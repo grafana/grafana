@@ -3,6 +3,7 @@ import memoize from 'micro-memoize';
 
 import { renderMarkdown } from '@grafana/data';
 
+import { MarkdownHTML } from '../../../Markdown/MarkdownHTML';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type MarkdownCellProps, type TableCellStyles } from '../types';
@@ -17,11 +18,9 @@ export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCel
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
-      <div
+      <MarkdownHTML
         className="markdown-container"
-        dangerouslySetInnerHTML={{
-          __html: renderMarkdown(renderValue.text, { noSanitize: disableSanitizeHtml }).trim(),
-        }}
+        html={renderMarkdown(renderValue.text, { noSanitize: disableSanitizeHtml }).trim()}
       />
     </MaybeWrapWithLink>
   );

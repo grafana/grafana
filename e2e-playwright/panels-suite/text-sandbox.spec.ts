@@ -39,6 +39,7 @@ const scriptPromise = build({
   write: false,
   format: 'iife',
   globalName: 'textSandbox',
+  loader: { '.css': 'empty', '.svg': 'text' },
   plugins: [
     {
       name: 'text-panel-runtime',
@@ -48,7 +49,7 @@ const scriptPromise = build({
           namespace: 'text-panel-runtime',
         }));
         build.onLoad({ filter: /.*/, namespace: 'text-panel-runtime' }, (args) => ({
-          contents: `export default ${JSON.stringify(args.path.includes('sandboxMermaid') ? mermaidSource : runtimeSource)};`,
+          contents: `export default ${JSON.stringify(args.path.includes('sandboxMermaid') ? mermaidSource : args.path.includes('sandboxAdmonitions') ? admonitionsSource : runtimeSource)};`,
           loader: 'js',
         }));
       },
@@ -56,7 +57,85 @@ const scriptPromise = build({
   ],
 }).then((result) => result.outputFiles[0].text);
 
+const admonitionsSource = buildSync({
+  entryPoints: [path.resolve(__dirname, '../../public/app/plugins/panel/text/v2/sandboxAdmonitions.tsx')],
+  bundle: true,
+  write: false,
+  format: 'iife',
+  conditions: ['@grafana-app/source'],
+  loader: { '.css': 'empty', '.svg': 'text' },
+  define: { 'process.env.NODE_ENV': '"production"' },
+  minify: true,
+}).outputFiles[0].text;
+
 test.describe('Text sandbox network boundary', () => {
+  test('renders real Alerts with bundled icons, theme changes and blocked resources', async ({ page }) => {
+    const requests: string[] = [];
+    const externalRequests: string[] = [];
+    page.on('request', (request) => requests.push(request.url()));
+    await page.route('https://external.test/**', (route) => {
+      externalRequests.push(route.request().url());
+      return route.abort();
+    });
+    await page.evaluate(() => {
+      window.sandboxStates = [];
+      window.sandboxHeights = [];
+      window.sandboxSession = window.textSandbox.renderSandbox(document.getElementById('host')!, {
+        html: window.textSandbox.renderMarkdown(
+          '> [!NOTE]\n> **Details** [Docs](https://grafana.com)\n\n> [!WARNING]\n> Careful'
+        ),
+        globalCss: '',
+        policy: window.textSandbox.textSandboxPolicy([], '/public/fonts/'),
+        admonitions: window.textSandbox.admonitionConfig(),
+        title: 'Text panel content',
+        onState: (state) => window.sandboxStates.push(state),
+        onHeight: (height) => window.sandboxHeights.push(height),
+      });
+    });
+    const content = page.frameLocator('iframe');
+    await expect(content.getByRole('status', { name: 'Note' })).toBeVisible();
+    await expect(content.getByRole('alert', { name: 'Warning' })).toBeVisible();
+    await expect(content.locator('svg path')).toHaveCount(2);
+    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('ready');
+    expect(await page.evaluate(() => window.sandboxStates.at(-1)?.resources)).toEqual([]);
+    expect(requests.filter((url) => url.includes('/icons/'))).toEqual([]);
+    const darkColor = await content
+      .getByRole('status', { name: 'Note' })
+      .locator('svg')
+      .evaluate((el) => getComputedStyle(el).color);
+    await page.evaluate(() =>
+      window.sandboxSession.update({ admonitions: window.textSandbox.admonitionConfig('light') })
+    );
+    await expect(content.getByRole('status', { name: 'Note' })).toBeVisible();
+    await expect
+      .poll(() =>
+        content
+          .getByRole('status', { name: 'Note' })
+          .locator('svg')
+          .evaluate((el) => getComputedStyle(el).color)
+      )
+      .not.toBe(darkColor);
+    await page.evaluate(() =>
+      window.sandboxSession.update({
+        html: window.textSandbox.renderMarkdown('> [!CAUTION]\n> <img src="https://external.test/secret">Updated'),
+      })
+    );
+    await expect(content.getByRole('alert', { name: 'Caution' })).toContainText('Updated');
+    await expect
+      .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
+      .toEqual([
+        {
+          directive: 'img-src',
+          origin: 'https://external.test',
+          urls: [{ url: 'https://external.test/secret', count: 1 }],
+        },
+      ]);
+    expect(externalRequests).toEqual([]);
+    expect(await page.evaluate(() => Math.max(...window.sandboxHeights))).toBeGreaterThan(20);
+    await page.evaluate(() => window.sandboxSession.update({ html: '<p>Plain again</p>' }));
+    await expect(content.getByText('Plain again')).toBeVisible();
+    await expect(content.getByRole('alert')).toHaveCount(0);
+  });
   test.beforeEach(async ({ page }) => {
     await page.route('https://grafana.test/**', (route) =>
       route.fulfill({ contentType: 'text/html', body: '<div id="host"></div>' })

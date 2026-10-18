@@ -10,7 +10,7 @@ import {
   textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Icon, type IconName, MarkdownHTML, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];
@@ -140,8 +140,7 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
               <pre className={styles.code}>{entry.content}</pre>
             </>
           ) : (
-            // renderMarkdown sanitizes its output, so this is safe to set as HTML.
-            <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: renderMarkdown(entry.content) }} />
+            <MarkdownHTML className={styles.markdown} html={renderMarkdown(entry.content)} />
           )}
           {entry.link && (
             <TextLink href={textUtil.sanitizeUrl(entry.link)} external className={styles.link}>
