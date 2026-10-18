@@ -3,9 +3,13 @@ package plugincontext_test
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -39,6 +43,25 @@ func TestGet(t *testing.T) {
 	}))
 
 	cfg := setting.NewCfg()
+	cfg.DataProxyTimeout = 175
+	cfg.DataProxyDialTimeout = 12
+	cfg.DataProxyKeepAlive = 45
+	cfg.DataProxyTLSHandshakeTimeout = 15
+	cfg.DataProxyExpectContinueTimeout = 2
+	cfg.DataProxyMaxConnsPerHost = 50
+	cfg.DataProxyMaxIdleConns = 200
+	cfg.DataProxyIdleConnTimeout = 120
+	expectedTimeouts := httpclient.TimeoutOptions{
+		Timeout:               175 * time.Second,
+		DialTimeout:           12 * time.Second,
+		KeepAlive:             45 * time.Second,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ExpectContinueTimeout: 2 * time.Second,
+		MaxConnsPerHost:       50,
+		MaxIdleConns:          200,
+		MaxIdleConnsPerHost:   200,
+		IdleConnTimeout:       120 * time.Second,
+	}
 	ds := &fakeDatasources.FakeDataSourceService{}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
 	store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
@@ -47,7 +70,8 @@ func TestGet(t *testing.T) {
 		store, &fakeDatasources.FakeCacheService{},
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
-	identity := &user.SignedInUser{OrgID: int64(1), Login: "admin"}
+	requester := &user.SignedInUser{OrgID: int64(1), Login: "admin"}
+	ctx := identity.WithRequester(context.Background(), requester)
 
 	for _, tc := range []struct {
 		name  string
@@ -58,23 +82,46 @@ func TestGet(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("Get", func(t *testing.T) {
-				pCtx, err := pcp.Get(context.Background(), tc.input, identity, identity.OrgID)
+				pCtx, err := pcp.Get(ctx, tc.input, requester, requester.OrgID)
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
 				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 
 			t.Run("GetWithDataSource", func(t *testing.T) {
-				pCtx, err := pcp.GetWithDataSource(context.Background(), tc.input, identity, &datasources.DataSource{
+				datasource := &datasources.DataSource{
 					ID:       1,
 					OrgID:    1,
 					Name:     "test",
 					Type:     pluginID,
 					JsonData: simplejson.New(),
-				})
+				}
+				pCtx, err := pcp.GetWithDataSource(ctx, tc.input, requester, datasource)
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
 				require.NotNil(t, pCtx.GrafanaConfig)
+				opts, err := pCtx.DataSourceInstanceSettings.HTTPClientOptions(ctx)
+				require.NoError(t, err)
+				require.Equal(t, expectedTimeouts, *opts.Timeouts)
+				require.Empty(t, datasource.JsonData.MustMap())
+			})
+
+			t.Run("PluginContextForDataSource", func(t *testing.T) {
+				settings := &backend.DataSourceInstanceSettings{
+					Type:     tc.input,
+					JSONData: []byte(`{"timeout":60,"httpKeepAlive":0,"custom":9007199254740993}`),
+				}
+				original := string(settings.JSONData)
+				pCtx, err := pcp.PluginContextForDataSource(ctx, settings)
+				require.NoError(t, err)
+				opts, err := pCtx.DataSourceInstanceSettings.HTTPClientOptions(ctx)
+				require.NoError(t, err)
+				expected := expectedTimeouts
+				expected.Timeout = 60 * time.Second
+				expected.KeepAlive = 0
+				require.Equal(t, expected, *opts.Timeouts)
+				require.Equal(t, original, string(settings.JSONData))
+				require.Contains(t, string(pCtx.DataSourceInstanceSettings.JSONData), `"custom":9007199254740993`)
 			})
 		})
 	}

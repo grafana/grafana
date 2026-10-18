@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -89,9 +90,9 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	if err != nil {
 		return pCtx, err
 	}
-	pCtx.DataSourceInstanceSettings = datasourceSettings
+	pCtx.DataSourceInstanceSettings, err = p.withHTTPClientDefaults(datasourceSettings)
 
-	return pCtx, nil
+	return pCtx, err
 }
 
 func (p *Provider) GetDataSourceInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
@@ -120,9 +121,45 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 		return backend.PluginContext{}, err
 	}
 	pCtx := p.GetBasePluginContext(ctx, plugin, user)
-	pCtx.DataSourceInstanceSettings = datasourceSettings
+	pCtx.DataSourceInstanceSettings, err = p.withHTTPClientDefaults(datasourceSettings)
 
-	return pCtx, nil
+	return pCtx, err
+}
+
+// withHTTPClientDefaults forwards Grafana's dataproxy defaults to plugins running
+// in separate processes, which do not share the SDK's global HTTP client defaults.
+// Only request settings are changed; datasource overrides and stored settings are preserved.
+func (p *Provider) withHTTPClientDefaults(settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
+	var jsonData map[string]json.RawMessage
+	if len(settings.JSONData) > 0 {
+		if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
+			return nil, fmt.Errorf("failed to decode datasource HTTP settings: %w", err)
+		}
+	}
+	if jsonData == nil {
+		jsonData = make(map[string]json.RawMessage)
+	}
+
+	for key, value := range map[string]int{
+		"timeout":                   p.cfg.DataProxyTimeout,
+		"dialTimeout":               p.cfg.DataProxyDialTimeout,
+		"httpKeepAlive":             p.cfg.DataProxyKeepAlive,
+		"httpTLSHandshakeTimeout":   p.cfg.DataProxyTLSHandshakeTimeout,
+		"httpExpectContinueTimeout": p.cfg.DataProxyExpectContinueTimeout,
+		"httpMaxConnsPerHost":       p.cfg.DataProxyMaxConnsPerHost,
+		"httpMaxIdleConns":          p.cfg.DataProxyMaxIdleConns,
+		"httpMaxIdleConnsPerHost":   p.cfg.DataProxyMaxIdleConns,
+		"httpIdleConnTimeout":       p.cfg.DataProxyIdleConnTimeout,
+	} {
+		if _, exists := jsonData[key]; !exists {
+			jsonData[key] = json.RawMessage(strconv.Itoa(value))
+		}
+	}
+
+	result := *settings
+	var err error
+	result.JSONData, err = json.Marshal(jsonData)
+	return &result, err
 }
 
 // PluginContextForApp will retrieve plugin context by the provided pluginID and app instance settings.
