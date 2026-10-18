@@ -73,6 +73,20 @@ type PluginInstanceCfg struct {
 
 	DataProxyRowLimit int64
 
+	// DataProxy HTTP client defaults forwarded to out-of-process plugins.
+	// In-process plugins are covered by setDefaultTimeoutOptions in
+	// pkg/infra/httpclient/httpclientprovider; out-of-process plugins run in
+	// their own process and keep the SDK's built-in 30 s defaults unless these
+	// values are forwarded via PluginRequestConfig.
+	DataProxyTimeout               int
+	DataProxyDialTimeout           int
+	DataProxyKeepAlive             int
+	DataProxyTLSHandshakeTimeout   int
+	DataProxyExpectContinueTimeout int
+	DataProxyMaxConnsPerHost       int
+	DataProxyMaxIdleConns          int
+	DataProxyIdleConnTimeout       int
+
 	SQLDatasourceMaxOpenConnsDefault    int
 	SQLDatasourceMaxIdleConnsDefault    int
 	SQLDatasourceMaxConnLifetimeDefault int
@@ -124,6 +138,14 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		ConcurrentQueryCount:                cfg.ConcurrentQueryCount,
 		UserFacingDefaultError:              cfg.UserFacingDefaultError,
 		DataProxyRowLimit:                   cfg.DataProxyRowLimit,
+		DataProxyTimeout:                    cfg.DataProxyTimeout,
+		DataProxyDialTimeout:                cfg.DataProxyDialTimeout,
+		DataProxyKeepAlive:                  cfg.DataProxyKeepAlive,
+		DataProxyTLSHandshakeTimeout:        cfg.DataProxyTLSHandshakeTimeout,
+		DataProxyExpectContinueTimeout:      cfg.DataProxyExpectContinueTimeout,
+		DataProxyMaxConnsPerHost:            cfg.DataProxyMaxConnsPerHost,
+		DataProxyMaxIdleConns:               cfg.DataProxyMaxIdleConns,
+		DataProxyIdleConnTimeout:            cfg.DataProxyIdleConnTimeout,
 		SQLDatasourceMaxOpenConnsDefault:    cfg.SqlDatasourceMaxOpenConnsDefault,
 		SQLDatasourceMaxIdleConnsDefault:    cfg.SqlDatasourceMaxIdleConnsDefault,
 		SQLDatasourceMaxConnLifetimeDefault: cfg.SqlDatasourceMaxConnLifetimeDefault,

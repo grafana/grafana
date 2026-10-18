@@ -19,6 +19,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
+// dataProxy* constants follow the GF_* naming convention established in
+// grafana-plugin-sdk-go/config/grafana_cfg.go. A companion SDK change will
+// read these from GrafanaConfigFromContext and apply them to the plugin
+// process's DefaultTimeoutOptions, restoring the [dataproxy] timeout
+// behaviour for out-of-process plugins (Loki/Prometheus/Tempo in 13.2+).
+const (
+	dataProxyTimeoutDefault               = "GF_DATAPROXY_TIMEOUT"
+	dataProxyDialTimeoutDefault           = "GF_DATAPROXY_DIAL_TIMEOUT"
+	dataProxyKeepAliveDefault             = "GF_DATAPROXY_KEEP_ALIVE"
+	dataProxyTLSHandshakeTimeoutDefault   = "GF_DATAPROXY_TLS_HANDSHAKE_TIMEOUT"
+	dataProxyExpectContinueTimeoutDefault = "GF_DATAPROXY_EXPECT_CONTINUE_TIMEOUT"
+	dataProxyMaxConnsPerHostDefault       = "GF_DATAPROXY_MAX_CONNS_PER_HOST"
+	dataProxyMaxIdleConnsDefault          = "GF_DATAPROXY_MAX_IDLE_CONNS"
+	dataProxyIdleConnTimeoutDefault       = "GF_DATAPROXY_IDLE_CONN_TIMEOUT"
+)
+
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
 
 type PluginRequestConfigProvider interface {
@@ -182,6 +198,37 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 	if s.cfg.DataProxyRowLimit != 0 {
 		m[backend.SQLRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
+	}
+
+	// Forward [dataproxy] HTTP client defaults so that out-of-process plugins
+	// (Loki, Prometheus, Tempo in Grafana 13.2+) use the operator-configured
+	// timeouts instead of the SDK's hard-coded 30 s fallback.
+	// Keys follow the GF_* convention established in grafana-plugin-sdk-go
+	// config/grafana_cfg.go; a companion SDK change will consume these values
+	// via GrafanaConfigFromContext and apply them to DefaultTimeoutOptions.
+	if s.cfg.DataProxyTimeout != 0 {
+		m[dataProxyTimeoutDefault] = strconv.Itoa(s.cfg.DataProxyTimeout)
+	}
+	if s.cfg.DataProxyDialTimeout != 0 {
+		m[dataProxyDialTimeoutDefault] = strconv.Itoa(s.cfg.DataProxyDialTimeout)
+	}
+	if s.cfg.DataProxyKeepAlive != 0 {
+		m[dataProxyKeepAliveDefault] = strconv.Itoa(s.cfg.DataProxyKeepAlive)
+	}
+	if s.cfg.DataProxyTLSHandshakeTimeout != 0 {
+		m[dataProxyTLSHandshakeTimeoutDefault] = strconv.Itoa(s.cfg.DataProxyTLSHandshakeTimeout)
+	}
+	if s.cfg.DataProxyExpectContinueTimeout != 0 {
+		m[dataProxyExpectContinueTimeoutDefault] = strconv.Itoa(s.cfg.DataProxyExpectContinueTimeout)
+	}
+	if s.cfg.DataProxyMaxConnsPerHost != 0 {
+		m[dataProxyMaxConnsPerHostDefault] = strconv.Itoa(s.cfg.DataProxyMaxConnsPerHost)
+	}
+	if s.cfg.DataProxyMaxIdleConns != 0 {
+		m[dataProxyMaxIdleConnsDefault] = strconv.Itoa(s.cfg.DataProxyMaxIdleConns)
+	}
+	if s.cfg.DataProxyIdleConnTimeout != 0 {
+		m[dataProxyIdleConnTimeoutDefault] = strconv.Itoa(s.cfg.DataProxyIdleConnTimeout)
 	}
 
 	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
