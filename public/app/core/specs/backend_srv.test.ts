@@ -3,7 +3,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
-import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
+import { type BackendSrvRequest, type FetchError, type FetchResponse, logError } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
@@ -98,6 +98,11 @@ const createUnauthorizedResponse = () =>
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
   }) as unknown as Response;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  logError: jest.fn(),
+}));
 
 jest.mock('app/core/utils/auth', () => ({
   ...jest.requireActual('app/core/utils/auth'),
@@ -403,6 +408,46 @@ describe('backendSrv', () => {
           String(input).includes('/api/login/ping')
         );
         expect(loginPingRequests).toHaveLength(1);
+      });
+    });
+
+    describe('when the login ping fails with a server error', () => {
+      it('logs the failure to Faro without showing an alert', async () => {
+        jest.useFakeTimers();
+        jest.mocked(logError).mockClear();
+        const { backendSrv, appEventsMock, fromFetchMock, logoutMock } = getTestContext({ authenticatedBy: 'jwt' });
+        const serverErrorResponse = {
+          ...createUnauthorizedResponse(),
+          status: 500,
+          statusText: 'Internal Server Error',
+          text: jest.fn().mockResolvedValue(JSON.stringify({ message: 'Internal Server Error', traceID: 'trace-1' })),
+        } as unknown as Response;
+
+        fromFetchMock.mockImplementation((input) =>
+          of(String(input).includes('/api/login/ping') ? serverErrorResponse : createUnauthorizedResponse())
+        );
+
+        await expect(backendSrv.request({ url: '/api/dashboards/1', method: 'GET', retry: 0 })).rejects.toMatchObject({
+          status: 500,
+        });
+        jest.advanceTimersByTime(50);
+
+        expect(appEventsMock.emit).not.toHaveBeenCalled();
+        expect(logoutMock).not.toHaveBeenCalled();
+        expect(logError).toHaveBeenCalledTimes(1);
+        expect(logError).toHaveBeenCalledWith(expect.any(Error), { status: '500', traceId: 'trace-1' });
+        jest.useRealTimers();
+      });
+
+      it('does not log to Faro when the ping returns 401', async () => {
+        jest.mocked(logError).mockClear();
+        const { backendSrv, fromFetchMock, logoutMock } = getTestContext({ authenticatedBy: 'jwt' });
+        fromFetchMock.mockImplementation(() => of(createUnauthorizedResponse()));
+
+        await expect(backendSrv.request({ url: '/api/dashboards/1', method: 'GET', retry: 0 })).rejects.toBeDefined();
+
+        expect(logoutMock).toHaveBeenCalledTimes(1);
+        expect(logError).not.toHaveBeenCalled();
       });
     });
 

@@ -27,6 +27,7 @@ import {
   type StreamingFrameOptions,
   type BackendDataSourceResponse,
   getBackendSrv,
+  logError,
 } from '@grafana/runtime';
 
 import { type StreamingResponseData } from '../data/utils';
@@ -141,10 +142,13 @@ export class CentrifugeService implements CentrifugeSrv {
       // API if there is a case like this
       if (now - this.lastAuthCheck > 5000) {
         this.lastAuthCheck = now;
+        // Non-critical background check, so report failures to Faro instead of alerting the user
         getBackendSrv()
-          .get('/api/login/ping')
-          .catch(() => {
-            // Just swallow this error - it's non-critical
+          .get('/api/login/ping', undefined, undefined, { showErrorAlert: false })
+          .catch((err) => {
+            logError(new Error(`Grafana Live login ping failed with status ${err?.status}`), {
+              status: String(err?.status),
+            });
           });
       }
     }

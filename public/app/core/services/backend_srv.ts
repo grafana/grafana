@@ -32,6 +32,7 @@ import {
   config,
   type FetchError,
   type FetchResponse,
+  logError,
 } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -644,12 +645,25 @@ export class BackendSrv implements BackendService {
       return this._loginPingInProgress;
     }
 
-    this._loginPingInProgress = this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 }).pipe(
+    this._loginPingInProgress = this.fetch({
+      url: '/api/login/ping',
+      method: 'GET',
+      retry: 1,
+      showErrorAlert: false,
+    }).pipe(
       // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
       // no matter how many requests are waiting on this same ping.
-      catchError((err) => {
+      catchError((err: FetchError) => {
         if (err.status === 401) {
           this.dependencies.logout();
+        } else {
+          // The ping is a background session check, so the user can't act on its failure. Marking it
+          // handled also stops the request that triggered the ping from alerting with this error.
+          err.isHandled = true;
+          logError(new Error(`Login ping failed with status ${err.status}`), {
+            status: String(err.status),
+            traceId: err.data?.traceID ?? '',
+          });
         }
         return throwError(() => err);
       }),

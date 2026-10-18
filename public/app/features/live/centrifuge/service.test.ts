@@ -7,6 +7,7 @@ import {
   LiveChannelScope,
   isLiveChannelStatusEvent,
 } from '@grafana/data';
+import { getBackendSrv, logError } from '@grafana/runtime';
 
 import { CentrifugeService, type CentrifugeSrvDeps } from './service';
 
@@ -43,6 +44,7 @@ jest.mock('centrifuge', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(() => ({ get: jest.fn() })),
+  logError: jest.fn(),
 }));
 
 const baseAddr = {
@@ -93,6 +95,20 @@ describe('CentrifugeService', () => {
 
     const errorEvent = events.find((e) => isLiveChannelStatusEvent(e) && e.error === 'Grafana Live connection timeout');
     expect(errorEvent).toBeDefined();
+  });
+
+  it('should log a failed auth check ping to Faro without showing an alert', async () => {
+    const get = jest.fn().mockRejectedValue({ status: 500 });
+    jest.mocked(getBackendSrv).mockReturnValue({ get } as unknown as ReturnType<typeof getBackendSrv>);
+    jest.mocked(logError).mockClear();
+
+    new CentrifugeService(makeDeps());
+    const onError = mockCentrifuge.on.mock.calls.find(([event]) => event === 'error')?.[1];
+    onError({ type: 'transport', error: { code: 2, message: 'transport closed' } });
+    await Promise.resolve();
+
+    expect(get).toHaveBeenCalledWith('/api/login/ping', undefined, undefined, { showErrorAlert: false });
+    expect(logError).toHaveBeenCalledWith(expect.any(Error), { status: '500' });
   });
 
   it('should immediately shut down channel when liveEnabled is false', async () => {
