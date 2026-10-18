@@ -96,9 +96,8 @@ export default function HomePage() {
   const incidentsData = useIncidents(incidentsFilter);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
-  const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
   const isWaitingForIRM = !redesignEnabled && incidentsData.enabled === undefined;
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs || isWaitingForIRM;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs || isWaitingForIRM;
 
   // The impression counts a rendered homepage, never a skeleton: the tracker mounts inside
   // the Suspense boundary below, so a suspended lazy extension defers it until reveal. The
@@ -178,8 +177,7 @@ export default function HomePage() {
                   })}
 
                   <HomeGrid columns={2} gap={2}>
-                    {/* Skip the HomepageTabs extension point for the redesign UI */}
-                    <DashboardTabs extensionComponents={[]} />
+                    <DashboardTabs extensionComponents={tabComponents} />
                     <AlertIncidentTabs
                       alertsData={alertsData}
                       incidentsData={incidentsData}
