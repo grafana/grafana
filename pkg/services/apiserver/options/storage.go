@@ -279,7 +279,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 
 	const resourceStoreAudience = "resourceStore"
 
-	unified, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
+	unified, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
 		Token:            o.GrpcClientAuthenticationToken,
 		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		Namespace:        o.GrpcClientAuthenticationTokenNamespace,

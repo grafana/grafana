@@ -14,6 +14,8 @@ replace github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 
 replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 
+replace github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
+
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
@@ -80,7 +82,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect

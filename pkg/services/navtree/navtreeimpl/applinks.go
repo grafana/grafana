@@ -35,6 +35,7 @@ var assistantOSSNavigationPaths = map[string]struct{}{
 var assistantTrialNavigationPaths = map[string]struct{}{
 	assistantAppHomePath:                 {},
 	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/pages":     {},
 }
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
@@ -214,6 +215,19 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
+			if s.canCreateAssistantPage(plugin, include, c) {
+				// no plugin id: the frontend registers a catch-all app route for every plugin nav item,
+				// which would make the top-level pages section own every assistant app url
+				link.Children = append(link.Children, &navtree.NavLink{
+					Id:             "assistant/pages/new",
+					Text:           "New Grafana Page",
+					Icon:           "plus",
+					Url:            s.cfg.AppSubURL + assistantAppHomePath + "/pages/new",
+					HideFromTabs:   true,
+					IsCreateAction: true,
+				})
+			}
+
 			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
 				link.Id = "standalone-plugin-page-" + include.Path
@@ -311,6 +325,11 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) canCreateAssistantPage(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	return plugin.ID == assistantAppID && include.Path == assistantAppHomePath+"/pages" && include.AddToNav &&
+		ac.HasAccess(s.accessControl, c)(ac.EvalPermission("assistant.ext.grafana.app/pages:create"))
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {

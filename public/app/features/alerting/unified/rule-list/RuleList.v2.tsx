@@ -86,9 +86,9 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const canImportRulesToGMA = hasImportToGMAPermissions;
-
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && hasImportToGMAPermissions;
+  // The migration wizard replaces the rules-only import tool, so only offer the old one without it.
+  const canImportRulesToGMA = hasImportToGMAPermissions && !canAccessMigrationWizardUI;
 
   const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
 

@@ -326,14 +326,14 @@ describe('UPDATE_DASHBOARD_SETTINGS', () => {
     const { scene } = buildTestScene({ isEditing: false });
     await updateDashboardSettingsCommand.handler({ title: 'X' }, { scene });
 
-    expect(scene.onEnterEditMode).toHaveBeenCalled();
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
   });
 
-  it('does not re-enter edit mode if already editing', async () => {
+  it('applies the Assistant presentation to an existing edit session', async () => {
     const { scene } = buildTestScene({ isEditing: true });
     await updateDashboardSettingsCommand.handler({ title: 'X' }, { scene });
 
-    expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
   });
 
   it('records previous and new values in changes', async () => {

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
@@ -51,7 +52,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	if err != nil {
 		return nil, err
 	}
-	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
+	tracingConfig, err := tracingsetting.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +134,7 @@ var ossBaseCLISet = wire.NewSet(
 
 var moduleServerSet = wire.NewSet(
 	NewModule,
-	ossBaseCLISet, tracing.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
+	ossBaseCLISet, tracingsetting.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
 )
 
 var dashboardStatsSet = wire.NewSet(builders.ProvideDashboardStats, wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)))
