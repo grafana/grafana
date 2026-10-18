@@ -159,6 +159,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
+    this.stopped = false;
     if (this.baseline === undefined) {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
@@ -296,8 +297,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.cellTimeRangesEdited.clear();
   }
 
-  public markVisualizationEdited(elementName: string): void {
-    if (!this.scene.state.isEditing) {
+  public markVisualizationEdited(elementName: string, wasEditing = this.scene.state.isEditing): void {
+    if (!wasEditing) {
       return;
     }
     this.vizConfigsEdited.add(elementName);
@@ -306,6 +307,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       this.editedByWriter = true;
     }
     this.schedule(somethingToWrite);
+    if (this.stopped) {
+      this.flush();
+    }
   }
 
   /**
@@ -609,23 +613,25 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Writes a pending save immediately, if there is one. */
   public flush(): void {
-    const pendingVizChanges = this.scene.state.body.whenVizChangesSettled();
-    if (pendingVizChanges) {
-      const wasEditing = this.scene.state.isEditing;
-      this.scheduleSave.cancel();
-      void pendingVizChanges.then((elementNames) => {
-        if (!this.abandoned) {
-          if (wasEditing) {
-            elementNames.forEach((name) => this.vizConfigsEdited.add(name));
-            this.editedByWriter = true;
-          }
-          this.schedule();
-          this.flush();
-        }
-      });
-      return;
-    }
     this.scheduleSave.flush();
+  }
+
+  public async flushWhenSettled(): Promise<void> {
+    const wasEditing = this.scene.state.isEditing;
+    let pending = this.scene.state.body.whenVizChangesSettled();
+    while (pending) {
+      const elementNames = await pending;
+      if (this.abandoned || this.stopped) {
+        return;
+      }
+      if (wasEditing) {
+        elementNames.forEach((name) => this.vizConfigsEdited.add(name));
+        this.editedByWriter = true;
+      }
+      this.schedule();
+      pending = this.scene.state.body.whenVizChangesSettled();
+    }
+    this.flush();
   }
 
   /**

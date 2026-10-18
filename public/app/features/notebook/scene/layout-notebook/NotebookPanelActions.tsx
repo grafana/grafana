@@ -1,28 +1,16 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { type ReactNode, type Ref, type RefObject } from 'react';
 
-import { CoreApp, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime';
-import {
-  isSceneObject,
-  sceneGraph,
-  SceneReactObject,
-  type SceneObject,
-  type SceneQueryRunner,
-  type VizPanel,
-} from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Button, IconButton, Input, LinkButton, Spinner, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
-import { getUpdatedHoverHeader } from 'app/features/dashboard-scene/scene/panel-timerange/utils';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
+import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
-import { VisualizationSuggestionCard } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestionCard';
-import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { PanelExploreLink } from './PanelExploreLink';
+import { VizSuggestionsButton } from './VizSuggestionsButton';
 import { NotebookCellActions } from './edit/NotebookCellActions';
 import { NOTEBOOK_CELL_CONTROLS_CLASS } from './edit/cellClassNames';
 
@@ -38,6 +26,7 @@ interface Props {
   timeRangeControl?: ReactNode;
   onDuplicate?: () => void;
   onDelete?: () => void;
+  toolbarRef?: Ref<HTMLDivElement>;
 }
 
 export function NotebookPanelActions({
@@ -52,95 +41,16 @@ export function NotebookPanelActions({
   timeRangeControl,
   onDuplicate,
   onDelete,
+  toolbarRef,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const { title } = panel.useState();
-  const [renaming, setRenaming] = useState(false);
-  const [draft, setDraft] = useState(title);
-  const [originalTitle, setOriginalTitle] = useState(title);
-  const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null);
-  const renameFinished = useRef(false);
   const canEditPanel = isEditing && !isLibraryPanel(panel);
-  useEffect(() => {
-    const previous = panel.state.headerActions;
-    const previousItems = Array.isArray(previous)
-      ? previous
-      : previous
-        ? [isSceneObject(previous) ? previous : new SceneReactObject({ reactNode: previous })]
-        : [];
-    const headerActions = [...previousItems, new SceneReactObject({ reactNode: <div ref={setHeaderTarget} /> })];
-    panel.setState({ headerActions });
-    return () => {
-      if (panel.state.headerActions === headerActions) {
-        panel.setState({ headerActions: previous });
-      }
-    };
-  }, [panel]);
-  const startRename = useCallback(() => {
-    renameFinished.current = false;
-    setOriginalTitle(panel.state.title);
-    setDraft(panel.state.title);
-    setRenaming(true);
-  }, [panel]);
-  const titleAction = useMemo(
-    () =>
-      new SceneReactObject({
-        reactNode: title ? (
-          <IconButton
-            name="pen"
-            size="sm"
-            className={styles.titleEdit}
-            data-notebook-title-action
-            tooltip={t('notebooks.panel.rename', 'Edit panel title')}
-            onClick={startRename}
-          />
-        ) : (
-          <Button variant="secondary" fill="text" size="sm" onClick={startRename}>
-            {t('notebooks.panel.add-title', 'Add title')}
-          </Button>
-        ),
-      }),
-    [startRename, title, styles.titleEdit]
-  );
-
-  useEffect(() => {
-    if (!canEditPanel || renaming || !Array.isArray(panel.state.titleItems)) {
-      return;
-    }
-    panel.setState({ titleItems: [...panel.state.titleItems, titleAction] });
-    return () => {
-      const titleItems = panel.state.titleItems;
-      if (Array.isArray(titleItems) && titleItems.includes(titleAction)) {
-        panel.setState({ titleItems: titleItems.filter((item: SceneObject) => item !== titleAction) });
-      }
-    };
-  }, [panel, canEditPanel, title, renaming, titleAction]);
-
-  useEffect(() => {
-    if (!canEditPanel || title) {
-      return;
-    }
-    panel.setState({ hoverHeader: false });
-    return () => {
-      panel.setState({ hoverHeader: getUpdatedHoverHeader(panel.state.title, panel.state.$timeRange?.state) });
-    };
-  }, [panel, canEditPanel, title]);
-
-  const finishRename = () => {
-    if (renameFinished.current) {
-      return;
-    }
-    renameFinished.current = true;
-    cell.onPanelTitleChange(draft.trim());
-    cell.onPanelTitleCommit();
-    setRenaming(false);
-  };
-
-  const toolbar = (
+  return (
     <div
+      ref={toolbarRef}
       className={cx(
         styles.toolbar,
-        headerTarget ? styles.headerToolbar : isEditing ? styles.toolbarEditing : styles.toolbarViewing,
+        isEditing ? styles.toolbarEditing : styles.toolbarViewing,
         NOTEBOOK_CELL_CONTROLS_CLASS
       )}
       data-notebook-panel-actions
@@ -177,269 +87,9 @@ export function NotebookPanelActions({
       </Stack>
     </div>
   );
-
-  return (
-    <>
-      {canEditPanel && renaming && (
-        <div className={styles.rename}>
-          <Input
-            autoFocus
-            aria-label={t('notebooks.panel.title-label', 'Panel title')}
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.currentTarget.value);
-              cell.onPanelTitleChange(event.currentTarget.value);
-            }}
-            onBlur={finishRename}
-            onKeyDown={(event) => {
-              if (event.nativeEvent.isComposing) {
-                return;
-              }
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                finishRename();
-              } else if (event.key === 'Escape') {
-                event.preventDefault();
-                event.stopPropagation();
-                renameFinished.current = true;
-                cell.onPanelTitleChange(originalTitle);
-                cell.onPanelTitleCommit();
-                setRenaming(false);
-              }
-            }}
-          />
-        </div>
-      )}
-      {headerTarget ? createPortal(toolbar, headerTarget) : toolbar}
-    </>
-  );
-}
-
-function PanelExploreLink({ panel }: { panel: VizPanel }) {
-  const runner = getQueryRunnerFor(panel);
-  if (!runner) {
-    return null;
-  }
-  return <PanelExploreLinkWithRunner panel={panel} runner={runner} />;
-}
-
-function PanelExploreLinkWithRunner({ panel, runner }: { panel: VizPanel; runner: SceneQueryRunner }) {
-  const { queries, datasource } = runner.useState();
-  const { value: range } = sceneGraph.getTimeRange(panel).useState();
-  const { pluginId } = panel.useState();
-  const styles = useStyles2(getStyles);
-  const [url, setUrl] = useState<string>();
-
-  useEffect(() => {
-    let cancelled = false;
-    setUrl(undefined);
-    if (queries.length > 0) {
-      void Promise.all(
-        queries.map(async (query) => {
-          if (query.queryType) {
-            return query;
-          }
-          try {
-            const queryDatasource = await getDataSourceInstance(query.datasource ?? datasource);
-            if (queryDatasource.uid !== 'grafana') {
-              return query;
-            }
-            const queryType = queryDatasource.getDefaultQuery?.(CoreApp.Explore)?.queryType;
-            return queryType ? { ...query, queryType } : query;
-          } catch {
-            return query;
-          }
-        })
-      )
-        .then((exploreQueries) => tryGetExploreUrlForPanel(panel, exploreQueries))
-        .then((nextUrl) => {
-          if (!cancelled) {
-            setUrl(nextUrl);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setUrl(undefined);
-          }
-        });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [panel, queries, datasource, range, pluginId]);
-
-  return url ? (
-    <LinkButton
-      icon="compass"
-      size="sm"
-      variant="secondary"
-      fill="text"
-      className={styles.exploreLink}
-      tooltip={t('notebooks.panel.open-explore', 'Open in Explore')}
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-    />
-  ) : null;
-}
-
-function VizSuggestionsButton({
-  cell,
-  panel,
-  lastSuggestedQuery,
-  autoSuggest,
-}: {
-  cell: NotebookCellItem;
-  panel: VizPanel;
-  lastSuggestedQuery?: RefObject<DataQuery | undefined>;
-  autoSuggest?: RefObject<boolean>;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Toggletip
-      show={open}
-      onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
-      content={
-        <SuggestionsContent
-          cell={cell}
-          panel={panel}
-          lastSuggestedQuery={lastSuggestedQuery}
-          autoSuggest={autoSuggest}
-          onSelect={() => setOpen(false)}
-        />
-      }
-      placement="bottom-end"
-      closeButton={false}
-    >
-      <IconButton
-        name="chart-line"
-        size="sm"
-        tooltip={t('notebooks.panel.change-visualization', 'Change visualization')}
-      />
-    </Toggletip>
-  );
-}
-
-function SuggestionsContent({
-  cell,
-  panel,
-  lastSuggestedQuery,
-  autoSuggest,
-  onSelect,
-}: {
-  cell: NotebookCellItem;
-  panel: VizPanel;
-  lastSuggestedQuery?: RefObject<DataQuery | undefined>;
-  autoSuggest?: RefObject<boolean>;
-  onSelect: () => void;
-}) {
-  const styles = useStyles2(getStyles);
-  const { data } = sceneGraph.getData(panel).useState();
-  const [suggestions, setSuggestions] = useState<PanelPluginVisualizationSuggestion[]>();
-  const [loadError, setLoadError] = useState(false);
-  const [changeError, setChangeError] = useState(false);
-  const [changing, setChanging] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSuggestions(undefined);
-    setLoadError(false);
-    setChangeError(false);
-    if (data?.series.length) {
-      void getAllSuggestions(data.series)
-        .then((result) => {
-          if (!cancelled) {
-            setSuggestions(result.suggestions.slice(0, 6));
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setLoadError(true);
-          }
-        });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [data?.series]);
-
-  if (!data?.series.length) {
-    return <Text color="secondary">{t('notebooks.panel.suggestions-no-data', 'Run a query to see suggestions.')}</Text>;
-  }
-  if (loadError) {
-    return <Text color="secondary">{t('notebooks.panel.suggestions-error', 'Could not load suggestions.')}</Text>;
-  }
-  if (!suggestions) {
-    return <Spinner />;
-  }
-  if (suggestions.length === 0) {
-    return <Text color="secondary">{t('notebooks.panel.suggestions-empty', 'No suggestions for this data.')}</Text>;
-  }
-
-  return (
-    <Stack direction="column" gap={1}>
-      {changeError && (
-        <div role="alert">
-          <Text color="error">
-            {t('notebooks.panel.visualization-error', 'Could not change visualization. Try again.')}
-          </Text>
-        </div>
-      )}
-      <div className={styles.suggestions} aria-busy={changing}>
-        {suggestions.map((suggestion, index) => (
-          <div
-            key={`${suggestion.pluginId}-${index}`}
-            role="button"
-            tabIndex={0}
-            aria-label={suggestion.name}
-            aria-disabled={changing}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                event.currentTarget.click();
-              }
-            }}
-            onClick={() => {
-              if (changing) {
-                return;
-              }
-              const selectedQuery = getQueryRunnerFor(panel)?.state.queries[0];
-              if (autoSuggest) {
-                autoSuggest.current = false;
-              }
-              setChanging(true);
-              setChangeError(false);
-              void cell
-                .onVisualizationChange(suggestion)
-                .then(() => {
-                  if (lastSuggestedQuery) {
-                    lastSuggestedQuery.current = selectedQuery;
-                  }
-                  onSelect();
-                })
-                .catch(() => setChangeError(true))
-                .finally(() => setChanging(false));
-            }}
-          >
-            <VisualizationSuggestionCard data={data} suggestion={suggestion} width={150} />
-            <div className={styles.suggestionLabel}>{suggestion.name}</div>
-          </div>
-        ))}
-      </div>
-    </Stack>
-  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  exploreLink: css({
-    border: 0,
-    height: 22,
-    marginLeft: theme.spacing(-0.5),
-    padding: theme.spacing(0.5),
-    '& svg': { margin: 0 },
-  }),
   toolbar: css({
     position: 'absolute',
     right: theme.spacing(1),
@@ -461,54 +111,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transition: theme.transitions.create('opacity'),
     },
   }),
-  titleEdit: css({
-    opacity: 0,
-    pointerEvents: 'none',
-    '@media (hover: none)': {
-      opacity: 1,
-      pointerEvents: 'auto',
-    },
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create('opacity'),
-    },
-  }),
   toolbarEditing: css({
-    top: theme.spacing(-1.5),
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(0.25, 0.5),
-    paddingLeft: theme.spacing(1),
-    boxShadow: theme.shadows.z1,
-  }),
-  headerToolbar: css({
-    position: 'static',
+    top: theme.spacing(1),
   }),
   toolbarViewing: css({
     top: theme.spacing(0.5),
-  }),
-  rename: css({
-    position: 'absolute',
-    top: theme.spacing(0.5),
-    left: theme.spacing(1),
-    zIndex: 3,
-    width: 'min(320px, calc(100% - 72px))',
-    background: theme.colors.background.primary,
-  }),
-  suggestions: css({
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, 150px)',
-    justifyContent: 'center',
-    width: 316,
-    maxWidth: `calc(100vw - ${theme.spacing(6)})`,
-    gap: theme.spacing(1),
-    maxHeight: `min(420px, calc(50dvh - ${theme.spacing(10)}))`,
-    overflowY: 'auto',
-    padding: theme.spacing(0.5),
-  }),
-  suggestionLabel: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    marginTop: theme.spacing(0.5),
   }),
 });

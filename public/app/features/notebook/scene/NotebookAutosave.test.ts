@@ -30,6 +30,7 @@ import { transformNotebookToScene } from '../serialization/transformNotebookToSc
 import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
 
 import { changedCellTimeRange } from './NotebookAutosave';
+import { needsConfirmBeforeLeaving } from './NotebookPrompt';
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -1629,7 +1630,7 @@ describe('NotebookAutosave', () => {
       stopPanel();
     });
 
-    it('waits for visualization undo when leaving the route', async () => {
+    it('flushes other edits immediately on teardown without waiting for visualization undo', async () => {
       const { scene, cell, panel } = buildSceneWithPanel();
       deactivate = scene.activate();
       const stopPanel = panel.activate();
@@ -1657,12 +1658,20 @@ describe('NotebookAutosave', () => {
       expect(savedVizConfigs().at(-1)?.group).toBe('table');
 
       scene.editHistory.undo();
+      scene.onTitleChange('Changed before leaving');
+      expect(needsConfirmBeforeLeaving(scene)).toBe(true);
+      const markEdited = jest.spyOn(scene.autosave, 'markVisualizationEdited');
       deactivate();
       deactivate = undefined;
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].title).toBe('Changed before leaving');
+      const savesBeforeUndoSettles = jest.mocked(updateNotebook).mock.calls.length;
       await jest.advanceTimersByTimeAsync(0);
       finishUndo();
       await jest.advanceTimersByTimeAsync(0);
 
+      expect(panel.state.pluginId).toBe('timeseries');
+      expect(markEdited).toHaveBeenCalledWith('panel1', true);
+      expect(updateNotebook).toHaveBeenCalledTimes(savesBeforeUndoSettles + 1);
       expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
       stopPanel();
     });

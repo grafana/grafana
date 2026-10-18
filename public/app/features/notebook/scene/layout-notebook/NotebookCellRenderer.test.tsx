@@ -342,6 +342,7 @@ describe('NotebookCellRenderer', () => {
         );
       };
       const { user } = render(<Cells />);
+      act(() => layout.editModeChanged(true));
       await screen.findByRole('heading', { name: 'Latency' });
 
       act(() => layout.duplicateCell(cell));

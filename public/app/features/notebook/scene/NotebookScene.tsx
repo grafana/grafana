@@ -359,7 +359,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   public onExitEditMode = () => {
     const pendingVizChanges = this.state.body.whenVizChangesSettled();
     if (pendingVizChanges) {
-      void pendingVizChanges.then(() => this.onExitEditMode());
+      void this.autosave.flushWhenSettled().then(() => this.onExitEditMode());
       return;
     }
 

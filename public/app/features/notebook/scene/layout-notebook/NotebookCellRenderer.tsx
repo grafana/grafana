@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { type CSSProperties, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -140,6 +141,11 @@ function PanelCell({
   const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
   const autoSuggest = useRef(Boolean(autoFocus));
   const canEditQuery = isEditing && isEditableQueryPanel(panel);
+  const [toolbarRef, { width: toolbarWidth }] = useMeasure<HTMLDivElement>();
+  const panelStyle: CSSProperties & { '--notebook-panel-actions-width': string } = {
+    height: panelHeight,
+    '--notebook-panel-actions-width': `${toolbarWidth}px`,
+  };
 
   return (
     <Stack direction="column" gap={1}>
@@ -157,13 +163,14 @@ function PanelCell({
       )}
       <div
         className={styles.panel}
-        style={{ height: panelHeight }}
+        style={panelStyle}
         data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}
       >
         <NotebookPanelActions
           cell={cell}
           panel={panel}
           isEditing={isEditing}
+          toolbarRef={toolbarRef}
           lastSuggestedQuery={lastSuggestedQuery}
           autoSuggest={autoSuggest}
           onToggleQueryEditor={
@@ -416,6 +423,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   panel: css({
     position: 'relative',
+    [`[data-testid="${selectors.components.Panels.Panel.headerContainer}"]`]: {
+      paddingRight: `calc(var(--notebook-panel-actions-width, 0px) + ${theme.spacing(2)})`,
+    },
     // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
     breakInside: 'avoid',
     pageBreakInside: 'avoid',

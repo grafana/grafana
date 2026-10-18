@@ -738,8 +738,9 @@ describe('NotebookLayoutManager', () => {
       expect(copy.state.pluginId).toBe('timeseries');
       expect(copy.state.options).toEqual({ legend: { showLegend: true } });
       expect(copy.state.headerActions).toBeUndefined();
-      expect(copy.state.titleItems).toEqual([]);
-      expect(panel.state.titleItems).toHaveLength(1);
+      expect(copy.state.titleItems).toHaveLength(1);
+      expect(panel.state.titleItems).toHaveLength(2);
+      expect(copy.state.titleItems).not.toBe(panel.state.titleItems);
     });
 
     it('ignores a cell that is not in the notebook', () => {

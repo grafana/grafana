@@ -1,15 +1,17 @@
+import { type ComponentProps } from 'react';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
-import { SceneQueryRunner, SceneReactObject, SceneTimeRange, type SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, SceneReactObject, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 import { NotebookPanelActions } from './NotebookPanelActions';
+import { PanelTitleEditor } from './PanelTitleEditor';
 
 jest.mock('app/features/dashboard-scene/utils/urlBuilders', () => ({
   tryGetExploreUrlForPanel: jest.fn(),
@@ -42,13 +44,13 @@ function buildPanelCell(title = 'Latency') {
   return { cell, panel };
 }
 
-function renderTitleAction(panel: VizPanel) {
-  const titleAction = (panel.state.titleItems as SceneObject[]).find(
-    (item): item is SceneReactObject => item instanceof SceneReactObject
+function NotebookPanelControls(props: ComponentProps<typeof NotebookPanelActions>) {
+  return (
+    <>
+      <NotebookPanelActions {...props} />
+      <PanelTitleEditor cell={props.cell} panel={props.panel} isEditing={props.isEditing} />
+    </>
   );
-  expect(titleAction).toBeDefined();
-  const TitleAction = titleAction!.Component;
-  return render(<TitleAction model={titleAction!} />);
 }
 
 const getDefaultQuery = jest.fn();
@@ -67,13 +69,12 @@ describe('NotebookPanelActions', () => {
 
   it('offers only Explore in view mode', async () => {
     const { cell, panel } = buildPanelCell();
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
 
     const explore = await screen.findByRole('link', { name: 'Open in Explore' });
     expect(explore).toHaveAttribute('href', '/explore?panel=1');
     expect(explore).toHaveAttribute('target', '_blank');
     expect(screen.queryByRole('button', { name: 'Edit panel title' })).not.toBeInTheDocument();
-    expect(panel.state.titleItems).toEqual([]);
     expect(screen.queryByRole('button', { name: 'Change visualization' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Duplicate block' })).not.toBeInTheDocument();
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, (panel.state.$data as SceneQueryRunner).state.queries);
@@ -84,7 +85,7 @@ describe('NotebookPanelActions', () => {
     const runner = panel.state.$data as SceneQueryRunner;
     runner.setState({ queries: [{ refId: 'A', datasource: { uid: 'grafana', type: 'datasource' } }] });
 
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, [
@@ -99,7 +100,7 @@ describe('NotebookPanelActions', () => {
     const runner = panel.state.$data as SceneQueryRunner;
     runner.setState({ queries: [{ refId: 'A' }] });
 
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, [{ refId: 'A', queryType: 'randomWalk' }]);
@@ -113,7 +114,7 @@ describe('NotebookPanelActions', () => {
       queries: [{ refId: 'A', datasource: { uid: 'grafana', type: 'datasource' }, queryType: 'annotations' }],
     });
 
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, runner.state.queries);
@@ -124,11 +125,10 @@ describe('NotebookPanelActions', () => {
     const onDuplicate = jest.fn();
     const onDelete = jest.fn();
     render(
-      <NotebookPanelActions cell={cell} panel={panel} isEditing={true} onDuplicate={onDuplicate} onDelete={onDelete} />
+      <NotebookPanelControls cell={cell} panel={panel} isEditing={true} onDuplicate={onDuplicate} onDelete={onDelete} />
     );
 
     await screen.findByRole('link', { name: 'Open in Explore' });
-    renderTitleAction(panel);
     const toolbar = screen
       .getByRole('button', { name: 'Change visualization' })
       .closest('[data-notebook-panel-actions]');
@@ -146,7 +146,7 @@ describe('NotebookPanelActions', () => {
   });
 
   it.each(['react', 'scene', 'array'] as const)(
-    'preserves %s header actions and title controls',
+    'does not mutate %s header actions or title controls while rendering',
     async (representation) => {
       const { cell, panel } = buildPanelCell();
       const headerNode = <span>Existing header action</span>;
@@ -154,28 +154,18 @@ describe('NotebookPanelActions', () => {
       const existingHeader =
         representation === 'react' ? headerNode : representation === 'scene' ? headerObject : [headerObject];
       const existingTitle = new SceneReactObject({ reactNode: <span>Existing title control</span> });
-      panel.setState({ headerActions: existingHeader, titleItems: [existingTitle] });
-      const { unmount } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
-      const header = render(
-        <div data-testid="panel-header">
-          {(panel.state.headerActions as SceneObject[]).map((action, index) => (
-            <action.Component key={index} model={action} />
-          ))}
-        </div>
-      );
+      const titleItems = [existingTitle];
+      panel.setState({ headerActions: existingHeader, titleItems });
+      const setState = jest.spyOn(panel, 'setState');
+      const { rerender, unmount } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
+      await screen.findByRole('link', { name: 'Open in Explore' });
 
-      const toolbar = await screen.findByRole('button', { name: 'Change visualization' });
-      expect(screen.getByTestId('panel-header')).toContainElement(toolbar);
-      expect(screen.getByTestId('panel-header')).toContainElement(screen.getByText('Existing header action'));
-      expect(panel.state.titleItems).toContain(existingTitle);
-      if (representation !== 'react') {
-        expect(headerObject.parent).toBe(panel);
-      }
-
+      rerender(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
       unmount();
+
+      expect(setState).not.toHaveBeenCalled();
       expect(panel.state.headerActions).toBe(existingHeader);
-      expect(panel.state.titleItems).toEqual([existingTitle]);
-      header.unmount();
+      expect(panel.state.titleItems).toBe(titleItems);
     }
   );
 
@@ -183,7 +173,7 @@ describe('NotebookPanelActions', () => {
     const { cell, panel } = buildPanelCell();
     const onToggleQueryEditor = jest.fn();
     render(
-      <NotebookPanelActions
+      <NotebookPanelControls
         cell={cell}
         panel={panel}
         isEditing={true}
@@ -216,7 +206,7 @@ describe('NotebookPanelActions', () => {
     const lastSuggestedQuery = { current: undefined };
     const autoSuggest = { current: true };
     const { user } = render(
-      <NotebookPanelActions
+      <NotebookPanelControls
         cell={cell}
         panel={panel}
         isEditing={true}
@@ -258,7 +248,7 @@ describe('NotebookPanelActions', () => {
       .spyOn(cell, 'onVisualizationChange')
       .mockRejectedValueOnce(new Error('Plugin failed'))
       .mockResolvedValueOnce(undefined);
-    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
     await user.click(await screen.findByRole('button', { name: 'Table' }));
@@ -288,7 +278,7 @@ describe('NotebookPanelActions', () => {
       hasErrors: false,
     });
     jest.spyOn(cell, 'onVisualizationChange').mockResolvedValue(undefined);
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
     const suggestion = await screen.findByRole('button', { name: 'Table' });
@@ -302,10 +292,10 @@ describe('NotebookPanelActions', () => {
 
   it('updates the panel title while editing', async () => {
     const { cell, panel } = buildPanelCell();
-    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    const titleItems = panel.state.titleItems;
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     expect(screen.getByRole('button', { name: 'Change visualization' })).toBeInTheDocument();
-    renderTitleAction(panel);
     fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     expect(
@@ -315,14 +305,14 @@ describe('NotebookPanelActions', () => {
     await user.type(title, 'Error rate{Enter}');
 
     expect(panel.state.title).toBe('Error rate');
+    expect(panel.state.titleItems).toBe(titleItems);
     expect(screen.queryByRole('textbox', { name: 'Panel title' })).not.toBeInTheDocument();
   });
 
   it('restores the previous title when rename is cancelled', async () => {
     const { cell, panel } = buildPanelCell();
-    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
-    renderTitleAction(panel);
     fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     await user.clear(title);
@@ -334,10 +324,9 @@ describe('NotebookPanelActions', () => {
 
   it('does not commit a cancelled title when the input blurs', async () => {
     const { cell, panel } = buildPanelCell();
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
-    renderTitleAction(panel);
     fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     fireEvent.change(title, { target: { value: 'Wrong title' } });
@@ -351,60 +340,39 @@ describe('NotebookPanelActions', () => {
 
   it('shows Add title in the panel header for an untitled panel', async () => {
     const { cell, panel } = buildPanelCell('');
-    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
-    expect(panel.state.hoverHeader).toBe(false);
     await screen.findByRole('link', { name: 'Open in Explore' });
-    const titleAction = renderTitleAction(panel);
     expect(
       screen.getByRole('button', { name: 'Change visualization' }).closest('[data-notebook-panel-actions]')
     ).not.toContainElement(screen.getByRole('button', { name: 'Add title' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add title' }));
-    titleAction.unmount();
-    expect(panel.state.hoverHeader).toBe(false);
     await user.type(screen.getByRole('textbox', { name: 'Panel title' }), 'Error rate{Enter}');
 
     expect(panel.state.title).toBe('Error rate');
-    expect(panel.state.hoverHeader).toBe(false);
     expect(screen.queryByRole('button', { name: 'Add title' })).not.toBeInTheDocument();
-    renderTitleAction(panel);
     expect(screen.getByRole('button', { name: 'Edit panel title' })).toBeInTheDocument();
   });
 
   it('treats Add title as a normal panel title when saved', async () => {
     const { cell, panel } = buildPanelCell('Add title');
-    render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
-    renderTitleAction(panel);
     expect(panel.state.title).toBe('Add title');
     expect(screen.queryByRole('button', { name: 'Add title' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit panel title' })).toBeInTheDocument();
   });
 
-  it('restores the untitled panel hover header in view mode', async () => {
-    const { cell, panel } = buildPanelCell('');
-    const { rerender } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
-
-    await screen.findByRole('link', { name: 'Open in Explore' });
-    expect(panel.state.hoverHeader).toBe(false);
-    expect(panel.state.titleItems).toHaveLength(1);
-    rerender(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
-
-    expect(panel.state.hoverHeader).toBe(true);
-    expect(panel.state.titleItems).toEqual([]);
-  });
-
-  it('removes the title action in view mode without changing existing title items', async () => {
+  it('hides title editing in view mode without replacing native title items', async () => {
     const { cell, panel } = buildPanelCell();
-    const existingItem = new SceneReactObject({ reactNode: <span>Existing title item</span> });
-    panel.setState({ titleItems: [existingItem] });
-    const { rerender } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
-
+    const titleItems = panel.state.titleItems;
+    const { rerender } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
     await screen.findByRole('link', { name: 'Open in Explore' });
-    expect(panel.state.titleItems).toHaveLength(2);
-    rerender(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
 
-    expect(panel.state.titleItems).toEqual([existingItem]);
+    rerender(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
+
+    expect(screen.queryByRole('button', { name: 'Edit panel title' })).not.toBeInTheDocument();
+    expect(panel.state.titleItems).toBe(titleItems);
   });
 });

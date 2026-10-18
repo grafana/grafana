@@ -263,6 +263,11 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+    for (const panel of this.getVizPanels()) {
+      panel.setState({
+        hoverHeader: isEditing ? false : getUpdatedHoverHeader(panel.state.title, panel.state.$timeRange?.state),
+      });
+    }
   }
 
   /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
@@ -585,7 +590,9 @@ export class NotebookLayoutManager
       if (cell.state.elementName === elementName && cell.state.body) {
         cell.state.body.setState({
           title,
-          hoverHeader: getUpdatedHoverHeader(title, cell.state.body.state.$timeRange?.state),
+          hoverHeader: this.state.isEditing
+            ? false
+            : getUpdatedHoverHeader(title, cell.state.body.state.$timeRange?.state),
         });
       }
     }
@@ -602,24 +609,27 @@ export class NotebookLayoutManager
     this.commitPendingEdits();
     const elementName = cell.state.elementName;
     let panels: VizPanel[] = [];
+    const wasEditing = this.notebookScene?.state.isEditing;
     let before: Array<ReturnType<typeof snapshotVisualization>> = [];
     let after: Array<ReturnType<typeof snapshotVisualization>> = [];
     const action: NotebookEditAction = {
       label: t('notebooks.history.change-visualization', 'Change visualization'),
       kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => {
+        const wasEditing = this.notebookScene?.state.isEditing;
         void this.enqueueVizChange(elementName, async () => {
           if (after.length) {
             await applyVisualizations(panels, after);
           }
-        });
+        }).then(() => this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing));
       },
       undo: () => {
+        const wasEditing = this.notebookScene?.state.isEditing;
         void this.enqueueVizChange(elementName, async () => {
           if (before.length) {
             await applyVisualizations(panels, before);
           }
-        });
+        }).then(() => this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing));
       },
     };
     const history = this.editHistory;
@@ -659,7 +669,7 @@ export class NotebookLayoutManager
     if (isEqual(before, after)) {
       history?.discard(action);
     } else {
-      this.notebookScene?.autosave.markVisualizationEdited(elementName);
+      this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
     }
   }
 
@@ -683,6 +693,10 @@ export class NotebookLayoutManager
     return pending.length
       ? Promise.all(pending.map(([, change]) => change)).then(() => pending.map(([name]) => name))
       : undefined;
+  }
+
+  public hasPendingVizChanges(): boolean {
+    return this.pendingVizChanges.size > 0;
   }
 
   /**
@@ -1006,6 +1020,10 @@ export class NotebookLayoutManager
   private insertCell(cell: NotebookCellItem, index: number): void {
     if (this.state.cells.includes(cell)) {
       return;
+    }
+
+    if (this.state.isEditing) {
+      cell.state.body?.setState({ hoverHeader: false });
     }
 
     const cells = [...this.state.cells];

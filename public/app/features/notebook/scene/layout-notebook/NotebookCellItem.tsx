@@ -1,5 +1,12 @@
 import { type PanelPluginVisualizationSuggestion } from '@grafana/data';
-import { type SceneObjectState, SceneObjectBase, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
+import {
+  isSceneObject,
+  type SceneObjectState,
+  SceneObjectBase,
+  SceneReactObject,
+  type SceneTimeRangeLike,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
@@ -7,6 +14,7 @@ import { type NotebookBlockInsertVia } from '../../analytics/types';
 import { type CellContentKind } from '../../types';
 
 import { type NotebookLayoutManager } from './NotebookLayoutManager';
+import { NotebookPanelTitle } from './PanelTitleEditor';
 import { type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { isNotebookLayoutManager } from './isNotebookLayoutManager';
@@ -32,10 +40,31 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
   // A panel cell is the panel's parent in the scene graph, so it must be a DashboardLayoutItem.
   public readonly isDashboardLayoutItem = true;
 
+  public constructor(state: NotebookCellItemState) {
+    super(state);
+    if (state.body) {
+      this.configurePanelTitle(state.body);
+    }
+  }
+
+  private configurePanelTitle(panel: VizPanel): void {
+    const previous = panel.state.titleItems;
+    if (Array.isArray(previous) && previous.some((item) => item instanceof NotebookPanelTitle)) {
+      return;
+    }
+    const items = Array.isArray(previous)
+      ? previous
+      : previous
+        ? [isSceneObject(previous) ? previous : new SceneReactObject({ reactNode: previous })]
+        : [];
+    panel.setState({ titleItems: [...items, new NotebookPanelTitle({})] });
+  }
+
   // Also clears `content` to hold the "never both" invariant above. `elementName` is optional to
   // match the DashboardLayoutItem interface's signature, but NotebookLayoutManager.convertCellToPanel
   // (the only caller) always passes one: this cell may still share its old name with a sibling.
   public setElementBody(body: VizPanel, elementName?: string) {
+    this.configurePanelTitle(body);
     this.setState({ body, content: undefined, elementName: elementName ?? this.state.elementName });
   }
 
