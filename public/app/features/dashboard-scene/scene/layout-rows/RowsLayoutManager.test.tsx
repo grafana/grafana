@@ -1,5 +1,8 @@
+import { waitFor } from '@testing-library/react';
+
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -206,11 +209,8 @@ describe('RowsLayoutManager', () => {
       const layout = newRow.getLayout();
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
-      // editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
-      await new Promise((resolve) => setTimeout(resolve, 20));
-
       const grid = (layout as DefaultGridLayoutManager).state.grid;
-      expect(grid.state.isDraggable).toBe(true);
+      await waitFor(() => expect(grid.state.isDraggable).toBe(true));
       expect(grid.state.isResizable).toBe(true);
     });
   });
