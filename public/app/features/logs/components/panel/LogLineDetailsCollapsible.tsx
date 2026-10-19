@@ -29,22 +29,13 @@ export const LogLineDetailsCollapsible = ({
   const { fontSize, logOptionsStorageKey, syntaxHighlightingUnavailable } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
   const storageKey = getExpandedStorageKey(logOptionsStorageKey, id);
-  // Heavy logs disable highlighting. Start collapsed instead of restoring a stored open state.
-  const [expanded, setExpanded] = useState(() => {
-    if (syntaxHighlightingUnavailable) {
-      return false;
-    }
-    return logOptionsStorageKey ? store.getBool(storageKey, defaultExpanded) : defaultExpanded;
-  });
+  const [expanded, setExpanded] = useState(() =>
+    resolveExpanded(syntaxHighlightingUnavailable, logOptionsStorageKey, storageKey, defaultExpanded)
+  );
 
   useEffect(() => {
-    // syntaxHighlightingUnavailable means heavy log lines or excessive fields. Collapse by default.
-    if (syntaxHighlightingUnavailable) {
-      setExpanded(false);
-      return;
-    }
-    setExpanded((current) => (logOptionsStorageKey ? store.getBool(storageKey, current) : current));
-  }, [logOptionsStorageKey, storageKey, syntaxHighlightingUnavailable]);
+    setExpanded(resolveExpanded(syntaxHighlightingUnavailable, logOptionsStorageKey, storageKey, defaultExpanded));
+  }, [defaultExpanded, logOptionsStorageKey, storageKey, syntaxHighlightingUnavailable]);
 
   const toggle = useCallback(() => {
     setExpanded((current) => {
@@ -84,6 +75,19 @@ export const LogLineDetailsCollapsible = ({
 
 function getExpandedStorageKey(logOptionsStorageKey: string | undefined, id: string) {
   return `${logOptionsStorageKey}.log-details.${id}-open`;
+}
+
+function resolveExpanded(
+  syntaxHighlightingUnavailable: boolean,
+  logOptionsStorageKey: string | undefined,
+  storageKey: string,
+  defaultExpanded: boolean
+) {
+  // Heavy log lines and excessive fields disable highlighting. Collapse instead of restoring a stored open state.
+  if (syntaxHighlightingUnavailable) {
+    return false;
+  }
+  return logOptionsStorageKey ? store.getBool(storageKey, defaultExpanded) : defaultExpanded;
 }
 
 function applyIconClassName(icon: ReactNode, className: string) {
