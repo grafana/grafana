@@ -285,7 +285,7 @@ describe('NotebookPanelActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
     const table = await screen.findByRole('button', { name: 'Table' });
     const stat = screen.getByRole('button', { name: 'Stat' });
-    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toContainElement(document.activeElement));
+    await waitFor(() => expect(screen.getByTestId('toggletip-content').contains(document.activeElement)).toBe(true));
     act(() => table.focus());
 
     await user.tab();
@@ -317,7 +317,7 @@ describe('NotebookPanelActions', () => {
     const trigger = screen.getByRole('button', { name: 'Change visualization' });
     fireEvent.click(trigger);
     const suggestion = await screen.findByRole('button', { name: 'Table' });
-    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toContainElement(document.activeElement));
+    await waitFor(() => expect(screen.getByTestId('toggletip-content').contains(document.activeElement)).toBe(true));
     act(() => suggestion.focus());
     await user.keyboard(input);
 
