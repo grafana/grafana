@@ -138,8 +138,6 @@ export const FlagKeys = {
   DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
   DisableScriptedDashboards: "disableScriptedDashboards",
-  /** Set this to true to enable all app chrome extensions registered by plugins. */
-  EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -1072,17 +1070,6 @@ export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagDisableScriptedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("disableScriptedDashboards", true, options).value;
-};
-
-/**
- * Set this to true to enable all app chrome extensions registered by plugins.
- *
- * **Details:**
- * - flag key: `enableAppChromeExtensions`
- * - default value: `false`
- */
-export const useFlagEnableAppChromeExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("enableAppChromeExtensions", false, options).value;
 };
 
 /**

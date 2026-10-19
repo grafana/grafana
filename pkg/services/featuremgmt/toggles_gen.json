@@ -2179,7 +2179,8 @@
       "metadata": {
         "name": "enableAppChromeExtensions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-06-30T04:32:08Z"
+        "creationTimestamp": "2025-06-30T04:32:08Z",
+        "deletionTimestamp": "2026-10-19T14:29:55Z"
       },
       "spec": {
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
