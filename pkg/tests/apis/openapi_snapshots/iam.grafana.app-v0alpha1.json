@@ -3516,6 +3516,27 @@
           }
         }
       }
+    },
+    "/apis/iam.grafana.app/v0alpha1/whoami/permissions": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
+        "operationId": "getWhoAmIPermissions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
     }
   },
   "components": {

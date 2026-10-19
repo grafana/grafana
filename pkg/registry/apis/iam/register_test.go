@@ -68,12 +68,20 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 			}
 			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
 			found := false
-			for _, route := range routes.Namespace {
-				if route.Path == "users/~/permissions" {
+			for _, route := range routes.Root {
+				if route.Path == "whoami/permissions" {
 					found = true
 				}
 			}
 			require.Equal(t, tt.want, found)
+			foundLegacy := false
+			for _, route := range routes.Namespace {
+				if route.Path == "users/~/permissions" {
+					foundLegacy = true
+				}
+				require.NotEqual(t, "whoami/permissions", route.Path)
+			}
+			require.Equal(t, tt.want, foundLegacy)
 		})
 	}
 }
@@ -156,6 +164,13 @@ func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
 	}{
 		{name: "list", verb: "list", want: authorizer.DecisionAllow},
 		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "permissions", verb: "get", resourceName: "permissions", want: authorizer.DecisionAllow},
+		{name: "permissions missing identity", verb: "get", resourceName: "permissions", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "permissions list", verb: "list", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions create", verb: "create", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions watch", verb: "watch", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions subresource", verb: "get", resourceName: "permissions", subresource: "other", want: authorizer.DecisionDeny},
+		{name: "permissions namespaced", verb: "get", resourceName: "permissions", namespace: "org-1", want: authorizer.DecisionDeny},
 		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
 		{name: "create", verb: "create", want: authorizer.DecisionDeny},
 		{name: "watch", verb: "watch", want: authorizer.DecisionDeny},
