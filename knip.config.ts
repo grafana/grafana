@@ -57,7 +57,7 @@ const config: KnipConfig = {
     'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
-  ignoreBinaries: ['jq', 'make', 'nx', 'shellcheck', 'webpack'],
+  ignoreBinaries: ['jq', 'lerna', 'make', 'nx', 'shellcheck', 'webpack'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {

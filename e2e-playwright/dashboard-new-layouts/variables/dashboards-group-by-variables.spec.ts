@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
@@ -54,9 +54,7 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Group by variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);

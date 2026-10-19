@@ -89,6 +89,7 @@ export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   NAVIGATION: 'navigation',
   NEW: 'new',
   ASSISTANT: 'assistant',
+  ADD_TO_NOTEBOOK: 'add_to_notebook',
 } as const;
 
 export type NotebookEditSessionSource =

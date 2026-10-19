@@ -17,8 +17,11 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
+
+import { setDashboardModeAfterSave } from './dashboardModeAfterSave';
 
 export function useSaveDashboard(isCopy = false) {
   const notifyApp = useAppNotification();
@@ -47,6 +50,8 @@ export function useSaveDashboard(isCopy = false) {
 
         // A new dashboard proposed as pending changes is created under the uid it was proposed for.
         const newDashboardUid = options.isNew ? scene.state.meta.newDashboardUid : undefined;
+        // Attribute the submitted draft, even if the user switches modes while the save is in flight.
+        const editSessionTracking = scene.getEditSessionTracking();
 
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
@@ -83,6 +88,14 @@ export function useSaveDashboard(isCopy = false) {
           await finishSavingNewDashboard(newDashboardUid);
         }
 
+        if (editSessionTracking.edit_session_id) {
+          DashboardInteractions.editPeriodEnded({
+            ...editSessionTracking,
+            edit_session_id: editSessionTracking.edit_session_id,
+            outcome: isCopy ? 'saved_as_copy' : 'saved',
+          });
+        }
+
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
         notifyApp.success(t('dashboard-scene.use-save-dashboard.message-dashboard-saved', 'Dashboard saved'));
@@ -94,12 +107,14 @@ export function useSaveDashboard(isCopy = false) {
             name: saveModel.title || '',
             url: resultData.url,
             diff_count: diffCount,
+            ...editSessionTracking,
           });
         } else {
           trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
             name: saveModel.title || '',
             url: resultData.url || '',
             diff_count: diffCount,
+            ...editSessionTracking,
             transformation_counts: scene.getTransformationCounts(saveModel),
             expression_counts: scene.getExpressionCounts(saveModel),
           });
@@ -112,6 +127,9 @@ export function useSaveDashboard(isCopy = false) {
 
         if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
           setTimeout(() => {
+            if (dashboardModesEnabled()) {
+              setDashboardModeAfterSave(resultData.uid, getDashboardMode(scene.state));
+            }
             locationService.push({ pathname: newUrl, search });
           });
         }

@@ -2560,6 +2560,31 @@ describe('TableNG', () => {
       }
     );
 
+    it('offers Inspect only on oversized cells in the refreshed menu', async () => {
+      const value = 'x'.repeat(10_001) + 'END OF MESSAGE';
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['short', value],
+              config: { custom: { wrapText: false, inspect: false, width: 300 } },
+            },
+          ],
+        })
+      );
+      render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+
+      const shortCell = screen.getByText('short').closest('[role="gridcell"]') as HTMLElement;
+      const oversizedCell = screen.getByText(value).closest('[role="gridcell"]') as HTMLElement;
+      expect(within(shortCell).queryByRole('button', { name: 'Cell actions' })).not.toBeInTheDocument();
+      within(oversizedCell).getByRole('button', { name: 'Cell actions' }).focus();
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('menuitem', { name: 'Inspect value' }));
+      expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+    });
+
     it('offers Inspect for oversized formatted JSON with wrapping disabled', async () => {
       const data = createJsonDataFrame(false);
       data.fields[1].values = [{ content: 'x'.repeat(10_000) }];

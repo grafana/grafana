@@ -36,6 +36,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -4348,6 +4349,50 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 	}
 }
 
+// A replica whose store missed a repository must not unblock on its cached count.
+func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheLags(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
+	addedElsewhere := blockedOverQuotaRepo(namespace, "added-elsewhere", time.Now(), false)
+	rc, patcher, stub, _ := newQuotaController(t, 1, repo)
+
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), usinformer.NewStore())
+	rc.repos = getter
+	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Empty(t, patcher.ops, "the block must not be released on a count the API contradicts")
+	assert.Zero(t, stub.testCalls.Load(), "a steady-state blocked repository is not reconciled")
+	assert.True(t, isQuotaExceeded(repo.Status.Conditions))
+}
+
+// The confirmation LIST runs only when unblocking.
+func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
+	other := blockedOverQuotaRepo(namespace, "other-repo", time.Now(), false)
+	rc, patcher, _, _ := newQuotaController(t, 1, repo)
+
+	store := usinformer.NewStore()
+	store.Update(context.Background(), &metav1.PartialObjectMetadata{ObjectMeta: other.ObjectMeta})
+	clientset := fake.NewClientset(repo, other)
+	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), store)
+	rc.repos = getter
+	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	for _, action := range clientset.Actions() {
+		assert.NotEqual(t, "list", action.GetVerb(), "the cached count already holds the block")
+	}
+	assert.Empty(t, patcher.ops, "still over quota, so the block stays as it is")
+}
+
 // Dropping the steady-state trigger must not strand a blocked repository. Quota is
 // resolved before the trigger switch on every reconcile, and the informer re-lists
 // every repository on the resync interval, so the next resync after the namespace
@@ -5494,4 +5539,47 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseSystem))
 	// A system failure must not be miscounted as user-caused (which an SLO would ignore).
 	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
+}
+
+// The apiserver informer delivers a whole Repository and the NATS one a metadata
+// projection, so keying must accept both: a key that cannot be computed is a
+// repository that never gets enqueued, with no error.
+func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		obj  any
+	}{
+		{
+			name: "whole repository, from the apiserver informer",
+			obj: &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns", Name: "repo", ResourceVersion: "42",
+			}},
+		},
+		{
+			name: "metadata projection, from the NATS informer",
+			obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns", Name: "repo", ResourceVersion: "42",
+			}},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			key, err := repoKeyFunc(tc.obj)
+			require.NoError(t, err)
+			assert.Equal(t, "ns/repo", key)
+			assert.Equal(t, "42", resourceVersion(tc.obj))
+		})
+	}
+}
+
+// A delete tombstone carries no metadata to read.
+func TestRepoKeyFuncHandlesTombstones(t *testing.T) {
+	tombstone := cache.DeletedFinalStateUnknown{
+		Key: "ns/repo",
+		Obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo"}},
+	}
+
+	key, err := repoKeyFunc(tombstone)
+	require.NoError(t, err)
+	assert.Equal(t, "ns/repo", key)
+	assert.Empty(t, resourceVersion(tombstone), "nothing to read a version from")
 }
