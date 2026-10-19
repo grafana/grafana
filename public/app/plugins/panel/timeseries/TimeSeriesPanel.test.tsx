@@ -124,12 +124,60 @@ describe('TimeSeriesPanel', () => {
     expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
   });
 
-  it('does not mount the exemplar overlay when annotations and programmatic requests are absent', async () => {
+  it('does not render the exemplar overlay when there are no annotations', async () => {
     renderPanel();
 
     const chart = await screen.findByTestId('uplot-main-div');
     await waitFor(() => expect(chart.querySelector('.u-over')).toBeVisible());
     expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
+  });
+
+  it('renders exemplar markers when annotations arrive after the chart initializes without a programmatic request', async () => {
+    const from = Date.UTC(2026, 9, 15, 10);
+    const to = Date.UTC(2026, 9, 15, 11);
+    const props = getPanelProps(
+      { ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } },
+      {
+        timeRange: {
+          from: dateTime(from),
+          to: dateTime(to),
+          raw: { from: dateTime(from), to: dateTime(to) },
+        },
+      }
+    );
+    const time = (from + to) / 2;
+    const [series, exemplar] = applyFieldOverrides({
+      data: [
+        createDataFrame({
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [from, time, to] },
+            { name: 'Value', type: FieldType.number, values: [10, 20, 30], labels: {}, config: { custom: {} } },
+          ],
+        }),
+        createDataFrame({
+          name: 'exemplar',
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [time] },
+            { name: 'Value', type: FieldType.number, values: [20] },
+            { name: 'traceID', type: FieldType.string, values: ['late-annotation-trace'] },
+          ],
+        }),
+      ],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+    });
+    props.data = { ...props.data, series: [series], annotations: undefined };
+    const { rerender } = render(<TimeSeriesPanel {...props} />);
+    const chart = await screen.findByTestId('uplot-main-div');
+    await waitFor(() => expect(chart.querySelector('.u-over')).toBeVisible());
+
+    rerender(<TimeSeriesPanel {...props} data={{ ...props.data, annotations: [exemplar] }} />);
+
+    const marker = await screen.findByTestId(selectors.components.DataSource.Prometheus.exemplarMarker);
+    await userEvent.click(marker);
+    expect(await screen.findByText('late-annotation-trace')).toBeVisible();
   });
 
   it('does not retry a pending exemplar request on an unrelated panel render', async () => {

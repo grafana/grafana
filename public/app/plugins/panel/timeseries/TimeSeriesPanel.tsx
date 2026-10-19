@@ -246,17 +246,16 @@ export const TimeSeriesPanel = ({
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {(data.annotations || experimentalOpenExemplar) && (
-                  <ExemplarsPlugin
-                    openExemplar={experimentalOpenExemplar}
-                    visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
-                    config={uplotConfig}
-                    exemplars={data.annotations ?? noAnnotations}
-                    timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
+                {/* always mounted: uPlot reads hooks only when the plot is created, so a late mount would never initialize */}
+                <ExemplarsPlugin
+                  openExemplar={experimentalOpenExemplar}
+                  visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
+                  config={uplotConfig}
+                  exemplars={data.annotations ?? noAnnotations}
+                  timeZone={timeZone}
+                  maxHeight={options.tooltip.maxHeight}
+                  maxWidth={options.tooltip.maxWidth}
+                />
               </>
             )}
           </>
