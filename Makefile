@@ -31,6 +31,7 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	$(if $(ENTERPRISE_COMMIT_SHA),-X main.enterpriseCommit=$(ENTERPRISE_COMMIT_SHA)) \
 	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
+GO_SKIP_FLAGS = $(shell skip="$$(./scripts/ci/test-exclusions.sh go)" && [ -n "$$skip" ] && echo "-skip '$$skip'")
 GO_BUILD_DEV_ENABLED := $(filter 1 dev,$(GO_BUILD_DEV))
 GO_BUILD_GCFLAGS_EFFECTIVE := $(if $(GO_BUILD_GCFLAGS),$(GO_BUILD_GCFLAGS),$(if $(GO_BUILD_DEV_ENABLED),all=-N -l))
 GO_BUILD_TRIMPATH_FLAG := $(if $(GO_BUILD_DEV_ENABLED),,-trimpath)
@@ -548,7 +549,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "backend unit tests ($(SHARD)/$(SHARDS))"
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -v -short -timeout=30m \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) $(GO_SKIP_FLAGS) -v -short -timeout=30m \
 		$(shell ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-unit-pretty
@@ -562,7 +563,7 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) $(GO_SKIP_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m \
 		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-alertmanager

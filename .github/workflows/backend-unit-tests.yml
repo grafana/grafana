@@ -66,7 +66,8 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -short -timeout=30m "${PACKAGES[@]}"
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -119,9 +120,10 @@ jobs:
           set -euo pipefail
 
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
-          CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -short -timeout=30m "${PACKAGES[@]}"
 
       # The enterprise module beside this checkout is a separate Go module, so shard.sh's
       # `find . -name go.mod` never reaches it and its packages need their own run.
@@ -141,4 +143,5 @@ jobs:
             echo "No enterprise packages in this shard"
             exit 0
           fi
-          CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"
+          SKIP="$("$grafana_root"/scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -short -timeout=30m "${PACKAGES[@]}"

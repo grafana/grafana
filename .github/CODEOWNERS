@@ -1316,6 +1316,10 @@ embed.go @grafana/grafana-as-code
 
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev
+/.github/test-exclusions.json @kminehart
+/.github/workflows/test-exclusions-check.yml @kminehart
+/scripts/ci/test-exclusions.sh @kminehart
+/scripts/ci/validate-test-exclusions.sh @kminehart
 /.github/ISSUE_TEMPLATE/ @torkelo @sympatheticmoose
 /.github/PULL_REQUEST_TEMPLATE.md @torkelo
 /.github/bot.md @torkelo

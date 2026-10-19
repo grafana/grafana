@@ -90,7 +90,8 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          go test ${SKIP:+-skip "$SKIP"} -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql:
     # Run this workflow only for PRs from forks
@@ -146,7 +147,8 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup MySQL
         if: always()
         run: make devenv-down sources=mysql_tests
@@ -201,7 +203,8 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -251,7 +254,8 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          go test ${SKIP:+-skip "$SKIP"} -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
       # The enterprise module beside this checkout is a separate Go module, so shard.sh's
       # `find . -name go.mod` never reaches it and its packages need their own run.
       # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
@@ -271,7 +275,8 @@ jobs:
             echo "No enterprise packages in this shard"
             exit 0
           fi
-          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$("$grafana_root"/scripts/ci/test-exclusions.sh go)"
+          go test ${SKIP:+-skip "$SKIP"} -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
@@ -339,7 +344,8 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       # The enterprise module beside this checkout is a separate Go module, so shard.sh's
       # `find . -name go.mod` never reaches it and its packages need their own run.
       # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
@@ -361,7 +367,8 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$("$grafana_root"/scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup MySQL
         if: always()
         run: make devenv-down sources=mysql_tests
@@ -428,7 +435,8 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$(./scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       # The enterprise module beside this checkout is a separate Go module, so shard.sh's
       # `find . -name go.mod` never reaches it and its packages need their own run.
       # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
@@ -450,7 +458,8 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          SKIP="$("$grafana_root"/scripts/ci/test-exclusions.sh go)"
+          CGO_ENABLED=0 go test ${SKIP:+-skip "$SKIP"} -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
