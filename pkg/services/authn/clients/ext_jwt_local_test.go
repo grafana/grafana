@@ -103,6 +103,38 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		}
 	})
 
+	t.Run("a token Grafana sends a plugin is only valid for that plugin's own API", func(t *testing.T) {
+		exchanger, err := v3.LocalTokenExchanger()
+		require.NoError(t, err)
+		idToken := generateIDToken(t, idTokenClaims{Claims: jwt.Claims{Subject: "user:u1", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}, Rest: authlib.IDTokenClaims{Identifier: "u1", Type: claims.TypeUser, Namespace: "default"}}, pk, jose.ES256)
+		inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"example-app"}, SubjectToken: idToken})
+		require.NoError(t, err)
+
+		client := localExtendedJWT(t, cfgWith(""))
+		at := func(path string) *authn.Request {
+			r := request(inbound.Token)
+			r.HTTPRequest.URL = &url.URL{Path: path}
+			return r
+		}
+
+		// /apis/<plugin-id>/... is the plugin's own API, so the plugin may call it
+		// as its caller. The token delegates no permissions, so the caller keeps
+		// none of their RBAC permissions there.
+		identity, err := client.Authenticate(context.Background(), at("/apis/example-app/v0alpha1/namespaces/default/settings/example-app"))
+		require.NoError(t, err)
+		require.Equal(t, claims.TypeUser, identity.Type)
+		require.Equal(t, "u1", identity.UID)
+		require.NotNil(t, identity.ClientParams.FetchPermissionsParams.RestrictedActions)
+		require.Empty(t, identity.ClientParams.FetchPermissionsParams.RestrictedActions)
+		require.NotNil(t, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
+		require.Empty(t, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
+
+		for _, path := range []string{"/apis/other-app/v0alpha1/namespaces/default/settings/other-app", "/apis/iam.grafana.app/v0alpha1/whoami", "/api/plugins/example-app/settings", "/apis", "/apis/example-app/../other-app/v0alpha1"} {
+			_, err := client.Authenticate(context.Background(), at(path))
+			require.ErrorIs(t, err, authlib.ErrInvalidAudience, "a token for the example-app plugin is not valid for %s", path)
+		}
+	})
+
 	t.Run("still authenticates a token for only the grafana audience", func(t *testing.T) {
 		client := localExtendedJWT(t, cfgWith(""))
 		token := sign(t, authlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
