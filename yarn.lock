@@ -21822,21 +21822,21 @@ __metadata:
   linkType: hard
 
 "joi@npm:^17.11.0":
-  version: 17.13.3
-  resolution: "joi@npm:17.13.3"
+  version: 17.13.8
+  resolution: "joi@npm:17.13.8"
   dependencies:
     "@hapi/hoek": "npm:^9.3.0"
     "@hapi/topo": "npm:^5.1.0"
     "@sideway/address": "npm:^4.1.5"
     "@sideway/formula": "npm:^3.0.1"
     "@sideway/pinpoint": "npm:^2.0.0"
-  checksum: 10/4c150db0c820c3a52f4a55c82c1fc5e144a5b5f4da9ffebc7339a15469d1a447ebb427ced446efcb9709ab56bd71a06c4c67c9381bc1b9f9ae63fc7c89209bdf
+  checksum: 10/7d8ccb06cee958516748519cb46430b1bf5b732f54428a5daf8f8630290c928be1abb7d3c3c2506d68ba76d1c1abe480e087255c34b839aae47b2ee2c76f587d
   languageName: node
   linkType: hard
 
 "joi@npm:^18.2.1":
-  version: 18.2.1
-  resolution: "joi@npm:18.2.1"
+  version: 18.2.9
+  resolution: "joi@npm:18.2.9"
   dependencies:
     "@hapi/address": "npm:^5.1.1"
     "@hapi/formula": "npm:^3.0.2"
@@ -21845,7 +21845,7 @@ __metadata:
     "@hapi/tlds": "npm:^1.1.1"
     "@hapi/topo": "npm:^6.0.2"
     "@standard-schema/spec": "npm:^1.1.0"
-  checksum: 10/1525745571b0b0c60fdb51a8cb6f2e5717241b04314872259f68e10ea729e456d2d4883812013fc03913b03eb2b6cbca9d40d144bbd29e7b02fb57797edb0357
+  checksum: 10/321836e1bded18c23f5bd10c85715cda778849cddf9285704c39b8df290ad50f9d977f4ebf522cc741feba31aa65fe760dc84e9f218decc777ed15412a33bf77
   languageName: node
   linkType: hard
 
