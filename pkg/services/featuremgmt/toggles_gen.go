@@ -399,6 +399,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzLegacyUserPermissions
+	// Load legacy Access Control permissions through embedded AuthZ.
+	FlagAuthzLegacyUserPermissions = "authz.legacyUserPermissions"
+
 	// FlagAuthzUserPermissions
 	// Route user permission snapshots through the AuthZ service.
 	FlagAuthzUserPermissions = "authz.userPermissions"
@@ -467,18 +471,6 @@ const (
 	// Enables user auth for Azure Monitor datasource only
 	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
 
-	// FlagAlertingAIGenAlertRules
-	// Enable AI-generated alert rules.
-	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
-
-	// FlagAlertingAIFeedback
-	// Enable AI-generated feedback from the Grafana UI.
-	FlagAlertingAIFeedback = "alertingAIFeedback"
-
-	// FlagAlertingAIImproveAlertRules
-	// Enable AI-improve alert rules labels and annotations.
-	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
-
 	// FlagAlertingAIGenTemplates
 	// Enable AI-generated alerting templates.
 	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
@@ -530,6 +522,10 @@ const (
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
+	// FlagTeamlbacUsageFromAppPlatform
+	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
+	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
 	// FlagTeamLBACApiWriteFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server

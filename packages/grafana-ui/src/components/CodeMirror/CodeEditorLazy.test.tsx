@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { CodeMirrorEditor } from '@grafana/ui';
+import { CodeMirrorEditor } from './CodeEditorLazy';
 
 let shouldThrowOnRender = false;
 

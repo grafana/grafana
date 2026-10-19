@@ -196,6 +196,8 @@ Several values are ORed. Only `In` is supported. The named folders themselves ar
 
 `folderTree` is not stored with each item: the global search works it out from the folders it has indexed when it searches. Like the rest of that index it is eventually consistent, so just after a folder moves, a search can still find what is below it in its old place.
 
+The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
+
 #### Requiring every value
 
 `In` with several values is an OR: this returns dashboards tagged `prod`, or `eu-west`, or both.
