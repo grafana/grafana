@@ -727,7 +727,7 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 				hs := helper.GetEnv().Server.HTTPServer
 				cfg := helper.GetEnv().Cfg
 				// Route authorization is registered with the startup license; swapping it below only changes the handler.
-				require.False(t, hs.License.FeatureEnabled("accesscontrol.enforcement"), "lookup route must allow permission writers")
+				routeEnforcement := hs.License.FeatureEnabled("accesscontrol.enforcement")
 				for _, tt := range []struct {
 					name    string
 					enforce bool
@@ -735,7 +735,7 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 					caller  apis.User
 					want    []string
 				}{
-					{name: "without enforcement team permission writers see the directory", caller: teamPermissionsOnly, want: []string{"org-user-one", "org-user-two"}},
+					{name: "team permission writers respect route enforcement", caller: teamPermissionsOnly, want: []string{"org-user-one", "org-user-two"}},
 					{name: "team permission writers cannot see hidden users", hidden: true, caller: teamPermissionsOnly, want: []string{"org-user-one"}},
 					{name: "without enforcement scoped callers see the directory", caller: scoped, want: []string{"org-user-one", "org-user-two"}},
 					{name: "handler enforcement limits callers to their allowed users", enforce: true, caller: scoped, want: []string{"org-user-one"}},
@@ -755,13 +755,16 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 							rsp := apis.DoRequest(helper, apis.RequestParams{
 								User: tt.caller, Method: "GET", Path: "/api/org/users/lookup?query=org-user-",
 							}, &[]orgUser{})
+							if routeEnforcement && tt.caller.Identity.GetUID() == teamPermissionsOnly.Identity.GetUID() {
+								assert.Equal(collect, 403, rsp.Response.StatusCode, "body: %s", rsp.Body)
+								return
+							}
 							assert.Equal(collect, 200, rsp.Response.StatusCode, "body: %s", rsp.Body)
 							assert.ElementsMatch(collect, tt.want, logins(*rsp.Result))
 						}, 10*time.Second, 100*time.Millisecond)
 					})
 				}
 			})
-
 		})
 	}
 }
