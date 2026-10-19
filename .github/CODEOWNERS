@@ -1048,6 +1048,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/datasources/ @grafana/grafana-catalog
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/datapro
+/public/app/features/cloudwatch-helpers/ @grafana/datapro
 /public/app/features/loki-helpers/ @grafana/datapro
 /public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
