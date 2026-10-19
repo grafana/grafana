@@ -45,7 +45,6 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
-| `grafana_router_stack_fallback_refused_total` | counter | | Requests the single-tenant fallback refused because a stack's aggregator sent them (`X-Grafana-Aggregator`), which would loop back to that stack. Absent without the fallback |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
 Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`

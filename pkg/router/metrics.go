@@ -219,7 +219,6 @@ type routerCollector struct {
 	lastSuccess     *prometheus.Desc
 	polls           *prometheus.Desc
 	stackLookups    *prometheus.Desc
-	stackRefused    *prometheus.Desc
 	stackDiscovery  *prometheus.Desc
 }
 
@@ -249,8 +248,6 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"Load or poll attempts of each route source, by result: success or failure.", []string{"source", "result"}, nil),
 		stackLookups: prometheus.NewDesc(name("stack_lookups_total"),
 			"Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.", []string{"result"}, nil),
-		stackRefused: prometheus.NewDesc(name("stack_fallback_refused_total"),
-			"Requests the single-tenant fallback refused because a stack's aggregator sent them, which would loop back to that stack.", nil, nil),
 		stackDiscovery: prometheus.NewDesc(name("stack_discovery_cache_total"),
 			"Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.", []string{"result"}, nil),
 	}
@@ -259,7 +256,7 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackRefused, c.stackDiscovery,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery,
 	} {
 		ch <- d
 	}
@@ -320,9 +317,6 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	for result, n := range status.stackLookups() {
 		ch <- prometheus.MustNewConstMetric(c.stackLookups, prometheus.CounterValue, float64(n), result)
-	}
-	if n, ok := status.stackFallbackRefused(); ok {
-		ch <- prometheus.MustNewConstMetric(c.stackRefused, prometheus.CounterValue, float64(n))
 	}
 	for result, n := range status.stackDiscoveryCache() {
 		ch <- prometheus.MustNewConstMetric(c.stackDiscovery, prometheus.CounterValue, float64(n), result)

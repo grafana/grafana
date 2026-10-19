@@ -3109,6 +3109,25 @@
           }
         }
       }
+    },
+    "/whoami/permissions": {
+      "get": {
+        "tags": ["User"],
+        "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
+        "operationId": "getWhoAmIPermissions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
     }
   },
   "components": {
@@ -3855,6 +3874,37 @@
                 "type": "string"
               }
             }
+          }
+        }
+      },
+      "GetTeamLBACUsageResponse": {
+        "type": "object",
+        "required": ["counts"],
+        "properties": {
+          "counts": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "GetTeamLBACUsageV0alpha1ResponseCounts": {
+        "type": "object",
+        "required": ["datasources", "teams", "filters"],
+        "properties": {
+          "datasources": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "filters": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "teams": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5370,15 +5420,14 @@
       "UserPermission": {
         "description": "UserPermission is one effective action and scope granted to an identity.",
         "type": "object",
-        "required": ["action", "scope"],
+        "required": ["action"],
         "properties": {
           "action": {
             "type": "string",
             "default": ""
           },
           "scope": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },

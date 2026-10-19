@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
@@ -29,7 +29,7 @@ const renderEditor = (overrides: { onSilenceCreated?: jest.Mock; onCancel?: jest
   const onSilenceCreated = overrides.onSilenceCreated ?? jest.fn();
   const onCancel = overrides.onCancel ?? jest.fn();
 
-  render(
+  const { user } = render(
     <AlertmanagerProvider accessType="instance" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
       <SilencesEditor
         ruleUid={RULE_UID}
@@ -40,7 +40,7 @@ const renderEditor = (overrides: { onSilenceCreated?: jest.Mock; onCancel?: jest
     </AlertmanagerProvider>
   );
 
-  return { onSilenceCreated, onCancel };
+  return { user, onSilenceCreated, onCancel };
 };
 
 const captureCreateSilence = (failFirstAttempt = false) => {
@@ -71,9 +71,8 @@ beforeEach(() => {
 
 describe('SilencesEditor', () => {
   it('calls onSilenceCreated after a successful submit', async () => {
-    const user = userEvent.setup();
     const captured = captureCreateSilence();
-    const { onSilenceCreated } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
 
     await user.click(saveButton());
 
@@ -83,10 +82,23 @@ describe('SilencesEditor', () => {
     ]);
   });
 
-  it('calls onCancel without submitting when the user cancels', async () => {
-    const user = userEvent.setup();
+  it('preserves named matchers with empty values when submitting', async () => {
     const captured = captureCreateSilence();
-    const { onCancel } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
+
+    await user.type(screen.getByRole('textbox', { name: /^label$/i }), 'region');
+    await user.click(saveButton());
+
+    await waitFor(() => expect(onSilenceCreated).toHaveBeenCalledTimes(1));
+    expect(captured.bodies[0].matchers).toEqual([
+      { isEqual: true, isRegex: false, name: 'region', value: '' },
+      { isEqual: true, isRegex: false, name: '__alert_rule_uid__', value: RULE_UID },
+    ]);
+  });
+
+  it('calls onCancel without submitting when the user cancels', async () => {
+    const captured = captureCreateSilence();
+    const { user, onCancel } = renderEditor();
 
     await user.click(screen.getByText(/^cancel$/i));
 
@@ -95,10 +107,9 @@ describe('SilencesEditor', () => {
   });
 
   it('keeps the editor open with the entered values when the submit fails', async () => {
-    const user = userEvent.setup();
     const emitSpy = jest.spyOn(appEvents, 'emit');
     captureCreateSilence(true);
-    const { onSilenceCreated } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
 
     await user.clear(commentField());
     await user.type(commentField(), 'investigating outage');
@@ -112,10 +123,9 @@ describe('SilencesEditor', () => {
   });
 
   it('submits exactly one rule UID matcher when retrying after a failure', async () => {
-    const user = userEvent.setup();
     const emitSpy = jest.spyOn(appEvents, 'emit');
     const captured = captureCreateSilence(true);
-    const { onSilenceCreated } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
 
     await user.click(saveButton());
     await waitFor(() => expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertError, ['Could not create silence']));

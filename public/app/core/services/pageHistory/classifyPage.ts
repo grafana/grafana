@@ -1,10 +1,12 @@
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 import { isRecord } from 'app/core/utils/isRecord';
 
 import { type PageIdentity } from './types';
 
 /**
- * Maps a base-url-less URL to the page it belongs to, or `null` for pages that are not worth resuming
+ * Maps a base-url-less URL to the page it belongs to, or `null` for URLs that are no page to come back to
  * (home, browse pages, settings, Explore before it has written its state, ...). First matching rule wins.
+ * Whether a visit to the page is worth a row is `hasNothingToResume`'s question, not this one's.
  */
 export function classifyPage(pathname: string, search: string): PageIdentity | null {
   const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
@@ -17,6 +19,11 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
   if (normalized === '/explore') {
     const session = exploreSession(search);
     return session ? { kind: 'explore', session, pathname: normalized } : null;
+  }
+
+  // A Page before the generic app rule; the list at ASSISTANT_PAGES_PATH itself stays an app page.
+  if (normalized.startsWith(`${ASSISTANT_PAGES_PATH}/`)) {
+    return { kind: 'page', pathname: normalized };
   }
 
   if (first === 'a' && second) {
@@ -76,6 +83,7 @@ export function pageKey(page: PageIdentity): string {
       return `dashboard:${page.uid}`;
     case 'explore':
       return `explore:${page.session}`;
+    case 'page':
     case 'alerting':
     case 'app':
       return page.pathname;
