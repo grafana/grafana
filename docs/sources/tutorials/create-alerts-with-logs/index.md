@@ -77,12 +77,13 @@ There are different ways you can follow along with this tutorial.
 
 To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
-1. Download and save the Docker Compose file, the Alloy configuration, and the Grafana data source provisioning file for this tutorial.
+1. Create a folder for this tutorial, then download and save the Docker Compose file, the Alloy configuration, and the Grafana data source provisioning file for this tutorial. Also create a `logs` folder, which Alloy reads the sample logs from.
 
    ```bash
+   mkdir alerts-with-logs && cd alerts-with-logs
    wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/docker-compose.yaml
    wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/config.alloy
-   mkdir -p provisioning/datasources
+   mkdir -p provisioning/datasources logs
    wget -P provisioning/datasources https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/provisioning/datasources/datasources.yaml
    ```
 
@@ -127,14 +128,14 @@ To demonstrate how to create alert rules based on logs, you’ll use a script th
 1. Execute the log-generating Python script.
 
    ```bash
-   python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
+   python3 ./web-server-logs-simulator.py | tee -a logs/web_requests.log
    ```
 
 ### Troubleshooting the script
 
 If you don't see the sample logs in Explore:
 
-- Does the output file exist, check `/var/log/web_requests.log` to see if it contains logs.
+- Does the output file exist, check `logs/web_requests.log` to see if it contains logs.
 - If the file is empty, check that you followed the steps above to create the file.
 - If the file exists, verify that the alloy container is running.
 - In Grafana Explore, check that the time range is only for the last 5 minutes.
@@ -168,9 +169,9 @@ In this step, we set up a new contact point. This contact point uses the [webhoo
 
 Your webhook endpoint is now waiting for the first request.
 
-Next, let's configure a contact point in Grafana's Alerting UI to send notifications to our webhook endpoint.
+Next, let's configure a contact point in the Grafana Alerting UI to send notifications to our webhook endpoint.
 
-1. Return to Grafana. In Grafana's sidebar, click **Alerting** > **Notification configuration**, and then select the **Contact points** tab.
+1. Return to Grafana. In the Grafana sidebar, click **Alerting** > **Notification configuration**, and then select the **Contact points** tab.
 1. Click **+ New contact point**.
 1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
