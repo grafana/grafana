@@ -54,6 +54,7 @@ type mockResourceServer struct {
 	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
+	resourcepb.UnimplementedBlobStoreStreamingServer
 	resourcepb.UnimplementedQuotasServer
 }
 
@@ -70,6 +71,17 @@ func (s *embeddedErrorServer) Read(context.Context, *resourcepb.ReadRequest) (*r
 
 func (s *embeddedErrorServer) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	return &resourcepb.ResourceSearchResponse{Error: s.failure}, nil
+}
+
+func (s *embeddedErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+	if _, err := stream.Recv(); err != nil {
+		return err
+	}
+	return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: s.failure})
+}
+
+func (s *embeddedErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	return stream.Send(&resourcepb.GetBlobResponse{Error: s.failure})
 }
 
 func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
@@ -105,6 +117,18 @@ func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
 				if !standalone {
 					readResp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
 					check(readResp.GetError(), err)
+
+					blobs := resourcepb.NewBlobStoreStreamingClient(conn)
+					put, err := blobs.PutBlobStream(t.Context())
+					require.NoError(t, err)
+					require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+					putResp, err := put.CloseAndRecv()
+					check(putResp.GetError(), err)
+
+					get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+					require.NoError(t, err)
+					getResp, err := get.Recv()
+					check(getResp.GetError(), err)
 				}
 			})
 		}

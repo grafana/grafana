@@ -58,8 +58,6 @@ type filters struct {
 	routingTree         string
 	metric              string
 	targetDatasourceUID string
-	sortField           string
-	sortDesc            bool
 	states              listFilter
 	healths             listFilter
 }
@@ -129,10 +127,6 @@ func extractFilters(req *Query) filters {
 			continue
 		}
 		f.groupsInclude = append(f.groupsInclude, r.Values...)
-	}
-	if len(req.Sort) > 0 {
-		f.sortField = req.Sort[0].Field
-		f.sortDesc = req.Sort[0].Direction == sortDescending
 	}
 	return f
 }

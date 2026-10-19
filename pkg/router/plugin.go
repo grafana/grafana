@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/authn"
@@ -26,14 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,6 +50,7 @@ type PluginDependencies struct {
 	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
 	AccessControl      accesscontrol.AccessControl
+	AccessClient       types.AccessClient // runs the access checks manifest routes declare
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
 	MetricsRegister    prometheus.Registerer
@@ -57,6 +60,7 @@ type PluginDependencies struct {
 	Unified            resource.ResourceClient
 	Decrypter          decrypt.DecryptService
 	TokenExchanger     authn.TokenExchanger       // used for delegation
+	PluginAuth         *pluginauth.Config         // whether Grafana signs plugin tokens itself
 	Tracer             tracing.Tracer             // needed for proxy (legacy)
 	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
 	Cfg                *setting.Cfg
@@ -90,6 +94,7 @@ func ProvidePluginLoaderDependencies(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	restConfigProvider restcfg.RestConfigProvider,
+	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
 	return PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
@@ -100,6 +105,7 @@ func ProvidePluginLoaderDependencies(
 			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
 			AccessControl:      accessControl,
+			AccessClient:       accessClient,
 			DualWrite:          dualWrite,
 			SecureValues:       secureValues,
 			MetricsRegister:    reg,
@@ -112,6 +118,7 @@ func ProvidePluginLoaderDependencies(
 			Features:           features,
 			Cfg:                cfg,
 			TokenExchanger:     newClientV3TokenExchanger(cfg),
+			PluginAuth:         pluginAuth,
 		},
 	}
 }
@@ -144,6 +151,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
+	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -164,6 +172,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		reg,
 		builderMetrics,
 		clients.RESTConfigProvider,
+		pluginAuth,
 	)
 }
 
@@ -186,7 +195,11 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 				continue
 			}
 			group := manifest.Group
-			if !strings.HasSuffix(group, pluginManifestGroupSuffix) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			if slices.Contains(routableCoreGroups, group) {
+				// A core group keeps the roles its own app declares.
+				continue
+			}
+			if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
 				logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
 				continue
 			}
@@ -206,7 +219,7 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				if jsonData.ID == "v1" || !isPluginAPIGroup(jsonData.ID) {
+				if !isAppPluginID(jsonData.ID) {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -253,6 +266,7 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 				continue
 			}
 			backend.info = plugin.JSONData.Info
+			backend.hasBackend = plugin.JSONData.Backend
 			backends = append(backends, backend)
 		}
 	}
@@ -275,15 +289,17 @@ func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.Man
 // always enforces RBAC on it, and no core Grafana group uses it.
 const pluginManifestGroupSuffix = ".ext.grafana.app"
 
-// isPluginAPIGroup reports whether group has the shape of an app plugin's API
-// group: a manifest group ending in pluginManifestGroupSuffix, or a plugin ID,
-// which contains a hyphen and no dots. No core Grafana or Kubernetes group has
-// either shape, so a group that passes cannot shadow one.
-func isPluginAPIGroup(group string) bool {
-	if name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix); ok {
-		return name != ""
-	}
-	return strings.Contains(group, "-") && !strings.Contains(group, ".")
+// isPluginManifestGroup reports whether group is a plugin manifest group: a
+// name followed by pluginManifestGroupSuffix.
+func isPluginManifestGroup(group string) bool {
+	name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix)
+	return ok && name != ""
+}
+
+// isAppPluginID reports whether id has the shape of an app plugin ID: it
+// contains a hyphen and no dots.
+func isAppPluginID(id string) bool {
+	return strings.Contains(id, "-") && !strings.Contains(id, ".")
 }
 
 func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
@@ -294,6 +310,17 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
+// routableCoreGroups are the core groups a plugin backend may serve in place of
+// the embedded API server, from any source, local and remote plugins included.
+// This is deliberate: these groups are low risk, so any plugin may shadow them.
+// A misbehaving or malicious plugin serving one of them can do no serious harm,
+// which is why the router may route them before their authorization moves too.
+// Before adding a group, confirm the same holds for it: never add a group
+// whose data or permissions matter, such as dashboards, folders or IAM.
+var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
+
+// newPluginBackend builds the backend for one plugin manifest. Its group must be
+// a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
 func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
@@ -306,10 +333,10 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if manifest == nil {
 		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
 	}
-	if !isPluginAPIGroup(manifest.Group) {
-		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", pluginID, manifest.Group)
+	if !isPluginManifestGroup(manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
 	}
-	if _, err := pluginroute.NewAPI(pluginID, manifest, pluginroute.Options{}); err != nil {
+	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err
 	}
 	group := pluginroute.APIGroup(manifest)
@@ -339,6 +366,15 @@ type PluginBackend struct {
 	manifest *app.ManifestData
 	client   PluginClientProvider
 	deps     PluginDependencies
+
+	// hasBackend is whether the plugin runs a backend process, for the
+	// status page.
+	hasBackend bool
+}
+
+// PluginStatus implements [PluginStatusProvider].
+func (b *PluginBackend) PluginStatus() (PluginStatus, bool) {
+	return PluginStatus{ID: b.pluginID, Version: b.info.Version, HasBackend: b.hasBackend}, true
 }
 
 func (b *PluginBackend) Group() metav1.APIGroup {
@@ -347,6 +383,11 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 
 // Source implements [Backend].
 func (b *PluginBackend) Source() string { return sourceLocalPlugin }
+
+// Manifest implements [ManifestProvider].
+func (b *PluginBackend) Manifest() (*app.ManifestData, bool) {
+	return b.manifest, b.manifest != nil
+}
 
 func (b *PluginBackend) Key() string {
 	return b.key
@@ -365,8 +406,8 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	}
 	// Keep authentication outside the breaker: token exchange failures do not
 	// indicate whether the plugin is reachable.
-	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID,
-		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger))
+	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID, []string{b.group.Name},
+		withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
 	if err != nil {
 		return nil, err
 	}
@@ -383,6 +424,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		ClientV3:         clientV3,
 		ContextProvider:  b.deps.ContextProvider,
 		Decrypter:        b.deps.Decrypter,
+		AccessClient:     b.deps.AccessClient,
 		Search:           b.deps.Unified,
 		Store:            b.deps.Unified,
 		HybridAPIEnabled: apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true),
@@ -413,4 +455,24 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		return nil, err
 	}
 	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name}, nil
+}
+
+// withAuthFailureOutcome records failed token exchanges on the request, for
+// grafana_router_backend_failures_total. They fail the call before it reaches
+// the plugin.
+func withAuthFailureOutcome(exchanger authn.TokenExchanger) authn.TokenExchanger {
+	if exchanger == nil {
+		return nil
+	}
+	return &authOutcomeExchanger{TokenExchanger: exchanger}
+}
+
+type authOutcomeExchanger struct{ authn.TokenExchanger }
+
+func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+	res, err := e.TokenExchanger.Exchange(ctx, r)
+	if err != nil && ctx.Err() == nil {
+		setContextFailure(ctx, failureAuth)
+	}
+	return res, err
 }

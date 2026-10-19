@@ -3,8 +3,7 @@ import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
@@ -30,8 +29,8 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
 }));
 
@@ -125,27 +124,18 @@ const getSavedQueriesAction = (actions: CommandPaletteAction[]) =>
 
 describe('useStaticActions - open saved queries action', () => {
   let originalPermissions: UserPermission | undefined;
-  let originalIsSignedIn: boolean;
-  let originalSavedQueriesRBAC: boolean | undefined;
 
   beforeEach(() => {
     mockQueryLibraryContext = { queryLibraryEnabled: true, openDrawer: jest.fn() };
     originalPermissions = contextSrv.user.permissions;
-    originalIsSignedIn = contextSrv.isSignedIn;
-    originalSavedQueriesRBAC = config.featureToggles.savedQueriesRBAC;
-    // Default: RBAC off, so read access falls back to being signed in.
-    config.featureToggles.savedQueriesRBAC = false;
-    contextSrv.isSignedIn = true;
-    contextSrv.user.permissions = {};
+    contextSrv.user.permissions = { [AccessControlAction.QueriesRead]: true };
   });
 
   afterEach(() => {
     contextSrv.user.permissions = originalPermissions;
-    contextSrv.isSignedIn = originalIsSignedIn;
-    config.featureToggles.savedQueriesRBAC = originalSavedQueriesRBAC;
   });
 
-  it('includes the action when the query library is enabled and the user is signed in', () => {
+  it('includes the action when the query library is enabled and the user has queries:read', () => {
     const { result } = renderStaticActions();
     expect(hasSavedQueriesAction(result.current)).toBe(true);
   });
@@ -156,21 +146,7 @@ describe('useStaticActions - open saved queries action', () => {
     expect(hasSavedQueriesAction(result.current)).toBe(false);
   });
 
-  it('does not include the action when the user is not signed in and RBAC is off', () => {
-    contextSrv.isSignedIn = false;
-    const { result } = renderStaticActions();
-    expect(hasSavedQueriesAction(result.current)).toBe(false);
-  });
-
-  it('includes the action when RBAC is on and the user has queries:read', () => {
-    config.featureToggles.savedQueriesRBAC = true;
-    contextSrv.user.permissions = { [AccessControlAction.QueriesRead]: true };
-    const { result } = renderStaticActions();
-    expect(hasSavedQueriesAction(result.current)).toBe(true);
-  });
-
-  it('does not include the action when RBAC is on and the user lacks queries:read', () => {
-    config.featureToggles.savedQueriesRBAC = true;
+  it('does not include the action when the user lacks queries:read', () => {
     contextSrv.user.permissions = {};
     const { result } = renderStaticActions();
     expect(hasSavedQueriesAction(result.current)).toBe(false);

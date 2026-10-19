@@ -42,11 +42,13 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
   const getPreviousSpecUrl = () => (previousSpecUrl ??= specUrlState(scene));
 
   // Keep sidebar alive - otherwise undo/redo stack would be wiped out
-  const { isOverlayLoading: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
+  const { loadingView: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
+    // Template identity is not part of the dashboard spec or its access DTO.
+    meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
-  const { isOverlayLoading: previousLoading, ...previousState } = scene.state;
+  const { loadingView: previousLoading, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach
@@ -54,7 +56,9 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
   // sync, the same path `?editPanel=` takes, which resolves the id against the current tree,
   // waits for a library panel to load, and leaves the pane closed when the applied spec no
   // longer has the panel.
-  const editPanelKey = scene.state.editPanel?.getUrlKey();
+  const requestedPanel = scene.urlSync?.getUrlState().editPanel;
+  const editPanelKey =
+    scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
 
@@ -78,10 +82,15 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
         fromSpec: getPreviousSpecUrl,
         toSpec: () => nextSpecUrl,
       });
-      scene.setState({ ...newState, editPanel: undefined, isDirty: true });
+      scene.setState({
+        ...newState,
+        mode: scene.state.mode,
+        editPanel: undefined,
+        isDirty: true,
+      });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
+      scene.applyDashboardMode();
 
       scene.state.sidebar.refreshAfterRebuild();
 
@@ -97,7 +106,9 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     },
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
-      scene.setState(previousState);
+      // A previously pending editor has no state key to overwrite the editor from the rebuilt tree.
+      scene.setState({ ...previousState, editPanel: previousState.editPanel, mode: scene.state.mode });
+      scene.applyDashboardMode();
       scene.state.sidebar.refreshAfterRebuild();
       // The restored tree is the one the apply replaced, so its spec state can be read from it now.
       const urlUpdates = urlUpdatesForSwap(scene, {

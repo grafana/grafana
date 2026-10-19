@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -31,6 +30,8 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -252,12 +253,25 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	}
 }
 
+// InstallerOption customizes the advisor app built by ProvideAppInstaller.
+type InstallerOption func(*checkregistry.AdvisorAppConfig)
+
+// WithLeaderElector makes the multi-tenant check scheduler run only on the
+// replica holding the elector's lease, so replicas don't all discover, clean
+// up and create checks for every tenant at once.
+func WithLeaderElector(elector leaderelection.Elector) InstallerOption {
+	return func(c *checkregistry.AdvisorAppConfig) {
+		c.LeaderElector = elector
+	}
+}
+
 func ProvideAppInstaller(
 	authorizer authorizer.Authorizer,
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
 	orgService org.Service,
 	registerer prometheus.Registerer,
+	opts ...InstallerOption,
 ) (*AdvisorAppInstaller, error) {
 	metrics.MustRegister(registerer)
 	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, New)
@@ -267,6 +281,9 @@ func ProvideAppInstaller(
 		PluginConfig:  pluginConfig,
 		StackID:       cfg.StackID,
 		OrgService:    orgService,
+	}
+	for _, opt := range opts {
+		opt(&specificConfig)
 	}
 	appCfg := app.Config{
 		KubeConfig:     rest.Config{},

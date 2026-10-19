@@ -1,8 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Grafana API Server",
-    "version": "1.37"
+    "title": "quotas.grafana.app/v0alpha1"
   },
   "paths": {
     "/usage": {

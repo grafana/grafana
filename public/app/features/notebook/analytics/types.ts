@@ -61,10 +61,10 @@ export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
 }
 
 /**
- * The surface a notebook came from, for every event that has to name one. `EXPLORE` and
- * `DASHBOARD_PANEL` are the two callers of the add-panel modal, which creates a notebook outright
- * instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT` or
- * `WORKSPACE` yet.
+ * The surface a notebook came from, for every event that has to name one. `EXPLORE`,
+ * `DASHBOARD_PANEL`, and `PLUGIN` are the callers of the add-panel modal, which creates a notebook
+ * outright instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT`
+ * or `WORKSPACE` yet.
  */
 export const NOTEBOOK_ENTRY_POINT = {
   NOTEBOOK_LIST: 'notebook_list',
@@ -72,6 +72,7 @@ export const NOTEBOOK_ENTRY_POINT = {
   QUICK_ADD: 'quick_add',
   EXPLORE: 'explore',
   DASHBOARD_PANEL: 'dashboard_panel',
+  PLUGIN: 'plugin',
   ASSISTANT: 'assistant',
   WORKSPACE: 'workspace',
 } as const;
@@ -90,6 +91,7 @@ export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   NAVIGATION: 'navigation',
   NEW: 'new',
   ASSISTANT: 'assistant',
+  ADD_TO_NOTEBOOK: 'add_to_notebook',
 } as const;
 
 export type NotebookEditSessionSource =
