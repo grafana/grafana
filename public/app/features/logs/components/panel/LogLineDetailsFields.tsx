@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -26,6 +26,7 @@ import { type FieldDef } from '../logParser';
 import { AsyncIconButton } from './AsyncIconButton';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
+import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
@@ -121,7 +122,8 @@ const getFieldsStyles = (
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
+    // Icon buttons are 24px (sm) or 26px (md). Fit 3, or 4 when the show-field toggle is available.
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(12) : theme.spacing(9)) : onClickShowField ? theme.spacing(13) : theme.spacing(9.75)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -252,7 +254,7 @@ const LogLineDetailsField = ({
     (value: string) => {
       onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'include',
         logRowUid: log.uid,
@@ -265,7 +267,7 @@ const LogLineDetailsField = ({
     (value: string) => {
       onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'exclude',
         logRowUid: log.uid,
@@ -337,6 +339,7 @@ const LogLineDetailsField = ({
               )}
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
+                  className={styles.iconButton}
                   name="filter-minus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
@@ -351,7 +354,7 @@ const LogLineDetailsField = ({
               )}
               {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
-                  variant="primary"
+                  className={cx(styles.iconButton, styles.activeIconButton)}
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
                   name="eye"
@@ -360,6 +363,7 @@ const LogLineDetailsField = ({
               )}
               {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
+                  className={styles.iconButton}
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',
                     'Show this field instead of the message'
@@ -370,11 +374,10 @@ const LogLineDetailsField = ({
                 />
               )}
               <IconButton
-                variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
                 size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                className={styles.statsIcon}
+                className={cx(styles.iconButton, styles.statsIcon, showFieldsStats && styles.activeIconButton)}
                 disabled={!singleKey}
                 onClick={showStats}
               />
@@ -430,13 +433,12 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   actionIcons: css({
     display: 'flex',
     justifyContent: 'space-between',
-    paddingRight: 2,
-    marginTop: 2,
   }),
   statsIcon: css({
     margin: 0,
     paddingRight: 4,
   }),
+  ...getIconButtonStyles(theme),
   label: css({
     paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',

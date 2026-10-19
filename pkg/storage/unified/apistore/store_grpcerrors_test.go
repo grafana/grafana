@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -116,37 +117,43 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 	}
 	for name, failure := range conflicts {
 		t.Run(name+"/competing create fails", func(t *testing.T) {
-			// The lease holder fails without persisting an object. The next create must
-			// succeed, rather than exposing the first lease conflict as AlreadyExists.
-			client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
-				if attempt == 1 {
-					return failure()
-				}
-				return &resourcepb.CreateResponse{ResourceVersion: 2}, nil
-			}}
-			out, err := callCreate(t, testContext(t), client)
-			require.NoError(t, err)
-			require.Equal(t, 2, client.attempts)
-			require.Equal(t, "2", out.GetResourceVersion())
+			synctest.Test(t, func(t *testing.T) {
+				// The lease holder fails without persisting an object. The next create must
+				// succeed, rather than exposing the first lease conflict as AlreadyExists.
+				client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
+					if attempt == 1 {
+						return failure()
+					}
+					return &resourcepb.CreateResponse{ResourceVersion: 2}, nil
+				}}
+				out, err := callCreate(t, testContext(t), client)
+				require.NoError(t, err)
+				require.Equal(t, 2, client.attempts)
+				require.Equal(t, "2", out.GetResourceVersion())
+			})
 		})
 		t.Run(name+"/exhausted", func(t *testing.T) {
-			client := &createRetryClient{result: func(int) (*resourcepb.CreateResponse, error) { return failure() }}
-			_, err := callCreate(t, testContext(t), client)
-			require.True(t, apierrors.IsConflict(err), "expected Conflict, got %v", err)
-			require.False(t, storage.IsExist(err))
-			requireKubernetesError(t, err)
-			require.Equal(t, updateRetryConfig.MaxRetries, client.attempts)
+			synctest.Test(t, func(t *testing.T) {
+				client := &createRetryClient{result: func(int) (*resourcepb.CreateResponse, error) { return failure() }}
+				_, err := callCreate(t, testContext(t), client)
+				require.True(t, apierrors.IsConflict(err), "expected Conflict, got %v", err)
+				require.False(t, storage.IsExist(err))
+				requireKubernetesError(t, err)
+				require.Equal(t, updateRetryConfig.MaxRetries, client.attempts)
+			})
 		})
 		t.Run(name+"/competing create succeeds", func(t *testing.T) {
-			client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
-				if attempt == 1 {
-					return failure()
-				}
-				return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"}}, nil
-			}}
-			_, err := callCreate(t, testContext(t), client)
-			require.True(t, storage.IsExist(err), "expected KeyExistsError, got %v", err)
-			require.Equal(t, 2, client.attempts)
+			synctest.Test(t, func(t *testing.T) {
+				client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
+					if attempt == 1 {
+						return failure()
+					}
+					return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"}}, nil
+				}}
+				_, err := callCreate(t, testContext(t), client)
+				require.True(t, storage.IsExist(err), "expected KeyExistsError, got %v", err)
+				require.Equal(t, 2, client.attempts)
+			})
 		})
 	}
 }
@@ -394,26 +401,30 @@ func TestExhaustedConflictRetriesReturnKubernetesError(t *testing.T) {
 	})
 
 	t.Run("GuaranteedUpdate", func(t *testing.T) {
-		client := &alwaysFailsClient{value: testObject(t), err: conflict}
-		s := testStorage(t, client)
+		synctest.Test(t, func(t *testing.T) {
+			client := &alwaysFailsClient{value: testObject(t), err: conflict}
+			s := testStorage(t, client)
 
-		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
-			return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
-		}
+			tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+				return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
+			}
 
-		err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
-		require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
-		requireKubernetesError(t, err)
-		require.Greater(t, client.updates, 1, "the conflict must be retried before giving up")
+			err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+			require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+			requireKubernetesError(t, err)
+			require.Greater(t, client.updates, 1, "the conflict must be retried before giving up")
+		})
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		client := &alwaysFailsClient{value: testObject(t), err: conflict}
-		s := testStorage(t, client)
+		synctest.Test(t, func(t *testing.T) {
+			client := &alwaysFailsClient{value: testObject(t), err: conflict}
+			s := testStorage(t, client)
 
-		err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
-		require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
-		requireKubernetesError(t, err)
-		require.Greater(t, client.deletes, 1, "the conflict must be retried before giving up")
+			err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+			require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+			requireKubernetesError(t, err)
+			require.Greater(t, client.deletes, 1, "the conflict must be retried before giving up")
+		})
 	})
 }

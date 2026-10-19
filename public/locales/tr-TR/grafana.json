@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "İçerik yüklenemedi: {{error}}",
+        "hide-secrets": "",
         "loading": "İçerik yükleniyor...",
         "notifications-title": "Bildirim Yapılandırması Ön İzlemesi",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Uyarı Kuralları Ön İzlemesi"
       },
       "recording-rules": "Kayıt kuralları",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "Kayıt kurallarının saklanacağı Prometheus veri kaynağı",
       "label-target-data-source": "Hedef veri kaynağı",
-      "target-data-source-required": "Lütfen hedef veri kaynağı seçin"
+      "target-data-source-required": "Lütfen hedef veri kaynağı seçin",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Kayıt kuralınız için Ad Alanı ve Grup seçin.",
@@ -3918,6 +3923,11 @@
     },
     "viz-wrapper": {
       "table": "Tablo"
+    },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "welcome-header": {
       "description-alert-activity": "Şu anda hangi uyarıların aktif olduğunu görün ve mevcut ya da geçmiş sorunları incelemek için geçmiş verilere göz atın.",
@@ -6032,6 +6042,24 @@
       "tooltip-next": "İleri",
       "tooltip-previous": "Önceki"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Asistan şeması düzenlemesi"
@@ -6109,6 +6137,9 @@
       "placeholder-search-options": "Arama seçenekleri",
       "visualization-button-tooltip": "Arama seçenekleri"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
     "plan-placeholder-badge": {
       "text": "Örnek veri",
       "tooltip": "Gösterilen sayılar örnek amaçlı verilerdir ve gerçek sorgulardan gelmez."
@@ -6147,6 +6178,9 @@
           "no-template-variables-found": "Şablon değişkeni bulunamadı"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "İptal et",
@@ -7590,6 +7624,33 @@
       "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
       "confirmText-restore-version": "Evet, {{version}} sürümüne geri yükle",
       "title-restore-version": "Sürümü geri yükle"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Kaydet",
@@ -10081,6 +10142,7 @@
             "name-humidity": "Nem (%H)",
             "name-locale": "Yerel tarih biçimi",
             "name-number": "Numarası",
+            "name-ordinal": "",
             "name-percent-1": "Yüzde (0,0-1,0)",
             "name-percent-100": "Yüzde (0-100)",
             "name-pixels": "Pikseller",
@@ -10206,7 +10268,9 @@
           },
           "name": "Hacim"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10821,6 +10885,7 @@
       "no-rows": "Satır yok",
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
       "sort-by-column-ascending": "Sütuna göre sırala: {{column}}, artan sırayla",
@@ -11129,6 +11194,8 @@
       "incident-filter-all": "Tüm olaylar",
       "incident-filter-label": "Olayları etikete göre filtrele",
       "incident-tab-label": "Olaylar",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ekipleriniz",
       "title": "Uyarılar ve olaylar",
       "title-alerts": "Uyarılar",
@@ -11205,6 +11272,17 @@
       "error-title": "Yakın zamandaki blog yazıları yüklenemedi",
       "read-more": "Grafana Labs blogunda daha fazlasını okuyun",
       "title": "Blog'tan son gönderiler"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +12045,11 @@
       "load-newer": "Yeni günlükler yükleniyor...",
       "load-older": "Eski günlükler yükleniyor..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Etiketleri daralt",
       "expand": "Etiketleri genişlet"
@@ -12017,6 +12100,7 @@
       "inline-mode": "Satır içi görüntüle",
       "inline-no-scrolls": "Genişletilmiş görünüme geç",
       "inline-with-scrolls": "Daraltılmış görünüme geç",
+      "link-fallback-label": "",
       "link-value-tooltip": "Bağlantı değeri",
       "links-section": "Bağlantılar",
       "log-attributes-field": "Günlük kaydı öznitelikleri",
@@ -12026,13 +12110,14 @@
       "move-displayed-field-up": "Yukarı taşı",
       "no-details": "Görüntülenecek alan yok.",
       "open-assistant": "Asistan'da günlük kaydı satırını açıklayın",
+      "open-value-in": "",
       "pin-line": "Günlüğü sabitle",
       "prettify": "Düzgünleştir",
       "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
       "scroll-to-logline": "Günlük satırına git",
       "search": {
-        "no-results": "Görüntülenecek sonuç yok."
+        "no-results": ""
       },
       "search-placeholder": "Alan adlarını ve değerlerini ara",
       "show-context": "İçeriği göster",
@@ -13196,6 +13281,7 @@
       "created-by-me": "Benim oluşturduklarım",
       "error-conflict": "Siz ekleme yaparken bu not defteri değişti. Paneli en son sürüme eklemek için tekrar deneyin.",
       "error-generic": "Panel not defterine eklenemedi",
+      "error-open-conflict": "",
       "list-error": "Not defterleri yüklenemedi",
       "list-error-body": "Not defterleriniz yüklenirken bir hata oluştu. Tekrar deneyin veya bunun yerine yeni bir tane oluşturun.",
       "list-no-matches": "Bu filtrelerle eşleşen not defteri yok.",
@@ -13204,6 +13290,8 @@
       "list-truncated": "Tüm not defterleri gösterilmiyor. Diğerlerini bulmak için aramayı daraltın.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Başlığa göre ara",
       "sort-alphabetical": "Alfabetik (A-Z)",
       "sort-label": "Not defterlerini sırala",
@@ -13211,13 +13299,20 @@
       "sort-updated": "Son güncellenenler",
       "submit": "Not defterine ekle",
       "success": "Panel {{title}} adlı not defterine eklendi",
+      "success-cells": "",
       "success-link": "Not defterini göster",
       "tag-placeholder": "Etikete göre filtrele",
       "target-description": "Panelin nereye ekleneceğini seçin.",
       "target-existing": "Mevcut not defteri",
       "target-label": "Hedef not defteri",
       "target-new": "Yeni not defteri",
-      "title": "Paneli not defterine ekle"
+      "title": "Paneli not defterine ekle",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -16586,6 +16681,7 @@
     "name-page-size": "Sayfa boyutu",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Tablo başlığını göster",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Alan üzerinden stil uygulama",
     "name-tooltip-from-field": "Alandan araç ipucu",
     "name-tooltip-placement": "Araç ipucu yerleşimi",

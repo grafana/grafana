@@ -20,6 +20,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"
@@ -45,6 +46,7 @@ declare module "@openfeature/core" {
     | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
@@ -92,6 +94,7 @@ declare module "@openfeature/core" {
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"
+    | "alerting.ruleQualityFix"
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
@@ -165,6 +168,7 @@ declare module "@openfeature/core" {
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "dataviz.tabularNums"
+    | "grafana.preserveLoginTabTitle"
     | "grafana.customizableMegaMenu"
     | "cujTracking"
     | "grafana.dashboardSettingsRedesign"
@@ -189,7 +193,9 @@ declare module "@openfeature/core" {
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
     | "grafana.globalHomePreference"
+    | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
+    | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
