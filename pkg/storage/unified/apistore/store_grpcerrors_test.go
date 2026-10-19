@@ -463,6 +463,7 @@ func TestNonRetryableGRPCErrorIsConverted(t *testing.T) {
 					client.value = testObject(t)
 				}
 				if shape == "response error" {
+					client.err = nil
 					switch operation {
 					case "Get", "GuaranteedUpdate read":
 						client.readResponse = &resourcepb.ReadResponse{Error: result}
