@@ -15,7 +15,7 @@ const TRACES_DRILLDOWN_APP_ID = 'grafana-exploretraces-app';
 export function isExploreTempoTraceLink(link: LinkModel): boolean {
   const query = link.interpolatedParams?.query;
   const traceQuery = query ? getTempoQueryText(query) : undefined;
-  if (!query || !traceQuery || !isExploreHref(link.href)) {
+  if (!query || !traceQuery || !isExploreHref(link.href) || query.queryType !== 'traceql') {
     return false;
   }
   return getTraceIdFromTempoQuery(traceQuery) !== undefined && Boolean(getDatasourceUid(query));
