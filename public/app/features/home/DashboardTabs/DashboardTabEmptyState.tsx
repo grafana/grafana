@@ -6,7 +6,7 @@ interface Props {
   message: string;
   variant: ComponentProps<typeof EmptyState>['variant'];
   /** Description shown under the message; dropped in the compact density. */
-  children: ReactNode;
+  children?: ReactNode;
   button?: ReactNode;
   density?: 'default' | 'compact';
 }
