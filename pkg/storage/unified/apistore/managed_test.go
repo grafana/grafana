@@ -825,6 +825,42 @@ func TestAllowOrphanedUpdate(t *testing.T) {
 	})
 }
 
+func TestContentChanged(t *testing.T) {
+	newDash := func(t *testing.T, mutate func(*dashboard.Dashboard)) utils.GrafanaMetaAccessor {
+		d := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default"}}
+		d.Spec.Object = map[string]any{"title": "a"}
+		if mutate != nil {
+			mutate(d)
+		}
+		accessor, err := utils.MetaAccessor(d)
+		require.NoError(t, err)
+		return accessor
+	}
+	previous := newDash(t, nil)
+
+	t.Run("unchanged", func(t *testing.T) {
+		require.False(t, contentChanged(newDash(t, nil), previous))
+	})
+	t.Run("starting a delete only sets the deletion timestamp", func(t *testing.T) {
+		now := v1.Now()
+		cur := newDash(t, func(d *dashboard.Dashboard) { d.DeletionTimestamp = &now })
+		require.False(t, contentChanged(cur, previous))
+	})
+	t.Run("label only", func(t *testing.T) {
+		cur := newDash(t, func(d *dashboard.Dashboard) { d.Labels = map[string]string{"x": "y"} })
+		require.False(t, contentChanged(cur, previous))
+	})
+	t.Run("spec changed", func(t *testing.T) {
+		cur := newDash(t, func(d *dashboard.Dashboard) { d.Spec.Object = map[string]any{"title": "b"} })
+		require.True(t, contentChanged(cur, previous))
+	})
+	t.Run("moved to another folder", func(t *testing.T) {
+		cur := newDash(t, nil)
+		cur.SetFolder("other")
+		require.True(t, contentChanged(cur, previous))
+	})
+}
+
 func TestEnsureSameRepoManager(t *testing.T) {
 	tests := []struct {
 		name            string
