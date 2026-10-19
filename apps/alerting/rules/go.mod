@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/rules
 go 1.26.9
 
 require (
-	github.com/getkin/kin-openapi v0.144.0
+	github.com/getkin/kin-openapi v0.151.0
 	github.com/grafana/grafana-app-sdk v0.56.2
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/prometheus/common v0.70.0
@@ -60,7 +60,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

@@ -18,7 +18,7 @@ require (
 	github.com/dave/dst v0.27.4 // indirect
 	github.com/emicklei/proto v1.14.2 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/getkin/kin-openapi v0.144.0 // indirect
+	github.com/getkin/kin-openapi v0.151.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
