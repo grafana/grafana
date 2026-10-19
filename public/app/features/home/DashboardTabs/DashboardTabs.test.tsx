@@ -449,6 +449,7 @@ describe('DashboardTabs', () => {
         explore_count: 1,
         alerting_count: 1,
         app_count: 1,
+        filter: 'all',
       });
     });
 
@@ -472,6 +473,12 @@ describe('DashboardTabs', () => {
       // The counter says what the list shows; the options follow the whole history.
       expect(screen.getByRole('tab', { name: /recent.*1/i })).toBeInTheDocument();
       expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeInTheDocument();
+
+      // A click under a kind filter says so: the kind was forced and the position counts within it.
+      await user.click(screen.getByRole('link', { name: /^Ops Logs/ }));
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'open_page', page_kind: 'explore', position: 0, filter: 'explore' })
+      );
     });
 
     it('hides the filter when every page is of one kind but keeps the clear action', async () => {
@@ -569,6 +576,7 @@ describe('DashboardTabs', () => {
         placement: 'list',
         page_kind: 'explore',
         position: 0,
+        filter: 'all',
       });
     });
 
