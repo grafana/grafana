@@ -3042,6 +3042,59 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 	}
 }
 
+func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
+	ns := NamespacedResource{
+		Namespace: "retention-ns",
+		Group:     "test.group",
+		Resource:  "test-resources",
+	}
+	listNames := func(t *testing.T, backend *kvStorageBackend, sinceRV int64) []string {
+		t.Helper()
+		_, seq := backend.ListModifiedSince(t.Context(), ns, sinceRV, nil)
+		var names []string
+		for mr, err := range seq {
+			require.NoError(t, err)
+			names = append(names, mr.Key.Name)
+		}
+		slices.Sort(names)
+		return names
+	}
+	// Prunes the first object's event, as if it were past retention.
+	setup := func(t *testing.T, retention time.Duration) (*kvStorageBackend, int64) {
+		t.Helper()
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = retention
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
+		require.NoError(t, err)
+		addTestObject(t, backend, t.Context(), ns, "retained", "value")
+		return backend, rv
+	}
+
+	t.Run("reads the data store when sinceRV is older than the retention period", func(t *testing.T) {
+		backend, rv := setup(t, 30*time.Minute)
+		sinceRV := SubtractDurationFromSnowflake(rv, 40*time.Minute)
+
+		require.Equal(t, []string{"pruned", "retained"}, listNames(t, backend, sinceRV))
+	})
+
+	t.Run("reads the event store when sinceRV is within the retention period", func(t *testing.T) {
+		backend, rv := setup(t, 30*time.Minute)
+		sinceRV := SubtractDurationFromSnowflake(rv, 10*time.Minute)
+
+		// Missing "pruned" shows the event store answered.
+		require.Equal(t, []string{"retained"}, listNames(t, backend, sinceRV))
+	})
+
+	t.Run("reads the data store past an hour even with a longer retention period", func(t *testing.T) {
+		backend, rv := setup(t, 24*time.Hour)
+		sinceRV := SubtractDurationFromSnowflake(rv, 2*time.Hour)
+
+		require.Equal(t, []string{"pruned", "retained"}, listNames(t, backend, sinceRV))
+	})
+}
+
 func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) {
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 		opts.SearchLookback = time.Second

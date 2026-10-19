@@ -47,6 +47,7 @@ const (
 	defaultEventRetentionPeriod       = 1 * time.Hour
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
+	eventStoreRetentionMargin         = 2 * time.Minute
 	defaultResourceVersionMaxWait     = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
@@ -2336,13 +2337,20 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	sinceRvAge := time.Since(sinceRvTime)
 
-	if sinceRvAge > time.Hour {
+	// Events past the retention period may already be pruned.
+	effectiveRvAge := time.Since(time.UnixMilli(snowflakeTimestampMillis(effectiveRv)))
+	if effectiveRvAge > k.maxEventStoreAge() {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
 		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
 	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
+}
+
+// The margin covers clock skew and pruning during the scan.
+func (k *kvStorageBackend) maxEventStoreAge() time.Duration {
+	return min(time.Hour, k.eventRetentionPeriod-eventStoreRetentionMargin)
 }
 
 func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
