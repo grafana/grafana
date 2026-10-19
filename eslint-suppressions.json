@@ -339,11 +339,6 @@
       "count": 1
     }
   },
-  "packages/grafana-runtime/src/utils/useFavoriteDatasources.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "packages/grafana-schema/src/veneer/common.types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
