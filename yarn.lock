@@ -9630,13 +9630,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cookie@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "@types/cookie@npm:0.4.1"
-  checksum: 10/427c9220217d3d74f3e5d53d68cd39502f3bbebdb1af4ecf0d05076bcbe9ddab299ad6369fe0f517389296ba4ca49ddf9a8c22f68e5e9eb8ae6d0076cfab90b2
-  languageName: node
-  linkType: hard
-
 "@types/cookie@npm:^0.6.0":
   version: 0.6.0
   resolution: "@types/cookie@npm:0.6.0"
@@ -10773,6 +10766,15 @@ __metadata:
   version: 1.18.8
   resolution: "@types/webpack-env@npm:1.18.8"
   checksum: 10/f3932f3d6c2530f644cfc898eda1ab8182d6ae57f555c2f0179d813549b639078671b71e4041831fc306c5ebe61f5cdac794fe4ceae281fce8bf67e23661a488
+  languageName: node
+  linkType: hard
+
+"@types/ws@npm:^8.5.12":
+  version: 8.18.2
+  resolution: "@types/ws@npm:8.18.2"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/7d87483731222387ba7d49a752b7eca6c29baeb3439d9c0a2ebe57b06bad0ce868cd850f4794c81aa93a90b2a35d7673c9b0362e7b940aace446144c17a894c2
   languageName: node
   linkType: hard
 
@@ -12836,7 +12838,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base64id@npm:2.0.0, base64id@npm:~2.0.0":
+"base64id@npm:~2.0.0":
   version: 2.0.0
   resolution: "base64id@npm:2.0.0"
   checksum: 10/e3312328429e512b0713469c5312f80b447e71592cae0a5bddf3f1adc9c89d1b2ed94156ad7bb9f529398f310df7ff6f3dbe9550735c6a759f247c088ea67364
@@ -15176,7 +15178,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:~4.3.1, debug@npm:~4.3.2, debug@npm:~4.3.4":
+"debug@npm:~4.3.2, debug@npm:~4.3.4":
   version: 4.3.7
   resolution: "debug@npm:4.3.7"
   dependencies:
@@ -16023,20 +16025,19 @@ __metadata:
   linkType: hard
 
 "engine.io@npm:~6.6.0":
-  version: 6.6.2
-  resolution: "engine.io@npm:6.6.2"
+  version: 6.6.11
+  resolution: "engine.io@npm:6.6.11"
   dependencies:
-    "@types/cookie": "npm:^0.4.1"
     "@types/cors": "npm:^2.8.12"
     "@types/node": "npm:>=10.0.0"
+    "@types/ws": "npm:^8.5.12"
     accepts: "npm:~1.3.4"
-    base64id: "npm:2.0.0"
     cookie: "npm:~0.7.2"
     cors: "npm:~2.8.5"
-    debug: "npm:~4.3.1"
+    debug: "npm:~4.4.1"
     engine.io-parser: "npm:~5.2.1"
-    ws: "npm:~8.17.1"
-  checksum: 10/381c0a715362bebf32c95f0e4247899b53ff9f8c0074b03f88748cf17635a02948ea3eca27905df37130bc963747c0d286acc78c757e6fc085fe8b8e17d76e01
+    ws: "npm:~8.21.0"
+  checksum: 10/9a0c538de41b6e77da86723153e43d5843b8c82925be23278c3effd2c4bff601f9d1cab88e13a9fc9ca0d6a146055565e31397f4f73e4d5c1a79079b7aa23045
   languageName: node
   linkType: hard
 
