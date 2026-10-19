@@ -135,6 +135,9 @@ type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOption
 
 // buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
 func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	if err := opts.Cfg.ValidateSharedVectorConfig(); err != nil {
+		return nil, fmt.Errorf("vector collection configuration: %w", err)
+	}
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{

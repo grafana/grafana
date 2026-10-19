@@ -223,4 +223,11 @@ END $$;`))
 		migrator.NewRawSQLMigration("").Postgres(`
 			ALTER TABLE embeddings ADD COLUMN IF NOT EXISTS ts tsvector;
 		`))
+
+	mg.AddMigration("add embedding collection scope",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE embedding_collections
+				ADD COLUMN IF NOT EXISTS scope VARCHAR(16) NOT NULL DEFAULT 'tenant'
+				CHECK (scope IN ('tenant', 'shared') AND (scope <> 'shared' OR is_external));
+		`))
 }

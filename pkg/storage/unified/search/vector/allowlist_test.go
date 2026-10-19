@@ -26,3 +26,8 @@ func TestCollectionAllowlist(t *testing.T) {
 	require.False(t, a.Allows(Collection{Group: "unknown", Resource: "nope"}))
 	require.False(t, CollectionAllowlist{}.Allows(internal), "zero value allows nothing")
 }
+
+func TestCollectionAllowlistRejectsSharedRowsFromLegacyEnrollment(t *testing.T) {
+	a := NewCollectionAllowlist(nil, []string{"docs.example.com/articles"})
+	require.False(t, a.Allows(Collection{Group: "docs.example.com", Resource: "articles", IsExternal: true, Scope: ScopeShared}))
+}

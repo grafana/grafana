@@ -146,6 +146,9 @@ func (s *VectorStoreServer) ensureExternalCollection(ctx context.Context, group,
 		s.log.Error("vector store: ensure collection", "err", err, "group", group, "resource", resource)
 		return vector.Collection{}, writeStatusError(ctx, err, "provision collection")
 	}
+	if !coll.IsExternal || !coll.IsTenantScoped() {
+		return vector.Collection{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+	}
 	return coll, nil
 }
 
@@ -425,7 +428,7 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		s.log.Error("vector store: resolve collection", "err", err, "group", req.Group, "resource", req.Resource)
 		return nil, writeStatusError(ctx, err, "resolve collection")
 	}
-	if !found || !coll.IsExternal {
+	if !found || !coll.IsExternal || !coll.IsTenantScoped() {
 		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
 	}
 
@@ -500,7 +503,7 @@ func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.
 	if err != nil {
 		return nil, writeStatusError(ctx, err, "resolve collection")
 	}
-	if !found || !coll.IsExternal {
+	if !found || !coll.IsExternal || !coll.IsTenantScoped() {
 		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
 	}
 
