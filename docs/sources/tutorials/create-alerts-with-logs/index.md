@@ -34,21 +34,21 @@ Loki stores your logs and only indexes labels for each log stream. Using Loki wi
 
 In this tutorial, you'll:
 
-- Generate sample logs and pull them with Promtail to Grafana.
+- Generate sample logs and collect them with Grafana Alloy.
 - Create an alert rule based on a Loki query (LogQL).
 - Create a Webhook contact point to send alert notifications to.
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 {{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
 
-> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+> In [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
@@ -77,10 +77,13 @@ There are different ways you can follow along with this tutorial.
 
 To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
-1. Download and save a Docker compose file to run Grafana, Loki and Promtail.
+1. Download and save the Docker Compose file, the Alloy configuration, and the Grafana datasource provisioning file for this tutorial.
 
    ```bash
-   wget https://raw.githubusercontent.com/grafana/loki/refs/heads/main/production/docker-compose.yaml -O docker-compose.yaml
+   wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/docker-compose.yaml
+   wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/config.alloy
+   mkdir -p provisioning/datasources
+   wget -P provisioning/datasources https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/provisioning/datasources/datasources.yaml
    ```
 
 2. Run the Grafana stack.
@@ -133,7 +136,7 @@ If you don't see the sample logs in Explore:
 
 - Does the output file exist, check `/var/log/web_requests.log` to see if it contains logs.
 - If the file is empty, check that you followed the steps above to create the file.
-- If the file exists, verify that promtail container is running.
+- If the file exists, verify that the alloy container is running.
 - In Grafana Explore, check that the time range is only for the last 5 minutes.
 
 <!-- INTERACTIVE page step2.md END -->
@@ -167,7 +170,7 @@ Your webhook endpoint is now waiting for the first request.
 
 Next, let's configure a contact point in Grafana's Alerting UI to send notifications to our webhook endpoint.
 
-1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
+1. Return to Grafana. In Grafana's sidebar, click **Alerting** > **Notification configuration**, and then select the **Contact points** tab.
 1. Click **+ New contact point**.
 1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
@@ -187,7 +190,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 ## Create an alert rule
 
-Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
+Next, we'll establish an [alert rule](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
 1. In Grafana, **navigate to Alerting** > **Alert rules**.
 1. Click on **New alert rule**.
@@ -198,7 +201,7 @@ Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alert
 In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
 1. Select the **Loki** datasource from the drop-down.
-1. In the Query editor, switch to **Code** mode by clicking the button on the right.
+1. The query editor opens in **Code** mode by default. If it's showing **Builder** mode instead, click **Code** on the right.
 1. Paste the query below.
 
    ```
@@ -224,8 +227,7 @@ In this section, we use the default options for Grafana-managed alert rule creat
    If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
    {{< /docs/ignore >}}
 
-1. In the **Alert condition** section:
-   - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
+1. In the **Alert condition** section, confirm the condition reads **WHEN QUERY IS ABOVE** `0`. This is the default, and `0` is the threshold above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the query.
 
@@ -235,10 +237,12 @@ In this section, we use the default options for Grafana-managed alert rule creat
 
 ### Set evaluation behavior
 
-An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines when an alert rule fires, and it’s based on two settings:
+The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines the conditions under which an alert rule triggers, based on the following settings:
 
-- **Evaluation group**: how frequently the alert rule is evaluated.
-- **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
+- **Evaluation group**: every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
+- **Evaluation interval**: determines how frequently the alert rule is checked. For instance, the evaluation may occur every 10s, 30s, 1m, 10m, etc.
+- **Pending period**: how long the condition must be met to trigger the alert rule.
+- **Keep firing for**: defines how long an alert should remain in the Firing state after the alert condition stops being true. During this time, the alert enters a _Recovering_ state, suppressing additional notifications but keeping the alert active. It helps prevent alert flapping, where alerts rapidly switch between firing and resolved due to noisy or unstable metrics.
 
 To set up the evaluation:
 
@@ -247,13 +251,14 @@ To set up the evaluation:
 1. Choose an **Evaluation interval** (how often the alert are evaluated).
    For example, every `1m` (1 minute).
 1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
+1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true. Use this when you want alerts to be resolved as soon as the system is healthy again.
 
 ### Configure labels and notifications
 
 Choose the contact point where you want to receive your alert notifications.
 
 1. Under **Contact point**, select **Webhook** from the drop-down menu.
-1. Click **Save rule and exit** at the top right corner.
+1. Click **Save** at the bottom of the page.
 
 <!-- INTERACTIVE page step4.md END -->
 
@@ -272,14 +277,14 @@ Since the Python script continues to generate log data that matches the alert ru
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 {{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
 
-> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+> In [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
