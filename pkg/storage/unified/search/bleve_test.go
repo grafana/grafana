@@ -2502,6 +2502,60 @@ func TestIndexUpdate(t *testing.T) {
 	require.Equal(t, int64(5), searchTitle(t, idx, "gen_2", 10, ns).TotalHits)
 }
 
+func TestIndexUpdateRVPersistInterval(t *testing.T) {
+	tests := []struct {
+		name          string
+		interval      time.Duration
+		docs          int
+		wantPersisted bool
+	}{
+		{name: "no interval persists every update", interval: 0, docs: 0, wantPersisted: true},
+		{name: "no changes inside interval stay in memory", interval: time.Hour, docs: 0, wantPersisted: false},
+		{name: "changes inside interval persist", interval: time.Hour, docs: 3, wantPersisted: true},
+		{name: "no changes after interval persist", interval: time.Nanosecond, docs: 0, wantPersisted: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "index")
+			index, err := bleve.New(dir, bleve.NewIndexMapping())
+			require.NoError(t, err)
+
+			idx := &bleveIndex{
+				index:             index,
+				logger:            log.NewNopLogger(),
+				rvPersistInterval: tc.interval,
+				updaterFn: func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+					return 20, tc.docs, nil
+				},
+			}
+			idx.updaterCond = sync.NewCond(&idx.updaterMu)
+			require.NoError(t, idx.updateResourceVersion(10))
+
+			rv, err := idx.UpdateIndex(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, int64(20), rv)
+			require.Equal(t, int64(20), idx.resourceVersion.Load())
+
+			persisted, err := getRV(index)
+			require.NoError(t, err)
+			if tc.wantPersisted {
+				require.Equal(t, int64(20), persisted)
+			} else {
+				require.Equal(t, int64(10), persisted)
+			}
+
+			// Graceful close persists the latest RV in every case.
+			require.NoError(t, idx.stopUpdaterAndCloseIndex())
+			reopened, err := bleve.Open(dir)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, reopened.Close()) }()
+			persisted, err = getRV(reopened)
+			require.NoError(t, err)
+			require.Equal(t, int64(20), persisted)
+		})
+	}
+}
+
 func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
