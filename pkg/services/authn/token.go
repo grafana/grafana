@@ -67,7 +67,7 @@ func (t *GrafanaTokenAuthenticator) AuthenticateTokenForRequest(ctx context.Cont
 	if t.verifier == nil {
 		return nil, apierrors.NewUnauthorized("token verifier is not configured")
 	}
-	claims, err := VerifyAccessTokenForRequest(ctx, token, req, t.verifier, t.keys)
+	claims, err := authnlib.VerifyAccessTokenForRequest(ctx, token, req, t.verifier, t.keys)
 	if err != nil || claims == nil {
 		return nil, apierrors.NewUnauthorized("invalid access token")
 	}
