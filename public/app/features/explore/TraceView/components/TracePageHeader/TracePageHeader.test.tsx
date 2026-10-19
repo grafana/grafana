@@ -146,6 +146,24 @@ describe('TracePageHeader test', () => {
     config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
   });
 
+  it('shortens a long trace id in the middle and copies the full id', async () => {
+    const traceId = '0000000000000000000000000009bfab';
+    const longIdTrace = {
+      ...trace,
+      traceID: traceId,
+      spans: trace.spans.map((span) => ({ ...span, traceID: traceId })),
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, longIdTrace);
+
+    const copyButton = screen.getByRole('button', { name: `Copy trace ID ${traceId}` });
+    expect(copyButton).toHaveTextContent('00000000...9bfab');
+
+    await userEvent.click(copyButton);
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(traceId);
+  });
+
   it('shows the span count next to the other header metadata', () => {
     const singleSpanTraceId = 'single-span-trace-id';
     const singleSpanTrace = {
@@ -220,6 +238,7 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('POST')).toBeInTheDocument();
     expect(screen.getByText('500')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Trace error banner')).getByText('Error: 500')).toBeInTheDocument();
     expect(screen.queryByText('200')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Trace error banner')).toBeInTheDocument();
   });
@@ -250,7 +269,7 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('404')).toBeInTheDocument();
-    expect(screen.getByLabelText('Trace warning banner')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Trace warning banner')).getByText('Warning: 404')).toBeInTheDocument();
     expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
   });
 
@@ -367,7 +386,7 @@ describe('TracePageHeader test', () => {
     const banner = screen.getByLabelText('Trace error banner');
     expect(within(banner).getByText('payment-service')).toBeInTheDocument();
     expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
-    expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).getByText('1.42 s · 58.9% of trace')).toBeInTheDocument();
     expect(within(banner).getByRole('button', { name: 'Go to span' })).toBeInTheDocument();
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
   });
@@ -401,7 +420,7 @@ describe('TracePageHeader test', () => {
     setup({ links: [], isLoading: false }, false, undefined, errorTrace);
 
     const banner = screen.getByLabelText('Trace error banner');
-    expect(within(banner).getByText('811μs · <0.1% of trace')).toBeInTheDocument();
+    expect(within(banner).getByText('811 μs · <0.1% of trace')).toBeInTheDocument();
   });
 
   it('asks to go to the highlighted span and reports the click on every Go to span click, including repeats', async () => {
@@ -818,7 +837,7 @@ describe('TracePageHeader test', () => {
       setup({ links: [], isLoading: false }, false);
 
       expect(screen.getByText('Trace ID')).toBeInTheDocument();
-      expect(screen.getByText('Start time')).toBeInTheDocument();
+      expect(screen.getByText('Start')).toBeInTheDocument();
       expect(screen.getByText('Duration')).toBeInTheDocument();
       expect(screen.getByText('Services')).toBeInTheDocument();
       expect(screen.getByText('Spans')).toBeInTheDocument();

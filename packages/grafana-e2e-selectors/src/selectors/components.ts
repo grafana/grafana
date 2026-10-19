@@ -1667,6 +1667,12 @@ export const versionedComponents = {
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
       },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner stacktrace-button',
+      },
+      toggleButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner toggle-button',
+      },
     },
     spanException: {
       container: {

@@ -73,3 +73,8 @@ export function formatDuration(duration: number): string {
   const secondaryUnitString = `${secondaryValue}${secondaryUnit.unit}`;
   return `${primaryUnitString} ${secondaryUnitString}`;
 }
+
+/** Same as formatDuration, with a space before each unit ("18.6 s", "20.01 s"). */
+export function formatSummaryDuration(duration: number): string {
+  return formatDuration(duration).replace(/([\d.])([^\d.\s]+)/g, '$1 $2');
+}
