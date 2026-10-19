@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
@@ -1431,6 +1434,123 @@ func TestWatchReconcilesOwnedIndexesWhenReadyAndOnReconnect(t *testing.T) {
 	require.Eventually(t, func() bool { return server.reconcileQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued again after a reconnect")
 	cancel()
 	<-done
+}
+
+// The bus delivers keys only of the types the watch asked for, so the watch is
+// opened again when the covered types change.
+func TestWatchFollowsCoverageChanges(t *testing.T) {
+	yes := true
+	storage := &watchStorage{keys: make(chan *WrittenEvent)}
+	server, _ := repairServer(t, storage, nil)
+	server.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		server.runGlobalIndexWatch(ctx)
+	}()
+	require.Eventually(t, func() bool { return slices.Equal(storage.watchedTypes(), GlobalSearchResourceTypes()) },
+		5*time.Second, 10*time.Millisecond)
+
+	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
+	server.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+	require.Eventually(t, func() bool { return slices.Contains(storage.watchedTypes(), pages) },
+		5*time.Second, 10*time.Millisecond, "opened again at once, with the added type")
+	cancel()
+	<-done
+}
+
+// scanCountingStorage counts the rebuild scans, each of which reads the import
+// times once.
+type scanCountingStorage struct {
+	*reconcileStorage
+	scans atomic.Int32
+}
+
+func (m *scanCountingStorage) ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+	m.scans.Add(1)
+	return m.reconcileStorage.ListResourceLastImportTimes(ctx)
+}
+
+// A type added to the coverage is synced into open global indexes at once,
+// not at the next periodic scan.
+func TestCoverageChangeSyncsTypesAtOnce(t *testing.T) {
+	yes := true
+	storage := &scanCountingStorage{reconcileStorage: &reconcileStorage{}}
+	server, idx := repairServer(t, storage, nil)
+	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+	server.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+	for _, gr := range GlobalSearchResourceTypes() {
+		require.NoError(t, idx.RecordCompletedTypeBuild(gr, TypeBuild{}))
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	server.bgTaskWg.Add(1)
+	go server.runPeriodicScanForIndexesToRebuild(ctx)
+	t.Cleanup(func() {
+		cancel()
+		server.bgTaskWg.Wait()
+	})
+
+	// After the scan at start, so only the change can queue the sync.
+	require.Eventually(t, func() bool { return storage.scans.Load() == 1 }, 5*time.Second, 10*time.Millisecond)
+
+	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
+	server.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+	waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
+	defer stop()
+	req, err := server.rebuildQueue.Next(waitCtx)
+	require.NoError(t, err, "a type sync is queued")
+	assert.Equal(t, GlobalSearchKey("ns"), req.NamespacedResource)
+	assert.Equal(t, []schema.GroupResource{pages}, req.staleTypes)
+}
+
+// blockingTypesIndex holds the first DocumentTypes call, which a type-sync scan
+// makes after reading the coverage, until released.
+type blockingTypesIndex struct {
+	*MockResourceIndex
+	reached, release chan struct{}
+	once             sync.Once
+}
+
+func (b *blockingTypesIndex) DocumentTypes() ([]schema.GroupResource, error) {
+	b.once.Do(func() {
+		close(b.reached)
+		<-b.release
+	})
+	return b.MockResourceIndex.DocumentTypes()
+}
+
+// A change while a scan runs, after it read the coverage, still starts another.
+func TestCoverageChangeDuringAScanSyncsTypes(t *testing.T) {
+	yes := true
+	idx := &blockingTypesIndex{MockResourceIndex: &MockResourceIndex{}, reached: make(chan struct{}), release: make(chan struct{})}
+	for _, gr := range GlobalSearchResourceTypes() {
+		require.NoError(t, idx.RecordCompletedTypeBuild(gr, TypeBuild{}))
+	}
+	search := &mockSearchBackend{
+		cache:       map[NamespacedResource]ResourceIndex{GlobalSearchKey("ns"): idx},
+		openIndexes: []NamespacedResource{GlobalSearchKey("ns")},
+	}
+	server := globalTestServer(t, &reconcileStorage{}, search)
+	server.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+	ctx, cancel := context.WithCancel(t.Context())
+	server.bgTaskWg.Add(1)
+	go server.runPeriodicScanForIndexesToRebuild(ctx)
+	t.Cleanup(func() {
+		cancel()
+		server.bgTaskWg.Wait()
+	})
+
+	<-idx.reached
+	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
+	server.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+	close(idx.release)
+
+	waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
+	defer stop()
+	req, err := server.rebuildQueue.Next(waitCtx)
+	require.NoError(t, err, "a type sync is queued")
+	assert.Equal(t, []schema.GroupResource{pages}, req.staleTypes)
 }
 
 // A backend that cannot report written keys is followed through its watch

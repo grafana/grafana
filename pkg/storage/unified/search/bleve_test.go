@@ -3295,7 +3295,7 @@ func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
 		s := &batchAuthzSearcher{
 			namespace: "stacks-1",
 			group:     "dashboard.grafana.app",
-			resources: map[string]string{"dashboards": utils.VerbGet},
+			resources: map[string]string{"dashboard.grafana.app/dashboards": utils.VerbGet},
 			log:       fake,
 		}
 		s.candidates.Store(candidates)
@@ -3312,7 +3312,7 @@ func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
 		require.Equal(t, []any{
 			"namespace", "stacks-1",
 			"group", "dashboard.grafana.app",
-			"resources", "dashboards",
+			"resources", "dashboard.grafana.app/dashboards",
 			"candidates", int64(3),
 			"authorized", int64(0),
 		}, fake.WarnLogs.Ctx)

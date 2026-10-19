@@ -139,7 +139,9 @@ func (c authzLimitedClient) checkServicePermission(ctx context.Context, id claim
 // A global search leaves out the types it cannot search instead of failing, and
 // returns them as {group}/{resource}: otherwise one type without a grant would
 // break the search for every type. It fails only when no type is left.
-func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]string, error) {
+//
+// resources are the types the index draws from, from indexSources.
+func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest, resources []NamespacedResource) ([]string, error) {
 	var excluded []string
 	id, ok := claims.AuthInfoFrom(ctx)
 	if !ok || id == nil {
@@ -162,7 +164,6 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 	if req.IsDeleted {
 		verb = utils.VerbSetPermissions
 	}
-	resources := indexSources(nsr)
 	var lastErr error
 	for _, resource := range resources {
 		groupResource := resource.Group + "/" + resource.Resource
