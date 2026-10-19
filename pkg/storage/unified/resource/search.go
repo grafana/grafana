@@ -545,9 +545,13 @@ type searchServer struct {
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
 	globalIndexEnabled        bool
+	globalIndexStartupBuild   bool
 	// uncheckedGlobalTypesLogged holds the {group}/{resource} of each type already
 	// logged as left out of global search for being unchecked.
 	uncheckedGlobalTypesLogged sync.Map
+
+	backgroundGlobalBuildsMu sync.RWMutex
+	backgroundGlobalBuilds   map[NamespacedResource]bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -639,6 +643,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
+		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
 		queryCache:             opts.QueryCache,
@@ -1664,6 +1669,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	}
 
 	builds := make([]ResourceStats, 0, len(stats))
+	var backgroundBuilds []ResourceStats
 	seen := make(map[NamespacedResource]bool, len(stats))
 	for _, info := range stats {
 		if seen[info.NamespacedResource] {
@@ -1676,15 +1682,43 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 			continue
 		}
 		seen[info.NamespacedResource] = true
-		builds = append(builds, info)
+		if info.IsGlobal() && !s.globalIndexStartupBuild {
+			backgroundBuilds = append(backgroundBuilds, info)
+		} else {
+			builds = append(builds, info)
+		}
 	}
-	if len(builds) == 0 {
+	if len(builds)+len(backgroundBuilds) == 0 {
 		return 0, nil
 	}
 	// SQL reads the whole import-time table, so share one lookup across builds and retries.
 	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
 	if err != nil {
 		s.log.Warn("Failed to load startup import times", "error", err)
+	}
+	s.backgroundGlobalBuildsMu.Lock()
+	s.backgroundGlobalBuilds = make(map[NamespacedResource]bool, len(backgroundBuilds))
+	for _, info := range backgroundBuilds {
+		s.backgroundGlobalBuilds[info.NamespacedResource] = true
+	}
+	s.backgroundGlobalBuildsMu.Unlock()
+
+	built, err := s.buildInitialIndexes(ctx, builds, importTimes, false)
+	if err != nil {
+		return built, err
+	}
+	if len(backgroundBuilds) > 0 {
+		s.bgTaskWg.Go(func() {
+			// Global builds must not occupy workers until readiness-blocking work has finished.
+			_, _ = s.buildInitialIndexes(ctx, backgroundBuilds, importTimes, true)
+		})
+	}
+	return built, nil
+}
+
+func (s *searchServer) buildInitialIndexes(ctx context.Context, builds []ResourceStats, importTimes map[NamespacedResource]time.Time, background bool) (int, error) {
+	if len(builds) == 0 {
+		return 0, nil
 	}
 	// Replicas should try different indexes first, not all wait for the same ones.
 	rand.Shuffle(len(builds), func(i, j int) { builds[i], builds[j] = builds[j], builds[i] })
@@ -1704,6 +1738,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 		queue.Add(info)
 	}
 	results := make(chan error, len(builds))
+	backoff := workqueue.NewTypedItemExponentialFailureRateLimiter[ResourceStats](s.initRetryInterval, 5*time.Minute)
 	for range min(s.initWorkers, len(builds)) {
 		workers.Go(func() {
 			for ctx.Err() == nil {
@@ -1715,9 +1750,26 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 				if ctx.Err() != nil {
 					err = ctx.Err()
 				}
-				if errors.Is(err, ErrIndexBuildInProgress) {
+				switch {
+				case ctx.Err() != nil:
+					results <- err
+				case errors.Is(err, ErrIndexBuildInProgress):
 					queue.AddAfter(info, time.Duration(float64(s.initRetryInterval)*(0.5+rand.Float64())))
-				} else {
+				case err != nil && background:
+					delay := backoff.When(info)
+					s.log.Warn("failed to build global search index in background", "namespace", info.Namespace, "error", err, "retryAfter", delay)
+					queue.AddAfter(info, delay)
+				default:
+					if background {
+						// A late-opening index may have missed the initial scan for imports and removed types.
+						if _, err := s.queueTypeSyncs(ctx, []NamespacedResource{info.NamespacedResource}, nil); err != nil {
+							s.log.Warn("failed to check resource types of a background global search index", "namespace", info.Namespace, "error", err)
+						}
+						backoff.Forget(info)
+						s.backgroundGlobalBuildsMu.Lock()
+						delete(s.backgroundGlobalBuilds, info.NamespacedResource)
+						s.backgroundGlobalBuildsMu.Unlock()
+					}
 					results <- err
 				}
 				queue.Done(info)
@@ -2286,6 +2338,12 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 
 	idx := s.search.GetIndex(key)
 	if idx == nil {
+		s.backgroundGlobalBuildsMu.RLock()
+		pending := s.backgroundGlobalBuilds[key]
+		s.backgroundGlobalBuildsMu.RUnlock()
+		if pending {
+			return nil, StatusError(NewServiceUnavailableError("the global search index for this namespace is still being built"))
+		}
 		span.AddEvent("Building index")
 		buildStartTime := time.Now()
 		ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
