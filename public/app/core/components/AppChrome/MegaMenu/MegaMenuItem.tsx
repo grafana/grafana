@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { type DraggableProvided } from '@hello-pangea/dnd';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -12,6 +12,9 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { STPodHealthPoller } from 'app/core/navigation/STPodHealthPoller';
+import { useIsUrlAllowed } from 'app/core/navigation/mtFallback';
+import { getStPodReadyPromise, getStPodStatus, StPodStatus } from 'app/core/navigation/stPodReadiness';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
@@ -90,6 +93,7 @@ export function MegaMenuItem({
   const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
+  const isUrlAllowed = useIsUrlAllowed({ ...location, pathname: link.url?.split(/[?#]/)[0] ?? '' });
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
@@ -232,6 +236,12 @@ export function MegaMenuItem({
               <Text truncate element="p">
                 {link.text}
               </Text>
+              {/* TODO: place here the ellipsis component
+                  1. Check if link.url is in the allowList
+                  2. If it is not, show the component till the st pod is ready
+                  3. If it is, do nothing
+              */}
+              {!isUrlAllowed && <StPodPendingEllipsis />}
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>
@@ -394,6 +404,38 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     padding: theme.spacing(1, 1.5, 1, 7),
   }),
 });
+
+// The ready promise resolves on both Ready and Timeout, the only transitions that hide the ellipsis.
+const subscribeToStPodStatus = (onChange: () => void) => {
+  let subscribed = true;
+  getStPodReadyPromise().then(() => {
+    if (subscribed) {
+      onChange();
+    }
+  });
+  return () => {
+    subscribed = false;
+  };
+};
+
+function StPodPendingEllipsis() {
+  const status = useSyncExternalStore(subscribeToStPodStatus, getStPodStatus);
+
+  if (status === StPodStatus.Ready || status === StPodStatus.Timeout) {
+    return null;
+  }
+
+  // GrafanaRoute only polls when the current route is not allowlisted, so on an allowlisted page
+  // nothing else would ever mark the pod ready.
+  return (
+    <>
+      <STPodHealthPoller skip={false} />
+      <Text color="secondary" aria-hidden>
+        ...
+      </Text>
+    </>
+  );
+}
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
