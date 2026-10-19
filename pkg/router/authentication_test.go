@@ -2,12 +2,20 @@ package router
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -117,6 +125,57 @@ func TestProvideStandaloneServiceRequiresTokenVerificationConfig(t *testing.T) {
 		svc, err := provideTestService(cfg, featuremgmt.WithFeatures(), stubLoader{})
 		require.Error(t, err)
 		require.Nil(t, svc)
+	}
+}
+
+func TestStandaloneRouterGroupAudience(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{Key: &key.PublicKey, KeyID: "test-key", Algorithm: string(jose.ES256), Use: "sig"}}}))
+	}))
+	t.Cleanup(server.Close)
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
+	cfg.ExtJWTAuth.JWKSUrl = server.URL
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry())
+	require.NoError(t, err)
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, (&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "test-key"))
+	require.NoError(t, err)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		requester, err := identity.GetRequester(req.Context())
+		require.NoError(t, err)
+		require.Equal(t, "access-policy:policy-1", requester.GetUID())
+		w.WriteHeader(http.StatusNoContent)
+	})
+	snapshot := map[string]servingEntry{"iam.grafana.app": {handler: handler, breaker: newGroupBreaker("iam.grafana.app")}}
+	svc.router.snapshot.Store(&snapshot)
+	svc.router.unregisteredGroupHandler = handler
+
+	for _, audience := range []string{"grafana", "iam.grafana.app"} {
+		claims := authnlib.Claims[authnlib.AccessTokenClaims]{
+			Claims: jwt.Claims{Subject: "access-policy:policy-1", Audience: jwt.Audience{audience}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))},
+			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457"},
+		}
+		token, err := jwt.Signed(signer).Claims(claims).Serialize()
+		require.NoError(t, err)
+		for _, target := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/folder.grafana.app/v1/folders", "/apis", "/apis/discovery", "/openapi/v3"} {
+			t.Run(audience+target, func(t *testing.T) {
+				req := httptest.NewRequest(http.MethodGet, target, nil)
+				req.Header.Set("X-Access-Token", token)
+				rec := httptest.NewRecorder()
+				svc.router.HandleFunc(rec, req, http.NotFoundHandler())
+				want := http.StatusUnauthorized
+				if audience == "grafana" || target == "/apis/iam.grafana.app/v0alpha1/whoami" {
+					want = http.StatusNoContent
+					if target == "/apis" || target == "/apis/discovery" || target == "/openapi/v3" {
+						want = http.StatusOK
+					}
+				}
+				require.Equal(t, want, rec.Code, rec.Body.String())
+			})
+		}
 	}
 }
 

@@ -223,20 +223,3 @@ func localExtendedJWT(t *testing.T, cfg *setting.Cfg) *ExtendedJWT {
 	require.NoError(t, err)
 	return ProvideExtendedJWTWithPluginAuth(cfg, tracing.InitializeTracerForTest(), pluginAuth)
 }
-
-func TestAPIGroupFromRequest(t *testing.T) {
-	for path, want := range map[string]string{
-		"/apis/iam.grafana.app/v0alpha1/whoami":         "iam.grafana.app",
-		"/apis/folder.grafana.app":                      "folder.grafana.app",
-		"/apis/appsdktest.ext.grafana.app/v1alpha1/foo": "appsdktest.ext.grafana.app",
-		"/apis":                "",
-		"/apis/":               "",
-		"/apis/example-app/v1": "",
-		"/api/user":            "",
-		"/api/plugins/example-app/resources/apis/x.y.z/foo": "",
-	} {
-		require.Equal(t, want, apiGroupFromRequest(&http.Request{URL: &url.URL{Path: path}}), path)
-	}
-	require.Empty(t, apiGroupFromRequest(&http.Request{}))
-	require.Empty(t, apiGroupFromRequest(nil))
-}

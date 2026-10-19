@@ -84,6 +84,29 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
 		}
 	}
+	for _, audience := range []string{"grafana", "iam.grafana.app"} {
+		for _, path := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/iam.grafana.app", "/apis/folder.grafana.app/v1/folders", "/apis", "/api/user", "/openapi/v3"} {
+			t.Run(audience+path, func(t *testing.T) {
+				claims := validClaims()
+				claims.Audience = jwt.Audience{audience}
+				token := sign(claims, key, authnlib.TokenTypeAccess)
+				req := httptest.NewRequest(http.MethodGet, path, nil)
+				requester, err := authenticator.AuthenticateTokenForRequest(t.Context(), "Bearer "+token, req)
+				if audience == "grafana" || path == "/apis/iam.grafana.app/v0alpha1/whoami" || path == "/apis/iam.grafana.app" {
+					require.NoError(t, err)
+					require.Equal(t, "access-policy:policy-1", requester.GetUID())
+				} else {
+					require.True(t, apierrors.IsUnauthorized(err), "%v", err)
+					require.Nil(t, requester)
+				}
+				if audience != "grafana" {
+					_, err = authenticator.AuthenticateToken(t.Context(), token)
+					require.True(t, apierrors.IsUnauthorized(err), "token-only authentication must still require a configured audience")
+				}
+			})
+		}
+	}
+
 	for _, prefix := range []string{"", "Bearer "} {
 		t.Run("access policy/"+prefix, func(t *testing.T) {
 			token := sign(validClaims(), key, authnlib.TokenTypeAccess)

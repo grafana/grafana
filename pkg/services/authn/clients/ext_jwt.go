@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -91,11 +90,9 @@ func ProvideExtendedJWTWithPluginAuth(cfg *setting.Cfg, tracer trace.Tracer, plu
 		log:                 logger,
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
-		apiGroupVerifier: func(group string) authlib.Verifier[authlib.AccessTokenClaims] {
-			return authlib.NewAccessTokenVerifier(authlib.VerifierConfig{AllowedAudiences: []string{group}}, keys)
-		},
-		idTokenVerifier: idTokenVerifier,
-		tracer:          tracer,
+		accessTokenKeys:     keys,
+		idTokenVerifier:     idTokenVerifier,
+		tracer:              tracer,
 	}
 }
 
@@ -106,12 +103,10 @@ type ExtendedJWT struct {
 	localKeys           bool
 	log                 log.Logger
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
-	// apiGroupVerifier returns the verifier for access tokens addressed to an
-	// API group that Grafana serves rather than to Grafana as a whole.
-	apiGroupVerifier func(group string) authlib.Verifier[authlib.AccessTokenClaims]
-	idTokenVerifier  authlib.Verifier[authlib.IDTokenClaims]
-	namespaceMapper  request.NamespaceMapper
-	tracer           trace.Tracer
+	accessTokenKeys     authlib.KeyRetriever
+	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
+	namespaceMapper     request.NamespaceMapper
+	tracer              trace.Tracer
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -120,7 +115,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
-	accessTokenClaims, err := s.verifyAccessToken(ctx, jwtToken, r.HTTPRequest)
+	accessTokenClaims, err := authn.VerifyAccessTokenForRequest(ctx, jwtToken, r.HTTPRequest, s.accessTokenVerifier, s.accessTokenKeys)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
@@ -175,39 +170,6 @@ func (s *ExtendedJWT) localTokenOrgID(namespace string, requestedOrgID int64) (i
 		return 0, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected organization for configured stack")
 	}
 	return orgID, nil
-}
-
-// verifyAccessToken verifies an access token for one of the configured
-// audiences or, for a request to /apis/<group>/..., for the API group it is
-// addressed to. A token for one API group is then only valid for that group.
-func (s *ExtendedJWT) verifyAccessToken(ctx context.Context, token string, req *http.Request) (*authlib.Claims[authlib.AccessTokenClaims], error) {
-	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, token)
-	if !errors.Is(err, authlib.ErrInvalidAudience) || s.apiGroupVerifier == nil {
-		return accessTokenClaims, err
-	}
-	group := apiGroupFromRequest(req)
-	if group == "" {
-		return nil, err
-	}
-	return s.apiGroupVerifier(group).Verify(ctx, token)
-}
-
-// apiGroupFromRequest returns the API group of a request to /apis/<group>/...,
-// or "" for any other request. A group always contains a dot, which plugin IDs,
-// the audience of the tokens Grafana sends to plugins, never do.
-func apiGroupFromRequest(req *http.Request) string {
-	if req == nil || req.URL == nil {
-		return ""
-	}
-	rest, ok := strings.CutPrefix(req.URL.Path, "/apis/")
-	if !ok {
-		return ""
-	}
-	group, _, _ := strings.Cut(rest, "/")
-	if !strings.Contains(group, ".") {
-		return ""
-	}
-	return group
 }
 
 func (s *ExtendedJWT) IsEnabled(context.Context) bool {
