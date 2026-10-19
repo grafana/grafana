@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { lazy, Suspense } from 'react';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor, createCodeEditorTheme } from '@grafana/ui/unstable';
 
 import { type CodeLanguage } from '../panelcfg.gen';
 
-const TextNGCodeViewImplementation = lazy(() =>
-  import('./TextNGCodeViewImplementation').then((module) => ({ default: module.TextNGCodeViewImplementation }))
-);
+import { getCodeMirrorLanguage } from './utils';
 
 export interface TextNGCodeViewProps {
   content: string;
@@ -19,15 +19,56 @@ export interface TextNGCodeViewProps {
   transparent?: boolean;
 }
 
-/** Read-only code stays visible while its editor and theme load. */
-export function TextNGCodeView(props: TextNGCodeViewProps) {
-  const styles = useStyles2(getStyles, props.transparent);
-  const loadingFallback = <pre className={styles.loadingFallback}>{props.content}</pre>;
+/**
+ * Read-only, syntax-highlighted rendering of code-mode content
+ */
+export function TextNGCodeView({
+  content,
+  language,
+  showLineNumbers,
+  height = '100%',
+  transparent,
+}: TextNGCodeViewProps) {
+  const styles = useStyles2(getStyles, transparent);
+  const theme = useTheme2();
+  const editorTheme = useMemo(
+    () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
+    [theme, transparent]
+  );
+
+  const basicSetup = useMemo(
+    () => ({
+      lineNumbers: showLineNumbers,
+      foldGutter: false,
+      highlightActiveLine: false,
+      highlightActiveLineGutter: false,
+      bracketMatching: false,
+      closeBrackets: false,
+      autocompletion: false,
+      highlightSelectionMatches: false,
+      history: false,
+      indentOnInput: false,
+      allowMultipleSelections: false,
+      rectangularSelection: false,
+      crosshairCursor: false,
+      dropCursor: false,
+    }),
+    [showLineNumbers]
+  );
 
   return (
-    <Suspense fallback={loadingFallback}>
-      <TextNGCodeViewImplementation {...props} loadingFallback={loadingFallback} />
-    </Suspense>
+    <CodeMirrorEditor
+      value={content}
+      onChange={() => {}}
+      language={getCodeMirrorLanguage(language)}
+      readOnly
+      lineWrapping
+      basicSetup={basicSetup}
+      height={height}
+      aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
+      loadingFallback={<pre className={styles.loadingFallback}>{content}</pre>}
+      theme={editorTheme}
+    />
   );
 }
 

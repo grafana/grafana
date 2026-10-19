@@ -15,12 +15,6 @@ const iconSrcPaths = icons.map((iconSubPath) => {
 
 export default [
   {
-    input: 'src/codemirror.ts',
-    plugins,
-    output: [cjsOutput(pkg, 'grafana-ui'), esmOutput(pkg, 'grafana-ui')],
-    treeshake: false,
-  },
-  {
     input: entryPoint,
     plugins: [
       ...plugins,

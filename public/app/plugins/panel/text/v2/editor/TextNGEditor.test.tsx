@@ -27,14 +27,11 @@ afterAll(() => {
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
-jest.mock('@grafana/ui/codemirror', () => ({
-  ...jest.requireActual('@grafana/ui/codemirror'),
-  createVariableCompletionSource: () => () => null,
-}));
-
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
+jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -203,20 +200,20 @@ describe('TextNGEditor', () => {
       }
     });
 
-    it('renders code mode preview as a raw, unrendered code view', async () => {
+    it('renders code mode preview as a raw, unrendered code view', () => {
       setup('# Not a heading in code mode', TextMode.Code);
 
       const preview = screen.getByTestId(PREVIEW_TEST_ID);
       // The preview reuses the read-only code view, so the content stays raw.
-      expect(await within(preview).findByRole('textbox')).toHaveValue('# Not a heading in code mode');
+      expect(within(preview).getByRole('textbox')).toHaveValue('# Not a heading in code mode');
       expect(preview.innerHTML).not.toContain('<h1');
     });
 
-    it('passes language and line numbers to the code mode preview', async () => {
+    it('passes language and line numbers to the code mode preview', () => {
       setup('{\n  "a": 1\n}', TextMode.Code, jest.fn(), true, CodeLanguage.Json);
 
       const preview = screen.getByTestId(PREVIEW_TEST_ID);
-      expect(await within(preview).findByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+      expect(within(preview).getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
     });
 
     it('interpolates variables in the preview but keeps the raw template in the editor', async () => {

@@ -1,10 +1,6 @@
-import { CompletionContext } from '@codemirror/autocomplete';
-import { EditorState } from '@codemirror/state';
-
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 import { QueryField, makeValue } from '@grafana/ui';
-import { type createVariableCompletionSource } from '@grafana/ui/codemirror';
 
 import { sandboxPluginDependencies } from '../sandbox/pluginDependencies';
 
@@ -18,38 +14,13 @@ describe('shared Grafana UI', () => {
   const dependencyId = 'package:@grafana/ui';
 
   beforeEach(() => {
-    SystemJS.addImportMap({
-      imports: buildImportMap({
-        '@grafana/ui': sharedDependenciesMap['@grafana/ui'],
-        '@grafana/ui/codemirror': sharedDependenciesMap['@grafana/ui/codemirror'],
-      }),
-    });
+    SystemJS.addImportMap({ imports: buildImportMap({ '@grafana/ui': sharedDependenciesMap['@grafana/ui'] }) });
   });
 
   afterEach(() => {
     SystemJS.delete(pluginId);
     SystemJS.delete(dependencyId);
     sandboxPluginDependencies.delete('@grafana/ui');
-    SystemJS.delete('package:@grafana/ui/codemirror');
-    sandboxPluginDependencies.delete('@grafana/ui/codemirror');
-  });
-
-  it('lets a plugin load CodeMirror helpers separately and complete a variable', async () => {
-    let helpers: { createVariableCompletionSource: typeof createVariableCompletionSource };
-    SystemJS.register(pluginId, ['@grafana/ui/codemirror'], (_export) => ({
-      setters: [(module) => (helpers = module as typeof helpers)],
-      execute: () => {
-        const complete = helpers.createVariableCompletionSource([
-          { label: 'region', value: 'region', origin: grafanaData.VariableOrigin.Template },
-        ]);
-        const result = complete(new CompletionContext(EditorState.create({ doc: '$re' }), 3, false));
-        _export({ labels: result?.options.map((option) => option.label) });
-      },
-    }));
-
-    const plugin = await SystemJS.import(pluginId);
-
-    expect(plugin.labels).toEqual(['region']);
   });
 
   it('lets a plugin use Slate synchronously during execution and shares core component identities', async () => {

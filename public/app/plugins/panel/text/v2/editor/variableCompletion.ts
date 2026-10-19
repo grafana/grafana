@@ -1,6 +1,9 @@
 import { type VariableSuggestion } from '@grafana/data';
-import { type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } from '@grafana/ui';
-import { createVariableCompletionSource } from '@grafana/ui/codemirror';
+import {
+  type CodeMirrorCompletionContext,
+  type CodeMirrorCompletionResult,
+  createVariableCompletionSource,
+} from '@grafana/ui/unstable';
 
 /**
  * Autocompletion source for template and field variables, triggered by `$`.

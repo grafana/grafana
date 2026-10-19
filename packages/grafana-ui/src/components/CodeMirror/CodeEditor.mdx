@@ -10,15 +10,10 @@ A code editor component using CodeMirror.
 ### Usage
 
 ```tsx
-import { CodeMirrorEditor } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 <CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
 ```
-
-Runtime helpers such as `createCodeEditorTheme`, `signatureHelp`, and
-`createVariableCompletionSource` are exported from `@grafana/ui/codemirror`.
-Import that entry point inside a lazy-loaded editor module to keep CodeMirror out
-of application startup. Editor components and types remain available from `@grafana/ui`.
 
 ## Props
 
