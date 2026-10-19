@@ -122,8 +122,7 @@ describe('TimePicker', () => {
     // A transform would misplace the fixed time zone Select menu inside.
     expect(dialog?.style.transform).toBe('');
     // Toasts portal at zIndex.portal (1061) and must stay above the panel.
-    // Portal wraps its children in an extra div, so the z-index lives on the grandparent.
-    expect(overlay.parentElement?.parentElement).toHaveStyle({ zIndex: '1060' });
+    expect(overlay.parentElement).toHaveStyle({ zIndex: '1060' });
   });
 
   it('closes when the backdrop is clicked', async () => {
