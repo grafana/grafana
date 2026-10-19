@@ -19,7 +19,8 @@ interface LogLineDetailsSummaryProps {
 export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
   const { app, fontSize, noInteractions, pinLineButtonTooltipTitle, timestampResolution } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
-  const links = useMemo(() => collectLogLinks(log), [log]);
+  const linksMap = useMemo(() => getLinksFromLog(log), [log]);
+  const links = useMemo(() => linksMap.map((link) => link.link), [linksMap]);
   const level = formatLevel(log.logLevel);
   const timestamp = timestampResolution === 'ms' ? log.timestamp : log.timestampNs;
 
@@ -44,10 +45,10 @@ export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
         <span className={styles.timestamp}>{timestamp}</span>
       </div>
       {links.length > 0 && (
-        <TracesDrilldownLinkResolver links={links.map((item) => item.link)}>
+        <TracesDrilldownLinkResolver links={links}>
           {(resolvedLinks) => (
             <div className={styles.links}>
-              {links.map(({ fieldKey }, index) => {
+              {linksMap.map(({ fieldKey }, index) => {
                 const link = resolvedLinks?.[index];
                 if (!link) {
                   return null;
@@ -76,7 +77,7 @@ export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
   );
 };
 
-function collectLogLinks(log: LogListModel): Array<{ fieldKey: string; link: LinkModel<Field> }> {
+function getLinksFromLog(log: LogListModel): Array<{ fieldKey: string; link: LinkModel<Field> }> {
   const fieldsWithLinks = log.fields.filter((field) => field.links?.length);
   const displayed = fieldsWithLinks.filter((field) => field.fieldIndex !== log.entryFieldIndex);
   const fromLogLine = createLogLineLinks(fieldsWithLinks.filter((field) => field.fieldIndex === log.entryFieldIndex));
