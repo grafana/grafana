@@ -27441,9 +27441,6 @@
   "servers": [
     {
       "url": "/api"
-    },
-    {
-      "url": "/api"
     }
   ],
   "tags": [
