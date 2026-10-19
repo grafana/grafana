@@ -2,10 +2,10 @@ package accesscontrol_test
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"testing"
+	"testing/synctest"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -136,35 +136,49 @@ func TestScopeResolverRegistry_Register(t *testing.T) {
 }
 
 func TestScopeResolverRegistry_ConcurrentRegistrationAndLookup(t *testing.T) {
-	registry := accesscontrol.NewScopeResolverRegistry()
-	start := make(chan struct{})
-	var workers sync.WaitGroup
+	synctest.Test(t, func(t *testing.T) {
+		registry := accesscontrol.NewScopeResolverRegistry()
+		registrations := []registryTestRegistration{
+			{
+				prefix:   "folders:uid:",
+				resolver: &registryTestResolver{},
+			},
+			{
+				prefix:   "dashboards:uid:",
+				resolver: &registryTestResolver{},
+			},
+			{
+				prefix:   "datasources:uid:",
+				resolver: &registryTestResolver{},
+			},
+		}
+		start := make(chan struct{})
 
-	for i := range 16 {
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
-			<-start
+		for _, registration := range registrations {
+			go func() {
+				<-start
 
-			prefix := fmt.Sprintf("resources%d:uid:", i)
-			resolver := &registryTestResolver{}
-			for range 32 {
-				registry.Register(prefix, resolver)
-				registered, ok := registry.Get(prefix)
-				if !ok || registered != resolver {
-					t.Errorf("registered resolver is missing for %s", prefix)
-					return
-				}
-				if !registry.HasResolvers() {
-					t.Error("registry reports no resolvers after registration")
-					return
-				}
-			}
-		}()
-	}
+				registry.Register(registration.prefix, registration.resolver)
+				resolver, ok := registry.Get(registration.prefix)
 
-	close(start)
-	workers.Wait()
+				assert.True(t, ok, registration.prefix)
+				assert.Same(t, registration.resolver, resolver, registration.prefix)
+				assert.True(t, registry.HasResolvers())
+			}()
+		}
+
+		// Wait until every worker is blocked on start before releasing them.
+		synctest.Wait()
+		close(start)
+		synctest.Wait()
+
+		for _, registration := range registrations {
+			resolver, ok := registry.Get(registration.prefix)
+
+			require.True(t, ok, registration.prefix)
+			require.Same(t, registration.resolver, resolver, registration.prefix)
+		}
+	})
 }
 
 type registryTestRegistration struct {
