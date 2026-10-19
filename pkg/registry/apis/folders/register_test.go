@@ -180,34 +180,52 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
-	for _, dryRun := range []bool{false, true} {
-		t.Run(fmt.Sprintf("dryRun=%t", dryRun), func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
-			storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
-				Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
-			b := &FolderAPIBuilder{
-				storage:              storage,
-				parents:              newParentsGetter(storage, 5),
-				maxNestedFolderDepth: 5,
-			}
-			obj := &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "child",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
-				},
-				Spec: folders.FolderSpec{Title: "child"},
-			}
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
-				obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
-				folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
-				nil, dryRun, &user.SignedInUser{},
-			), nil)
-			if dryRun {
-				require.NoError(t, err)
-			} else {
-				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
-			}
-		})
+	for _, tc := range []struct {
+		name            string
+		parentName      string
+		missingAncestor bool
+	}{
+		{name: "immediate parent missing", parentName: "missing"},
+		{name: "grandparent missing", parentName: "parent", missingAncestor: true},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
+				storage := grafanarest.NewMockStorage(t)
+				if tc.missingAncestor {
+					storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "parent",
+							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
+						},
+						Spec: folders.FolderSpec{Title: "parent"},
+					}, nil).Once()
+				}
+				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
+					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
+				b := &FolderAPIBuilder{
+					storage:              storage,
+					parents:              newParentsGetter(storage, 5),
+					maxNestedFolderDepth: 5,
+				}
+				obj := &folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: tc.parentName},
+					},
+					Spec: folders.FolderSpec{Title: "child"},
+				}
+				err := b.Validate(context.Background(), admission.NewAttributesRecord(
+					obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
+					folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
+					nil, dryRun, &user.SignedInUser{},
+				), nil)
+				if dryRun || tc.missingAncestor {
+					require.NoError(t, err)
+				} else {
+					require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+				}
+			})
+		}
 	}
 }
 
