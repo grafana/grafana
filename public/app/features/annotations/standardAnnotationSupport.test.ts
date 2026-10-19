@@ -113,6 +113,7 @@ describe('DataFrame to annotations', () => {
         { name: 'data', values: [{ text: 'a', value: 'A' }] },
         { name: 'panelId', values: [4] },
         { name: 'alertId', values: [0] },
+        { name: 'alertUID', values: ['rule-uid'] },
       ],
     });
 
@@ -137,6 +138,7 @@ describe('DataFrame to annotations', () => {
           type: 'default',
           userId: 'Admin',
           alertId: 0,
+          alertUID: 'rule-uid',
         },
       ],
     ]);
