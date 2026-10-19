@@ -156,6 +156,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     [app, datasourceType, onGoToSpan]
   );
 
+  const toggleBannerException = useCallback(
+    (isOpen: boolean) => {
+      reportInteraction('grafana_traces_trace_view_banner_exception_toggled', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen,
+      });
+    },
+    [app, datasourceType]
+  );
+
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
 
@@ -373,6 +386,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           highlight={traceBanner}
           traceDuration={trace.duration}
           onGoToSpan={goToBannerSpan}
+          onExceptionToggle={toggleBannerException}
           onLayoutChange={measureHeader}
         />
       )}

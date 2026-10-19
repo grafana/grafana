@@ -25,10 +25,17 @@ type TraceBannerProps = {
   highlight: TraceBannerHighlight;
   traceDuration: number;
   onGoToSpan: (spanId: string) => void;
+  onExceptionToggle?: (isOpen: boolean) => void;
   onLayoutChange?: () => void;
 };
 
-export function TraceBanner({ highlight, traceDuration, onGoToSpan, onLayoutChange }: TraceBannerProps) {
+export function TraceBanner({
+  highlight,
+  traceDuration,
+  onGoToSpan,
+  onExceptionToggle,
+  onLayoutChange,
+}: TraceBannerProps) {
   const styles = useStyles2(getStyles);
   const { span, severity } = highlight;
   const [isOpen, setIsOpen] = useState(false);
@@ -88,7 +95,11 @@ export function TraceBanner({ highlight, traceDuration, onGoToSpan, onLayoutChan
             className={styles.summaryToggle}
             aria-expanded={isOpen}
             aria-controls={detailsId}
-            onClick={() => setIsOpen((open) => !open)}
+            onClick={() => {
+              const next = !isOpen;
+              onExceptionToggle?.(next);
+              setIsOpen(next);
+            }}
             data-testid={selectors.components.TraceViewer.traceBanner.toggleButton}
           >
             {identity}

@@ -472,6 +472,55 @@ describe('TracePageHeader test', () => {
     });
   });
 
+  it('reports opening and closing the banner exception details', async () => {
+    const errorTraceId = 'exception-banner-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'timeout-error',
+          tags: [
+            { key: 'http.status_code', type: 'String', value: '504' },
+            { key: 'exception.type', type: 'String', value: 'java.lang.TimeoutException' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const toggle = screen.getByTestId(selectors.components.TraceViewer.traceBanner.toggleButton);
+    await userEvent.click(toggle);
+    await userEvent.click(toggle);
+
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(reportInteraction)).toHaveBeenNthCalledWith(
+      1,
+      'grafana_traces_trace_view_banner_exception_toggled',
+      {
+        app: CoreApp.Unknown,
+        datasourceType: 'tempo',
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen: true,
+      }
+    );
+    expect(jest.mocked(reportInteraction)).toHaveBeenNthCalledWith(
+      2,
+      'grafana_traces_trace_view_banner_exception_toggled',
+      {
+        app: CoreApp.Unknown,
+        datasourceType: 'tempo',
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen: false,
+      }
+    );
+  });
+
   it('should render the trace-level logs link when provided', () => {
     setup({ links: [], isLoading: false }, false, {
       href: '/explore?logs',
