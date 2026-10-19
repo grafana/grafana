@@ -19,8 +19,12 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 		expected []provisioning.ConnectionType
 	}{
 		{
-			name:     "defaults to GitHub",
-			expected: []provisioning.ConnectionType{provisioning.GithubConnectionType},
+			name: "defaults to GitHub and OAuth connection types",
+			expected: []provisioning.ConnectionType{
+				provisioning.GithubConnectionType,
+				provisioning.GithubOAuthConnectionType,
+				provisioning.GitOAuthConnectionType,
+			},
 		},
 		{
 			name:     "uses configured connection types",
@@ -31,9 +35,11 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			extras := make([]connection.Extra, 0, 2)
+			extras := make([]connection.Extra, 0, 4)
 			for _, connectionType := range []provisioning.ConnectionType{
 				provisioning.GithubConnectionType,
+				provisioning.GithubOAuthConnectionType,
+				provisioning.GitOAuthConnectionType,
 				configuredType,
 			} {
 				extra := connection.NewMockExtra(t)
