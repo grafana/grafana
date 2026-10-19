@@ -133,7 +133,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 			if maxAge := b.opts.Snapshot.MaxIndexAge; maxAge > 0 {
 				notOlderThan = time.Now().Add(-maxAge)
 			}
-			ranked := b.rankSnapshots(all, notOlderThan, logger)
+			ranked := b.rankSnapshots(key, all, notOlderThan, logger)
 			choices := make([]snapshotChoice, 0, len(ranked))
 			for _, c := range ranked {
 				choices = append(choices, snapshotChoice{key: c.key, meta: c.meta})
@@ -371,8 +371,9 @@ func (b *bleveBackend) downloadSnapshotCandidate(
 // Tier 1 (older, acceptable): v < MinBuildVersion
 // Tier 2 (newer, last resort): v > runningVersion
 //
-// Within each tier, sort by version desc -> RV desc -> upload time desc.
-func (b *bleveBackend) rankSnapshots(all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) []snapshotCandidate {
+// Within each tier, prefer newer versions, then reconciliation time for global
+// indexes or RV for per-resource indexes, then upload time.
+func (b *bleveBackend) rankSnapshots(key resource.NamespacedResource, all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) []snapshotCandidate {
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
@@ -459,10 +460,7 @@ func (b *bleveBackend) rankSnapshots(all map[ulid.ULID]*IndexMeta, notOlderThan 
 		if c := candidates[i].version.Compare(candidates[j].version); c != 0 {
 			return c > 0
 		}
-		if candidates[i].meta.LatestResourceVersion != candidates[j].meta.LatestResourceVersion {
-			return candidates[i].meta.LatestResourceVersion > candidates[j].meta.LatestResourceVersion
-		}
-		return candidates[i].meta.UploadTimestamp.After(candidates[j].meta.UploadTimestamp)
+		return newerSnapshot(candidates[i].meta, candidates[j].meta, key.IsGlobal())
 	})
 
 	logger.Debug("selected index snapshot",
@@ -478,9 +476,29 @@ func (b *bleveBackend) rankSnapshots(all map[ulid.ULID]*IndexMeta, notOlderThan 
 	return candidates
 }
 
+// Shared with cleanup so it retains the snapshot downloads would prefer.
+func newerSnapshot(a, b *IndexMeta, global bool) bool {
+	if global {
+		// Global RVs stay at the build, even while reconciliation repairs the index.
+		aTime, bTime := a.ReconciledAt, b.ReconciledAt
+		if aTime.IsZero() {
+			aTime = a.BuildTime
+		}
+		if bTime.IsZero() {
+			bTime = b.BuildTime
+		}
+		if c := aTime.Compare(bTime); c != 0 {
+			return c > 0
+		}
+	} else if a.LatestResourceVersion != b.LatestResourceVersion {
+		return a.LatestResourceVersion > b.LatestResourceVersion
+	}
+	return a.UploadTimestamp.After(b.UploadTimestamp)
+}
+
 // pickBestSnapshot returns the best candidate, for callers that do not retry.
-func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) (snapshotCandidate, bool) {
-	ranked := b.rankSnapshots(all, notOlderThan, logger)
+func (b *bleveBackend) pickBestSnapshot(key resource.NamespacedResource, all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) (snapshotCandidate, bool) {
+	ranked := b.rankSnapshots(key, all, notOlderThan, logger)
 	if len(ranked) == 0 {
 		return snapshotCandidate{}, false
 	}

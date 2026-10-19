@@ -27,8 +27,10 @@ import (
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/authlib/types"
@@ -543,6 +545,9 @@ type searchServer struct {
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
 	globalIndexEnabled        bool
+	// uncheckedGlobalTypesLogged holds the {group}/{resource} of each type already
+	// logged as left out of global search for being unchecked.
+	uncheckedGlobalTypesLogged sync.Map
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -932,10 +937,20 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
-	if err := s.checkSearchServicePermissions(ctx, req); err != nil {
+	excluded, err := s.checkSearchServicePermissions(ctx, req)
+	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+	}
+	if len(excluded) > 0 {
+		// Cloned so the caller's request is not changed underneath it.
+		req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key:      SEARCH_FIELD_GROUP_RESOURCE,
+			Operator: string(selection.NotIn),
+			Values:   excluded,
+		})
 	}
 
 	nsr := NamespacedResource{
@@ -973,7 +988,11 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	if prepare != nil {
 		prepare(idx)
 	}
-	return idx.Search(ctx, s.access, req, federate, stats)
+	rsp, err := idx.Search(ctx, s.access, req, federate, stats)
+	if rsp != nil && len(excluded) > 0 {
+		rsp.SkippedTypes = excluded
+	}
+	return rsp, err
 }
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with
