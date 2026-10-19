@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Drawer } from './Drawer';
+import { DRAWER_INSIDE_ATTRIBUTE, Drawer } from './Drawer';
 
 describe('Drawer', () => {
   // Drawer.tsx passes getContainer={'.main-view'} to RcDrawer, which tells it
@@ -64,5 +64,28 @@ describe('Drawer', () => {
     expect(drawer).toHaveAttribute('aria-labelledby', titleWrapper?.getAttribute('id'));
     // no aria-label for non-string titles
     expect(drawer).not.toHaveAttribute('aria-label');
+  });
+
+  it('keeps elements marked as inside reachable while open, and hides the rest of the page', async () => {
+    // Without the portal container, getPortalContainer() falls back to document.body and so treats the whole page as inside.
+    const portalContainer = document.createElement('div');
+    portalContainer.id = 'grafana-portal-container';
+    const page = document.createElement('div');
+    const floating = document.createElement('div');
+    floating.setAttribute(DRAWER_INSIDE_ATTRIBUTE, '');
+    document.body.append(portalContainer, page, floating);
+
+    render(
+      <Drawer title="Inspect" onClose={() => {}}>
+        <div>Content</div>
+      </Drawer>
+    );
+
+    await waitFor(() => expect(page).toHaveAttribute('aria-hidden', 'true'));
+    expect(floating).not.toHaveAttribute('aria-hidden');
+
+    portalContainer.remove();
+    page.remove();
+    floating.remove();
   });
 });

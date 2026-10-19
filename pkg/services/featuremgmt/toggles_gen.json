@@ -268,7 +268,8 @@
       "metadata": {
         "name": "alertingAIFeedback",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-23T12:38:09Z"
+        "creationTimestamp": "2025-07-23T12:38:09Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-generated feedback from the Grafana UI.",
@@ -282,7 +283,8 @@
       "metadata": {
         "name": "alertingAIGenAlertRules",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T16:42:42Z"
+        "creationTimestamp": "2025-07-16T16:42:42Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-generated alert rules.",
@@ -310,7 +312,8 @@
       "metadata": {
         "name": "alertingAIImproveAlertRules",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T16:42:42Z"
+        "creationTimestamp": "2025-07-16T16:42:42Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-improve alert rules labels and annotations.",
@@ -3101,6 +3104,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.preserveLoginTabTitle",
+        "resourceVersion": "1791187415500",
+        "creationTimestamp": "2026-10-05T08:03:35Z"
+      },
+      "spec": {
+        "description": "Preserves the navigation section label in the browser tab title after session expiry",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.publishLegacySQLEvents",
         "resourceVersion": "1791422331913",
         "creationTimestamp": "2026-10-07T14:35:19Z",
@@ -5873,15 +5890,17 @@
     {
       "metadata": {
         "name": "text.newFeatures",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-12T12:33:51Z"
+        "resourceVersion": "1792435530884",
+        "creationTimestamp": "2026-08-12T12:33:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 18:45:30.884278 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new features in text panel",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },

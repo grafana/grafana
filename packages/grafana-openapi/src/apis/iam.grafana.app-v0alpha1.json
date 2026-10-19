@@ -3109,6 +3109,25 @@
           }
         }
       }
+    },
+    "/whoami/permissions": {
+      "get": {
+        "tags": ["User"],
+        "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
+        "operationId": "getWhoAmIPermissions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
     }
   },
   "components": {
@@ -5401,15 +5420,14 @@
       "UserPermission": {
         "description": "UserPermission is one effective action and scope granted to an identity.",
         "type": "object",
-        "required": ["action", "scope"],
+        "required": ["action"],
         "properties": {
           "action": {
             "type": "string",
             "default": ""
           },
           "scope": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },
@@ -5678,7 +5696,7 @@
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {
