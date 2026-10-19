@@ -310,6 +310,28 @@ describe('detectDrilldownMigrationCandidates', () => {
   });
 
   it('keeps a high-confidence filter candidate also referenced in a panel title, flagged for rewriting', async () => {
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getDrilldownMigrationUsage: () => ({ kind: 'filter', key: 'instance', operator: '=~' }),
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'down{instance=~"$instance"}' }], {
+      title: 'Instance: $instance',
+    });
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectDrilldownMigrationCandidates(scene);
+
+    expect(candidates).toEqual([
+      expect.objectContaining({ variableName: 'instance', confidence: 'high', referencedOutsideQueries: true }),
+    ]);
+  });
+
+  it('rejects a high-confidence candidate when another query on the datasource does not use the variable', async () => {
+    // The migrated filter would apply to that query too, changing what it returns.
     const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): DrilldownMigrationUsage | undefined =>
       query.refId === 'A' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined
     );
@@ -321,14 +343,10 @@ describe('detectDrilldownMigrationCandidates', () => {
 
     const variable = buildVariable('instance', 'prom-a');
     const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
-    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'up' }], { title: 'Instance: $instance' });
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'up' }]);
     const scene = buildScene([variable], [panel1, panel2]);
 
-    const candidates = await detectDrilldownMigrationCandidates(scene);
-
-    expect(candidates).toEqual([
-      expect.objectContaining({ variableName: 'instance', confidence: 'high', referencedOutsideQueries: true }),
-    ]);
+    expect(await detectDrilldownMigrationCandidates(scene)).toEqual([]);
   });
 
   it('resolves a missing datasource ref on the variable and panel to the default datasource', async () => {

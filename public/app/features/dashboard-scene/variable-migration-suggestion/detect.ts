@@ -206,7 +206,9 @@ function aggregateHighConfidenceCandidate(
       return undefined;
     }
     if (!usage) {
-      continue;
+      // Filters and group by apply to every query on the datasource, so migrating would change a
+      // query that doesn't use the variable today.
+      return undefined;
     }
 
     if (usage.kind === 'unsafe') {
