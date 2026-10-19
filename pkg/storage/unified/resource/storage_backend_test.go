@@ -3095,7 +3095,12 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
 		require.NoError(t, err)
 
-		require.Equal(t, []string{"pruned"}, listNames(t, backend, SubtractDurationFromSnowflake(rv, 40*time.Minute)))
+		oldRV := SubtractDurationFromSnowflake(rv, 40*time.Minute)
+		require.Equal(t, []string{"pruned"}, listNames(t, backend, oldRV))
+		// No committed RV to advance to, so the checkpoint stays.
+		latestRV, _ := backend.ListModifiedSince(t.Context(), ns, oldRV, nil)
+		require.Equal(t, oldRV, latestRV)
+
 		require.Empty(t, listNames(t, backend, SubtractDurationFromSnowflake(rv, 10*time.Minute)))
 	})
 

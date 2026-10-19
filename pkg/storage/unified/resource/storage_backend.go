@@ -2323,22 +2323,24 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	useDataStore := time.Since(effectiveRvTime) > k.maxEventStoreAge()
 
 	latestEvent, err := k.eventStore.LastEventKey(ctx)
-	latestRv := latestEvent.ResourceVersion
 	if errors.Is(err, ErrNotFound) {
 		if !useDataStore {
 			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
 		}
-		// Pruning may have removed every event since effectiveRv.
-		latestRv, err = k.generateResourceVersion()
+		// Pruning may have removed every event since effectiveRv. Without a
+		// committed RV to advance to, keep the checkpoint.
+		k.log.Debug("ListModifiedSince using data store, event store is empty", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+		return sinceRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
 	}
 	if err != nil {
-		err = fmt.Errorf("error trying to retrieve the latest resource version: %w", err)
+		err = fmt.Errorf("error trying to retrieve last event key: %w", err)
 		recordSpanError(span, err)
 		return 0, func(yield func(*ModifiedResource, error) bool) {
 			yield(nil, err)
 		}
 	}
 
+	latestRv := latestEvent.ResourceVersion
 	// If no new events since effectiveRv, return early and avoid doing a range query.
 	if latestRv <= effectiveRv {
 		return latestRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
