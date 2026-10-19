@@ -227,6 +227,6 @@ END $$;`))
 	mg.AddMigration("add embedding collection scope",
 		migrator.NewRawSQLMigration("").Postgres(`
 			ALTER TABLE embedding_collections
-				ADD COLUMN IF NOT EXISTS scope VARCHAR(16) NOT NULL DEFAULT 'tenant';
+				ADD COLUMN IF NOT EXISTS scope VARCHAR(256) NOT NULL DEFAULT 'tenant';
 		`))
 }
