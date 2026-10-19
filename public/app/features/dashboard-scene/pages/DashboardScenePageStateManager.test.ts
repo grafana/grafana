@@ -324,7 +324,7 @@ describe('DashboardScenePageStateManager v1', () => {
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
 
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -359,7 +359,7 @@ describe('DashboardScenePageStateManager v1', () => {
 
       try {
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
         expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
       } finally {
         contextSrv.user.authenticatedBy = originalAuthBy;
@@ -375,7 +375,7 @@ describe('DashboardScenePageStateManager v1', () => {
 
       try {
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
         expect(initializeReportRenderReadinessObserver as jest.Mock).not.toHaveBeenCalled();
       } finally {
         contextSrv.user.authenticatedBy = originalAuthBy;
@@ -409,7 +409,8 @@ describe('DashboardScenePageStateManager v1', () => {
             expect.objectContaining({
               from: expectedFromISO,
               to: expectedToISO,
-            })
+            }),
+            { alertNotFound: true }
           );
 
           // Verify that extra parameters were filtered out (including timezone)
@@ -430,7 +431,7 @@ describe('DashboardScenePageStateManager v1', () => {
           await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
           // Verify that loadDashboard was called without query params (3 parameters only)
-          expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+          expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
         })
       );
 
@@ -530,7 +531,7 @@ describe('DashboardScenePageStateManager v1', () => {
       resolveMetas();
       await loading;
 
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
       expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
     });
 
@@ -2250,7 +2251,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       const manager = new UnifiedDashboardScenePageStateManager({});
       await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
     });
 
@@ -2372,8 +2373,9 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         setupV1FailureV2Success();
         const manager = new UnifiedDashboardScenePageStateManager({});
         await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        const loadDashboard = jest.fn().mockRejectedValue(notFound);
         manager['v2Manager']['dashboardLoader'] = {
-          loadDashboard: jest.fn().mockRejectedValue(notFound),
+          loadDashboard,
           loadSnapshot: jest.fn(),
         } as unknown as DashboardLoaderSrvV2;
         jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(proposal(baseGeneration));
@@ -2385,11 +2387,14 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         jest
           .mocked(getPendingChangePreview)
           .mockImplementation(jest.requireActual('../lifecycle/pendingChangePreview').getPendingChangePreview);
-        return manager;
+        return { manager, loadDashboard };
       }
 
       it('opens unsaved, showing the proposal, and saves under the uid it was proposed for', async () => {
-        const manager = await loadMissingDashboard(0);
+        const { manager, loadDashboard } = await loadMissingDashboard(0);
+
+        // The pending changes may propose the missing dashboard, so the loader doesn't alert it.
+        expect(loadDashboard.mock.calls[0][4]).toEqual({ alertNotFound: false });
 
         const scene = manager.state.dashboard;
         expect(manager.state.loadError).toBeUndefined();
@@ -2430,7 +2435,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       });
 
       it('still reports a missing dashboard when its pending changes are to a saved one', async () => {
-        const manager = await loadMissingDashboard(3);
+        const { manager } = await loadMissingDashboard(3);
 
         expect(manager.state.dashboard).toBeUndefined();
         expect(manager.state.loadError?.status).toBe(404);
@@ -2573,7 +2578,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
 
       const reloadMock = jest.fn();
@@ -2671,7 +2676,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       const manager = new UnifiedDashboardScenePageStateManager({});
       await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined, { alertNotFound: true });
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
 
       const mockDashboard: DashboardDTO = {

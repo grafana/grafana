@@ -150,7 +150,8 @@ export interface LoadDashboardOptions {
   defaultLinks?: DashboardLink[];
   /**
    * Pending changes to preview (see pendingChangePreview.ts). The dashboard page reads them
-   * from its URL instead.
+   * from its URL instead. With them, a missing dashboard isn't alerted: they may propose it, and
+   * the page reports one that is missing.
    */
   pendingChanges?: string;
 }
@@ -858,6 +859,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     uid,
     route,
     urlFolderUid,
+    pendingChanges,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -942,9 +944,13 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           // Since the scene is not yet there, we need to process whatever came through URL
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
-            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject, {
+              alertNotFound: !pendingChanges,
+            });
           } else {
-            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, undefined, {
+              alertNotFound: !pendingChanges,
+            });
           }
 
           if (route === DashboardRoutes.Embedded) {
@@ -1232,6 +1238,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     urlFolderUid,
     dashboardTemplateUid,
     editTemplate,
+    pendingChanges,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -1290,9 +1297,13 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         default:
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
-            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParamsObject, {
+              alertNotFound: !pendingChanges,
+            });
           } else {
-            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
+            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, undefined, {
+              alertNotFound: !pendingChanges,
+            });
           }
 
           if (route === DashboardRoutes.Embedded) {
@@ -1504,7 +1515,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null;
     try {
       rsp = await this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
-        manager.fetchDashboard(options)
+        // The id the page read from its URL too, so a missing dashboard isn't alerted before the
+        // pending changes say whether they propose it.
+        manager.fetchDashboard({ ...options, pendingChanges: id })
       );
     } catch (error) {
       const preview = await loadingPreview;
