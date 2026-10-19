@@ -35,8 +35,6 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		Teams:               []string{"team-1", "team-2"},
 		SkipCache:           false,
 		SkipScopeResolution: false,
-		Action:              "",
-		Scope:               "",
 		Expression: &authzextv1.LegacyExpression{
 			Node: &authzextv1.LegacyExpression_All{
 				All: &authzextv1.LegacyExpressionList{
@@ -125,8 +123,6 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 				Teams:               nil,
 				SkipCache:           false,
 				SkipScopeResolution: false,
-				Action:              "",
-				Scope:               "",
 			}
 
 			request, err := ac.buildLegacyCheckRequest(&tc.requester, accesscontrol.EvalPermission("dashboards:read"), false)
