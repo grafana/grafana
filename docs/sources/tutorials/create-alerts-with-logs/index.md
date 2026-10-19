@@ -77,7 +77,7 @@ There are different ways you can follow along with this tutorial.
 
 To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
-1. Download and save the Docker Compose file, the Alloy configuration, and the Grafana datasource provisioning file for this tutorial.
+1. Download and save the Docker Compose file, the Alloy configuration, and the Grafana data source provisioning file for this tutorial.
 
    ```bash
    wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/loki-logs/docker-compose.yaml
