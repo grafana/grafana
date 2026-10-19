@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { pickBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
+import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import {
   type GrafanaTheme2,
   addDurationToDate,
@@ -17,6 +19,7 @@ import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
   Field,
   FieldSet,
@@ -147,6 +150,10 @@ export const SilencesEditor = ({
 }: SilencesEditorProps) => {
   const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
 
+  const { data: silencedRule, isError: silencedRuleUnavailable } = useGetAlertRuleQuery(
+    ruleUid ? { name: ruleUid } : skipToken
+  );
+
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
@@ -248,7 +255,27 @@ export const SilencesEditor = ({
             </Field>
           </div>
 
-          <MatchersField required={Boolean(!ruleUid)} ruleUid={ruleUid} />
+          {ruleUid && (silencedRule || silencedRuleUnavailable) && (
+            <Box marginBottom={2}>
+              <Field
+                noMargin
+                label={t('alerting.silences-editor.label-alert-rule', 'Alert rule')}
+                description={getSilencedRuleDescription(ruleUid, Boolean(silencedRule))}
+                disabled
+              >
+                <Input
+                  id="alert-rule-name"
+                  value={
+                    silencedRule?.spec.title ??
+                    t('alerting.silences-editor.alert-rule-unavailable', 'Alert rule unavailable')
+                  }
+                  disabled
+                />
+              </Field>
+            </Box>
+          )}
+
+          <MatchersField required={Boolean(!ruleUid)} />
 
           <Field
             label={t('alerting.silences-editor.label-comment', 'Comment')}
@@ -309,6 +336,21 @@ export const SilencesEditor = ({
     </FormProvider>
   );
 };
+
+function getSilencedRuleDescription(ruleUid: string, ruleLoaded: boolean) {
+  if (ruleLoaded) {
+    return t(
+      'alerting.silences-editor.description-alert-rule-scope',
+      'This silence applies only to alerts from this alert rule.'
+    );
+  }
+
+  return t(
+    'alerting.silences-editor.description-alert-rule-unavailable',
+    'This silence applies only to alerts from the alert rule with UID {{ruleUid}}. The rule may have been deleted, or you may not have permission to view it.',
+    { ruleUid }
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   formContainer: css({
