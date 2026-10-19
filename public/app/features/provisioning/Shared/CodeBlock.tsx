@@ -3,7 +3,8 @@ import { noop } from 'lodash';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, useStyles2, CodeMirrorEditor } from '@grafana/ui';
+import { ClipboardButton, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 interface Props {
   code: string;

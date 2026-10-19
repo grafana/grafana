@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
@@ -8,6 +8,7 @@ import { type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/t
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
+import { getAlertRuleHandler, mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -15,6 +16,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 import { SilencesEditor } from './SilencesEditor';
 
 const RULE_UID = 'rule-uid-1';
+const RULE_TITLE = 'CPU usage high';
 
 const server = setupMswServer();
 
@@ -24,12 +26,13 @@ const dataSources = {
 
 const saveButton = () => screen.getByRole('button', { name: /save silence/i });
 const commentField = () => screen.getByLabelText(/comment/i);
+const findRuleField = () => screen.findByRole('textbox', { name: /^alert rule/i });
 
 const renderEditor = (overrides: { onSilenceCreated?: jest.Mock; onCancel?: jest.Mock } = {}) => {
   const onSilenceCreated = overrides.onSilenceCreated ?? jest.fn();
   const onCancel = overrides.onCancel ?? jest.fn();
 
-  render(
+  const { user } = render(
     <AlertmanagerProvider accessType="instance" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
       <SilencesEditor
         ruleUid={RULE_UID}
@@ -40,7 +43,7 @@ const renderEditor = (overrides: { onSilenceCreated?: jest.Mock; onCancel?: jest
     </AlertmanagerProvider>
   );
 
-  return { onSilenceCreated, onCancel };
+  return { user, onSilenceCreated, onCancel };
 };
 
 const captureCreateSilence = (failFirstAttempt = false) => {
@@ -70,10 +73,32 @@ beforeEach(() => {
 });
 
 describe('SilencesEditor', () => {
-  it('calls onSilenceCreated after a successful submit', async () => {
-    const user = userEvent.setup();
+  it('shows the title of the silenced rule from the Kubernetes rules API', async () => {
+    const rulerRequests: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname.startsWith('/api/ruler/')) {
+        rulerRequests.push(request.url);
+      }
+    });
+    server.use(getAlertRuleHandler([mockK8sAlertRule({ uid: RULE_UID, title: RULE_TITLE })]));
+    renderEditor();
+
+    expect(await findRuleField()).toHaveValue(RULE_TITLE);
+    expect(screen.getByText('Refine affected alerts')).toBeInTheDocument();
+    expect(screen.getByText('This silence applies only to alerts from this alert rule.')).toBeInTheDocument();
+    expect(rulerRequests).toEqual([]);
+    server.events.removeAllListeners('request:start');
+  });
+
+  it('explains that the rule is unavailable when it cannot be loaded, and still scopes to its UID', async () => {
+    server.use(getAlertRuleHandler([]));
     const captured = captureCreateSilence();
-    const { onSilenceCreated } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
+
+    expect(await findRuleField()).toHaveValue('Alert rule unavailable');
+    expect(
+      screen.getByText(new RegExp(`only to alerts from the alert rule with UID ${RULE_UID}.*may have been deleted`))
+    ).toBeInTheDocument();
 
     await user.click(saveButton());
 
@@ -83,10 +108,35 @@ describe('SilencesEditor', () => {
     ]);
   });
 
-  it('calls onCancel without submitting when the user cancels', async () => {
-    const user = userEvent.setup();
+  it('calls onSilenceCreated after a successful submit', async () => {
     const captured = captureCreateSilence();
-    const { onCancel } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
+
+    await user.click(saveButton());
+
+    await waitFor(() => expect(onSilenceCreated).toHaveBeenCalledTimes(1));
+    expect(captured.bodies[0].matchers).toEqual([
+      { isEqual: true, isRegex: false, name: '__alert_rule_uid__', value: RULE_UID },
+    ]);
+  });
+
+  it('preserves named matchers with empty values when submitting', async () => {
+    const captured = captureCreateSilence();
+    const { user, onSilenceCreated } = renderEditor();
+
+    await user.type(screen.getByRole('textbox', { name: /^label$/i }), 'region');
+    await user.click(saveButton());
+
+    await waitFor(() => expect(onSilenceCreated).toHaveBeenCalledTimes(1));
+    expect(captured.bodies[0].matchers).toEqual([
+      { isEqual: true, isRegex: false, name: 'region', value: '' },
+      { isEqual: true, isRegex: false, name: '__alert_rule_uid__', value: RULE_UID },
+    ]);
+  });
+
+  it('calls onCancel without submitting when the user cancels', async () => {
+    const captured = captureCreateSilence();
+    const { user, onCancel } = renderEditor();
 
     await user.click(screen.getByText(/^cancel$/i));
 
@@ -95,10 +145,9 @@ describe('SilencesEditor', () => {
   });
 
   it('keeps the editor open with the entered values when the submit fails', async () => {
-    const user = userEvent.setup();
     const emitSpy = jest.spyOn(appEvents, 'emit');
     captureCreateSilence(true);
-    const { onSilenceCreated } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
 
     await user.clear(commentField());
     await user.type(commentField(), 'investigating outage');
@@ -112,10 +161,9 @@ describe('SilencesEditor', () => {
   });
 
   it('submits exactly one rule UID matcher when retrying after a failure', async () => {
-    const user = userEvent.setup();
     const emitSpy = jest.spyOn(appEvents, 'emit');
     const captured = captureCreateSilence(true);
-    const { onSilenceCreated } = renderEditor();
+    const { user, onSilenceCreated } = renderEditor();
 
     await user.click(saveButton());
     await waitFor(() => expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertError, ['Could not create silence']));

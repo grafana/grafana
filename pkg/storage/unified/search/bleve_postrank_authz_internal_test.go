@@ -85,18 +85,39 @@ func TestAuthzResourcesVerb(t *testing.T) {
 		dashboardaccess.PERMISSION_CREATE: utils.VerbCreate,
 	} {
 		got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(perm)})
-		assert.Equal(t, map[string]string{"folders": verb}, got, "permission %v", perm)
+		assert.Equal(t, map[string]string{"folder.grafana.app/folders": verb}, got, "permission %v", perm)
 	}
 }
 
 func TestAuthzResourcesCreateOnlyAppliesToFolders(t *testing.T) {
 	idx := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: dashboardGroup, Resource: "dashboards"}}
 	got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
-	assert.Equal(t, map[string]string{"dashboards": utils.VerbGet}, got)
+	assert.Equal(t, map[string]string{dashboardGroup + "/dashboards": utils.VerbGet}, got)
 
 	other := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: "other.grafana.app", Resource: "folders"}}
 	got = other.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
-	assert.Equal(t, map[string]string{"folders": utils.VerbGet}, got, "same resource name in another group")
+	assert.Equal(t, map[string]string{"other.grafana.app/folders": utils.VerbGet}, got, "same resource name in another group")
+}
+
+// A global index answers every type, and keeps types of the same name in
+// different groups apart.
+func TestAuthzResourcesOfAGlobalIndex(t *testing.T) {
+	idx := &bleveIndex{key: resource.GlobalSearchKey("default")}
+	got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
+
+	for _, tc := range []struct{ group, resource, verb string }{
+		{"folder.grafana.app", "folders", utils.VerbCreate},
+		{"other.grafana.app", "folders", utils.VerbGet},
+		{"assistant.ext.grafana.app", "pages", utils.VerbGet},
+	} {
+		verb, ok := authzVerb(got, tc.group, tc.resource)
+		require.True(t, ok, "%s/%s", tc.group, tc.resource)
+		assert.Equal(t, tc.verb, verb, "%s/%s", tc.group, tc.resource)
+	}
+
+	perResource := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: "assistant.ext.grafana.app", Resource: "pages"}}
+	_, ok := authzVerb(perResource.authzResources(&resourcepb.ResourceSearchRequest{}), "gas.ext.grafana.app", "pages")
+	assert.False(t, ok, "a per-resource index returns only its own type")
 }
 
 func TestBatchCheckItem(t *testing.T) {

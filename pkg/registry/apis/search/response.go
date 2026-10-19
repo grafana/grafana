@@ -45,6 +45,24 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 	return out, nil
 }
 
+// globalSearchResults is searchResults for the search across resource types,
+// which also reports the types it left out.
+func globalSearchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.GlobalSearchResults, error) {
+	results, err := searchResults(res, kind, limit)
+	if err != nil {
+		return nil, err
+	}
+	return &searchv0.GlobalSearchResults{
+		TypeMeta: metaForKind(searchv0.KindGlobalSearchResults),
+		Metadata: searchv0.GlobalResultsMetadata{
+			ResultsMetadata: results.Metadata,
+			SkippedTypes:    res.GetSkippedTypes(),
+		},
+		Items:  results.Items,
+		Facets: results.Facets,
+	}, nil
+}
+
 // trashResults maps a backend search response into the trash envelope. No facets:
 // trash never requests any, so the backend never returns any.
 func trashResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.TrashResults, error) {
