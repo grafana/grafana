@@ -115,7 +115,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
-	accessTokenClaims, err := authlib.VerifyAccessTokenForRequest(ctx, jwtToken, r.HTTPRequest, s.accessTokenVerifier, s.accessTokenKeys)
+	accessTokenClaims, err := authn.VerifyAccessTokenForRequest(ctx, jwtToken, r.HTTPRequest, s.accessTokenVerifier, s.accessTokenKeys)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
