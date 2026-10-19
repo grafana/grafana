@@ -1801,10 +1801,10 @@ var (
 		{
 			Name:         "kubernetesAuthzTeamLBACRuleApi",
 			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
