@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type JSX, useCallback, useContext, useMemo, useState } from 'react';
+import { type JSX, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2, locationUtil } from '@grafana/data';
@@ -16,6 +16,8 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
+import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
+import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 import { CopyActionButton, DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
@@ -75,6 +77,8 @@ function PanelActionsPopoverWrapper({
   const { menu } = panel.useState();
   const [hoverSlot, setHoverSlot] = useState<HTMLElement | null>(null);
   const { hasOpenOverlay, setOverlayOpen } = usePanelActionsOverlays();
+  // Read in the same render as the menu closing, so opening the picker from the menu never lets the popover close.
+  const isGroupByPickerOpen = useIsGroupByPickerOpen(panel);
 
   const isExpanded = Boolean(viewPanel);
   const headerControls = useMemo(
@@ -94,7 +98,7 @@ function PanelActionsPopoverWrapper({
           content={<PanelActions panel={panel} dashboard={dashboard} menu={menu} onHoverSlotChange={setHoverSlot} />}
           showOutsideEditMode
           keyboardAccessible
-          keepOpen={hasOpenOverlay}
+          keepOpen={hasOpenOverlay || isGroupByPickerOpen}
           placement="top-end"
           offset={POPOVER_OFFSET}
           portalRoot={getPortalRoot}
@@ -119,6 +123,12 @@ interface PanelActionsProps {
 
 function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelActionsProps) {
   const onMenuOpenChange = usePanelActionsOverlayOpenChange();
+  const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
+  const isGroupByPickerOpen = useIsGroupByPickerOpen(panel);
+  const headerActions = getHeaderActions(panel);
+
+  // A picker left open when the popover closes would otherwise reappear the next time it opens.
+  useEffect(() => () => headerActions?.closeGroupByPicker(), [headerActions]);
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
   const { isEditing, viewPanel, editable } = dashboard.useState();
@@ -258,22 +268,55 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
         </>
       )}
 
-      <Dropdown
-        overlay={() => <menu.Component model={menu} />}
-        placement="bottom-end"
-        onVisibleChange={onMenuVisibleChange}
-      >
-        <IconButton
-          name="ellipsis-v"
-          size="md"
-          className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.more-actions', 'More actions')}
-          tooltipPlacement="top"
-          data-testid={selectors.components.Panels.Panel.menu(titleText)}
+      <span ref={setMoreActionsAnchor} className={styles.moreActions}>
+        <Dropdown
+          overlay={() => <menu.Component model={menu} />}
+          placement="bottom-end"
+          onVisibleChange={onMenuVisibleChange}
+        >
+          <IconButton
+            name="ellipsis-v"
+            size="md"
+            className={actionStyles.action}
+            tooltip={t('dashboard-scene.panel-actions-popover.more-actions', 'More actions')}
+            tooltipPlacement="top"
+            data-testid={selectors.components.Panels.Panel.menu(titleText)}
+          />
+        </Dropdown>
+      </span>
+
+      {isGroupByPickerOpen && headerActions && moreActionsAnchor && (
+        <PanelGroupByPicker
+          {...headerActions.getGroupByVariables()}
+          queries={headerActions.getQueryRunner()?.state.queries ?? []}
+          referenceElement={moreActionsAnchor}
+          placement="bottom-end"
+          onClose={() => headerActions.closeGroupByPicker()}
         />
-      </Dropdown>
+      )}
     </>
   );
+}
+
+function getHeaderActions(panel: VizPanel): VizPanelHeaderActions | undefined {
+  const { headerActions } = panel.state;
+  return headerActions instanceof VizPanelHeaderActions ? headerActions : undefined;
+}
+
+function useIsGroupByPickerOpen(panel: VizPanel): boolean {
+  const headerActions = getHeaderActions(panel);
+  const [isOpen, setIsOpen] = useState(Boolean(headerActions?.state.isGroupByPickerOpen));
+
+  useEffect(() => {
+    if (!headerActions) {
+      return;
+    }
+    setIsOpen(Boolean(headerActions.state.isGroupByPickerOpen));
+    const sub = headerActions.subscribeToState((state) => setIsOpen(Boolean(state.isGroupByPickerOpen)));
+    return () => sub.unsubscribe();
+  }, [headerActions]);
+
+  return isOpen;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -282,6 +325,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1),
     // The popover offset alone sets the 8px overlap with the panel's top edge.
     top: 0,
+  }),
+  moreActions: css({
+    display: 'inline-flex',
   }),
   hoverSlot: css({
     // Header items join the toolbar's flex layout and 8px gap; items that render nothing leave no gap.

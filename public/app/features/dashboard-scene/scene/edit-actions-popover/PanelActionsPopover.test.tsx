@@ -5,7 +5,7 @@ import { act, render, screen, userEvent, within } from 'test/test-utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { AdHocFiltersVariable, SceneVariableSet, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { Dropdown, ElementSelectionContext, IconButton, Menu } from '@grafana/ui';
 import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
@@ -15,6 +15,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { DashboardScene } from '../DashboardScene';
+import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
@@ -380,6 +381,36 @@ describe('<PanelActionsWrapper />', () => {
       await user.keyboard('{ArrowDown}{Enter}');
 
       expect(onLinkClick).toHaveBeenCalledTimes(1);
+    });
+
+    test('Group by opened from the menu shows the panel keys and keeps the popover open', async () => {
+      jest
+        .spyOn(AdHocFiltersVariable.prototype, '_getGroupByKeys')
+        .mockResolvedValue([{ label: 'host', value: 'host' }]);
+      const headerActions = new VizPanelHeaderActions({ isGroupByActionSupported: true });
+      const panel = createPanel({
+        headerActions,
+        menu: new VizPanelMenu({ items: [{ text: 'Group by…', onClick: () => headerActions.openGroupByPicker() }] }),
+      });
+      createDashboard(panel, {
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', enableGroupBy: true, filters: [] })],
+        }),
+      });
+      const user = userEvent.setup();
+
+      renderWrapper(panel);
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'More actions' }));
+      // Clicking the item closes the menu and opens the picker in the same event.
+      await user.click(await screen.findByRole('menuitem', { name: 'Group by…' }));
+
+      expect(await screen.findByRole('checkbox', { name: 'host' })).toBeInTheDocument();
+      expect(screen.getByRole('toolbar', { name: 'Panel actions', hidden: true })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(headerActions.state.isGroupByPickerOpen).toBe(false);
     });
 
     test('for a panel with a hover header, its header items are rendered first in the popover', async () => {

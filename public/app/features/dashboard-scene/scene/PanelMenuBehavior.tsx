@@ -46,6 +46,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { VizPanelHeaderActions } from './VizPanelHeaderActions';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 /**
@@ -182,6 +183,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         e.preventDefault();
       },
     });
+
+    // With the panel actions popover, group by moves from the panel header into the menu.
+    const headerActions = panel.state.headerActions;
+    if (hasActionsPopover && headerActions instanceof VizPanelHeaderActions && headerActions.canGroupBy()) {
+      items.push({
+        text: t('panel.header-menu.group-by', 'Group by…'),
+        iconClassName: 'layer-group',
+        onClick: () => headerActions.openGroupByPicker(),
+      });
+    }
 
     // In edit mode the popover offers Copy, Duplicate and Remove, except on repeated panels.
     const popoverHasLayoutActions = hasActionsPopover && isEditing && !isReadOnlyRepeat;

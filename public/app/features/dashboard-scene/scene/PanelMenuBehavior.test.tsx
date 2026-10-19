@@ -38,6 +38,7 @@ import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
+import { VizPanelHeaderActions } from './VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -187,6 +188,30 @@ describe('panelMenuBehavior', () => {
         expect(moreItemTexts).not.toContain('Copy');
       }
     );
+
+    it('offers Group by… when the panel supports grouping, and it opens the group by picker', async () => {
+      const headerActions = new VizPanelHeaderActions({ isGroupByActionSupported: true });
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ headerActions });
+
+      menu.activate();
+      await waitFor(() => expect(menu.state.items?.length).toBeGreaterThan(0));
+
+      const groupBy = menu.state.items?.find((i) => i.text === 'Group by…');
+      expect(groupBy).toBeDefined();
+
+      groupBy?.onClick?.({} as React.MouseEvent);
+      expect(headerActions.state.isGroupByPickerOpen).toBe(true);
+    });
+
+    it('does not offer Group by… when the panel does not support grouping', async () => {
+      const { itemTexts } = await getMenuItems((_scene, panel) =>
+        panel.setState({ headerActions: new VizPanelHeaderActions({ isGroupByActionSupported: false }) })
+      );
+
+      expect(itemTexts).not.toContain('Group by…');
+    });
 
     it('while searching panels, keeps all items because panels are shown without the popover', async () => {
       const { itemTexts } = await getMenuItems((scene) => scene.setState({ panelSearch: 'cpu' }));

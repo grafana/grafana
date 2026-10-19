@@ -1,3 +1,4 @@
+import { useContext } from 'react';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -10,12 +11,15 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
   hideGroupByAction?: boolean;
   isGroupByActionSupported?: boolean;
+  /** The group by picker opened from the panel menu, used when the panel actions popover owns the header controls. */
+  isGroupByPickerOpen?: boolean;
 }
 
 export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActionsState> {
@@ -47,6 +51,29 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
       this._groupBySub?.unsubscribe();
     };
   };
+
+  public canGroupBy(): boolean {
+    return !this.state.hideGroupByAction && Boolean(this.state.isGroupByActionSupported);
+  }
+
+  public openGroupByPicker() {
+    this.setState({ isGroupByPickerOpen: true });
+  }
+
+  public closeGroupByPicker() {
+    this.setState({ isGroupByPickerOpen: false });
+  }
+
+  public getGroupByVariables(): { groupByVariable?: GroupByVariable; adhocGroupByVariable?: AdHocFiltersVariable } {
+    const variables = sceneGraph.getVariables(this).state.variables;
+    return {
+      groupByVariable: variables.find((variable): variable is GroupByVariable => variable instanceof GroupByVariable),
+      adhocGroupByVariable: variables.find(
+        (variable): variable is AdHocFiltersVariable =>
+          variable instanceof AdHocFiltersVariable && variable.state.enableGroupBy === true
+      ),
+    };
+  }
 
   private updateGroupByActionSupport() {
     const queryRunner = this.getQueryRunner();
@@ -162,28 +189,26 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 
 function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
   const { hideGroupByAction, isGroupByActionSupported } = model.useState();
-  const variables = sceneGraph.getVariables(model);
-  const groupByVariable = variables.state.variables.find(
-    (variable): variable is GroupByVariable => variable instanceof GroupByVariable
-  );
-  const adhocGroupByVariable = variables.state.variables.find(
-    (variable): variable is AdHocFiltersVariable =>
-      variable instanceof AdHocFiltersVariable && variable.state.enableGroupBy === true
-  );
+  // The panel actions popover offers group by from the panel menu instead.
+  const hasExternalHeaderControls = Boolean(useContext(PanelChromeHeaderControlsContext)?.external);
+  const { groupByVariable, adhocGroupByVariable } = model.getGroupByVariables();
   const queryRunner = model.getQueryRunner();
   const queries = queryRunner?.state.queries ?? [];
 
   return (
     <>
-      {!hideGroupByAction && isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
-        <div className="show-on-hover">
-          <PanelGroupByAction
-            groupByVariable={groupByVariable}
-            adhocGroupByVariable={adhocGroupByVariable}
-            queries={queries}
-          />
-        </div>
-      )}
+      {!hasExternalHeaderControls &&
+        !hideGroupByAction &&
+        isGroupByActionSupported &&
+        (groupByVariable || adhocGroupByVariable) && (
+          <div className="show-on-hover">
+            <PanelGroupByAction
+              groupByVariable={groupByVariable}
+              adhocGroupByVariable={adhocGroupByVariable}
+              queries={queries}
+            />
+          </div>
+        )}
     </>
   );
 }
