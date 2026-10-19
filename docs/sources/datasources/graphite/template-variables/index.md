@@ -27,7 +27,7 @@ Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/) documentation.
 
-To view an example templated dashboard, refer to [Graphite Templated Nested dashboard](https://play.grafana.org/d/cvDFGseGz/graphite-templated-nested).
+To view an example templated dashboard, refer to [Graphite Templated Nested dashboard](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard).
 
 ## Use query variables
 

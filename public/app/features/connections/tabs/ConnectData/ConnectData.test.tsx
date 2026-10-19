@@ -1,10 +1,11 @@
-import { render, type RenderResult, screen, waitFor } from '@testing-library/react';
+import { render, type RenderResult, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
@@ -205,6 +206,11 @@ describe('Group by', () => {
 });
 
 describe('Category filter', () => {
+  beforeAll(() => {
+    // Combobox virtualizes its options, so jsdom needs a non-zero layout for any option to render
+    mockBoundingClientRect();
+  });
+
   const pluginsWithCategories = [
     getCatalogPluginMock({ id: 'ds-tsdb', name: 'TSDB Plugin', type: PluginType.datasource, category: 'tsdb' }),
     getCatalogPluginMock({ id: 'ds-sql', name: 'SQL Plugin', type: PluginType.datasource, category: 'sql' }),
@@ -226,6 +232,55 @@ describe('Category filter', () => {
     expect(screen.queryByText('SQL Plugin')).not.toBeInTheDocument();
     expect(screen.queryByText('Cloud Plugin')).not.toBeInTheDocument();
   });
+
+  test('shows plugins from every selected category', async () => {
+    renderPage(pluginsWithCategories, '/add-new-connection?categoryFilter=tsdb,sql');
+
+    expect(await screen.findByText('TSDB Plugin')).toBeVisible();
+    expect(screen.getByText('SQL Plugin')).toBeVisible();
+    expect(screen.queryByText('Cloud Plugin')).not.toBeInTheDocument();
+  });
+
+  test('adds each picked category as a chip and filters by all of them', async () => {
+    const user = userEvent.setup();
+    renderPage(pluginsWithCategories);
+
+    await user.click(await screen.findByLabelText('Filters'));
+    await user.click(screen.getByLabelText('Filter by category'));
+    await user.click(await screen.findByRole('option', { name: 'Time series databases' }));
+    await user.click(screen.getByLabelText('Filter by category'));
+    await user.click(await screen.findByRole('option', { name: 'SQL' }));
+
+    const chips = within(screen.getByRole('list', { name: 'Selected categories' })).getAllByRole('listitem');
+    expect(chips.map((chip) => chip.textContent)).toEqual(['Time series databases', 'SQL']);
+    expect(locationService.getSearchObject().categoryFilter).toBe('tsdb,sql');
+    expect(screen.queryByText('Cloud Plugin')).not.toBeInTheDocument();
+    expect(screen.getByText('TSDB Plugin')).toBeVisible();
+    expect(screen.getByText('SQL Plugin')).toBeVisible();
+  });
+
+  test('does not offer an already selected category in the picker', async () => {
+    const user = userEvent.setup();
+    renderPage(pluginsWithCategories, '/add-new-connection?categoryFilter=tsdb');
+
+    await user.click(await screen.findByLabelText('Filters'));
+    await user.click(screen.getByLabelText('Filter by category'));
+
+    expect(await screen.findByRole('option', { name: 'SQL' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'Time series databases' })).not.toBeInTheDocument();
+  });
+
+  test('removing the last chip clears the category filter', async () => {
+    const user = userEvent.setup();
+    renderPage(pluginsWithCategories, '/add-new-connection?categoryFilter=tsdb');
+
+    await user.click(await screen.findByLabelText('Filters'));
+    await user.click(screen.getByRole('button', { name: 'Remove Time series databases' }));
+
+    expect(locationService.getSearchObject().categoryFilter).toBe('all');
+    expect(screen.queryByRole('list', { name: 'Selected categories' })).not.toBeInTheDocument();
+    expect(await screen.findByText('Cloud Plugin')).toBeVisible();
+  });
 });
 
 describe('Type filter', () => {
@@ -246,6 +301,13 @@ describe('Type filter', () => {
 
     expect(await screen.findByText('My App')).toBeVisible();
     expect(screen.queryByText('My DataSource')).not.toBeInTheDocument();
+  });
+
+  test('shows both types when both are selected in category view', async () => {
+    renderPage(mixedPlugins, '/add-new-connection?groupBy=category&typeFilter=datasource,app');
+
+    expect(await screen.findByText('My DataSource')).toBeVisible();
+    expect(screen.getByText('My App')).toBeVisible();
   });
 });
 

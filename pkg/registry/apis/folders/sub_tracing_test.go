@@ -112,11 +112,11 @@ func TestFolderIndexHandlerTracing(t *testing.T) {
 				}}
 				var handler rest.Connecter = &subChildrenREST{getter: getter, searcher: client}
 				prefix := "folders.subChildrenREST.Connect"
-				operation := "Search"
+				childName := prefix + ".Search"
 				if endpoint == "counts" {
 					handler = &subCountREST{getter: getter, searcher: client}
 					prefix = "folders.subCountREST.Connect"
-					operation = "GetStats"
+					childName = "folders.subCountREST.getStats"
 				}
 				responder := &recordingResponder{}
 				h, err := handler.Connect(ctx, "folder", nil, responder)
@@ -138,7 +138,7 @@ func TestFolderIndexHandlerTracing(t *testing.T) {
 					require.Len(t, recorder.Ended(), 1)
 					return
 				}
-				child := folderSpan(t, recorder, prefix+"."+operation)
+				child := folderSpan(t, recorder, childName)
 				require.Equal(t, parent.SpanContext().TraceID(), child.SpanContext().TraceID())
 				require.Equal(t, outer.SpanContext().SpanID(), child.Parent().SpanID())
 				require.Equal(t, child.SpanContext(), client.span)
