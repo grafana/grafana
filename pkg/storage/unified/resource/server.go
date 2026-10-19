@@ -423,6 +423,10 @@ type SearchOptions struct {
 	// types, alongside the per-resource indexes.
 	GlobalIndexEnabled bool
 
+	// GlobalIndexStartupBuild waits for global indexes before initialization completes.
+	// Otherwise they build in the background after per-resource initialization.
+	GlobalIndexStartupBuild bool
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -2556,6 +2560,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	var processedRV int64 // Includes events deliberately excluded by watch filters.
 	var lastObjectRV int64
+	var initialEventsSentAt time.Time
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2586,13 +2591,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
-
 		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
 			if err := sendBookmark(processedRV); err != nil {
 				return err
 			}
 		}
+		initialEventsSentAt = time.Now()
 	}
 
 	switch {
@@ -2700,10 +2705,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// Resource versions can be either Unix microsecond timestamps (SQL backend)
 					// or snowflake IDs (KV backend). Split the total at Send so upstream
 					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					resourceVersionAt := ResourceVersionTime(event.ResourceVersion)
+					phase := watchEventPhaseLive
+					if resourceVersionAt.Before(initialEventsSentAt) {
+						phase = watchEventPhaseInitialList
+					}
 					s.storageMetrics.observeWatchEvent(
 						event.Key.Group,
 						event.Key.Resource,
-						ResourceVersionTime(event.ResourceVersion),
+						phase,
+						resourceVersionAt,
 						sendStartedAt,
 						sentAt,
 					)

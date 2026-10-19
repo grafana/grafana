@@ -162,9 +162,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
 2024-11-12,crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2024-11-27,azureMonitorEnableUserAuth,GA,@grafana/data-sources-plugins,false,false,false
-2025-07-16,alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
-2025-07-23,alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
-2025-07-16,alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 2025-07-16,alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
@@ -181,6 +178,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-02,datasources.teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
 2026-10-05,datasources.teamHttpHeadersWriteGuard,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
+2026-10-16,teamlbac.usageFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-04-10,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/grafana-catalog,false,false,true
@@ -352,6 +350,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-10-02,dataviz.tabularNums,preview,@grafana/dataviz-squad,false,false,true
 2026-08-05,datetime.useLuxon,GA,@grafana/grafana-frontend-platform,false,false,false
+2026-10-05,grafana.preserveLoginTabTitle,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-01,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-30,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false

@@ -357,10 +357,6 @@
     },
     "ai": {
       "error-boundary": {
-        "alert-rule-button": "AI Alert Rule Button failed to load",
-        "feedback-button": "AI Feedback Button failed to load",
-        "improve-annotations-button": "AI Improve Annotations Button failed to load",
-        "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
         "triage-button": "AI Triage Button failed to load"
       }
@@ -453,6 +449,11 @@
       "text-loading-rules": "Loading rules...",
       "title-search-alert-rule": "Search alert rule",
       "title-select-alert-instances": "Select alert instances"
+    },
+    "alert-instance-silence-action": {
+      "silence": "Silence",
+      "subtitle": "Configure a silence to stop notifications from this alert instance.",
+      "title": "Silence alert instance"
     },
     "alert-instance-state-filter": {
       "state": "State"
@@ -1143,6 +1144,8 @@
       }
     },
     "editor": {
+      "duplicate-alert-rule": "Duplicate alert rule",
+      "duplicate-recording-rule": "Duplicate recording rule",
       "edit-alert-rule": "Edit alert rule",
       "edit-recording-rule": "Edit recording rule",
       "new-alert-rule": "New alert rule",
@@ -1767,7 +1770,7 @@
         "datasource": "Alertmanager data source",
         "datasource-autosync-badge": "Auto-sync",
         "heading": "Import Notification Resources",
-        "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
+        "next-disabled-tooltip": "Complete the required fields before continuing.",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
@@ -1807,6 +1810,7 @@
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-parse-error": "Your YAML has a syntax error: {{message}}",
         "yaml-remove": "Remove {{name}}"
       },
       "step2": {
@@ -3419,6 +3423,7 @@
       "schedule": "Schedule"
     },
     "silence-grafana-rule-drawer": {
+      "subtitle": "Configure silences to stop notifications from a particular alert rule.",
       "title-silence-alert-rule": "Silence alert rule"
     },
     "silence-period": {
@@ -5214,6 +5219,10 @@
   },
   "connections": {
     "add-new-connection": {
+      "add-category": "Add category",
+      "add-type": "Add type",
+      "all-categories": "All categories",
+      "all-types": "All types",
       "category": "Category",
       "clear": "Clear",
       "filter-by-category": "Filter by category",
@@ -5242,7 +5251,10 @@
         "by-published-date": "By published date",
         "by-updated-date": "By updated date"
       },
+      "remove-filter-value": "Remove {{label}}",
       "reset-filters": "Reset filters",
+      "selected-categories": "Selected categories",
+      "selected-types": "Selected types",
       "sort": "Sort",
       "sort-list": "Sort Plugins List",
       "state": "State",
@@ -11205,16 +11217,11 @@
     },
     "dashboard-tabs": {
       "most-used": "Most used",
-      "most-used-active": "Most used dashboards",
       "recent": "Recent",
-      "recent-active": "Recent dashboards",
       "retry": "Retry",
       "starred": "Starred",
-      "starred-active": "Starred dashboards"
-    },
-    "dashboards": {
-      "title": "Dashboards",
-      "view-all": "View all"
+      "title": "Jump back in",
+      "view-all-dashboards": "View all dashboards"
     },
     "firing-alerts-card": {
       "create": "Create an alert rule",
@@ -11391,15 +11398,25 @@
       },
       "title": "Your observability stack overview"
     },
-    "recent-dashboards-tab": {
+    "recent-activity-tab": {
       "browse": "Browse dashboards",
-      "clear": "Clear history",
+      "clear": "Clear recent activity",
       "create": "Create your first dashboard",
-      "empty": "Dashboards you've recently viewed will appear here.",
-      "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
-      "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "reset": "Reset recent dashboards"
+      "empty": "No recent activity yet. Pages you visit will show up here.",
+      "error-title": "Could not load your recent activity",
+      "filter-alerting": "Alerting",
+      "filter-all": "All",
+      "filter-apps": "Apps",
+      "filter-dashboards": "Dashboards",
+      "filter-explore": "Explore",
+      "filter-label": "Show only",
+      "filter-pages": "Pages",
+      "kind-alerting": "Alerting",
+      "kind-app": "App",
+      "kind-dashboard": "Dashboard",
+      "kind-explore": "Explore",
+      "kind-page": "Page",
+      "loading": "Loading your recent activity..."
     },
     "recommendations": {
       "application-observability": {
@@ -11988,6 +12005,9 @@
     "signup": {
       "button-label": "Sign up",
       "new-to-question": "New to Grafana?"
+    },
+    "title": {
+      "sign-in": "Sign in"
     }
   },
   "logs": {

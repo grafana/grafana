@@ -121,8 +121,9 @@ func globalTestServer(t *testing.T, storage StorageBackend, search *mockSearchBa
 			"dashboard.grafana.app": "dashboards",
 			"folder.grafana.app":    "folders",
 		}},
-		GlobalIndexEnabled: true,
-		InitMinCount:       1,
+		GlobalIndexEnabled:      true,
+		GlobalIndexStartupBuild: true,
+		InitMinCount:            1,
 	}, storage, nil, nil, nil, nil, nil, ProvideIndexMetrics(nil), nil, nil)
 	require.NoError(t, err)
 	return server
@@ -1504,6 +1505,8 @@ func TestWatchSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
 func TestSearchNeverUpdatesAGlobalIndex(t *testing.T) {
 	search := &mockSearchBackend{}
 	server := globalTestServer(t, &multiTypeStorage{}, search)
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
 
 	for range 2 {
 		idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
@@ -1517,7 +1520,7 @@ func TestSearchNeverUpdatesAGlobalIndex(t *testing.T) {
 func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
 	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{reusesFromDisk: true})
 
-	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
 	require.NoError(t, err)
 
 	queued := server.reconcileQueue.Elements()
@@ -1531,7 +1534,7 @@ func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
 func TestFreshGlobalIndexIsReconciled(t *testing.T) {
 	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
 
-	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
 	require.NoError(t, err)
 
 	queued := server.reconcileQueue.Elements()
@@ -1672,6 +1675,64 @@ func TestStartupSyncsTheTypesOfAReusedGlobalIndex(t *testing.T) {
 		_, ok := builds[foldersGroupResource]
 		return ok
 	}, 5*time.Second, 10*time.Millisecond, "folders were synced without waiting for the scan")
+}
+
+func TestBackgroundStartupSyncsTypesAfterTheInitialScan(t *testing.T) {
+	for _, indexedRV := range []int64{50, 100} {
+		t.Run(fmt.Sprint(indexedRV), func(t *testing.T) {
+			storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+				live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+				listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+			}}
+			storage.lastImportTimes = importedAt(importMonday, time.Time{})
+			idx := &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()},
+				documentRefs: map[schema.GroupResource][]DocumentRef{
+					dashboardsGroupResource: {{Name: "dash-a", RV: indexedRV}},
+					playlistsGroupResource:  {{Name: "playlist-a", RV: 40}},
+				},
+				completedTypeBuilds: heldAt(importMonday, time.Time{}),
+			}
+			idx.completedTypeBuilds[playlistsGroupResource] = TypeBuild{StorageImportTime: importMonday}
+			backend := &initialBuildTestBackend{reusedIndex: idx}
+			backend.openIndexStats = []ResourceStats{{NamespacedResource: GlobalSearchKey("ns"), Count: 2}}
+			// Create the builder cache outside the bubble: its cleanup goroutine has no stop hook.
+			server := newInitialBuildTestServer(t, backend, nil, 1)
+			server.storage = storage
+			server.globalIndexStartupBuild = false
+
+			synctest.Test(t, func(t *testing.T) {
+				release := make(chan struct{})
+				backend.beforeBuild = func(ctx context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-release:
+						return nil
+					}
+				}
+				require.NoError(t, server.init(t.Context()))
+				defer server.stop()
+				synctest.Wait()
+				require.Nil(t, backend.GetIndex(GlobalSearchKey("ns")), "the initial scan must finish before this index opens")
+				storage.lastImportTimes = importedAt(importTuesday, time.Time{})
+				close(release)
+				synctest.Wait()
+
+				builds, err := idx.CompletedTypeBuilds()
+				require.NoError(t, err)
+				require.Equal(t, importTuesday, builds[dashboardsGroupResource].StorageImportTime, "use the import time at opening, not the cached startup time")
+				require.NotContains(t, builds, playlistsGroupResource)
+				items := idx.indexedItems()
+				require.Len(t, items, 2, "repair imports and removed types without waiting for the next scan")
+				require.Equal(t, ActionIndex, items[0].Action)
+				require.Equal(t, "dash-a", items[0].Doc.Title)
+				require.Equal(t, int64(50), items[0].Doc.RV)
+				require.Equal(t, ActionDelete, items[1].Action)
+				require.Equal(t, "playlist-a", items[1].Key.Name)
+			})
+		})
+	}
 }
 
 // The rebuild scan notices a coverage change the same way it notices an import.

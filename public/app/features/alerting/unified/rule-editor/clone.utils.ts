@@ -5,7 +5,7 @@ import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { generateCopiedName } from '../utils/duplicate';
 import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';
-import { getRuleName, rulerRuleType } from '../utils/rules';
+import { getRuleName, isUngroupedRuleGroup, rulerRuleType } from '../utils/rules';
 
 function changeRuleName(rule: RulerRuleDTO, newName: string) {
   if (rulerRuleType.grafana.rule(rule)) {
@@ -33,6 +33,11 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     // Provisioned alert rules have provisioned alert group which cannot be used in UI
     if (Boolean(ruleClone.rule.grafana_alert.provenance)) {
       ruleClone.group = { name: '', rules: ruleClone.group.rules };
+    }
+
+    // The reserved group name is derived from the original rule's uid and is rejected on save
+    if (isUngroupedRuleGroup(ruleClone.group.name)) {
+      ruleClone.group = { ...ruleClone.group, name: '' };
     }
   }
 
