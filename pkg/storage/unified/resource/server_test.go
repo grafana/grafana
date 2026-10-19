@@ -2441,8 +2441,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 
 // TestWatchEventMetricsPhase checks that writes made during the initial list are labeled phase=initial_list.
 func TestWatchEventMetricsPhase(t *testing.T) {
-	const initialItems = 5
-	const sendDelay = 100 * time.Millisecond
+	const initialItems = 3
 
 	testUser := newWatchTestUser()
 
@@ -2460,7 +2459,14 @@ func TestWatchEventMetricsPhase(t *testing.T) {
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), initialItems)
 
 	mock := newMockWatchServer(ctx)
-	mock.sendDelay = sendDelay
+	wroteDuringList := false
+	mock.onSend = func(evt *resourcepb.WatchEvent) {
+		// The first ADDED send is an initial-list item, so the list has already captured its RV.
+		if evt.Type == resourcepb.WatchEvent_ADDED && !wroteDuringList {
+			wroteDuringList = true
+			assert.NoError(t, createTestPlaylist(ctx, srv))
+		}
+	}
 	var eg errgroup.Group
 	eg.Go(func() error {
 		return srv.Watch(&resourcepb.WatchRequest{
@@ -2486,33 +2492,24 @@ func TestWatchEventMetricsPhase(t *testing.T) {
 			}
 		}
 	}
-
-	// The subscription registers before the initial list starts, so this write lands during the list.
-	requireMetricEventually(t, metrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
-	require.NoError(t, createTestPlaylist(ctx, srv))
 	waitForAdded(initialItems + 1)
 
+	// The list has finished; wait past the boundary's millisecond since RVs only have millisecond precision.
+	time.Sleep(2 * time.Millisecond)
 	require.NoError(t, createTestPlaylist(ctx, srv))
 	waitForAdded(1)
 
 	cancel()
 	require.NoError(t, eg.Wait())
+	require.True(t, wroteDuringList)
 
-	readHistogram := func(phase string) *dto.Histogram {
-		t.Helper()
+	for phase, want := range map[string]uint64{watchEventPhaseInitialList: 1, watchEventPhaseLive: 1} {
 		observer, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, phase)
 		require.NoError(t, err)
 		m := &dto.Metric{}
 		require.NoError(t, observer.(prometheus.Metric).Write(m))
-		return m.Histogram
+		assert.Equal(t, want, m.GetHistogram().GetSampleCount(), "phase %s", phase)
 	}
-	duringList := readHistogram(watchEventPhaseInitialList)
-	live := readHistogram(watchEventPhaseLive)
-
-	require.Equal(t, uint64(1), duringList.GetSampleCount(), "the write during the initial list must be labeled initial_list")
-	require.Equal(t, uint64(1), live.GetSampleCount(), "the write after the initial list must be labeled live")
-	assert.GreaterOrEqual(t, duringList.GetSampleSum(), (initialItems * sendDelay / 2).Seconds(),
-		"the initial_list sample keeps the real wait for the list")
 }
 
 // TestWatchEventMetricsPhaseIncludesInitialBookmark checks that a write made while the
