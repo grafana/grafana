@@ -51,7 +51,6 @@ var dependencyMap = map[string][]string{
 	UnifiedBackend: {NATS, UnifiedVectorBackend},
 
 	ZanzanaServer:           {InstrumentationServer},
-	AuthnServer:             {InstrumentationServer},
 	SearchServerDistributor: {InstrumentationServer, GRPCServer, MemberlistKV, SearchServerRing},
 	Core:                    {},
 	All:                     {Core},
