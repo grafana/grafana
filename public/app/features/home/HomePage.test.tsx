@@ -2,9 +2,15 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints } from '@grafana/data';
+import {
+  type AppPluginConfig,
+  type ComponentTypeWithExtensionMeta,
+  OrgRole,
+  PluginExtensionPoints,
+} from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -111,6 +117,7 @@ describe('HomePage', () => {
   afterEach(async () => {
     config.buildInfo = { ...originalBuildInfo };
     config.namespace = originalNamespace;
+    setAppPluginMetas({});
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
     // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
     await act(async () => {
@@ -344,24 +351,71 @@ describe('HomePage', () => {
     expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
   });
 
-  it('starts card placement while extensions are still loading and hands it to the overview', async () => {
+  it('renders every section while extensions are still loading, with the Assistant slot held for its input', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-    const { datasource, needsAttention } = stubMetricsSolution();
+    setAppPluginMetas({ 'grafana-assistant-app': { id: 'grafana-assistant-app' } as AppPluginConfig });
+    const { needsAttention } = stubMetricsSolution();
 
-    const { rerender } = render(<HomePage />);
+    render(<HomePage />);
 
-    // The whole-page skeleton is up, yet detection is already running. Only placement reads
-    // needsAttention, so a call at this point proves detection started at mount.
-    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
-    expect(datasource).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
-
-    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-    rerender(<HomePage />);
-
-    // The card renders once the extensions settle.
+    // No whole-page skeleton: the tabs, the overview and placement all start at mount, and the Assistant slot
+    // is held while the plugin metas settle and the component loads, so the input lands in place.
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-tabs-skeleton')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    // Placement runs once, from the overview; nothing prefetches it a second time.
+    expect(needsAttention).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the Assistant slot once the plugin metas show the plugin is not installed', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+    setAppPluginMetas({ 'some-other-app': { id: 'some-other-app' } as AppPluginConfig });
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('dashboard-tabs-skeleton')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('home-page-assistant-skeleton')).not.toBeInTheDocument());
+  });
+
+  it('holds the Assistant slot while its lazy component loads instead of hiding the page', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
+    const LazyExtension = lazy(
+      () =>
+        new Promise<{ default: ComponentType<{}> }>((resolve) => {
+          resolveComponent = resolve;
+        })
+    );
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Lazy assistant', component: LazyExtension },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveComponent({ default: () => <div>Lazy assistant content</div> });
+    });
+
+    expect(await screen.findByText('Lazy assistant content')).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
   });
 
   it('renders the jump-back-in grid above the stack overview on the redesigned homepage', async () => {
