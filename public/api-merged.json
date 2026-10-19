@@ -6294,6 +6294,12 @@
         "operationId": "getOrgUsersForCurrentOrg",
         "parameters": [
           {
+            "type": "string",
+            "description": "Filter by the exact user UID within the current organization.",
+            "name": "userUid",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "format": "int64",
             "description": "Filter by the exact numerical user ID within the current organization.",

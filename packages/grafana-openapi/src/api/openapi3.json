@@ -20012,6 +20012,14 @@
         "operationId": "getOrgUsersForCurrentOrg",
         "parameters": [
           {
+            "description": "Filter by the exact user UID within the current organization.",
+            "in": "query",
+            "name": "userUid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Filter by the exact numerical user ID within the current organization.",
             "in": "query",
             "name": "userId",

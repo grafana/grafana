@@ -830,7 +830,9 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 			Cfg: cfg,
 			userService: &usertest.FakeUserService{
 				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 50},
+				ExpectedUser:        &user.User{ID: 42, UID: "uid-one", OrgID: 1},
 			},
+			authInfoService: &authinfotest.FakeService{},
 		}
 	}
 	reqCtx := func() *contextmodel.ReqContext {
@@ -885,7 +887,7 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 				{Users: searchHits(500, 1001), TotalCount: 1500, Page: 2, PerPage: 1000},
 			},
 		}
-		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc, authInfoService: &authinfotest.FakeService{}}
 
 		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1})
 		require.NoError(t, err)
@@ -894,20 +896,19 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.Equal(t, int64(1500), res.TotalCount)
 	})
 
-	// A UserID lookup is a single-page request, not a paged sweep.
-	t.Run("fetches a single page when a UserID is requested", func(t *testing.T) {
+	t.Run("does not search when a UserID is requested", func(t *testing.T) {
 		svc := &pagedUserService{
-			FakeUserService: &usertest.FakeUserService{},
+			FakeUserService: &usertest.FakeUserService{ExpectedUser: &user.User{ID: 5, OrgID: 1}},
 			pages: []user.SearchUserQueryResult{
 				{Users: searchHits(1000, 1), TotalCount: 1500, Page: 1, PerPage: 1000},
 				{Users: searchHits(500, 1001), TotalCount: 1500, Page: 2, PerPage: 1000}, // must not be fetched
 			},
 		}
-		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc, authInfoService: &authinfotest.FakeService{}}
 
 		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1, UserID: 5})
 		require.NoError(t, err)
-		assert.Equal(t, 1, svc.calls, "a UserID lookup must not page through all results")
+		assert.Zero(t, svc.calls, "an exact lookup must not search")
 		require.Len(t, res.OrgUsers, 1)
 		assert.Equal(t, int64(5), res.OrgUsers[0].UserID)
 	})
@@ -1073,32 +1074,126 @@ func TestGetOrgUsersForCurrentOrg_UserID(t *testing.T) {
 	}
 }
 
-func TestGetOrgUsersForCurrentOrg_UserIDBeyondFirstRedirectPage(t *testing.T) {
+func TestGetOrgUsersForCurrentOrg_ExactRedirectLookup(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
-	service := &usertest.MockService{}
-	firstPage := make([]*user.UserSearchHitDTO, 1000)
-	for i := range firstPage {
-		firstPage[i] = &user.UserSearchHitDTO{ID: int64(i + 1)}
-	}
-	service.On("Search", mock.Anything, mock.MatchedBy(func(query *user.SearchUsersQuery) bool {
-		return query.OrgID == 7 && query.Page == 1 && query.Limit == 1000
-	})).Return(&user.SearchUserQueryResult{Users: firstPage, TotalCount: 1001}, nil).Once()
-	service.On("Search", mock.Anything, mock.MatchedBy(func(query *user.SearchUsersQuery) bool {
-		return query.OrgID == 7 && query.Page == 2 && query.Limit == 1000
-	})).Return(&user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{{ID: 1001, UID: "target"}}, TotalCount: 1001}, nil).Once()
+	for _, parameter := range []string{"userUid=target", "userId=1001"} {
+		t.Run(parameter, func(t *testing.T) {
+			service := &usertest.MockService{}
+			u := &user.User{ID: 1001, UID: "target", OrgID: 7, OrgRole: "Editor", IsProvisioned: true, ExternalAuthInfo: []user.ExternalAuthInfo{{Module: login.LDAPAuthModule}}}
+			if strings.HasPrefix(parameter, "userUid") {
+				service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(u, nil).Once()
+			} else {
+				service.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 1001}).Return(u, nil).Once()
+			}
 
-	hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
+			hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
+			hs.Cfg.LDAPAuthEnabled = true
+			ctx := &contextmodel.ReqContext{
+				Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?"+parameter+"&accesscontrol=true", nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1, Permissions: map[int64]map[string][]string{7: {
+					"org.users:write": {"users:id:1001"}, "org.users:remove": {"users:uid:other"},
+					"users.roles:read": {"users:uid:target"},
+				}}},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var result []org.OrgUserDTO
+			require.NoError(t, json.Unmarshal(resp.Body(), &result))
+			require.Len(t, result, 1)
+			require.Equal(t, "target", result[0].UID)
+			require.Equal(t, "Editor", result[0].Role)
+			require.True(t, result[0].IsProvisioned)
+			require.True(t, result[0].IsExternallySynced)
+			require.True(t, result[0].AccessControl["org.users:write"])
+			require.True(t, result[0].AccessControl["users.roles:read"])
+			require.False(t, result[0].AccessControl["org.users:remove"])
+			service.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetOrgUsersForCurrentOrg_UIDLegacy(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+	service := &usertest.MockService{}
+	service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(&user.User{ID: 42, OrgID: 99}, nil).Once()
+	hs := &HTTPServer{
+		Cfg: setting.NewCfg(), userService: service, authInfoService: &authinfotest.FakeService{},
+		orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+			require.Equal(t, int64(42), query.UserID)
+			require.Equal(t, int64(7), query.OrgID)
+			require.True(t, query.ExcludeHiddenUsers)
+			return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
+		}},
+	}
 	ctx := &contextmodel.ReqContext{
-		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userId=1001&limit=100", nil)},
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
 		SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
 	}
 	resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
 	require.Equal(t, http.StatusOK, resp.Status())
-	var result []org.OrgUserDTO
-	require.NoError(t, json.Unmarshal(resp.Body(), &result))
-	require.Len(t, result, 1)
-	require.Equal(t, "target", result[0].UID)
+	require.JSONEq(t, "[]", string(resp.Body()))
 	service.AssertExpectations(t)
+}
+
+func TestGetOrgUsersForCurrentOrg_UIDAuthFallback(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	for _, lookupErr := range []error{nil, errors.New("auth lookup unavailable")} {
+		t.Run(fmt.Sprint(lookupErr), func(t *testing.T) {
+			auth := &authinfotest.MockAuthInfoService{}
+			auth.On("GetUsersRecentlyUsedLabel", mock.Anything, login.GetUserLabelsQuery{UserIDs: []int64{42}}).
+				Return(map[int64]string{42: login.LDAPAuthModule}, lookupErr).Once()
+			hs := &HTTPServer{Cfg: setting.NewCfg(), authInfoService: auth,
+				userService: &usertest.FakeUserService{ExpectedUser: &user.User{ID: 42, UID: "target", OrgID: 7}},
+			}
+			hs.Cfg.LDAPAuthEnabled = true
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			if lookupErr != nil {
+				require.Equal(t, http.StatusInternalServerError, resp.Status())
+			} else {
+				require.Equal(t, http.StatusOK, resp.Status())
+				var result []org.OrgUserDTO
+				require.NoError(t, json.Unmarshal(resp.Body(), &result))
+				require.Len(t, result, 1)
+				require.True(t, result[0].IsExternallySynced)
+			}
+			auth.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetOrgUsersForCurrentOrg_UIDRedirectErrors(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	for _, tc := range []struct {
+		name   string
+		user   *user.User
+		err    error
+		status int
+	}{
+		{name: "missing", err: user.ErrUserNotFound, status: http.StatusOK},
+		{name: "lookup failure", err: errors.New("unavailable"), status: http.StatusInternalServerError},
+		{name: "other organization", user: &user.User{ID: 42, OrgID: 99}, status: http.StatusOK},
+		{name: "service account", user: &user.User{ID: 42, OrgID: 7, IsServiceAccount: true}, status: http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &usertest.MockService{}
+			service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(tc.user, tc.err).Once()
+			hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			require.Equal(t, tc.status, resp.Status())
+			if tc.status == http.StatusOK {
+				require.JSONEq(t, "[]", string(resp.Body()))
+			}
+			service.AssertExpectations(t)
+		})
+	}
 }
 
 func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
