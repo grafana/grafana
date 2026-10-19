@@ -238,6 +238,25 @@ func (st RuleStore) getFolderFullpaths(ctx context.Context, orgID int64, folderU
 	return result, nil
 }
 
+// GetFolderUIDsWithMissingFullpath returns distinct folders with NULL legacy fullpaths.
+// Empty strings are not missing paths and must not trigger another backfill.
+func (st RuleStore) GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error) {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	alertRuleTable := dbHelper.Table("alert_rule")
+	var uids []string
+	err = dbHelper.DB.WithDbSession(withoutAmbientSession(ctx), func(sess *db.Session) error {
+		return sess.Table(alertRuleTable).Distinct("namespace_uid").
+			Where("org_id = ? AND folder_fullpath IS NULL", orgID).Find(&uids)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return uids, nil
+}
+
 // UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules
 // in the specified folders using the K8s folder service.
 func (st RuleStore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
