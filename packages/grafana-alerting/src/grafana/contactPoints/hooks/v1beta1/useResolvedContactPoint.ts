@@ -2,7 +2,7 @@ import { isUsableContactPoint } from '../../utils';
 
 import { useListContactPoints } from './useContactPoints';
 
-export type ContactPointStatus =
+type ContactPointStatus =
   /** No receiver was given, so there is nothing to resolve. */
   | 'idle'
   /** The list hasn't loaded yet, so a null `selectorValue` doesn't mean the receiver is unset. */
