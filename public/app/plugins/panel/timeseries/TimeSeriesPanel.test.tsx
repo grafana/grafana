@@ -374,6 +374,21 @@ describe('TimeSeriesPanel', () => {
       expect(plot()).toBeInTheDocument();
     });
 
+    it('hides the thresholds while a refresh after an error is loading', () => {
+      const { rerender } = render(<TimeSeriesPanel {...getProps({ state: LoadingState.Error })} />);
+      rerender(<TimeSeriesPanel {...getProps({ state: LoadingState.Loading })} />);
+
+      expect(plot()).not.toBeInTheDocument();
+    });
+
+    it('draws the thresholds again once a refresh after an error succeeds', () => {
+      const { rerender } = render(<TimeSeriesPanel {...getProps({ state: LoadingState.Error })} />);
+      rerender(<TimeSeriesPanel {...getProps({ state: LoadingState.Loading })} />);
+      rerender(<TimeSeriesPanel {...getProps({})} />);
+
+      expect(plot()).toBeInTheDocument();
+    });
+
     it('drops the overlay when data arrives', () => {
       const { rerender } = render(<TimeSeriesPanel {...getProps({})} />);
       rerender(<TimeSeriesPanel {...getProps({ series: [validFrame] })} />);

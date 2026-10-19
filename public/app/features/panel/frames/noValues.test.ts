@@ -47,7 +47,7 @@ describe('getNoValuesShape', () => {
       series: [],
       frames: [],
       state: LoadingState.Done,
-      hasResponse: true,
+      lastResponseSucceeded: true,
       defaults: lineThresholds,
       ...overrides,
     });
@@ -101,12 +101,12 @@ describe('getNoValuesShape', () => {
       expect(shapeOf({ state: LoadingState.Error })).toBe('none');
     });
 
-    it('returns none while the first response is loading', () => {
-      expect(shapeOf({ state: LoadingState.Loading, hasResponse: false })).toBe('none');
+    it('returns none while loading without a successful response', () => {
+      expect(shapeOf({ state: LoadingState.Loading, lastResponseSucceeded: false })).toBe('none');
     });
 
     it('keeps the shape while a refresh is loading', () => {
-      expect(shapeOf({ state: LoadingState.Loading, hasResponse: true })).toBe('no-frames');
+      expect(shapeOf({ state: LoadingState.Loading, lastResponseSucceeded: true })).toBe('no-frames');
     });
   });
 
@@ -234,12 +234,18 @@ describe('getThresholdsExtent', () => {
     expect(getThresholdsExtent({ thresholds: { mode: ThresholdsMode.Absolute, steps: steps(80) } })).toEqual([80, 80]);
   });
 
+  it('resolves percentage steps against min and max', () => {
+    expect(
+      getThresholdsExtent({ thresholds: { mode: ThresholdsMode.Percentage, steps: steps(25, 75) }, min: 0, max: 200 })
+    ).toEqual([50, 150]);
+  });
+
   it.each<{ name: string; config: FieldConfig }>([
     { name: 'there are no thresholds', config: {} },
     { name: 'there is only the base step', config: { thresholds: { mode: ThresholdsMode.Absolute, steps: steps() } } },
     {
-      name: 'the thresholds are percentages',
-      config: { thresholds: { mode: ThresholdsMode.Percentage, steps: steps(80) } },
+      name: 'percentage thresholds have no max',
+      config: { thresholds: { mode: ThresholdsMode.Percentage, steps: steps(80) }, min: 0 },
     },
   ])('returns undefined when $name', ({ config }) => {
     expect(getThresholdsExtent(config)).toBeUndefined();

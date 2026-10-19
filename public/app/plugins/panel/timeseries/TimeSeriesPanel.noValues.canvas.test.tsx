@@ -6,8 +6,10 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { TimeSeriesPanel } from './TimeSeriesPanel';
 import {
   DAY_MS,
+  getTimeSeriesPanelProps,
   getUPlotInstance,
   renderTimeSeriesPanel,
   setupCanvasCapture,
@@ -132,6 +134,89 @@ describe('TimeSeriesPanel (canvas) — frames with no values, thresholds without
 
     await waitForPlot();
     expect(screen.getByText('Nothing yet')).toBeInTheDocument();
+  });
+
+  it('keeps the y axis when every series is hidden from the viz', async () => {
+    const config = thresholdsConfig();
+    config.fieldConfig!.defaults.custom = {
+      ...config.fieldConfig!.defaults.custom,
+      hideFrom: { legend: false, tooltip: false, viz: true },
+    };
+    renderTimeSeriesPanel({ series: [nullOnlyFrame()] }, undefined, config);
+
+    await expectRangeAroundThreshold();
+  });
+
+  it('keeps the thresholds without the overlay when every series with values is hidden from the viz', async () => {
+    const config = thresholdsConfig();
+    config.fieldConfig!.defaults.custom = {
+      ...config.fieldConfig!.defaults.custom,
+      hideFrom: { legend: false, tooltip: false, viz: true },
+    };
+    const valueFrame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [START_MS, START_MS + DAY_MS] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    renderTimeSeriesPanel({ series: [valueFrame] }, undefined, config);
+
+    await expectRangeAroundThreshold();
+    expect(screen.queryByText('No data')).not.toBeInTheDocument();
+  });
+
+  it('keeps the same plot when a response turns empty', async () => {
+    const valueFrame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [START_MS, START_MS + DAY_MS] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const { rerender } = renderTimeSeriesPanel({ series: [valueFrame] }, undefined, thresholdsConfig());
+    const before = await waitForPlot();
+
+    rerender(
+      <TimeSeriesPanel {...getTimeSeriesPanelProps({ series: [nullOnlyFrame()] }, undefined, thresholdsConfig())} />
+    );
+
+    expect(getUPlotInstance()).toBe(before);
+    await expectRangeAroundThreshold();
+    expect(screen.getByText('No data')).toBeInTheDocument();
+  });
+
+  it('shows a no value override of the field in the overlay', async () => {
+    const config = thresholdsConfig();
+    config.fieldConfig!.overrides = [
+      { matcher: { id: 'byName', options: 'value' }, properties: [{ id: 'noValue', value: 'From override' }] },
+    ];
+    renderTimeSeriesPanel({ series: [nullOnlyFrame()] }, undefined, config);
+
+    await waitForPlot();
+    expect(screen.getByText('From override')).toBeInTheDocument();
+  });
+
+  it('ranges over percentage thresholds when a soft min unfixes min and max', async () => {
+    const config = withFieldConfig({
+      custom: { thresholdsStyle: { mode: GraphThresholdsStyleMode.Line }, axisSoftMin: -50 },
+      defaults: {
+        min: 0,
+        max: 200,
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 25, color: 'orange' },
+            { value: 75, color: 'red' },
+          ],
+        },
+      },
+    });
+    renderTimeSeriesPanel({ series: [nullOnlyFrame()] }, undefined, config);
+    const u = await waitForPlot();
+    const yScale = u.scales[u.series[1].scale!];
+
+    expect(yScale.min).toBeLessThanOrEqual(50);
+    expect(yScale.max).toBeGreaterThanOrEqual(150);
   });
 
   it('keeps hard min and max over the thresholds range', async () => {

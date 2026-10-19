@@ -29,8 +29,8 @@ interface NoValuesShapeOptions {
   /** a prepareGraphableFields warning, or a suggestion message */
   warning?: string;
   state: LoadingState;
-  /** whether the panel already received a response; refreshes keep the previous series while Loading */
-  hasResponse: boolean;
+  /** whether the last settled response was Done; refreshes keep the previous series while Loading */
+  lastResponseSucceeded: boolean;
   defaults: FieldConfig<GraphFieldConfig>;
 }
 
@@ -39,10 +39,10 @@ export function getNoValuesShape({
   frames,
   warning,
   state,
-  hasResponse,
+  lastResponseSucceeded,
   defaults,
 }: NoValuesShapeOptions): NoValuesShape {
-  if (state === LoadingState.Error || (state === LoadingState.Loading && !hasResponse) || warning) {
+  if (state === LoadingState.Error || (state === LoadingState.Loading && !lastResponseSucceeded) || warning) {
     return 'none';
   }
 
@@ -89,17 +89,23 @@ function hasDrawableThresholds(config: FieldConfig<GraphFieldConfig>): boolean {
 }
 
 /**
- * The value range of a field's absolute thresholds, used as the y range of a scale with no values.
- * Percentage thresholds only draw with an explicit min and max, which already fix the range.
+ * The value range of a field's thresholds, used as the y range of a scale with no values.
+ * Percentage steps resolve against an explicit min and max; soft limits unfix that range, so it is not enough on its own.
  */
 export function getThresholdsExtent(config: FieldConfig): [number, number] | undefined {
-  if (config.thresholds?.mode !== ThresholdsMode.Absolute) {
+  const { thresholds, min, max } = config;
+  if (!thresholds) {
     return undefined;
   }
 
-  const values = config.thresholds.steps
+  const isPercentage = thresholds.mode === ThresholdsMode.Percentage;
+  if (isPercentage && (min == null || max == null)) {
+    return undefined;
+  }
+
+  const values = thresholds.steps
     .slice(1)
-    .map((step) => step.value)
+    .map((step) => (isPercentage ? min! + ((max! - min!) * step.value) / 100 : step.value))
     .filter(Number.isFinite);
 
   return values.length ? [Math.min(...values), Math.max(...values)] : undefined;

@@ -147,7 +147,7 @@ const defaultPanelOptions: Options = {
 
 // --- Panel rendering ---
 
-export function renderTimeSeriesPanel(
+export function getTimeSeriesPanelProps(
   dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations'>>,
   optionsOverrides?: Partial<Options>,
   panelPropsOverrides?: Partial<PanelProps<Options>>
@@ -179,7 +179,11 @@ export function renderTimeSeriesPanel(
     width,
     height,
   });
-  return render(<TimeSeriesPanel {...props} />);
+  return props;
+}
+
+export function renderTimeSeriesPanel(...args: Parameters<typeof getTimeSeriesPanelProps>) {
+  return render(<TimeSeriesPanel {...getTimeSeriesPanelProps(...args)} />);
 }
 
 // --- Canvas capture ---

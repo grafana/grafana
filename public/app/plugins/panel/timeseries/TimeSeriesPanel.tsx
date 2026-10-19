@@ -6,6 +6,7 @@ import {
   type DataFrame,
   DataFrameType,
   type Field,
+  type FieldConfigSource,
   FieldType,
   LoadingState,
   type PanelProps,
@@ -127,9 +128,11 @@ export const TimeSeriesPanel = ({
   }, [frames, id]);
 
   const thresholdsWithoutData = getFeatureFlagClient().getBooleanValue(FlagKeys.TimeseriesThresholdsWithoutData, false);
-  // a refresh keeps the previous (empty) series while Loading, so only the very first load is skipped
-  const hasResponseRef = useRef(false);
-  hasResponseRef.current ||= data.state !== LoadingState.Loading;
+  // a refresh keeps the previous series while Loading, so thresholds stay only if the last settled response succeeded
+  const lastSettledStateRef = useRef<LoadingState>(null);
+  if (data.state !== LoadingState.Loading) {
+    lastSettledStateRef.current = data.state;
+  }
 
   const noValuesShape: NoValuesShape = thresholdsWithoutData
     ? getNoValuesShape({
@@ -137,7 +140,7 @@ export const TimeSeriesPanel = ({
         frames: frames ?? [],
         warning: suggestions?.message ?? prepWarning,
         state: data.state,
-        hasResponse: hasResponseRef.current,
+        lastResponseSucceeded: lastSettledStateRef.current === LoadingState.Done,
         defaults: fieldConfig.defaults,
       })
     : 'none';
@@ -150,7 +153,8 @@ export const TimeSeriesPanel = ({
     [noValuesShape, frames, timeRange, fieldConfig, theme, replaceVariables, timeZone]
   );
 
-  const tweakScale = useMemo(() => (noValuesShape === 'none' ? undefined : withThresholdsRange), [noValuesShape]);
+  // also ranges scales whose series are all hidden, so the thresholds stay visible
+  const tweakScale = thresholdsWithoutData ? withThresholdsRange : undefined;
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
@@ -187,9 +191,7 @@ export const TimeSeriesPanel = ({
 
   return (
     <TimeSeries
-      // the plot config is only rebuilt on structure changes, so a change of shape needs a fresh plot
-      key={noValuesShape}
-      frames={plotFrames!}
+      frames={plotFrames}
       tweakScale={tweakScale}
       structureRev={data.structureRev}
       timeRange={timeRange}
@@ -208,7 +210,7 @@ export const TimeSeriesPanel = ({
         const compFieldPairs = getComparisonFieldPairs(alignedFrame, plotFrames!);
         return (
           <>
-            {noValuesShape !== 'none' && <NoValuesOverlay noValue={fieldConfig.defaults.noValue} />}
+            {noValuesShape !== 'none' && <NoValuesOverlay noValue={getNoValueText(plotFrames, fieldConfig)} />}
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
@@ -306,4 +308,10 @@ function withThresholdsRange(opts: ScaleProps, field: Field): ScaleProps {
   const emptyRange = mode === GraphThresholdsStyleMode.Off ? undefined : getThresholdsExtent(field.config);
 
   return emptyRange ? { ...opts, emptyRange } : opts;
+}
+
+// the no-values shape keeps real fields, so their overrides of noValue win over the panel default
+function getNoValueText(frames: DataFrame[] | undefined, fieldConfig: FieldConfigSource): string | undefined {
+  const field = frames?.flatMap((frame) => frame.fields).find((f) => f.type === FieldType.number);
+  return field?.config.noValue ?? fieldConfig.defaults.noValue;
 }

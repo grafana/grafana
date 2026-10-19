@@ -136,7 +136,8 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
 
   let range = minStopPos - maxStopPos;
 
-  if (range === 0) {
+  // a scale without a range (no values on it) has no positions, and canvas gradients reject non-finite ones
+  if (range === 0 || !Number.isFinite(range)) {
     return scaleStops[maxStopIdx!][1];
   }
 
@@ -200,7 +201,8 @@ function getDataRange(plot: uPlot, scaleKey: string) {
     }
   });
 
-  if (max === min) {
+  // a flat range, or no values at all (min stays Infinity), falls back to the scale range
+  if (max <= min) {
     min = sc.min!;
     max = sc.max!;
   }
