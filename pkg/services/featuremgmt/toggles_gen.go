@@ -531,14 +531,6 @@ const (
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
 	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
 
-	// FlagTeamLBACApiReadFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
-
-	// FlagTeamLBACApiWriteFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
-
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"

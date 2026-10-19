@@ -701,16 +701,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
-  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-  * @default false
-  */
-  teamLBACApiReadFromAppPlatform?: boolean;
-  /**
-  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-  * @default false
-  */
-  teamLBACApiWriteFromAppPlatform?: boolean;
-  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */

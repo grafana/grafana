@@ -5822,7 +5822,8 @@
       "metadata": {
         "name": "teamLBACApiReadFromAppPlatform",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-16T18:46:43Z"
+        "creationTimestamp": "2026-03-16T18:46:43Z",
+        "deletionTimestamp": "2026-10-19T15:01:17Z"
       },
       "spec": {
         "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
@@ -5835,7 +5836,8 @@
       "metadata": {
         "name": "teamLBACApiWriteFromAppPlatform",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-04-10T17:22:14Z"
+        "creationTimestamp": "2026-04-10T17:22:14Z",
+        "deletionTimestamp": "2026-10-19T15:01:17Z"
       },
       "spec": {
         "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",

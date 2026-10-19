@@ -1562,22 +1562,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamLBACApiReadFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
-			Name:        "teamLBACApiWriteFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
