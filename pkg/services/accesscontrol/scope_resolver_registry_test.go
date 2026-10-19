@@ -42,32 +42,97 @@ func TestScopeResolverRegistry_Empty(t *testing.T) {
 }
 
 func TestScopeResolverRegistry_Register(t *testing.T) {
-	var registry accesscontrol.ScopeResolverRegistry
 	folderResolver := &registryTestResolver{}
 	dashboardResolver := &registryTestResolver{}
 	replacement := &registryTestResolver{}
 
-	registry.Register("folders:uid:", folderResolver)
-	registry.Register("dashboards:uid:", dashboardResolver)
+	tests := []struct {
+		name          string
+		registrations []registryTestRegistration
+		prefix        string
+		wantResolver  *registryTestResolver
+		wantFound     bool
+	}{
+		{
+			name: "register resolver on zero value registry",
+			registrations: []registryTestRegistration{
+				{
+					prefix:   "folders:uid:",
+					resolver: folderResolver,
+				},
+			},
+			prefix:       "folders:uid:",
+			wantResolver: folderResolver,
+			wantFound:    true,
+		},
+		{
+			name: "replace resolver for the same prefix",
+			registrations: []registryTestRegistration{
+				{
+					prefix:   "folders:uid:",
+					resolver: folderResolver,
+				},
+				{
+					prefix:   "folders:uid:",
+					resolver: replacement,
+				},
+			},
+			prefix:       "folders:uid:",
+			wantResolver: replacement,
+			wantFound:    true,
+		},
+		{
+			name: "replacing a resolver preserves other prefixes",
+			registrations: []registryTestRegistration{
+				{
+					prefix:   "folders:uid:",
+					resolver: folderResolver,
+				},
+				{
+					prefix:   "dashboards:uid:",
+					resolver: dashboardResolver,
+				},
+				{
+					prefix:   "folders:uid:",
+					resolver: replacement,
+				},
+			},
+			prefix:       "dashboards:uid:",
+			wantResolver: dashboardResolver,
+			wantFound:    true,
+		},
+		{
+			name: "missing prefix",
+			registrations: []registryTestRegistration{
+				{
+					prefix:   "folders:uid:",
+					resolver: folderResolver,
+				},
+			},
+			prefix:       "datasources:uid:",
+			wantResolver: nil,
+			wantFound:    false,
+		},
+	}
 
-	resolver, ok := registry.Get("folders:uid:")
-	require.True(t, ok)
-	require.Same(t, folderResolver, resolver)
-	require.True(t, registry.HasResolvers())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var registry accesscontrol.ScopeResolverRegistry
+			for _, registration := range tt.registrations {
+				registry.Register(registration.prefix, registration.resolver)
+			}
 
-	registry.Register("folders:uid:", replacement)
+			resolver, ok := registry.Get(tt.prefix)
 
-	resolver, ok = registry.Get("folders:uid:")
-	require.True(t, ok)
-	require.Same(t, replacement, resolver)
-
-	resolver, ok = registry.Get("dashboards:uid:")
-	require.True(t, ok)
-	require.Same(t, dashboardResolver, resolver)
-
-	resolver, ok = registry.Get("datasources:uid:")
-	require.False(t, ok)
-	require.Nil(t, resolver)
+			require.Equal(t, tt.wantFound, ok)
+			require.True(t, registry.HasResolvers())
+			if tt.wantResolver == nil {
+				require.Nil(t, resolver)
+				return
+			}
+			require.Same(t, tt.wantResolver, resolver)
+		})
+	}
 }
 
 func TestScopeResolverRegistry_ConcurrentRegistrationAndLookup(t *testing.T) {
@@ -100,6 +165,11 @@ func TestScopeResolverRegistry_ConcurrentRegistrationAndLookup(t *testing.T) {
 
 	close(start)
 	workers.Wait()
+}
+
+type registryTestRegistration struct {
+	prefix   string
+	resolver *registryTestResolver
 }
 
 type registryTestResolver struct {
