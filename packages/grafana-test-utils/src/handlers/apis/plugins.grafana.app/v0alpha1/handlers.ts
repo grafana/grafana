@@ -4,8 +4,8 @@ import { mockPluginMetasStore } from '../../../../fixtures/pluginMetas';
 
 const GET_PLUGIN_METAS_URL = '/apis/plugins.grafana.app/v0alpha1/namespaces/:namespace/metas';
 
-/** Override the metas endpoint for a test, e.g. `server.use(customGetPluginMetasHandler(() => HttpResponse.json(null, { status: 500 })))` */
-export const customGetPluginMetasHandler = (resolver: HttpResponseResolver) => http.get(GET_PLUGIN_METAS_URL, resolver);
+/** Overrides the metas endpoint, e.g. to answer with an error status */
+const customGetPluginMetasHandler = (resolver: HttpResponseResolver) => http.get(GET_PLUGIN_METAS_URL, resolver);
 
 const getMetasHandler = () =>
   customGetPluginMetasHandler(() =>

@@ -11,7 +11,7 @@ export function isClientNavTreeEnabled(): boolean {
 }
 
 /** Whether app plugin nav items are fetched and folded in, on top of the client build. */
-export function arePluginNavItemsEnabled(): boolean {
+function arePluginNavItemsEnabled(): boolean {
   return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
 }
 
