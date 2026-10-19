@@ -116,7 +116,6 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   const [currentGeneration, setCurrentGeneration] = useState<number | undefined>(undefined);
   const [comparing, setComparing] = useState(false);
   const [confirm, setConfirm] = useState<'apply' | 'discard' | undefined>(undefined);
-  const [highlight, setHighlight] = useState(false);
   const { changes, baseSpec } = usePendingChangeDiff(uid, pending, saved);
 
   useEffect(() => {
@@ -129,10 +128,10 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
     };
   }, [uid]);
 
-  useChangeHighlights(dashboard, highlight ? changes : undefined);
-
   const latestGeneration = currentGeneration ?? saved?.generation;
   const stale = latestGeneration !== undefined && latestGeneration !== pending.baseGeneration;
+  // Against the version they were made from: once the dashboard moved on, they'd mislead.
+  useChangeHighlights(dashboard, stale ? undefined : changes);
   const title = saved?.title ?? dashboard.state.title;
   const changeCount = changes?.length;
   const canApply = saved?.canEdit ?? false;
@@ -167,22 +166,6 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
       <LifecycleAlert
         className={styles.banner}
         heading={t('dashboard-scene.lifecycle.pending-title', 'Pending changes')}
-        headingAside={
-          !stale &&
-          changes &&
-          changes.length > 0 && (
-            <Button
-              variant="secondary"
-              fill={highlight ? 'solid' : 'outline'}
-              size="sm"
-              icon="eye"
-              aria-pressed={highlight}
-              onClick={() => setHighlight((v) => !v)}
-            >
-              <Trans i18nKey="dashboard-scene.lifecycle.highlight">Highlight</Trans>
-            </Button>
-          )
-        }
         actions={
           stale ? (
             <>
@@ -230,16 +213,18 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
                 source: pending.source,
               }
             )
-          : t('dashboard-scene.lifecycle.pending-body', 'Previewing pending changes, only you can see them.')}{' '}
-        <TextLink
-          href={locationService.getLocation().pathname}
-          onClick={async (event) => {
-            event.preventDefault();
-            await showOriginal(placement, uid, id, true, reload);
-          }}
-        >
-          {t('dashboard-scene.lifecycle.show-original-dashboard', 'Show original dashboard')}
-        </TextLink>
+          : t('dashboard-scene.lifecycle.pending-body', 'Previewing pending changes, only you can see them.')}
+        <div className={styles.showOriginal}>
+          <TextLink
+            href={locationService.getLocation().pathname}
+            onClick={async (event) => {
+              event.preventDefault();
+              await showOriginal(placement, uid, id, true, reload);
+            }}
+          >
+            {t('dashboard-scene.lifecycle.show-original-dashboard', 'Show original dashboard')}
+          </TextLink>
+        </div>
         {stale && (
           <div className={styles.stale}>
             <Icon name="exclamation-triangle" className={styles.staleIcon} />
@@ -259,7 +244,6 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
           onClose={() => setComparing(false)}
           onSelectPanel={(panelKey) => {
             setComparing(false);
-            setHighlight(true);
             document
               .querySelector(`[data-viz-panel-key="${CSS.escape(panelKey)}"]`)
               ?.scrollIntoView({ block: 'center' });
@@ -409,24 +393,19 @@ async function discardPendingChanges(
 interface LifecycleAlertProps {
   className: string;
   heading: string;
-  /** Beside the heading, such as a toggle for what the banner describes. */
-  headingAside?: ReactNode;
   /** At the top right. */
   actions: ReactNode;
   children: ReactNode;
 }
 
 /** An Alert with its actions beside the heading, at the top right, rather than centred beside the body. */
-function LifecycleAlert({ className, heading, headingAside, actions, children }: LifecycleAlertProps) {
+function LifecycleAlert({ className, heading, actions, children }: LifecycleAlertProps) {
   const styles = useStyles2(getLifecycleAlertStyles);
   return (
     <Alert className={cx(className, styles.alert)} severity="info" title="" aria-label={heading}>
       <div className={styles.content}>
         <Stack justifyContent="space-between" alignItems="center" wrap="wrap" gap={1}>
-          <Stack alignItems="center" gap={1}>
-            <Text weight="medium">{heading}</Text>
-            {headingAside}
-          </Stack>
+          <Text weight="medium">{heading}</Text>
           <Stack gap={1} wrap="wrap">
             {actions}
           </Stack>
@@ -516,6 +495,9 @@ const getStyles = (theme: GrafanaTheme2, inset: BannerInset) => ({
   }),
   staleIcon: css({
     color: theme.colors.warning.text,
+  }),
+  showOriginal: css({
+    marginTop: theme.spacing(1),
   }),
   hint: css({
     display: 'flex',

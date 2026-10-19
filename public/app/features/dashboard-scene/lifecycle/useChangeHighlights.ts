@@ -9,7 +9,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { changedPanelKeys, type SpecChange } from './specDiff';
 
 /**
- * Outlines the panels pending changes add or edit. Decorates the rendered panels by their
+ * Borders the panels pending changes add or edit. Decorates the rendered panels by their
  * scene key instead of changing scene state, so highlighting never marks the dashboard dirty.
  */
 export function useChangeHighlights(dashboard: DashboardScene, changes: SpecChange[] | undefined) {
@@ -22,10 +22,17 @@ export function useChangeHighlights(dashboard: DashboardScene, changes: SpecChan
     const keys = changedPanelKeys(changes);
     const highlight = (color: string, text: string) =>
       css({
-        outline: `2px solid ${color}`,
-        outlineOffset: -2,
-        borderRadius: theme.shape.radius.default,
         position: 'relative',
+        // Above the panel's header and content, which would cover an outline but for its corners.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          border: `2px solid ${color}`,
+          borderRadius: theme.shape.radius.default,
+          pointerEvents: 'none',
+          zIndex: 1,
+        },
         '&::after': {
           content: JSON.stringify(text),
           position: 'absolute',
