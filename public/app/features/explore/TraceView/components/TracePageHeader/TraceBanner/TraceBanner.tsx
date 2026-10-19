@@ -305,6 +305,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightRegular,
   }),
   stacktraceBody: css({
+    // The banner lives in the sticky trace header, so an uncapped stacktrace would cover the timeline.
+    maxHeight: '300px',
+    overflowY: 'auto',
     margin: 0,
     padding: theme.spacing(1.5),
     borderRadius: theme.shape.radius.default,

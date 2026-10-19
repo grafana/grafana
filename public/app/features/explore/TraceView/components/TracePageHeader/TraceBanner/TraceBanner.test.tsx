@@ -106,7 +106,10 @@ describe('TraceBanner', () => {
 
     await user.click(screen.getByRole('button', { name: /Show stacktrace/ }));
 
-    expect(screen.getByText(/QueryRunner\.run/)).toBeInTheDocument();
+    const stacktrace = screen.getByText(/QueryRunner\.run/);
+    expect(stacktrace).toBeInTheDocument();
+    expect(window.getComputedStyle(stacktrace).maxHeight).toBe('300px');
+    expect(window.getComputedStyle(stacktrace).overflowY).toBe('auto');
     expect(screen.getByText('exception.stacktrace')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Hide stacktrace/ }));
