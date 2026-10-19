@@ -928,6 +928,43 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 		requireOnlyEntries(t, pluginsDir, pluginID)
 	})
 
+	t.Run("previous version in the install path reached through a symlink is replaced", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		writePluginDir(t, pluginsDir, pluginID, "1.0.0")
+		link := filepath.Join(t.TempDir(), "plugins")
+		require.NoError(t, os.Symlink(pluginsDir, link))
+
+		s := newSetup(t, filepath.Join(link, pluginID), newArchive(t))
+		s.pluginsDir = pluginsDir
+		s.inst.pluginStorage = storage.FileSystem(log.NewPrettyLogger("test"), pluginsDir)
+		require.NoError(t, update(s))
+
+		targetDir := filepath.Join(pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		requireOnlyEntries(t, pluginsDir, pluginID)
+	})
+
+	t.Run("previous version in the install path under a differently cased name is replaced", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		previousDir := filepath.Join(pluginsDir, "Test-Datasource")
+		require.NoError(t, os.MkdirAll(previousDir, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(previousDir, "plugin.json"), []byte(pluginJSON(pluginID, "1.0.0")), 0o600))
+		if _, err := os.Stat(filepath.Join(pluginsDir, pluginID)); err != nil {
+			t.Skip("filesystem is case-sensitive")
+		}
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.pluginsDir = pluginsDir
+		s.inst.pluginStorage = storage.FileSystem(log.NewPrettyLogger("test"), pluginsDir)
+		require.NoError(t, update(s))
+
+		targetDir := filepath.Join(pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		requireOnlyEntries(t, pluginsDir, pluginID)
+	})
+
 	t.Run("download failure keeps the previous version loaded", func(t *testing.T) {
 		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
 

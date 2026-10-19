@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -206,9 +205,24 @@ func (m *PluginInstaller) replace(ctx context.Context, previous *plugins.Plugin,
 	return nil
 }
 
+// isWithinDir reports whether path is dir or inside it. It compares directories on disk rather than
+// their names: on a case-insensitive filesystem or through a symlink, a path spelled differently
+// can still be dir, and mistaking it for another location would delete the new version.
 func isWithinDir(dir, path string) bool {
-	rel, err := filepath.Rel(dir, path)
-	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+	dirInfo, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+	for {
+		if info, err := os.Stat(path); err == nil && os.SameFile(dirInfo, info) {
+			return true
+		}
+		parent := filepath.Dir(path)
+		if parent == path {
+			return false
+		}
+		path = parent
+	}
 }
 
 func (m *PluginInstaller) updateFromURL(ctx context.Context, plugin *plugins.Plugin, url string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
