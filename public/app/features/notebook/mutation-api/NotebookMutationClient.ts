@@ -15,4 +15,8 @@ export class NotebookMutationClient extends SceneMutationClient<NotebookScene> {
   constructor(scene: NotebookScene) {
     super(scene, NOTEBOOK_COMMANDS);
   }
+
+  public getScene(): NotebookScene {
+    return this.scene;
+  }
 }

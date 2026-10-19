@@ -703,6 +703,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.notebookComposer",
+			Description: "Enables Composer for editing notebooks with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardPreviewMode",
 			Description: "Enables Viewing and Editing modes for dynamic dashboards",
 			Stage:       FeatureStageExperimental,

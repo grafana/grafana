@@ -59,9 +59,19 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
   private undoStack: NotebookEditAction[] = [];
   private redoStack: NotebookEditAction[] = [];
   private redoStackBeforeRecord = new WeakMap<NotebookEditAction, NotebookEditAction[]>();
+  private changes = 0;
 
   public constructor(private readonly observer?: NotebookEditHistoryObserver) {
     super({ canUndo: false, canRedo: false });
+  }
+
+  /**
+   * Counts every change to the history: a record, a discard, an undo, a redo and a clear. A reader that
+   * remembers it can tell whether the document was edited since, without being fooled by the state
+   * changes a query refresh or a reader's own time range publish (Composer's write gate relies on this).
+   */
+  public get revision(): number {
+    return this.changes;
   }
 
   public execute(action: NotebookEditAction): void {
@@ -76,6 +86,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
       this.undoStack.shift();
     }
     this.redoStack = [];
+    this.changes++;
     this.observer?.onRecord(action.kind);
     this.publishState();
   }
@@ -88,6 +99,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     this.undoStack.pop();
     this.redoStack = this.redoStackBeforeRecord.get(action) ?? this.redoStack;
     this.redoStackBeforeRecord.delete(action);
+    this.changes++;
     this.observer?.onDiscard();
     this.publishState();
   }
@@ -101,6 +113,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     action.undo();
     this.undoStack.pop();
     this.redoStack.push(action);
+    this.changes++;
     this.observer?.onUndo();
     this.publishState();
     return true;
@@ -115,6 +128,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     action.perform();
     this.redoStack.pop();
     this.undoStack.push(action);
+    this.changes++;
     this.observer?.onRedo();
     this.publishState();
     return true;
@@ -127,6 +141,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
 
     this.undoStack = [];
     this.redoStack = [];
+    this.changes++;
     this.publishState();
   }
 

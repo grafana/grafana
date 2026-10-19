@@ -15,8 +15,8 @@ export type ComposerDashboardSpec = DashboardV2Spec;
 export type ComposerNotebookSpec = NotebookSpec;
 
 /**
- * The document a session edits: a dashboard, or a notebook on its own route, `/notebooks/:uid`. Notebook
- * targets are refused for now.
+ * The document a session edits: a dashboard, or (behind `grafana.notebookComposer`) a notebook on its own
+ * route, `/notebooks/:uid`.
  */
 export interface ComposerTarget {
   resource: ComposerResource;

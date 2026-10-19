@@ -47,6 +47,7 @@ declare module "@openfeature/core" {
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "grafana.dashboardComposer"
+    | "grafana.notebookComposer"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
