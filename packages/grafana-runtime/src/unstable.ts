@@ -13,9 +13,19 @@ export { clearLoggerRegistry, getLogger, initializeLoggersRegistry, setLogger } 
 export { type LoggerSource } from './services/logging/loggers';
 export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event, EventVariants } from './analyticsFramework/types';
-export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
-export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
-export { usePluginSettings } from './services/pluginSettings/hooks';
+// Plugins bundling @grafana/plugin-compat < 0.5.0 only look for these here.
+export {
+  /** @deprecated Import from `@grafana/runtime` instead. */
+  getPluginSettings,
+} from './services/pluginSettings/getPluginSettings';
+export {
+  /** @deprecated Import from `@grafana/runtime` instead. */
+  updateAppPluginSettings,
+} from './services/pluginSettings/updateAppPluginSettings';
+export {
+  /** @deprecated Import from `@grafana/runtime` instead. */
+  usePluginSettings,
+} from './services/pluginSettings/hooks';
 // The async data source APIs are stable and exported from `@grafana/runtime`. They stay here until
 // @grafana/plugin-compat no longer supports hosts that only expose them on this entrypoint.
 export {

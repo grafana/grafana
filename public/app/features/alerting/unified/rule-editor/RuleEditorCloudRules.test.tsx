@@ -4,7 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import * as pluginSettings from '@grafana/runtime/unstable';
+import * as runtime from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -56,7 +56,7 @@ describe('RuleEditor cloud', () => {
 
     // Mock getPluginSettings to ensure labels plugin is not detected
     // This ensures consistent test behavior across OSS and Enterprise environments
-    jest.spyOn(pluginSettings, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
+    jest.spyOn(runtime, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,

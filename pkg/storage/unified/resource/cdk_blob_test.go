@@ -53,6 +53,8 @@ func TestCDKBlobStore(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "49dfdd54b01cbcd2d2ab5e9e5ee6b9b9", rsp.Hash)
+		_, isV7 := uuidV7Time(rsp.Uid)
+		require.True(t, isV7, "uid %q must be a UUIDv7", rsp.Uid)
 
 		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{
 			UID:      rsp.Uid,

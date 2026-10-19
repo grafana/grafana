@@ -28,10 +28,10 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -235,7 +235,9 @@ var (
 	_ builder.OpenAPIPostProcessor     = (*manifestBuilder)(nil)
 )
 
-// ValidateManifest reports whether a manifest can be served for a plugin.
+// ValidateManifest reports whether a manifest can be served for a plugin. It
+// checks only that the group is a valid name: which groups a plugin may serve
+// is the caller's policy (see newPluginBackend in pkg/router).
 func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if manifest == nil {
 		return fmt.Errorf("missing manifest")
@@ -243,9 +245,8 @@ func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if manifest.IsEmpty() {
 		return fmt.Errorf("plugin %q has an empty app manifest", pluginID)
 	}
-	group := manifest.Group
-	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
+	if len(validation.IsDNS1123Subdomain(manifest.Group)) > 0 {
+		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS subdomain", pluginID, manifest.Group)
 	}
 	versions := make(map[string]bool, len(manifest.Versions))
 	for _, version := range manifest.Versions {

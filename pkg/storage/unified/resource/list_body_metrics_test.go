@@ -214,6 +214,7 @@ func TestServerListBodyMetricsForSearchBackedLists(t *testing.T) {
 		name           string
 		maxPageBytes   int
 		limit          int64
+		empty          bool
 		denied         bool
 		stale          bool
 		failFrom       int
@@ -224,6 +225,7 @@ func TestServerListBodyMetricsForSearchBackedLists(t *testing.T) {
 		wantStopReason string
 	}{
 		{name: "exhausted", wantRequested: 60, wantConsumed: 60, wantReturned: 60, wantStopReason: listStopExhausted},
+		{name: "empty", empty: true, wantStopReason: listStopExhausted},
 		{name: "byte limit", maxPageBytes: 1, wantRequested: readChunkSize, wantConsumed: readChunkSize, wantReturned: 1, wantUnused: readChunkSize - 1, wantStopReason: listStopByteLimit},
 		{name: "count limit", limit: 1, wantRequested: readChunkSize, wantConsumed: readChunkSize, wantReturned: 1, wantUnused: readChunkSize - 1, wantStopReason: listStopCountLimit},
 		{name: "denied", denied: true, wantRequested: 60, wantConsumed: 60, wantUnused: 60, wantStopReason: listStopExhausted},
@@ -242,7 +244,11 @@ func TestServerListBodyMetricsForSearchBackedLists(t *testing.T) {
 			denied := map[string]struct{}{}
 			rows := make([]*resourcepb.ResourceSearchRow, 0, 60)
 			var listRV int64
-			for i := range 60 {
+			resources := 60
+			if tc.empty {
+				resources = 0
+			}
+			for i := range resources {
 				name := fmt.Sprintf("resource-%03d", i)
 				listRV = seedResource(t, backend, ctx, name, "")
 				rv := listRV

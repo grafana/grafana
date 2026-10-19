@@ -1031,7 +1031,7 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 
 	if t.SkipScope(req.Verb) {
 		// Resource doesn't require scope on this verb, so allow if the user has the action
-		return scopeMap[""], nil
+		return scopeMap[""] || scopeMap["*"], nil
 	}
 
 	// Create maps empty parent to general for every folder-capable resource
@@ -1299,7 +1299,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return s.listPermissionWithFolderAuthz(ctx, scopeMap, req)
 	}
 
-	if scopeMap["*"] {
+	if scopeMap["*"] || (t.SkipScope(req.Verb) && scopeMap[""]) {
 		return &authzv1.ListResponse{
 			All:    true,
 			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},

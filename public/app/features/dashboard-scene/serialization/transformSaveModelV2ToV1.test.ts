@@ -57,7 +57,6 @@ jest.mock('@grafana/runtime', () => {
       '-- Mixed --': { type: 'mixed', uid: '-- Mixed --', name: '-- Mixed --', meta: { id: 'mixed' } },
     },
     featureToggles: {
-      dashboardNewLayouts: true,
       unifiedAlertingEnabled: true,
       scopeFilters: false,
       reloadDashboardsOnParamsChange: false,
