@@ -1049,8 +1049,8 @@ func TestExtendedJWTConfiguredSignerGroupAudience(t *testing.T) {
 	cfg.ExtJWTAuth.Audiences = []string{"custom-grafana"}
 	client := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
 
-	for _, audience := range []string{"custom-grafana", "iam.grafana.app", "example-app"} {
-		for _, target := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/folder.grafana.app/v1/folders", "/apis", "/api/user", "/apis/example-app/v1", "/apis/iam.grafana.app/../folder.grafana.app/v1"} {
+	for _, audience := range []string{"custom-grafana", "iam.grafana.app", "example-app", "example-aisdk-app", "github-datasource"} {
+		for _, target := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/folder.grafana.app/v1/folders", "/apis", "/api/user", "/apis/example-app/v1", "/apis/example-aisdk-app/v1", "/apis/github-datasource/v1", "/apis/example-aisdk-app%2fv1", "/apis/example-aisdk-app/../github-datasource/v1", "/apis/iam.grafana.app/../folder.grafana.app/v1"} {
 			t.Run(audience+target, func(t *testing.T) {
 				payload := accessTokenClaims{
 					Claims: jwt.Claims{Subject: "access-policy:policy-1", Audience: jwt.Audience{audience}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))},
@@ -1059,7 +1059,11 @@ func TestExtendedJWTConfiguredSignerGroupAudience(t *testing.T) {
 				req := httptest.NewRequest(http.MethodGet, target, nil)
 				req.Header.Set(ExtJWTAuthenticationHeaderName, generateToken(t, payload, key, jose.ES256))
 				identity, err := client.Authenticate(t.Context(), &authn.Request{HTTPRequest: req})
-				if audience == "custom-grafana" || audience == "iam.grafana.app" && target == "/apis/iam.grafana.app/v0alpha1/whoami" {
+				if audience == "custom-grafana" ||
+					audience == "iam.grafana.app" && target == "/apis/iam.grafana.app/v0alpha1/whoami" ||
+					audience == "example-app" && target == "/apis/example-app/v1" ||
+					audience == "example-aisdk-app" && target == "/apis/example-aisdk-app/v1" ||
+					audience == "github-datasource" && target == "/apis/github-datasource/v1" {
 					require.NoError(t, err)
 					require.Equal(t, "policy-1", identity.ID)
 				} else {

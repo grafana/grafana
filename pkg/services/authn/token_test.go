@@ -84,15 +84,18 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
 		}
 	}
-	for _, audience := range []string{"grafana", "iam.grafana.app"} {
-		for _, path := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/iam.grafana.app", "/apis/folder.grafana.app/v1/folders", "/apis", "/api/user", "/openapi/v3"} {
+	for _, audience := range []string{"grafana", "iam.grafana.app", "example-aisdk-app", "github-datasource"} {
+		for _, path := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/iam.grafana.app", "/apis/folder.grafana.app/v1/folders", "/apis/example-aisdk-app/v1", "/apis/github-datasource/v1", "/apis/example-aisdk-app%2fv1", "/apis/example-aisdk-app/../github-datasource/v1", "/apis", "/api/user", "/openapi/v3"} {
 			t.Run(audience+path, func(t *testing.T) {
 				claims := validClaims()
 				claims.Audience = jwt.Audience{audience}
 				token := sign(claims, key, authnlib.TokenTypeAccess)
 				req := httptest.NewRequest(http.MethodGet, path, nil)
 				requester, err := authenticator.AuthenticateTokenForRequest(t.Context(), "Bearer "+token, req)
-				if audience == "grafana" || path == "/apis/iam.grafana.app/v0alpha1/whoami" || path == "/apis/iam.grafana.app" {
+				if audience == "grafana" ||
+					audience == "iam.grafana.app" && (path == "/apis/iam.grafana.app/v0alpha1/whoami" || path == "/apis/iam.grafana.app") ||
+					audience == "example-aisdk-app" && path == "/apis/example-aisdk-app/v1" ||
+					audience == "github-datasource" && path == "/apis/github-datasource/v1" {
 					require.NoError(t, err)
 					require.Equal(t, "access-policy:policy-1", requester.GetUID())
 				} else {
