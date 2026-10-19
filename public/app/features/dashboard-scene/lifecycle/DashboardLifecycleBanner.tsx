@@ -22,7 +22,7 @@ import {
   type PendingChangesView,
   previewedDashboardUid,
   proposesNewDashboard,
-  setShowOriginal,
+  showOriginal,
 } from './pendingChangePreview';
 import { useChangeHighlights } from './useChangeHighlights';
 import { usePendingChangeDiff } from './usePendingChangeDiff';
@@ -83,11 +83,12 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
       uid={uid}
       id={preview.id}
       pending={preview.pending}
+      placement={placement}
       inset={inset}
       reload={load}
     />
   ) : (
-    <PendingChangesHint uid={uid} id={preview.id} inset={inset} reload={load} />
+    <PendingChangesHint uid={uid} id={preview.id} placement={placement} inset={inset} reload={load} />
   );
 }
 
@@ -100,6 +101,7 @@ interface PendingChangesProps {
   uid: string;
   id: string;
   pending: DashboardPendingChanges;
+  placement: PendingChangesView;
   inset: BannerInset;
   reload: () => Promise<void>;
 }
@@ -108,7 +110,7 @@ interface PendingChangesProps {
  * While the scene shows the requester's pending changes: what they are, and Apply or Discard. Once
  * the dashboard moved on since they were made, Rebase or Discard instead.
  */
-function PendingChangesBanner({ dashboard, uid, id, pending, inset, reload }: PendingChangesProps) {
+function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, reload }: PendingChangesProps) {
   const styles = useStyles2(getStyles, inset);
   const [saved, setSaved] = useState<SavedDashboard | null | undefined>(undefined);
   const [currentGeneration, setCurrentGeneration] = useState<number | undefined>(undefined);
@@ -233,8 +235,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, inset, reload }: Pe
           href={locationService.getLocation().pathname}
           onClick={async (event) => {
             event.preventDefault();
-            setShowOriginal(uid, id, true);
-            await reload();
+            await showOriginal(placement, uid, id, true, reload);
           }}
         >
           {t('dashboard-scene.lifecycle.show-original-dashboard', 'Show original dashboard')}
@@ -454,11 +455,13 @@ const getLifecycleAlertStyles = (theme: GrafanaTheme2) => ({
 function PendingChangesHint({
   uid,
   id,
+  placement,
   inset,
   reload,
 }: {
   uid: string;
   id: string;
+  placement: PendingChangesView;
   inset: BannerInset;
   reload: () => Promise<void>;
 }) {
@@ -474,10 +477,7 @@ function PendingChangesHint({
         variant="secondary"
         fill="outline"
         size="sm"
-        onClick={async () => {
-          setShowOriginal(uid, id, false);
-          await reload();
-        }}
+        onClick={() => showOriginal(placement, uid, id, false, reload)}
       >
         <Trans i18nKey="dashboard-scene.lifecycle.preview-changes">Preview changes</Trans>
       </Button>

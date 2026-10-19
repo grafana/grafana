@@ -11,6 +11,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import {
   PENDING_CHANGES_QUERY_PARAM,
+  PENDING_CHANGES_VIEW_QUERY_PARAM,
   pendingChangesIdFromLocation,
   previewedDashboardUid,
 } from '../../lifecycle/pendingChangePreview';
@@ -40,7 +41,10 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
     const preview = payload.pendingChanges;
     if (preview !== undefined && (preview ?? undefined) !== pendingChangesIdFromLocation()) {
       // The page loads a new scene for the other preview (DashboardScenePage); replace: same page.
-      locationService.partial({ [PENDING_CHANGES_QUERY_PARAM]: preview }, true);
+      locationService.partial(
+        { [PENDING_CHANGES_QUERY_PARAM]: preview, [PENDING_CHANGES_VIEW_QUERY_PARAM]: null },
+        true
+      );
       return { success: true, data: { reloaded: false, reason: 'switched-preview' }, changes: [] };
     }
     try {

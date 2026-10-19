@@ -30,6 +30,8 @@ export type DashboardPageRouteSearchParams = {
   editTemplate?: string | true;
   // The pending changes to preview (see dashboard-scene/lifecycle/pendingChangePreview.ts).
   pendingChanges?: string;
+  // `original` shows the saved dashboard instead of the pending changes.
+  pendingChangesView?: string;
 };
 
 export type PublicDashboardPageRouteParams = {

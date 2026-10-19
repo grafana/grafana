@@ -25,6 +25,12 @@ const PENDING_CHANGES_EXTENSION_POINT = 'grafana/dashboard/pending-changes/v1';
 /** The dashboard page query parameter naming the pending changes to preview. */
 export const PENDING_CHANGES_QUERY_PARAM = 'pendingChanges';
 
+/**
+ * With `original`, the dashboard page shows the saved dashboard instead of the pending changes,
+ * with a way back to them. In the URL so a plugin linking to the page can tell which it shows.
+ */
+export const PENDING_CHANGES_VIEW_QUERY_PARAM = 'pendingChangesView';
+
 type ApplyPendingChangesResult = { applied: true } | { applied: false; currentGeneration: number };
 
 /** One set of pending changes to a dashboard, as its plugin supplies them. */
@@ -49,6 +55,7 @@ export interface DashboardPendingChanges {
 
 type DashboardPendingChangesLoader = (request: { uid: string; id: string }) => Promise<DashboardPendingChanges | null>;
 
+/** The embedded view's Show original choices, which have no URL to live in. */
 const ORIGINAL_VIEW_KEY = 'grafana.dashboard.pendingChanges.showOriginal';
 
 /** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
@@ -78,11 +85,33 @@ function originalViews(): Set<string> {
 }
 
 /** Whether the requester chose to see the saved dashboard instead of these pending changes. */
-function isShowingOriginal(uid: string, id: string): boolean {
-  return originalViews().has(viewKey(uid, id));
+function isShowingOriginal(view: PendingChangesView, uid: string, id: string): boolean {
+  return view === 'page'
+    ? locationService.getSearchObject()[PENDING_CHANGES_VIEW_QUERY_PARAM] === 'original'
+    : originalViews().has(viewKey(uid, id));
 }
 
-export function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
+/**
+ * Shows the saved dashboard instead of the pending changes, or the pending changes again. The
+ * page changes its URL, which reloads it; the embedded view remembers the choice for the tab and
+ * reloads itself (`reload`).
+ */
+export async function showOriginal(
+  view: PendingChangesView,
+  uid: string,
+  id: string,
+  original: boolean,
+  reload: () => Promise<void>
+) {
+  if (view === 'page') {
+    locationService.partial({ [PENDING_CHANGES_VIEW_QUERY_PARAM]: original ? 'original' : null }, true);
+    return;
+  }
+  setShowOriginal(uid, id, original);
+  await reload();
+}
+
+function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
   const views = originalViews();
   if (showOriginal) {
     views.add(viewKey(uid, id));
@@ -195,7 +224,7 @@ export async function loadPendingChangePreview(
     const pending = await askLoader(load, { uid, id });
     if (pending) {
       // A new dashboard has no saved original to show instead.
-      const preview = { id, pending, previewing: proposesNewDashboard(pending) || !isShowingOriginal(uid, id) };
+      const preview = { id, pending, previewing: proposesNewDashboard(pending) || !isShowingOriginal(view, uid, id) };
       previews.set(previewKey(view, uid), preview);
       return preview;
     }
@@ -217,6 +246,7 @@ export function clearPendingChangePreview(uid: string, id: string) {
 export function withoutPendingChangesPreview(search: string): string {
   const params = new URLSearchParams(search);
   params.delete(PENDING_CHANGES_QUERY_PARAM);
+  params.delete(PENDING_CHANGES_VIEW_QUERY_PARAM);
   const rest = params.toString();
   return rest ? `?${rest}` : '';
 }
