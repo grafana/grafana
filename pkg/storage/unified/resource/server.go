@@ -2556,6 +2556,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	var processedRV int64 // Includes events deliberately excluded by watch filters.
 	var lastObjectRV int64
+	var initialEventsSentAt time.Time
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2586,6 +2587,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
+		initialEventsSentAt = time.Now()
 
 		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
@@ -2700,10 +2702,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// Resource versions can be either Unix microsecond timestamps (SQL backend)
 					// or snowflake IDs (KV backend). Split the total at Send so upstream
 					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					resourceVersionAt := ResourceVersionTime(event.ResourceVersion)
+					phase := watchEventPhaseLive
+					if resourceVersionAt.Before(initialEventsSentAt) {
+						phase = watchEventPhaseInitialList
+					}
 					s.storageMetrics.observeWatchEvent(
 						event.Key.Group,
 						event.Key.Resource,
-						ResourceVersionTime(event.ResourceVersion),
+						phase,
+						resourceVersionAt,
 						sendStartedAt,
 						sentAt,
 					)
