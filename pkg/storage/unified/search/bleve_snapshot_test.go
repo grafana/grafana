@@ -119,6 +119,7 @@ func TestSnapshotTier(t *testing.T) {
 }
 
 func TestPickBestSnapshot(t *testing.T) {
+	ns := newTestNsResource()
 	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
 	minV := semver.MustParse("11.4.0")
 	running := semver.MustParse("11.5.0")
@@ -144,13 +145,13 @@ func TestPickBestSnapshot(t *testing.T) {
 	cutoff := func(maxAge time.Duration) time.Time { return now.Add(-maxAge) }
 
 	t.Run("empty list", func(t *testing.T) {
-		_, ok := newBackend(minV).pickBestSnapshot(nil, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, nil, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("dropped by age", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("11.5.0", 100, 2*time.Hour)}
-		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
@@ -161,14 +162,14 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("zero cutoff is no age limit", func(t *testing.T) {
 		old := makeULID(t, now.Add(-30*24*time.Hour))
 		all := map[ulid.ULID]*IndexMeta{old: snap("11.5.0", 100, 30*24*time.Hour)}
-		c, ok := newBackend(minV).pickBestSnapshot(all, time.Time{}, log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, time.Time{}, log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, old, c.key)
 	})
 
 	t.Run("dropped for unparseable version", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("not-a-version", 100, time.Minute)}
-		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
@@ -180,14 +181,14 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	t.Run("dropped for unknown reader requirements", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): requiring("11.5.0", 100, time.Minute, "feature-from-the-future")}
-		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("requirements this instance understands are accepted", func(t *testing.T) {
 		key := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{key: requiring("11.5.0", 100, time.Minute, resource.IndexFeatureDeletedMarker)}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
@@ -206,14 +207,14 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	t.Run("dropped when missing a required feature", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): having("11.5.0", 100, time.Minute)}
-		_, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("kept when it has the required feature", func(t *testing.T) {
 		key := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{key: having("11.5.0", 100, time.Minute, "alpha")}
-		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
@@ -223,7 +224,7 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("kept when features were not recorded", func(t *testing.T) {
 		key := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{key: snap("11.5.0", 100, time.Minute)}
-		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
@@ -236,7 +237,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			usable:           having("11.4.5", 100, time.Minute, "alpha"),
 			makeULID(t, now): having("11.5.0", 999, time.Minute),
 		}
-		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, usable, c.key)
 	})
@@ -248,7 +249,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			compatible:       snap("11.5.0", 100, time.Minute),
 			makeULID(t, now): requiring("12.0.0", 999, time.Minute, "feature-from-the-future"),
 		}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, compatible, c.key)
 	})
@@ -262,7 +263,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			newer: snap("11.6.0", 300, time.Minute),  // tier 2 (above running)
 			ideal: snap("11.5.0", 100, 10*time.Hour), // tier 0 wins despite lower RV / older upload
 		}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, ideal, c.key)
 		assert.Equal(t, 0, c.tier)
@@ -275,7 +276,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			older: snap("11.3.0", 100, time.Minute),
 			newer: snap("12.0.0", 999, time.Minute),
 		}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, older, c.key)
 		assert.Equal(t, 1, c.tier)
@@ -284,7 +285,7 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("tier 2 picked as last resort", func(t *testing.T) {
 		only := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{only: snap("12.0.0", 100, time.Minute)}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, only, c.key)
 		assert.Equal(t, 2, c.tier)
@@ -306,12 +307,12 @@ func TestPickBestSnapshot(t *testing.T) {
 		all[same].IndexFormat = format
 		all[tooNew].IndexFormat = testIndexFormatDelta(t, 1)
 
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, legacy, c.key, "empty legacy format remains compatible and normal tie-breaking still applies")
 
 		delete(all, legacy)
-		c, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok = newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, same, c.key, "same format should beat older format by RV")
 	})
@@ -329,13 +330,13 @@ func TestPickBestSnapshot(t *testing.T) {
 			b: snap("11.5.0", 50, time.Minute),     // best version, lowest RV, newer upload
 			c: snap("11.5.0", 200, 30*time.Minute), // best version, high RV, older upload
 		}
-		got, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		got, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, c, got.key)
 
 		// Adding d (same version + RV as c, newer upload): d wins via upload-desc tiebreaker.
 		all[d] = snap("11.5.0", 200, time.Minute)
-		got, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		got, ok = newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, d, got.key)
 	})
