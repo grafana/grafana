@@ -135,6 +135,11 @@ jobs:
           set -euo pipefail
 
           grafana_root="$PWD"
+
+          # Use clone path as the replace
+          export GOWORK="$grafana_root/go.work"
+          go work edit -use=../grafana-enterprise
+
           cd ../grafana-enterprise
           readarray -t PACKAGES <<< "$("$grafana_root"/scripts/ci/backend-tests/shard.sh -N"$SHARD" -d ./pkg/... | grep -v -E "$EXCLUDED")"
           if [ "${#PACKAGES[@]}" -eq 0 ] || [ -z "${PACKAGES[0]}" ]; then
