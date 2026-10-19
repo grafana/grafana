@@ -625,17 +625,17 @@ it('keeps IAM membership details visible when the account request fails', async 
   expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
 });
 
-it('requests organization membership by exact user ID', async () => {
+it('requests organization membership by exact user UID', async () => {
   const queries = jest.fn();
   server.use(
     http.get('/api/org/users', ({ request }) => {
       const params = new URL(request.url).searchParams;
-      queries(params.get('userId'), params.get('query'), params.get('accesscontrol'));
+      queries(params.get('userUid'), params.get('userId'), params.get('query'), params.get('accesscontrol'));
       return HttpResponse.json([{ ...profile, role: 'Viewer' }]);
     })
   );
   setup();
-  await waitFor(() => expect(queries).toHaveBeenCalledWith('12', null, 'true'));
+  await waitFor(() => expect(queries).toHaveBeenCalledWith('alice', null, null, 'true'));
 });
 
 it('treats a full membership page without the user as unknown', async () => {

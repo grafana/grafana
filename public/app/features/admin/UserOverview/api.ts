@@ -162,9 +162,9 @@ function useUserMembership(uid: string, account?: UserAccount): UserSection<User
   const login = account?.login ?? resource?.spec.login;
   const id = account?.id ?? Number(resource?.metadata.labels?.['grafana.app/deprecatedInternalID']);
   const canSearchMembers = id > 0 && contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
-  const members = useGetOrgUsersForCurrentOrgQuery(canSearchMembers ? { userId: id, limit: 100 } : skipToken);
+  const members = useGetOrgUsersForCurrentOrgQuery(canSearchMembers ? { userUid: uid, limit: 100 } : skipToken);
   const member = members.currentData?.find((member) => member.uid === uid);
-  // Older backends can ignore the exact-ID filter. A full page without a match
+  // Older backends can ignore the exact-UID filter. A full page without a match
   // cannot establish that the user is absent from the organization.
   const incomplete = !member && (members.currentData?.length ?? 0) >= 100;
   const orgs = useGetUserOrgListQuery(
