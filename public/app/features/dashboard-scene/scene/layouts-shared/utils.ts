@@ -156,6 +156,9 @@ export function findAdjacentVizPanel<T>(
  * Moves keyboard focus to the given panel's chrome. Deferred to the next animation frame because
  * the caller removes another panel from the layout first, and the DOM needs to reflect that
  * removal before we can safely move focus into what's left.
+ *
+ * Only acts when focus has dropped to document.body, i.e. the removal took the focused element
+ * with it. Programmatic removals (moves, mutation commands) leave focus where the user has it.
  */
 export function focusVizPanel(panel: VizPanel | undefined): void {
   if (!panel) {
@@ -163,6 +166,10 @@ export function focusVizPanel(panel: VizPanel | undefined): void {
   }
 
   requestAnimationFrame(() => {
+    if (document.activeElement && document.activeElement !== document.body) {
+      return;
+    }
+
     const panelEl = document.querySelector<HTMLElement>(`[data-viz-panel-key="${panel.state.key}"] section`);
     panelEl?.focus();
   });

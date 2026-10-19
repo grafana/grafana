@@ -237,7 +237,7 @@ export class DefaultGridLayoutManager
     clearClipboard();
   }
 
-  public removePanel(panel: VizPanel, options?: { skipFocus?: boolean }) {
+  public removePanel(panel: VizPanel) {
     const gridItem = panel.parent!;
 
     if (!(gridItem instanceof DashboardGridItem)) {
@@ -260,9 +260,7 @@ export class DefaultGridLayoutManager
       const adjacentPanel = findAdjacentVizPanel(gridItem, row.state.children, getPanelFromGridChild);
       row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
-      if (!options?.skipFocus) {
-        focusVizPanel(adjacentPanel);
-      }
+      focusVizPanel(adjacentPanel);
       return;
     }
 
@@ -271,9 +269,7 @@ export class DefaultGridLayoutManager
     if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
-      if (!options?.skipFocus) {
-        focusVizPanel(adjacentPanel);
-      }
+      focusVizPanel(adjacentPanel);
       return;
     }
 
@@ -283,9 +279,7 @@ export class DefaultGridLayoutManager
       source: this,
       perform: () => {
         layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
-        if (!options?.skipFocus) {
-          focusVizPanel(adjacentPanel);
-        }
+        focusVizPanel(adjacentPanel);
       },
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
     });

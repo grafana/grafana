@@ -110,29 +110,19 @@ describe('findAdjacentVizPanel', () => {
   const b = new VizPanel({ key: 'panel-b', pluginId: 'table' });
   const c = new VizPanel({ key: 'panel-c', pluginId: 'table' });
 
-  it('returns the next sibling when one exists', () => {
-    const siblings = [{ panel: a }, { panel: b }, { panel: c }];
-    expect(findAdjacentVizPanel(siblings[1], siblings, (s) => s.panel)).toBe(c);
-  });
+  type Sibling = { panel: VizPanel | undefined };
+  const all: Sibling[] = [{ panel: a }, { panel: b }, { panel: c }];
+  const withRow: Sibling[] = [{ panel: a }, { panel: undefined }, { panel: c }];
+  const single: Sibling[] = [{ panel: a }];
 
-  it('falls back to the previous sibling when removing the last item', () => {
-    const siblings = [{ panel: a }, { panel: b }, { panel: c }];
-    expect(findAdjacentVizPanel(siblings[2], siblings, (s) => s.panel)).toBe(b);
-  });
-
-  it('skips siblings whose getPanel returns undefined, such as rows', () => {
-    const siblings = [{ panel: a }, { panel: undefined }, { panel: c }];
-    expect(findAdjacentVizPanel(siblings[0], siblings, (s) => s.panel)).toBe(c);
-  });
-
-  it('returns undefined when the removed item is not in siblings', () => {
-    const siblings = [{ panel: a }];
-    expect(findAdjacentVizPanel({ panel: b }, siblings, (s) => s.panel)).toBeUndefined();
-  });
-
-  it('returns undefined when there are no other panels', () => {
-    const siblings = [{ panel: a }];
-    expect(findAdjacentVizPanel(siblings[0], siblings, (s) => s.panel)).toBeUndefined();
+  it.each<[string, Sibling, Sibling[], VizPanel | undefined]>([
+    ['returns the next sibling when one exists', all[1], all, c],
+    ['falls back to the previous sibling when removing the last item', all[2], all, b],
+    ['skips siblings whose getPanel returns undefined, such as rows', withRow[0], withRow, c],
+    ['returns undefined when the removed item is not in siblings', { panel: b }, single, undefined],
+    ['returns undefined when there are no other panels', single[0], single, undefined],
+  ])('%s', (_name, removed, siblings, expected) => {
+    expect(findAdjacentVizPanel(removed, siblings, (s) => s.panel)).toBe(expected);
   });
 });
 
@@ -178,6 +168,22 @@ describe('focusVizPanel', () => {
     });
 
     expect(document.activeElement).toBe(screen.getByTestId(selectors.components.Panels.Panel.title('Panel B')));
+  });
+
+  it('leaves focus alone when it is not on document.body', async () => {
+    const panelA = new VizPanel({ title: 'Panel A', key: 'panel-a', pluginId: 'table' });
+    const panelB = new VizPanel({ title: 'Panel B', key: 'panel-b', pluginId: 'table' });
+    await renderPanels([panelA, panelB]);
+
+    const panelATitle = screen.getByTestId(selectors.components.Panels.Panel.title('Panel A'));
+    act(() => panelATitle.focus());
+
+    await act(async () => {
+      focusVizPanel(panelB);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+
+    expect(document.activeElement).toBe(panelATitle);
   });
 
   it('does nothing when panel is undefined', async () => {
