@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Resetten"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Auxiliary Logs",
+      "description-auxiliary-logs": "Het inschakelen van deze functie brengt per-querykosten van Azure Monitor met zich mee voor dashboardpanelen die query's uitvoeren op tabellen die zijn geconfigureerd voor <2>Auxiliary Logs</2>. Auxiliary logs hebben geen SLA's voor responstijd, zijn alleen bedoeld voor ad-hocquery's en gegevensverkenning en mogen niet worden gebruikt voor dashboards die realtime gegevens vereisen of voor waarschuwingen.",
+      "label-enable-auxiliary-logs": "Auxiliary Logs inschakelen"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} onbewerkte query",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Beperk het aantal geretourneerde rijen (standaard is 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Weet je zeker dat je wilt overschakelen naar Auxiliary Logs?",
       "body-basic-logs-queries": "Weet je zeker dat je wilt overschakelen naar Basislogs?",
       "confirmText-confirm": "Bevestigen",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Aan query's op Auxiliary Logs zijn kosten verbonden op basis van de hoeveelheid gescande gegevens. Auxiliary Logs hebben geen SLA's voor reactietijden en mogen niet worden gebruikt voor dashboards die realtime gegevens nodig hebben of voor waarschuwingen.",
       "description-basic-logs-queries": "Basislogquery's brengen kosten met zich mee op basis van de hoeveelheid gescande gegevens.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analytics",
+      "label-auxiliary": "Auxiliary",
+      "label-basic": "Basic",
       "label-logs": "Logs",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Auxiliary Logs-query's",
       "title-basic-logs-queries": "Basislogquery's",
       "tooltip-logs": "Geeft aan of een basis- of analytische logquery moet worden uitgevoerd.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Geeft aan of er een Analytics-, Basic- of Auxiliary Logs-query moet worden uitgevoerd.",
+      "tooltip-logs-aux": "Geeft aan of er een Analytics- of Auxiliary Logs-query moet worden uitgevoerd."
     },
     "logs-query-builder": {
       "title-no-tables": "Bron is geladen, maar zonder tabellen"
     },
     "logs-query-editor": {
       "learn-more": "Meer informatie ",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Wanneer je Auxiliary Logs gebruikt, kun je slechts één bron tegelijk selecteren.",
+      "notice-basic-single-resource": "Wanneer je Basic Logs gebruikt, kun je slechts één bron tegelijk selecteren.",
+      "notice-same-resource-type": "Je mag alleen items van hetzelfde brontype kiezen.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> is een Analytics-tabel.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> is een Auxiliary Logs-tabel — brengt kosten met zich mee per gescande GiB, heeft geen SLA voor responstijd en is niet geschikt voor realtime- of waarschuwingsscenario's.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> is een Basic Logs-tabel — brengt kosten met zich mee per gescande GiB.",
+      "tier-switch-revert": "Terugzetten naar {{fromTier}}",
+      "tier-switch-title": "Queryniveau ingesteld op {{toTier}}",
       "view-query": "Query bekijken in Azure Portal",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Deze Auxiliary Logs-query verwerkt {{dataIngested}} GiB wanneer deze wordt uitgevoerd. Auxiliary Logs hebben geen SLA voor responstijd en zijn niet geschikt voor realtime- of waarschuwingsscenario's. ",
+      "warning-auxiliary-raw": "Dit is een Auxiliary Logs-query — gebruikt het zoek-eindpunt, brengt kosten met zich mee per gescande GiB, heeft geen SLA voor responstijd en is niet geschikt voor realtime- of waarschuwingsscenario's. Analytics-plan-tabellen kunnen in deze modus niet worden opgevraagd (gebruik hiervoor het Analytics-niveau). ",
+      "warning-basic-raw": "Dit is een Basic Logs-query — gebruikt het zoek-eindpunt en brengt kosten met zich mee per gescande GiB. Analytics-plan-tabellen kunnen in deze modus niet worden opgevraagd (gebruik hiervoor het Analytics-niveau). ",
+      "warning-data-ingested": "Deze query verwerkt {{dataIngested}} GiB wanneer deze wordt uitgevoerd. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Deze tabel maakt deel uit van het Auxiliary Logs-abonnement. Schakel ''Auxiliary Logs'' in de instellingen van de gegevensbron in om deze op te vragen.",
+      "description-auxiliary-enabled": "Als je deze tabel selecteert, wordt de querymodus gewijzigd naar Auxiliary Logs",
+      "description-basic-disabled": "Deze tabel maakt deel uit van het Basic Logs-abonnement. Schakel ''Basic Logs'' in de instellingen van de gegevensbron in om deze op te vragen.",
+      "description-basic-enabled": "Als je deze tabel selecteert, wordt de querymodus gewijzigd naar Basic Logs",
+      "description-plan-unavailable": "Deze tabel kan niet worden geselecteerd omdat het Logs-abonnement niet kon worden bepaald.",
+      "label-all-columns": "Alle kolommen"
     },
     "metric-name-field": {
       "label-metric": "Metrisch"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Aangepaste naamruimte selecteren",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Dimensienaam selecteren",
+      "aria-label-select-metric-name": "Metricnaam selecteren",
       "aria-label-select-namespace": "Namespace selecteren",
       "aria-label-select-query-type": "Selecteer query",
       "aria-label-select-region": "Selecteer regio",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Selecteer bronnengroep",
       "aria-label-select-subscription": "Selecteer abonnement",
       "label-custom-namespace": "Aangepaste naamruimte",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Dimensienaam",
+      "label-metric-name": "Metricnaam",
       "label-namespace": "Namespace",
       "label-query-type": "Type vraag",
       "label-region": "Regio",

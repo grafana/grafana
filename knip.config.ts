@@ -57,7 +57,7 @@ const config: KnipConfig = {
     'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
-  ignoreBinaries: ['jq', 'make', 'nx', 'shellcheck', 'webpack'],
+  ignoreBinaries: ['jq', 'lerna', 'make', 'nx', 'shellcheck', 'webpack'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
@@ -106,6 +106,8 @@ const config: KnipConfig = {
         'public/swagger/index.tsx!',
         'public/app/api/clients/**/index.ts!',
         'public/app/extensions/index.ts!',
+        // locale extensions for enterprise translations
+        'public/app/extensions/locales/localeExtensions.ts!',
         'public/app/extensions/api/clients/**/index.ts!',
         'public/app/plugins/**/module.{ts,tsx,js}!',
         'scripts/**/*.{t,j,mt,mj,cj}s*',
@@ -113,6 +115,8 @@ const config: KnipConfig = {
 
         // reporter for playwright
         'e2e-playwright/utils/axe-a11y/reporter.ts',
+        // Bundled by esbuild and accessed through window.textSandbox in browser tests.
+        'e2e-playwright/panels-suite/text-sandbox.fixture.tsx',
 
         // levitate
         '.github/workflows/scripts/levitate/*.js',
@@ -132,6 +136,7 @@ const config: KnipConfig = {
       playwright: {
         config: [
           'e2e-playwright/playwright.config.ts',
+          'e2e-playwright/text-sandbox.config.ts',
           'e2e-playwright/extensions/enterprise/playwright-enterprise.config.ts',
           'e2e-playwright/extensions/oem/playwright-enterprise-oem.config.ts',
         ],

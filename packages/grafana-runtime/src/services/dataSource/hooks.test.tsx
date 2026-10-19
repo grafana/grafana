@@ -180,8 +180,8 @@ describe('useDataSourceInstanceListItem', () => {
     const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
     await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
 
-    act(() => {
-      syncDataSourceInstanceSettings({
+    await act(async () => {
+      await syncDataSourceInstanceSettings({
         datasources: { Synced: ds({ id: 1, uid: 'uid-alpha', name: 'Synced', type: 'test-db' }) },
         defaultDatasource: 'Synced',
       });
@@ -203,6 +203,10 @@ describe('useDataSourceInstanceListItem', () => {
     await waitFor(() => expect(result.current.item?.name).toBe('RuntimeDataSource-runtime-db'));
   });
 });
+
+const failingFilter = () => {
+  throw new Error('filter failed');
+};
 
 describe('useDataSourceInstanceList', () => {
   it('populates items', async () => {
@@ -258,6 +262,64 @@ describe('useDataSourceInstanceList', () => {
 
     await waitFor(() => expect(result.current.items.map((item) => item.name)).toEqual(['Charlie']));
   });
+
+  it('keeps the same items reference across re-renders while loading', async () => {
+    const { result, rerender } = renderHook(() => useDataSourceInstanceList());
+
+    expect(result.current.isLoading).toBe(true);
+    const itemsWhileLoading = result.current.items;
+    expect(itemsWhileLoading).toEqual([]);
+
+    rerender();
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.items).toBe(itemsWhileLoading);
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('keeps the same items reference across re-renders after an error', async () => {
+    const { result, rerender } = renderHook(() => useDataSourceInstanceList({ filter: failingFilter }));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error?.message).toBe('filter failed');
+    expect(result.current.items).toEqual([]);
+    const itemsAfterError = result.current.items;
+
+    rerender();
+
+    expect(result.current.items).toBe(itemsAfterError);
+  });
+
+  it('does not share the empty items array between hook instances', async () => {
+    const first = renderHook(() => useDataSourceInstanceList());
+    const second = renderHook(() => useDataSourceInstanceList());
+
+    expect(first.result.current.isLoading).toBe(true);
+    expect(second.result.current.isLoading).toBe(true);
+    expect(first.result.current.items).not.toBe(second.result.current.items);
+
+    // A caller that mutates its own empty array must not change what other callers see.
+    first.result.current.items.push(ds({ name: 'Intruder' }) as unknown as DataSourceInstanceListItem);
+    expect(second.result.current.items).toEqual([]);
+
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    await waitFor(() => expect(second.result.current.isLoading).toBe(false));
+  });
+
+  it('does not leak a mutated empty items array into a later hook instance', async () => {
+    const first = renderHook(() => useDataSourceInstanceList());
+    first.result.current.items.push(ds({ name: 'Intruder' }) as unknown as DataSourceInstanceListItem);
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    first.unmount();
+
+    const second = renderHook(() => useDataSourceInstanceList());
+
+    expect(second.result.current.isLoading).toBe(true);
+    expect(second.result.current.items).toEqual([]);
+
+    await waitFor(() => expect(second.result.current.isLoading).toBe(false));
+  });
 });
 
 describe('useDataSourceInstance', () => {
@@ -301,20 +363,8 @@ describe('useDataSourceInstance', () => {
 });
 
 describe('useDefaultDataSourceInstanceListItem', () => {
-  const alpha = {
-    uid: 'uid-alpha',
-    type: 'test-db',
-    name: 'Alpha',
-    meta: {},
-    isDefault: false,
-  } as DataSourceInstanceListItem;
-  const bravo = {
-    uid: 'uid-bravo',
-    type: 'test-db',
-    name: 'Bravo',
-    meta: {},
-    isDefault: true,
-  } as DataSourceInstanceListItem;
+  const alpha = { uid: 'uid-alpha', type: 'test-db', name: 'Alpha', meta: {} } as DataSourceInstanceListItem;
+  const bravo = { uid: 'uid-bravo', type: 'test-db', name: 'Bravo', meta: {} } as DataSourceInstanceListItem;
 
   it('starts loading then resolves to the flagged item', async () => {
     const { result } = renderHook(() => useDefaultDataSourceInstanceListItem([alpha, bravo]));
@@ -345,19 +395,32 @@ describe('useDefaultDataSourceInstanceListItem', () => {
     expect(result.current.item).toBe(itemAfterFirstRender);
   });
 
-  it('re-resolves when the flag moves to another item', async () => {
+  it('re-resolves when the items change', async () => {
     const { result, rerender } = renderHook(({ items }) => useDefaultDataSourceInstanceListItem(items), {
       initialProps: { items: [alpha, bravo] },
     });
 
     await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
 
-    rerender({
-      items: [
-        { ...alpha, isDefault: true },
-        { ...bravo, isDefault: false },
-      ],
+    rerender({ items: [alpha] });
+    await waitFor(() => expect(result.current.item).toBeUndefined());
+  });
+
+  it('re-resolves when the default moves to another instance in the cache', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem([alpha, bravo]));
+
+    await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
+
+    act(() => {
+      syncDataSourceInstanceSettings({
+        datasources: {
+          Alpha: { ...fixtures.Alpha, isDefault: true },
+          Bravo: { ...fixtures.Bravo, isDefault: false },
+        },
+        defaultDatasource: 'Alpha',
+      });
     });
+
     await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
   });
 });

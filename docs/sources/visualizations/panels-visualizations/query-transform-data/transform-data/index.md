@@ -97,6 +97,10 @@ For users that rely on multiple views of the same dataset, transformations offer
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
 
+To see transformations in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Transforms - Rows to fields" url="https://play.grafana.org/d/T5dVQV47z/" >}}
+
 > **Note:** Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
 
 ## Transformation types
