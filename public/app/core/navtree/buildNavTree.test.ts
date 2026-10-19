@@ -49,12 +49,16 @@ describe('buildNavTree', () => {
       ]);
     });
 
-    it('places notebooks after drilldown when the flag is on and the user can read notebooks', () => {
-      const notebookReader = [AccessControlAction.NotebooksRead, AccessControlAction.DataSourcesExplore];
+    it('places notebooks after dashboards when the flag is on and the user can read notebooks', () => {
+      const notebookReader = [
+        ...DASHBOARD_READER,
+        AccessControlAction.NotebooksRead,
+        AccessControlAction.DataSourcesExplore,
+      ];
       setup({ permissions: notebookReader, openFeatureFlags: { 'dashboard.notebooks': true } });
 
       const treeIds = ids(buildNavTree());
-      expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
+      expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.dashboards) + 1);
 
       setup({ permissions: notebookReader });
       expect(findById(buildNavTree(), NavID.notebooks)).toBeUndefined();

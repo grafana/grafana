@@ -96,6 +96,15 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		}))
 	})
 
+	// How the search server leaves out the types it cannot search.
+	t.Run("a request can leave out types", func(t *testing.T) {
+		assert.ElementsMatch(t, []string{"dash-a", "dash-b"}, search(&resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_GROUP_RESOURCE,
+			Operator: string(selection.NotIn),
+			Values:   []string{"folder.grafana.app/folders"},
+		}))
+	})
+
 	t.Run("a hit is authorized against its own resource type", func(t *testing.T) {
 		// Permission on folders alone leaves the dashboards out, even though they
 		// share the index.
@@ -132,6 +141,45 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			"folder-a": "folder.grafana.app/folders",
 		}, found)
 	})
+}
+
+func TestSearchResponseResourceVersion(t *testing.T) {
+	src := newTestNsResource()
+	for _, tc := range []struct {
+		name string
+		key  resource.NamespacedResource
+		rv   int64
+	}{
+		{name: "per resource", key: src, rv: 42},
+		{name: "global", key: resource.GlobalSearchKey(src.Namespace)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t)
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: src.Namespace})
+			idx, err := backend.BuildIndex(ctx, tc.key, 1, "test", indexTestDocs(src, 1, 42), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+				resourcepb.ResourceSearchRequest_UNSPECIFIED,
+				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+				resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			} {
+				t.Run(format.String(), func(t *testing.T) {
+					response, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+						Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+							Namespace: src.Namespace, Group: src.Group, Resource: src.Resource,
+						}},
+						Limit:        10,
+						ResultFormat: format,
+					}, nil, nil)
+					require.NoError(t, err)
+					require.Nil(t, response.Error)
+					assert.Equal(t, int64(1), response.TotalHits)
+					assert.Equal(t, tc.rv, response.ResourceVersion)
+				})
+			}
+		})
+	}
 }
 
 func TestVerifyKeyPerResourceIndex(t *testing.T) {

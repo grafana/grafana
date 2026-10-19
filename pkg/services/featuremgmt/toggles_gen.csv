@@ -162,9 +162,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
 2024-11-12,crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2024-11-27,azureMonitorEnableUserAuth,GA,@grafana/data-sources-plugins,false,false,false
-2025-07-16,alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
-2025-07-23,alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
-2025-07-16,alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 2025-07-16,alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false

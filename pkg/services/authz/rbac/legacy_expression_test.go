@@ -106,7 +106,7 @@ func TestConvertLegacyExpression(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			evaluator, err := convertLegacyExpression(tc.expression)
+			evaluator, _, err := convertLegacyExpression(tc.expression)
 			require.NoError(t, err)
 			require.Equal(t, tc.allowed, evaluator.Evaluate(tc.permissions))
 		})
@@ -115,7 +115,7 @@ func TestConvertLegacyExpression(t *testing.T) {
 
 func TestConvertLegacyExpressionScopeMutation(t *testing.T) {
 	for _, scopes := range [][]string{nil, {}} {
-		evaluator, err := convertLegacyExpression(legacyPermissionExpression("users:create", scopes...))
+		evaluator, _, err := convertLegacyExpression(legacyPermissionExpression("users:create", scopes...))
 		require.NoError(t, err)
 		mutated, err := evaluator.MutateScopes(t.Context(), func(context.Context, string) ([]string, error) {
 			t.Fatal("action-only checks must not resolve scopes")
@@ -125,7 +125,7 @@ func TestConvertLegacyExpressionScopeMutation(t *testing.T) {
 		require.True(t, mutated.Evaluate(map[string][]string{"users:create": {}}))
 	}
 
-	evaluator, err := convertLegacyExpression(legacyAnyExpression(
+	evaluator, _, err := convertLegacyExpression(legacyAnyExpression(
 		legacyPermissionExpression("dashboards:read", "dashboards:uid:dash-1"),
 		legacyAllExpression(
 			legacyPermissionExpression("dashboards:read", ""),
@@ -145,7 +145,7 @@ func TestConvertLegacyExpressionScopeMutation(t *testing.T) {
 
 func TestConvertLegacyExpressionCopiesScopes(t *testing.T) {
 	expression := legacyPermissionExpression("dashboards:read", "dashboards:uid:dash-1")
-	evaluator, err := convertLegacyExpression(expression)
+	evaluator, _, err := convertLegacyExpression(expression)
 	require.NoError(t, err)
 
 	expression.GetPermission().Scopes[0] = "dashboards:uid:dash-2"
@@ -189,7 +189,7 @@ func TestConvertLegacyExpressionLimits(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			evaluator, err := convertLegacyExpression(tc.expression)
+			evaluator, _, err := convertLegacyExpression(tc.expression)
 			require.NoError(t, err)
 			require.NotNil(t, evaluator)
 		})
@@ -199,7 +199,7 @@ func TestConvertLegacyExpressionLimits(t *testing.T) {
 func TestConvertLegacyExpressionRejectsInvalid(t *testing.T) {
 	for _, tc := range invalidLegacyExpressions() {
 		t.Run(tc.name, func(t *testing.T) {
-			evaluator, err := convertLegacyExpression(tc.expression)
+			evaluator, _, err := convertLegacyExpression(tc.expression)
 			require.ErrorContains(t, err, tc.wantError)
 			require.Nil(t, evaluator)
 		})
@@ -207,21 +207,7 @@ func TestConvertLegacyExpressionRejectsInvalid(t *testing.T) {
 }
 
 func TestService_LegacyCheckExpressionValidation(t *testing.T) {
-	cases := append(invalidLegacyExpressions(),
-		invalidLegacyExpressionCase{
-			name:       "valid empty all remains unsupported by the RPC",
-			expression: legacyAllExpression(),
-			wantError:  "composite legacy expressions are not supported yet",
-		},
-		invalidLegacyExpressionCase{
-			name: "valid nested expression remains unsupported by the RPC",
-			expression: legacyAnyExpression(
-				legacyAllExpression(legacyPermissionExpression("dashboards:read")),
-			),
-			wantError: "composite legacy expressions are not supported yet",
-		},
-	)
-	for _, tc := range cases {
+	for _, tc := range invalidLegacyExpressions() {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewTestService("u-1", nil, nil)
 			permissions := &legacyPermissionStore{PermissionStore: s.permissionStore}
