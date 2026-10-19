@@ -2294,11 +2294,6 @@
       "count": 2
     }
   },
-  "public/app/features/plugins/admin/components/PluginDetailsPanel.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/hooks/usePluginConfig.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
