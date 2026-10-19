@@ -15,6 +15,7 @@ import (
 func (a *AccessControl) buildLegacyCheckRequest(
 	user identity.Requester,
 	evaluator accesscontrol.Evaluator,
+	useExternalGroups bool,
 ) (*authzextv1.LegacyCheckRequest, error) {
 	if user == nil || user.IsNil() {
 		return nil, errors.New("legacy check requester is required")
@@ -37,10 +38,16 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		namespace = types.OrgNamespaceFormatter(user.GetOrgID())
 	}
 
+	groups := user.GetGroups()
+	if useExternalGroups {
+		groups = user.GetExternalGroups()
+	}
+
 	return &authzextv1.LegacyCheckRequest{
-		Namespace:  namespace,
-		Subject:    user.GetUID(),
-		Expression: expression,
-		Teams:      slices.Clone(user.GetGroups()),
+		Namespace:           namespace,
+		Subject:             user.GetUID(),
+		Expression:          expression,
+		Teams:               slices.Clone(groups),
+		SkipScopeResolution: a.skipScopeResolution,
 	}, nil
 }

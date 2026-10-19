@@ -62,7 +62,7 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		},
 	}
 
-	request, err := ac.buildLegacyCheckRequest(requester, evaluator)
+	request, err := ac.buildLegacyCheckRequest(requester, evaluator, false)
 
 	require.NoError(t, err)
 	require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
@@ -129,9 +129,102 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 				Scope:               "",
 			}
 
-			request, err := ac.buildLegacyCheckRequest(&tc.requester, accesscontrol.EvalPermission("dashboards:read"))
+			request, err := ac.buildLegacyCheckRequest(&tc.requester, accesscontrol.EvalPermission("dashboards:read"), false)
 
 			require.NoError(t, err)
+			require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
+		})
+	}
+}
+
+func TestBuildLegacyCheckRequestGroups(t *testing.T) {
+	tests := []struct {
+		name              string
+		useExternalGroups bool
+		externalGroups    []string
+		expected          []string
+	}{
+		{
+			name:           "stored teams when external groups are disabled",
+			externalGroups: []string{"external-team"},
+			expected:       []string{"stored-team"},
+		},
+		{
+			name:              "external groups when enabled",
+			useExternalGroups: true,
+			externalGroups:    []string{"external-team"},
+			expected:          []string{"external-team"},
+		},
+		{
+			name:              "nil external groups do not fall back to stored teams",
+			useExternalGroups: true,
+		},
+		{
+			name:              "empty external groups do not fall back to stored teams",
+			useExternalGroups: true,
+			externalGroups:    []string{},
+			expected:          []string{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := ProvideAccessControlTest()
+			requester := &user.SignedInUser{
+				UserID:         42,
+				UserUID:        "user-uid",
+				OrgID:          1,
+				TeamUIDs:       []string{"stored-team"},
+				ExternalGroups: tc.externalGroups,
+			}
+
+			request, err := ac.buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:read"), tc.useExternalGroups)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, request.Teams)
+
+			requester.TeamUIDs[0] = "changed-stored-team"
+			if len(requester.ExternalGroups) > 0 {
+				requester.ExternalGroups[0] = "changed-external-team"
+			}
+			require.Equal(t, tc.expected, request.Teams)
+		})
+	}
+}
+
+func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
+	ac := ProvideAccessControlTest()
+	withoutResolvers := ac.WithoutResolvers().(*AccessControl)
+	requester := &user.SignedInUser{
+		UserID:         42,
+		UserUID:        "user-uid",
+		OrgID:          1,
+		Namespace:      "stacks-123",
+		TeamUIDs:       []string{"stored-team"},
+		ExternalGroups: []string{"external-team"},
+	}
+	evaluator := accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1")
+
+	for _, tc := range []struct {
+		name                string
+		ac                  *AccessControl
+		skipScopeResolution bool
+	}{
+		{name: "without resolvers", ac: withoutResolvers, skipScopeResolution: true},
+		{name: "without resolvers called twice", ac: withoutResolvers.WithoutResolvers().(*AccessControl), skipScopeResolution: true},
+		{name: "original instance still resolves scopes", ac: ac},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request, err := tc.ac.buildLegacyCheckRequest(requester, evaluator, true)
+
+			require.NoError(t, err)
+			expected := &authzextv1.LegacyCheckRequest{
+				Namespace:           "stacks-123",
+				Subject:             "user:user-uid",
+				Expression:          legacyRequestPermissionExpression("dashboards:read", "dashboards:id:1"),
+				Teams:               []string{"external-team"},
+				SkipScopeResolution: tc.skipScopeResolution,
+			}
 			require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
 		})
 	}
@@ -183,7 +276,7 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := ProvideAccessControlTest()
 
-			request, err := ac.buildLegacyCheckRequest(tc.requester, tc.evaluator)
+			request, err := ac.buildLegacyCheckRequest(tc.requester, tc.evaluator, false)
 
 			require.ErrorContains(t, err, tc.error)
 			require.Nil(t, request)
