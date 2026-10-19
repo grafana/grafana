@@ -948,7 +948,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	noopIAMRolesSyncer := accesscontrol.ProvideNoopIAMRolesSyncer()
 	noopGlobalRoleSeeder := accesscontrol.ProvideNoopGlobalRoleSeeder()
 	installsyncClientGenerator := installsync.ProvideClientGenerator(eventualRestConfigProvider)
-	syncer, err := installsync.ProvideSyncer(featureToggles, installsyncClientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
+	syncer, err := installsync.ProvideSyncer(featureToggles, installsyncClientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService, pluginerrsStore)
 	if err != nil {
 		return nil, err
 	}
@@ -1746,7 +1746,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	noopIAMRolesSyncer := accesscontrol.ProvideNoopIAMRolesSyncer()
 	noopGlobalRoleSeeder := accesscontrol.ProvideNoopGlobalRoleSeeder()
 	installsyncClientGenerator := installsync.ProvideClientGenerator(eventualRestConfigProvider)
-	syncer, err := installsync.ProvideSyncer(featureToggles, installsyncClientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
+	syncer, err := installsync.ProvideSyncer(featureToggles, installsyncClientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService, pluginerrsStore)
 	if err != nil {
 		return nil, err
 	}
