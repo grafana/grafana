@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
-import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { TimeCompareColorMode } from '@grafana/schema';
@@ -79,26 +78,30 @@ export const VizTooltipRow = ({
   // the delta is a separate node for coloring, but copying the value should keep both values
   const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
+  // values stay on one line and truncate; pinned rows reveal the full value in a tooltip
   const innerValueScrollStyle: CSSProperties = showValueScroll
     ? {
         maxHeight: 55,
-        whiteSpace: 'wrap',
-        wordBreak: 'break-word',
+        whiteSpace: 'pre',
+        overflowX: 'hidden',
         overflowY: 'auto',
       }
     : {
-        whiteSpace: 'pre-line',
-        wordBreak: 'break-word',
+        whiteSpace: 'pre',
         lineHeight: 1.2,
       };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
+  const [showValueTooltip, setShowValueTooltip] = useState(false);
+  const [fullTextTooltipMaxWidth, setFullTextTooltipMaxWidth] = useState<number>();
 
   const [copiedText, setCopiedText] = useState<Record<string, string> | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   const labelRef = useRef<null | HTMLDivElement>(null);
-  const valueRef = useRef<null | HTMLDivElement>(null);
+  const labelClipRef = useRef<null | HTMLElement>(null);
+  const rowRef = useRef<null | HTMLDivElement>(null);
+  const valueRef = useRef<null | HTMLElement>(null);
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -149,13 +152,18 @@ export const VizTooltipRow = ({
     textarea.remove();
   };
 
-  const onMouseEnterLabel = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.currentTarget.offsetWidth < event.currentTarget.scrollWidth) {
-      setShowLabelTooltip(true);
+  const showFullTextIfClipped = (clip: HTMLElement | null, setShow: (show: boolean) => void) => {
+    if (clip && clip.offsetWidth < clip.scrollWidth) {
+      // both tooltips have the same padding, so capping the content at the row width matches the outer widths
+      setFullTextTooltipMaxWidth(rowRef.current?.offsetWidth);
+      setShow(true);
     }
   };
 
+  const onMouseEnterLabel = () => showFullTextIfClipped(labelClipRef.current, setShowLabelTooltip);
   const onMouseLeaveLabel = () => setShowLabelTooltip(false);
+  const onMouseEnterValue = () => showFullTextIfClipped(valueRef.current, setShowValueTooltip);
+  const onMouseLeaveValue = () => setShowValueTooltip(false);
 
   // if label is > 50% window width, try to put label/value pairs on new lines
   if (label.length * HORIZONTAL_PX_PER_CHAR > window.innerWidth / 2) {
@@ -163,7 +171,7 @@ export const VizTooltipRow = ({
   }
 
   return (
-    <div className={styles.contentWrapper}>
+    <div className={styles.contentWrapper} ref={rowRef}>
       {color && colorPlacement === VizTooltipColorPlacement.first && (
         <div className={styles.colorWrapper}>
           <VizTooltipColorIndicator
@@ -180,8 +188,14 @@ export const VizTooltipRow = ({
             <div className={clsx(styles.label, isActive ? styles.activeSeries : '')}>{label}</div>
           ) : (
             <>
-              <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-                <>
+              <Tooltip
+                content={<div style={{ maxWidth: fullTextTooltipMaxWidth }}>{label}</div>}
+                interactive={false}
+                show={showLabelTooltip}
+                ref={labelClipRef}
+              >
+                {/* Tooltip overrides mouse handlers on its direct child, so they live on the label below */}
+                <div className={styles.labelTooltipTarget}>
                   {showCopySuccess && copiedText?.label && (
                     <InlineToast placement="top" referenceElement={labelRef.current}>
                       {SUCCESSFULLY_COPIED_TEXT}
@@ -197,7 +211,7 @@ export const VizTooltipRow = ({
                   >
                     {label}
                   </div>
-                </>
+                </div>
               </Tooltip>
             </>
           )}
@@ -226,16 +240,30 @@ export const VizTooltipRow = ({
                 {SUCCESSFULLY_COPIED_TEXT}
               </InlineToast>
             )}
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
-            <div
-              className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
-              style={innerValueScrollStyle}
-              onClick={() => copyToClipboard(copyText ? copyText.toString() : '', LabelValueTypes.value)}
+            <Tooltip
+              content={
+                <div style={{ maxWidth: fullTextTooltipMaxWidth }}>
+                  {value}
+                  {deltaNode}
+                </div>
+              }
+              interactive={false}
+              show={showValueTooltip}
               ref={valueRef}
             >
-              {value}
-              {deltaNode}
-            </div>
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+              <div
+                className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
+                style={innerValueScrollStyle}
+                onClick={() => copyToClipboard(copyText ? copyText.toString() : '', LabelValueTypes.value)}
+              >
+                {/* Tooltip overrides mouse handlers on its direct child, so they live on this span */}
+                <span onMouseEnter={onMouseEnterValue} onMouseLeave={onMouseLeaveValue}>
+                  {value}
+                  {deltaNode}
+                </span>
+              </div>
+            </Tooltip>
           </>
         )}
 
@@ -287,17 +315,28 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     alignSelf: 'center',
     flexShrink: 0,
   }),
+  // label and value split the row evenly, each capped at its content width: a short side keeps its
+  // full width and the long side truncates. The auto margin keeps the value right-aligned.
   labelWrapper: css({
-    flexGrow: 1,
+    flex: '1 1 0',
+    maxWidth: 'max-content',
+    marginRight: 'auto',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
   }),
+  // the inline label can't report overflow, so this block both clips it and is measured for it
+  labelTooltipTarget: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 0,
+    flex: '1 1 0',
+    minWidth: 0,
+    maxWidth: 'max-content',
     alignSelf: 'center',
     marginRight,
   }),
