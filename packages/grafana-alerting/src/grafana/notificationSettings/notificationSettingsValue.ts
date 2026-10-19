@@ -34,15 +34,17 @@ export function simplifiedRouting(
   receiver: string,
   options: Omit<SimplifiedRoutingSettings, 'type' | 'receiver'> = {}
 ): SimplifiedRoutingSettings {
-  // A cleared duration field is '', which the API rejects; leave it unset instead.
-  const { groupWait, groupInterval, repeatInterval } = options;
+  const { groupBy, groupWait, groupInterval, repeatInterval, muteTimeIntervals, activeTimeIntervals } = options;
   const value: SimplifiedRoutingSettings = {
-    ...options,
     type: 'SimplifiedRouting',
     receiver,
+    groupBy,
+    // A cleared duration field is '', which the API rejects; leave it unset instead.
     groupWait: groupWait || undefined,
     groupInterval: groupInterval || undefined,
     repeatInterval: repeatInterval || undefined,
+    muteTimeIntervals,
+    activeTimeIntervals,
   };
   return withoutUndefined(value);
 }

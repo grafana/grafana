@@ -63,6 +63,18 @@ describe('simplifiedRouting with an existing value as options', () => {
   });
 });
 
+describe('simplifiedRouting with unrelated properties in the options', () => {
+  it('does not carry them onto the value', () => {
+    const previousNamedTree = { groupWait: '1m', routingTree: 'deployment-tools' };
+
+    expect(simplifiedRouting('slack-oncall', previousNamedTree)).toEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+      groupWait: '1m',
+    });
+  });
+});
+
 describe('namedRoutingTree', () => {
   it('builds a value from a tree name', () => {
     expect(namedRoutingTree('deployment-tools')).toEqual(namedTree);
