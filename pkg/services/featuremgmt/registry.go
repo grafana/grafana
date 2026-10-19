@@ -957,7 +957,7 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.drilldownMigrationAssistantSuggestion",
+			Name:        "grafana.filtersMigrationAssistantSuggestion",
 			Description: "Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},

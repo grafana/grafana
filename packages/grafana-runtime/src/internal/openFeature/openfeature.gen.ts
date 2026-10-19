@@ -168,8 +168,6 @@ export const FlagKeys = {
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
-  /** Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant */
-  GrafanaDrilldownMigrationAssistantSuggestion: "grafana.drilldownMigrationAssistantSuggestion",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -178,6 +176,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant */
+  GrafanaFiltersMigrationAssistantSuggestion: "grafana.filtersMigrationAssistantSuggestion",
   /** Offers the reserved Grafana home option in the home dashboard preference */
   GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
@@ -1224,17 +1224,6 @@ export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEval
 };
 
 /**
- * Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant
- *
- * **Details:**
- * - flag key: `grafana.drilldownMigrationAssistantSuggestion`
- * - default value: `false`
- */
-export const useFlagGrafanaDrilldownMigrationAssistantSuggestion = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.drilldownMigrationAssistantSuggestion", false, options).value;
-};
-
-/**
  * Check for the existence of logs when linking from the Trace View
  *
  * **Details:**
@@ -1276,6 +1265,17 @@ export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.filterablePanels", false, options).value;
+};
+
+/**
+ * Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.filtersMigrationAssistantSuggestion`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFiltersMigrationAssistantSuggestion = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.filtersMigrationAssistantSuggestion", false, options).value;
 };
 
 /**

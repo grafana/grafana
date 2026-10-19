@@ -7,8 +7,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { DrilldownMigrationSuggestionBanner } from './DrilldownMigrationSuggestionBanner';
-import { detectDrilldownMigrationCandidates, type MigrationSuggestionCandidate } from './detect';
+import { FiltersMigrationSuggestionBanner } from './FiltersMigrationSuggestionBanner';
+import { detectFiltersMigrationCandidates, type MigrationSuggestionCandidate } from './detect';
 
 const mockIsAssistantAvailable = jest.fn();
 const mockOpenAssistant = jest.fn();
@@ -28,10 +28,10 @@ jest.mock('app/core/assistant/assistantSidebarState', () => ({
 
 jest.mock('./detect', () => ({
   ...jest.requireActual('./detect'),
-  detectDrilldownMigrationCandidates: jest.fn(),
+  detectFiltersMigrationCandidates: jest.fn(),
 }));
 
-const mockDetect = jest.mocked(detectDrilldownMigrationCandidates);
+const mockDetect = jest.mocked(detectFiltersMigrationCandidates);
 
 const CANDIDATE: MigrationSuggestionCandidate = {
   variableName: 'instance',
@@ -50,21 +50,21 @@ function buildDashboard(overrides: Partial<{ uid: string; canEdit: boolean; canS
 }
 
 async function renderBanner(dashboard = buildDashboard()) {
-  const result = render(<DrilldownMigrationSuggestionBanner dashboard={dashboard} />);
+  const result = render(<FiltersMigrationSuggestionBanner dashboard={dashboard} />);
   await waitFor(() => expect(mockDetect).toHaveBeenCalled());
   return result;
 }
 
 // For gated-off cases, where detection must never run: just let effects settle.
 async function renderGatedOffBanner(dashboard = buildDashboard()) {
-  const result = render(<DrilldownMigrationSuggestionBanner dashboard={dashboard} />);
+  const result = render(<FiltersMigrationSuggestionBanner dashboard={dashboard} />);
   await act(async () => {});
   return result;
 }
 
 function enableOurFlag(enabled = true) {
   return act(async () => {
-    setTestFlags({ 'grafana.drilldownMigrationAssistantSuggestion': enabled });
+    setTestFlags({ 'grafana.filtersMigrationAssistantSuggestion': enabled });
   });
 }
 
@@ -86,7 +86,7 @@ afterEach(async () => {
   jest.clearAllMocks();
 });
 
-describe('DrilldownMigrationSuggestionBanner', () => {
+describe('FiltersMigrationSuggestionBanner', () => {
   it('does not render when the flag is disabled', async () => {
     await enableOurFlag(false);
     await renderGatedOffBanner();
@@ -200,7 +200,7 @@ describe('DrilldownMigrationSuggestionBanner', () => {
 
     expect(mockOpenAssistant).toHaveBeenCalledTimes(1);
     expect(mockOpenAssistant).toHaveBeenCalledWith({
-      origin: 'grafana/dashboard-scene/drilldown-migration-suggestion',
+      origin: 'grafana/dashboard-scene/filters-migration-suggestion',
       mode: 'dashboarding',
       prompt: expect.stringContaining('single filters '),
       autoSend: true,
@@ -212,7 +212,7 @@ describe('DrilldownMigrationSuggestionBanner', () => {
             type: 'structured',
             params: {
               data: {
-                name: 'Drilldown migration candidates',
+                name: 'Filters migration candidates',
                 dashboardUid: 'dash-cta',
                 candidates: [CANDIDATE],
               },

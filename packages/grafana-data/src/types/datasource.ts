@@ -376,14 +376,14 @@ abstract class DataSourceApi<
   /**
    * @alpha
    * Classifies how a template variable is used within a single query, to help detect
-   * variables that duplicate what an ad hoc filter / group-by ("drilldown") control could
-   * do instead. Implementing this opts a datasource into the "migrate variables to
-   * filters" assistant suggestion. Called once per (variable, query) pair that uses this
-   * datasource; the caller aggregates classifications across all of a variable's usages.
+   * variables that duplicate what an ad hoc filter / group-by control could do instead.
+   * Implementing this opts a datasource into the "migrate variables to filters" assistant
+   * suggestion. Called once per (variable, query) pair that uses this datasource; the caller
+   * aggregates classifications across all of a variable's usages.
    */
-  getDrilldownMigrationUsage?(
-    options: DataSourceGetDrilldownMigrationUsageOptions<TQuery>
-  ): DrilldownMigrationUsage | undefined;
+  getFiltersMigrationUsage?(
+    options: DataSourceGetFiltersMigrationUsageOptions<TQuery>
+  ): FiltersMigrationUsage | undefined;
 
   /**
    * Get tag values for adhoc filters
@@ -768,7 +768,7 @@ export interface DrilldownsApplicability {
 /**
  * @alpha
  */
-export interface DataSourceGetDrilldownMigrationUsageOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceGetFiltersMigrationUsageOptions<TQuery extends DataQuery = DataQuery> {
   variableName: string;
   query: TQuery;
 }
@@ -776,7 +776,7 @@ export interface DataSourceGetDrilldownMigrationUsageOptions<TQuery extends Data
 /**
  * @alpha
  */
-export type DrilldownMigrationUsage =
+export type FiltersMigrationUsage =
   | { kind: 'filter'; key: string; operator: string }
   | { kind: 'groupBy' }
   | { kind: 'unsafe'; reason?: string };

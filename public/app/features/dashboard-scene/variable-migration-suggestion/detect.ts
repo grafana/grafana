@@ -1,4 +1,4 @@
-import { type DataSourceApi, type DrilldownMigrationUsage } from '@grafana/data';
+import { type DataSourceApi, type FiltersMigrationUsage } from '@grafana/data';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { dataLayers, QueryVariable, SceneDataTransformer, sceneGraph, type SceneDataQuery } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
@@ -42,12 +42,10 @@ interface QueryUsage {
 /**
  * Enumerates every (variable, query) pair that could plausibly be a candidate for migration to
  * an ad hoc filter / group-by control, delegating the DS-specific classification to each
- * datasource's optional `getDrilldownMigrationUsage` capability. Datasources without it never
+ * datasource's optional `getFiltersMigrationUsage` capability. Datasources without it never
  * produce candidates.
  */
-export async function detectDrilldownMigrationCandidates(
-  scene: DashboardScene
-): Promise<MigrationSuggestionCandidate[]> {
+export async function detectFiltersMigrationCandidates(scene: DashboardScene): Promise<MigrationSuggestionCandidate[]> {
   const queryUsages = await getQueryUsages(scene);
   const candidates: MigrationSuggestionCandidate[] = [];
 
@@ -137,7 +135,7 @@ async function detectCandidateForVariable(
 
   // Without the datasource's classification nothing tells whether migrating keeps every query's
   // meaning, so such variables aren't suggested at all.
-  if (typeof ds.getDrilldownMigrationUsage !== 'function') {
+  if (typeof ds.getFiltersMigrationUsage !== 'function') {
     return undefined;
   }
 
@@ -184,9 +182,9 @@ function aggregateCandidate(
   let kind: MigrationSuggestionCandidateUsage['kind'] | undefined;
 
   for (const { query } of sameDatasourceQueries) {
-    let usage: DrilldownMigrationUsage | undefined;
+    let usage: FiltersMigrationUsage | undefined;
     try {
-      usage = ds.getDrilldownMigrationUsage!({ variableName: variable.state.name, query });
+      usage = ds.getFiltersMigrationUsage!({ variableName: variable.state.name, query });
     } catch {
       return undefined;
     }
