@@ -88,7 +88,9 @@ function ContactPointRecipient({
   onValidityChange,
   manageContactPointsHref,
 }: ContactPointRecipientProps) {
-  const { selectorValue, isNotFound, isError } = useResolvedContactPoint(value?.receiver);
+  const { status, selectorValue } = useResolvedContactPoint(value?.receiver);
+  // The saved receiver isn't in the picker's options, so the user has to pick another one.
+  const isReceiverUnavailable = status === 'notFound' || status === 'unusable';
   const { timeIntervals, isLoading: isLoadingTimeIntervals, isError: isTimeIntervalsError } = useListTimeIntervals();
   const selectedTimeIntervals = [
     ...new Set([...(value?.muteTimeIntervals ?? []), ...(value?.activeTimeIntervals ?? [])]),
@@ -103,7 +105,7 @@ function ContactPointRecipient({
     selectedTimeIntervals.length === 0 ||
     (!isLoadingTimeIntervals && !isTimeIntervalsError && unavailableTimeIntervals.length === 0);
   const isValid =
-    Boolean(value?.receiver) && !isNotFound && isValidRoutingTimings(value ?? {}) && hasValidTimeIntervals;
+    Boolean(value?.receiver) && !isReceiverUnavailable && isValidRoutingTimings(value ?? {}) && hasValidTimeIntervals;
 
   useEffect(() => {
     onValidityChange?.(isValid);
@@ -138,7 +140,7 @@ function ContactPointRecipient({
   };
 
   // A failed fetch would otherwise resolve to null and show "no contact point selected" for a rule that has one.
-  if (isError) {
+  if (status === 'error') {
     return (
       <Alert
         severity="error"
@@ -158,12 +160,21 @@ function ContactPointRecipient({
         <Icon name="grafana" />
         <Text>{t('alerting.notifications-settings-selector.alertmanager-label', 'Alertmanager: grafana')}</Text>
       </Stack>
-      {isNotFound && (
+      {status === 'notFound' && (
         <Alert
           severity="warning"
           title={t(
             'alerting.notifications-settings-selector.contact-point-not-found',
             'The previously selected contact point could not be found — it may have been deleted'
+          )}
+        />
+      )}
+      {status === 'unusable' && (
+        <Alert
+          severity="warning"
+          title={t(
+            'alerting.notifications-settings-selector.contact-point-unusable',
+            'The previously selected contact point cannot be used — it may have been imported from an external Alertmanager'
           )}
         />
       )}
@@ -197,7 +208,7 @@ function ContactPointRecipient({
         onChange={handleTimingsChange}
         inheritedTimings={defaultTree?.defaults}
         disabledReason={
-          value?.receiver && !isNotFound
+          value?.receiver && !isReceiverUnavailable
             ? undefined
             : t('alerting.notifications-settings-selector.timings-disabled', 'Select a contact point first')
         }

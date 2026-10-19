@@ -10,6 +10,10 @@ import { store } from '../../../../../tests/provider';
 import { act, render, screen, waitFor } from '../../../../../tests/test-utils';
 import { notificationsAPI } from '../../../api/notifications';
 import {
+  ContactPointFactory,
+  ListReceiverApiResponseFactory,
+} from '../../../api/notifications/v1beta1/mocks/fakes/Receivers';
+import {
   ListRoutingTreeApiResponseFactory,
   RoutingTreeFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/Routes';
@@ -17,6 +21,7 @@ import {
   ListTimeIntervalApiResponseFactory,
   TimeIntervalFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/TimeIntervals';
+import { listReceiverHandler } from '../../../api/notifications/v1beta1/mocks/handlers/ReceiverHandlers/listReceiverHandler';
 import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
 import { USER_DEFINED_TREE_NAME } from '../../../notificationPolicies/routingTree.utils';
@@ -205,6 +210,38 @@ describe('a saved receiver that no longer exists', () => {
     await screen.findByRole('combobox', { name: /contact point/i });
 
     expect(screen.queryByText(/contact point could not be found/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('a saved receiver that cannot be used', () => {
+  const imported = { type: 'SimplifiedRouting' as const, receiver: 'imported-contact-point' };
+
+  beforeEach(() => {
+    const unusable = ContactPointFactory.build({
+      metadata: { annotations: { 'grafana.com/canUse': 'false' } },
+      spec: { title: imported.receiver },
+    });
+    server.use(
+      listReceiverHandler(ListReceiverApiResponseFactory.build({ items: [slackOncallContactPoint, unusable] }))
+    );
+  });
+
+  it('warns that it cannot be used, and disables the section', async () => {
+    const { user } = renderPicker({ value: imported });
+
+    expect(await screen.findByText(/contact point cannot be used/i)).toBeInTheDocument();
+
+    await user.click(screen.getByText(/muting, grouping and timings/i));
+    expect(screen.getByRole('switch', { name: /override grouping/i })).toBeDisabled();
+  });
+
+  it('reports invalid, like a receiver that no longer exists', async () => {
+    const onValidityChange = jest.fn();
+    renderPicker({ value: imported, onValidityChange });
+
+    await screen.findByText(/contact point cannot be used/i);
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
   });
 });
 

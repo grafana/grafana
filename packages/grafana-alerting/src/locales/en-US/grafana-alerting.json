@@ -32,6 +32,7 @@
       "contact-point-aria": "Contact point",
       "contact-point-description": "Notifications for firing alerts are routed to a selected contact point.",
       "contact-point-not-found": "The previously selected contact point could not be found — it may have been deleted",
+      "contact-point-unusable": "The previously selected contact point cannot be used — it may have been imported from an external Alertmanager",
       "contact-points-error": "Could not load contact points",
       "manage-contact-points": "View or create contact points",
       "routing-tree-not-found": "The previously selected notification policy could not be found — it may have been deleted",
