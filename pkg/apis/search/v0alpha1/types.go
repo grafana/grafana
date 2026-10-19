@@ -224,8 +224,8 @@ type GlobalSearchResults struct {
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
 }
 
-// GlobalResultsMetadata is ResultsMetadata plus what only a search across
-// resource types can report.
+// GlobalResultsMetadata carries the pagination token, the total hit count, and
+// the types the search left out.
 //
 // +k8s:deepcopy-gen=true
 type GlobalResultsMetadata struct {

@@ -171,7 +171,7 @@
         }
       },
       "GlobalResultsMetadata": {
-        "description": "GlobalResultsMetadata is ResultsMetadata plus what only a search across resource types can report.",
+        "description": "GlobalResultsMetadata carries the pagination token, the total hit count, and the types the search left out.",
         "type": "object",
         "required": ["totalHits", "totalHitsRelation"],
         "properties": {

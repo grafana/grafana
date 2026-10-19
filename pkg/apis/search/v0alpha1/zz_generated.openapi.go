@@ -137,7 +137,7 @@ func schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref common.ReferenceC
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "GlobalResultsMetadata is ResultsMetadata plus what only a search across resource types can report.",
+				Description: "GlobalResultsMetadata carries the pagination token, the total hit count, and the types the search left out.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"continue": {
