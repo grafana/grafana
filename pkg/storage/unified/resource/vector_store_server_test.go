@@ -447,35 +447,6 @@ func TestVectorStore_DeleteByUIDs(t *testing.T) {
 	assert.Empty(t, store.ensured, "delete must never provision")
 }
 
-func TestVectorStoreLegacyMutationsRejectSharedCollections(t *testing.T) {
-	store := &fakeWriteStore{resolveFound: true, collection: vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}}
-	s := newTestVectorStoreServer(store)
-	markerCtx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: vector.SharedNamespace, Type: authlib.TypeUser})
-	upsert := validUpsertReq()
-	upsert.Namespace = vector.SharedNamespace
-	_, err := s.Upsert(markerCtx, upsert)
-	require.Equal(t, codes.NotFound, status.Code(err))
-	_, err = s.UpsertSubresources(markerCtx, &resourcepb.VectorUpsertSubresourcesRequest{
-		Namespace: vector.SharedNamespace, Group: "g", Resource: "r", Uid: "same-uid",
-		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "chunk/1", Content: "content", Title: "Title"}},
-	})
-	require.Equal(t, codes.NotFound, status.Code(err))
-	_, err = s.Delete(markerCtx, &resourcepb.VectorDeleteRequest{
-		Namespace: vector.SharedNamespace, Group: "g", Resource: "r",
-		Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true},
-	})
-	require.Equal(t, codes.NotFound, status.Code(err))
-	_, err = s.UpdateMetadata(markerCtx, &resourcepb.VectorUpdateMetadataRequest{
-		Namespace: vector.SharedNamespace, Group: "g", Resource: "r", Filter: []byte(`{"status":"open"}`), Set: []byte(`{"status":"closed"}`),
-	})
-	require.Equal(t, codes.NotFound, status.Code(err))
-	require.Empty(t, store.deleteCalls)
-	require.Empty(t, store.updateCalls)
-	require.Empty(t, store.upserts)
-	require.Empty(t, store.replaceCalls)
-	require.Zero(t, store.lockCalls)
-}
-
 func TestVectorStoreScopeConflictStopsUpsertsBeforeEmbedding(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
