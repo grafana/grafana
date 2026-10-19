@@ -316,8 +316,8 @@ export const useNavCustomization = () => {
 
   // Apply hard-coded exclusions before resolving pins or edit-mode items so neither can reveal them.
   // When customisation is on, drop Bookmarks too — pinned items are re-presented in the pinned box.
-  const baseItems = removeHiddenItems(navTree, HIDDEN_NAV_ITEMS).filter(
-    (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
+  const baseItems = removeHiddenItems(navTree, new Set([...NON_MENU_NAV_IDS, ...HIDDEN_NAV_ITEMS])).filter(
+    (item) => !(canCustomise && item.id === 'bookmarks')
   );
 
   const {
