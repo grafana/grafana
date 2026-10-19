@@ -7,7 +7,6 @@ import {
   type EventDetails,
   MultiProvider,
   type Provider,
-  type Hook,
 } from '@openfeature/react-sdk';
 
 import { config } from '../../config';
@@ -42,8 +41,6 @@ function checkDefaultProvider(event?: EventDetails) {
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
-let meticulousReportingHook: Hook | undefined;
-
 // Allow direct access to a singleton localStorage provider,
 //  to allow the feature control developer UI to override flags via the provider
 let localStorageProvider: LocalStorageProvider;
@@ -79,14 +76,13 @@ export async function initOpenFeature() {
 
   if (window.Meticulous != null) {
     try {
-      const { MeticulousProvider, createMeticulousReportingHook } = await import(
+      const { MeticulousProvider, createMeticulousReportingHook, isMeticulousReportingHook } = await import(
         /* webpackChunkName: "meticulous-openfeature" */ './meticulous'
       );
       meticulousProvider = new MeticulousProvider();
-      meticulousReportingHook ??= createMeticulousReportingHook(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
-      if (!OpenFeature.getHooks().includes(meticulousReportingHook)) {
+      if (!OpenFeature.getHooks().some(isMeticulousReportingHook)) {
         // Report the final value after all providers resolve, including caller defaults.
-        OpenFeature.addHooks(meticulousReportingHook);
+        OpenFeature.addHooks(createMeticulousReportingHook(GRAFANA_CORE_OPEN_FEATURE_DOMAIN));
       }
     } catch (error) {
       console.error('Failed to load Meticulous OpenFeature integration', error);

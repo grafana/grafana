@@ -9,6 +9,7 @@ import {
 } from '@openfeature/web-sdk';
 
 type MeticulousFlagContext = Partial<Pick<MeticulousPublicApi['context'], 'getFlagOverride' | 'recordFeatureFlag'>>;
+const METICULOUS_REPORTING_HOOK_KEY = Symbol.for('grafana.openfeature.meticulousReportingHook');
 
 declare global {
   interface Window {
@@ -16,6 +17,7 @@ declare global {
   }
 }
 
+// Grafana core only: plugins must not copy this provider because it is wired to the private core domain.
 export class MeticulousProvider implements Provider {
   readonly runsOn = 'client';
   readonly metadata = { name: 'Meticulous overrides' };
@@ -60,7 +62,7 @@ export class MeticulousProvider implements Provider {
 }
 
 export function createMeticulousReportingHook(domain: string): Hook {
-  return {
+  const hook: Hook = {
     finally(context, details) {
       if (context.clientMetadata.domain !== domain) {
         return;
@@ -76,4 +78,10 @@ export function createMeticulousReportingHook(domain: string): Hook {
       }
     },
   };
+  Object.defineProperty(hook, METICULOUS_REPORTING_HOOK_KEY, { value: true });
+  return hook;
+}
+
+export function isMeticulousReportingHook(hook: Hook): boolean {
+  return Reflect.get(hook, METICULOUS_REPORTING_HOOK_KEY) === true;
 }
