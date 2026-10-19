@@ -2,8 +2,9 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 
 import { MetricsList, STATUS_SETTLE_MS } from './MetricsList';
 import { useLabelValues } from './data/useLabelValues';
@@ -736,6 +737,82 @@ describe('<MetricsList />', () => {
 
       expect(screen.queryByText('web-1')).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Show values for job' })).toBeInTheDocument();
+    });
+  });
+
+  describe('adding to the query', () => {
+    const onAddToQuery = jest.fn();
+
+    const seedDefaultEditor = (defaultEditor: string) =>
+      setDataSourceInstanceSettings(
+        {
+          'gdev-prometheus': {
+            uid: 'prom-uid',
+            type: 'prometheus',
+            name: 'gdev-prometheus',
+            meta: { id: 'prometheus' },
+            jsonData: { defaultEditor },
+          } as unknown as DataSourceInstanceSettings,
+        },
+        'gdev-prometheus'
+      );
+
+    const openJob = async (props: Partial<ComponentProps<typeof MetricsList>>) => {
+      setCatalog([row('up')]);
+      setLabelKeys(['job']);
+      setLabelValues(['web-1']);
+      renderList({ onAddToQuery, ...props });
+      await expandMetric('up');
+      await userEvent.click(screen.getByRole('button', { name: 'Show values for job' }));
+    };
+
+    const addButtons = () => screen.queryAllByRole('button', { name: /to query$/ });
+
+    beforeEach(() => {
+      onAddToQuery.mockReset();
+    });
+
+    it.each([
+      ['metric name', 'Add up to query', 'up'],
+      ['label key', 'Add label job to query', 'job'],
+      ['label value', 'Add value web-1 to query', 'web-1'],
+    ])('adds the %s to the card’s query', async (_, buttonName, text) => {
+      await openJob({ refId: 'B', editorMode: 'code' });
+
+      await userEvent.click(screen.getByRole('button', { name: buttonName }));
+
+      expect(onAddToQuery).toHaveBeenCalledTimes(1);
+      expect(onAddToQuery).toHaveBeenCalledWith('B', text);
+    });
+
+    it('offers nothing to add in Builder mode', async () => {
+      await openJob({ editorMode: 'builder' });
+
+      expect(addButtons()).toHaveLength(0);
+    });
+
+    it('offers nothing to add without a handler', async () => {
+      await openJob({ editorMode: 'code', onAddToQuery: undefined });
+
+      expect(addButtons()).toHaveLength(0);
+    });
+
+    it('follows the datasource’s default editor when the query has no mode', async () => {
+      seedDefaultEditor('code');
+      await openJob({});
+
+      expect(await screen.findByRole('button', { name: 'Add up to query' })).toBeInTheDocument();
+      expect(addButtons()).toHaveLength(3);
+    });
+
+    it('offers nothing when the datasource defaults to Builder and the query has no mode', async () => {
+      seedDefaultEditor('builder');
+      await openJob({});
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(addButtons()).toHaveLength(0);
     });
   });
 

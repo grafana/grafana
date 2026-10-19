@@ -71,6 +71,7 @@ export function ContentOutline({
   queries = [],
   paneDatasource,
   timeRange,
+  onAddToQuery,
 }: {
   scroller: HTMLElement | undefined;
   panelId: string;
@@ -83,6 +84,7 @@ export function ContentOutline({
    * `signalExplorerVisible` already widens this panel on the assumption it can render.
    */
   timeRange: TimeRange;
+  onAddToQuery?: (refId: string, text: string) => void;
 }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
@@ -227,6 +229,7 @@ export function ContentOutline({
           timeRange={timeRange}
           scroller={scroller}
           toggleButton={toggleButton}
+          onAddToQuery={onAddToQuery}
         />
       )}
 
