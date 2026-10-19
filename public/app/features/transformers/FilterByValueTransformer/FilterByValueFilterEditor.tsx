@@ -28,8 +28,15 @@ export const FilterByValueFilterEditor = (props: Props) => {
   const field = fieldByDisplayName[fieldName];
   const readOnlyMatcher =
     filter.config.id === ValueMatcherID.inSet ? valueMatchers.get(ValueMatcherID.inSet) : undefined;
-  const matcherOptions = field && !readOnlyMatcher ? getMatcherOptions(field) : [];
-  const matcherId = readOnlyMatcher ? undefined : getSelectedMatcherId(filter, matcherOptions);
+  const matcherOptions = field ? getMatcherOptions(field) : [];
+  if (readOnlyMatcher) {
+    matcherOptions.unshift({
+      value: readOnlyMatcher.id,
+      label: readOnlyMatcher.getOptionsDisplayText?.(filter.config.options ?? readOnlyMatcher.getDefaultOptions(field)),
+      isDisabled: true,
+    });
+  }
+  const matcherId = getSelectedMatcherId(filter, matcherOptions);
   const editor = matcherId ? valueMatchersUI.getIfExists(matcherId) : undefined;
 
   const onChangeField = useCallback(
@@ -93,20 +100,14 @@ export const FilterByValueFilterEditor = (props: Props) => {
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
-        {readOnlyMatcher ? (
-          <span>
-            {readOnlyMatcher.getOptionsDisplayText?.(filter.config.options ?? readOnlyMatcher.getDefaultOptions(field))}
-          </span>
-        ) : (
-          <Select
-            className="width-12"
-            placeholder={t('transformers.filter-by-value-filter-editor.placeholder-select-test', 'Select test')}
-            options={matcherOptions}
-            value={matcherId}
-            onChange={onChangeMatcher}
-            data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
-          />
-        )}
+        <Select
+          className="width-12"
+          placeholder={t('transformers.filter-by-value-filter-editor.placeholder-select-test', 'Select test')}
+          options={matcherOptions}
+          value={matcherId}
+          onChange={onChangeMatcher}
+          data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
+        />
       </InlineField>
       {!readOnlyMatcher && editor?.component && (
         <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
