@@ -40,6 +40,8 @@ interface Props {
   isPlanning?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
+  /** Covers the controls and body, for example the Composer overlay. */
+  overlay?: React.ReactNode;
 }
 
 export function DashboardSidebarSplitter(props: Props) {
@@ -65,7 +67,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls 
   );
 }
 
-function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls, overlay }: Props) {
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -192,6 +194,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {renderBody()}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
+      {overlay}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { isEqual } from 'lodash';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
+import { dashboardModesEnabled, isComposerMode, isViewingDashboard } from '../scene/dashboardModes';
 
 import { SceneMutationClient } from './SceneMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from './commands/lazyRegistry';
@@ -47,6 +47,10 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
     super(scene, [...LAZY_DASHBOARD_COMMANDS, ...notebookCommands]);
   }
 
+  public getScene(): DashboardScene {
+    return this.scene;
+  }
+
   /**
    * A plan preview is not a mutation target: refuses every mutating command except RENDER_PLAN
    * and END_PLANNING. The single point every dashboard command passes through, so a future
@@ -68,7 +72,7 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
 
     const checkWrite = () =>
       dashboardModesEnabled() &&
-      isViewingDashboard(this.scene.state) &&
+      (isViewingDashboard(this.scene.state) || isComposerMode(this.scene.state)) &&
       callerPluginId !== 'grafana-assistant-app' &&
       !PLANNING_ALLOWED_COMMANDS.has(type)
         ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'

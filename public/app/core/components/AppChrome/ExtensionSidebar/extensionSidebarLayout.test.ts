@@ -3,11 +3,16 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   canFloatExtensionSidebar,
+  getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
+  isExtensionSidebarFloatingOverridden,
   isFloatingExtensionSidebarHeld,
+  notifyExtensionSidebarClosed,
+  onExtensionSidebarClosed,
   releaseFloatingExtensionSidebarHolds,
   resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarFloatingOverride,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
@@ -18,6 +23,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+const ASSISTANT = 'grafana-assistant-app';
 
 describe('extensionSidebarLayout', () => {
   afterEach(() => {
@@ -126,5 +132,76 @@ describe('extensionSidebarLayout', () => {
         { from: 'docked', to: 'floating', surface: 'dashboardOrNotebook' },
       ],
     ]);
+  });
+
+  describe('the floating override', () => {
+    it('floats the sidebar with the flag off until it is turned off', () => {
+      setExtensionSidebarFloatingOverride(true);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
+
+      setExtensionSidebarFloatingOverride(false);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
+    });
+
+    it('floats only a plugin that supports floating', () => {
+      setExtensionSidebarFloatingOverride(true);
+
+      expect(getEffectiveExtensionSidebarPresentation('other-app')).toBe('docked');
+      expect(getEffectiveExtensionSidebarPresentation(undefined)).toBe('docked');
+    });
+
+    it("brings back the user's layout when turned off", () => {
+      setTestFlags({ [FLOATING_FLAG]: true });
+      setExtensionSidebarPresentation('floating');
+      setExtensionSidebarFloatingOverride(true);
+      setExtensionSidebarFloatingOverride(false);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
+
+      setExtensionSidebarPresentation('docked');
+      setExtensionSidebarFloatingOverride(true);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
+      setExtensionSidebarFloatingOverride(false);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
+    });
+
+    it('turns off when the user docks the sidebar, even if already docked as requested', () => {
+      setExtensionSidebarPresentation('docked');
+      setExtensionSidebarFloatingOverride(true);
+
+      setExtensionSidebarPresentation('docked');
+
+      expect(isExtensionSidebarFloatingOverridden()).toBe(false);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
+    });
+
+    it('stays on for a floating request the flag ignores', () => {
+      setExtensionSidebarFloatingOverride(true);
+
+      setExtensionSidebarPresentation('floating');
+
+      expect(isExtensionSidebarFloatingOverridden()).toBe(true);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
+    });
+
+    it('is not saved', () => {
+      const key = 'grafana.navigation.extensionSidebarPresentationBySurface';
+      const saved = window.localStorage.getItem(key);
+
+      setExtensionSidebarFloatingOverride(true);
+
+      expect(window.localStorage.getItem(key)).toBe(saved);
+    });
+  });
+
+  it('tells close listeners when the sidebar closes, until they unsubscribe', () => {
+    const listener = jest.fn();
+    const unsubscribe = onExtensionSidebarClosed(listener);
+
+    notifyExtensionSidebarClosed();
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    notifyExtensionSidebarClosed();
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

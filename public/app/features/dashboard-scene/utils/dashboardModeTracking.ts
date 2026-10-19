@@ -7,6 +7,7 @@ export type DashboardModeTrigger =
   | 'manual_change'
   | 'assistant'
   | 'navigation'
+  | 'composer'
   | 'restore';
 
 export interface DashboardEditSessionTracking {
