@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { KioskMode } from 'app/types/dashboard';
@@ -268,6 +269,17 @@ describe('AppChrome', () => {
       rerender();
       // Drawers and their mask sit at modalBackdrop (1050), modal dialogs at modal (1060).
       expect(stylesFor(container)).toContain('z-index: 1051');
+    });
+
+    it('marks only the floating sidebar as inside open drawers', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(container).not.toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(container).toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

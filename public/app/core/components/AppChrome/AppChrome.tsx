@@ -10,6 +10,7 @@ import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
@@ -51,6 +52,8 @@ export function AppChrome({ children }: Props) {
     floatingHidden: isExtensionSidebarFloatingHidden,
   } = useExtensionSidebarContext();
   const isExtensionSidebarFloating = isExtensionSidebarOpen && extensionSidebarPresentation === 'floating';
+  // Floating, the sidebar sits above drawers, so an open drawer must not hide it from keyboard and screen reader users.
+  const floatingSidebarAttributes = isExtensionSidebarFloating ? { [DRAWER_INSIDE_ATTRIBUTE]: '' } : {};
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
@@ -216,6 +219,7 @@ export function AppChrome({ children }: Props) {
                   isExtensionSidebarFloatingHidden && styles.sidebarContainerHidden
                 )}
                 data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}
+                {...floatingSidebarAttributes}
               >
                 <ExtensionSidebar />
               </div>
@@ -233,6 +237,7 @@ export function AppChrome({ children }: Props) {
                 handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
                 minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+                {...floatingSidebarAttributes}
               >
                 <ExtensionSidebar />
               </Resizable>
