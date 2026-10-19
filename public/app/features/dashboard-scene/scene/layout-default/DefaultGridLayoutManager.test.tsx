@@ -20,6 +20,7 @@ import { type DashboardSceneState } from '../types/dashboard';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 afterEach(() => setTestFlags({}));
 
