@@ -41,6 +41,7 @@ function checkDefaultProvider(event?: EventDetails) {
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
+
 // Allow direct access to a singleton localStorage provider,
 //  to allow the feature control developer UI to override flags via the provider
 let localStorageProvider: LocalStorageProvider;
