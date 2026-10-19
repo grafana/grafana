@@ -415,6 +415,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	permreg.ProvidePermissionRegistry,
 	acimpl.ProvideAccessControl,
+	acimpl.ProvideScopeResolverRegistry,
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
 	accesscontrol.ProvideNoopGlobalRoleSeeder,

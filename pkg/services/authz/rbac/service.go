@@ -48,6 +48,8 @@ type Service struct {
 	userPermissionsEvaluator accesscontrol.UserPermissionsEvaluator
 	userPermissionsResolver  UserPermissionsResolver
 	actionResolver           accesscontrol.ActionResolver
+	legacyScopeResolvers     *accesscontrol.ScopeResolverRegistry
+	legacyScopeNamespace     types.NamespaceFormatter
 	identityStore            legacy.LegacyIdentityStore
 	settings                 Settings
 
