@@ -836,6 +836,9 @@ func onlyCancellationErrors(err error) bool {
 		}
 		return true
 	}
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok && wrapped.Unwrap() != nil {
+		return onlyCancellationErrors(wrapped.Unwrap())
+	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return true
 	}

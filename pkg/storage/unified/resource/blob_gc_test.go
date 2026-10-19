@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"iter"
 	"testing"
 	"time"
@@ -154,7 +155,8 @@ func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 
 type blobGCShutdownStore struct {
 	KV
-	keys func(context.Context) iter.Seq2[string, error]
+	keys   func(context.Context) iter.Seq2[string, error]
+	delete func() error
 }
 
 func (s blobGCShutdownStore) Keys(ctx context.Context, section string, _ kv.ListOptions) iter.Seq2[string, error] {
@@ -168,7 +170,12 @@ func (s blobGCShutdownStore) FirstUnused(context.Context, string, time.Time) (ti
 	return time.Now().Add(-2 * time.Hour), nil
 }
 
-func (s blobGCShutdownStore) Delete(context.Context, string, string) error { return nil }
+func (s blobGCShutdownStore) Delete(context.Context, string, string) error {
+	if s.delete != nil {
+		return s.delete()
+	}
+	return nil
+}
 
 type blobGCShutdownLogger struct {
 	logging.NoOpLogger
@@ -270,7 +277,7 @@ func TestKVBlobGCPartialProgress(t *testing.T) {
 					if scenario == "cancellation" {
 						yield("", ctx.Err())
 					} else {
-						yield("", errors.Join(ctx.Err(), errors.New("storage unavailable")))
+						yield("", fmt.Errorf("scan: %w", errors.Join(ctx.Err(), errors.New("storage unavailable"))))
 					}
 				}
 			}}
@@ -296,6 +303,78 @@ func TestKVBlobGCPartialProgress(t *testing.T) {
 				require.Equal(t, float64(1), testutil.ToFloat64(metrics.Errors))
 				require.Equal(t, []string{"blob garbage collection failed"}, logger.errors)
 			}
+		})
+	}
+}
+
+func TestKVBlobGCErrorBeforeCancellation(t *testing.T) {
+	for _, scenario := range []string{"context check", "batch wait"} {
+		t.Run(scenario, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			storageErr := errors.New("delete failed")
+			key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "blob"}.String()
+			store := blobGCShutdownStore{
+				keys: func(context.Context) iter.Seq2[string, error] {
+					return func(yield func(string, error) bool) {
+						if !yield(key, nil) {
+							return
+						}
+						if scenario == "batch wait" {
+							time.AfterFunc(20*time.Millisecond, cancel)
+						}
+						yield(key, nil)
+					}
+				},
+				delete: func() error {
+					if scenario == "context check" {
+						cancel()
+					}
+					return storageErr
+				},
+			}
+			gc := NewBlobGarbageCollector(store, 1, 0)
+			if scenario == "batch wait" {
+				gc.batchWait = time.Second
+			}
+			logger := &blobGCShutdownLogger{}
+			metrics := NewBlobGCMetricsIfEnabled(prometheus.NewRegistry(), "kv", true)
+			b := &kvStorageBackend{
+				blobGC: gc, blobGCMetrics: metrics, log: logger,
+				dataStore: newDataStore(store, nil),
+			}
+			b.garbageCollection.MaxAge = time.Hour
+			b.collectBlobs(ctx)
+			require.Equal(t, []string{"blob garbage collection failed"}, logger.errors)
+			require.Empty(t, logger.infos)
+			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Errors))
+			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
+			require.Zero(t, testutil.ToFloat64(metrics.Deleted))
+
+			ctx2, cancel2 := context.WithCancel(t.Context())
+			defer cancel2()
+			store.keys = func(context.Context) iter.Seq2[string, error] {
+				return func(yield func(string, error) bool) {
+					if !yield(key, nil) {
+						return
+					}
+					if scenario == "batch wait" {
+						time.AfterFunc(20*time.Millisecond, cancel2)
+					}
+					yield(key, nil)
+				}
+			}
+			store.delete = func() error {
+				if scenario == "context check" {
+					cancel2()
+				}
+				return storageErr
+			}
+			gc = NewBlobGarbageCollector(store, 1, gc.batchWait)
+			_, err := gc.Collect(ctx2, time.Now(), time.Hour, false,
+				func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
+			require.ErrorIs(t, err, storageErr)
+			require.ErrorIs(t, err, context.Canceled)
 		})
 	}
 }
