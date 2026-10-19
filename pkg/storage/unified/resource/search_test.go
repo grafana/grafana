@@ -652,7 +652,7 @@ func TestStartupReadsImportTimesOnceAcrossBuildsAndRetries(t *testing.T) {
 			require.Equal(t, int32(3), attempts.Load())
 			for _, info := range stats {
 				want := importTimes[info.NamespacedResource]
-				if tc.readFails {
+				if tc.failBeforeRead {
 					want = time.Time{}
 				}
 				got := search.buildImportTimes[info.NamespacedResource]

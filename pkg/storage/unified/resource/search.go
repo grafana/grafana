@@ -1662,7 +1662,6 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
 	if err != nil {
 		s.log.Warn("Failed to load startup import times", "error", err)
-		importTimes = nil
 	}
 	// Replicas should try different indexes first, not all wait for the same ones.
 	rand.Shuffle(len(builds), func(i, j int) { builds[i], builds[j] = builds[j], builds[i] })
