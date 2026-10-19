@@ -100,7 +100,7 @@ The following Grafana Play dashboards contain chained variables. To view the var
 
 While the examples are data source-specific, the concepts can be applied broadly.
 
-#### TestData example explained
+#### Templating - Nested Variables Drilldown example explained
 
 In this example, there are several data centers. Each data center has a different set of servers, and each server has a different set of pods. The example uses the TestData data source, whose variable queries use dot-separated paths with `*` wildcards, similar to Graphite metric paths.
 
