@@ -24,7 +24,7 @@ weight: 400
 
 {{< admonition type="caution" >}}
 The Plugin Frontend Sandbox [public preview](https://grafana.com/docs/release-life-cycle/) has been deprecated and will
-be removed in Grafana 13.4
+be removed in Grafana 13.4.
 {{< /admonition >}}
 
 The Plugin Frontend Sandbox helps keep a plugin's frontend code focused on the plugin's own area of the Grafana interface.
