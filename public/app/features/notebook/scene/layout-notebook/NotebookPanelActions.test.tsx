@@ -1,6 +1,6 @@
 import { type ComponentProps } from 'react';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
@@ -23,8 +23,8 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
   getAllSuggestions: jest.fn(),
 }));
-jest.mock('app/features/panel/components/VizTypePicker/VisualizationSuggestionCard', () => ({
-  VisualizationSuggestionCard: () => <div>Visualization preview</div>,
+jest.mock('app/features/panel/components/PanelRenderer', () => ({
+  PanelRenderer: () => <div>Visualization preview</div>,
 }));
 
 function buildPanelCell(title = 'Latency') {
@@ -217,7 +217,7 @@ describe('NotebookPanelActions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
     const suggestion = await screen.findByRole('button', { name: 'Table' });
-    expect(within(suggestion).getByText('Table')).toBeVisible();
+    expect(suggestion).toBeVisible();
     await user.click(suggestion);
 
     await waitFor(() => expect(lastSuggestedQuery.current).toBe(runner.state.queries[0]));
@@ -263,7 +263,41 @@ describe('NotebookPanelActions', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('lets keyboard users choose a visualization suggestion', async () => {
+  it('has one tab stop per visualization suggestion', async () => {
+    const { cell, panel } = buildPanelCell();
+    const runner = panel.state.$data as SceneQueryRunner;
+    runner.setState({
+      data: {
+        state: LoadingState.Done,
+        series: [toDataFrame({ fields: [{ name: 'value', values: [1] }] })],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+    jest.mocked(getAllSuggestions).mockResolvedValue({
+      suggestions: [
+        { name: 'Table', pluginId: 'table', hash: 'table', options: {} },
+        { name: 'Stat', pluginId: 'stat', hash: 'stat', options: {} },
+      ],
+      hasErrors: false,
+    });
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    const table = await screen.findByRole('button', { name: 'Table' });
+    const stat = screen.getByRole('button', { name: 'Stat' });
+    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toContainElement(document.activeElement));
+    act(() => table.focus());
+
+    await user.tab();
+    expect(stat).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(table).toHaveFocus();
+  });
+
+  it.each([
+    { key: 'Enter', input: '{Enter}' },
+    { key: 'Space', input: ' ' },
+  ])('selects a visualization with $key and returns focus to the trigger', async ({ input }) => {
     const { cell, panel } = buildPanelCell();
     const runner = panel.state.$data as SceneQueryRunner;
     runner.setState({
@@ -278,15 +312,20 @@ describe('NotebookPanelActions', () => {
       hasErrors: false,
     });
     jest.spyOn(cell, 'onVisualizationChange').mockResolvedValue(undefined);
-    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    const trigger = screen.getByRole('button', { name: 'Change visualization' });
+    fireEvent.click(trigger);
     const suggestion = await screen.findByRole('button', { name: 'Table' });
-    fireEvent.keyDown(suggestion, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toContainElement(document.activeElement));
+    act(() => suggestion.focus());
+    await user.keyboard(input);
 
     await waitFor(() => {
+      expect(cell.onVisualizationChange).toHaveBeenCalledTimes(1);
       expect(cell.onVisualizationChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'table' }));
       expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
     });
   });
 

@@ -118,41 +118,42 @@ function SuggestionsContent({
       )}
       <div className={styles.suggestions} aria-busy={changing}>
         {suggestions.map((suggestion, index) => (
-          <div
-            key={`${suggestion.pluginId}-${index}`}
-            role="button"
-            tabIndex={0}
-            aria-label={suggestion.name}
-            aria-disabled={changing}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                event.currentTarget.click();
-              }
-            }}
-            onClick={() => {
-              if (changing) {
-                return;
-              }
-              const selectedQuery = getQueryRunnerFor(panel)?.state.queries[0];
-              if (autoSuggest) {
-                autoSuggest.current = false;
-              }
-              setChanging(true);
-              setChangeError(false);
-              void cell
-                .onVisualizationChange(suggestion)
-                .then(() => {
-                  if (lastSuggestedQuery) {
-                    lastSuggestedQuery.current = selectedQuery;
-                  }
-                  onSelect();
-                })
-                .catch(() => setChangeError(true))
-                .finally(() => setChanging(false));
-            }}
-          >
-            <VisualizationSuggestionCard data={data} suggestion={suggestion} width={150} />
+          <div key={`${suggestion.pluginId}-${index}`}>
+            <VisualizationSuggestionCard
+              data={data}
+              suggestion={suggestion}
+              width={150}
+              role="button"
+              tabIndex={0}
+              aria-disabled={changing}
+              onKeyDownCapture={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  event.currentTarget.click();
+                }
+              }}
+              onClick={() => {
+                if (changing) {
+                  return;
+                }
+                const selectedQuery = getQueryRunnerFor(panel)?.state.queries[0];
+                if (autoSuggest) {
+                  autoSuggest.current = false;
+                }
+                setChanging(true);
+                setChangeError(false);
+                void cell
+                  .onVisualizationChange(suggestion)
+                  .then(() => {
+                    if (lastSuggestedQuery) {
+                      lastSuggestedQuery.current = selectedQuery;
+                    }
+                    onSelect();
+                  })
+                  .catch(() => setChangeError(true))
+                  .finally(() => setChanging(false));
+              }}
+            />
             <div className={styles.suggestionLabel}>{suggestion.name}</div>
           </div>
         ))}
