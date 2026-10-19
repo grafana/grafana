@@ -157,12 +157,12 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	// Git Sync previews use dry-run creates with parents that may only exist
-	// on a repository branch. Require a complete chain only when persisting.
-	if !dryRun {
-		for _, parent := range parents.Items {
-			if parent.Detached {
-				return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable ancestor %s", parent.Name)
-			}
+	// on a repository branch. Require only the immediate parent when persisting;
+	// an inaccessible ancestor above it must not block folder creation.
+	if !dryRun && len(parents.Items) >= 2 {
+		parent := parents.Items[len(parents.Items)-2]
+		if parent.Detached {
+			return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable parent %s", parent.Name)
 		}
 	}
 
