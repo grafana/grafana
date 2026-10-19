@@ -739,6 +739,29 @@ export class NotebookLayoutManager
     return cell;
   }
 
+  /**
+   * Appends cells built outside the notebook, such as content added from another surface, as one
+   * undoable step. They go above the trailing empty block, which stays the typeable slot at the end.
+   * Returns the index the first one landed on.
+   */
+  public appendCells(cells: NotebookCellItem[], label: string): number {
+    const last = this.state.cells.at(-1);
+    const index = last && isEmptyMarkdown(last.state.content) ? this.state.cells.length - 1 : this.state.cells.length;
+
+    this.executeEdit({
+      label,
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
+      perform: () => {
+        const next = this.state.cells.filter((cell) => !cells.includes(cell));
+        next.splice(Math.min(index, next.length), 0, ...cells);
+        this.setState({ cells: next });
+      },
+      undo: () => this.setState({ cells: this.state.cells.filter((cell) => !cells.includes(cell)) }),
+    });
+
+    return index;
+  }
+
   public removeCell(cell: NotebookCellItem): void {
     const index = this.state.cells.indexOf(cell);
     if (index === -1) {
@@ -755,6 +778,8 @@ export class NotebookLayoutManager
 
   private executeEdit(action: NotebookEditAction): void {
     this.commitPendingEdits();
+    // The title's own pending edit lives on the parent scene, not here.
+    this.notebookScene?.commitTitleEdit();
     const history = this.editHistory;
     if (history) {
       history.execute(action);

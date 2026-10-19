@@ -344,7 +344,7 @@ const getStyles = (
   }),
   inlineContainer: css({
     backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
+    border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
     display: 'flex',
     flexDirection: 'column',
@@ -353,8 +353,8 @@ const getStyles = (
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
   container: css({
-    backgroundColor: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
     borderBottomRightRadius: showControls ? undefined : theme.shape.radius.default,
     borderRight: mode === 'sidebar' && showControls ? 'none' : undefined,
     borderTopRightRadius: showControls ? undefined : theme.shape.radius.default,

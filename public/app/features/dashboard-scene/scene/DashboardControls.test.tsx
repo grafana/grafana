@@ -596,8 +596,6 @@ describe('DashboardControls', () => {
 
   describe('Panel edit buttons', () => {
     beforeEach(() => {
-      // Default most tests to new layouts on; the flag-off case overrides this explicitly.
-      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });
 

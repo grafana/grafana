@@ -1,8 +1,7 @@
 import { render, screen, fireEvent } from 'test/test-utils';
 
 import { PluginExtensionTypes, type DataSourceInstanceSettings, type IconName } from '@grafana/data';
-import { setPluginLinksHook, config } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { setPluginLinksHook, config, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getMockDataSource, getMockDataSourceMeta } from '../mocks/dataSourcesMocks';
@@ -30,14 +29,9 @@ jest.mock('@grafana/runtime', () => {
       },
     },
     useFavoriteDatasources: jest.fn(),
+    useDataSourceInstanceSettings: jest.fn(),
   };
 });
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn(),
-}));
-
 // Mock picker components
 jest.mock('./picker/DataSourcePicker', () => ({
   INTERACTION_EVENT_NAME: 'dashboards_dspicker_clicked',

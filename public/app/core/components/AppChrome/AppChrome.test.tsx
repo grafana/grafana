@@ -36,9 +36,20 @@ jest.mock('app/features/scopes/ScopesContextProvider', () => ({
 
 jest.mock('app/core/hooks/useMediaQueryMinWidth');
 
+const mockSidebarLifecycle = { mounts: 0, unmounts: 0 };
+
 jest.mock('./ExtensionSidebar/ExtensionSidebar', () => ({
   ...jest.requireActual('./ExtensionSidebar/ExtensionSidebar'),
-  ExtensionSidebar: () => <div data-testid="ext-sidebar-stub" />,
+  ExtensionSidebar: function ExtensionSidebarStub() {
+    const { useEffect } = jest.requireActual('react');
+    useEffect(() => {
+      mockSidebarLifecycle.mounts++;
+      return () => {
+        mockSidebarLifecycle.unmounts++;
+      };
+    }, []);
+    return <div data-testid="ext-sidebar-stub" />;
+  },
 }));
 
 jest.mock('./ExtensionSidebar/ExtensionSidebarProvider', () => ({
@@ -88,6 +99,8 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  presentation: 'docked',
+  floatingHidden: false,
 };
 
 const openSidebarContext: ExtensionSidebarContextType = {
@@ -96,10 +109,20 @@ const openSidebarContext: ExtensionSidebarContextType = {
   dockedComponentId: 'p/c/v',
 };
 
+/** The declarations of the class rules on `element` (jsdom does not resolve `var()` in computed styles). */
+const stylesFor = (element: Element) => {
+  const selectors = new Set(Array.from(element.classList, (className) => `.${className}`));
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && selectors.has(rule.selectorText))
+    .map((rule) => rule.style.cssText)
+    .join('\n');
+};
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode) => {
+const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -122,18 +145,22 @@ const setup = (children: ReactNode) => {
   ];
 
   const context = getGrafanaContextMock();
-  const wrapper = getWrapper({ grafanaContext: context, renderWithRouter: true });
+  const wrapper = getWrapper({
+    grafanaContext: context,
+    renderWithRouter: true,
+    historyOptions: path ? { initialEntries: [path] } : undefined,
+  });
 
-  const renderResult = render(
+  const tree = (
     <KBarProvider>
       <AppChrome>
         <div data-testid="page-children">{children}</div>
       </AppChrome>
-    </KBarProvider>,
-    { wrapper }
+    </KBarProvider>
   );
+  const renderResult = render(tree, { wrapper });
 
-  return { renderResult, context };
+  return { renderResult, context, rerender: () => renderResult.rerender(tree) };
 };
 
 describe('AppChrome', () => {
@@ -547,6 +574,38 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('ext-sidebar-stub');
       expect(screen.getByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).toBeInTheDocument();
+    });
+
+    it('switches between docked and floating presentation without remounting the extension', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      mockSidebarLifecycle.mounts = 0;
+      mockSidebarLifecycle.unmounts = 0;
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const stub = await screen.findByTestId('ext-sidebar-stub');
+      const mainContent = document.getElementById('pageContent')!;
+      const dockedClassName = mainContent.className;
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(screen.getByTestId('ext-sidebar-stub')).toBe(stub);
+      expect(mainContent.className).not.toBe(dockedClassName);
+
+      mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+      rerender();
+      expect(screen.getByTestId('ext-sidebar-stub')).toBe(stub);
+      expect(mockSidebarLifecycle).toEqual({ mounts: 1, unmounts: 0 });
+    });
+
+    it.each(['/explore', '/'])('floats over the page on a non-dashboard route (%s)', async (path) => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      setup(<Page navId="child1">Children</Page>, { path });
+
+      await screen.findByTestId('ext-sidebar-stub');
+      const mainContent = document.getElementById('pageContent')!;
+      // The floating sidebar overlays the page, so the page keeps its full size.
+      expect(stylesFor(mainContent)).not.toContain('padding-bottom');
+      expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

@@ -22,6 +22,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchFilter":     schema_pkg_apis_search_v0alpha1_HybridSearchFilter(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchManagedBy":  schema_pkg_apis_search_v0alpha1_HybridSearchManagedBy(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchQuery":      schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchResource":   schema_pkg_apis_search_v0alpha1_HybridSearchResource(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchResultItem": schema_pkg_apis_search_v0alpha1_HybridSearchResultItem(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchResults":    schema_pkg_apis_search_v0alpha1_HybridSearchResults(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.RangePredicate":         schema_pkg_apis_search_v0alpha1_RangePredicate(ref),
@@ -168,7 +169,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchFilter(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"field": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql).",
+							Description: "Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -232,7 +233,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+				Description: "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid and POST .../global/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -247,6 +248,24 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchResource"),
+									},
+								},
+							},
 						},
 					},
 					"query": {
@@ -284,7 +303,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 					},
 					"limit": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+							Description: "Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -298,7 +317,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 					},
 					"skipRerank": {
 						SchemaProps: spec.SchemaProps{
-							Description: "SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured.",
+							Description: "SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -308,7 +327,35 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchFilter"},
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchFilter", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchResource"},
+	}
+}
+
+func schema_pkg_apis_search_v0alpha1_HybridSearchResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "HybridSearchResource identifies a resource type for global hybrid search.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"group", "resource"},
+			},
+		},
 	}
 }
 
@@ -392,7 +439,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchResults(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HybridSearchResults is the response body for POST .../{resource}/search/hybrid. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+				Description: "HybridSearchResults is the response body for per-resource and global hybrid search. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -632,7 +679,7 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SearchQuery is the request body for POST .../{resource}/search.",
+				Description: "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -651,7 +698,7 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 					},
 					"where": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+							Description: "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
 						},
 					},
@@ -732,7 +779,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SearchResults is the response body for POST .../{resource}/search.",
+				Description: "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
