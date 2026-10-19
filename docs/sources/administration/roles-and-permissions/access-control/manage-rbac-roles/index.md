@@ -265,56 +265,18 @@ The `jq` filters first strip the read-only `created` and `updated` timestamps an
 
 #### Example: Remove Grafana Assistant access from Viewers
 
-By default, viewers can access all app plugins that their organization role allows, including Grafana Assistant. To prevent viewers from accessing Grafana Assistant, remove the following permissions from the `basic:viewer` role:
+By default, the Viewer basic role grants `plugins.app:access` with the wildcard scope `plugins:*`. Removing only the permission scoped to `plugins:id:grafana-assistant-app` doesn't remove Assistant plugin access while this wildcard grant remains.
 
-| Action                               | Scope                              |
-| ------------------------------------ | ---------------------------------- |
-| `grafana-assistant-app.chats:access` |                                    |
-| `plugins.app:access`                 | `plugins:id:grafana-assistant-app` |
+To restrict the Viewer role without removing access to other app plugins:
 
-You can remove these permissions with the configuration file or with the API.
+1. List the app plugins that viewers still need. For plugin IDs, refer to [RBAC for app plugins](../rbac-for-app-plugins/).
+1. Remove `plugins.app:access` with scope `plugins:*` and any other wildcard scope that grants Assistant access from `basic:viewer`.
+1. Remove `plugins.app:access` with scope `plugins:id:grafana-assistant-app` and the `grafana-assistant-app.chats:access` permission from `basic:viewer`.
+1. Add `plugins.app:access` with scope `plugins:id:<PLUGIN_ID>` for each app plugin that viewers still need. Replace _PLUGIN_ID_ with that plugin's ID. Keep the role's other permissions.
 
-Use the `role > from` list and `permission > state` option of your provisioning file to remove the permissions:
+Apply these changes together with the configuration file or RBAC API procedures above. Removing wildcard access also removes access to other app plugins unless you explicitly grant it back. Newly installed app plugins need an explicit grant too.
 
-```yaml
-apiVersion: 2
-
-roles:
-  - name: 'basic:viewer'
-    global: true
-    version: 9
-    from:
-      - name: 'basic:viewer'
-        global: true
-    permissions:
-      - action: 'grafana-assistant-app.chats:access'
-        state: 'absent'
-      - action: 'plugins.app:access'
-        scope: 'plugins:id:grafana-assistant-app'
-        state: 'absent'
-```
-
-Alternatively, use the RBAC HTTP API. The following script fetches the `basic:viewer` role, removes the two Grafana Assistant permissions, increments the version, and updates the role:
-
-```bash
-# Fetch the role, remove the Grafana Assistant permissions, and increment its version
-curl -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
-  -X GET '<GRAFANA_URL>/api/access-control/roles/basic_viewer' | \
-  jq 'del(.created) | del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
-  jq 'del(.permissions[] | select(.action == "grafana-assistant-app.chats:access")) | del(.permissions[] | select(.action == "plugins.app:access" and .scope == "plugins:id:grafana-assistant-app"))' > basic_viewer.json
-
-# Update the role with the modified permissions
-curl -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" -H "Content-Type: application/json" \
-  -X PUT -d @basic_viewer.json \
-  '<GRAFANA_URL>/api/access-control/roles/basic_viewer'
-```
-
-Replace the following placeholders:
-
-- _`<SERVICE_ACCOUNT_TOKEN>`_: A service account token with permission to read and write roles.
-- _`<GRAFANA_URL>`_: The base URL of your Grafana instance.
-
-To find the IDs of other app plugins, refer to [RBAC for app plugins](ref:rbac-for-app-plugins). That page also explains how to grant fine-grained app plugin access to specific users and teams without changing the basic roles.
+Permissions from roles assigned directly to users or through teams still apply. Review those assignments as well: changing `basic:viewer` doesn't revoke access granted by another role.
 
 ## Reset basic roles to their default
 
