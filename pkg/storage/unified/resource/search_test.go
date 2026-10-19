@@ -247,6 +247,7 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
 	resourceStats       []ResourceStats
+	statsErr            error
 	lastImportTimes     []ResourceLastImportTime
 	statsCalls          atomic.Int32
 	listStoredCalls     atomic.Int32
@@ -264,7 +265,7 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 			result = append(result, stat)
 		}
 	}
-	return result, nil
+	return result, m.statsErr
 }
 
 // ListStoredResources reports the distinct group/resource identities in the
@@ -960,6 +961,61 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 	require.Len(t, search.buildIndexCalls, 1)
 	require.Equal(t, key, search.buildIndexCalls[0].key)
 	require.Equal(t, int64(5), search.buildIndexCalls[0].size)
+}
+
+func TestBuildIndexesWhenResourceStatsFail(t *testing.T) {
+	openStats := []ResourceStats{
+		{NamespacedResource: dashboardType("ns"), Count: 5},
+		{NamespacedResource: GlobalSearchKey("ns"), Count: 5},
+	}
+	for _, tc := range []struct {
+		name      string
+		openStats []ResourceStats
+		loadErr   error
+		wantErr   bool
+	}{
+		{name: "restore local indexes", openStats: openStats},
+		{name: "no local indexes", wantErr: true},
+		{name: "local stats failed", openStats: openStats, loadErr: errors.New("open index stats unavailable"), wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			failure := errors.New("resource stats unavailable")
+			storage := &mockStorageBackend{statsErr: failure}
+			search := &manifestSearchBackend{
+				mockSearchBackend: mockSearchBackend{reusesFromDisk: true},
+				stats:             tc.openStats,
+				ok:                true,
+				loadErr:           tc.loadErr,
+			}
+			server, err := newSearchServer(SearchOptions{
+				Backend: search,
+				Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+					"dashboard.grafana.app": "dashboards",
+				}},
+				InitMinCount:       10,
+				GlobalIndexEnabled: true,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			built, err := server.buildIndexes(t.Context())
+			require.Equal(t, int32(1), search.loadCall.Load())
+			require.Equal(t, int32(1), storage.statsCalls.Load())
+			if tc.wantErr {
+				require.ErrorIs(t, err, failure)
+				require.Zero(t, built)
+				require.Empty(t, search.buildIndexCalls)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, len(tc.openStats), built)
+			want := make([]buildIndexCall, 0, len(tc.openStats))
+			for _, info := range tc.openStats {
+				want = append(want, buildIndexCall{key: info.NamespacedResource, size: info.Count})
+				require.NotNil(t, search.GetIndex(info.NamespacedResource))
+			}
+			require.ElementsMatch(t, want, search.buildIndexCalls)
+		})
+	}
 }
 
 func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {

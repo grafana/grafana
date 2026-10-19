@@ -1551,6 +1551,10 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 	stats, err := s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, minCount, limit)
 	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
 	if err != nil {
+		if len(openStats) > 0 {
+			s.log.FromContext(ctx).Warn("failed to load resource stats, falling back to open index stats", "error", err)
+			return openStats, nil
+		}
 		return nil, err
 	}
 	globals := s.globalIndexStats(stats)
