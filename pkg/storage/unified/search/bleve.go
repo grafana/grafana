@@ -45,9 +45,10 @@ import (
 )
 
 const (
-	indexStorageMemory = "memory"
-	indexStorageFile   = "file"
-	boltTimeout        = "1s"
+	indexStorageMemory      = "memory"
+	indexStorageFile        = "file"
+	boltTimeout             = "1s"
+	unownedIndexIdleTimeout = 10 * time.Minute
 )
 
 // Keys used to store internal data in index.
@@ -466,6 +467,7 @@ func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Cont
 
 func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
+	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
 
 	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
 	expired := map[resource.NamespacedResource]*bleveIndex{}
@@ -474,7 +476,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 
 	b.cacheMx.Lock()
 	for key, idx := range b.cache {
-		// Check if index has expired.
+		// Memory indexes do not merge segments, so active indexes must also expire.
 		if !idx.expiration.IsZero() && now.After(idx.expiration) {
 			delete(b.cache, key)
 			expired[key] = idx
@@ -486,7 +488,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 			owned, err := b.ownsIndexFn(key)
 			if err != nil {
 				ownCheckErrors[key] = err
-			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > cacheTTLMillis {
+			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis {
 				delete(b.cache, key)
 				unowned[key] = idx
 			}
