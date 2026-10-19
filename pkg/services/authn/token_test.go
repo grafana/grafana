@@ -84,8 +84,8 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
 		}
 	}
-	for _, audience := range []string{"grafana", "iam.grafana.app", "example-aisdk-app", "github-datasource"} {
-		for _, path := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/iam.grafana.app", "/apis/folder.grafana.app/v1/folders", "/apis/example-aisdk-app/v1", "/apis/github-datasource/v1", "/apis/example-aisdk-app%2fv1", "/apis/example-aisdk-app/../github-datasource/v1", "/apis", "/api/user", "/openapi/v3"} {
+	for _, audience := range []string{"grafana", "iam.grafana.app", "example-aisdk-app", "github-datasource", authnlib.DatasourceAudience} {
+		for _, path := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/iam.grafana.app", "/apis/folder.grafana.app/v1/folders", "/apis/example-aisdk-app/v1", "/apis/github-datasource/v1", "/apis/example-aisdk-app%2fv1", "/apis/example-aisdk-app/../github-datasource/v1", "/apis/loki.datasource.grafana.app/v0alpha1/namespaces/stacks-5457/datasources", "/apis/datasource.grafana.app/v0alpha1", "/apis", "/api/user", "/openapi/v3"} {
 			t.Run(audience+path, func(t *testing.T) {
 				claims := validClaims()
 				claims.Audience = jwt.Audience{audience}
@@ -95,7 +95,9 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 				if audience == "grafana" ||
 					audience == "iam.grafana.app" && (path == "/apis/iam.grafana.app/v0alpha1/whoami" || path == "/apis/iam.grafana.app") ||
 					audience == "example-aisdk-app" && path == "/apis/example-aisdk-app/v1" ||
-					audience == "github-datasource" && path == "/apis/github-datasource/v1" {
+					audience == "github-datasource" && path == "/apis/github-datasource/v1" ||
+					// Every datasource group accepts the datasource audience, as datasource API servers do.
+					audience == authnlib.DatasourceAudience && path == "/apis/loki.datasource.grafana.app/v0alpha1/namespaces/stacks-5457/datasources" {
 					require.NoError(t, err)
 					require.Equal(t, "access-policy:policy-1", requester.GetUID())
 				} else {
