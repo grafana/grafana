@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
@@ -8,8 +7,9 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagFoldersAppPlatformAPI, useFlagGrafanaFolderPickerFolderEditAccess } from '@grafana/runtime/internal';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
-import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
+import { dashboardAPIv0alpha1, getSelectableFoldersArgs } from 'app/api/clients/dashboard/v0alpha1';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -30,7 +30,7 @@ import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
-import { getRootFolderItem, getSelectableFoldersArgs } from './utils';
+import { getRootFolderItem, toReadOnlyTreeItem } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -117,9 +117,9 @@ export function NestedFolderPicker({
   const dispatch = useDispatch();
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
 
-  const isFolderEditAccessEnabled = useBooleanFlagValue('grafana.folderPickerFolderEditAccess', false);
+  const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
   // Selectability comes from the search API, which only backs the picker with the app platform folder API
-  const isFoldersAppPlatformAPIEnabled = useBooleanFlagValue('foldersAppPlatformAPI', true);
+  const isFoldersAppPlatformAPIEnabled = useFlagFoldersAppPlatformAPI();
   const showReadOnly = isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && permission === 'edit';
 
   const getSelectableNames = useCallback(
@@ -301,8 +301,9 @@ export function NestedFolderPicker({
     } else {
       const selectableNames = searchResults?.selectableNames;
       flatTree = (searchResults?.items ?? []).map((item) => {
+        const treeItem = { isOpen: false, level: 0, item };
         const readOnly = selectableNames !== undefined && !selectableNames.has(item.uid);
-        return { isOpen: false, level: 0, item, ...(readOnly && { disabled: true, readOnly: true }) };
+        return readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
       });
     }
 

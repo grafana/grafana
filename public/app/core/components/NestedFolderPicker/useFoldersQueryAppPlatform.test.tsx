@@ -1,310 +1,164 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { act, renderHook } from 'test/test-utils';
 
+import { type SearchFolderChildrenPageArg } from 'app/api/clients/dashboard/v0alpha1';
+
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
 
-let mockSelectorResult: unknown;
-let mockDispatchResult = jest.fn();
 const mockInitiate = jest.fn();
-const mockSelect = jest.fn();
-const mockPageInitiate = jest.fn();
-const mockPageSelect = jest.fn();
+let mockPagesByOffset: Record<number, unknown> = {};
 
 jest.mock('app/types/store', () => ({
   ...jest.requireActual('app/types/store'),
-  useDispatch: jest.fn(() => mockDispatchResult),
-  useSelector: jest.fn(() => mockSelectorResult),
+  useDispatch: jest.fn(() => () => ({ unsubscribe: jest.fn() })),
+  // The mocked endpoint selectors ignore the store, so run the real aggregation against an empty state
+  useSelector: jest.fn((selector: (state: unknown) => unknown) => selector({})),
 }));
 
+// Each selector returns the same object every time, as real RTK Query selectors do
+const selectorCache = new Map<string, unknown>();
 jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   dashboardAPIv0alpha1: {
     endpoints: {
-      searchDashboardsAndFolders: {
-        initiate: (...args: unknown[]) => mockInitiate(...args),
-        select: (...args: unknown[]) => mockSelect(...args),
-      },
       searchFolderChildrenPage: {
-        initiate: (...args: unknown[]) => mockPageInitiate(...args),
-        select: (...args: unknown[]) => mockPageSelect(...args),
+        initiate: (...args: unknown[]) => mockInitiate(...args),
+        select: (args: SearchFolderChildrenPageArg) => () => {
+          const key = JSON.stringify(args);
+          if (!selectorCache.has(key)) {
+            selectorCache.set(key, { originalArgs: args, ...(mockPagesByOffset[args.offset] ?? {}) });
+          }
+          return selectorCache.get(key);
+        },
       },
     },
   },
 }));
 
-const folderHits = (prefix: string, count: number) =>
+const folderHits = (prefix: string, count: number, readOnly?: (index: number) => boolean) =>
   Array.from({ length: count }, (_, i) => ({
     name: `${prefix}-${i}`,
     title: `${prefix} ${String(i).padStart(2, '0')}`,
     folder: 'general',
     resource: 'folders',
+    readOnly: readOnly?.(i),
   }));
 
-const rootPage = (offset: number, hits: ReturnType<typeof folderHits>) => ({
-  status: QueryStatus.fulfilled,
-  originalArgs: { folder: 'general', limit: PAGE_SIZE, offset },
-  data: { hits },
-});
+const loadedPage = (hits: ReturnType<typeof folderHits>) => ({ status: QueryStatus.fulfilled, data: { hits } });
+
+function renderFoldersQuery(showReadOnly = false) {
+  return renderHook(() =>
+    useFoldersQueryAppPlatform({ isBrowsing: true, openFolders: {}, permission: 'edit', showReadOnly })
+  );
+}
+
+function loadNextPage(result: ReturnType<typeof renderFoldersQuery>['result']) {
+  act(() => {
+    result.current.requestNextPage(undefined);
+  });
+}
+
+const uids = (result: ReturnType<typeof renderFoldersQuery>['result']) =>
+  result.current.items.map((treeItem) => treeItem.item.uid);
+const hasPlaceholders = (result: ReturnType<typeof renderFoldersQuery>['result']) =>
+  result.current.items.some((treeItem) => treeItem.item.kind === 'ui');
 
 describe('useFoldersQueryAppPlatform', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDispatchResult = jest.fn();
+    selectorCache.clear();
+    mockPagesByOffset = {};
   });
 
-  it('returns a list that contains the virtual "Shared with me" folder under the root', () => {
-    mockSelectorResult = {
-      isLoading: false,
-      selectableByKey: {},
-      pagesByParent: {},
-    };
+  it('shows the root and the virtual "Shared with me" folder before anything has loaded', () => {
+    const { result } = renderFoldersQuery();
 
-    const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
-        isBrowsing: true,
-        openFolders: {},
-        permission: 'edit',
-      })
-    );
+    expect(result.current.items[0].item).toMatchObject({ kind: 'folder', uid: '' });
+    expect(result.current.items.find((treeItem) => treeItem.item.uid === 'sharedwithme')?.level).toBe(1);
+    expect(hasPlaceholders(result)).toBe(true);
+  });
 
-    // Root "Dashboards" item is injected by the hook.
-    expect(result.current.items[0].item.kind).toBe('folder');
-    expect(result.current.items[0].item.uid).toBe('');
+  it('requests the first page with the picker permission', () => {
+    const { result } = renderFoldersQuery();
 
-    const sharedWithMe = result.current.items.find((t) => t.item.kind === 'folder' && t.item.uid === 'sharedwithme');
-    expect(sharedWithMe).toBeDefined();
-    expect(sharedWithMe?.level).toBe(1);
+    loadNextPage(result);
+
+    expect(mockInitiate).toHaveBeenCalledWith({
+      folder: 'general',
+      limit: PAGE_SIZE,
+      offset: 0,
+      permission: 'edit',
+      markReadOnly: false,
+    });
   });
 
   it('normalizes the canonical root folder sentinel', () => {
-    mockSelectorResult = {
-      isLoading: false,
-      selectableByKey: {},
-      pagesByParent: {
-        general: [
-          {
-            status: QueryStatus.fulfilled,
-            data: {
-              hits: [{ name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders' }],
-            },
-          },
-        ],
-      },
+    mockPagesByOffset = {
+      0: loadedPage([
+        { name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders', readOnly: undefined },
+      ]),
     };
+    const { result } = renderFoldersQuery();
 
-    const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
-        isBrowsing: true,
-        openFolders: {},
-        permission: 'edit',
-      })
-    );
+    loadNextPage(result);
 
     const repositoryRoot = result.current.items.find((treeItem) => treeItem.item.uid === 'repo-root');
     expect(repositoryRoot?.item).toMatchObject({ parentUID: undefined });
   });
 
-  it('dispatches an app-platform search request when requestNextPage is called', () => {
-    const unsubscribe = jest.fn();
-    const subscription = { unsubscribe };
-    const dispatch = jest.fn(() => subscription);
+  it('asks for read only folders to be marked, and disables them', () => {
+    mockPagesByOffset = { 0: loadedPage(folderHits('folder', 2, (i) => i === 1)) };
+    const { result } = renderFoldersQuery(true);
 
-    mockDispatchResult = dispatch;
-    mockSelectorResult = {
-      isLoading: false,
-      selectableByKey: {},
-      pagesByParent: {},
-    };
+    loadNextPage(result);
 
-    mockInitiate.mockReturnValue(subscription);
-    mockSelect.mockReturnValue(jest.fn());
-
-    const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
-        isBrowsing: true,
-        openFolders: {},
-        permission: 'edit',
-      })
-    );
-
-    act(() => {
-      result.current.requestNextPage(undefined);
+    expect(mockInitiate).toHaveBeenCalledWith(expect.objectContaining({ markReadOnly: true }));
+    expect(result.current.items.find((treeItem) => treeItem.item.uid === 'folder-0')).toMatchObject({
+      disabled: false,
     });
-
-    expect(mockInitiate).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
-    expect(dispatch).toHaveBeenCalledWith(subscription);
-    expect(mockSelect).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
-    expect(mockPageInitiate).not.toHaveBeenCalled();
+    expect(result.current.items.find((treeItem) => treeItem.item.uid === 'folder-1')).toMatchObject({
+      disabled: true,
+      readOnly: true,
+    });
   });
 
-  describe('when showing read only folders', () => {
-    const rootHits = [
-      { name: 'editable', title: 'Editable', folder: 'general', resource: 'folders' },
-      { name: 'view-only', title: 'View only', folder: 'general', resource: 'folders' },
-    ];
+  it('loads the next page after a full one, and appends it in server order', () => {
+    mockPagesByOffset = {
+      0: loadedPage(folderHits('first', PAGE_SIZE)),
+      [PAGE_SIZE]: loadedPage([
+        { name: 'last', title: 'aardvark', folder: 'general', resource: 'folders', readOnly: undefined },
+      ]),
+    };
+    const { result } = renderFoldersQuery(true);
 
-    const renderReadOnlyHook = () =>
-      renderHook(() =>
-        useFoldersQueryAppPlatform({ isBrowsing: true, openFolders: {}, permission: 'edit', showReadOnly: true })
-      );
+    loadNextPage(result);
+    expect(hasPlaceholders(result)).toBe(true);
 
-    beforeEach(() => {
-      mockDispatchResult = jest.fn(() => ({ unsubscribe: jest.fn() }));
-      mockSelect.mockReturnValue(jest.fn());
-      mockPageSelect.mockReturnValue(jest.fn());
-    });
+    loadNextPage(result);
+    expect(mockInitiate).toHaveBeenLastCalledWith(expect.objectContaining({ offset: PAGE_SIZE }));
+    expect(uids(result).at(-1)).toBe('last');
+    expect(hasPlaceholders(result)).toBe(false);
+  });
 
-    it('requests the first page of every folder, then checks which of them can be picked', () => {
-      mockSelectorResult = { isLoading: false, selectableByKey: {}, pagesByParent: {} };
+  it('stops loading after a short page', () => {
+    mockPagesByOffset = { 0: loadedPage(folderHits('folder', 2)) };
+    const { result } = renderFoldersQuery(true);
 
-      const { result, rerender } = renderReadOnlyHook();
+    loadNextPage(result);
+    loadNextPage(result);
 
-      act(() => {
-        result.current.requestNextPage(undefined);
-      });
-      expect(mockPageInitiate).toHaveBeenCalledWith({ folder: 'general', limit: PAGE_SIZE, offset: 0 });
+    expect(mockInitiate).toHaveBeenCalledTimes(1);
+    expect(hasPlaceholders(result)).toBe(false);
+  });
 
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: {},
-        pagesByParent: { general: [rootPage(0, rootHits)] },
-      };
-      rerender();
+  it('shows the error and stops loading when a page fails', () => {
+    mockPagesByOffset = { 0: { status: QueryStatus.rejected, error: { status: 403, data: { message: 'Forbidden' } } } };
+    const { result } = renderFoldersQuery(true);
 
-      expect(mockInitiate).toHaveBeenCalledWith({
-        type: 'folder',
-        permission: 'create',
-        name: ['editable', 'view-only'],
-        limit: 2,
-      });
-    });
+    loadNextPage(result);
 
-    it('holds the children back until it knows which can be picked', () => {
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: {},
-        pagesByParent: { general: [rootPage(0, rootHits)] },
-      };
-
-      const { result } = renderReadOnlyHook();
-
-      expect(result.current.items.find((treeItem) => treeItem.item.uid === 'editable')).toBeUndefined();
-      expect(result.current.items.some((treeItem) => treeItem.item.kind === 'ui')).toBe(true);
-    });
-
-    it('marks the folders that cannot be picked as disabled and read only', () => {
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: { 'general@0': new Set(['editable']) },
-        pagesByParent: { general: [rootPage(0, rootHits)] },
-      };
-
-      const { result } = renderReadOnlyHook();
-
-      const editable = result.current.items.find((treeItem) => treeItem.item.uid === 'editable');
-      const viewOnly = result.current.items.find((treeItem) => treeItem.item.uid === 'view-only');
-      expect(editable).toMatchObject({ disabled: false });
-      expect(editable?.readOnly).toBeUndefined();
-      expect(viewOnly).toMatchObject({ disabled: true, readOnly: true });
-      expect(result.current.items.some((treeItem) => treeItem.item.kind === 'ui')).toBe(false);
-    });
-
-    it('loads the next page after a full one', () => {
-      const firstPage = folderHits('first', PAGE_SIZE);
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: { 'general@0': new Set(firstPage.map((hit) => hit.name)) },
-        pagesByParent: { general: [rootPage(0, firstPage)] },
-      };
-
-      const { result } = renderReadOnlyHook();
-
-      expect(result.current.items.filter((treeItem) => treeItem.item.uid.startsWith('first-'))).toHaveLength(PAGE_SIZE);
-      expect(result.current.items.some((treeItem) => treeItem.item.kind === 'ui')).toBe(true);
-
-      act(() => {
-        result.current.requestNextPage(undefined);
-      });
-      expect(mockPageInitiate).toHaveBeenCalledWith({ folder: 'general', limit: PAGE_SIZE, offset: PAGE_SIZE });
-    });
-
-    it('stops loading after a short page', () => {
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: { 'general@0': new Set(['editable']) },
-        pagesByParent: { general: [rootPage(0, rootHits)] },
-      };
-
-      const { result } = renderReadOnlyHook();
-
-      act(() => {
-        result.current.requestNextPage(undefined);
-      });
-      expect(mockPageInitiate).not.toHaveBeenCalled();
-    });
-
-    it('keeps the server order across pages, so a new page only appends', () => {
-      // A server title sort can differ from the browser's collation, e.g. on case
-      const firstPage = [
-        ...folderHits('first', PAGE_SIZE - 1),
-        { name: 'upper', title: 'Zebra', folder: 'general', resource: 'folders' },
-      ];
-      const secondPage = [{ name: 'lower', title: 'apple', folder: 'general', resource: 'folders' }];
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: {
-          'general@0': new Set(firstPage.map((hit) => hit.name)),
-          [`general@${PAGE_SIZE}`]: new Set(['lower']),
-        },
-        pagesByParent: { general: [rootPage(0, firstPage), rootPage(PAGE_SIZE, secondPage)] },
-      };
-
-      const { result } = renderReadOnlyHook();
-
-      const uids = result.current.items.map((treeItem) => treeItem.item.uid);
-      expect(uids.indexOf('lower')).toBeGreaterThan(uids.indexOf('upper'));
-      expect(uids.slice(-2)).toEqual(['upper', 'lower']);
-    });
-
-    it('shows a later page only once its own check is done', () => {
-      const firstPage = folderHits('first', PAGE_SIZE);
-      const secondPage = folderHits('second', 2);
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: { 'general@0': new Set(firstPage.map((hit) => hit.name)) },
-        pagesByParent: { general: [rootPage(0, firstPage), rootPage(PAGE_SIZE, secondPage)] },
-      };
-
-      const { result, rerender } = renderReadOnlyHook();
-
-      expect(result.current.items.some((treeItem) => treeItem.item.uid === 'first-0')).toBe(true);
-      expect(result.current.items.some((treeItem) => treeItem.item.uid === 'second-0')).toBe(false);
-      expect(mockInitiate).toHaveBeenCalledWith({
-        type: 'folder',
-        permission: 'create',
-        name: ['second-0', 'second-1'],
-        limit: 2,
-      });
-
-      mockSelectorResult = {
-        isLoading: false,
-        selectableByKey: {
-          'general@0': new Set(firstPage.map((hit) => hit.name)),
-          [`general@${PAGE_SIZE}`]: new Set(['second-0']),
-        },
-        pagesByParent: { general: [rootPage(0, firstPage), rootPage(PAGE_SIZE, secondPage)] },
-      };
-      rerender();
-
-      expect(result.current.items.find((treeItem) => treeItem.item.uid === 'second-0')).toMatchObject({
-        disabled: false,
-      });
-      expect(result.current.items.find((treeItem) => treeItem.item.uid === 'second-1')).toMatchObject({
-        disabled: true,
-        readOnly: true,
-      });
-      expect(result.current.items.some((treeItem) => treeItem.item.kind === 'ui')).toBe(false);
-    });
+    expect(result.current.error).toBeDefined();
+    expect(hasPlaceholders(result)).toBe(false);
   });
 });
