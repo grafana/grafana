@@ -37,7 +37,7 @@ interface StateOverrides {
   filteredFolders?: Record<string, unknown>;
 }
 
-const makeScopeServices = (overrides: StateOverrides = {}): ReturnType<typeof useScopesServices> =>
+const makeScopeServices = (overrides: StateOverrides = {}): NonNullable<ReturnType<typeof useScopesServices>> =>
   ({
     scopesDashboardsService: {
       stateObservable: { subscribe: () => ({ unsubscribe: () => {} }) },
@@ -63,7 +63,7 @@ const makeScopeServices = (overrides: StateOverrides = {}): ReturnType<typeof us
       updateFolder: jest.fn(),
       clearSearchQuery: jest.fn(),
     },
-  }) as unknown as ReturnType<typeof useScopesServices>;
+  }) as unknown as NonNullable<ReturnType<typeof useScopesServices>>;
 
 describe('ScopesDashboardsMegaMenuSection', () => {
   beforeEach(() => {
