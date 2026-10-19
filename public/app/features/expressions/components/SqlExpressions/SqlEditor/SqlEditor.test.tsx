@@ -10,7 +10,6 @@ jest.mock('@grafana/ui', () => ({
     editorProps = props;
     return <div className="cm-scroller" />;
   },
-  signatureHelp: jest.fn(),
 }));
 
 describe('SqlEditor', () => {

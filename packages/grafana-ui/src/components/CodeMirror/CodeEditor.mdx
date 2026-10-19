@@ -15,6 +15,11 @@ import { CodeMirrorEditor } from '@grafana/ui';
 <CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
 ```
 
+Runtime helpers such as `createCodeEditorTheme`, `signatureHelp`, and
+`createVariableCompletionSource` are exported from `@grafana/ui/codemirror`.
+Import that entry point inside a lazy-loaded editor module to keep CodeMirror out
+of application startup. Editor components and types remain available from `@grafana/ui`.
+
 ## Props
 
 <ArgTypes of={CodeEditor} />

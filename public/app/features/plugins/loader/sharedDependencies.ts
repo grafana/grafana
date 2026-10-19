@@ -53,6 +53,7 @@ export const sharedDependenciesMap = {
       AppPlugin,
       DataSourceApi,
     })),
+  '@grafana/ui/codemirror': () => import('@grafana/ui/codemirror'),
   '@grafana/ui/unstable': () => import('@grafana/ui/unstable'),
   '@kusto/monaco-kusto': () => import('@kusto/monaco-kusto'),
   'app/core/app_events': {

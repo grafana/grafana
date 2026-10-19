@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 
-import { CodeMirrorEditor } from '@grafana/ui';
+import { CodeMirrorEditor } from '../../index';
+import '../../unstable';
 
 let shouldThrowOnRender = false;
+
+// Importing either complete UI namespace must not evaluate the editor runtime.
+jest.mock('@codemirror/state', () => {
+  throw new Error('CodeMirror loaded before the lazy editor was rendered');
+});
 
 const mockCodeEditor = jest.fn(({ value }: { value: string }) => {
   if (shouldThrowOnRender) {

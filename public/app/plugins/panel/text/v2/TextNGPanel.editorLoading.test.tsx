@@ -10,12 +10,14 @@ import { createProps, renderPanel } from './test-utils';
 // depending on test order in TextNGPanel.test.tsx.
 
 // Stub the lazy CodeMirror bundle used by the inline editor.
+jest.mock('@grafana/ui/codemirror', () => ({
+  ...jest.requireActual('@grafana/ui/codemirror'),
+  createVariableCompletionSource: () => () => null,
+}));
+
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   __esModule: true,
-  // The stubbed editor never runs completions; the source itself is covered by
-  // editor/variableCompletion.test.ts.
-  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({ value, 'aria-label': ariaLabel }: { value: string; 'aria-label'?: string }) => (
     <textarea aria-label={ariaLabel} value={value} readOnly />
   ),
@@ -35,5 +37,16 @@ describe('TextNGPanel edit mode', () => {
     expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
+});
+
+it('keeps code visible while the read-only code renderer loads', async () => {
+  const props = createProps((str: string) => str, {
+    options: { content: 'SELECT 1', mode: TextMode.Code },
+  });
+
+  renderPanel(props);
+
+  expect(screen.getByText('SELECT 1', { selector: 'pre' })).toBeVisible();
+  expect(await screen.findByRole('textbox', { name: 'Code content' })).toHaveValue('SELECT 1');
 });
 jest.mock('./SandboxFrame');

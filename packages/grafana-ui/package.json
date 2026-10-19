@@ -27,6 +27,12 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./codemirror": {
+      "@grafana-app/source": "./src/codemirror.ts",
+      "types": "./dist/types/codemirror.d.ts",
+      "import": "./dist/esm/codemirror.mjs",
+      "require": "./dist/cjs/codemirror.cjs"
+    },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
       "types": "./dist/types/unstable.d.ts",

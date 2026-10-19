@@ -15,9 +15,9 @@ import {
   useStyles2,
   useTheme2,
   CodeMirrorEditor,
-  createCodeEditorTheme,
   type CodeMirrorEditorLanguage,
 } from '@grafana/ui';
+import { createCodeEditorTheme } from '@grafana/ui/codemirror';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';

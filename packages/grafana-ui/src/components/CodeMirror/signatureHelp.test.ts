@@ -1,7 +1,8 @@
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { showTooltip, type EditorView, type Tooltip } from '@codemirror/view';
 
-import { signatureHelp } from './signatureHelp';
+import { signatureHelp } from '../../codemirror';
+
 import { type SignatureHelp, type SignatureHelpProvider } from './types';
 
 const HELP: SignatureHelp = {
