@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
+import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
 // This existing flag is only generated for the legacy frontend API.
 // eslint-disable-next-line @grafana/no-config-feature-toggles
@@ -13,6 +14,8 @@ const restrictedApisEnabled = config.featureToggles.restrictedPluginApis;
 const restrictedGrafanaApis: RestrictedGrafanaApisContextType = restrictedApisEnabled
   ? {
       alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
+      // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
+      extensionSidebar: extensionSidebarApi,
     }
   : {};
 

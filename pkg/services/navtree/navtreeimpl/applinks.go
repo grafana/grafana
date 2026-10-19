@@ -35,6 +35,7 @@ var assistantOSSNavigationPaths = map[string]struct{}{
 var assistantTrialNavigationPaths = map[string]struct{}{
 	assistantAppHomePath:                 {},
 	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/pages":     {},
 }
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {

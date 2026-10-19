@@ -454,6 +454,11 @@
       "title-search-alert-rule": "Search alert rule",
       "title-select-alert-instances": "Select alert instances"
     },
+    "alert-instance-silence-action": {
+      "silence": "Silence",
+      "subtitle": "Configure a silence to stop notifications from this alert instance.",
+      "title": "Silence alert instance"
+    },
     "alert-instance-state-filter": {
       "state": "State"
     },
@@ -1143,6 +1148,8 @@
       }
     },
     "editor": {
+      "duplicate-alert-rule": "Duplicate alert rule",
+      "duplicate-recording-rule": "Duplicate recording rule",
       "edit-alert-rule": "Edit alert rule",
       "edit-recording-rule": "Edit recording rule",
       "new-alert-rule": "New alert rule",
@@ -3419,6 +3426,7 @@
       "schedule": "Schedule"
     },
     "silence-grafana-rule-drawer": {
+      "subtitle": "Configure silences to stop notifications from a particular alert rule.",
       "title-silence-alert-rule": "Silence alert rule"
     },
     "silence-period": {
@@ -5214,6 +5222,10 @@
   },
   "connections": {
     "add-new-connection": {
+      "add-category": "Add category",
+      "add-type": "Add type",
+      "all-categories": "All categories",
+      "all-types": "All types",
       "category": "Category",
       "clear": "Clear",
       "filter-by-category": "Filter by category",
@@ -5242,7 +5254,10 @@
         "by-published-date": "By published date",
         "by-updated-date": "By updated date"
       },
+      "remove-filter-value": "Remove {{label}}",
       "reset-filters": "Reset filters",
+      "selected-categories": "Selected categories",
+      "selected-types": "Selected types",
       "sort": "Sort",
       "sort-list": "Sort Plugins List",
       "state": "State",
@@ -11208,16 +11223,11 @@
     },
     "dashboard-tabs": {
       "most-used": "Most used",
-      "most-used-active": "Most used dashboards",
       "recent": "Recent",
-      "recent-active": "Recent dashboards",
       "retry": "Retry",
       "starred": "Starred",
-      "starred-active": "Starred dashboards"
-    },
-    "dashboards": {
-      "title": "Dashboards",
-      "view-all": "View all"
+      "title": "Jump back in",
+      "view-all-dashboards": "View all dashboards"
     },
     "firing-alerts-card": {
       "create": "Create an alert rule",
@@ -11394,15 +11404,25 @@
       },
       "title": "Your observability stack overview"
     },
-    "recent-dashboards-tab": {
+    "recent-activity-tab": {
       "browse": "Browse dashboards",
-      "clear": "Clear history",
+      "clear": "Clear recent activity",
       "create": "Create your first dashboard",
-      "empty": "Dashboards you've recently viewed will appear here.",
-      "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
-      "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "reset": "Reset recent dashboards"
+      "empty": "No recent activity yet. Pages you visit will show up here.",
+      "error-title": "Could not load your recent activity",
+      "filter-alerting": "Alerting",
+      "filter-all": "All",
+      "filter-apps": "Apps",
+      "filter-dashboards": "Dashboards",
+      "filter-explore": "Explore",
+      "filter-label": "Show only",
+      "filter-pages": "Pages",
+      "kind-alerting": "Alerting",
+      "kind-app": "App",
+      "kind-dashboard": "Dashboard",
+      "kind-explore": "Explore",
+      "kind-page": "Page",
+      "loading": "Loading your recent activity..."
     },
     "recommendations": {
       "application-observability": {
@@ -11991,6 +12011,9 @@
     "signup": {
       "button-label": "Sign up",
       "new-to-question": "New to Grafana?"
+    },
+    "title": {
+      "sign-in": "Sign in"
     }
   },
   "logs": {
@@ -13286,6 +13309,7 @@
       "created-by-me": "Created by me",
       "error-conflict": "This notebook changed while you were adding to it. Try again to add the panel to the latest version.",
       "error-generic": "Failed to add the panel to the notebook",
+      "error-open-conflict": "This notebook changed since it was opened. Reload it and try again.",
       "list-error": "Failed to load notebooks",
       "list-error-body": "Something went wrong loading your notebooks. Try again, or create a new one instead.",
       "list-no-matches": "No notebooks match these filters.",
@@ -13294,6 +13318,8 @@
       "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
       "lock-time-range": "Lock to {{range}}",
       "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
+      "lock-time-ranges": "Lock panels to the time ranges they showed",
+      "lock-time-ranges-description": "Keep each visualization on the window it was captured in. Unlocked, they follow the notebook time range.",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -13301,13 +13327,15 @@
       "sort-updated": "Recently updated",
       "submit": "Add to notebook",
       "success": "Panel added to {{title}}",
+      "success-cells": "Added to {{title}}",
       "success-link": "View notebook",
       "tag-placeholder": "Filter by tag",
       "target-description": "Choose where to add the panel.",
       "target-existing": "Existing notebook",
       "target-label": "Target notebook",
       "target-new": "New notebook",
-      "title": "Add panel to notebook"
+      "title": "Add panel to notebook",
+      "undo-label": "Add to notebook"
     },
     "add-to-notebook-form": {
       "title": {

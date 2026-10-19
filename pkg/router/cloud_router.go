@@ -381,13 +381,6 @@ func (l *cloudLoader) stackLookups() map[string]uint64 {
 	return l.singleTenantFallback.lookupsBy.byResult()
 }
 
-func (l *cloudLoader) stackFallbackRefused() (uint64, bool) {
-	if l.singleTenantFallback == nil {
-		return 0, false
-	}
-	return l.singleTenantFallback.fallbackRefused.Load(), true
-}
-
 func (l *cloudLoader) stackDiscoveryCache() map[string]uint64 {
 	if l.singleTenantFallback == nil || l.singleTenantFallback.discoveryDocs == nil {
 		return nil

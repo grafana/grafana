@@ -288,6 +288,10 @@ func NewAPIBuilder(
 	return b, nil
 }
 
+func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
+	b.repoValidatorOpts = opts
+}
+
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
 func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	// If LokiURL is defined, use Loki

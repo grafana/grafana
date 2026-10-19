@@ -170,7 +170,7 @@ export const SilencesEditor = ({
       ? [...matchersFields, { name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal }]
       : matchersFields;
 
-    const matchersToSend = matchersWithRuleUid.map(matcherFieldToMatcher).filter((field) => field.name && field.value);
+    const matchersToSend = matchersWithRuleUid.map(matcherFieldToMatcher).filter((field) => field.name);
     const payload = pickBy(
       {
         id,
