@@ -1,5 +1,5 @@
 import { type GrafanaPlugin, type NavModel, type NavModelItem, type PanelPluginMeta, PluginType } from '@grafana/data';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { getPluginSettings } from '@grafana/runtime';
 
 import { pluginImporter } from './importer/pluginImporter';
 

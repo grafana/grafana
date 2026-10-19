@@ -12,4 +12,11 @@ export {
   isValidRecordingRulesTarget,
 } from './grafana/dataSources/predicates';
 
+export { getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
+export {
+  type DataSourcesWithValidRecordingTargetByUidResult,
+  useDataSourcesWithValidRecordingTarget,
+  useDataSourcesWithValidRecordingTargetByUid,
+} from './grafana/dataSources/hooks';
+
 export default {};

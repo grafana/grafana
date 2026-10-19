@@ -3,8 +3,8 @@ import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { useDatasourcePluginMetas } from '@grafana/runtime/internal';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 

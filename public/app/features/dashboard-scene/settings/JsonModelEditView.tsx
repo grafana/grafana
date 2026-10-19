@@ -11,6 +11,7 @@ import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { type DashboardSceneState } from '../scene/types/dashboard';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { buildDashboardResource, validateDashboardResourceEnvelope } from '../sidebar/dashboardResource';
@@ -114,6 +115,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       dashboard.setState(newState);
     } else {
       jsonModel.version = result.version;
+      await resolveLegacyDatasourceNames(jsonModel);
       newDashboardScene = transformSaveModelToScene({
         dashboard: jsonModel,
         meta: dashboard.state.meta,

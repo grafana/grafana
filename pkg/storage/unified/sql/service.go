@@ -194,8 +194,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 
 	if cfg.QOSEnabled {
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
-			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       reg,
+			MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+			MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+			Registerer:             reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,

@@ -7,6 +7,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/server"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -66,6 +67,12 @@ type TeamLBACApiInstaller interface {
 	// authorization wrapper because the subresource has its own service-only
 	// authorization contract.
 	GetRulesForSubjectGetter() rest.Getter
+
+	// GetTeamLBACUsageRoutes returns the enterprise TeamLBAC usage route, if available.
+	GetTeamLBACUsageRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes
+
+	// GetTeamLBACUsageAuthorizer returns the usage route authorizer, denying access when unavailable.
+	GetTeamLBACUsageAuthorizer() authorizer.Authorizer
 }
 
 // ExternalGroupMappingApiInstaller provides ExternalGroupMapping-specific API registration and validation.
@@ -89,6 +96,14 @@ func (n *NoopApiInstaller[T]) RegisterStorage(apiGroupInfo *server.APIGroupInfo,
 
 func (n *NoopApiInstaller[T]) GetRulesForSubjectGetter() rest.Getter {
 	return &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
+}
+
+func (n *NoopApiInstaller[T]) GetTeamLBACUsageRoutes(_ map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) GetTeamLBACUsageAuthorizer() authorizer.Authorizer {
+	return n.GetAuthorizer()
 }
 
 func (n *NoopApiInstaller[T]) ValidateOnCreate(ctx context.Context, obj T) error {

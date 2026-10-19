@@ -330,9 +330,6 @@
     }
   },
   "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -340,11 +337,6 @@
   "packages/grafana-runtime/src/utils/queryResponse.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "packages/grafana-runtime/src/utils/useFavoriteDatasources.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
     }
   },
   "packages/grafana-schema/src/veneer/common.types.ts": {
@@ -709,7 +701,7 @@
   },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/core/TableModel.ts": {
@@ -1218,7 +1210,7 @@
   },
   "public/app/features/alerting/unified/components/silences/MatchersField.tsx": {
     "@grafana/require-no-margin": {
-      "count": 5
+      "count": 4
     }
   },
   "public/app/features/alerting/unified/components/silences/SilencePeriod.tsx": {
@@ -1322,16 +1314,6 @@
   "public/app/features/alerting/unified/navigation/useNotificationConfigNav.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 3
-    }
-  },
-  "public/app/features/alerting/unified/rule-editor/formDefaults.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-editor/formDefaults.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/rule-list/RuleList.v2.tsx": {
@@ -1494,11 +1476,6 @@
   "public/app/features/commandPalette/scopes/scopeActions.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 3
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/correlations/CorrelationsPageWrapper.tsx": {
@@ -1717,10 +1694,7 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 11
-    },
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
+      "count": 8
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
@@ -1743,9 +1717,6 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1871,7 +1842,7 @@
   },
   "public/app/features/dashboard-scene/utils/variables.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 10
+      "count": 7
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -1930,11 +1901,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmptyExtensionPoint.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1952,11 +1918,6 @@
   },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/services/DashboardLoaderSrv.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2353,11 +2314,6 @@
   },
   "public/app/features/plugins/admin/types.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/components/restrictedGrafanaApis/RestrictedGrafanaApisProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

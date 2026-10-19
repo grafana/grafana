@@ -18,13 +18,8 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
-
 jest.mock('../actions/panel/replacePanel');
 
 describe('AddLibraryPanelWidget', () => {

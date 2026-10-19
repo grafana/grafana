@@ -4,6 +4,8 @@ import {
   type RecommendationsShown,
   type ClearHistoryClicked,
   type CtaClicked,
+  type RecentActivityFilterChanged,
+  type RecentActivityShown,
   type SolutionFilterChanged,
   type TabChanged,
 } from './types';
@@ -16,8 +18,16 @@ export const tabChanged = createHomepageEvent<TabChanged>('tab_changed');
 /** Fired when the user is shown recommendations on the homepage. */
 export const recommendationsShown = createHomepageEvent<RecommendationsShown>('recommendations_shown');
 
-/** Fired when the user clears their recently-viewed dashboard history. */
+/** Fired when the user clears their recent activity history. */
 export const clearHistoryClicked = createHomepageEvent<ClearHistoryClicked>('clear_history_clicked');
+
+/** Fired once each time the Recent activity tab is displayed with its loaded history, including an empty one. */
+export const recentActivityShown = createHomepageEvent<RecentActivityShown>('recent_activity_shown');
+
+/** Fired when the user picks a kind in the Recent activity filter. */
+export const recentActivityFilterChanged = createHomepageEvent<RecentActivityFilterChanged>(
+  'recent_activity_filter_changed'
+);
 
 /**
  * Fired when the user clicks a tracked call-to-action on a homepage widget.

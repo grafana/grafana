@@ -227,56 +227,6 @@
         }
       }
     },
-    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/resourcepermissions/search": {
-      "post": {
-        "tags": [
-          "Search"
-        ],
-        "description": "Search ResourcePermission resources in a namespace.",
-        "operationId": "listResourcePermissionSearchV0alpha1",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          }
-        ],
-        "requestBody": {
-          "description": "A SearchQuery describing what to match, sort and return.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
-              },
-              "example": {
-                "kind": "SearchQuery",
-                "apiVersion": "search.grafana.app/v0alpha1",
-                "facetLimit": 0,
-                "limit": 10
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "A SearchResults envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/rolebindings/search": {
       "post": {
         "tags": [
@@ -3485,9 +3435,9 @@
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~": {
       "get": {
         "tags": [
-          "Display"
+          "User"
         ],
-        "description": "Show display information for the currently authenticated identity",
+        "description": "Show display information for the currently authenticated identity. Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead.",
         "operationId": "getCurrentUserDisplay",
         "parameters": [
           {
@@ -3506,12 +3456,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.CurrentUserInfo"
                 }
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~/permissions": {
@@ -3520,7 +3471,6 @@
           "User"
         ],
         "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
-        "deprecated": true,
         "operationId": "getCurrentUserPermissions",
         "parameters": [
           {
@@ -3543,7 +3493,49 @@
               }
             }
           }
+        },
+        "deprecated": true
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/whoami": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getWhoAmI",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.CurrentUserInfo"
+                }
+              }
+            }
+          }
         }
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/whoami/permissions": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
+        "operationId": "getWhoAmIPermissions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
       }
     }
   },
@@ -4393,6 +4385,43 @@
                 "type": "string"
               }
             }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamLBACUsageResponse": {
+        "type": "object",
+        "required": [
+          "counts"
+        ],
+        "properties": {
+          "counts": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamLBACUsageV0alpha1ResponseCounts": {
+        "type": "object",
+        "required": [
+          "datasources",
+          "teams",
+          "filters"
+        ],
+        "properties": {
+          "datasources": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "filters": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "teams": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5831,7 +5860,7 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
-      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display": {
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.CurrentUserInfo": {
         "type": "object",
         "required": [
           "identity",
@@ -5839,7 +5868,7 @@
         ],
         "properties": {
           "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "AuthenticatedBy is the authentication provider used for the current identity.",
             "type": "string"
           },
           "avatarURL": {
@@ -5852,7 +5881,7 @@
             "default": ""
           },
           "email": {
-            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "Email is the email address for the current identity.",
             "type": "string"
           },
           "identity": {
@@ -5867,9 +5896,43 @@
             "type": "integer",
             "format": "int64"
           },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+          "namespace": {
+            "description": "Namespace is the namespace of the current identity.",
             "type": "string"
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display": {
+        "type": "object",
+        "required": [
+          "identity",
+          "displayName"
+        ],
+        "properties": {
+          "avatarURL": {
+            "description": "AvatarURL is the url where we can get the avatar for identity",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "Display name for identity.",
+            "type": "string",
+            "default": ""
+          },
+          "identity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.IdentityRef"
+              }
+            ]
+          },
+          "internalId": {
+            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -6014,10 +6077,6 @@
           "displayName"
         ],
         "properties": {
-          "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
-          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -6026,10 +6085,6 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
-          },
-          "email": {
-            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -6050,10 +6105,6 @@
               "admin",
               "member"
             ]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -6113,8 +6164,7 @@
         "description": "UserPermission is one effective action and scope granted to an identity.",
         "type": "object",
         "required": [
-          "action",
-          "scope"
+          "action"
         ],
         "properties": {
           "action": {
@@ -6122,8 +6172,7 @@
             "default": ""
           },
           "scope": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },
@@ -6369,7 +6418,7 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -6417,7 +6466,7 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
           }
         }
@@ -6584,10 +6633,6 @@
           "displayName"
         ],
         "properties": {
-          "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
-          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -6596,10 +6641,6 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
-          },
-          "email": {
-            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -6625,10 +6666,6 @@
               "admin",
               "member"
             ]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },

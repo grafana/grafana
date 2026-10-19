@@ -248,9 +248,11 @@ func TestExtendedJWT_Test(t *testing.T) {
 			cfg: &setting.Cfg{
 				ExtJWTAuth: setting.ExtJWTSettings{
 					Enabled: false,
+					// A real signer, so the client does not trust local plugin tokens either.
+					JWKSUrl: "https://auth.example.com/jwks",
 				},
 			},
-			authHeaderFunc: func() string { return "eyJ" },
+			authHeaderFunc: func() string { return generateToken(t, validAccessTokenClaims, pk, jose.ES256) },
 			want:           false,
 		},
 		{
@@ -825,7 +827,7 @@ func TestExtendedJWT_authenticateAsUserViaOBO_defensive(t *testing.T) {
 			},
 		}
 
-		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token")
+		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token", env.s.cfg.DefaultOrgID())
 		assert.ErrorIs(t, err, errExtJWTInvalidSubject)
 		assert.Nil(t, id)
 	})
