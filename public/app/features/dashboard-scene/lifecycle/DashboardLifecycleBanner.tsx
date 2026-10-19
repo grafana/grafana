@@ -50,7 +50,7 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
   const { uid: sceneUid, meta, isEditing } = dashboard.useState();
   const uid = previewedDashboardUid({ uid: sceneUid, meta });
 
-  if (!uid || isEditing) {
+  if (!uid) {
     return null;
   }
   const load = reload ?? (() => reloadDashboardPage(uid));
@@ -59,6 +59,7 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
   if (!preview) {
     return null;
   }
+  // A draft stays in view while it is edited: its Save enters edit mode to open the save form.
   if (proposesNewDashboard(preview.pending)) {
     return (
       <NewDashboardBanner
@@ -71,6 +72,9 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
         reload={load}
       />
     );
+  }
+  if (isEditing) {
+    return null;
   }
   return preview.previewing ? (
     <PendingChangesBanner
