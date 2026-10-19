@@ -131,6 +131,10 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 		}
 		query.UserID = id
 	}
+	uid := c.Query("userUid")
+	if uid != "" && query.UserID != 0 {
+		return response.Error(http.StatusBadRequest, "Provide either userUid or userId", nil)
+	}
 
 	ctx := c.Req.Context()
 	var result *org.SearchOrgUsersQueryResult
@@ -138,6 +142,16 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 	if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
 		result, err = hs.searchOrgUsersUsingK8s(c, query)
 	} else {
+		if uid != "" {
+			u, lookupErr := hs.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
+			if errors.Is(lookupErr, user.ErrUserNotFound) {
+				return response.JSON(http.StatusOK, []*org.OrgUserDTO{})
+			}
+			if lookupErr != nil {
+				return response.Error(http.StatusInternalServerError, "Failed to get user", lookupErr)
+			}
+			query.UserID = u.ID
+		}
 		result, err = hs.searchOrgUsersHelper(c, query)
 	}
 
@@ -398,11 +412,14 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 }
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	if c.Query("userUid") != "" || query.UserID != 0 {
+		return hs.getOrgUserUsingK8s(c, query)
+	}
 	// Shared across pages so the externally-synced check is resolved once per
 	// auth module for the whole request, not once per page.
 	externallySynced := hs.newExternallySyncedResolver(c.Req.Context(), hs.Cfg)
 
-	if query.Limit > 0 && query.UserID == 0 {
+	if query.Limit > 0 {
 		return hs.searchOrgUsersPageUsingK8s(c, query, externallySynced)
 	}
 
@@ -413,35 +430,71 @@ func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *
 		pageQuery := *query
 		pageQuery.Limit = pageSize
 		pageQuery.Page = page
-		// Search has no exact-ID filter in the app platform. Filter each page
-		// without mistaking a missing first-page match for an absent membership.
-		pageQuery.UserID = 0
 
 		pageResult, err := hs.searchOrgUsersPageUsingK8s(c, &pageQuery, externallySynced)
 		if err != nil {
 			return nil, err
 		}
 		read += len(pageResult.OrgUsers)
-		if query.UserID != 0 {
-			for _, member := range pageResult.OrgUsers {
-				if member.UserID == query.UserID {
-					return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{member}, TotalCount: 1}, nil
-				}
-			}
-		} else {
-			result.OrgUsers = append(result.OrgUsers, pageResult.OrgUsers...)
-		}
+		result.OrgUsers = append(result.OrgUsers, pageResult.OrgUsers...)
 
 		if int64(read) >= pageResult.TotalCount || len(pageResult.OrgUsers) < pageSize {
-			if query.UserID != 0 {
-				return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
-			}
 			result.TotalCount = int64(len(result.OrgUsers))
 			result.Page = 1
 			result.PerPage = len(result.OrgUsers)
 			return result, nil
 		}
 	}
+}
+
+func (hs *HTTPServer) getOrgUserUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	ctx := c.Req.Context()
+	var u *user.User
+	var err error
+	if uid := c.Query("userUid"); uid != "" {
+		u, err = hs.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
+	} else {
+		u, err = hs.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.UserID})
+	}
+	if errors.Is(err, user.ErrUserNotFound) {
+		return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if u.IsServiceAccount || u.OrgID != query.OrgID {
+		return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
+	}
+	member := &org.OrgUserDTO{
+		OrgID: query.OrgID, UserID: u.ID, UID: u.UID, Login: u.Login,
+		Name: u.Name, Email: u.Email, Role: u.OrgRole,
+		Created: u.Created, LastSeenAt: u.LastSeenAt, LastSeenAtAge: util.GetAgeString(u.LastSeenAt),
+		IsDisabled: u.IsDisabled, IsProvisioned: u.IsProvisioned,
+		AvatarURL: dtos.GetGravatarUrl(hs.Cfg, u.Email),
+	}
+	if c.QueryBool("accesscontrol") {
+		member.AccessControl = accesscontrol.GetResourcesMetadata(ctx, c.GetPermissions(), "users:id:", map[string]bool{fmt.Sprint(u.ID): true})[fmt.Sprint(u.ID)]
+		uidMetadata := accesscontrol.GetResourcesMetadata(ctx, c.GetPermissions(), "users:uid:", map[string]bool{u.UID: true})[u.UID]
+		member.AccessControl = accesscontrol.MergeMeta("", member.AccessControl, uidMetadata)
+	}
+	externallySynced := hs.newExternallySyncedResolver(ctx, hs.Cfg)
+	// Legacy-backed IAM resources do not include external auth information.
+	// Resolve the label for this user only so role-sync restrictions are retained.
+	if len(u.ExternalAuthInfo) == 0 {
+		modules, err := hs.authInfoService.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: []int64{u.ID}})
+		if err != nil {
+			return nil, err
+		}
+		if module, ok := modules[u.ID]; ok {
+			member.AuthLabels = []string{login.GetAuthProviderLabel(module)}
+			member.IsExternallySynced = externallySynced(module)
+		}
+	}
+	for _, auth := range u.ExternalAuthInfo {
+		member.AuthLabels = append(member.AuthLabels, login.GetAuthProviderLabel(auth.Module))
+		member.IsExternallySynced = member.IsExternallySynced || externallySynced(auth.Module)
+	}
+	return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{member}, TotalCount: 1}, nil
 }
 
 func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery, externallySynced func(authModule string) bool) (*org.SearchOrgUsersQueryResult, error) {
@@ -782,6 +835,10 @@ type AddOrgUserParams struct {
 
 // swagger:parameters getOrgUsersForCurrentOrg
 type GetOrgUsersForCurrentOrgParams struct {
+	// Filter by the exact user UID within the current organization.
+	// in:query
+	// required:false
+	UserUID string `json:"userUid"`
 	// Filter by the exact numerical user ID within the current organization.
 	// in:query
 	// required:false

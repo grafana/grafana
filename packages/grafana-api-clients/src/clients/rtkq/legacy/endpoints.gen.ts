@@ -998,6 +998,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/org/users`,
           params: {
+            userUid: queryArg.userUid,
             userId: queryArg.userId,
             query: queryArg.query,
             limit: queryArg.limit,
@@ -2474,6 +2475,8 @@ export type GetCurrentOrgQuotaApiResponse = /** status 200 (empty) */ QuotaDto[]
 export type GetCurrentOrgQuotaApiArg = void;
 export type GetOrgUsersForCurrentOrgApiResponse = /** status 200 (empty) */ OrgUserDto[];
 export type GetOrgUsersForCurrentOrgApiArg = {
+  /** Filter by the exact user UID within the current organization. */
+  userUid?: string;
   /** Filter by the exact numerical user ID within the current organization. */
   userId?: number;
   query?: string;
