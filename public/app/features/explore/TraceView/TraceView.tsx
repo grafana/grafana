@@ -159,6 +159,8 @@ export function TraceView(props: Props) {
 
   const focusedSpanId = focusedSpanIdFromProps ?? focusedSpanIdExplore;
   const createFocusSpanLink = createFocusSpanLinkFromProps ?? createFocusSpanLinkExplore;
+  const expandSpan = useSelector((state) => state.explore.panes[exploreId!]?.panelsState.trace?.expandSpan === true);
+  const spanIdToExpand = expandSpan ? focusedSpanId : undefined;
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
@@ -299,15 +301,15 @@ export function TraceView(props: Props) {
     lastLinkedSpanId.current = undefined;
   }, [frame]);
   useEffect(() => {
-    if (lastLinkedSpanId.current === focusedSpanId) {
+    if (lastLinkedSpanId.current === spanIdToExpand) {
       return;
     }
-    lastLinkedSpanId.current = focusedSpanId;
+    lastLinkedSpanId.current = spanIdToExpand;
 
-    if (focusedSpanId) {
-      goToSpan(focusedSpanId);
+    if (spanIdToExpand) {
+      goToSpan(spanIdToExpand);
     }
-  }, [frame, focusedSpanId, goToSpan]);
+  }, [frame, spanIdToExpand, goToSpan]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
