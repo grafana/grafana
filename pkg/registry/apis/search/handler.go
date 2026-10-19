@@ -114,7 +114,7 @@ func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.Ha
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return searchResults(res, kind, limit)
+			return globalSearchResults(res, kind, limit)
 		},
 	)
 }

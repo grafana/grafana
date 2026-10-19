@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 
 import { type Labels } from '@grafana/data';
-import { SilencesEditor } from 'app/features/alerting/unified/components/silences/SilencesEditor';
-import { getDefaultSilenceFormValues } from 'app/features/alerting/unified/components/silences/utils';
-import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isPrivateLabelKey } from '../../utils/labels';
+
+import { SilencesEditor } from './SilencesEditor';
+import { getDefaultSilenceFormValues } from './utils';
 
 interface InstanceSilenceFormProps {
   ruleUid: string;
@@ -17,17 +20,15 @@ export function InstanceSilenceForm({ ruleUid, instanceLabels, onClose }: Instan
   const formValues = useMemo(
     () =>
       getDefaultSilenceFormValues({
-        matchers: Object.entries(instanceLabels).map(([name, value]) => ({
-          name,
-          value,
-          operator: MatcherOperator.equal,
-        })),
+        matchers: Object.entries(instanceLabels)
+          .filter(([name]) => !isPrivateLabelKey(name))
+          .map(([name, value]) => ({ name, value, operator: MatcherOperator.equal })),
       }),
     [instanceLabels]
   );
 
   return (
-    <AlertmanagerProvider accessType="instance">
+    <AlertmanagerProvider accessType="instance" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
       <SilencesEditor
         ruleUid={ruleUid}
         formValues={formValues}

@@ -444,6 +444,10 @@ const injectedRtkApi = api
         query: () => ({ url: `/whoami` }),
         providesTags: ['User'],
       }),
+      getWhoAmIPermissions: build.query<GetWhoAmIPermissionsApiResponse, GetWhoAmIPermissionsApiArg>({
+        query: () => ({ url: `/whoami/permissions` }),
+        providesTags: ['User'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -906,6 +910,8 @@ export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ U
 export type GetCurrentUserPermissionsApiArg = void;
 export type GetWhoAmIApiResponse = /** status 200 undefined */ CurrentUserInfo;
 export type GetWhoAmIApiArg = void;
+export type GetWhoAmIPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
+export type GetWhoAmIPermissionsApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1281,7 +1287,7 @@ export type CurrentUserInfo = {
 };
 export type UserPermission = {
   action: string;
-  scope: string;
+  scope?: string;
 };
 export type UserPermissions = {
   permissions: UserPermission[];
@@ -1344,4 +1350,6 @@ export const {
   useLazyGetCurrentUserPermissionsQuery,
   useGetWhoAmIQuery,
   useLazyGetWhoAmIQuery,
+  useGetWhoAmIPermissionsQuery,
+  useLazyGetWhoAmIPermissionsQuery,
 } = injectedRtkApi;

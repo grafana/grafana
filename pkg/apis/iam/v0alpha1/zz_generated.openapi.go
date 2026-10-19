@@ -555,13 +555,12 @@ func schema_pkg_apis_iam_v0alpha1_UserPermission(ref common.ReferenceCallback) c
 					},
 					"scope": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"action", "scope"},
+				Required: []string{"action"},
 			},
 		},
 	}
