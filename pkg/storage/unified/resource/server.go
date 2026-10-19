@@ -423,6 +423,10 @@ type SearchOptions struct {
 	// types, alongside the per-resource indexes.
 	GlobalIndexEnabled bool
 
+	// GlobalIndexStartupBuild waits for global indexes before initialization completes.
+	// Otherwise they build in the background after per-resource initialization.
+	GlobalIndexStartupBuild bool
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
