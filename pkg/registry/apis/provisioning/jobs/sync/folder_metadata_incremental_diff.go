@@ -497,7 +497,7 @@ func isFolderRelocating(index managedResourceIndex, input folderMetadataDiffSpli
 			continue
 		}
 		sourcePath := safepath.EnsureTrailingSlash(item.Path)
-		if sourcePath == "" || sourcePath == targetPath {
+		if sourcePath == targetPath {
 			continue
 		}
 		if input.IsMetadataVacatingAt(sourcePath) || input.HadChangeOriginallyAt(sourcePath) {

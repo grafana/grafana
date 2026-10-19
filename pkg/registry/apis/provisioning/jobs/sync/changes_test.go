@@ -1373,7 +1373,6 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 	t.Run("emits children for UID change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{})
 		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
 			Return(&repository.FileInfo{
 				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"My Folder"}}`),
@@ -1561,7 +1560,6 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 	t.Run("emits folder update with FolderRenamed when _folder.json deleted", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{})
 
 		source := []repository.FileTreeEntry{
 			{Path: "my-folder/", Blob: false},
@@ -1589,7 +1587,6 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 	t.Run("emits direct children of affected folder for deleted metadata", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{})
 
 		source := []repository.FileTreeEntry{
 			{Path: "my-folder/", Blob: false},
@@ -1624,7 +1621,6 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 	t.Run("normalizes source and target directory paths before emitting children", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{})
 
 		source := []repository.FileTreeEntry{
 			{Path: "my-folder", Blob: false},
@@ -1722,7 +1718,6 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 	t.Run("does not duplicate already-existing changes for deleted metadata", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{})
 
 		source := []repository.FileTreeEntry{
 			{Path: "my-folder/", Blob: false},
@@ -1766,7 +1761,6 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 	t.Run("only emits direct children not grandchildren for deleted metadata", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{})
 
 		source := []repository.FileTreeEntry{
 			{Path: "parent/", Blob: false},
@@ -2158,18 +2152,4 @@ func TestAttachUnsupportedPaths(t *testing.T) {
 		require.Nil(t, got[0].Warning)
 		require.Nil(t, got[1].Warning)
 	})
-}
-
-func TestDetectDeletedFolderMetadata_PreservesFallbackUID(t *testing.T) {
-	repo := newCompositeRepoWithConfig(t)
-	uid := resources.ParseFolder("team/", repo.Config().Name).ID
-	target := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{
-		{Name: uid, Path: "team", Group: resources.FolderResource.Group, Hash: "metadata-hash"},
-	}}
-	changes, affected := detectDeletedFolderMetadata(repo, target, map[string]bool{"team/": true}, nil, nil)
-	require.Len(t, changes, 1)
-	require.Equal(t, repository.FileActionUpdated, changes[0].Action)
-	require.Equal(t, provisioning.ReasonFolderMetadataDeleted, changes[0].Reason)
-	require.False(t, changes[0].FolderRenamed)
-	require.Empty(t, affected)
 }

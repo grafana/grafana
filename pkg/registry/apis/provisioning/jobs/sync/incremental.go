@@ -24,6 +24,13 @@ import (
 // Convert git changes into resource file changes
 func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
 	syncStart := time.Now()
+	if previousRef == currentRef {
+		if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer); err != nil {
+			return err
+		}
+		progress.SetFinalMessage(ctx, "same commit as last time")
+		return nil
+	}
 
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental")
 	defer span.End()
@@ -31,19 +38,19 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		metrics.RecordSyncDuration(jobs.SyncTypeIncremental, time.Since(syncStart))
 	}()
 
-	var diff []repository.VersionedFileChange
-	if previousRef != currentRef {
-		compareStart := time.Now()
-		compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.incremental.compare_files")
-		var err error
-		diff, err = repo.CompareFiles(compareCtx, previousRef, currentRef)
-		if err != nil {
-			compareSpan.RecordError(err)
-			compareSpan.End()
-			return tracing.Error(span, fmt.Errorf("compare files error: %w", err))
-		}
+	compareStart := time.Now()
+	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.incremental.compare_files")
+	diff, err := repo.CompareFiles(compareCtx, previousRef, currentRef)
+	if err != nil {
+		compareSpan.RecordError(err)
 		compareSpan.End()
-		metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
+		return tracing.Error(span, fmt.Errorf("compare files error: %w", err))
+	}
+	compareSpan.End()
+	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
+	if len(diff) < 1 {
+		progress.SetFinalMessage(ctx, "no changes detected between commits")
+		return nil
 	}
 	diff = splitRenamesOntoNonResources(diff, folderMetadataEnabled)
 
@@ -62,22 +69,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
 		return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
-	}
-
-	metadata, err := detectMissingFolderMetadata(ctx, readerRepo, currentRef, diff, target, tracer)
-	if err != nil {
-		return tracing.Error(span, err)
-	}
-	diff = append(diff, metadata.changes...)
-	if len(diff) == 0 {
-		recordMissingFolderMetadataWarnings(ctx, metadata.missing, diff, progress)
-		recordInvalidFolderMetadataWarnings(ctx, metadata.invalid, progress)
-		if previousRef == currentRef {
-			progress.SetFinalMessage(ctx, "same commit as last time")
-		} else {
-			progress.SetFinalMessage(ctx, "no changes detected between commits")
-		}
-		return nil
 	}
 
 	for i := range target.Items {
@@ -145,8 +136,10 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	// Run after deleteFolders so its informational warnings (e.g. missing
 	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
-	recordInvalidFolderMetadataWarnings(ctx, append(invalidFolderMetadata, metadata.invalid...), progress)
-	recordMissingFolderMetadataWarnings(ctx, metadata.missing, diff, progress)
+	recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
+	if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -650,66 +643,33 @@ func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resourc
 	}
 }
 
-type folderMetadataState struct {
-	changes []repository.VersionedFileChange
-	missing []string
-	invalid []*resources.InvalidFolderMetadata
-}
-
-// detectMissingFolderMetadata checks the full tree, including manifests untouched
-// by the Git diff. Repositories synced before metadata was enabled can still have
-// path-derived folder identities even when the commit has not changed.
-func detectMissingFolderMetadata(ctx context.Context, repo repository.Reader, currentRef string, diff []repository.VersionedFileChange, target *provisioning.ResourceList, tracer tracing.Tracer) (folderMetadataState, error) {
+// detectMissingFolderMetadata reads the full file tree and records warnings for folders
+// that do not have a folder metadata file.
+func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned, currentRef string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.detect_missing_folder_metadata")
 	defer span.End()
 
-	var state folderMetadataState
-	tree, err := repo.ReadTree(ctx, currentRef)
-	if err != nil {
-		return state, tracing.Error(span, fmt.Errorf("detect missing folder metadata: %w", err))
+	readerRepo, ok := repo.(repository.Reader)
+	if !ok {
+		span.RecordError(fmt.Errorf("repository does not implement Reader"))
+		return nil
 	}
-	state.missing = resources.FindFoldersMissingMetadata(tree)
-	changedMetadata := make(map[string]bool, len(diff))
-	for _, change := range diff {
-		changedMetadata[change.Path] = true
-	}
-	index := newManagedResourceIndex(target)
-	for _, entry := range tree {
-		if !entry.Blob || !resources.IsFolderMetadataFile(entry.Path) || changedMetadata[entry.Path] {
-			continue
-		}
-		folderPath := safepath.Dir(entry.Path)
-		if folderPath == "" || resources.IsPathSupported(folderPath) != nil {
-			continue
-		}
-		folder, hash, err := resources.ReadFolderMetadata(ctx, repo, folderPath, currentRef)
-		if warning, ok := errors.AsType[*resources.InvalidFolderMetadata](err); ok {
-			state.invalid = append(state.invalid, warning)
-			continue
-		}
-		if err != nil {
-			return state, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
-		}
-		existing := index.ExistingAt(folderPath)
-		if len(existing) == 1 && existing[0].Name == folder.Name && existing[0].Hash == hash {
-			continue
-		}
-		state.changes = append(state.changes, repository.VersionedFileChange{
-			Action: repository.FileActionUpdated,
-			Path:   entry.Path,
-			Ref:    currentRef,
-		})
-	}
-	return state, nil
-}
 
-func recordMissingFolderMetadataWarnings(ctx context.Context, missing []string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder) {
+	tree, err := readerRepo.ReadTree(ctx, currentRef)
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("detect missing folder metadata: %w", err)
+	}
+
 	changeActions := make(map[string]repository.FileAction, len(diff))
 	for _, c := range diff {
 		changeActions[c.Path] = c.Action
 	}
+
+	missing := resources.FindFoldersMissingMetadata(tree)
 	if len(missing) > 0 {
-		logging.FromContext(ctx).Info("missing folder metadata detected", "count", len(missing))
+		logger := logging.FromContext(ctx)
+		logger.Info("missing folder metadata detected", "count", len(missing))
 	}
 	for _, p := range missing {
 		builder := jobs.NewFolderResult(p).
@@ -721,4 +681,6 @@ func recordMissingFolderMetadataWarnings(ctx context.Context, missing []string, 
 		}
 		progress.Record(ctx, builder.Build())
 	}
+
+	return nil
 }
