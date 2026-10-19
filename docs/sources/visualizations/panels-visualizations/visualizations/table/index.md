@@ -135,6 +135,18 @@ value4 , value5 , value6
 
 If you need to hide columns, you can do so using [data transformations](ref:data-transformation), [field overrides](#field-overrides), or by [building a query](ref:build-query) that returns only the needed columns.
 
+## Column header and cell menus
+
+Columns headers and cells both have menus where you can access various table options.
+
+Column header menus include filtering options, and column management options.
+Cell menus include filtering and cell value inspection options.
+
+Both column and cell menus can include the **Ask Assistant** option, which lets you provide that data as a _context pill_ to Grafana Assistant.
+The pill carries a cell’s raw and formatted value, which field it belongs to, details of the query behind it, and which panel, dashboard, and time range it came from.
+For columns, it uses all the values in the column even if they've been filtered out.
+This option is only supported if you have Grafana Assistant enabled in your Grafana instance.
+
 ## Column filtering
 
 You can temporarily change how column data is displayed using column filtering.
@@ -251,7 +263,7 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
 | Zebra striping       | Alternate the background color of every other row. |
-| Show columns sidebar | Open the column management sidebar by default. In the sidebar, you can hide, show, and reorder columns. You can also reset all filters.<!--TODO: Doublecheck this --> |
+| Show columns sidebar | Toggle on the switch to have the column management sidebar open by default. In the sidebar, you can hide, show, and reorder columns. Viewers can close the sidebar when interacting with the table, but it's open by default the next time they load the visualization. |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
 | Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the panel. This option doesn't affect queries. |
 | Page size            | Define the number of rows per page when the **Enable pagination** switch is toggled on. When this field is empty, the page size automatically adjusts to the height of the panel. |
@@ -426,6 +438,7 @@ For more detailed information about all of the sparkline styling options (except
 | Option              | Description                                                                |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
+| Show hover tooltip  | Toggle the switch on or off to display or hide the cell value in a tooltip when you hover your cursor over the line. |
 | Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
