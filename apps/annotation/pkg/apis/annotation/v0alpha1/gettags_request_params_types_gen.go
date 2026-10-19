@@ -3,9 +3,9 @@
 package v0alpha1
 
 type GetTagsRequestParams struct {
-	// Return only tags that start with this value. Can't be combined with contains.
+	// Return tags that start with this value.
 	Prefix *string `json:"prefix,omitempty"`
-	// Return only tags that contain this value. Can't be combined with prefix.
+	// Return tags that contain this value.
 	Contains *string `json:"contains,omitempty"`
 	// Maximum number of tags to return. Defaults to 100.
 	Limit *int64 `json:"limit,omitempty"`

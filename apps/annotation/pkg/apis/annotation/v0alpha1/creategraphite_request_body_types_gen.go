@@ -11,7 +11,7 @@ import (
 type CreateGraphiteRequestBody struct {
 	// Title of the event. Becomes the first line of the annotation text.
 	What string `json:"what"`
-	// Time of the event, in seconds since the Unix epoch. Defaults to the current time.
+	// Time of the event, in Unix seconds. Defaults to the current time.
 	When *int64 `json:"when,omitempty"`
 	// Additional event details, appended to the annotation text on a new line.
 	Data *string `json:"data,omitempty"`

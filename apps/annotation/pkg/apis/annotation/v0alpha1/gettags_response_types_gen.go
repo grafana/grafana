@@ -4,7 +4,7 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetTagsResponse struct {
-	// Tags in use in the namespace, with the number of annotations that use each one.
+	// List of unique tags and their counts.
 	Tags []GetTagsV0alpha1ResponseTags `json:"tags"`
 }
 
@@ -24,7 +24,7 @@ func (GetTagsResponse) OpenAPIModelName() string {
 type GetTagsV0alpha1ResponseTags struct {
 	// Tag value.
 	Tag string `json:"tag"`
-	// Number of annotations with this tag.
+	// Count of annotations with this tag.
 	Count int64 `json:"count"`
 }
 

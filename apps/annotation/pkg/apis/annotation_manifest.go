@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaAnnotationv0alpha1     = []byte(`{"Annotation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardUID":{"description":"UID of the dashboard the annotation belongs to. Omit it for an organization-wide annotation.","type":"string"},"panelID":{"description":"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOmit it to show the annotation on every panel of the dashboard.","type":"integer"},"scopes":{"description":"Names of the scopes the annotation applies to. The server limits how many scopes an annotation can have (5 by default).","items":{"type":"string"},"type":"array"},"tags":{"description":"Tags used to categorize and filter annotations.","items":{"type":"string"},"type":"array"},"text":{"description":"Text of the annotation.","type":"string"},"time":{"description":"Start time of the annotation, in milliseconds since the Unix epoch.","type":"integer"},"timeEnd":{"description":"End time of the annotation, in milliseconds since the Unix epoch.\nSet it to make the annotation a region. Omit it, or set it to the same value as time, for a point-in-time annotation.","type":"integer"}},"required":["text","time"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaAnnotationv0alpha1     = []byte(`{"Annotation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardUID":{"description":"UID of the dashboard the annotation belongs to.\nOptional. Omit it for an organization-wide annotation.","type":"string"},"panelID":{"description":"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOptional. Omit it to show the annotation on every panel of the dashboard.","type":"integer"},"scopes":{"description":"Names of the scopes the annotation applies to.","items":{"type":"string"},"type":"array"},"tags":{"description":"Tags used to categorize and filter annotations.","items":{"type":"string"},"type":"array"},"text":{"description":"Text of the annotation.","type":"string"},"time":{"description":"Start time of the annotation, in Unix milliseconds.","type":"integer"},"timeEnd":{"description":"End time of the annotation, in Unix milliseconds.\nOptional. Set it to make the annotation a region.","type":"integer"}},"required":["text","time"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaAnnotationv0alpha1 app.VersionSchema
 	_                               = json.Unmarshal(rawSchemaAnnotationv0alpha1, &versionSchemaAnnotationv0alpha1)
 )
@@ -91,7 +91,7 @@ var appManifestData = app.ManifestData{
 																"when": {
 																	SchemaProps: spec.SchemaProps{
 																		Type:        []string{"integer"},
-																		Description: "Time of the event, in seconds since the Unix epoch. Defaults to the current time.",
+																		Description: "Time of the event, in Unix seconds. Defaults to the current time.",
 																	},
 																},
 															},
@@ -360,11 +360,11 @@ var appManifestData = app.ManifestData{
 										ParameterProps: spec3.ParameterProps{
 											Name:        "continue",
 											In:          "query",
-											Description: "Continue token from the metadata.continue field of the previous page.",
+											Description: "Continue token from the metadata.continue field of the previous page for pagination.",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type:        []string{"string"},
-													Description: "Continue token from the metadata.continue field of the previous page.",
+													Description: "Continue token from the metadata.continue field of the previous page for pagination.",
 												},
 											},
 										},
@@ -400,45 +400,13 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
-											Name:        "deleted",
-											In:          "query",
-											Description: "Whether to return deleted annotations. \"include\" returns deleted and live annotations, \"only\" returns only deleted ones. Live annotations only by default.",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type:        []string{"string"},
-													Description: "Whether to return deleted annotations. \"include\" returns deleted and live annotations, \"only\" returns only deleted ones. Live annotations only by default.",
-													Enum: []interface{}{
-														"include",
-														"only",
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
 											Name:        "from",
 											In:          "query",
-											Description: "Start of the time range, in milliseconds since the Unix epoch.",
+											Description: "Start of the time range, in Unix milliseconds.",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type:        []string{"integer"},
-													Description: "Start of the time range, in milliseconds since the Unix epoch.",
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name:        "legacyID",
-											In:          "query",
-											Description: "Return only the annotation with this ID from the legacy /api/annotations API.",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type:        []string{"integer"},
-													Description: "Return only the annotation with this ID from the legacy /api/annotations API.",
+													Description: "Start of the time range, in Unix milliseconds.",
 												},
 											},
 										},
@@ -544,11 +512,11 @@ var appManifestData = app.ManifestData{
 										ParameterProps: spec3.ParameterProps{
 											Name:        "to",
 											In:          "query",
-											Description: "End of the time range, in milliseconds since the Unix epoch.",
+											Description: "End of the time range, in Unix milliseconds.",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type:        []string{"integer"},
-													Description: "End of the time range, in milliseconds since the Unix epoch.",
+													Description: "End of the time range, in Unix milliseconds.",
 												},
 											},
 										},
@@ -570,7 +538,7 @@ var appManifestData = app.ManifestData{
 																		"items": {
 																			SchemaProps: spec.SchemaProps{
 																				Type:        []string{"array"},
-																				Description: "Annotations that match the query and that the caller can read.",
+																				Description: "List of annotations matching the query.",
 																				Items: &spec.SchemaOrArray{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
@@ -619,11 +587,11 @@ var appManifestData = app.ManifestData{
 										ParameterProps: spec3.ParameterProps{
 											Name:        "contains",
 											In:          "query",
-											Description: "Return only tags that contain this value. Can't be combined with prefix.",
+											Description: "Return tags that contain this value.",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type:        []string{"string"},
-													Description: "Return only tags that contain this value. Can't be combined with prefix.",
+													Description: "Return tags that contain this value.",
 												},
 											},
 										},
@@ -647,11 +615,11 @@ var appManifestData = app.ManifestData{
 										ParameterProps: spec3.ParameterProps{
 											Name:        "prefix",
 											In:          "query",
-											Description: "Return only tags that start with this value. Can't be combined with contains.",
+											Description: "Return tags that start with this value.",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type:        []string{"string"},
-													Description: "Return only tags that start with this value. Can't be combined with contains.",
+													Description: "Return tags that start with this value.",
 												},
 											},
 										},
@@ -673,7 +641,7 @@ var appManifestData = app.ManifestData{
 																		"tags": {
 																			SchemaProps: spec.SchemaProps{
 																				Type:        []string{"array"},
-																				Description: "Tags in use in the namespace, with the number of annotations that use each one.",
+																				Description: "List of unique tags and their counts.",
 																				Items: &spec.SchemaOrArray{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
@@ -682,7 +650,7 @@ var appManifestData = app.ManifestData{
 																								"count": {
 																									SchemaProps: spec.SchemaProps{
 																										Type:        []string{"integer"},
-																										Description: "Number of annotations with this tag.",
+																										Description: "Count of annotations with this tag.",
 																									},
 																								},
 																								"tag": {
@@ -723,19 +691,19 @@ var appManifestData = app.ManifestData{
 								"dashboardUID": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"string"},
-										Description: "UID of the dashboard the annotation belongs to. Omit it for an organization-wide annotation.",
+										Description: "UID of the dashboard the annotation belongs to.\nOptional. Omit it for an organization-wide annotation.",
 									},
 								},
 								"panelID": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
-										Description: "ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOmit it to show the annotation on every panel of the dashboard.",
+										Description: "ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOptional. Omit it to show the annotation on every panel of the dashboard.",
 									},
 								},
 								"scopes": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"array"},
-										Description: "Names of the scopes the annotation applies to. The server limits how many scopes an annotation can have (5 by default).",
+										Description: "Names of the scopes the annotation applies to.",
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
@@ -765,13 +733,13 @@ var appManifestData = app.ManifestData{
 								"time": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
-										Description: "Start time of the annotation, in milliseconds since the Unix epoch.",
+										Description: "Start time of the annotation, in Unix milliseconds.",
 									},
 								},
 								"timeEnd": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
-										Description: "End time of the annotation, in milliseconds since the Unix epoch.\nSet it to make the annotation a region. Omit it, or set it to the same value as time, for a point-in-time annotation.",
+										Description: "End time of the annotation, in Unix milliseconds.\nOptional. Set it to make the annotation a region.",
 									},
 								},
 							},
@@ -825,19 +793,19 @@ var appManifestData = app.ManifestData{
 								"dashboardUID": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"string"},
-										Description: "UID of the dashboard the annotation belongs to. Omit it for an organization-wide annotation.",
+										Description: "UID of the dashboard the annotation belongs to.\nOptional. Omit it for an organization-wide annotation.",
 									},
 								},
 								"panelID": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
-										Description: "ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOmit it to show the annotation on every panel of the dashboard.",
+										Description: "ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOptional. Omit it to show the annotation on every panel of the dashboard.",
 									},
 								},
 								"scopes": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"array"},
-										Description: "Names of the scopes the annotation applies to. The server limits how many scopes an annotation can have (5 by default).",
+										Description: "Names of the scopes the annotation applies to.",
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
@@ -867,13 +835,13 @@ var appManifestData = app.ManifestData{
 								"time": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
-										Description: "Start time of the annotation, in milliseconds since the Unix epoch.",
+										Description: "Start time of the annotation, in Unix milliseconds.",
 									},
 								},
 								"timeEnd": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
-										Description: "End time of the annotation, in milliseconds since the Unix epoch.\nSet it to make the annotation a region. Omit it, or set it to the same value as time, for a point-in-time annotation.",
+										Description: "End time of the annotation, in Unix milliseconds.\nOptional. Set it to make the annotation a region.",
 									},
 								},
 							},
@@ -887,7 +855,7 @@ var appManifestData = app.ManifestData{
 			},
 			OpenAPI: func() app.ManifestVersionOpenAPI {
 				var openAPI app.ManifestVersionOpenAPI
-				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/graphite\":{\"post\":{\"operationId\":\"createGraphite\",\"requestBody\":{\"description\":\"Annotation event in the Graphite events format.\",\"content\":{\"application/json\":{\"schema\":{\"description\":\"Annotation event in the Graphite events format.\",\"type\":\"object\",\"required\":[\"what\",\"tags\"],\"properties\":{\"data\":{\"description\":\"Additional event details, appended to the annotation text on a new line.\",\"type\":\"string\"},\"tags\":{\"description\":\"Tags of the event, as an array of strings or a single space-separated string.\",\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\",\"items\":{\"type\":\"string\"}}]},\"what\":{\"description\":\"Title of the event. Becomes the first line of the annotation text.\",\"type\":\"string\"},\"when\":{\"description\":\"Time of the event, in seconds since the Unix epoch. Defaults to the current time.\",\"type\":\"integer\"}},\"additionalProperties\":false}}},\"required\":true},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"spec\",\"apiVersion\",\"kind\",\"metadata\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"creationTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"deletionGracePeriodSeconds\":{\"type\":\"integer\",\"format\":\"int64\"},\"deletionTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"finalizers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"generateName\":{\"type\":\"string\"},\"generation\":{\"type\":\"integer\",\"format\":\"int64\"},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"managedFields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"fieldsType\":{\"type\":\"string\"},\"fieldsV1\":{\"type\":\"object\"},\"manager\":{\"type\":\"string\"},\"operation\":{\"type\":\"string\"},\"subresource\":{\"type\":\"string\"},\"time\":{\"type\":\"string\",\"format\":\"date-time\"}}}},\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"},\"ownerReferences\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"name\",\"uid\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"blockOwnerDeletion\":{\"type\":\"boolean\"},\"controller\":{\"type\":\"boolean\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}}}},\"resourceVersion\":{\"type\":\"string\"},\"selfLink\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}},\"x-grafana-app-uses-kubernetes-object-metadata\":true},\"spec\":{\"$ref\":\"#/components/schemas/createGraphiteAnnotationSpec\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/search\":{\"get\":{\"operationId\":\"getSearch\",\"parameters\":[{\"name\":\"continue\",\"in\":\"query\",\"description\":\"Continue token from the metadata.continue field of the previous page.\",\"schema\":{\"description\":\"Continue token from the metadata.continue field of the previous page.\",\"type\":\"string\"}},{\"name\":\"createdBy\",\"in\":\"query\",\"description\":\"Return only annotations created by the user with this UID.\",\"schema\":{\"description\":\"Return only annotations created by the user with this UID.\",\"type\":\"string\"}},{\"name\":\"dashboardUID\",\"in\":\"query\",\"description\":\"Return only annotations on the dashboard with this UID.\",\"schema\":{\"description\":\"Return only annotations on the dashboard with this UID.\",\"type\":\"string\"}},{\"name\":\"deleted\",\"in\":\"query\",\"description\":\"Whether to return deleted annotations. \\\"include\\\" returns deleted and live annotations, \\\"only\\\" returns only deleted ones. Live annotations only by default.\",\"schema\":{\"description\":\"Whether to return deleted annotations. \\\"include\\\" returns deleted and live annotations, \\\"only\\\" returns only deleted ones. Live annotations only by default.\",\"type\":\"string\",\"enum\":[\"include\",\"only\"]}},{\"name\":\"from\",\"in\":\"query\",\"description\":\"Start of the time range, in milliseconds since the Unix epoch.\",\"schema\":{\"description\":\"Start of the time range, in milliseconds since the Unix epoch.\",\"type\":\"integer\"}},{\"name\":\"legacyID\",\"in\":\"query\",\"description\":\"Return only the annotation with this ID from the legacy /api/annotations API.\",\"schema\":{\"description\":\"Return only the annotation with this ID from the legacy /api/annotations API.\",\"type\":\"integer\"}},{\"name\":\"limit\",\"in\":\"query\",\"description\":\"Maximum number of annotations to return in one page. Defaults to 100.\",\"schema\":{\"description\":\"Maximum number of annotations to return in one page. Defaults to 100.\",\"type\":\"integer\"}},{\"name\":\"panelID\",\"in\":\"query\",\"description\":\"Return only annotations on the panel with this ID.\",\"schema\":{\"description\":\"Return only annotations on the panel with this ID.\",\"type\":\"integer\"}},{\"name\":\"scope\",\"in\":\"query\",\"description\":\"Return only annotations with these scopes. Repeat the parameter to pass several scopes.\",\"schema\":{\"description\":\"Return only annotations with these scopes. Repeat the parameter to pass several scopes.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},{\"name\":\"scopesMatchAny\",\"in\":\"query\",\"description\":\"If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.\",\"schema\":{\"description\":\"If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.\",\"type\":\"boolean\"}},{\"name\":\"tag\",\"in\":\"query\",\"description\":\"Return only annotations with these tags. Repeat the parameter to pass several tags.\",\"schema\":{\"description\":\"Return only annotations with these tags. Repeat the parameter to pass several tags.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},{\"name\":\"tagsMatchAny\",\"in\":\"query\",\"description\":\"If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.\",\"schema\":{\"description\":\"If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.\",\"type\":\"boolean\"}},{\"name\":\"to\",\"in\":\"query\",\"description\":\"End of the time range, in milliseconds since the Unix epoch.\",\"schema\":{\"description\":\"End of the time range, in milliseconds since the Unix epoch.\",\"type\":\"integer\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"metadata\",\"items\"],\"properties\":{\"items\":{\"description\":\"Annotations that match the query and that the caller can read.\",\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getSearchAnnotationItem\"}},\"metadata\":{\"type\":\"object\",\"properties\":{\"continue\":{\"description\":\"Token for the next page. Pass it as the continue parameter. Empty on the last page.\",\"type\":\"string\"}},\"additionalProperties\":false}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/tags\":{\"get\":{\"operationId\":\"getTags\",\"parameters\":[{\"name\":\"contains\",\"in\":\"query\",\"description\":\"Return only tags that contain this value. Can't be combined with prefix.\",\"schema\":{\"description\":\"Return only tags that contain this value. Can't be combined with prefix.\",\"type\":\"string\"}},{\"name\":\"limit\",\"in\":\"query\",\"description\":\"Maximum number of tags to return. Defaults to 100.\",\"schema\":{\"description\":\"Maximum number of tags to return. Defaults to 100.\",\"type\":\"integer\"}},{\"name\":\"prefix\",\"in\":\"query\",\"description\":\"Return only tags that start with this value. Can't be combined with contains.\",\"schema\":{\"description\":\"Return only tags that start with this value. Can't be combined with contains.\",\"type\":\"string\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"tags\"],\"properties\":{\"tags\":{\"description\":\"Tags in use in the namespace, with the number of annotations that use each one.\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"tag\",\"count\"],\"properties\":{\"count\":{\"description\":\"Number of annotations with this tag.\",\"type\":\"integer\"},\"tag\":{\"description\":\"Tag value.\",\"type\":\"string\"}},\"additionalProperties\":false}}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"createGraphiteAnnotationSpec\":{\"type\":\"object\",\"required\":[\"text\",\"time\"],\"properties\":{\"dashboardUID\":{\"description\":\"UID of the dashboard the annotation belongs to. Omit it for an organization-wide annotation.\",\"type\":\"string\"},\"panelID\":{\"description\":\"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\\nOmit it to show the annotation on every panel of the dashboard.\",\"type\":\"integer\"},\"scopes\":{\"description\":\"Names of the scopes the annotation applies to. The server limits how many scopes an annotation can have (5 by default).\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"description\":\"Tags used to categorize and filter annotations.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"text\":{\"description\":\"Text of the annotation.\",\"type\":\"string\"},\"time\":{\"description\":\"Start time of the annotation, in milliseconds since the Unix epoch.\",\"type\":\"integer\"},\"timeEnd\":{\"description\":\"End time of the annotation, in milliseconds since the Unix epoch.\\nSet it to make the annotation a region. Omit it, or set it to the same value as time, for a point-in-time annotation.\",\"type\":\"integer\"}},\"additionalProperties\":false},\"getSearchAnnotationItem\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"metadata\",\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"additionalProperties\":true},\"spec\":{\"$ref\":\"#/components/schemas/getSearchAnnotationSpec\"}},\"additionalProperties\":false},\"getSearchAnnotationSpec\":{\"type\":\"object\",\"required\":[\"text\",\"time\"],\"properties\":{\"dashboardUID\":{\"description\":\"UID of the dashboard the annotation belongs to. Omit it for an organization-wide annotation.\",\"type\":\"string\"},\"panelID\":{\"description\":\"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\\nOmit it to show the annotation on every panel of the dashboard.\",\"type\":\"integer\"},\"scopes\":{\"description\":\"Names of the scopes the annotation applies to. The server limits how many scopes an annotation can have (5 by default).\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"description\":\"Tags used to categorize and filter annotations.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"text\":{\"description\":\"Text of the annotation.\",\"type\":\"string\"},\"time\":{\"description\":\"Start time of the annotation, in milliseconds since the Unix epoch.\",\"type\":\"integer\"},\"timeEnd\":{\"description\":\"End time of the annotation, in milliseconds since the Unix epoch.\\nSet it to make the annotation a region. Omit it, or set it to the same value as time, for a point-in-time annotation.\",\"type\":\"integer\"}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/graphite\":{\"post\":{\"operationId\":\"createGraphite\",\"requestBody\":{\"description\":\"Annotation event in the Graphite events format.\",\"content\":{\"application/json\":{\"schema\":{\"description\":\"Annotation event in the Graphite events format.\",\"type\":\"object\",\"required\":[\"what\",\"tags\"],\"properties\":{\"data\":{\"description\":\"Additional event details, appended to the annotation text on a new line.\",\"type\":\"string\"},\"tags\":{\"description\":\"Tags of the event, as an array of strings or a single space-separated string.\",\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\",\"items\":{\"type\":\"string\"}}]},\"what\":{\"description\":\"Title of the event. Becomes the first line of the annotation text.\",\"type\":\"string\"},\"when\":{\"description\":\"Time of the event, in Unix seconds. Defaults to the current time.\",\"type\":\"integer\"}},\"additionalProperties\":false}}},\"required\":true},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"spec\",\"apiVersion\",\"kind\",\"metadata\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"creationTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"deletionGracePeriodSeconds\":{\"type\":\"integer\",\"format\":\"int64\"},\"deletionTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"finalizers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"generateName\":{\"type\":\"string\"},\"generation\":{\"type\":\"integer\",\"format\":\"int64\"},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"managedFields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"fieldsType\":{\"type\":\"string\"},\"fieldsV1\":{\"type\":\"object\"},\"manager\":{\"type\":\"string\"},\"operation\":{\"type\":\"string\"},\"subresource\":{\"type\":\"string\"},\"time\":{\"type\":\"string\",\"format\":\"date-time\"}}}},\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"},\"ownerReferences\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"name\",\"uid\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"blockOwnerDeletion\":{\"type\":\"boolean\"},\"controller\":{\"type\":\"boolean\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}}}},\"resourceVersion\":{\"type\":\"string\"},\"selfLink\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}},\"x-grafana-app-uses-kubernetes-object-metadata\":true},\"spec\":{\"$ref\":\"#/components/schemas/createGraphiteAnnotationSpec\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/search\":{\"get\":{\"operationId\":\"getSearch\",\"parameters\":[{\"name\":\"continue\",\"in\":\"query\",\"description\":\"Continue token from the metadata.continue field of the previous page for pagination.\",\"schema\":{\"description\":\"Continue token from the metadata.continue field of the previous page for pagination.\",\"type\":\"string\"}},{\"name\":\"createdBy\",\"in\":\"query\",\"description\":\"Return only annotations created by the user with this UID.\",\"schema\":{\"description\":\"Return only annotations created by the user with this UID.\",\"type\":\"string\"}},{\"name\":\"dashboardUID\",\"in\":\"query\",\"description\":\"Return only annotations on the dashboard with this UID.\",\"schema\":{\"description\":\"Return only annotations on the dashboard with this UID.\",\"type\":\"string\"}},{\"name\":\"from\",\"in\":\"query\",\"description\":\"Start of the time range, in Unix milliseconds.\",\"schema\":{\"description\":\"Start of the time range, in Unix milliseconds.\",\"type\":\"integer\"}},{\"name\":\"limit\",\"in\":\"query\",\"description\":\"Maximum number of annotations to return in one page. Defaults to 100.\",\"schema\":{\"description\":\"Maximum number of annotations to return in one page. Defaults to 100.\",\"type\":\"integer\"}},{\"name\":\"panelID\",\"in\":\"query\",\"description\":\"Return only annotations on the panel with this ID.\",\"schema\":{\"description\":\"Return only annotations on the panel with this ID.\",\"type\":\"integer\"}},{\"name\":\"scope\",\"in\":\"query\",\"description\":\"Return only annotations with these scopes. Repeat the parameter to pass several scopes.\",\"schema\":{\"description\":\"Return only annotations with these scopes. Repeat the parameter to pass several scopes.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},{\"name\":\"scopesMatchAny\",\"in\":\"query\",\"description\":\"If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.\",\"schema\":{\"description\":\"If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.\",\"type\":\"boolean\"}},{\"name\":\"tag\",\"in\":\"query\",\"description\":\"Return only annotations with these tags. Repeat the parameter to pass several tags.\",\"schema\":{\"description\":\"Return only annotations with these tags. Repeat the parameter to pass several tags.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},{\"name\":\"tagsMatchAny\",\"in\":\"query\",\"description\":\"If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.\",\"schema\":{\"description\":\"If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.\",\"type\":\"boolean\"}},{\"name\":\"to\",\"in\":\"query\",\"description\":\"End of the time range, in Unix milliseconds.\",\"schema\":{\"description\":\"End of the time range, in Unix milliseconds.\",\"type\":\"integer\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"metadata\",\"items\"],\"properties\":{\"items\":{\"description\":\"List of annotations matching the query.\",\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getSearchAnnotationItem\"}},\"metadata\":{\"type\":\"object\",\"properties\":{\"continue\":{\"description\":\"Token for the next page. Pass it as the continue parameter. Empty on the last page.\",\"type\":\"string\"}},\"additionalProperties\":false}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/tags\":{\"get\":{\"operationId\":\"getTags\",\"parameters\":[{\"name\":\"contains\",\"in\":\"query\",\"description\":\"Return tags that contain this value.\",\"schema\":{\"description\":\"Return tags that contain this value.\",\"type\":\"string\"}},{\"name\":\"limit\",\"in\":\"query\",\"description\":\"Maximum number of tags to return. Defaults to 100.\",\"schema\":{\"description\":\"Maximum number of tags to return. Defaults to 100.\",\"type\":\"integer\"}},{\"name\":\"prefix\",\"in\":\"query\",\"description\":\"Return tags that start with this value.\",\"schema\":{\"description\":\"Return tags that start with this value.\",\"type\":\"string\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"tags\"],\"properties\":{\"tags\":{\"description\":\"List of unique tags and their counts.\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"tag\",\"count\"],\"properties\":{\"count\":{\"description\":\"Count of annotations with this tag.\",\"type\":\"integer\"},\"tag\":{\"description\":\"Tag value.\",\"type\":\"string\"}},\"additionalProperties\":false}}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"createGraphiteAnnotationSpec\":{\"type\":\"object\",\"required\":[\"text\",\"time\"],\"properties\":{\"dashboardUID\":{\"description\":\"UID of the dashboard the annotation belongs to.\\nOptional. Omit it for an organization-wide annotation.\",\"type\":\"string\"},\"panelID\":{\"description\":\"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\\nOptional. Omit it to show the annotation on every panel of the dashboard.\",\"type\":\"integer\"},\"scopes\":{\"description\":\"Names of the scopes the annotation applies to.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"description\":\"Tags used to categorize and filter annotations.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"text\":{\"description\":\"Text of the annotation.\",\"type\":\"string\"},\"time\":{\"description\":\"Start time of the annotation, in Unix milliseconds.\",\"type\":\"integer\"},\"timeEnd\":{\"description\":\"End time of the annotation, in Unix milliseconds.\\nOptional. Set it to make the annotation a region.\",\"type\":\"integer\"}},\"additionalProperties\":false},\"getSearchAnnotationItem\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"metadata\",\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"additionalProperties\":true},\"spec\":{\"$ref\":\"#/components/schemas/getSearchAnnotationSpec\"}},\"additionalProperties\":false},\"getSearchAnnotationSpec\":{\"type\":\"object\",\"required\":[\"text\",\"time\"],\"properties\":{\"dashboardUID\":{\"description\":\"UID of the dashboard the annotation belongs to.\\nOptional. Omit it for an organization-wide annotation.\",\"type\":\"string\"},\"panelID\":{\"description\":\"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\\nOptional. Omit it to show the annotation on every panel of the dashboard.\",\"type\":\"integer\"},\"scopes\":{\"description\":\"Names of the scopes the annotation applies to.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"description\":\"Tags used to categorize and filter annotations.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"text\":{\"description\":\"Text of the annotation.\",\"type\":\"string\"},\"time\":{\"description\":\"Start time of the annotation, in Unix milliseconds.\",\"type\":\"integer\"},\"timeEnd\":{\"description\":\"End time of the annotation, in Unix milliseconds.\\nOptional. Set it to make the annotation a region.\",\"type\":\"integer\"}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
 					panic(err)
 				}
 				return openAPI
