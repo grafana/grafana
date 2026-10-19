@@ -66,7 +66,6 @@ There are different ways you can follow along with this tutorial.
 
   To run a Grafana stack locally, ensure you have the following applications installed:
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
-  - [Git](https://git-scm.com/)
 
 - **Interactive learning environment**
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs). It's a fully configured environment with all the dependencies already installed.
@@ -199,7 +198,7 @@ Next, we'll establish an [alert rule](https://grafana.com/docs/grafana/latest/al
 
 ### Define query and alert condition
 
-In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
+In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, an expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
 1. Select the **Loki** data source from the drop-down.
 1. The query editor opens in **Code** mode by default. If it's showing **Builder** mode instead, click **Code** on the right.
@@ -248,9 +247,9 @@ The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fun
 To set up the evaluation:
 
 1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder contains our alerts.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
-1. Choose an **Evaluation interval** (how often the alert are evaluated).
-   For example, every `1m` (1 minute).
+1. In **Evaluation group and interval**, click **+ New evaluation group**.
+1. In **Evaluation group name**, enter _1m-evaluation_.
+1. Keep **Evaluation interval** set to `1m` (1 minute), so the alert rule is evaluated every minute, and then click **Create**.
 1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true. Use this when you want alerts to be resolved as soon as the system is healthy again.
 
