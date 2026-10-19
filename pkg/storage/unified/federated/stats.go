@@ -110,20 +110,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// extraWhere, when non-empty, is ANDed onto the org+folder filter. It must be a
 		// literal fragment with no bound parameters.
-		fn := func(table, folderCol, g, r string, existCheck bool, extraWhere string) error {
-			// if existCheck is true, do not error out if the table does not exist
-			if existCheck {
-				exists, err := sess.IsTableExist(helper.Table(table))
-				// A missing table is reported as (false, nil), so err is always a real lookup
-				// failure and must not be treated as "table does not exist".
-				if err != nil {
-					return err
-				}
-				if !exists {
-					return nil
-				}
-			}
-
+		fn := func(table, folderCol, g, r string, extraWhere string) error {
 			tableName := helper.Table(table)
 			countChunk := func(chunk []string) (int64, error) {
 				where, args := buildFolderWhere(folderCol, info.OrgID, chunk)
@@ -175,7 +162,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return &CountError{Resources: []string{"alertrules"}, Err: err}
 		}
 		if !alertRulesStale {
-			err = fn("alert_rule", "namespace_uid", group, "alertrules", false, "(record IS NULL OR record = '')")
+			err = fn("alert_rule", "namespace_uid", group, "alertrules", "(record IS NULL OR record = '')")
 			if err != nil {
 				return &CountError{Resources: []string{"alertrules"}, Err: err}
 			}
@@ -186,7 +173,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return &CountError{Resources: []string{"recordingrules"}, Err: err}
 		}
 		if !recordingRulesStale {
-			err = fn("alert_rule", "namespace_uid", group, "recordingrules", false, "(record IS NOT NULL AND record != '')")
+			err = fn("alert_rule", "namespace_uid", group, "recordingrules", "(record IS NOT NULL AND record != '')")
 			if err != nil {
 				return &CountError{Resources: []string{"recordingrules"}, Err: err}
 			}
@@ -198,7 +185,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return &CountError{Resources: []string{"library_elements"}, Err: err}
 		}
 		if !libraryPanelsStale {
-			err = fn("library_element", "folder_uid", group, "library_elements", false, "")
+			err = fn("library_element", "folder_uid", group, "library_elements", "")
 			if err != nil {
 				return &CountError{Resources: []string{"library_elements"}, Err: err}
 			}
