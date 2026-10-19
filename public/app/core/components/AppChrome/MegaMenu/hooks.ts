@@ -8,6 +8,7 @@ import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { findNavByUrl } from 'app/core/navtree/utils';
@@ -296,6 +297,7 @@ export const useNavCustomization = () => {
   const docked = state.megaMenuDocked;
 
   const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
+  const navigationInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
   const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
 
   // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
@@ -316,7 +318,8 @@ export const useNavCustomization = () => {
 
   // Apply hard-coded exclusions before resolving pins or edit-mode items so neither can reveal them.
   // When customisation is on, drop Bookmarks too — pinned items are re-presented in the pinned box.
-  const baseItems = removeHiddenItems(navTree, new Set([...NON_MENU_NAV_IDS, ...HIDDEN_NAV_ITEMS])).filter(
+  const hiddenNavItems = new Set([...NON_MENU_NAV_IDS, ...(navigationInfoArchRefresh ? HIDDEN_NAV_ITEMS : [])]);
+  const baseItems = removeHiddenItems(navTree, hiddenNavItems).filter(
     (item) => !(canCustomise && item.id === 'bookmarks')
   );
 

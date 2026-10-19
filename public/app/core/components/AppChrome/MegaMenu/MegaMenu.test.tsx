@@ -22,6 +22,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
+import { HIDDEN_NAV_ITEMS } from './utils';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
@@ -140,6 +141,35 @@ describe('MegaMenu', () => {
 
     expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+
+  describe('information architecture refresh exclusions', () => {
+    beforeEach(() => {
+      HIDDEN_NAV_ITEMS.add('child2');
+    });
+
+    afterEach(() => {
+      HIDDEN_NAV_ITEMS.delete('child2');
+    });
+
+    it.each([false, true])(
+      'applies hard-coded exclusions only when the refresh flag is enabled: %s',
+      async (enabled) => {
+        setTestFlags({ 'grafana.navigationInfoArchRefresh': enabled });
+        const { user } = renderMegaMenu({ navBarTree: nestedNavTree });
+
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+        await user.click(screen.getByRole('button', { name: 'Expand section: Child1' }));
+
+        expect(screen.getByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
+        if (enabled) {
+          expect(screen.queryByRole('link', { name: 'Child2' })).not.toBeInTheDocument();
+        } else {
+          expect(screen.getByRole('link', { name: 'Child2' })).toBeInTheDocument();
+        }
+        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+      }
+    );
   });
 
   describe('customisation', () => {
