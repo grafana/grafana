@@ -1,6 +1,6 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { type ContactPoint, type ContactPointMetadataAnnotations, type Receiver } from '../api/notifications';
+import { type ContactPoint, type Receiver } from '../api/notifications';
 
 // Annotation key that indicates whether a contact point can be used in routes and rules
 const CAN_USE_ANNOTATION = 'grafana.com/canUse';
@@ -10,7 +10,7 @@ const CAN_USE_ANNOTATION = 'grafana.com/canUse';
  * Accepts ContactPoint, Receiver, and the app-internal EntityToCheck type alike.
  */
 type WithContactPointAnnotations = {
-  metadata?: { annotations?: ContactPointMetadataAnnotations };
+  metadata?: { annotations?: ContactPoint['metadata']['annotations'] };
 };
 
 /**

@@ -13,4 +13,4 @@ export type {
   RoutingTreeRoute,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-export type { ContactPoint, ContactPointMetadataAnnotations, EnhancedListReceiverApiResponse } from './v1beta1/types';
+export type { ContactPoint, EnhancedListReceiverApiResponse } from './v1beta1/types';
