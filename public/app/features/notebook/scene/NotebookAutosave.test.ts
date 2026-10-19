@@ -1590,7 +1590,7 @@ describe('NotebookAutosave', () => {
       stopPanel();
     });
 
-    it('waits for visualization undo before leaving edit mode and saving', async () => {
+    it('leaves edit mode without waiting for visualization undo and saves its eventual result', async () => {
       const { scene, cell, panel } = buildSceneWithPanel();
       deactivate = scene.activate();
       const stopPanel = panel.activate();
@@ -1618,12 +1618,17 @@ describe('NotebookAutosave', () => {
       expect(savedVizConfigs().at(-1)?.group).toBe('table');
 
       scene.editHistory.undo();
+      scene.onTitleChange('Saved while the visualization loads');
       scene.onExitEditMode();
-      expect(scene.state.isEditing).toBe(true);
+      expect(scene.state.isEditing).toBe(false);
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].title).toBe('Saved while the visualization loads');
 
-      await jest.advanceTimersByTimeAsync(0);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(panel.state.pluginId).toBe('table');
+      expect(scene.state.isEditing).toBe(false);
+
       finishUndo();
-      await jest.advanceTimersByTimeAsync(0);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
       expect(scene.state.isEditing).toBe(false);
       expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');

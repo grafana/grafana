@@ -73,7 +73,6 @@ function SuggestionsContent({
 
   useEffect(() => {
     let cancelled = false;
-    setSuggestions(undefined);
     setLoadError(false);
     setChangeError(false);
     if (data?.series.length) {
@@ -97,7 +96,7 @@ function SuggestionsContent({
   if (!data?.series.length) {
     return <Text color="secondary">{t('notebooks.panel.suggestions-no-data', 'Run a query to see suggestions.')}</Text>;
   }
-  if (loadError) {
+  if (loadError && !suggestions) {
     return <Text color="secondary">{t('notebooks.panel.suggestions-error', 'Could not load suggestions.')}</Text>;
   }
   if (!suggestions) {

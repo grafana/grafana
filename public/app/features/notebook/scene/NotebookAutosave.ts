@@ -616,24 +616,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.scheduleSave.flush();
   }
 
-  public async flushWhenSettled(): Promise<void> {
-    const wasEditing = this.scene.state.isEditing;
-    let pending = this.scene.state.body.whenVizChangesSettled();
-    while (pending) {
-      const elementNames = await pending;
-      if (this.abandoned || this.stopped) {
-        return;
-      }
-      if (wasEditing) {
-        elementNames.forEach((name) => this.vizConfigsEdited.add(name));
-        this.editedByWriter = true;
-      }
-      this.schedule();
-      pending = this.scene.state.body.whenVizChangesSettled();
-    }
-    this.flush();
-  }
-
   /**
    * Gives up on saving, for a notebook that is about to stop existing.
    *

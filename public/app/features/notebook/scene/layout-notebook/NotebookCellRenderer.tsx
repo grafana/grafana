@@ -423,6 +423,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   panel: css({
     position: 'relative',
+    '.show-on-hover:has(> :only-child:empty)': {
+      display: 'none',
+    },
     [`[data-testid="${selectors.components.Panels.Panel.headerContainer}"]`]: {
       paddingRight: `calc(var(--notebook-panel-actions-width, 0px) + ${theme.spacing(2)})`,
     },

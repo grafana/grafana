@@ -124,7 +124,7 @@ describe('NotebookPanelActions', () => {
     const { cell, panel } = buildPanelCell();
     const onDuplicate = jest.fn();
     const onDelete = jest.fn();
-    render(
+    const { user } = render(
       <NotebookPanelControls cell={cell} panel={panel} isEditing={true} onDuplicate={onDuplicate} onDelete={onDelete} />
     );
 
@@ -137,10 +137,12 @@ describe('NotebookPanelActions', () => {
     expect(toolbar).toContainElement(screen.getByRole('link', { name: 'Open in Explore' }));
     expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Block actions' }));
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Block actions' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Duplicate block' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Block actions' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Delete block' }));
+    act(() => screen.getByRole('button', { name: 'Block actions' }).focus());
+    await user.keyboard('{Enter}');
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate block' }));
+    act(() => screen.getByRole('button', { name: 'Block actions' }).focus());
+    await user.keyboard('{Enter}');
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete block' }));
     expect(onDuplicate).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
@@ -172,7 +174,7 @@ describe('NotebookPanelActions', () => {
   it('toggles the query editor when available', async () => {
     const { cell, panel } = buildPanelCell();
     const onToggleQueryEditor = jest.fn();
-    render(
+    const { user } = render(
       <NotebookPanelControls
         cell={cell}
         panel={panel}
@@ -184,7 +186,8 @@ describe('NotebookPanelActions', () => {
 
     await screen.findByRole('link', { name: 'Open in Explore' });
     expect(screen.getByRole('button', { name: 'Edit query' })).toHaveAttribute('aria-pressed', 'false');
-    fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
+    act(() => screen.getByRole('button', { name: 'Edit query' }).focus());
+    await user.keyboard('{Enter}');
     expect(onToggleQueryEditor).toHaveBeenCalledTimes(1);
   });
 
@@ -215,7 +218,8 @@ describe('NotebookPanelActions', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
+    await user.keyboard('{Enter}');
     const suggestion = await screen.findByRole('button', { name: 'Table' });
     expect(suggestion).toBeVisible();
     await user.click(suggestion);
@@ -226,7 +230,8 @@ describe('NotebookPanelActions', () => {
     expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change visualization' })).toHaveAttribute('aria-expanded', 'false');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
+    await user.keyboard('{Enter}');
     expect(await screen.findByRole('button', { name: 'Table' })).toBeInTheDocument();
   });
 
@@ -250,7 +255,8 @@ describe('NotebookPanelActions', () => {
       .mockResolvedValueOnce(undefined);
     const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
+    await user.keyboard('{Enter}');
     await user.click(await screen.findByRole('button', { name: 'Table' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not change visualization. Try again.');
     expect(panel.state.pluginId).toBe('timeseries');
@@ -261,6 +267,57 @@ describe('NotebookPanelActions', () => {
       expect(screen.getByRole('button', { name: 'Change visualization' })).toHaveAttribute('aria-expanded', 'false')
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it.each(['success', 'failure'])('keeps suggestion focus through a data refresh %s', async (outcome) => {
+    const { cell, panel } = buildPanelCell();
+    const runner = panel.state.$data as SceneQueryRunner;
+    const data = {
+      state: LoadingState.Done,
+      series: [toDataFrame({ fields: [{ name: 'value', values: [1] }] })],
+      timeRange: getDefaultTimeRange(),
+    };
+    runner.setState({ data });
+    const result = {
+      suggestions: [{ name: 'Table', pluginId: 'table', hash: 'table', options: {} }],
+      hasErrors: false,
+    };
+    let finishRefresh!: (nextResult: typeof result) => void;
+    let rejectRefresh!: (error: Error) => void;
+    jest
+      .mocked(getAllSuggestions)
+      .mockResolvedValueOnce(result)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve, reject) => {
+            finishRefresh = resolve;
+            rejectRefresh = reject;
+          })
+      );
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
+    act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
+    await user.keyboard('{Enter}');
+    const suggestion = await screen.findByRole('button', { name: 'Table' });
+    await waitFor(() => expect(screen.getByTestId('toggletip-content').contains(document.activeElement)).toBe(true));
+    act(() => suggestion.focus());
+
+    act(() =>
+      runner.setState({
+        data: { ...data, series: [toDataFrame({ fields: [{ name: 'value', values: [2] }] })] },
+      })
+    );
+
+    expect(screen.getByRole('button', { name: 'Table' })).toBe(suggestion);
+    expect(suggestion).toHaveFocus();
+    await act(async () => {
+      if (outcome === 'success') {
+        finishRefresh(result);
+      } else {
+        rejectRefresh(new Error('Could not refresh suggestions'));
+      }
+    });
+    expect(screen.getByRole('button', { name: 'Table' })).toBe(suggestion);
+    expect(suggestion).toHaveFocus();
   });
 
   it('has one tab stop per visualization suggestion', async () => {
@@ -282,7 +339,8 @@ describe('NotebookPanelActions', () => {
     });
     const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
+    await user.keyboard('{Enter}');
     const table = await screen.findByRole('button', { name: 'Table' });
     const stat = screen.getByRole('button', { name: 'Stat' });
     await waitFor(() => expect(screen.getByTestId('toggletip-content').contains(document.activeElement)).toBe(true));
@@ -315,7 +373,8 @@ describe('NotebookPanelActions', () => {
     const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     const trigger = screen.getByRole('button', { name: 'Change visualization' });
-    fireEvent.click(trigger);
+    act(() => trigger.focus());
+    await user.keyboard('{Enter}');
     const suggestion = await screen.findByRole('button', { name: 'Table' });
     await waitFor(() => expect(screen.getByTestId('toggletip-content').contains(document.activeElement)).toBe(true));
     act(() => suggestion.focus());
@@ -335,7 +394,8 @@ describe('NotebookPanelActions', () => {
     const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     expect(screen.getByRole('button', { name: 'Change visualization' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
+    act(() => screen.getByRole('button', { name: 'Edit panel title' }).focus());
+    await user.keyboard('{Enter}');
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     expect(
       screen.getByRole('button', { name: 'Change visualization' }).closest('[data-notebook-panel-actions]')
@@ -352,7 +412,8 @@ describe('NotebookPanelActions', () => {
     const { cell, panel } = buildPanelCell();
     const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit panel title' }));
+    act(() => screen.getByRole('button', { name: 'Edit panel title' }).focus());
+    await user.keyboard('{Enter}');
     const title = screen.getByRole('textbox', { name: 'Panel title' });
     await user.clear(title);
     await user.type(title, 'Errors{Escape}');
@@ -385,7 +446,7 @@ describe('NotebookPanelActions', () => {
     expect(
       screen.getByRole('button', { name: 'Change visualization' }).closest('[data-notebook-panel-actions]')
     ).not.toContainElement(screen.getByRole('button', { name: 'Add title' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Add title' }));
+    await user.click(screen.getByRole('button', { name: 'Add title' }));
     await user.type(screen.getByRole('textbox', { name: 'Panel title' }), 'Error rate{Enter}');
 
     expect(panel.state.title).toBe('Error rate');

@@ -19,8 +19,7 @@ export class NotebookPanelTitle extends SceneObjectBase {
     if (!isPanelCell(cell)) {
       return null;
     }
-    const { isEditing } = cell.getParentLayout().useState();
-    return isEditing ? <PanelTitleEditor cell={cell} panel={panel} isEditing={true} /> : null;
+    return <PanelTitleEditor cell={cell} panel={panel} isEditing={true} />;
   };
 }
 
@@ -79,6 +78,7 @@ export function PanelTitleEditor({
             {t('notebooks.panel.add-title', 'Add title')}
           </Button>
         ))}
+      {renaming && <span className={styles.renamePlaceholder} aria-hidden />}
       {renaming && (
         <div className={styles.rename}>
           <Input
@@ -132,5 +132,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: 3,
     width: 'min(320px, calc(100% - 72px))',
     background: theme.colors.background.primary,
+  }),
+  renamePlaceholder: css({
+    height: theme.spacing(3),
+    width: 0,
   }),
 });

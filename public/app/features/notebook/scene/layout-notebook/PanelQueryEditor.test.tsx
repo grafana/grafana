@@ -2,6 +2,8 @@ import { act } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
@@ -13,6 +15,11 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => getPanelPlugin({ id }).useFieldConfig(),
+  getPanelPluginFromCache: () => undefined,
+});
 
 // QueryEditorRow pulls in real datasource plugin loading (DataSourcePluginContextProvider, the
 // plugin's own QueryEditor component) to render anything meaningful — none of which runs in jsdom.
@@ -357,7 +364,7 @@ describe('PanelQueryEditor', () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    const changePluginType = jest.spyOn(panel, 'changePluginType');
     getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
@@ -381,9 +388,6 @@ describe('PanelQueryEditor', () => {
   it('records an automatic visualization suggestion in notebook history', async () => {
     const { panel, cell, history } = buildPanel();
     const originalPluginId = panel.state.pluginId;
-    jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
-      panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
-    });
     getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 

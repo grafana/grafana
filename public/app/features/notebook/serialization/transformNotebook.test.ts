@@ -1,5 +1,7 @@
 // defaultDataQueryKind is not re-exported by ../types (that seam covers the notebook-specific and
 // forked names); it is a shared leaf type, so it comes straight from the generated module.
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
@@ -9,6 +11,11 @@ import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as 
 
 import { transformNotebookSceneToSaveModel } from './transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from './transformNotebookToScene';
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => getPanelPlugin({ id }).useFieldConfig(),
+  getPanelPluginFromCache: () => undefined,
+});
 
 // The spec fixture is written in the serializer's canonical form (explicit datasource per query,
 // description always present on panels, version '' etc.) so spec → scene → spec is an exact
@@ -225,10 +232,6 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
   it('saves panel title and visualization changes', async () => {
     const scene = transformNotebookToScene(notebookResource());
     const cell = scene.state.body.state.cells.find((item) => item.state.elementName === 'latency-panel')!;
-    const panel = cell.state.body!;
-    jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
-      panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
-    });
 
     scene.state.body.setPanelTitle(cell, 'Updated latency');
     await scene.state.body.changePanelVisualization(cell, {

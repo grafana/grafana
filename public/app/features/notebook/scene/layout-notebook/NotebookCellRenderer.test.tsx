@@ -10,6 +10,7 @@ import {
   SceneDataTransformer,
   SceneQueryRunner,
   SceneRefreshPicker,
+  SceneReactObject,
   SceneTimePicker,
   SceneTimeRange,
   VizPanel,
@@ -296,6 +297,50 @@ describe('NotebookCellRenderer', () => {
       });
       return cell;
     }
+
+    it('does not render empty native hover chrome for an untitled notebook panel', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: '',
+        hoverHeader: true,
+        pluginId: 'stat',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+      const layout = cell.getParentLayout();
+      const { rerender } = render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+
+      expect(screen.getByTestId(selectors.pages.Notebooks.Item.panelCell('panel-1'))).toBeVisible();
+      await waitFor(() => expect(panel.getPlugin()?.meta.id).toBe('stat'));
+      expect(screen.queryByTestId(selectors.components.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
+
+      act(() => layout.editModeChanged(true));
+      rerender(<NotebookCellRenderer cell={cell} isEditing={true} />);
+      expect(await screen.findByRole('button', { name: 'Add title' })).toBeVisible();
+      act(() => layout.editModeChanged(false));
+      rerender(<NotebookCellRenderer cell={cell} isEditing={false} />);
+      expect(screen.queryByTestId(selectors.components.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
+    });
+
+    it('preserves genuine title metadata when edit mode changes', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: '',
+        hoverHeader: true,
+        pluginId: 'stat',
+        titleItems: [new SceneReactObject({ reactNode: <span>Panel context</span> })],
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+      render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+
+      expect(await screen.findByText('Panel context')).toBeInTheDocument();
+      act(() => cell.getParentLayout().editModeChanged(true));
+      expect(await screen.findByRole('button', { name: 'Add title' })).toBeVisible();
+      act(() => cell.getParentLayout().editModeChanged(false));
+      expect(screen.getByText('Panel context')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Add title' })).not.toBeInTheDocument();
+    });
 
     it('keeps Stat and Gauge panels compact and restores chart height when the visualization changes', async () => {
       const panel = new VizPanel({

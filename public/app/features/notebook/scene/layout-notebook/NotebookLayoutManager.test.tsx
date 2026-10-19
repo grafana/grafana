@@ -1,5 +1,8 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneReactObject,
@@ -14,6 +17,8 @@ import { PanelTimeRange } from 'app/features/dashboard-scene/scene/panel-timeran
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
+import { gaugePanelChangedHandler } from 'app/plugins/panel/gauge/migrations';
+import { statPanelChangedHandler } from 'app/plugins/panel/stat/StatMigrations';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../../analytics/main';
@@ -101,6 +106,19 @@ import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => {
+    const plugin = getPanelPlugin({ id }).useFieldConfig();
+    if (id === 'stat') {
+      plugin.setPanelChangeHandler(statPanelChangedHandler);
+    } else if (id === 'gauge') {
+      plugin.setPanelChangeHandler(gaugePanelChangedHandler);
+    }
+    return plugin;
+  },
+  getPanelPluginFromCache: () => undefined,
+});
 
 function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
   // The renderer reads the time range via sceneGraph.getTimeRange, which resolves the nearest
@@ -719,17 +737,19 @@ describe('NotebookLayoutManager', () => {
       expect(new Set(keys).size).toBe(2);
     });
 
-    it('duplicates panel content without transient header controls', () => {
+    it('duplicates panel content with independently cloned header metadata', () => {
+      const headerNode = <span>Panel annotation</span>;
+      const titleNode = <span>Panel context</span>;
       const panel = new VizPanel({
         key: 'panel-1',
         title: 'Latency',
         pluginId: 'timeseries',
         options: { legend: { showLegend: true } },
-        headerActions: new SceneReactObject({ reactNode: <button>Header action</button> }),
-        titleItems: [new SceneReactObject({ reactNode: <button>Edit title</button> })],
+        headerActions: new SceneReactObject({ reactNode: headerNode }),
+        titleItems: [new SceneReactObject({ reactNode: titleNode })],
       });
       const cell = new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel });
-      const manager = buildManager([cell]);
+      const manager = buildManager([cell], true);
 
       manager.duplicateCell(cell);
 
@@ -737,8 +757,12 @@ describe('NotebookLayoutManager', () => {
       expect(copy.state.title).toBe('Latency');
       expect(copy.state.pluginId).toBe('timeseries');
       expect(copy.state.options).toEqual({ legend: { showLegend: true } });
-      expect(copy.state.headerActions).toBeUndefined();
-      expect(copy.state.titleItems).toHaveLength(1);
+      expect(copy.state.headerActions).toMatchObject({ state: { reactNode: headerNode } });
+      expect(copy.state.headerActions).not.toBe(panel.state.headerActions);
+      expect(copy.state.titleItems).toHaveLength(2);
+      expect(copy.state.titleItems).toEqual(
+        expect.arrayContaining([expect.objectContaining({ state: expect.objectContaining({ reactNode: titleNode }) })])
+      );
       expect(panel.state.titleItems).toHaveLength(2);
       expect(copy.state.titleItems).not.toBe(panel.state.titleItems);
     });
@@ -1720,9 +1744,6 @@ describe('NotebookLayoutManager', () => {
       const panel = cell.state.body!;
       const originalPluginId = panel.state.pluginId;
       const { manager, history } = withHistory([cell]);
-      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
-        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
-      });
 
       await manager.changePanelVisualization(cell, {
         name: 'Table',
@@ -1740,6 +1761,43 @@ describe('NotebookLayoutManager', () => {
       history.redo();
       await waitFor(() => expect(panel.state.pluginId).toBe('table'));
       expect(panel.state.options).toMatchObject({ showHeader: true });
+    });
+
+    it.each(['stat', 'gauge'])('preserves explicit %s suggestion options after plugin migration', async (pluginId) => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({ options: { reduceOptions: { values: false, calcs: ['lastNotNull'] } } });
+      const { manager } = withHistory([cell]);
+      const options = { reduceOptions: { values: true, calcs: [] } };
+
+      await manager.changePanelVisualization(cell, { name: pluginId, pluginId, hash: pluginId, options });
+
+      expect(panel.state.options).toMatchObject({ reduceOptions: { values: true, calcs: [] } });
+      expect(options).toEqual({ reduceOptions: { values: true, calcs: [] } });
+    });
+
+    it('restores Stat aggregation exactly through visualization undo and redo', async () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({ pluginId: 'stat', options: { reduceOptions: { values: false, calcs: ['sum'] } } });
+      const { manager, history } = withHistory([cell]);
+
+      await manager.changePanelVisualization(cell, {
+        name: 'Pie chart',
+        pluginId: 'piechart',
+        hash: 'piechart',
+        options: { reduceOptions: { values: false, calcs: ['lastNotNull'] } },
+      });
+      history.undo();
+      await manager.whenVizChangesSettled();
+
+      expect(panel.state.pluginId).toBe('stat');
+      expect(panel.state.options).toMatchObject({ reduceOptions: { values: false, calcs: ['sum'] } });
+
+      history.redo();
+      await manager.whenVizChangesSettled();
+      expect(panel.state.pluginId).toBe('piechart');
+      expect(panel.state.options).toMatchObject({ reduceOptions: { values: false, calcs: ['lastNotNull'] } });
     });
 
     it('keeps standard field overrides when changing visualization', async () => {
@@ -1760,7 +1818,7 @@ describe('NotebookLayoutManager', () => {
           ],
         },
       });
-      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const changePluginType = jest.spyOn(panel, 'changePluginType');
 
       await manager.changePanelVisualization(cell, {
         name: 'Table',
@@ -1778,6 +1836,99 @@ describe('NotebookLayoutManager', () => {
           },
         ],
       });
+    });
+
+    it.each(['undo', 'redo'] as const)(
+      'rolls back a failed visualization %s and removes only that history step',
+      async (direction) => {
+        const { cell } = panelCell('viz');
+        const panel = cell.state.body!;
+        const { manager, history } = withHistory([cell]);
+        const notify = jest.spyOn(appEvents, 'emit');
+        await manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+        if (direction === 'redo') {
+          history.undo();
+          await manager.whenVizChangesSettled();
+        }
+        const previous = {
+          pluginId: panel.state.pluginId,
+          options: structuredClone(panel.state.options),
+          fieldConfig: structuredClone(panel.state.fieldConfig),
+        };
+        const changePluginType = panel.changePluginType.bind(panel);
+        jest.spyOn(panel, 'changePluginType').mockImplementationOnce(async (...args) => {
+          await changePluginType(...args);
+          throw new Error('Cannot migrate visualization');
+        });
+
+        history[direction]();
+        manager.setPanelTitle(cell, 'Later title edit');
+        await manager.whenVizChangesSettled();
+
+        expect(panel.state).toMatchObject(previous);
+        expect(history.state.undoLabel).toBe('Rename panel');
+        expect(notify).toHaveBeenCalledWith(AppEvents.alertError, [
+          'Could not restore visualization. Try selecting the visualization again.',
+        ]);
+        history.undo();
+        expect(panel.state.title).not.toBe('Later title edit');
+        expect(history.state.canUndo).toBe(false);
+        expect(history.state.canRedo).toBe(true);
+      }
+    );
+
+    it('cancels queued replay of a failed visualization action', async () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const { manager, history } = withHistory([cell]);
+      await manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+      const changePluginType = panel.changePluginType.bind(panel);
+      const change = jest.spyOn(panel, 'changePluginType').mockImplementationOnce(async (...args) => {
+        await changePluginType(...args);
+        throw new Error('Cannot migrate visualization');
+      });
+
+      history.undo();
+      history.redo();
+      history.undo();
+      await manager.whenVizChangesSettled();
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(change).toHaveBeenCalledTimes(2);
+      expect(history.state).toMatchObject({ canUndo: false, canRedo: false });
+    });
+
+    it('waits for all linked panels before rolling back a failed undo', async () => {
+      const first = panelCell('shared').cell;
+      const second = panelCell('shared').cell;
+      const firstPanel = first.state.body!;
+      const secondPanel = second.state.body!;
+      const { manager, history } = withHistory([first, second]);
+      await manager.changePanelVisualization(first, { name: 'Table', pluginId: 'table', hash: 'table' });
+      const changeFirst = firstPanel.changePluginType.bind(firstPanel);
+      const changeSecond = secondPanel.changePluginType.bind(secondPanel);
+      let finishSecond!: () => void;
+      const secondBlocked = new Promise<void>((resolve) => {
+        finishSecond = resolve;
+      });
+      jest.spyOn(firstPanel, 'changePluginType').mockImplementationOnce(async (...args) => {
+        await changeFirst(...args);
+        throw new Error('Cannot migrate visualization');
+      });
+      const secondChange = jest.spyOn(secondPanel, 'changePluginType').mockImplementationOnce(async (...args) => {
+        await secondBlocked;
+        await changeSecond(...args);
+      });
+
+      history.undo();
+      await waitFor(() => expect(secondChange).toHaveBeenCalledTimes(1));
+      expect(manager.hasPendingVizChanges()).toBe(true);
+      finishSecond();
+      await manager.whenVizChangesSettled();
+
+      expect(firstPanel.state.pluginId).toBe('table');
+      expect(secondPanel.state.pluginId).toBe('table');
+      expect(history.state).toMatchObject({ canUndo: false, canRedo: false });
     });
 
     it('removes a failed visualization change after a newer edit', async () => {
@@ -1819,12 +1970,10 @@ describe('NotebookLayoutManager', () => {
       const pluginLoaded = new Promise<void>((resolve) => {
         finishSecond = resolve;
       });
+      const changeFirst = firstPanel.changePluginType.bind(firstPanel);
+      const changeSecond = secondPanel.changePluginType.bind(secondPanel);
       jest.spyOn(firstPanel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
-        firstPanel.setState({
-          pluginId,
-          options: options ?? {},
-          fieldConfig: fieldConfig ?? firstPanel.state.fieldConfig,
-        });
+        await changeFirst(pluginId, options, fieldConfig);
         if (pluginId === 'table') {
           throw new Error('Cannot migrate visualization');
         }
@@ -1833,11 +1982,7 @@ describe('NotebookLayoutManager', () => {
         if (pluginId === 'table') {
           await pluginLoaded;
         }
-        secondPanel.setState({
-          pluginId,
-          options: options ?? {},
-          fieldConfig: fieldConfig ?? secondPanel.state.fieldConfig,
-        });
+        await changeSecond(pluginId, options, fieldConfig);
       });
 
       const change = manager.changePanelVisualization(first, { name: 'Table', pluginId: 'table', hash: 'table' });
@@ -1866,11 +2011,12 @@ describe('NotebookLayoutManager', () => {
       const pluginLoaded = new Promise<void>((resolve) => {
         finishChange = resolve;
       });
+      const changePluginType = panel.changePluginType.bind(panel);
       jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
         if (pluginId === 'table') {
           await pluginLoaded;
         }
-        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+        await changePluginType(pluginId, options, fieldConfig);
       });
 
       const change = manager.changePanelVisualization(cell, {
@@ -1898,11 +2044,12 @@ describe('NotebookLayoutManager', () => {
       const pluginLoaded = new Promise<void>((resolve) => {
         finishChange = resolve;
       });
+      const changePluginType = panel.changePluginType.bind(panel);
       jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
         if (pluginId === 'table') {
           await pluginLoaded;
         }
-        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+        await changePluginType(pluginId, options, fieldConfig);
       });
 
       const change = manager.changePanelVisualization(cell, {

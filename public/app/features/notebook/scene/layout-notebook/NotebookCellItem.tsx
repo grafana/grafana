@@ -9,6 +9,7 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookBlockInsertVia } from '../../analytics/types';
 import { type CellContentKind } from '../../types';
@@ -40,15 +41,19 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
   // A panel cell is the panel's parent in the scene graph, so it must be a DashboardLayoutItem.
   public readonly isDashboardLayoutItem = true;
 
-  public constructor(state: NotebookCellItemState) {
-    super(state);
-    if (state.body) {
-      this.configurePanelTitle(state.body);
+  public setPanelTitleEditing(isEditing: boolean): void {
+    const panel = this.state.body;
+    if (!panel) {
+      return;
     }
-  }
-
-  private configurePanelTitle(panel: VizPanel): void {
     const previous = panel.state.titleItems;
+    if (!isEditing || isLibraryPanel(panel)) {
+      if (Array.isArray(previous) && previous.some((item) => item instanceof NotebookPanelTitle)) {
+        const items = previous.filter((item) => !(item instanceof NotebookPanelTitle));
+        panel.setState({ titleItems: items.length ? items : undefined });
+      }
+      return;
+    }
     if (Array.isArray(previous) && previous.some((item) => item instanceof NotebookPanelTitle)) {
       return;
     }
@@ -64,8 +69,10 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
   // match the DashboardLayoutItem interface's signature, but NotebookLayoutManager.convertCellToPanel
   // (the only caller) always passes one: this cell may still share its old name with a sibling.
   public setElementBody(body: VizPanel, elementName?: string) {
-    this.configurePanelTitle(body);
     this.setState({ body, content: undefined, elementName: elementName ?? this.state.elementName });
+    if (this.parent && isNotebookLayoutManager(this.parent)) {
+      this.setPanelTitleEditing(Boolean(this.parent.state.isEditing));
+    }
   }
 
   /**

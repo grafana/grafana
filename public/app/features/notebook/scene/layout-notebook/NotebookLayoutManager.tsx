@@ -4,6 +4,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
+  AppEvents,
   filterFieldConfigOverrides,
   type GrafanaTheme2,
   isStandardFieldProp,
@@ -149,6 +150,7 @@ export class NotebookLayoutManager
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
+    this.state.cells.forEach((cell) => cell.setPanelTitleEditing(Boolean(state.isEditing)));
 
     // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
     // closing the notebook mid-word would leave that step behind, and the next typing would join it.
@@ -263,6 +265,7 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+    this.state.cells.forEach((cell) => cell.setPanelTitleEditing(isEditing));
     for (const panel of this.getVizPanels()) {
       panel.setState({
         hoverHeader: isEditing ? false : getUpdatedHoverHeader(panel.state.title, panel.state.$timeRange?.state),
@@ -612,27 +615,48 @@ export class NotebookLayoutManager
     const wasEditing = this.notebookScene?.state.isEditing;
     let before: Array<ReturnType<typeof snapshotVisualization>> = [];
     let after: Array<ReturnType<typeof snapshotVisualization>> = [];
+    let failed = false;
+    const history = this.editHistory;
+    const replay = (getSnapshots: () => typeof before) => {
+      const wasEditing = this.notebookScene?.state.isEditing;
+      void this.enqueueVizChange(elementName, async () => {
+        if (failed) {
+          return;
+        }
+        let previous: typeof before = [];
+        try {
+          previous = panels.map(snapshotVisualization);
+          await applyVisualizations(panels, getSnapshots());
+          this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
+        } catch {
+          failed = true;
+          const restored =
+            previous.length === panels.length &&
+            (await applyVisualizations(panels, previous).then(
+              () => true,
+              () => false
+            ));
+          history?.discard(action);
+          appEvents.emit(AppEvents.alertError, [
+            restored
+              ? t(
+                  'notebooks.history.visualization-replay-error',
+                  'Could not restore visualization. Try selecting the visualization again.'
+                )
+              : t(
+                  'notebooks.history.visualization-rollback-error',
+                  'Could not restore visualization. Check the panel before saving.'
+                ),
+          ]);
+        }
+      });
+    };
     const action: NotebookEditAction = {
       label: t('notebooks.history.change-visualization', 'Change visualization'),
       kind: NOTEBOOK_EDIT_KIND.EDIT,
-      perform: () => {
-        const wasEditing = this.notebookScene?.state.isEditing;
-        void this.enqueueVizChange(elementName, async () => {
-          if (after.length) {
-            await applyVisualizations(panels, after);
-          }
-        }).then(() => this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing));
-      },
-      undo: () => {
-        const wasEditing = this.notebookScene?.state.isEditing;
-        void this.enqueueVizChange(elementName, async () => {
-          if (before.length) {
-            await applyVisualizations(panels, before);
-          }
-        }).then(() => this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing));
-      },
+      perform: () => replay(() => after),
+      undo: () => replay(() => before),
     };
-    const history = this.editHistory;
     history?.record(action);
 
     try {
@@ -643,19 +667,32 @@ export class NotebookLayoutManager
           .filter((panel): panel is VizPanel => Boolean(panel));
         before = panels.map(snapshotVisualization);
         const results = await Promise.allSettled(
-          panels.map((panel) => {
+          panels.map(async (panel) => {
             const fieldConfig = {
               defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
               overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
             };
-            return panel.changePluginType(suggestion.pluginId, suggestion.options, {
+            const options = suggestion.options && structuredClone(suggestion.options);
+            const nextFieldConfig = structuredClone({
               ...(suggestion.fieldConfig ?? fieldConfig),
               overrides: fieldConfig.overrides,
             });
+            await panel.changePluginType(
+              suggestion.pluginId,
+              structuredClone(options),
+              structuredClone(nextFieldConfig)
+            );
+            if (options) {
+              panel.onOptionsChange(options, true);
+            }
+            if (suggestion.fieldConfig) {
+              panel.onFieldConfigChange(nextFieldConfig, true);
+            }
           })
         );
         const failure = results.find((result) => result.status === 'rejected');
         if (failure) {
+          failed = true;
           await applyVisualizations(panels, before);
           throw failure.reason;
         }
@@ -909,8 +946,6 @@ export class NotebookLayoutManager
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({
         key: getVizPanelKeyForPanelId(nextId()),
-        headerActions: undefined,
-        titleItems: [],
       }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
       // A bare .clone() would reuse the same $timeRange instance across both cells.
@@ -1023,6 +1058,7 @@ export class NotebookLayoutManager
       return;
     }
 
+    cell.setPanelTitleEditing(Boolean(this.state.isEditing));
     if (this.state.isEditing) {
       cell.state.body?.setState({ hoverHeader: false });
     }
@@ -1112,15 +1148,25 @@ function snapshotVisualization(panel: VizPanel) {
 }
 
 async function applyVisualizations(panels: VizPanel[], snapshots: Array<ReturnType<typeof snapshotVisualization>>) {
-  await Promise.all(
-    panels.map((panel, index) => {
+  const results = await Promise.allSettled(
+    panels.map(async (panel, index) => {
       const snapshot = snapshots[index];
       if (isEqual(snapshotVisualization(panel), snapshot)) {
         return;
       }
-      return panel.changePluginType(snapshot.pluginId, snapshot.options, snapshot.fieldConfig);
+      await panel.changePluginType(
+        snapshot.pluginId,
+        structuredClone(snapshot.options),
+        structuredClone(snapshot.fieldConfig)
+      );
+      panel.onOptionsChange(structuredClone(snapshot.options), true);
+      panel.onFieldConfigChange(structuredClone(snapshot.fieldConfig), true);
     })
   );
+  const failure = results.find((result) => result.status === 'rejected');
+  if (failure) {
+    throw failure.reason;
+  }
 }
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
