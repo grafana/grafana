@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -292,6 +292,22 @@ export function TraceView(props: Props) {
     },
     [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
+
+  const lastLinkedSpanId = useRef<string | undefined>(undefined);
+  const frame = props.dataFrames[0];
+  useEffect(() => {
+    lastLinkedSpanId.current = undefined;
+  }, [frame]);
+  useEffect(() => {
+    if (lastLinkedSpanId.current === focusedSpanId) {
+      return;
+    }
+    lastLinkedSpanId.current = focusedSpanId;
+
+    if (focusedSpanId) {
+      goToSpan(focusedSpanId);
+    }
+  }, [frame, focusedSpanId, goToSpan]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
