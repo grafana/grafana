@@ -87,7 +87,9 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           Boolean(panel.state._pluginLoadError) ||
           Boolean(snapshot?.items.length);
       if (hasNotices) {
-        const dsWithErrorsAndNotices = await getDataSourceWithErrorsAndNoticesInspector(data.state.data);
+        const dsWithErrorsAndNotices = hasErrorsOrNotices(data.state.data)
+          ? await getDataSourceWithErrorsAndNoticesInspector(data.state.data)
+          : undefined;
         tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
       }
 

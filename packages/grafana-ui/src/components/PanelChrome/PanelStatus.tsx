@@ -64,8 +64,12 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: P
       }
     }
   }
-  const assistantSeverity =
-    onInvestigateErrors && assistantItems.length > 0 ? getTopSeverity(assistantItems) : undefined;
+  const assistantAction =
+    onInvestigateErrors && assistantItems.length > 0
+      ? getTopSeverity(assistantItems) === 'error'
+        ? 'fix'
+        : 'explain'
+      : undefined;
   const canInspect = Boolean(onClick) || Boolean(onOpenInspector);
 
   const handleInspectClick = (e: React.SyntheticEvent) => {
@@ -79,8 +83,8 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: P
         items={items}
         onInspect={canInspect ? handleInspectClick : undefined}
         ariaLabel={ariaLabel}
-        onInvestigateErrors={assistantSeverity ? onInvestigateErrors : undefined}
-        assistantSeverity={assistantSeverity}
+        onInvestigateErrors={assistantAction ? onInvestigateErrors : undefined}
+        assistantAction={assistantAction}
       />
     );
   }
@@ -103,7 +107,7 @@ interface PanelStatusPopoverProps {
   onInspect?: (e: React.SyntheticEvent) => void;
   ariaLabel: string;
   onInvestigateErrors?: () => void;
-  assistantSeverity?: PanelStatusSeverity;
+  assistantAction?: 'fix' | 'explain';
 }
 
 function PanelStatusPopover({
@@ -111,7 +115,7 @@ function PanelStatusPopover({
   onInspect,
   ariaLabel,
   onInvestigateErrors,
-  assistantSeverity,
+  assistantAction,
 }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -145,7 +149,7 @@ function PanelStatusPopover({
       <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
         {onInvestigateErrors ? (
           <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
-            {assistantSeverity === 'error'
+            {assistantAction === 'fix'
               ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
               : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
           </Button>
