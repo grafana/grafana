@@ -669,6 +669,29 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
     });
 
+    it('keeps folders reachable but not selectable when the selectability check fails', async () => {
+      setTestFlags(readOnlyFlags);
+      server.use(
+        http.get(searchRoute, ({ request }) =>
+          new URL(request.url).searchParams.get('permission') === 'create'
+            ? HttpResponse.json({ message: 'authz unavailable' }, { status: 500 })
+            : undefined
+        )
+      );
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const folderRow = await screen.findByRole('treeitem', { name: new RegExp(folderA.item.title) });
+      expect(folderRow).toHaveAttribute('aria-disabled', 'true');
+      expect(await screen.findByText('Error loading some folders')).toBeInTheDocument();
+
+      await user.click(within(folderRow).getByText(folderA.item.title));
+      expect(mockOnChange).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
+      expect(await screen.findByRole('treeitem', { name: new RegExp(folderA_folderA.item.title) })).toBeInTheDocument();
+    });
+
     it('does not select a read only folder with the keyboard', async () => {
       setTestFlags(readOnlyFlags);
       const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);

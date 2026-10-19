@@ -16,6 +16,8 @@ export type SearchFolderChildrenPageArg = {
 
 export type FolderChildrenPage = {
   hits: Array<DashboardHit & { readOnly?: boolean }>;
+  /** Set when the folders loaded but the check for which can be picked failed, so they are all read only */
+  selectabilityError?: unknown;
 };
 
 /**
@@ -61,7 +63,8 @@ export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({}).injectEndp
           const selectableNames = new Set(selectable.hits.map((hit) => hit.name));
           return { data: { hits: hits.map((hit) => ({ ...hit, readOnly: !selectableNames.has(hit.name) })) } };
         } catch (error) {
-          return { error };
+          // Keep the folders so their children can still be reached, but don't let any be picked
+          return { data: { hits: hits.map((hit) => ({ ...hit, readOnly: true })), selectabilityError: error } };
         }
       },
     }),

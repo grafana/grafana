@@ -68,8 +68,8 @@ export function useFoldersQueryAppPlatform({
           isLoading = true;
         }
 
-        if (!error && response.error) {
-          error = response.error;
+        if (!error) {
+          error = response.error ?? response.data?.selectabilityError;
         }
 
         const parentName = response.originalArgs?.folder;
