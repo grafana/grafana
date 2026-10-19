@@ -137,7 +137,7 @@ describe('detectDrilldownMigrationCandidates', () => {
     expect(candidates).toEqual([]);
   });
 
-  it('aggregates a high-confidence filter candidate when usages agree on one key', async () => {
+  it('aggregates a filter candidate when usages agree on one key', async () => {
     const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): DrilldownMigrationUsage | undefined =>
       query.refId === 'A' || query.refId === 'B' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined
     );
@@ -158,7 +158,6 @@ describe('detectDrilldownMigrationCandidates', () => {
       {
         variableName: 'instance',
         datasourceUid: 'prom-a',
-        confidence: 'high',
         usages: [
           { kind: 'filter', key: 'instance', operator: '=~' },
           { kind: 'filter', key: 'instance', operator: '=~' },
@@ -167,7 +166,7 @@ describe('detectDrilldownMigrationCandidates', () => {
     ]);
   });
 
-  it('produces a high-confidence groupBy candidate', async () => {
+  it('produces a groupBy candidate', async () => {
     const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): DrilldownMigrationUsage | undefined =>
       query.refId === 'A' ? { kind: 'groupBy' } : undefined
     );
@@ -187,7 +186,6 @@ describe('detectDrilldownMigrationCandidates', () => {
       {
         variableName: 'group_by',
         datasourceUid: 'prom-a',
-        confidence: 'high',
         usages: [{ kind: 'groupBy' }],
       },
     ]);
@@ -279,7 +277,7 @@ describe('detectDrilldownMigrationCandidates', () => {
     expect(candidates).toEqual([]);
   });
 
-  it('falls back to a low-confidence candidate when the datasource lacks getDrilldownMigrationUsage but supports filters', async () => {
+  it('does not produce a candidate when the datasource lacks getDrilldownMigrationUsage', async () => {
     registerDatasource('prom-a', 'prometheus', {
       getTagKeys: jest.fn(),
       getTagValues: jest.fn(),
@@ -289,27 +287,10 @@ describe('detectDrilldownMigrationCandidates', () => {
     const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
     const scene = buildScene([variable], [panel]);
 
-    const candidates = await detectDrilldownMigrationCandidates(scene);
-
-    expect(candidates).toEqual([{ variableName: 'instance', datasourceUid: 'prom-a', confidence: 'low', usages: [] }]);
+    expect(await detectDrilldownMigrationCandidates(scene)).toEqual([]);
   });
 
-  it('does not produce a low-confidence candidate when the variable never textually appears in a query', async () => {
-    registerDatasource('prom-a', 'prometheus', {
-      getTagKeys: jest.fn(),
-      getTagValues: jest.fn(),
-    });
-
-    const variable = buildVariable('instance', 'prom-a');
-    const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up' }], { title: 'Instance: $instance' });
-    const scene = buildScene([variable], [panel]);
-
-    const candidates = await detectDrilldownMigrationCandidates(scene);
-
-    expect(candidates).toEqual([]);
-  });
-
-  it('keeps a high-confidence filter candidate also referenced in a panel title, flagged for rewriting', async () => {
+  it('keeps a filter candidate also referenced in a panel title, flagged for rewriting', async () => {
     registerDatasource('prom-a', 'prometheus', {
       getTagKeys: jest.fn(),
       getTagValues: jest.fn(),
@@ -325,12 +306,10 @@ describe('detectDrilldownMigrationCandidates', () => {
 
     const candidates = await detectDrilldownMigrationCandidates(scene);
 
-    expect(candidates).toEqual([
-      expect.objectContaining({ variableName: 'instance', confidence: 'high', referencedOutsideQueries: true }),
-    ]);
+    expect(candidates).toEqual([expect.objectContaining({ variableName: 'instance', referencedOutsideQueries: true })]);
   });
 
-  it('rejects a high-confidence candidate when another query on the datasource does not use the variable', async () => {
+  it('rejects a candidate when another query on the datasource does not use the variable', async () => {
     // The migrated filter would apply to that query too, changing what it returns.
     const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): DrilldownMigrationUsage | undefined =>
       query.refId === 'A' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined
@@ -366,7 +345,6 @@ describe('detectDrilldownMigrationCandidates', () => {
       {
         variableName: 'instance',
         datasourceUid: DEFAULT_DS_UID,
-        confidence: 'high',
         usages: [{ kind: 'filter', key: 'instance', operator: '=~' }],
       },
     ]);
@@ -531,15 +509,6 @@ describe('detectDrilldownMigrationCandidates', () => {
 
       expect(await detectDrilldownMigrationCandidates(buildTestScene())).toEqual([]);
     });
-
-    it.each(displayReferenceScenes)(
-      'disqualifies a low-confidence candidate referenced in %s',
-      async (_, buildTestScene) => {
-        registerDatasource('prom-a', 'prometheus', { getTagKeys: jest.fn(), getTagValues: jest.fn() });
-
-        expect(await detectDrilldownMigrationCandidates(buildTestScene())).toEqual([]);
-      }
-    );
 
     const annotationTarget = (expr: string): DataQuery & { expr: string } => ({ refId: 'Anno', expr });
 

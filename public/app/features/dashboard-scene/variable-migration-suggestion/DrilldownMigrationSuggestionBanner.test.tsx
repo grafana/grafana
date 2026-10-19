@@ -33,18 +33,10 @@ jest.mock('./detect', () => ({
 
 const mockDetect = jest.mocked(detectDrilldownMigrationCandidates);
 
-const HIGH_CONFIDENCE_CANDIDATE: MigrationSuggestionCandidate = {
+const CANDIDATE: MigrationSuggestionCandidate = {
   variableName: 'instance',
   datasourceUid: 'prom-a',
-  confidence: 'high',
   usages: [{ kind: 'filter', key: 'instance', operator: '=~' }],
-};
-
-const LOW_CONFIDENCE_CANDIDATE: MigrationSuggestionCandidate = {
-  variableName: 'job',
-  datasourceUid: 'prom-a',
-  confidence: 'low',
-  usages: [],
 };
 
 function buildDashboard(overrides: Partial<{ uid: string; canEdit: boolean; canSave: boolean }> = {}) {
@@ -82,7 +74,7 @@ beforeEach(() => {
   mockOpenAssistant.mockReset();
   mockCreateAssistantContextItem.mockImplementation((type, params) => ({ node: { type, params } }));
   mockGetAssistantChatIdToContinue.mockReturnValue('chat-1');
-  mockDetect.mockResolvedValue([HIGH_CONFIDENCE_CANDIDATE]);
+  mockDetect.mockResolvedValue([CANDIDATE]);
   config.featureToggles.dashboardUnifiedDrilldownControls = true;
 });
 
@@ -199,7 +191,7 @@ describe('DrilldownMigrationSuggestionBanner', () => {
 
   it('opens the assistant with the expected prompt/context/mode/autoSend/chatId when the CTA is clicked', async () => {
     await enableOurFlag(true);
-    mockDetect.mockResolvedValue([HIGH_CONFIDENCE_CANDIDATE, LOW_CONFIDENCE_CANDIDATE]);
+    mockDetect.mockResolvedValue([CANDIDATE]);
     const dashboard = buildDashboard({ uid: 'dash-cta' });
     const { user } = await renderBanner(dashboard);
 
@@ -222,7 +214,7 @@ describe('DrilldownMigrationSuggestionBanner', () => {
               data: {
                 name: 'Drilldown migration candidates',
                 dashboardUid: 'dash-cta',
-                candidates: [HIGH_CONFIDENCE_CANDIDATE],
+                candidates: [CANDIDATE],
               },
             },
           },

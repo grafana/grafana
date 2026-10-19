@@ -9,8 +9,6 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
-type MigrationSuggestionConfidence = 'high' | 'low';
-
 interface MigrationSuggestionCandidateUsage {
   kind: 'filter' | 'groupBy';
   key?: string;
@@ -20,9 +18,6 @@ interface MigrationSuggestionCandidateUsage {
 export interface MigrationSuggestionCandidate {
   variableName: string;
   datasourceUid: string;
-  confidence: MigrationSuggestionConfidence;
-  // Only populated for high-confidence candidates - low-confidence ones only justify showing
-  // the CTA, the Assistant inspects the dashboard itself for the rest.
   usages: MigrationSuggestionCandidateUsage[];
   // Filter candidates also used in titles, links, text, etc. - the Assistant has to rewrite those
   // references to `${filters["<key>"]}` when it migrates the variable.
@@ -47,8 +42,8 @@ interface QueryUsage {
 /**
  * Enumerates every (variable, query) pair that could plausibly be a candidate for migration to
  * an ad hoc filter / group-by control, delegating the DS-specific classification to each
- * datasource's optional `getDrilldownMigrationUsage` capability where implemented, and falling
- * back to a broader, capability-only heuristic where it isn't.
+ * datasource's optional `getDrilldownMigrationUsage` capability. Datasources without it never
+ * produce candidates.
  */
 export async function detectDrilldownMigrationCandidates(
   scene: DashboardScene
@@ -140,6 +135,12 @@ async function detectCandidateForVariable(
     return undefined;
   }
 
+  // Without the datasource's classification nothing tells whether migrating keeps every query's
+  // meaning, so such variables aren't suggested at all.
+  if (typeof ds.getDrilldownMigrationUsage !== 'function') {
+    return undefined;
+  }
+
   const name = variable.state.name;
 
   const crossDatasourceUsage = queryUsages.some(
@@ -158,37 +159,21 @@ async function detectCandidateForVariable(
 
   const datasourceRef = variableDsRef && isDatasourceVariableRef(variableDsRef) ? { datasourceRef: variableDsRef } : {};
 
-  if (typeof ds.getDrilldownMigrationUsage === 'function') {
-    const candidate = aggregateHighConfidenceCandidate(ds, variable, instanceSettings.uid, sameDatasourceQueries);
-    if (!candidate) {
-      return undefined;
-    }
-    if (outsideQueryReferences === 'none') {
-      return { ...candidate, ...datasourceRef };
-    }
-    // Only a filter's value can be interpolated per key; a group-by has no such equivalent.
-    if (!candidate.usages.every((usage) => usage.kind === 'filter')) {
-      return undefined;
-    }
-    return { ...candidate, ...datasourceRef, referencedOutsideQueries: true };
-  }
-
-  if (outsideQueryReferences === 'display') {
-    // Without the datasource's classification there's no telling whether the variable becomes a
-    // filter, so whether its display references can be rewritten at all.
+  const candidate = aggregateCandidate(ds, variable, instanceSettings.uid, sameDatasourceQueries);
+  if (!candidate) {
     return undefined;
   }
-
-  // Without a classification, a variable that never appears in a query (only in a title, say) would
-  // qualify on the datasource's capabilities alone, so require at least one query usage.
-  if (!sameDatasourceQueries.some((usage) => containsVariable(usage.query, name))) {
+  if (outsideQueryReferences === 'none') {
+    return { ...candidate, ...datasourceRef };
+  }
+  // Only a filter's value can be interpolated per key; a group-by has no such equivalent.
+  if (!candidate.usages.every((usage) => usage.kind === 'filter')) {
     return undefined;
   }
-
-  return { variableName: name, datasourceUid: instanceSettings.uid, confidence: 'low', usages: [], ...datasourceRef };
+  return { ...candidate, ...datasourceRef, referencedOutsideQueries: true };
 }
 
-function aggregateHighConfidenceCandidate(
+function aggregateCandidate(
   ds: DataSourceApi,
   variable: QueryVariable,
   datasourceUid: string,
@@ -238,7 +223,7 @@ function aggregateHighConfidenceCandidate(
     return undefined;
   }
 
-  return { variableName: variable.state.name, datasourceUid, confidence: 'high', usages };
+  return { variableName: variable.state.name, datasourceUid, usages };
 }
 
 function isDatasourceVariableRef(ref: DataSourceRef): boolean {

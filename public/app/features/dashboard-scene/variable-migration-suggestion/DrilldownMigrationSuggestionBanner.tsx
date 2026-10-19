@@ -17,10 +17,12 @@ import { detectDrilldownMigrationCandidates, type MigrationSuggestionCandidate }
 // investigatePanelErrorsWithAssistant() in setDashboardPanelContext.ts): it's an instruction to
 // the LLM, not rendered UI copy, so it stays in English regardless of UI locale.
 const MIGRATION_PROMPT =
-  'Migrate the variables on this dashboard that can become filters or group by into a single filters ' +
-  'variable with group by enabled. Filters and group by apply to queries automatically, so remove migrated ' +
-  'variables from queries. Elsewhere (titles, descriptions, links, text), $job becomes ${filters["job"]}, ' +
-  'keeping any format. Carry current selections over as default filters and default group by with dashboard origin. ' +
+  'Migrate only the variables listed in the attached drilldown migration candidates into a single filters ' +
+  'variable with group by enabled, using the filter key and operator or the group by given for each. ' +
+  'Leave every other variable, and every query not using a listed variable, unchanged. ' +
+  'Filters and group by apply to queries automatically, so remove migrated variables from queries. ' +
+  'Elsewhere (titles, descriptions, links, text), $job becomes ${filters["job"]}, keeping any format. ' +
+  'Carry current selections over as default filters and default group by with dashboard origin. ' +
   'A variable set to All becomes operator =| with value $__all, not =~ .* and not a list of values. ' +
   'If the variables use a datasource variable such as ${ds}, give the filters variable that same datasource.';
 
@@ -102,8 +104,6 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
   }
 
   const onMigrateWithAssistant = () => {
-    const highConfidenceCandidates = candidates.filter((candidate) => candidate.confidence === 'high');
-
     openAssistant({
       origin: 'grafana/dashboard-scene/drilldown-migration-suggestion',
       mode: 'dashboarding',
@@ -117,7 +117,7 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
             // The assistant derives the context pill's label from `name` and crashes rendering it without one.
             name: 'Drilldown migration candidates',
             dashboardUid: uid,
-            candidates: highConfidenceCandidates,
+            candidates,
           },
         }),
       ],
