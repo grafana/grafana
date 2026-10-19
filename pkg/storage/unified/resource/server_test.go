@@ -1367,6 +1367,7 @@ type mockWatchServer struct {
 	ctx       context.Context
 	events    chan *resourcepb.WatchEvent
 	sendDelay time.Duration
+	onSend    func(*resourcepb.WatchEvent)
 }
 
 func newMockWatchServer(ctx context.Context) *mockWatchServer {
@@ -1377,6 +1378,9 @@ func newMockWatchServer(ctx context.Context) *mockWatchServer {
 }
 
 func (m *mockWatchServer) Send(evt *resourcepb.WatchEvent) error {
+	if m.onSend != nil {
+		m.onSend(evt)
+	}
 	if m.sendDelay > 0 {
 		select {
 		case <-m.ctx.Done():
@@ -2509,6 +2513,69 @@ func TestWatchEventMetricsPhase(t *testing.T) {
 	require.Equal(t, uint64(1), live.GetSampleCount(), "the write after the initial list must be labeled live")
 	assert.GreaterOrEqual(t, duringList.GetSampleSum(), (initialItems * sendDelay / 2).Seconds(),
 		"the initial_list sample keeps the real wait for the list")
+}
+
+// TestWatchEventMetricsPhaseIncludesInitialBookmark checks that a write made while the
+// initial-events bookmark is being sent is labeled phase=initial_list.
+func TestWatchEventMetricsPhaseIncludesInitialBookmark(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 1)
+
+	mock := newMockWatchServer(ctx)
+	wroteDuringBookmark := false
+	mock.onSend = func(evt *resourcepb.WatchEvent) {
+		if evt.Type == resourcepb.WatchEvent_BOOKMARK && !wroteDuringBookmark {
+			wroteDuringBookmark = true
+			// Simulate a send blocked on flow control; RVs only have millisecond precision.
+			time.Sleep(10 * time.Millisecond)
+			assert.NoError(t, createTestPlaylist(ctx, srv))
+		}
+	}
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			SendInitialEvents:   true,
+			AllowWatchBookmarks: true,
+		}, mock)
+	})
+
+	received := 0
+	timeout := time.After(10 * time.Second)
+	for received < 2 {
+		select {
+		case evt := <-mock.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				received++
+			}
+		case <-timeout:
+			t.Fatalf("timed out waiting for events: got %d, want %d", received, 2)
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+	require.True(t, wroteDuringBookmark)
+
+	for phase, want := range map[string]uint64{watchEventPhaseInitialList: 1, watchEventPhaseLive: 0} {
+		observer, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, phase)
+		require.NoError(t, err)
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		assert.Equal(t, want, m.GetHistogram().GetSampleCount(), "phase %s", phase)
+	}
 }
 
 func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {

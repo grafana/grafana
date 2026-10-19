@@ -2587,14 +2587,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
-		initialEventsSentAt = time.Now()
-
 		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
 			if err := sendBookmark(processedRV); err != nil {
 				return err
 			}
 		}
+		initialEventsSentAt = time.Now()
 	}
 
 	switch {
