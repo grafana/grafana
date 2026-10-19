@@ -29,55 +29,43 @@ function renderResolved(receiver?: string) {
 }
 
 describe('useResolvedContactPoint', () => {
-  it('maps a receiver title to the selector value (the uid when the contact point has one)', async () => {
+  it('finds the contact point for a receiver title and returns the selector value (the uid when it has one)', async () => {
     const { result } = renderResolved('slack-oncall');
 
-    await waitFor(() => expect(result.current.selectorValue).toBe('uid-1'));
-    expect(result.current.isNotFound).toBe(false);
+    await waitFor(() => expect(result.current.status).toBe('found'));
+    expect(result.current.selectorValue).toBe('uid-1');
   });
 
-  it('has no contact point for a title that matches none', async () => {
+  it('is not found for a title that matches none', async () => {
     const { result } = renderResolved('gone');
 
-    await waitFor(() => expect(result.current.isNotFound).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('notFound'));
     expect(result.current.selectorValue).toBeNull();
   });
 
-  it('is not "not found" while the list is still loading', () => {
-    const { result } = renderResolved('slack-oncall');
+  it('is unusable, with no selector value, for a contact point that cannot be used', async () => {
+    const imported = ContactPointFactory.build({
+      metadata: { uid: 'uid-2', annotations: { 'grafana.com/canUse': 'false' } },
+      spec: { title: 'imported' },
+    });
+    server.use(listReceiverHandler(ListReceiverApiResponseFactory.build({ items: [withUid, imported] })));
 
-    expect(result.current.isNotFound).toBe(false);
+    const { result } = renderResolved('imported');
+
+    await waitFor(() => expect(result.current.status).toBe('unusable'));
+    expect(result.current.selectorValue).toBeNull();
   });
 
   it('is resolving until the list has loaded', async () => {
     const { result } = renderResolved('slack-oncall');
 
-    expect(result.current.isResolving).toBe(true);
+    expect(result.current.status).toBe('resolving');
     expect(result.current.selectorValue).toBeNull();
 
-    await waitFor(() => expect(result.current.isResolving).toBe(false));
-    expect(result.current.selectorValue).toBe('uid-1');
+    await waitFor(() => expect(result.current.status).toBe('found'));
   });
 
-  it('is not resolving when the list failed to load', async () => {
-    server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
-
-    const { result } = renderResolved('slack-oncall');
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.isResolving).toBe(false);
-  });
-
-  it('is not "not found" when the list failed to load', async () => {
-    server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
-
-    const { result } = renderResolved('slack-oncall');
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.isNotFound).toBe(false);
-  });
-
-  it('has no contact point when no receiver is given', async () => {
+  it('is idle when no receiver is given', async () => {
     const { result } = renderHook(
       () => ({ resolved: useResolvedContactPoint(undefined), list: useListContactPoints() }),
       {
@@ -86,15 +74,24 @@ describe('useResolvedContactPoint', () => {
     );
 
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
-    expect(result.current.resolved).toMatchObject({ selectorValue: null, isNotFound: false });
+    expect(result.current.resolved).toEqual({ status: 'idle', selectorValue: null });
   });
 
-  it('reports a failed fetch', async () => {
+  it('reports an error when the list failed to load, not "not found"', async () => {
     server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
 
     const { result } = renderResolved('slack-oncall');
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.selectorValue).toBeNull();
+  });
+
+  it('reports an error even when no receiver is given', async () => {
+    server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
+
+    const { result } = renderResolved(undefined);
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
   });
 
   it('keeps the resolved selector value, without an error, when a later refetch fails', async () => {
@@ -103,7 +100,7 @@ describe('useResolvedContactPoint', () => {
       () => ({ resolved: useResolvedContactPoint('slack-oncall'), list: useListContactPoints() }),
       { wrapper: getDefaultWrapper() }
     );
-    await waitFor(() => expect(result.current.resolved.selectorValue).toBe('uid-1'));
+    await waitFor(() => expect(result.current.resolved.status).toBe('found'));
 
     server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
     const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
@@ -112,23 +109,22 @@ describe('useResolvedContactPoint', () => {
     });
 
     await waitFor(() => expect(result.current.list.isError).toBe(true));
-    expect(result.current.resolved.selectorValue).toBe('uid-1');
-    expect(result.current.resolved.isError).toBe(false);
+    expect(result.current.resolved).toEqual({ status: 'found', selectorValue: 'uid-1' });
   });
 
   it('recovers on window focus after the initial fetch failed', async () => {
     const stopListening = setupListeners(store.dispatch);
     server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
     const { result } = renderResolved('slack-oncall');
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('error'));
 
     server.use(listReceiverHandler(ListReceiverApiResponseFactory.build({ items: [withUid] })));
     act(() => {
       window.dispatchEvent(new Event('focus'));
     });
 
-    await waitFor(() => expect(result.current.selectorValue).toBe('uid-1'));
-    expect(result.current.isError).toBe(false);
+    await waitFor(() => expect(result.current.status).toBe('found'));
+    expect(result.current.selectorValue).toBe('uid-1');
     stopListening();
   });
 });
