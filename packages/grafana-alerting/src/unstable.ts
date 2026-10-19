@@ -26,11 +26,7 @@ export {
 } from './grafana/notificationPolicies/routingTree.utils';
 
 // Notification settings
-export {
-  NotificationsSettingsSelector,
-  type RecipientMode,
-  type NotificationsSettingsSelectorProps,
-} from './grafana/notificationSettings/components/NotificationsSettingsSelector/NotificationsSettingsSelector';
+export { NotificationsSettingsSelector } from './grafana/notificationSettings/components/NotificationsSettingsSelector/NotificationsSettingsSelector';
 export {
   type NotificationSettings,
   simplifiedRouting,
