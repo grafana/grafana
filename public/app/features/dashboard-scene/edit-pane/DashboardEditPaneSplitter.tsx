@@ -268,6 +268,9 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         zIndex: theme.zIndex.activePanel,
         background: theme.colors.background.canvas,
         top: headerHeight,
+        // Scroll the controls when they'd be taller than the viewport, so part of the dashboard stays visible.
+        maxHeight: `calc(100dvh - ${headerHeight}px - max(20dvh, 200px))`,
+        overflowY: 'auto',
       },
     }),
   };
