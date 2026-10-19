@@ -258,6 +258,18 @@ describe('AppChrome', () => {
       expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
     });
 
+    it('floats above drawers but below modals, and leaves the docked sidebar under drawers', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(stylesFor(container)).toContain('z-index: 1001');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      // Drawers and their mask sit at modalBackdrop (1050), modal dialogs at modal (1060).
+      expect(stylesFor(container)).toContain('z-index: 1051');
+    });
+
     it('renders the sidebar docked, not floating, on larger screens', async () => {
       mockUseMediaQueryMinWidth.mockReturnValue(true);
       setup(<Page navId="child1">Children</Page>);

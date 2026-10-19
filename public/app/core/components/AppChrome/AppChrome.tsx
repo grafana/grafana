@@ -415,6 +415,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.
       pointerEvents: 'none',
+      // Above drawers and their mask (modalBackdrop), so the Assistant stays usable beside, for example, panel
+      // inspect; below modal dialogs, and below the portal that tooltips and menus (its own included) render in.
+      zIndex: theme.zIndex.modalBackdrop + 1,
     }),
     // A page holds the floating sidebar hidden: it stays mounted, so it takes over the page's prompt at once.
     sidebarContainerHidden: css({
