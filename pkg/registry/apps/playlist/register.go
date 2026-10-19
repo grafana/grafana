@@ -11,8 +11,8 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 
 	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"

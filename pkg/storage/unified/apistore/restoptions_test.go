@@ -3,10 +3,11 @@ package apistore
 import (
 	"testing"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 )
 
 // ForResource exists for exactly one caller: the app-sdk installer, which

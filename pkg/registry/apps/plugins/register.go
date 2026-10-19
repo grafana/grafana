@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"

@@ -16,8 +16,8 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"

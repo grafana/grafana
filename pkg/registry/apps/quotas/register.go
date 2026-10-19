@@ -1,15 +1,16 @@
 package quotas
 
 import (
-	"github.com/grafana/grafana/apps/quotas/pkg/apis"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/apps/quotas/pkg/apis"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	quotasapp "github.com/grafana/grafana/apps/quotas/pkg/app"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"

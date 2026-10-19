@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
+
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
