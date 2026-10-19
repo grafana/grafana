@@ -1,8 +1,45 @@
-import { type Field, FieldType } from '@grafana/data';
+import { createTheme, type Field, FieldType, getDisplayProcessor, toDataFrame } from '@grafana/data';
 
 import { type TableRow } from '../types';
 
-import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
+import {
+  calculateUniqueFieldValues,
+  getFilteredOptions,
+  operatorSelectableValues,
+  rangeHistogram,
+  sliderBoundText,
+  sliderDecimals,
+  valuesToOptions,
+} from './utils';
+
+it('bins the full finite distribution without counting missing values as zero', () => {
+  expect(rangeHistogram([null, Infinity, NaN, -1, -1, 0, 29]).bins).toEqual([2, 1, ...Array(27).fill(0), 1]);
+  expect(rangeHistogram([null, Infinity, NaN]).missing).toBe(3);
+  expect(rangeHistogram([7, 7]).bins).toEqual([2]);
+});
+
+it('uses displayed field precision for slider changes, not raw floating-point precision', () => {
+  const values = [16.95899372, 18.39482761];
+  const field = toDataFrame({ fields: [{ name: 'Value', type: FieldType.number, values }] }).fields[0];
+  field.display = getDisplayProcessor({ field, theme: createTheme() });
+
+  expect(sliderDecimals(field, values, values[1] - values[0])).toBe(1);
+  expect(sliderBoundText(17.456789, values[0], '', 1)).toBe('17.5');
+});
+
+it('honors explicit decimals and retains enough precision for narrow ranges', () => {
+  const field = toDataFrame({ fields: [{ name: 'Value', type: FieldType.number, values: [0.125, 1.125] }] }).fields[0];
+  expect(sliderDecimals(field, [0.125, 1.125], 1)).toBe(3);
+  expect(sliderDecimals(field, [371.499999999999, 372.499999999999], 1)).toBe(1);
+  field.config.decimals = 5;
+  expect(sliderDecimals(field, [0.125, 1.125], 1)).toBe(5);
+  expect(sliderDecimals(field, [0, 0.00001], 0.00001)).toBe(5);
+});
+
+it('keeps typed precision on an untouched bound while rounding a moved slider bound', () => {
+  expect(sliderBoundText(0.123456789, 0.123456789, '0.123456789', 3)).toBe('0.123456789');
+  expect(sliderBoundText(0.998999999999, 1, '', 3)).toBe('0.999');
+});
 
 function makeField(name: string, displayName?: string): Field {
   return {

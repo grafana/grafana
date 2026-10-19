@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, FieldType, getDisplayProcessor, toDataFrame } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data';
 
 import { compileFrameToRecords } from '../utils';
 
-import { RangeFilter, rangeHistogram, sliderBoundText, sliderDecimals } from './RangeFilter';
-
+import { DateRangeFilter } from './DateRangeFilter';
+import { NumericRangeFilter } from './NumericRangeFilter';
 function setup(
   type = FieldType.number,
   values: Array<number | null> = [0, 1, 1, 2, 10, null, Infinity],
@@ -25,45 +25,17 @@ function setup(
     onClear,
     onCancel,
   };
-  const view = render(<RangeFilter {...props} range={range} />);
+  const Filter = type === FieldType.time ? DateRangeFilter : NumericRangeFilter;
+  const view = render(<Filter {...props} range={range} />);
   return {
     user: userEvent.setup(),
     onApply,
     onClear,
     onCancel,
     rerender: (range?: { min?: number; max?: number; includeMissing: boolean }) =>
-      view.rerender(<RangeFilter {...props} range={range} />),
+      view.rerender(<Filter {...props} range={range} />),
   };
 }
-
-it('bins the full finite distribution without counting missing values as zero', () => {
-  expect(rangeHistogram([null, Infinity, NaN, -1, -1, 0, 29]).bins).toEqual([2, 1, ...Array(27).fill(0), 1]);
-  expect(rangeHistogram([null, Infinity, NaN]).missing).toBe(3);
-  expect(rangeHistogram([7, 7]).bins).toEqual([2]);
-});
-
-it('uses displayed field precision for slider changes, not raw floating-point precision', () => {
-  const values = [16.95899372, 18.39482761];
-  const field = toDataFrame({ fields: [{ name: 'Value', type: FieldType.number, values }] }).fields[0];
-  field.display = getDisplayProcessor({ field, theme: createTheme() });
-
-  expect(sliderDecimals(field, values, values[1] - values[0])).toBe(1);
-  expect(sliderBoundText(17.456789, values[0], '', 1)).toBe('17.5');
-});
-
-it('honors explicit decimals and retains enough precision for narrow ranges', () => {
-  const field = toDataFrame({ fields: [{ name: 'Value', type: FieldType.number, values: [0.125, 1.125] }] }).fields[0];
-  expect(sliderDecimals(field, [0.125, 1.125], 1)).toBe(3);
-  expect(sliderDecimals(field, [371.499999999999, 372.499999999999], 1)).toBe(1);
-  field.config.decimals = 5;
-  expect(sliderDecimals(field, [0.125, 1.125], 1)).toBe(5);
-  expect(sliderDecimals(field, [0, 0.00001], 0.00001)).toBe(5);
-});
-
-it('keeps typed precision on an untouched bound while rounding a moved slider bound', () => {
-  expect(sliderBoundText(0.123456789, 0.123456789, '0.123456789', 3)).toBe('0.123456789');
-  expect(sliderBoundText(0.998999999999, 1, '', 3)).toBe('0.999');
-});
 
 it.each([FieldType.number, FieldType.time])('shows Clear filter only for an active %s range filter', async (type) => {
   const { user, onClear, rerender } = setup(type);

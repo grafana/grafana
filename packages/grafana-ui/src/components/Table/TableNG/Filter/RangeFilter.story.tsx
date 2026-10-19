@@ -5,15 +5,15 @@ import { FieldType, toDataFrame } from '@grafana/data';
 
 import { compileFrameToRecords } from '../utils';
 
-import { RangeFilter } from './RangeFilter';
+import { DateRangeFilter } from './DateRangeFilter';
 
 const data = toDataFrame({
   fields: [{ name: 'Time', type: FieldType.time, values: [1789660800123, 1789747200999] }],
 });
 
-const meta: Meta<typeof RangeFilter> = {
+const meta: Meta<typeof DateRangeFilter> = {
   title: 'Date time pickers/Table date range filter',
-  component: RangeFilter,
+  component: DateRangeFilter,
   decorators: [
     (Story) => (
       <div style={{ width: 'fit-content' }}>
@@ -34,4 +34,4 @@ const meta: Meta<typeof RangeFilter> = {
 
 export default meta;
 
-export const DateBounds: StoryObj<typeof RangeFilter> = {};
+export const DateBounds: StoryObj<typeof DateRangeFilter> = {};

@@ -119,6 +119,15 @@ describe('FilterPopup', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('mounts the date range editor for time fields', () => {
+    const field: Field = { name: 'Time', type: FieldType.time, values: [Date.UTC(2026, 8, 17)], config: {} };
+    renderPopup({ field, rows: makeRows('Time', ['2026-09-17']) });
+
+    expect(screen.getByRole('textbox', { name: 'Start' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'End' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Filter values')).not.toBeInTheDocument();
+  });
+
   describe('Ok button', () => {
     it('closes when Ok is clicked', async () => {
       const user = userEvent.setup();
