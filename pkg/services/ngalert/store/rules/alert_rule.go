@@ -947,7 +947,9 @@ func (st RuleStore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.L
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesByGroup", "error", err)
+			}
 		}()
 
 		opts := alertRuleConvertOptions{}
@@ -1209,7 +1211,9 @@ func (st RuleStore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesPaginated", "error", err)
+			}
 		}()
 
 		// Deserialize each rule separately in case any of them contain invalid JSON.
