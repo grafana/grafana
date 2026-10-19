@@ -4900,7 +4900,6 @@ func testIntegrationRuleSoftDelete(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -5012,7 +5011,6 @@ func testIntegrationRulePermanentlyDelete(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

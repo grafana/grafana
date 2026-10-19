@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -962,33 +963,35 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
-			compareFn := NewMockCompareFn(t)
+			synctest.Test(t, func(t *testing.T) {
+				repo := repository.NewMockRepository(t)
+				repoResources := resources.NewMockRepositoryResources(t)
+				clients := resources.NewMockResourceClients(t)
+				progress := jobs.NewMockJobProgressRecorder(t)
+				compareFn := NewMockCompareFn(t)
 
-			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
-			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					Title: "Test Repo",
-				},
+				tt.setupMocks(repo, repoResources, clients, progress, compareFn)
+				compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
+				repo.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+					},
+				})
+
+				progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
+				err := FullSync(t.Context(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
+				if tt.expectedError != "" {
+					require.EqualError(t, err, tt.expectedError, tt.description)
+				} else {
+					require.NoError(t, err, tt.description)
+				}
+				if tt.verifyMocks != nil {
+					tt.verifyMocks(t, repoResources)
+				}
 			})
-
-			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
-			if tt.expectedError != "" {
-				require.EqualError(t, err, tt.expectedError, tt.description)
-			} else {
-				require.NoError(t, err, tt.description)
-			}
-			if tt.verifyMocks != nil {
-				tt.verifyMocks(t, repoResources)
-			}
 		})
 	}
 }

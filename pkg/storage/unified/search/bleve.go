@@ -775,6 +775,23 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 	}
 }
 
+func openFileIndex(path string) (bleve.Index, error) {
+	idx, err := bleve.OpenUsing(path, map[string]interface{}{
+		"bolt_timeout": boltTimeout,
+		"unsafe_batch": false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Opening starts background persistence. Keep it within the caller's worker
+	// limit by waiting for an empty batch to reach disk before opening more indexes.
+	if err := idx.Batch(idx.NewBatch()); err != nil {
+		return nil, errors.Join(fmt.Errorf("waiting for opened index to persist: %w", err), idx.Close())
+	}
+	return idx, nil
+}
+
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
@@ -1409,7 +1426,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 		return nil, "", "", fmt.Errorf("copying index to filesystem: %w", err)
 	}
 
-	fileIndex, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	fileIndex, err := openFileIndex(indexDir)
 	if err != nil {
 		return nil, "", "", fmt.Errorf("opening promoted filesystem index: %w", err)
 	}
@@ -1702,7 +1719,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
-		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+		idx, err := openFileIndex(indexDir)
 		if err != nil {
 			// On timeout, the file probably is locked by another process.
 			// This indicates a setup issue that should be fixed rather than worked around by creating a new index file.
@@ -2349,6 +2366,21 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 	}
 }
 
+func (b *bleveIndex) SearchFieldDefinitions() []resource.SearchFieldDefinition {
+	definitions := make([]resource.SearchFieldDefinition, 0, len(b.searchFields.resultFields))
+	for name, field := range b.searchFields.resultFields {
+		// Skip prefixed aliases and keep standard fields' precedence over
+		// per-kind declarations with the same name.
+		if name == field.Name {
+			definitions = append(definitions, field)
+		}
+	}
+	slices.SortFunc(definitions, func(a, b resource.SearchFieldDefinition) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return definitions
+}
+
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
@@ -2546,16 +2578,12 @@ func (b *bleveIndex) deletedDocCount(ctx context.Context) (int64, error) {
 
 // DocCount counts live documents, so callers using it as a size estimate
 // undercount by whatever trash the index holds. Close enough for a threshold.
-// listDocumentRefsPageSize is how many documents one page of an enumeration
-// reads. Reconciliation walks every document, so this trades the number of
-// searches against how much is held at once. A variable so a test can page
-// without indexing thousands of documents.
-var listDocumentRefsPageSize = 1000
-
 // ListDocumentRefs implements resource.ResourceIndex.
 //
-// Paged rather than returned at once: an index can hold hundreds of thousands of
-// documents, and the caller compares them a page at a time.
+// The documents are read once, in index order, and sorted by name in memory.
+// Paging through them sorted, as a search does, reads every document of the type
+// again for each page. The cost is holding a name and a version for every
+// document, and reading all of them before the first is returned.
 func (b *bleveIndex) ListDocumentRefs(ctx context.Context, gr schema.GroupResource) iter.Seq2[resource.DocumentRef, error] {
 	return func(yield func(resource.DocumentRef, error) bool) {
 		ctx, span := tracer.Start(ctx, "search.bleveIndex.ListDocumentRefs")
@@ -2566,43 +2594,92 @@ func (b *bleveIndex) ListDocumentRefs(ctx context.Context, gr schema.GroupResour
 			yield(resource.DocumentRef{}, err)
 			return
 		}
-
-		var searchAfter []string
-		for {
-			req := &bleve.SearchRequest{
-				Size:  listDocumentRefsPageSize,
-				Query: scopeQuery(q, false, 0),
-				// The stored copy, because a resource version is too large to survive
-				// being held as the float64 bleve stores numbers as.
-				Fields:      []string{resource.SEARCH_FIELD_RV_STRING},
-				SearchAfter: searchAfter,
-			}
-			// By document id, which is unique, so paging cannot repeat or skip a
-			// document the way ordering by a shared value could.
-			req.SortBy([]string{"_id"})
-
-			rsp, err := b.index.SearchInContext(ctx, req)
+		var refs []resource.DocumentRef
+		err = b.visitLiveDocuments(ctx, q, nil, func(reader index.IndexReader, id string, _ index.IndexInternalID, _ index.DocValueReader) error {
+			ref, err := documentRefFromID(reader, id)
 			if err != nil {
-				yield(resource.DocumentRef{}, err)
-				return
+				return err
 			}
-			for _, hit := range rsp.Hits {
-				ref, err := documentRefFromHit(hit)
-				if err != nil {
-					if !yield(resource.DocumentRef{}, err) {
-						return
-					}
-					continue
-				}
-				if !yield(ref, nil) {
-					return
-				}
-			}
-			if len(rsp.Hits) < listDocumentRefsPageSize {
-				return
-			}
-			searchAfter = rsp.Hits[len(rsp.Hits)-1].Sort
+			refs = append(refs, ref)
+			return nil
+		})
+		if err != nil {
+			yield(resource.DocumentRef{}, err)
+			return
 		}
+		// Checked before each reference and after the last: a caller cancelled part
+		// way must not mistake what it saw for a complete listing.
+		cancelled := func() bool {
+			if err := ctx.Err(); err != nil {
+				yield(resource.DocumentRef{}, err)
+				return true
+			}
+			return false
+		}
+		if cancelled() {
+			return
+		}
+		// By name, which within one type orders them as their document ids do.
+		slices.SortFunc(refs, func(x, y resource.DocumentRef) int { return strings.Compare(x.Name, y.Name) })
+		for _, ref := range refs {
+			if cancelled() || !yield(ref, nil) {
+				return
+			}
+		}
+		cancelled()
+	}
+}
+
+// visitLiveDocuments calls visit for every live document q matches, in index
+// order, with one reader for the whole pass. docValueFields are read through the
+// DocValueReader visit is given, which is nil when there are none.
+func (b *bleveIndex) visitLiveDocuments(ctx context.Context, q query.Query, docValueFields []string,
+	visit func(reader index.IndexReader, id string, internal index.IndexInternalID, docValues index.DocValueReader) error,
+) error {
+	advanced, err := b.index.Advanced()
+	if err != nil {
+		return err
+	}
+	reader, err := advanced.Reader()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = reader.Close() }()
+	// No scores: callers want which documents match, not how well.
+	searcher, err := scopeQuery(q, false, 0).Searcher(ctx, reader, b.index.Mapping(), search.SearcherOptions{Score: "none"})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = searcher.Close() }()
+	var docValues index.DocValueReader
+	if len(docValueFields) > 0 {
+		if docValues, err = reader.DocValueReader(docValueFields); err != nil {
+			return err
+		}
+	}
+
+	sctx := &search.SearchContext{DocumentMatchPool: search.NewDocumentMatchPool(searcher.DocumentMatchPoolSize(), 0)}
+	for read := 0; ; read++ {
+		if read%256 == 0 {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+		}
+		match, err := searcher.Next(sctx)
+		if err != nil {
+			return err
+		}
+		if match == nil {
+			return nil
+		}
+		id, err := reader.ExternalID(match.IndexInternalID)
+		if err != nil {
+			return err
+		}
+		if err := visit(reader, id, match.IndexInternalID, docValues); err != nil {
+			return err
+		}
+		sctx.DocumentMatchPool.Put(match)
 	}
 }
 
@@ -2819,27 +2896,35 @@ func (b *bleveIndex) documentsOfQuery(gr schema.GroupResource) (query.Query, err
 	return bleve.NewMatchAllQuery(), nil
 }
 
-// documentRefFromHit reads the name and resource version off a hit. The name
-// comes from the document id, which every document has, rather than from a
-// stored field that a document could be missing.
-func documentRefFromHit(hit *search.DocumentMatch) (resource.DocumentRef, error) {
-	parts := strings.Split(hit.ID, "/")
+// documentRefFromID reads the name off a document id, which every document has,
+// and the resource version from the document's stored copy.
+func documentRefFromID(reader index.IndexReader, id string) (resource.DocumentRef, error) {
+	parts := strings.Split(id, "/")
 	if len(parts) != 4 {
-		return resource.DocumentRef{}, fmt.Errorf("unexpected document id %q", hit.ID)
+		return resource.DocumentRef{}, fmt.Errorf("unexpected document id %q", id)
 	}
-	ref := resource.DocumentRef{Name: parts[3]}
+	// A copy, so the refs held until they are sorted do not keep every whole id.
+	ref := resource.DocumentRef{Name: strings.Clone(parts[3])}
 
-	rv, ok := hit.Fields[resource.SEARCH_FIELD_RV_STRING].(string)
-	if !ok || rv == "" {
-		// Nothing to compare against, so the caller treats it as out of date and
-		// reindexes rather than skipping it.
-		return ref, nil
-	}
-	parsed, err := strconv.ParseInt(rv, 10, 64)
+	doc, err := reader.Document(id)
 	if err != nil {
-		return ref, nil
+		return ref, err
 	}
-	ref.RV = parsed
+	// The stored copy, because a resource version is too large to survive being
+	// held as the float64 bleve stores numbers as.
+	rv := ""
+	if doc != nil {
+		doc.VisitFields(func(f index.Field) {
+			if f.Name() == resource.SEARCH_FIELD_RV_STRING {
+				rv = string(f.Value())
+			}
+		})
+	}
+	// Nothing to compare against means out of date, so the caller reindexes rather
+	// than skipping it.
+	if parsed, err := strconv.ParseInt(rv, 10, 64); err == nil {
+		ref.RV = parsed
+	}
 	return ref, nil
 }
 
@@ -3026,7 +3111,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			expirationThreshold = t
 		}
 	}
-	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted, expirationThreshold)
+	searchrequest.Query = scopeQuery(wrapInFolderSets(filters, textQuery), req.IsDeleted, expirationThreshold)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -4760,16 +4845,7 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 
 	// WithTracer makes FilterAuthorized emit a span around the batched
 	// BatchCheck loop, so the authz phase is visible as a child of this

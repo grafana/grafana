@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/alerting/logging"
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
@@ -252,7 +253,7 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(logging.NewSlogLogger(ng.Log), featurecontrol.NoopFlags{})
 
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
@@ -969,6 +970,8 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 			Timeout:              settings.Timeout,
 			CustomHeaders:        settings.CustomHeaders,
 			DefaultDatasourceUID: settings.DefaultDatasourceUID,
+			MaxBatchSize:         settings.MaxWriteBatchSize,
+			MaxWriteConcurrency:  settings.MaxWriteConcurrency,
 		}
 
 		logger.Info("Setting up remote write using data sources",

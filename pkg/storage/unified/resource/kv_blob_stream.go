@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"uuid"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,7 +18,7 @@ func (s *kvBlobSupport) PutResourceBlobStream(ctx context.Context, req *resource
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "streaming requires SQL-backed KV")
 	}
-	info := &utils.BlobInfo{UID: uuid.NewV4().String()}
+	info := &utils.BlobInfo{UID: NewBlobUID()}
 	info.SetContentType(req.ContentType)
 	var err error
 	info.Size, info.Hash, err = store.SaveBlobStream(ctx, kvBlobKey(req.Resource, info.UID), req.ContentType, reader)

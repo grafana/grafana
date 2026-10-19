@@ -7,7 +7,7 @@ import {
   useGetLibraryElementByUidQuery,
 } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
-import { useDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceListItem } from '@grafana/runtime';
 import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';

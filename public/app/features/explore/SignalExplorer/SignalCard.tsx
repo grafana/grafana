@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 interface Props {
   refId: string;
@@ -24,8 +24,8 @@ interface Props {
 
 /**
  * A single query in the Datasource explorer sidebar, labelled with its refId and
- * datasource. Clicking it jumps to that query row; expanding it reveals the
- * datasource's explorer inline, pushing the cards below it down.
+ * datasource. Its jump button scrolls to that query row. Clicking an expandable card's
+ * header toggles the datasource's explorer inline, pushing the cards below it down.
  */
 export function SignalCard({
   refId,
@@ -65,12 +65,39 @@ export function SignalCard({
   const [brokenLogo, setBrokenLogo] = useState<string>();
   const logo = datasourceLogo === brokenLogo ? undefined : datasourceLogo;
   // The datasource name is not rendered inline (the logo covers the type and long query
-  // names need the room), so name the card with it to disambiguate two instances of the
+  // names need the room), so name the controls with it to disambiguate two instances of the
   // same datasource type in Mixed mode.
   const jumpLabel = t('explore.signal-card.jump-to-query-label', 'Jump to query {{refId}} ({{datasourceName}})', {
     refId,
     datasourceName,
   });
+  const toggleLabel = expanded
+    ? t(
+        'explore.signal-card.collapse-aria-label',
+        'Collapse datasource explorer for query {{refId}} ({{datasourceName}})',
+        { refId, datasourceName }
+      )
+    : t(
+        'explore.signal-card.expand-aria-label',
+        'Expand datasource explorer for query {{refId}} ({{datasourceName}})',
+        { refId, datasourceName }
+      );
+
+  const headerContent = (
+    <>
+      {isExpandable && (
+        <span className={styles.cardChevron}>
+          <Icon name={expanded ? 'angle-down' : 'angle-right'} />
+        </span>
+      )}
+      {logo ? (
+        <img src={logo} alt="" className={styles.datasourceLogo} onError={() => setBrokenLogo(logo)} />
+      ) : (
+        <Icon name="database" className={styles.datasourceLogoFallback} />
+      )}
+      <span className={styles.cardTitle}>{refId}</span>
+    </>
+  );
 
   return (
     <div
@@ -78,9 +105,6 @@ export function SignalCard({
       className={cx(styles.card, expanded && styles.cardExpanded)}
       data-testid={`signal-card-${refId}`}
     >
-      {/* Siblings rather than a jump target wrapping the chevron: WebKit treats the
-          content of a button as presentational, so a nested control is invisible to
-          VoiceOver, and nesting would make the two fight over clicks and keydowns. */}
       <div
         className={cx(
           styles.cardHeader,
@@ -88,42 +112,34 @@ export function SignalCard({
           expanded && styles.cardHeaderExpanded
         )}
       >
-        {isExpandable && (
+        {isExpandable ? (
           <button
             type="button"
-            className={styles.cardChevron}
+            className={styles.headerButton}
             aria-expanded={expanded}
             aria-controls={expanded ? bodyId : undefined}
-            aria-label={
-              expanded
-                ? t('explore.signal-card.collapse-aria-label', 'Collapse datasource explorer for query {{refId}}', {
-                    refId,
-                  })
-                : t('explore.signal-card.expand-aria-label', 'Expand datasource explorer for query {{refId}}', {
-                    refId,
-                  })
-            }
+            // `title` only names an element that has no other name, and this one is named by
+            // its refId text, so the label has to be explicit or the datasource name is lost.
+            aria-label={toggleLabel}
+            title={toggleLabel}
             onClick={toggleExpanded}
           >
-            <Icon name={expanded ? 'angle-down' : 'angle-right'} />
+            {headerContent}
           </button>
+        ) : (
+          <div className={styles.staticHeader} title={datasourceName}>
+            {headerContent}
+          </div>
         )}
-        <button
-          type="button"
-          className={styles.jumpButton}
-          // `title` only names an element that has no other name, and this one is named by
-          // its refId text, so the label has to be explicit or the datasource name is lost.
-          aria-label={jumpLabel}
-          title={jumpLabel}
-          onClick={onJumpToQuery}
-        >
-          {logo ? (
-            <img src={logo} alt="" className={styles.datasourceLogo} onError={() => setBrokenLogo(logo)} />
-          ) : (
-            <Icon name="database" className={styles.datasourceLogoFallback} />
-          )}
-          <span className={styles.cardTitle}>{refId}</span>
-        </button>
+        <span className={styles.jumpButtonWrapper}>
+          <IconButton
+            name="corner-down-right-alt"
+            size="sm"
+            variant="secondary"
+            tooltip={jumpLabel}
+            onClick={onJumpToQuery}
+          />
+        </span>
       </div>
       {expanded && (
         <div className={styles.cardBody} id={bodyId}>
@@ -156,16 +172,8 @@ const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
     top: '50%',
     transform: 'translateY(-50%)',
     display: 'flex',
-    alignItems: 'center',
-    padding: 0,
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
     color: theme.colors.text.secondary,
     opacity: 0,
-    '&:hover': {
-      color: theme.colors.text.primary,
-    },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity'], {
         duration: theme.transitions.duration.shortest,
@@ -173,9 +181,7 @@ const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
     },
   });
 
-  const jumpButton = css({
-    label: 'signal-card-jump-button',
-    // Fills the header so clicking anywhere outside the chevron jumps to the query.
+  const headerLayout = {
     flex: '1 1 auto',
     minWidth: 0,
     display: 'flex',
@@ -183,13 +189,19 @@ const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
     gap: theme.spacing(1),
     minHeight: CARD_HEIGHT,
     padding: theme.spacing(0.5, 1, 0.5, 1.25),
+    overflow: 'hidden',
+  };
+
+  const headerButton = css({
+    label: 'signal-card-header-button',
+    // Fills the header up to the jump button, so the rest of the row, chevron included, is the hit target.
+    ...headerLayout,
     background: 'transparent',
     border: 'none',
     color: 'inherit',
     font: 'inherit',
     textAlign: 'left',
     cursor: 'pointer',
-    overflow: 'hidden',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['padding-left'], {
         duration: theme.transitions.duration.shortest,
@@ -197,20 +209,46 @@ const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
     },
   });
 
-  // The hidden chevron still sits over the logo, so anything that makes it clickable has
-  // to shift the jump button's content clear of it in the same breath.
+  // A wrapper rather than IconButton's own className: `cx` merges Emotion classes into a new one,
+  // so a selector on this class would never match the button.
+  const jumpButtonWrapper = css({
+    label: 'signal-card-jump-button-wrapper',
+    display: 'flex',
+    flexShrink: 0,
+    marginRight: theme.spacing(0.5),
+    opacity: 0,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+  });
+
+  // The hidden chevron still sits over the logo, so anything that reveals it has to shift
+  // the header button's content clear of it in the same breath.
   const chevronRevealed = {
     [`.${cardChevron}`]: {
       opacity: 1,
     },
-    [`.${jumpButton}`]: {
+    [`.${headerButton}`]: {
       paddingLeft: chevronGutter,
+    },
+  };
+
+  const jumpRevealed = {
+    [`.${jumpButtonWrapper}`]: {
+      opacity: 1,
     },
   };
 
   return {
     cardChevron,
-    jumpButton,
+    headerButton,
+    jumpButtonWrapper,
+    staticHeader: css({
+      label: 'signal-card-static-header',
+      ...headerLayout,
+    }),
     card: css({
       label: 'signal-card',
       position: 'relative',
@@ -249,17 +287,18 @@ const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
       flexShrink: 0,
       overflow: 'hidden',
       minWidth: 0,
-      '&:hover': {
-        background: colorManipulator.alpha(theme.colors.text.primary, 0.08),
-      },
+      '&:hover, &:has(:focus-visible)': jumpRevealed,
+      '@media (hover: none)': jumpRevealed,
     }),
     // The chevron takes no layout space at rest so logos and query names sit flush
     // left; revealing it shifts the content right to make room. Keying the reveal
     // off :focus-visible rather than :focus-within stops it from staying open after a
-    // mouse click, and `:has` reveals it for whichever of the two controls has
-    // keyboard focus.
+    // mouse click.
     cardHeaderExpandable: css({
       label: 'signal-card-header-expandable',
+      '&:hover': {
+        background: colorManipulator.alpha(theme.colors.text.primary, 0.08),
+      },
       '&:hover, &:has(:focus-visible)': chevronRevealed,
       // A pointer that cannot hover would never reveal the chevron, so show it
       // upfront there and keep its gutter reserved.

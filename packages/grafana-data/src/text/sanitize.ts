@@ -113,6 +113,29 @@ function sanitizeSVGContent(unsanitizedString: string): string {
   return DOMPurify.sanitize(unsanitizedString, { USE_PROFILES: { svg: true, svgFilters: true } });
 }
 
+// Attributes on the outermost <svg> that let it paint outside its own layout box,
+// e.g. style="position:fixed;inset:0;z-index:9999" or transform="scale(100)" to cover the page.
+const UNTRUSTED_SVG_ROOT_FORBID_ATTR = ['style', 'transform', 'overflow'];
+
+// Like sanitizeSVGContent, but for SVGs that do not ship with Grafana
+// Inlined SVG <style> applies to the whole document, and <image>/<feImage> pull in content this sanitizer
+// never inspects, so they are removed.
+function sanitizeUntrustedSVGContent(unsanitizedString: string): string {
+  const fragment = DOMPurify.sanitize(unsanitizedString, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    FORBID_TAGS: ['style', 'image', 'feImage'],
+    RETURN_DOM_FRAGMENT: true,
+  });
+
+  const container = document.createElement('div');
+  container.appendChild(fragment);
+  for (const root of container.querySelectorAll(':scope > svg')) {
+    UNTRUSTED_SVG_ROOT_FORBID_ATTR.forEach((attr) => root.removeAttribute(attr));
+  }
+
+  return container.innerHTML;
+}
+
 // Return a sanitized URL, free from XSS attacks, such as javascript:alert(1)
 export function sanitizeUrl(url: string): string {
   return braintreeSanitizeUrl(url);
@@ -186,6 +209,7 @@ export const textUtil = {
   sanitizeTextPanelContent,
   sanitizeUrl,
   sanitizeSVGContent,
+  sanitizeUntrustedSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
 };
