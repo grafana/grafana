@@ -78,7 +78,7 @@ func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) 
 		}
 		filtered = append(filtered, r)
 	}
-	perKindSortRules(filtered, f.sortField, f.sortDesc)
+	perKindSortRules(filtered, req.Sort)
 
 	total := len(filtered)
 	page := applyOffset(filtered, req.Offset, req.Limit)

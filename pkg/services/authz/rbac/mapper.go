@@ -402,6 +402,27 @@ func newAlertmanagerImportsTranslation() translation {
 	}
 }
 
+// newAlertingConfigTranslation maps an alerting app's per-org Config singleton
+// (and its /status subresource) to its read/update actions, mirroring the
+// app's own authorizer. Delete is deliberately unmapped because the singleton
+// can never be deleted; the app authorizer additionally restricts create to
+// the service identity, which a verb mapping cannot express.
+func newAlertingConfigTranslation(scopeRoot, readAction, updateAction string) translation {
+	return translation{
+		resource:  scopeRoot,
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:    readAction,
+			utils.VerbList:   readAction,
+			utils.VerbWatch:  readAction,
+			utils.VerbCreate: updateAction,
+			utils.VerbUpdate: updateAction,
+			utils.VerbPatch:  updateAction,
+		},
+		folderSupport: false,
+	}
+}
+
 // newAlertRuleTranslation maps the rule resources in rules.alerting.grafana.app
 // (alertrules, recordingrules, rulesequences) to the alert.rules:* actions.
 //
@@ -574,12 +595,32 @@ func NewMapperRegistry() MapperRegistry {
 			// No silence kind is served here yet; the translation exists so folder-scoped
 			// silence capability checks resolve. See newSilenceTranslation.
 			"silences": newSilenceTranslation(),
+			"configs": newAlertingConfigTranslation(
+				accesscontrol.AlertingConfigResource,
+				accesscontrol.ActionAlertingConfigRead,
+				accesscontrol.ActionAlertingConfigUpdate,
+			),
+			"configs/status": newAlertingConfigTranslation(
+				accesscontrol.AlertingConfigResource,
+				accesscontrol.ActionAlertingConfigRead,
+				accesscontrol.ActionAlertingConfigStatusUpdate,
+			),
 		},
 		"rules.alerting.grafana.app": {
 			// All rule resources share the folder-scoped alert.rules:* actions.
 			"alertrules":     newAlertRuleTranslation(),
 			"recordingrules": newAlertRuleTranslation(),
 			"rulesequences":  newAlertRuleTranslation(),
+			"configs": newAlertingConfigTranslation(
+				accesscontrol.AlertingRulesConfigScopeRoot,
+				accesscontrol.ActionAlertingRulesConfigRead,
+				accesscontrol.ActionAlertingRulesConfigUpdate,
+			),
+			"configs/status": newAlertingConfigTranslation(
+				accesscontrol.AlertingRulesConfigScopeRoot,
+				accesscontrol.ActionAlertingRulesConfigRead,
+				accesscontrol.ActionAlertingRulesConfigStatusUpdate,
+			),
 		},
 		// Assistant-pushed alert-rule embeddings, authorized like the native rule kinds above.
 		"assistant.alertrules.ext.grafana.app": {

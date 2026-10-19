@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"iter"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"slices"
 	"strconv"
@@ -24,12 +24,14 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/authlib/types"
 
@@ -411,6 +413,13 @@ type DocumentRef struct {
 
 type BuildFn func(index ResourceIndex) (int64, error)
 
+var ErrIndexBuildInProgress = errors.New("another replica is building the index")
+
+type BuildIndexOptions struct {
+	// Startup workers can try other indexes instead of waiting for a replica.
+	SkipIfBuilding bool
+}
+
 // UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
 type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error)
 
@@ -434,6 +443,8 @@ type SearchBackend interface {
 	// Updater function is used to update the index before performing the search.
 	// rebuild forces a full rebuild of the index, regardless of state.
 	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
+	// SkipIfBuilding returns ErrIndexBuildInProgress instead of waiting for a
+	// replica's cold-start build, so the caller can try another index first.
 	// maxFreshSnapshotAge is the freshness window (by snapshot BuildTime) within
 	// which a same-version remote snapshot is preferred over rebuilding from
 	// scratch on the rebuild path. Zero disables that fast path.
@@ -447,6 +458,7 @@ type SearchBackend interface {
 		rebuild bool,
 		lastImportTime time.Time,
 		maxFreshSnapshotAge time.Duration,
+		options BuildIndexOptions,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -479,16 +491,17 @@ type searchServer struct {
 	// Lexical leg for external collections (internal use bleve); nil = unsupported.
 	// Interim until bleve indexes external kinds — then external routes down
 	// the existing bleve leg and this field (and the FTS impl) gets deleted.
-	externalLexical vector.LexicalSearcher
-	embedder        *embedder.Embedder
-	reranker        *rerank.Reranker
-	search          SearchBackend
-	indexMetrics    *BleveIndexMetrics
-	vectorMetrics   *VectorMetrics
-	access          types.AccessClient
-	builders        *builderCache
-	initWorkers     int
-	initMinSize     int
+	externalLexical   vector.LexicalSearcher
+	embedder          *embedder.Embedder
+	reranker          *rerank.Reranker
+	search            SearchBackend
+	indexMetrics      *BleveIndexMetrics
+	vectorMetrics     *VectorMetrics
+	access            types.AccessClient
+	builders          *builderCache
+	initWorkers       int
+	initMinSize       int
+	initRetryInterval time.Duration
 
 	queryCache             vector.QueryEmbeddingCache
 	queryCacheMaxPerTenant int
@@ -509,6 +522,7 @@ type searchServer struct {
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
 	searchFields         *SearchFieldsRegistry
+	hybridSearchConfig   *HybridSearchConfigRegistry
 	requiredFeatures     []IndexFeature
 
 	bgTaskWg     sync.WaitGroup
@@ -531,6 +545,9 @@ type searchServer struct {
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
 	globalIndexEnabled        bool
+	// uncheckedGlobalTypesLogged holds the {group}/{resource} of each type already
+	// logged as left out of global search for being unchecked.
+	uncheckedGlobalTypesLogged sync.Map
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -551,7 +568,7 @@ func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
 // maybeInjectFailure returns an error for a configured percentage of calls.
 // Returns nil when failure injection is disabled or the call is not selected.
 func (s *searchServer) maybeInjectFailure() error {
-	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+	if s.injectFailuresPercent > 0 && rand.IntN(100) < s.injectFailuresPercent {
 		return fmt.Errorf("injected search failure")
 	}
 	return nil
@@ -598,25 +615,27 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	}
 
 	s := &searchServer{
-		access:         access,
-		storage:        storage,
-		vectorBackend:  vectorBackend,
-		embedder:       embedder,
-		reranker:       reranker,
-		search:         opts.Backend,
-		log:            log.New("resource-search"),
-		initWorkers:    opts.InitWorkerThreads,
-		rebuildWorkers: opts.IndexRebuildWorkers,
-		initMinSize:    opts.InitMinCount,
-		indexMetrics:   indexMetrics,
-		vectorMetrics:  vectorMetrics,
-		ownsIndexFn:    ownsIndexFn,
+		access:            access,
+		storage:           storage,
+		vectorBackend:     vectorBackend,
+		embedder:          embedder,
+		reranker:          reranker,
+		search:            opts.Backend,
+		log:               log.New("resource-search"),
+		initWorkers:       opts.InitWorkerThreads,
+		initRetryInterval: 30 * time.Second,
+		rebuildWorkers:    opts.IndexRebuildWorkers,
+		initMinSize:       opts.InitMinCount,
+		indexMetrics:      indexMetrics,
+		vectorMetrics:     vectorMetrics,
+		ownsIndexFn:       ownsIndexFn,
 
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
 		searchFields:              searchFields,
+		hybridSearchConfig:        opts.HybridSearchConfig,
 		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
@@ -918,10 +937,20 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
-	if err := s.checkSearchServicePermissions(ctx, req); err != nil {
+	excluded, err := s.checkSearchServicePermissions(ctx, req)
+	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+	}
+	if len(excluded) > 0 {
+		// Cloned so the caller's request is not changed underneath it.
+		req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key:      SEARCH_FIELD_GROUP_RESOURCE,
+			Operator: string(selection.NotIn),
+			Values:   excluded,
+		})
 	}
 
 	nsr := NamespacedResource{
@@ -959,7 +988,11 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	if prepare != nil {
 		prepare(idx)
 	}
-	return idx.Search(ctx, s.access, req, federate, stats)
+	rsp, err := idx.Search(ctx, s.access, req, federate, stats)
+	if rsp != nil && len(excluded) > 0 {
+		rsp.SkippedTypes = excluded
+	}
+	return rsp, err
 }
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with
@@ -1514,31 +1547,54 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 }
 
 func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, error) {
-	stats, err := s.search.LoadOpenIndexStats(time.Now(), openIndexStatsMaxAge)
+	openStats, err := s.search.LoadOpenIndexStats(time.Now(), openIndexStatsMaxAge)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("failed to load open index stats, falling back to resource stats", "error", err)
-	} else if len(stats) > 0 {
-		// Do not apply initMinSize here: open index stats restore indexes that were recently open on this node,
-		// rather than discovering resources from storage.
-		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(stats))
-		return stats, nil
-	} else {
-		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
+		openStats = nil
+	} else if len(openStats) > 0 {
+		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(openStats))
+		if !s.globalIndexEnabled {
+			return openStats, nil
+		}
 	}
 
-	// The prebuild only compares counts against thresholds, so cap counting above
-	// the highest one that consumes the count: init min size, plus the snapshot
-	// threshold when a snapshot store is active.
-	limit := s.initMinSize
-	if t := int(s.search.SnapshotCountThreshold()); t > limit {
-		limit = t
+	// Counts only decide whether to prebuild or use snapshots, so neither
+	// decision needs an exact count above the higher threshold.
+	limit := max(s.initMinSize, int(s.search.SnapshotCountThreshold())) + 1
+	minCount := s.initMinSize
+	if s.globalIndexEnabled {
+		// Individually small types can together make a large global index.
+		minCount = 0
 	}
-	limit++
-
 	start := time.Now()
-	stats, err = s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, s.initMinSize, limit)
+	stats, err := s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, minCount, limit)
 	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
-	return stats, err
+	if err != nil {
+		if len(openStats) > 0 {
+			s.log.FromContext(ctx).Warn("failed to load resource stats, falling back to open index stats", "error", err)
+			return openStats, nil
+		}
+		return nil, err
+	}
+	globals := s.globalIndexStats(stats)
+	if len(openStats) > 0 {
+		// Restore recently open indexes regardless of size, but discover global
+		// indexes from storage: the local list may omit one of their types.
+		present := make(map[NamespacedResource]int, len(openStats))
+		for i, info := range openStats {
+			present[info.NamespacedResource] = i
+		}
+		for _, info := range globals {
+			if i, ok := present[info.NamespacedResource]; ok {
+				openStats[i].Count = info.Count
+			} else if info.Count > int64(s.initMinSize) {
+				openStats = append(openStats, info)
+			}
+		}
+		return openStats, nil
+	}
+	stats = append(stats, globals...)
+	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return info.Count <= int64(s.initMinSize) }), nil
 }
 
 // globalIndexStats returns the namespace-wide index to build for every namespace
@@ -1546,10 +1602,7 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 // index is not a stored resource, so storage never reports it and it has to be
 // added here.
 //
-// It sees only what the startup build was already going to build, so a namespace
-// whose covered types are all below the startup size threshold gets no index
-// built here. That is the same as for per-resource indexes: a small index is
-// built the first time it is searched.
+// Counts must be combined before the caller applies the startup threshold.
 func (s *searchServer) globalIndexStats(stats []ResourceStats) []ResourceStats {
 	if !s.globalIndexEnabled {
 		return nil
@@ -1592,48 +1645,96 @@ func (s *searchServer) globalIndexStats(stats []ResourceStats) []ResourceStats {
 	return out
 }
 
-func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
-	totalBatchesIndexed := 0
-	group := errgroup.Group{}
-	group.SetLimit(s.initWorkers)
+func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats, lastImportTime time.Time) error {
+	if s.search.GetIndex(info.NamespacedResource) != nil {
+		return nil
+	}
+	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true})
+	return err
+}
 
+func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	stats, err := s.startupIndexStats(ctx)
 	if err != nil {
 		return 0, err
 	}
-	if s.globalIndexEnabled {
-		stats = append(stats, s.globalIndexStats(stats)...)
-	} else {
-		// Open-index stats restored from a run with the index switched on can still
-		// name one, and it must not be built with the index switched off.
+	if !s.globalIndexEnabled {
+		// A previous run may have recorded a global index that is now disabled.
 		stats = slices.DeleteFunc(stats, func(info ResourceStats) bool { return info.IsGlobal() })
 	}
 
+	builds := make([]ResourceStats, 0, len(stats))
+	seen := make(map[NamespacedResource]bool, len(stats))
 	for _, info := range stats {
+		if seen[info.NamespacedResource] {
+			continue
+		}
 		own, err := s.ownsIndexFn(info.NamespacedResource)
 		if err != nil {
 			s.log.Warn("failed to check index ownership, building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "error", err)
 		} else if !own {
-			s.log.Debug("skip building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			continue
 		}
+		seen[info.NamespacedResource] = true
+		builds = append(builds, info)
+	}
+	if len(builds) == 0 {
+		return 0, nil
+	}
+	// SQL reads the whole import-time table, so share one lookup across builds and retries.
+	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
+	if err != nil {
+		s.log.Warn("Failed to load startup import times", "error", err)
+	}
+	// Replicas should try different indexes first, not all wait for the same ones.
+	rand.Shuffle(len(builds), func(i, j int) { builds[i], builds[j] = builds[j], builds[i] })
 
-		group.Go(func() error {
-			totalBatchesIndexed++
-
-			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
-			reason := "init"
-			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
-			return err
+	ctx, cancel := context.WithCancel(ctx)
+	// Delayed retries free workers to build other indexes while a lock is held.
+	queue := workqueue.NewTypedDelayingQueue[ResourceStats]()
+	stop := context.AfterFunc(ctx, queue.ShutDown)
+	var workers sync.WaitGroup
+	defer func() {
+		cancel()
+		queue.ShutDown()
+		stop()
+		workers.Wait()
+	}()
+	for _, info := range builds {
+		queue.Add(info)
+	}
+	results := make(chan error, len(builds))
+	for range min(s.initWorkers, len(builds)) {
+		workers.Go(func() {
+			for ctx.Err() == nil {
+				info, shutdown := queue.Get()
+				if shutdown {
+					return
+				}
+				err := s.buildStartupIndex(ctx, info, importTimes[info.NamespacedResource])
+				if ctx.Err() != nil {
+					err = ctx.Err()
+				}
+				if errors.Is(err, ErrIndexBuildInProgress) {
+					queue.AddAfter(info, time.Duration(float64(s.initRetryInterval)*(0.5+rand.Float64())))
+				} else {
+					results <- err
+				}
+				queue.Done(info)
+			}
 		})
 	}
-
-	err = group.Wait()
-	if err != nil {
-		return totalBatchesIndexed, err
+	for completed := range len(builds) {
+		select {
+		case <-ctx.Done():
+			return completed, ctx.Err()
+		case err := <-results:
+			if err != nil {
+				return completed, err
+			}
+		}
 	}
-
-	return totalBatchesIndexed, nil
+	return len(builds), nil
 }
 
 func (s *searchServer) init(ctx context.Context) error {
@@ -1642,22 +1743,19 @@ func (s *searchServer) init(ctx context.Context) error {
 			return fmt.Errorf("embedding enrollment: %w", err)
 		}
 	}
-	origCtx := ctx
-
 	ctx, span := tracer.Start(ctx, "resource.searchServer.init")
 	defer span.End()
 	start := time.Now().Unix()
 
-	totalBatchesIndexed, err := s.buildIndexes(ctx)
+	subctx, cancel := context.WithCancel(ctx)
+	s.bgTaskCancel = cancel
+	totalBatchesIndexed, err := s.buildIndexes(subctx)
 	if err != nil {
+		cancel()
 		return err
 	}
 
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
-
-	subctx, cancel := context.WithCancel(origCtx)
-
-	s.bgTaskCancel = cancel
 	for i := 0; i < s.rebuildWorkers; i++ {
 		s.bgTaskWg.Add(1)
 		go s.runIndexRebuilder(subctx)
@@ -1683,7 +1781,6 @@ func (s *searchServer) init(ctx context.Context) error {
 }
 
 func (s *searchServer) stop() {
-	// This stops search-server tasks only: rebuild workers, rebuild scans, and rate-limit sweeping.
 	s.bgTaskCancel()
 	s.bgTaskWg.Wait()
 
@@ -2298,6 +2395,10 @@ func (b *bulkIndexBatcher) flush() error {
 func (b *bulkIndexBatcher) indexed() int { return b.total }
 
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
+	return s.buildWithOptions(ctx, nsr, size, indexBuildReason, rebuild, lastImportTime, BuildIndexOptions{})
+}
+
+func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time, options BuildIndexOptions) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
 
@@ -2317,6 +2418,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	var builderMu sync.Mutex
 	builders := map[NamespacedResource]DocumentBuilder{}
 	getBuilder := func(ctx context.Context, src NamespacedResource) (DocumentBuilder, error) {
+		if nsr.IsGlobal() {
+			return &globalDocumentBuilder{blob: s.builders.blob}, nil
+		}
 		builderMu.Lock()
 		defer builderMu.Unlock()
 		if b, ok := builders[src]; ok {
@@ -2334,7 +2438,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// draws from its own. Documents of a namespace-wide index keep the standard
 	// fields only, because it declares no others.
 	sources := indexSources(nsr)
-	standardFieldsOnly := nsr.IsGlobal()
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
@@ -2370,7 +2473,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			if err != nil {
 				return indexRV, err
 			}
-			listRV, docs, err := s.indexResourceType(ctx, index, src, builder, standardFieldsOnly, phases, logger)
+			listRV, docs, err := s.indexResourceType(ctx, index, src, builder, phases, logger)
 			indexedDocs[src.GroupResource()] += docs
 			if indexRV == 0 || (listRV > 0 && listRV < indexRV) {
 				indexRV = listRV
@@ -2467,7 +2570,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		updater = nil
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updater, rebuild, lastImportTime, maxFreshSnapshotAge, options)
 
 	if err != nil {
 		return nil, err
@@ -2496,7 +2599,6 @@ func (s *searchServer) indexResourceType(
 	index ResourceIndex,
 	src NamespacedResource,
 	builder DocumentBuilder,
-	standardFieldsOnly bool,
 	phases *buildPhaseRecorder,
 	logger log.Logger,
 ) (int64, int, error) {
@@ -2552,10 +2654,6 @@ func (s *searchServer) indexResourceType(
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
 			}
-			if standardFieldsOnly {
-				doc = keepStandardFieldsOnly(doc)
-			}
-
 			if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 				return err
 			}

@@ -12,6 +12,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.60.15
 	github.com/grafana/grafana-plugin-sdk-go v0.296.5
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
+	github.com/grafana/grafana/pkg/apiserver v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/stretchr/testify v1.12.1
@@ -56,6 +57,7 @@ replace (
 	github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
 	github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 	github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
+	github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ../../pkg/storage/unified/apistore
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
@@ -63,7 +65,7 @@ replace (
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
 )
 
 require (
@@ -126,7 +128,6 @@ require (
 	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
-	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
@@ -179,7 +180,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2 // indirect
+	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // indirect
 	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
@@ -188,10 +189,10 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
 	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/log v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/infra/tracing v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.6.0 // indirect
@@ -344,7 +345,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.2 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -353,7 +353,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.37.1 // indirect
 	k8s.io/component-base v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kms v0.37.1 // indirect
 	k8s.io/streaming v0.37.1 // indirect
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
 	modernc.org/libc v1.75.6 // indirect

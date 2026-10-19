@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -21,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/atomic"
 
 	alertingModels "github.com/grafana/alerting/models"
@@ -28,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -1348,125 +1352,87 @@ func TestRuleRoutine(t *testing.T) {
 }
 
 func TestAlertRuleRetry(t *testing.T) {
-	gen := models.RuleGen
-	createSchedule := func(
-		evalAppliedChan chan time.Time,
-		senderMock *SyncAlertsSenderMock,
-	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
+	synctest.Test(t, func(t *testing.T) {
+		const maxAttempts = 3
+		const backoffDuration = 10 * time.Millisecond
+
 		ruleStore := newFakeRulesStore()
 		instanceStore := &state.FakeInstanceStore{}
+		reg := prometheus.NewPedanticRegistry()
 
-		registry := prometheus.NewPedanticRegistry()
-		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil, nil)
-		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
-			evalAppliedChan <- t
-		}
-		return sch, ruleStore, instanceStore, registry
-	}
+		rule := models.RuleGen.With(withQueryForState(t, eval.Error)).GenerateRef()
+		rule.ExecErrState = models.ErrorErrState
 
-	evalAppliedChan := make(chan time.Time)
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-	rule := gen.With(withQueryForState(t, eval.Error)).GenerateRef()
-	rule.ExecErrState = models.ErrorErrState
+		// Use a real clock, since we're inside synctest!
+		sch := setupScheduler(t, ruleStore, instanceStore, reg, sender, nil, nil, withSchedulerClock(clock.New()))
 
-	sender := NewSyncAlertsSenderMock()
-	sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+		// The shared setup starts separate scheduler and evaluator trace exporters that must exit with the bubble.
+		schedulerTracer := sch.tracer.(*tracing.TracingService)
+		evaluatorTracer := otel.GetTracerProvider().(*tracesdk.TracerProvider)
+		t.Cleanup(func() {
+			// The test context is canceled before cleanup; exporter shutdown needs a live context.
+			assert.NoError(t, schedulerTracer.GetTracerProvider().Shutdown(context.Background()))
+			assert.NoError(t, evaluatorTracer.Shutdown(context.Background()))
+		})
 
-	sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
-	fakeClock := sch.clock.(*clock.Mock)
-
-	ruleStore.PutRule(context.Background(), rule)
-
-	maxAttempts := int64(3)
-	backoffDuration := time.Millisecond * 10
-
-	factory := newRuleFactory(
-		sch.appURL,
-		sch.disableGrafanaFolder,
-		RetryConfig{
+		sch.retryConfig = RetryConfig{
 			MaxAttempts:       maxAttempts,
 			InitialRetryDelay: backoffDuration,
 			MaxRetryDelay:     backoffDuration,
-		},
-		sch.alertsSender,
-		sch.stateManager,
-		sch.evaluatorFactory,
-		fakeClock,
-		sch.rrCfg,
-		sch.metrics,
-		sch.log,
-		sch.tracer,
-		sch.featureToggles,
-		sch.recordingWriter,
-		sch.evalAppliedFunc,
-		sch.stopAppliedFunc,
-	)
+		}
+		ruleInfo := ruleFactoryFromScheduler(sch).new(t.Context(), ruleWithFolder{rule: rule})
+		t.Cleanup(func() { ruleInfo.Stop(nil) })
+		go func() {
+			assert.NoError(t, ruleInfo.Run())
+		}()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
+		// Run the rule evaluation tick
+		ruleInfo.Eval(&Evaluation{
+			scheduledAt: sch.clock.Now(),
+			rule:        rule,
+		})
 
-	go func() {
-		_ = ruleInfo.Run()
-	}()
+		// Let the first failed attempt finish and install its retry timer before checking metrics.
+		synctest.Wait()
 
-	// Run the rule evaluation tick
-	ruleInfo.Eval(&Evaluation{
-		scheduledAt: sch.clock.Now(),
-		rule:        rule,
-	})
+		compareMetrics := func(t *testing.T, attempts int) {
+			t.Helper()
 
-	compareMetrics := func(c *assert.CollectT, evaluations, expectedFailures int) {
-		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
-			# TYPE grafana_alerting_rule_evaluation_attempts_total counter
-			grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} %[3]d
-			# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
-			# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
-			grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} %[3]d
-			# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
-			# TYPE grafana_alerting_rule_evaluations_total counter
-			grafana_alerting_rule_evaluations_total{org="%[1]d"} %[2]d
-			`, rule.OrgID, evaluations, expectedFailures)
+			expectedMetrics := fmt.Sprintf(
+				`# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+				# TYPE grafana_alerting_rule_evaluation_attempts_total counter
+				grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} %[2]d
+				# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+				# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+				grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} %[2]d
+				# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+				# TYPE grafana_alerting_rule_evaluations_total counter
+				grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+				`, rule.OrgID, attempts)
 
-		err := testutil.GatherAndCompare(
-			reg,
-			bytes.NewBufferString(expectedMetric),
-			"grafana_alerting_rule_evaluations_total",
-			"grafana_alerting_rule_evaluation_attempts_total",
-			"grafana_alerting_rule_evaluation_attempt_failures_total",
-		)
-		assert.NoError(c, err)
-	}
+			require.NoError(t, testutil.GatherAndCompare(
+				reg,
+				bytes.NewBufferString(expectedMetrics),
+				"grafana_alerting_rule_evaluations_total",
+				"grafana_alerting_rule_evaluation_attempts_total",
+				"grafana_alerting_rule_evaluation_attempt_failures_total",
+			))
+		}
 
-	t.Run("first attempt", func(t *testing.T) {
-		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			compareMetrics(c, 1, 1)
-		}, time.Second, 10*time.Millisecond)
-	})
+		compareMetrics(t, 1)
 
-	t.Run("second attempt", func(t *testing.T) {
-		// advance the clock by the backoff duration
-		fakeClock.Add(backoffDuration)
-		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			compareMetrics(c, 1, 2)
-		}, time.Second, 10*time.Millisecond)
-	})
+		for attempt := 2; attempt <= maxAttempts; attempt++ {
+			// Expire the backoff and let the retry finish before checking its metrics.
+			synctest.Sleep(backoffDuration)
+			compareMetrics(t, attempt)
+		}
 
-	t.Run("third attempt", func(t *testing.T) {
-		// advance the clock by the backoff duration
-		fakeClock.Add(backoffDuration)
-		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			compareMetrics(c, 1, 3)
-		}, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("no fourth attempt", func(t *testing.T) {
-		// Wait long enough to ensure no fourth attempt occurs
-		fakeClock.Add(backoffDuration * 10)
-		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			compareMetrics(c, 1, 3)
-		}, time.Second, 10*time.Millisecond)
+		// Advance beyond further backoffs and let any unexpected fourth attempt finish before checking.
+		synctest.Sleep(backoffDuration * 10)
+		compareMetrics(t, maxAttempts)
 	})
 }
 

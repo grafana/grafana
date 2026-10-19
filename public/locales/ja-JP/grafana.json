@@ -1695,8 +1695,12 @@
       },
       "preview": {
         "error": "コンテンツの読み込みに失敗しました：{{error}}",
+        "hide-secrets": "",
         "loading": "コンテンツを読み込み中...",
         "notifications-title": "通知設定のプレビュー",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "アラートルールのプレビュー"
       },
       "recording-rules": "記録ルール",
@@ -2722,7 +2726,8 @@
     "recording-rules": {
       "description-target-data-source": "記録ルールの保存先のPrometheusデータソース",
       "label-target-data-source": "ターゲットデータソース",
-      "target-data-source-required": "ターゲットデータソースを選択してください"
+      "target-data-source-required": "ターゲットデータソースを選択してください",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "記録ルールの名前空間とグループを選択してください。",
@@ -3882,6 +3887,11 @@
     },
     "viz-wrapper": {
       "table": "テーブル"
+    },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "welcome-header": {
       "description-alert-activity": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。",
@@ -5985,6 +5995,24 @@
       "tooltip-next": "次へ",
       "tooltip-previous": "前へ"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Assistantのスキーマ編集"
@@ -6061,6 +6089,9 @@
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
     "plan-placeholder-badge": {
       "text": "サンプルデータ",
       "tooltip": "表示されている数値は説明用のサンプルデータであり、実際のクエリの結果ではありません。"
@@ -6099,6 +6130,9 @@
           "no-template-variables-found": "テンプレート変数が見つかりません"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "キャンセル",
@@ -7539,6 +7573,26 @@
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
       "confirmText-restore-version": "バージョン{{version}}に復元",
       "title-restore-version": "バージョンの復元"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_other": "",
+      "allowed-panels_other": "",
+      "banner-title_other": "",
+      "resources_other": "",
+      "resources-at-least_other": "",
+      "sources_other": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "保存",
@@ -10011,6 +10065,7 @@
             "name-humidity": "湿度 (%H)",
             "name-locale": "ロケールの日付書式",
             "name-number": "数値",
+            "name-ordinal": "",
             "name-percent-1": "パーセント (0.0-1.0)",
             "name-percent-100": "パーセント (0〜100)",
             "name-pixels": "ピクセル",
@@ -10136,7 +10191,8 @@
           },
           "name": "容量"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10751,6 +10807,7 @@
       "no-rows": "行なし",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
@@ -11059,6 +11116,8 @@
       "incident-filter-all": "すべてのインシデント",
       "incident-filter-label": "ラベルでインシデントを絞り込む",
       "incident-tab-label": "インシデント",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "自分のチーム",
       "title": "アラートとインシデント",
       "title-alerts": "アラート",
@@ -11133,6 +11192,17 @@
       "error-title": "最近のブログ投稿を読み込めませんでした",
       "read-more": "Grafana Labsブログの記事をもっと読む",
       "title": "ブログの最新記事"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11873,6 +11943,11 @@
       "load-newer": "新しいログを読み込んでいます...",
       "load-older": "古いログを読み込んでいます..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "ラベルを折りたたむ",
       "expand": "ラベルを展開"
@@ -11923,6 +11998,7 @@
       "inline-mode": "インラインで表示",
       "inline-no-scrolls": "拡張ビューに切り替える",
       "inline-with-scrolls": "縮小ビューに切り替える",
+      "link-fallback-label": "",
       "link-value-tooltip": "リンク値",
       "links-section": "リンク",
       "log-attributes-field": "ログ属性",
@@ -11932,13 +12008,14 @@
       "move-displayed-field-up": "上へ移動",
       "no-details": "表示するフィールドがありません。",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "ログをピン留め",
       "prettify": "整形",
       "remove-displayed-field": "フィールドを削除する",
       "remove-log": "ログを削除",
       "scroll-to-logline": "ログ行までスクロール",
       "search": {
-        "no-results": "表示する結果がありません。"
+        "no-results": ""
       },
       "search-placeholder": "フィールド名と値を検索",
       "show-context": "コンテキストを表示",
@@ -13097,6 +13174,7 @@
       "created-by-me": "自分が作成したもの",
       "error-conflict": "追加中にこのノートブックが変更されました。パネルを最新バージョンに追加して、もう一度お試しください。",
       "error-generic": "パネルをノートブックに追加できませんでした",
+      "error-open-conflict": "",
       "list-error": "ノートブックの読み込みに失敗しました",
       "list-error-body": "ノートブックの読み込み中に問題が発生しました。もう一度お試しいただくか、代わりに新しいノートブックを作成してください。",
       "list-no-matches": "これらのフィルターに一致するノートブックはありません。",
@@ -13105,6 +13183,8 @@
       "list-truncated": "すべてのノートブックが表示されているわけではありません。検索を絞り込んで他のノートブックを見つけてください。",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "タイトルで検索",
       "sort-alphabetical": "アルファベット順（A-Z）",
       "sort-label": "ノートブックを並べ替え",
@@ -13112,13 +13192,20 @@
       "sort-updated": "最近更新された",
       "submit": "ノートブックに追加",
       "success": "{{title}}にパネルが追加されました",
+      "success-cells": "",
       "success-link": "ノートブックを表示",
       "tag-placeholder": "タグで絞り込む",
       "target-description": "パネルを追加する場所を選択してください。",
       "target-existing": "既存のノートブック",
       "target-label": "ターゲットノートブック",
       "target-new": "新しいノートブック",
-      "title": "ノートブックにパネルを追加"
+      "title": "ノートブックにパネルを追加",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -16456,6 +16543,7 @@
     "name-page-size": "ページサイズ",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "テーブルヘッダーを表示",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "フィールドからのスタイリング",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
