@@ -3087,6 +3087,36 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 		require.Equal(t, []string{"retained"}, listNames(t, backend, sinceRV))
 	})
 
+	t.Run("reads the data store when pruning emptied the event store", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = 30 * time.Minute
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
+		require.NoError(t, err)
+
+		require.Equal(t, []string{"pruned"}, listNames(t, backend, SubtractDurationFromSnowflake(rv, 40*time.Minute)))
+		require.Empty(t, listNames(t, backend, SubtractDurationFromSnowflake(rv, 10*time.Minute)))
+	})
+
+	t.Run("rescans the data store when the event store scan outlives the retention period", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = eventStoreRetentionMargin + 2*time.Second
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "slow", "value")
+
+		_, seq := backend.ListModifiedSince(t.Context(), ns, SubtractDurationFromSnowflake(rv, time.Millisecond), nil)
+		var names []string
+		for mr, err := range seq {
+			require.NoError(t, err)
+			names = append(names, mr.Key.Name)
+			if len(names) == 1 {
+				time.Sleep(2500 * time.Millisecond)
+			}
+		}
+		require.Equal(t, []string{"slow", "slow"}, names)
+	})
+
 	t.Run("reads the data store past an hour even with a longer retention period", func(t *testing.T) {
 		backend, rv := setup(t, 24*time.Hour)
 		sinceRV := SubtractDurationFromSnowflake(rv, 2*time.Hour)

@@ -2298,19 +2298,6 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	))
 	defer span.End()
 
-	latestEvent, err := k.eventStore.LastEventKey(ctx)
-	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
-		}
-
-		err = fmt.Errorf("error trying to retrieve last event key: %w", err)
-		recordSpanError(span, err)
-		return 0, func(yield func(*ModifiedResource, error) bool) {
-			yield(nil, err)
-		}
-	}
-
 	// Determine whether to apply the lookback window. If the caller has previously
 	// called with this same sinceRv and enough wall-clock time has elapsed since that
 	// call, any in-flight concurrent writes at sinceRv time must have committed, so
@@ -2330,25 +2317,59 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
-	// If no new events since effectiveRv, return early and avoid doing a range query.
-	if latestEvent.ResourceVersion <= effectiveRv {
-		return latestEvent.ResourceVersion, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	sinceRvAge := time.Since(sinceRvTime)
+	effectiveRvTime := time.UnixMilli(snowflakeTimestampMillis(effectiveRv))
+	// Events past the retention period may already be pruned.
+	useDataStore := time.Since(effectiveRvTime) > k.maxEventStoreAge()
+
+	latestEvent, err := k.eventStore.LastEventKey(ctx)
+	latestRv := latestEvent.ResourceVersion
+	if errors.Is(err, ErrNotFound) {
+		if !useDataStore {
+			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+		}
+		// Pruning may have removed every event since effectiveRv.
+		latestRv, err = k.generateResourceVersion()
+	}
+	if err != nil {
+		err = fmt.Errorf("error trying to retrieve the latest resource version: %w", err)
+		recordSpanError(span, err)
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
 	}
 
-	sinceRvAge := time.Since(sinceRvTime)
+	// If no new events since effectiveRv, return early and avoid doing a range query.
+	if latestRv <= effectiveRv {
+		return latestRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	}
 
-	// Events past the retention period may already be pruned.
-	effectiveRvAge := time.Since(time.UnixMilli(snowflakeTimestampMillis(effectiveRv)))
-	if effectiveRvAge > k.maxEventStoreAge() {
+	if useDataStore {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
+		return latestRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
+	events := k.listModifiedSinceEventStore(ctx, key, effectiveRv)
+	return latestRv, func(yield func(*ModifiedResource, error) bool) {
+		for mr, err := range events {
+			if !yield(mr, err) || err != nil {
+				return
+			}
+		}
+		// The scan reads the oldest events last, so pruning may have overtaken a long one.
+		if time.Since(effectiveRvTime) > k.eventRetentionPeriod-eventStoreRetentionMargin {
+			k.log.Info("ListModifiedSince event store scan outlived the retention period, rescanning the data store", "sinceRv", sinceRv, "group", key.Group, "resource", key.Resource)
+			for mr, err := range k.listModifiedSinceDataStore(ctx, key, effectiveRv) {
+				if !yield(mr, err) {
+					return
+				}
+			}
+		}
+	}
 }
 
-// The margin covers clock skew and pruning during the scan.
+// The margin covers clock skew between this instance and the one pruning events.
 func (k *kvStorageBackend) maxEventStoreAge() time.Duration {
 	return min(time.Hour, k.eventRetentionPeriod-eventStoreRetentionMargin)
 }
