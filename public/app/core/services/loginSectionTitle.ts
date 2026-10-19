@@ -52,10 +52,10 @@ export function getLoginSectionTitle(): string | undefined {
     if (url.origin !== window.location.origin) {
       return undefined;
     }
-    const pathname =
-      config.appSubUrl && url.pathname.startsWith(config.appSubUrl + '/')
-        ? url.pathname.slice(config.appSubUrl.length)
-        : url.pathname;
+    let pathname = url.pathname;
+    if (config.appSubUrl && (pathname === config.appSubUrl || pathname.startsWith(config.appSubUrl + '/'))) {
+      pathname = pathname.slice(config.appSubUrl.length) || '/';
+    }
     // Section metadata is saved during navigation, independently of the login redirect.
     // Section metadata is saved during navigation, independently of the login redirect because we need navigationNode.navId to build the title.
     // We only use it when the saved pathname matches the actual redirect destination. It may not match in case user is not logged out from Grafana but when opening a new tab and trying to access a new page while logged out. In that case nothing updated the `grafana.loginSection` yet and so we don't show any title, which is expected.

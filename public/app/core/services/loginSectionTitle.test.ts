@@ -32,6 +32,15 @@ it.each([
   expect(sessionStorage.getItem('grafana.loginSection')).not.toContain('Sensitive name');
 });
 
+it.each(['/grafana', '/grafana/', '/grafana?orgId=2', '/'])(
+  'preserves the Home section for redirect %s',
+  (redirect) => {
+    rememberLoginSectionTitle({ id: 'home', text: 'Home' }, '/');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(redirect));
+    expect(getLoginSectionTitle()).toBe('Home');
+  }
+);
+
 it('uses the nearest catalogue ancestor of a specific navigation item', () => {
   rememberLoginSectionTitle(
     { id: 'user-123', text: 'Sensitive username', parentItem: { id: 'global-users', text: 'Users' } },
