@@ -21,6 +21,7 @@ import {
   enrichWithInteractionTracking,
   getActiveItem,
   getPinnedEntries,
+  HIDDEN_NAV_ITEMS,
   hiddenKey,
   hideItem,
   isHideable,
@@ -313,9 +314,9 @@ export const useNavCustomization = () => {
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
   const [isSaving, setIsSaving] = useState(false);
 
-  // Base tree without the items the mega menu never lists directly. When customisation is on, the
-  // dedicated Bookmarks section is also dropped — pinned items are re-presented in the pinned box.
-  const baseItems = navTree.filter(
+  // Apply hard-coded exclusions before resolving pins or edit-mode items so neither can reveal them.
+  // When customisation is on, drop Bookmarks too — pinned items are re-presented in the pinned box.
+  const baseItems = removeHiddenItems(navTree, HIDDEN_NAV_ITEMS).filter(
     (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
   );
 
