@@ -1,13 +1,15 @@
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   canFloatExtensionSidebar,
+  getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
   isFloatingExtensionSidebarHeld,
   releaseFloatingExtensionSidebarHolds,
   resetExtensionSidebarPresentationForTests,
+  resolveExtensionSidebarPresentation,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
@@ -67,6 +69,85 @@ describe('extensionSidebarLayout', () => {
     setExtensionSidebarPresentation('floating', '/d/abc');
     expect(getRequestedExtensionSidebarPresentation('/d/abc')).toBe('floating');
     expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('docked');
+  });
+
+  describe('resolveExtensionSidebarPresentation', () => {
+    const ASSISTANT = 'grafana-assistant-app';
+    const originalToggle = config.featureToggles.restrictedPluginApis;
+    const { pluginRestrictedAPIsAllowList, pluginRestrictedAPIsBlockList } = config.bootData.settings;
+
+    // The plugin docks again through the restricted `extensionSidebar` API, so it floats only while it gets it.
+    function giveRestrictedApis({
+      enabled = true,
+      allowList,
+      blockList,
+    }: {
+      enabled?: boolean;
+      allowList?: Record<string, string[]>;
+      blockList?: Record<string, string[]>;
+    }) {
+      config.featureToggles.restrictedPluginApis = enabled;
+      config.bootData.settings.pluginRestrictedAPIsAllowList = allowList;
+      config.bootData.settings.pluginRestrictedAPIsBlockList = blockList;
+    }
+
+    afterEach(() => {
+      config.featureToggles.restrictedPluginApis = originalToggle;
+      config.bootData.settings.pluginRestrictedAPIsAllowList = pluginRestrictedAPIsAllowList;
+      config.bootData.settings.pluginRestrictedAPIsBlockList = pluginRestrictedAPIsBlockList;
+    });
+
+    it('floats a supporting plugin that gets the extensionSidebar API', () => {
+      giveRestrictedApis({ allowList: { extensionSidebar: [ASSISTANT] } });
+
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('floating');
+      expect(resolveExtensionSidebarPresentation('docked', true, ASSISTANT)).toBe('docked');
+      expect(resolveExtensionSidebarPresentation('floating', false, ASSISTANT)).toBe('docked');
+    });
+
+    it('docks a plugin that does not support floating, even when it gets the API', () => {
+      giveRestrictedApis({ allowList: { extensionSidebar: ['grafana-pathfinder-app'] } });
+
+      expect(resolveExtensionSidebarPresentation('floating', true, 'grafana-pathfinder-app')).toBe('docked');
+      expect(resolveExtensionSidebarPresentation('floating', true, undefined)).toBe('docked');
+    });
+
+    it('docks while the restrictedPluginApis toggle is off', () => {
+      giveRestrictedApis({ enabled: false, allowList: { extensionSidebar: [ASSISTANT] } });
+
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('docked');
+    });
+
+    it('docks when the allow list does not give the plugin the extensionSidebar API', () => {
+      // As on a stack whose allow list has other APIs but no `extensionSidebar` entry.
+      giveRestrictedApis({ allowList: { dashboardMutationAPI: [ASSISTANT] } });
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('docked');
+
+      giveRestrictedApis({ allowList: { extensionSidebar: ['another-app'] } });
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('docked');
+
+      giveRestrictedApis({});
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('docked');
+    });
+
+    it('applies the block list the same way the restricted APIs provider does', () => {
+      giveRestrictedApis({ blockList: { extensionSidebar: [ASSISTANT] } });
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('docked');
+
+      giveRestrictedApis({ blockList: { extensionSidebar: ['another-app'] } });
+      expect(resolveExtensionSidebarPresentation('floating', true, ASSISTANT)).toBe('floating');
+    });
+
+    it('docks the default floating layout when the plugin cannot reach the API', () => {
+      setTestFlags({ [FLOATING_FLAG]: true });
+      giveRestrictedApis({ allowList: { dashboardMutationAPI: [ASSISTANT] } });
+
+      expect(getRequestedExtensionSidebarPresentation()).toBe('floating');
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
+
+      giveRestrictedApis({ allowList: { extensionSidebar: [ASSISTANT] } });
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
+    });
   });
 
   it('holds the floating sidebar hidden until every hold is released, or all are released at once', () => {

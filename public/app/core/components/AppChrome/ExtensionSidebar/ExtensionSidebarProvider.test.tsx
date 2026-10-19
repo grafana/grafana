@@ -4,7 +4,7 @@ import { type ReactElement, type ReactNode } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService, reportInteraction } from '@grafana/runtime';
+import { config, getAppEvents, setAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
@@ -527,7 +527,18 @@ describe('ExtensionSidebarProvider', () => {
       );
     };
 
+    const originalRestrictedApisToggle = config.featureToggles.restrictedPluginApis;
+    const originalAllowList = config.bootData.settings.pluginRestrictedAPIsAllowList;
+
+    beforeEach(() => {
+      // The Assistant docks again through the restricted `extensionSidebar` API, so it floats only while it gets it.
+      config.featureToggles.restrictedPluginApis = true;
+      config.bootData.settings.pluginRestrictedAPIsAllowList = { extensionSidebar: [mockPluginMeta.pluginId] };
+    });
+
     afterEach(async () => {
+      config.featureToggles.restrictedPluginApis = originalRestrictedApisToggle;
+      config.bootData.settings.pluginRestrictedAPIsAllowList = originalAllowList;
       resetExtensionSidebarPresentationForTests();
       await act(async () => {
         setTestFlags({});
@@ -656,6 +667,20 @@ describe('ExtensionSidebarProvider', () => {
       expect(reportInteraction).toHaveBeenCalledWith(
         'grafana_extension_sidebar_changed',
         expect.objectContaining({ opened: true, pluginId: mockPathfinderMeta.pluginId, presentation: 'docked' })
+      );
+    });
+
+    it('docks the Assistant when it does not get the extensionSidebar API, so it is never stuck floating', async () => {
+      config.bootData.settings.pluginRestrictedAPIsAllowList = { dashboardMutationAPI: [mockPluginMeta.pluginId] };
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+      });
+      renderPresentation();
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_extension_sidebar_changed',
+        expect.objectContaining({ opened: true, pluginId: mockPluginMeta.pluginId, presentation: 'docked' })
       );
     });
 

@@ -64,6 +64,34 @@ export type Props = {
   apiBlockList?: RestrictedGrafanaApisAllowList;
 };
 
+function matchesPluginId(entries: Array<string | RegExp>, pluginId: string): boolean {
+  return entries.includes(pluginId) || entries.some((keyword) => keyword instanceof RegExp && keyword.test(pluginId));
+}
+
+/**
+ * Whether `pluginId` gets the restricted API `api` from these lists. The allow list takes precedence; the block
+ * list applies only while no allow list is defined.
+ */
+export function isRestrictedGrafanaApiAllowed(
+  api: keyof RestrictedGrafanaApisContextType,
+  pluginId: string,
+  apiAllowList?: RestrictedGrafanaApisAllowList,
+  apiBlockList?: RestrictedGrafanaApisAllowList
+): boolean {
+  const allowed = apiAllowList?.[api];
+  if (allowed && matchesPluginId(allowed, pluginId)) {
+    return true;
+  }
+
+  // IF no allow list is defined (only block list), then we only omit the blocked APIs
+  const blocked = apiBlockList?.[api];
+  return (
+    (!apiAllowList || Object.keys(apiAllowList).length === 0) &&
+    blocked !== undefined &&
+    !matchesPluginId(blocked, pluginId)
+  );
+}
+
 export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Props>): ReactElement {
   const { children, pluginId, apis, apiAllowList, apiBlockList } = props;
   const allowedApis = useMemo(() => {
@@ -71,28 +99,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     for (const api of Object.keys(apis) as Array<keyof RestrictedGrafanaApisContextType>) {
-      if (
-        apiAllowList &&
-        apiAllowList[api] &&
-        (apiAllowList[api].includes(pluginId) ||
-          apiAllowList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId)))
-      ) {
-        // We use Object.assign below because direct assignment fails when the type has multiple optional properties
-        // of different types (TS can't correlate the key-value pair through a dynamic index).
-        Object.assign(allowedApis, { [api]: apis[api] });
-        continue;
-      }
-
-      // IF no allow list is defined (only block list), then we only omit the blocked APIs
-      if (
-        (!apiAllowList || Object.keys(apiAllowList).length === 0) &&
-        apiBlockList &&
-        apiBlockList[api] &&
-        !(
-          apiBlockList[api].includes(pluginId) ||
-          apiBlockList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId))
-        )
-      ) {
+      if (isRestrictedGrafanaApiAllowed(api, pluginId, apiAllowList, apiBlockList)) {
         // We use Object.assign below because direct assignment fails when the type has multiple optional properties
         // of different types (TS can't correlate the key-value pair through a dynamic index).
         Object.assign(allowedApis, { [api]: apis[api] });

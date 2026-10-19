@@ -2,6 +2,7 @@ import { store } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
+import { isRestrictedGrafanaApiAvailable } from 'app/features/plugins/components/restrictedGrafanaApis/isRestrictedGrafanaApiAvailable';
 
 /**
  * How the open extension sidebar is laid out: `docked` as a column next to the page, or `floating` over the
@@ -23,7 +24,8 @@ const PRESENTATION_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarPrese
 
 /**
  * Plugins that draw their own floating surface and drag handle, and can dock again through the restricted
- * `extensionSidebar` API. Any other sidebar plugin always docks.
+ * `extensionSidebar` API. Any other sidebar plugin always docks, and so does one of these while this Grafana
+ * does not give it that API: it would float with no way back to the column.
  */
 const FLOATING_EXTENSION_SIDEBAR_PLUGINS = ['grafana-assistant-app'];
 
@@ -78,7 +80,7 @@ export function setExtensionSidebarPresentation(
 
 /**
  * The layout `pluginId`'s sidebar shows on the current page, given the requested one: floating only while the
- * flag allows it and only for a plugin that supports it.
+ * flag allows it and only for a plugin that supports it and can dock again.
  */
 export function resolveExtensionSidebarPresentation(
   requestedPresentation: ExtensionSidebarPresentation,
@@ -88,7 +90,8 @@ export function resolveExtensionSidebarPresentation(
   return canFloat &&
     requestedPresentation === 'floating' &&
     pluginId !== undefined &&
-    FLOATING_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
+    FLOATING_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
+    isRestrictedGrafanaApiAvailable('extensionSidebar', pluginId)
     ? 'floating'
     : 'docked';
 }
