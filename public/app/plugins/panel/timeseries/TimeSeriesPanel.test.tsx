@@ -124,6 +124,14 @@ describe('TimeSeriesPanel', () => {
     expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
   });
 
+  it('does not mount the exemplar overlay when annotations and programmatic requests are absent', async () => {
+    renderPanel();
+
+    const chart = await screen.findByTestId('uplot-main-div');
+    await waitFor(() => expect(chart.querySelector('.u-over')).toBeVisible());
+    expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
+  });
+
   it('does not retry a pending exemplar request on an unrelated panel render', async () => {
     const props = getPanelProps({ ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } });
     props.data.series = [validFrame];

@@ -33,6 +33,8 @@ export const ExemplarsPlugin = ({
   maxWidth,
 }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot | undefined>(undefined);
+  const openExemplarRef = useRef(openExemplar);
+  openExemplarRef.current = openExemplar;
   const [initializedConfig, setInitializedConfig] = useState<UPlotConfigBuilder>();
   const [drawCount, setDrawCount] = useState(0);
 
@@ -116,7 +118,9 @@ export const ExemplarsPlugin = ({
       setInitializedConfig(config);
     });
     config.addHook('draw', () => {
-      setDrawCount((count) => count + 1);
+      if (openExemplarRef.current) {
+        setDrawCount((count) => count + 1);
+      }
     });
   }, [config]);
 
