@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -18,7 +19,6 @@ import { contextSrv } from '../../../services/context_srv';
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
-  findByUrl,
   getActiveItem,
   getPinnedEntries,
   hiddenKey,
@@ -381,7 +381,7 @@ export const useNavCustomization = () => {
     if (bookmarksItem) {
       // Add children to the legacy bookmarks section
       bookmarksItem.children = pinnedItems.reduce<NavModelItem[]>((acc, url) => {
-        const item = findByUrl(navItems, url);
+        const item = findNavByUrl(navItems, (itemUrl) => itemUrl === url);
         if (!item) {
           return acc;
         }

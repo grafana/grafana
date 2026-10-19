@@ -40,8 +40,9 @@ type MockResourceIndex struct {
 	updateIndexMu    sync.Mutex
 	updateIndexCalls int
 
-	buildInfo IndexBuildInfo
-	docCount  int64
+	buildInfo        IndexBuildInfo
+	docCount         int64
+	fieldDefinitions []SearchFieldDefinition
 
 	// Types recorded through RecordCompletedTypeBuild, and an error to fail
 	// reading them with.
@@ -107,6 +108,13 @@ func (m *MockResourceIndex) indexedItems() []*BulkIndexItem {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 	return slices.Clone(m.bulkItems)
+}
+
+func (m *MockResourceIndex) SearchFieldDefinitions() []SearchFieldDefinition {
+	if m.fieldDefinitions != nil {
+		return m.fieldDefinitions
+	}
+	return StandardSearchFieldDefinitions()
 }
 
 func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
@@ -239,6 +247,7 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
 	resourceStats       []ResourceStats
+	statsErr            error
 	lastImportTimes     []ResourceLastImportTime
 	statsCalls          atomic.Int32
 	listStoredCalls     atomic.Int32
@@ -256,7 +265,7 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 			result = append(result, stat)
 		}
 	}
-	return result, nil
+	return result, m.statsErr
 }
 
 // ListStoredResources reports the distinct group/resource identities in the
@@ -428,7 +437,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration, _ BuildIndexOptions) (ResourceIndex, error) {
 	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
@@ -471,6 +480,440 @@ func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
 
 func (m *mockSearchBackend) Stop() {
 	m.stopCalls.Add(1)
+}
+
+type initialBuildTestBackend struct {
+	mockSearchBackend
+	beforeBuild      func(context.Context, NamespacedResource, BuildIndexOptions) error
+	buildImportTimes map[NamespacedResource][]time.Time
+}
+
+func (b *initialBuildTestBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration, options BuildIndexOptions) (ResourceIndex, error) {
+	b.mu.Lock()
+	if b.buildImportTimes == nil {
+		b.buildImportTimes = make(map[NamespacedResource][]time.Time)
+	}
+	b.buildImportTimes[key] = append(b.buildImportTimes[key], lastImportTime)
+	b.mu.Unlock()
+	if err := b.beforeBuild(ctx, key, options); err != nil {
+		return nil, err
+	}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures()}}
+	if key.IsGlobal() {
+		index.buildInfo.SearchFieldsHash = GlobalSearchFieldsHash()
+	}
+	if _, err := builder(index); err != nil {
+		return nil, err
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.cache == nil {
+		b.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	b.cache[key] = index
+	b.buildIndexCalls = append(b.buildIndexCalls, buildIndexCall{key: key, size: size})
+	return index, nil
+}
+
+func newInitialBuildTestServer(t *testing.T, backend *initialBuildTestBackend, stats []ResourceStats, workers int) *searchServer {
+	t.Helper()
+	server, err := newSearchServer(SearchOptions{
+		Backend: backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+			"dashboard.grafana.app": "dashboards",
+			"folder.grafana.app":    "folders",
+		}},
+		InitWorkerThreads:  workers,
+		GlobalIndexEnabled: true,
+	}, &mockStorageBackend{resourceStats: stats}, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	server.initRetryInterval = 10 * time.Millisecond
+	t.Cleanup(func() {
+		if backend.stopCalls.Load() == 0 {
+			server.stop()
+		}
+	})
+	return server
+}
+
+func TestStartupBuildsDeferHeldLocksWithoutOccupyingWorker(t *testing.T) {
+	stats := make([]ResourceStats, 3)
+	for i := range stats {
+		stats[i] = ResourceStats{NamespacedResource: dashboardType(fmt.Sprintf("ns-%d", i)), Count: 1}
+	}
+	attempts := make(chan NamespacedResource, 10)
+	var leaderFinished atomic.Bool
+	var blocked NamespacedResource
+	backend := &initialBuildTestBackend{beforeBuild: func(ctx context.Context, key NamespacedResource, options BuildIndexOptions) error {
+		if key.IsGlobal() {
+			return nil
+		}
+		if !options.SkipIfBuilding {
+			return fmt.Errorf("startup build must not wait for the leader")
+		}
+		if blocked.Namespace == "" {
+			blocked = key
+		}
+		select {
+		case attempts <- key:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+		if key == blocked && !leaderFinished.Load() {
+			return ErrIndexBuildInProgress
+		}
+		return nil
+	}}
+	server := newInitialBuildTestServer(t, backend, stats, 1)
+	server.initRetryInterval = 100 * time.Millisecond
+	done := make(chan error, 1)
+	go func() { done <- server.init(t.Context()) }()
+
+	seen := make(map[NamespacedResource]bool)
+	for range len(stats) {
+		select {
+		case key := <-attempts:
+			require.False(t, seen[key], "the held lock must not stop attempts for other indexes")
+			seen[key] = true
+		case <-time.After(5 * time.Second):
+			t.Fatal("worker did not try the remaining indexes")
+		}
+	}
+	select {
+	case err := <-done:
+		t.Fatalf("startup finished before the leader: %v", err)
+	default:
+	}
+
+	leaderFinished.Store(true)
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("startup did not retry the deferred index")
+	}
+	for _, info := range stats {
+		require.NotNil(t, backend.GetIndex(info.NamespacedResource))
+	}
+}
+
+func TestStartupReadsImportTimesOnceAcrossBuildsAndRetries(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		readFails      bool
+		failBeforeRead bool
+	}{
+		{name: "successful lookup"},
+		{name: "failed lookup", readFails: true, failBeforeRead: true},
+		{name: "partial lookup failure", readFails: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			importTimes := map[NamespacedResource]time.Time{
+				dashboardType("default"): time.Now().UTC().Truncate(time.Second).Add(-time.Hour),
+				folderType("default"):    time.Now().UTC().Truncate(time.Second).Add(-2 * time.Hour),
+			}
+			for key, importedAt := range importTimes {
+				require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+					NamespacedResource: key, LastImportTime: importedAt,
+				}))
+			}
+			storage := &countingImportTimeBackend{StorageBackend: backend, failBeforeRead: tc.failBeforeRead}
+			if tc.readFails {
+				storage.readErr = errors.New("import times unavailable")
+			}
+			stats := []ResourceStats{
+				{NamespacedResource: dashboardType("default"), Count: 2},
+				{NamespacedResource: folderType("default"), Count: 2},
+				{NamespacedResource: dashboardType("stacks-1"), Count: 2},
+			}
+			var attempts atomic.Int32
+			search := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, _ BuildIndexOptions) error {
+				if key == dashboardType("default") && attempts.Add(1) <= 2 {
+					return ErrIndexBuildInProgress
+				}
+				return nil
+			}}
+			search.openIndexStats = stats
+			server, err := newSearchServer(SearchOptions{
+				Backend: search,
+				Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+					"dashboard.grafana.app": "dashboards",
+					"folder.grafana.app":    "folders",
+				}},
+				InitWorkerThreads: 3,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+			server.initRetryInterval = time.Millisecond
+			built, err := server.buildIndexes(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, len(stats), built)
+			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, storage.singleCalls, "startup retries must not issue per-key import-time reads")
+			require.Equal(t, int32(3), attempts.Load())
+			for _, info := range stats {
+				want := importTimes[info.NamespacedResource]
+				if tc.failBeforeRead {
+					want = time.Time{}
+				}
+				got := search.buildImportTimes[info.NamespacedResource]
+				require.NotEmpty(t, got)
+				for _, importedAt := range got {
+					require.Equal(t, want, importedAt, "timestamp for %s", info.String())
+				}
+			}
+		})
+	}
+}
+
+func TestStartupAppliesGlobalThresholdAfterCombiningResourceTypes(t *testing.T) {
+	cases := []struct {
+		name      string
+		openStats []ResourceStats
+	}{
+		{name: "discover from storage"},
+		{name: "local stats omit folders", openStats: []ResourceStats{{NamespacedResource: dashboardType("large"), Count: 6}}},
+		{name: "local global count is outdated", openStats: []ResourceStats{{NamespacedResource: GlobalSearchKey("large"), Count: 3}}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &initialBuildTestBackend{beforeBuild: func(context.Context, NamespacedResource, BuildIndexOptions) error { return nil }}
+			backend.openIndexStats = tc.openStats
+			backend.snapshotThreshold = 50
+			server := newInitialBuildTestServer(t, backend, []ResourceStats{
+				{NamespacedResource: dashboardType("large"), Count: 6},
+				{NamespacedResource: folderType("large"), Count: 5},
+				{NamespacedResource: dashboardType("small"), Count: 5},
+				{NamespacedResource: folderType("small"), Count: 5},
+			}, 2)
+			server.initMinSize = 10
+			require.NoError(t, server.init(t.Context()))
+
+			backend.mu.Lock()
+			calls := slices.Clone(backend.buildIndexCalls)
+			backend.mu.Unlock()
+			want := []buildIndexCall{{key: GlobalSearchKey("large"), size: 11}}
+			for _, info := range tc.openStats {
+				if !info.IsGlobal() {
+					want = append(want, buildIndexCall{key: info.NamespacedResource, size: info.Count})
+				}
+			}
+			require.ElementsMatch(t, want, calls)
+			require.NotNil(t, backend.GetIndex(GlobalSearchKey("large")))
+			require.Nil(t, backend.GetIndex(GlobalSearchKey("small")))
+			require.Nil(t, backend.GetIndex(folderType("large")))
+			require.Equal(t, int64(51), server.storage.(*mockStorageBackend).lastCountLimit.Load())
+		})
+	}
+}
+
+func TestStartupWaitsForGlobalBuild(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	backend := &initialBuildTestBackend{beforeBuild: func(ctx context.Context, key NamespacedResource, _ BuildIndexOptions) error {
+		if !key.IsGlobal() {
+			return nil
+		}
+		close(started)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-release:
+			return nil
+		}
+	}}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{
+		{NamespacedResource: dashboardType("ns"), Count: 1},
+		{NamespacedResource: folderType("ns"), Count: 1},
+	}, 1)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- server.init(ctx) }()
+	select {
+	case <-started:
+	case <-ctx.Done():
+		t.Fatal("global build did not start")
+	}
+	select {
+	case err := <-done:
+		t.Fatalf("startup finished before the global build: %v", err)
+	default:
+	}
+	close(release)
+	require.NoError(t, <-done)
+	require.NotNil(t, backend.GetIndex(GlobalSearchKey("ns")))
+	require.NotNil(t, backend.GetIndex(dashboardType("ns")))
+	require.NotNil(t, backend.GetIndex(folderType("ns")))
+}
+
+func TestSmallGlobalIndexRequestsWaitForSharedBuild(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var calls atomic.Int32
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+		if calls.Add(1) == 1 {
+			close(started)
+		}
+		<-release
+		return nil
+	}}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{
+		{NamespacedResource: dashboardType("small"), Count: 1},
+		{NamespacedResource: folderType("small"), Count: 1},
+	}, 1)
+	server.initMinSize = 10
+	require.NoError(t, server.init(t.Context()))
+	require.Zero(t, calls.Load(), "small indexes should not be prebuilt")
+
+	type result struct {
+		index ResourceIndex
+		err   error
+	}
+	results := make(chan result, 10)
+	var requests sync.WaitGroup
+	t.Cleanup(func() {
+		releaseOnce.Do(func() { close(release) })
+		requests.Wait()
+	})
+	for range 10 {
+		requests.Go(func() {
+			index, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("small"), "test")
+			results <- result{index: index, err: err}
+		})
+	}
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("request did not start global initialization")
+	}
+	select {
+	case got := <-results:
+		t.Fatalf("request returned before the shared build finished: %v", got.err)
+	default:
+	}
+	releaseOnce.Do(func() { close(release) })
+	requests.Wait()
+	for range 10 {
+		got := <-results
+		require.NoError(t, got.err)
+		require.Same(t, backend.GetIndex(GlobalSearchKey("small")), got.index)
+	}
+	require.Equal(t, int32(1), calls.Load())
+	require.Equal(t, int32(1), server.storage.(*mockStorageBackend).statsCalls.Load(), "only startup should read resource stats")
+}
+
+func TestStartupReportsGlobalBuildErrors(t *testing.T) {
+	failure := errors.New("cannot build global index")
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+		return failure
+	}}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{{NamespacedResource: GlobalSearchKey("ns"), Count: 1}}, 1)
+	require.ErrorIs(t, server.init(t.Context()), failure)
+}
+
+func TestStartupCancellationFinishesBeforeClosingBackend(t *testing.T) {
+	started := make(chan struct{})
+	var closedTooEarly atomic.Bool
+	backend := &initialBuildTestBackend{}
+	backend.beforeBuild = func(ctx context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+		close(started)
+		<-ctx.Done()
+		closedTooEarly.Store(backend.stopCalls.Load() != 0)
+		return ctx.Err()
+	}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{{NamespacedResource: GlobalSearchKey("ns"), Count: 1}}, 1)
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- server.init(ctx) }()
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("global build did not start")
+	}
+	cancel()
+	require.ErrorIs(t, <-done, context.Canceled)
+	require.NoError(t, server.Stop(t.Context()))
+	require.False(t, closedTooEarly.Load())
+	require.Equal(t, int32(1), backend.stopCalls.Load())
+}
+
+func TestInitialIndexBuildsRespectConcurrencyLimit(t *testing.T) {
+	started := make(chan struct{}, 5)
+	release := make(chan struct{})
+	backend := &initialBuildTestBackend{beforeBuild: func(ctx context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+		started <- struct{}{}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-release:
+			return nil
+		}
+	}}
+	stats := make([]ResourceStats, 5)
+	for i := range stats {
+		stats[i] = ResourceStats{NamespacedResource: GlobalSearchKey(fmt.Sprintf("ns-%d", i)), Count: 1}
+	}
+	server := newInitialBuildTestServer(t, backend, stats, 2)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- server.init(ctx) }()
+	for range 2 {
+		select {
+		case <-started:
+		case <-ctx.Done():
+			t.Fatal("initial build workers did not start")
+		}
+	}
+	select {
+	case <-started:
+		t.Fatal("more than two builds started at once")
+	case <-time.After(25 * time.Millisecond):
+	}
+	close(release)
+	require.NoError(t, <-done)
+	for _, info := range stats {
+		require.NotNil(t, backend.GetIndex(info.NamespacedResource))
+	}
+}
+
+func TestStartupCancellationWhileWaitingForLeader(t *testing.T) {
+	attempted := make(chan struct{})
+	var once sync.Once
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+		once.Do(func() { close(attempted) })
+		return ErrIndexBuildInProgress
+	}}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{{NamespacedResource: dashboardType("ns"), Count: 1}}, 1)
+	server.initRetryInterval = time.Hour
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- server.init(ctx) }()
+	select {
+	case <-attempted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("startup did not try to acquire the build lock")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(5 * time.Second):
+		t.Fatal("startup did not cancel its delayed retry")
+	}
+}
+
+func TestStartupStillReportsPerResourceBuildErrors(t *testing.T) {
+	failure := errors.New("cannot build resource index")
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, _ NamespacedResource, _ BuildIndexOptions) error {
+		return failure
+	}}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{{NamespacedResource: dashboardType("ns"), Count: 1}}, 1)
+	require.ErrorIs(t, server.init(t.Context()), failure)
 }
 
 type manifestSearchBackend struct {
@@ -518,6 +961,61 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 	require.Len(t, search.buildIndexCalls, 1)
 	require.Equal(t, key, search.buildIndexCalls[0].key)
 	require.Equal(t, int64(5), search.buildIndexCalls[0].size)
+}
+
+func TestBuildIndexesWhenResourceStatsFail(t *testing.T) {
+	openStats := []ResourceStats{
+		{NamespacedResource: dashboardType("ns"), Count: 5},
+		{NamespacedResource: GlobalSearchKey("ns"), Count: 5},
+	}
+	for _, tc := range []struct {
+		name      string
+		openStats []ResourceStats
+		loadErr   error
+		wantErr   bool
+	}{
+		{name: "restore local indexes", openStats: openStats},
+		{name: "no local indexes", wantErr: true},
+		{name: "local stats failed", openStats: openStats, loadErr: errors.New("open index stats unavailable"), wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			failure := errors.New("resource stats unavailable")
+			storage := &mockStorageBackend{statsErr: failure}
+			search := &manifestSearchBackend{
+				mockSearchBackend: mockSearchBackend{reusesFromDisk: true},
+				stats:             tc.openStats,
+				ok:                true,
+				loadErr:           tc.loadErr,
+			}
+			server, err := newSearchServer(SearchOptions{
+				Backend: search,
+				Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+					"dashboard.grafana.app": "dashboards",
+				}},
+				InitMinCount:       10,
+				GlobalIndexEnabled: true,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			built, err := server.buildIndexes(t.Context())
+			require.Equal(t, int32(1), search.loadCall.Load())
+			require.Equal(t, int32(1), storage.statsCalls.Load())
+			if tc.wantErr {
+				require.ErrorIs(t, err, failure)
+				require.Zero(t, built)
+				require.Empty(t, search.buildIndexCalls)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, len(tc.openStats), built)
+			want := make([]buildIndexCall, 0, len(tc.openStats))
+			for _, info := range tc.openStats {
+				want = append(want, buildIndexCall{key: info.NamespacedResource, size: info.Count})
+				require.NotNil(t, search.GetIndex(info.NamespacedResource))
+			}
+			require.ElementsMatch(t, want, search.buildIndexCalls)
+		})
+	}
 }
 
 func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
@@ -1640,7 +2138,7 @@ type failingRebuildSearchBackend struct {
 	buildCalls atomic.Int32
 }
 
-func (m *failingRebuildSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration) (ResourceIndex, error) {
+func (m *failingRebuildSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration, BuildIndexOptions) (ResourceIndex, error) {
 	m.buildCalls.Add(1)
 	return nil, fmt.Errorf("index rebuild failed")
 }
@@ -1981,11 +2479,11 @@ func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *block
 	}
 }
 
-func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
+func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration, options BuildIndexOptions) (ResourceIndex, error) {
 	b.buildCalls.Add(1)
 	b.startedOnce.Do(func() { close(b.onStarted) })
 	<-b.proceed
-	return b.mockSearchBackend.BuildIndex(ctx, key, size, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+	return b.mockSearchBackend.BuildIndex(ctx, key, size, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge, options)
 }
 
 // TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated verifies the
@@ -2704,7 +3202,7 @@ type snapshotSearchBackend struct {
 	mockSearchBackend
 }
 
-func (m *snapshotSearchBackend) BuildIndex(_ context.Context, key NamespacedResource, size int64, _ string, _ BuildFn, updater UpdateFn, _ bool, _ time.Time, _ time.Duration) (ResourceIndex, error) {
+func (m *snapshotSearchBackend) BuildIndex(_ context.Context, key NamespacedResource, size int64, _ string, _ BuildFn, updater UpdateFn, _ bool, _ time.Time, _ time.Duration, _ BuildIndexOptions) (ResourceIndex, error) {
 	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 
 	m.mu.Lock()

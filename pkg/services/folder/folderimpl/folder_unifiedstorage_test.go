@@ -949,7 +949,7 @@ func TestSearchFolders(t *testing.T) {
 					}).UpdateCopyFields(),
 				}},
 			})
-		}, nil, false, time.Time{}, 0)
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 
 		// Both formats must be usable: unified storage/search may deploy separately from the API

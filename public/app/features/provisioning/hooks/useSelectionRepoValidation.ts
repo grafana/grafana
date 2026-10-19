@@ -12,6 +12,7 @@ import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { getIsReadOnlyRepo, getItemRepositoryUid } from 'app/features/provisioning/utils/repository';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useSelector } from 'app/types/store';
@@ -74,7 +75,9 @@ export function useSelectionRepoValidation(selectedItems: SelectedItems) {
     return getItemRepoUid(item) === selectedItemsRepoUID;
   };
   const isItemInReadOnlyRepo = (item: DashboardViewItem) => {
-    const repo = getRepositoryByUid(getItemRepoUid(item));
+    // Folderless and instance repos don't name top-level folders after the repo
+    const repoName = isItemManagedByRepository(item) && item.managerId ? item.managerId : getItemRepoUid(item);
+    const repo = getRepositoryByUid(repoName);
     return repo ? getIsReadOnlyRepo(repo) : false;
   };
 

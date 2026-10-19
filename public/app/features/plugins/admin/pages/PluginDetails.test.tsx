@@ -11,8 +11,7 @@ import {
 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { updateAppPluginSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv, setBackendSrv, updateAppPluginSettings } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../api';
@@ -34,13 +33,8 @@ jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
   runtime.config.buildInfo.version = 'v8.1.0';
 
-  return runtime;
+  return { ...runtime, updateAppPluginSettings: jest.fn() };
 });
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  updateAppPluginSettings: jest.fn(),
-}));
 
 const updateAppPluginSettingsMock = jest.mocked(updateAppPluginSettings);
 

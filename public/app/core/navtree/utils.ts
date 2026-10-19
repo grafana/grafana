@@ -82,6 +82,23 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
   return undefined;
 }
 
+/**
+ * Depth-first search of a nav tree by item url; `match` sees each url as the tree stores it (app sub url
+ * included), so a caller decides what counts as the same destination (exact, by path, ...).
+ */
+export function findNavByUrl(nodes: NavModelItem[], match: (url: string) => boolean): NavModelItem | undefined {
+  for (const node of nodes) {
+    if (node.url !== undefined && match(node.url)) {
+      return node;
+    }
+    const found = node.children && findNavByUrl(node.children, match);
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
+}
+
 /** Returns a new tree with the matching node (at any depth) replaced by update(node) */
 function updateNavById(
   nodes: NavModelItem[],

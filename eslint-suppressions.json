@@ -706,7 +706,7 @@
   },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/core/TableModel.ts": {
@@ -1321,16 +1321,6 @@
       "count": 3
     }
   },
-  "public/app/features/alerting/unified/rule-editor/formDefaults.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-editor/formDefaults.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/rule-list/RuleList.v2.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1709,10 +1699,7 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 11
-    },
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
+      "count": 8
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
@@ -1735,9 +1722,6 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1863,7 +1847,7 @@
   },
   "public/app/features/dashboard-scene/utils/variables.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 10
+      "count": 7
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -1922,11 +1906,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmptyExtensionPoint.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1944,11 +1923,6 @@
   },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/services/DashboardLoaderSrv.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2345,11 +2319,6 @@
   },
   "public/app/features/plugins/admin/types.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/components/restrictedGrafanaApis/RestrictedGrafanaApisProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

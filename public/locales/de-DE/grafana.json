@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Inhalt konnte nicht geladen werden: {{error}}",
+        "hide-secrets": "",
         "loading": "Inhalt wird geladen …",
         "notifications-title": "Vorschau der Benachrichtigungskonfiguration",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Vorschau der Warnregeln"
       },
       "recording-rules": "Aufnahmeregeln",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "Die Prometheus-Datenquelle zur Speicherung der Aufnahmeregeln",
       "label-target-data-source": "Zieldatenquelle",
-      "target-data-source-required": "Bitte wählen Sie eine Zieldatenquelle aus"
+      "target-data-source-required": "Bitte wählen Sie eine Zieldatenquelle aus",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Wählen Sie den Namensraum und die Gruppe für Ihre Aufnahmeregel.",
@@ -3918,6 +3923,11 @@
     },
     "viz-wrapper": {
       "table": "Tabelle"
+    },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "welcome-header": {
       "description-alert-activity": "Sehen Sie, was zurzeit warnt, und prüfen Sie historische Daten, um aktuelle oder vergangene Probleme zu untersuchen.",
@@ -6032,6 +6042,24 @@
       "tooltip-next": "Weiter",
       "tooltip-previous": "Zurück"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Schemabearbeitung in Assistant"
@@ -6109,6 +6137,9 @@
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
     "plan-placeholder-badge": {
       "text": "Beispieldaten",
       "tooltip": "Die angezeigten Zahlen sind Beispieldaten zur Veranschaulichung und stammen nicht von echten Abfragen."
@@ -6147,6 +6178,9 @@
           "no-template-variables-found": "Keine Vorlagenvariablen gefunden"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Abbrechen",
@@ -7590,6 +7624,33 @@
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
       "confirmText-restore-version": "Ja, auf Version {{version}} zurücksetzen",
       "title-restore-version": "Version wiederherstellen"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Speichern",
@@ -10081,6 +10142,7 @@
             "name-humidity": "Feuchtigkeit (%H)",
             "name-locale": "Lokales Format",
             "name-number": "Nummer",
+            "name-ordinal": "",
             "name-percent-1": "Prozent (0,0–1,0)",
             "name-percent-100": "Prozent (0–100)",
             "name-pixels": "Pixel",
@@ -10206,7 +10268,9 @@
           },
           "name": "Volumen"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10762,13 +10826,21 @@
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
       "cell-inspect-tooltip": "Wert prüfen",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filterwerte",
+      "column-menu-hide": "",
       "column-menu-label": "Spaltenoptionen für {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Filter aktualisieren",
+      "column-visibility": "",
+      "columns": "",
       "copy": "In Zwischenablage kopieren",
       "csv-counts": "Zeilen:{{rows}}, Spalten:{{columns}}",
       "csv-placeholder": "CSV hier eingeben …",
       "edit-column-filter": "Filter bearbeiten bei {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Alle angezeigten Werte zum Filter hinzufügen",
         "blanks": "(Leerzeichen)",
@@ -10802,6 +10874,8 @@
           "count": "Anzahl"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Wert prüfen",
       "loading": "Tabelle wird geladen",
       "nested-table": {
@@ -10811,6 +10885,8 @@
       "no-rows": "Keine Zeilen",
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
       "sort-by-column-ascending": "Nach Spalte {{column}} sortieren, aufsteigend",
       "sort-by-column-descending": "Nach Spalte {{column}} sortieren, absteigend",
@@ -10820,7 +10896,8 @@
       },
       "tooltip": {
         "trigger": "Tooltip umschalten"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tags"
@@ -11117,6 +11194,8 @@
       "incident-filter-all": "Alle Incidents",
       "incident-filter-label": "Incidents nach Label filtern",
       "incident-tab-label": "Vorfälle",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -11193,6 +11272,17 @@
       "error-title": "Neue Blogbeiträge konnten nicht geladen werden",
       "read-more": "Lesen Sie mehr vom Grafana-Labs-Blog",
       "title": "Das Neueste aus dem Blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11955,6 +12045,11 @@
       "load-newer": "Neuere Protokolle werden geladen …",
       "load-older": "Ältere Protokolle werden geladen …"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Labels einklappen",
       "expand": "Labels ausklappen"
@@ -12005,6 +12100,7 @@
       "inline-mode": "Inline anzeigen",
       "inline-no-scrolls": "Zur erweiterten Ansicht wechseln",
       "inline-with-scrolls": "Zur komprimierten Ansicht wechseln",
+      "link-fallback-label": "",
       "link-value-tooltip": "Link-Wert",
       "links-section": "Links",
       "log-attributes-field": "Log-Attribute",
@@ -12014,13 +12110,14 @@
       "move-displayed-field-up": "Nach oben",
       "no-details": "Keine anzuzeigenden Felder.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Log anheften",
       "prettify": "Formatieren",
       "remove-displayed-field": "Feld entfernen",
       "remove-log": "Log entfernen",
       "scroll-to-logline": "Zur Logzeile scrollen",
       "search": {
-        "no-results": "Keine anzuzeigenden Ergebnisse."
+        "no-results": ""
       },
       "search-placeholder": "Feldnamen und Werte durchsuchen",
       "show-context": "Kontext anzeigen",
@@ -13184,6 +13281,7 @@
       "created-by-me": "Von mir erstellt",
       "error-conflict": "Dieses Notizbuch wurde geändert, während Sie etwas hinzugefügt haben. Versuchen Sie erneut, das Panel zur neuesten Version hinzuzufügen.",
       "error-generic": "Das Panel konnte nicht zum Notizbuch hinzugefügt werden",
+      "error-open-conflict": "",
       "list-error": "Notizbücher konnten nicht geladen werden",
       "list-error-body": "Beim Laden Ihrer Notizbücher ist ein Fehler aufgetreten. Versuchen Sie es erneut oder erstellen Sie stattdessen ein neues.",
       "list-no-matches": "Keine Notizbücher entsprechen diesen Filtern.",
@@ -13192,6 +13290,8 @@
       "list-truncated": "Es wird nicht jedes Notizbuch angezeigt. Schränken Sie die Suche ein, um andere zu finden.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Suche nach Titel",
       "sort-alphabetical": "Alphabetisch (A–Z)",
       "sort-label": "Notizbücher sortieren",
@@ -13199,13 +13299,20 @@
       "sort-updated": "Kürzlich aktualisiert",
       "submit": "Zum Notizbuch hinzufügen",
       "success": "Panel hinzugefügt zu {{title}}",
+      "success-cells": "",
       "success-link": "Notizbuch anzeigen",
       "tag-placeholder": "Filtern nach Tag",
       "target-description": "Wählen Sie, wo das Panel hinzugefügt werden soll.",
       "target-existing": "Vorhandenes Notizbuch",
       "target-label": "Ziel-Notizbuch",
       "target-new": "Neues Notizbuch",
-      "title": "Bereich zum Notizbuch hinzufügen"
+      "title": "Bereich zum Notizbuch hinzufügen",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -13871,6 +13978,9 @@
       "label-plugin-id": "Plugin-ID",
       "label-severity": "Schweregrad"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Alle Plugins sind auf dem neuesten Stand"
     },
@@ -13892,6 +14002,10 @@
     "plugin-details-body": {
       "needs-service-account": "Das Plugin {{pluginName}} erfordert ein Dienstkonto für die Abfrage von Grafana. Die folgende Liste enthält die Berechtigungen, die für das Dienstkonto verfügbar sind:",
       "page-not-found": "Die Seite wurde nicht gefunden."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Veraltet"
@@ -16526,6 +16640,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -16564,7 +16679,9 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-page-size": "Seitengröße",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Gestaltung über das Feld",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
@@ -16727,6 +16844,7 @@
     "editor": {
       "aria-label-content": "Textinhalt",
       "aria-label-mode": "Textmodus: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Zeilennummern",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16890,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
