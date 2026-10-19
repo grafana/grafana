@@ -9,11 +9,7 @@ import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
-import {
-  clockPanelOnPremPluginMeta,
-  myOrgTestAppSettings,
-  testdataPluginMeta,
-} from './test-fixtures/v0alpha1Response';
+import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 import { type Settings as v0alpha1Settings } from './types';
 import { updateAppPluginSettings } from './updateAppPluginSettings';
 import { getCacheKey } from './utils';

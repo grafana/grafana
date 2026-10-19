@@ -42,7 +42,7 @@ export interface MetricStat {
 /**
  * A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
  */
-export type Dimensions = Record<string, (string | Array<string>)>;
+export type Dimensions = Record<string, string | Array<string>>;
 
 /**
  * Shape of a CloudWatch Metrics query
@@ -60,7 +60,7 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   /**
    * When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
    */
-  format?: ('time_series' | 'table' | 'heatmap');
+  format?: 'time_series' | 'table' | 'heatmap';
   /**
    * ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
    */
@@ -111,7 +111,7 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   sqlExpression?: string;
 }
 
-type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
+type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
   Insights = 1,
@@ -128,7 +128,7 @@ interface SQLExpression {
   /**
    * FROM part of the SQL expression
    */
-  from?: (QueryEditorPropertyExpression | QueryEditorFunctionExpression);
+  from?: QueryEditorPropertyExpression | QueryEditorFunctionExpression;
   /**
    * GROUP BY part of the SQL expression
    */
@@ -200,10 +200,10 @@ interface QueryEditorOperatorExpression {
  */
 interface QueryEditorOperator {
   name?: string;
-  value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
+  value?: QueryEditorOperatorType | Array<QueryEditorOperatorType>;
 }
 
-type QueryEditorOperatorType = (string | boolean | number);
+type QueryEditorOperatorType = string | boolean | number;
 
 interface QueryEditorProperty {
   name?: string;
@@ -215,8 +215,14 @@ enum QueryEditorPropertyType {
 }
 
 interface QueryEditorArrayExpression {
-  expressions: (Array<QueryEditorExpression> | Array<QueryEditorArrayExpression>);
-  type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
+  expressions: Array<QueryEditorExpression> | Array<QueryEditorArrayExpression>;
+  type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or;
 }
 
-type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
+type QueryEditorExpression =
+  | QueryEditorArrayExpression
+  | QueryEditorPropertyExpression
+  | QueryEditorGroupByExpression
+  | QueryEditorFunctionExpression
+  | QueryEditorFunctionParameterExpression
+  | QueryEditorOperatorExpression;

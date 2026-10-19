@@ -11,11 +11,7 @@ import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../plu
 import { getPluginSettings } from './getPluginSettings';
 import { refetchPluginSettings } from './refetchPluginSettings';
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
-import {
-  clockPanelOnPremPluginMeta,
-  myOrgTestAppSettings,
-  testdataPluginMeta,
-} from './test-fixtures/v0alpha1Response';
+import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
