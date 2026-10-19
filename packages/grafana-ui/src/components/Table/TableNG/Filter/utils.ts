@@ -1,4 +1,6 @@
-import { type Field, formattedValueToString, type SelectableValue } from '@grafana/data';
+import { useMemo } from 'react';
+
+import { formattedValueToString, guessDecimals, type Field, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { FilterOperator, type TableRow } from '../types';
@@ -109,3 +111,64 @@ export const operatorSelectableValues = () => {
     ),
   };
 };
+
+export function rangeHistogram(values: unknown[]) {
+  const finite = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  let min = Infinity;
+  let max = -Infinity;
+  for (const value of finite) {
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  }
+  const bins = Array.from({ length: finite.length === 0 ? 0 : min === max ? 1 : 30 }, () => 0);
+  for (const value of finite) {
+    const index = min === max ? 0 : Math.min(bins.length - 1, Math.floor(((value - min) / (max - min)) * bins.length));
+    bins[index]++;
+  }
+  return { finite, min, max, bins, missing: values.length - finite.length };
+}
+
+export function useRangeValues(field: Field, rows: TableRow[]) {
+  const values = useMemo(
+    () => rows.filter((row) => row.__depth === 0).map((row) => field.values[row.__index]),
+    [rows, field]
+  );
+  const histogram = useMemo(() => rangeHistogram(values), [values]);
+  return { values, histogram };
+}
+
+export function rangeValidation(min?: number, max?: number) {
+  const minimumInvalid = min != null && !Number.isFinite(min);
+  const maximumInvalid = max != null && !Number.isFinite(max);
+  const boundsReversed = min != null && max != null && min > max;
+  return {
+    minimumInvalid,
+    maximumInvalid,
+    boundsReversed,
+    invalid: minimumInvalid || maximumInvalid || boundsReversed,
+  };
+}
+
+export function sliderDecimals(field: Field, values: number[], range: number) {
+  const display = field.display;
+  const displayed = display
+    ? values
+        .slice(0, 100)
+        .map((value) => Number(display(value).text.replaceAll(',', '')))
+        .filter(Number.isFinite)
+    : [];
+  const dataDecimals =
+    field.config.decimals ??
+    (displayed.length > 0
+      ? displayed.reduce((decimals, value) => Math.max(decimals, guessDecimals(value)), 0)
+      : Math.min(
+          3,
+          values.reduce((decimals, value) => Math.max(decimals, guessDecimals(Number(value.toPrecision(10)))), 0)
+        ));
+  const rangeDecimals = range > 0 && range < 1 ? Math.ceil(-Math.log10(range)) : 0;
+  return Math.min(100, Math.max(0, dataDecimals, rangeDecimals));
+}
+
+export function sliderBoundText(value: number, currentValue: number, currentText: string, decimals: number) {
+  return value === currentValue ? currentText : String(Number(value.toFixed(decimals)));
+}

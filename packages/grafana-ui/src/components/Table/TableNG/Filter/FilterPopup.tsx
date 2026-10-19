@@ -1,27 +1,13 @@
-import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useRef } from 'react';
 
-import { FieldType, type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { FieldType, type Field, type SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
-import { Button } from '../../../Button/Button';
-import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
-import { FilterInput } from '../../../FilterInput/FilterInput';
-import { Stack } from '../../../Layout/Stack/Stack';
 import { type FilterOperator, type TableRow } from '../types';
 
-import { FilterList } from './FilterList';
-import { FilterPopupFooter, FilterPopupLayout } from './FilterPopupLayout';
-import { RangeFilter } from './RangeFilter';
-import {
-  calculateUniqueFieldValues,
-  getFieldFilterValue,
-  getFilteredOptions,
-  operatorSelectableValues,
-  valuesToOptions,
-} from './utils';
+import { DateRangeFilter } from './DateRangeFilter';
+import { FilterPopupLayout } from './FilterPopupLayout';
+import { NumericRangeFilter } from './NumericRangeFilter';
+import { StringMatchingFilter } from './StringMatchingFilter';
 
 export interface FilterPopupProps {
   stateKey?: string;
@@ -43,199 +29,89 @@ export interface FilterPopupProps {
 
 export const FilterPopup = memo((props: FilterPopupProps) => <FilterPopupEditor key={props.stateKey} {...props} />);
 
-const FilterPopupEditor = memo(
-  ({
-    onApplyValues,
-    onApplyRange,
-    onClear,
-    range,
-    timeZone,
-    rows,
-    filterValue,
-    onClose,
-    field,
-    searchFilter,
-    setSearchFilter,
-    operator,
-    setOperator,
-    buttonElement,
-  }: FilterPopupProps) => {
-    const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
-    const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
-    const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
-    const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
-    const { selectedRows, totalRows } = useMemo(() => {
-      const selectedValues = new Set(values.map((option) => option.value));
-      let selectedRows = 0;
-      let totalRows = 0;
-      for (const row of rows) {
-        if (row.__depth !== 0) {
-          continue;
-        }
-        totalRows++;
-        if (field && selectedValues.has(getFieldFilterValue(row, field))) {
-          selectedRows++;
-        }
+const FilterPopupEditor = memo((props: FilterPopupProps) => {
+  const { buttonElement, onClose, onClear, onApplyRange, field, filterValue, rows, range, timeZone } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pointerStartedInside = useRef(false);
+
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose();
+        buttonElement?.focus();
       }
-      return { selectedRows: values.length === 0 ? totalRows : selectedRows, totalRows };
-    }, [field, rows, values]);
-    const [popupWidth, setPopupWidth] = useState(240);
-    const [matchCase, setMatchCase] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const pointerStartedInside = useRef(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const operators = Object.values(operatorSelectableValues());
-
-    // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
-    useEffect(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, []);
-
-    useEffect(() => {
-      function handleEscape(e: KeyboardEvent) {
-        if (e.key === 'Escape') {
-          onClose();
-          buttonElement?.focus();
-        }
-      }
-      document.addEventListener('keyup', handleEscape);
-
-      return () => {
-        document.removeEventListener('keyup', handleEscape);
-      };
-    }, [onClose, buttonElement]);
-
-    const onFilter = useCallback(() => {
-      onApplyValues(values);
-      onClose();
-    }, [values, onClose, onApplyValues]);
-
-    const onClearFilter = useCallback(() => {
-      onClear();
-      onClose();
-    }, [onClose, onClear]);
-
-    // we can't directly use ClickOutsideWrapper here because the click and keyup
-    // events are complex and need to be handled with care to avoid conflicts
-    useEffect(() => {
-      const onPointerDown = (event: PointerEvent) => {
-        pointerStartedInside.current = event.target instanceof Node && !!containerRef.current?.contains(event.target);
-      };
-      const onOutsideClick = (event: Event) => {
-        const domNode = containerRef.current;
-        if (!domNode) {
-          return;
-        }
-        const startedInside = pointerStartedInside.current;
-        pointerStartedInside.current = false;
-        if (event.target instanceof Node && !domNode.contains(event.target) && !startedInside) {
-          onClose();
-        }
-      };
-      window.addEventListener('pointerdown', onPointerDown, true);
-      window.addEventListener('click', onOutsideClick);
-      return () => {
-        window.removeEventListener('pointerdown', onPointerDown, true);
-        window.removeEventListener('click', onOutsideClick);
-      };
-    }, [onClose]);
-
-    const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
-    const clearFilterVisible = filterValue !== undefined;
-    const styles = useStyles2(getStyles);
-
-    if (!filterValue && field && (field.type === FieldType.number || field.type === FieldType.time)) {
-      return (
-        <FilterPopupLayout containerRef={containerRef}>
-          <RangeFilter
-            field={field}
-            rows={rows}
-            range={range}
-            timeZone={timeZone}
-            onCancel={() => {
-              onClose();
-              buttonElement?.focus();
-            }}
-            onClear={() => {
-              onClearFilter();
-              buttonElement?.focus();
-            }}
-            onApply={(next) => {
-              onApplyRange?.(next);
-              onClose();
-              buttonElement?.focus();
-            }}
-          />
-        </FilterPopupLayout>
-      );
     }
+    document.addEventListener('keyup', handleEscape);
 
-    return (
-      <FilterPopupLayout containerRef={containerRef} width={popupWidth}>
-        <Stack direction="column" gap={1.5}>
-          <Stack gap={1}>
-            <FilterInput
-              ref={inputRef}
-              placeholder={filterInputPlaceholder}
-              title={filterInputPlaceholder}
-              onChange={setSearchFilter}
-              value={searchFilter}
-              suffix={
-                <ButtonSelect
-                  className={styles.buttonSelectOverrides}
-                  options={operators}
-                  onChange={setOperator}
-                  value={operator}
-                  tooltip={operator.description}
-                  narrow
-                  root={containerRef.current ?? undefined}
-                />
-              }
-            />
-            <Button
-              tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
-              variant={matchCase ? 'primary' : 'secondary'}
-              onClick={() => setMatchCase((s) => !s)}
-              aria-pressed={matchCase}
-              icon={'text-fields'}
-            />
-          </Stack>
+    return () => {
+      document.removeEventListener('keyup', handleEscape);
+    };
+  }, [onClose, buttonElement]);
 
-          <FilterList
-            onChange={setValues}
-            onWidthChange={setPopupWidth}
-            values={values}
-            options={options}
-            caseSensitive={matchCase}
-            searchFilter={searchFilter}
-            operator={operator}
-          />
+  // Sliders can release a pointer gesture outside the popup; dismiss only on a separate outside click.
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      pointerStartedInside.current = event.target instanceof Node && !!containerRef.current?.contains(event.target);
+    };
+    const onOutsideClick = (event: Event) => {
+      const domNode = containerRef.current;
+      if (!domNode) {
+        return;
+      }
+      const startedInside = pointerStartedInside.current;
+      pointerStartedInside.current = false;
+      if (event.target instanceof Node && !domNode.contains(event.target) && !startedInside) {
+        onClose();
+      }
+    };
+    window.addEventListener('pointerdown', onPointerDown, true);
+    window.addEventListener('click', onOutsideClick);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown, true);
+      window.removeEventListener('click', onOutsideClick);
+    };
+  }, [onClose]);
 
-          <FilterPopupFooter
-            selectedRows={selectedRows}
-            totalRows={totalRows}
-            onClear={clearFilterVisible ? onClearFilter : undefined}
-            onCancel={onClose}
-            onApply={onFilter}
-            applyLabel={<Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>}
-          />
-        </Stack>
-      </FilterPopupLayout>
-    );
+  if (!filterValue && field) {
+    const rangeProps = {
+      field,
+      rows,
+      range,
+      timeZone,
+      onCancel: () => {
+        onClose();
+        buttonElement?.focus();
+      },
+      onClear: () => {
+        onClear();
+        onClose();
+        buttonElement?.focus();
+      },
+      onApply: (next: { min?: number; max?: number; includeMissing: boolean }) => {
+        onApplyRange?.(next);
+        onClose();
+        buttonElement?.focus();
+      },
+    };
+
+    switch (field.type) {
+      case FieldType.time:
+        return (
+          <FilterPopupLayout containerRef={containerRef}>
+            <DateRangeFilter {...rangeProps} />
+          </FilterPopupLayout>
+        );
+      case FieldType.number:
+        return (
+          <FilterPopupLayout containerRef={containerRef}>
+            <NumericRangeFilter {...rangeProps} />
+          </FilterPopupLayout>
+        );
+    }
   }
-);
+
+  return <StringMatchingFilter {...props} containerRef={containerRef} />;
+});
 
 FilterPopup.displayName = 'FilterPopup';
 FilterPopupEditor.displayName = 'FilterPopupEditor';
-
-const getStyles = memoize((theme: GrafanaTheme2) => ({
-  buttonSelectOverrides: css({
-    fontSize: 12,
-    '&:hover, &:focus, &:active': {
-      color: theme.colors.text.primary,
-      background: 'transparent',
-    },
-  }),
-}));
