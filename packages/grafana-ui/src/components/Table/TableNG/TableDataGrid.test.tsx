@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
@@ -313,7 +313,7 @@ describe('TableDataGrid', () => {
 
     it.each([false, true])(
       'keeps the summary row above active and hovered cells with table.refresh=%s',
-      (tableRefreshEnabled) => {
+      async (tableRefreshEnabled) => {
         jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
         jest.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(100);
         const props = makeProps({
@@ -335,7 +335,7 @@ describe('TableDataGrid', () => {
         const summaryRow = screen.getByRole('gridcell', { name: 'Total' }).closest('[role="row"]')!;
         const summaryZIndex = Number(window.getComputedStyle(summaryRow).zIndex);
         for (const [idx, name] of ['Frozen value', 'Body value'].entries()) {
-          act(() => props.gridRef.current?.setActivePosition({ rowIdx: 0, idx }));
+          await act(async () => props.gridRef.current?.setActivePosition({ rowIdx: 0, idx }));
           const cell = screen.getByRole('gridcell', { name });
           expect(cell).toHaveAttribute('aria-selected', 'true');
           expect(summaryZIndex).toBeGreaterThan(Number(window.getComputedStyle(cell).zIndex));
@@ -373,6 +373,53 @@ describe('TableDataGrid', () => {
   });
 
   describe('scroll shadows', () => {
+    it.each([
+      { name: 'narrower than the viewport', widths: [100, 200], expected: '300px' },
+      { name: 'equal to the viewport', widths: [200, 300], expected: '500px' },
+      { name: 'wider than the viewport', widths: [300, 400], expected: '500px' },
+    ])('limits both shadows to columns $name', ({ widths, expected }) => {
+      render(
+        <TableDataGrid
+          {...makeProps({
+            tableRefreshEnabled: true,
+            columns: widths.map((width, index) => ({ key: String(index), name: String(index), width })),
+          })}
+        />
+      );
+      const grid = screen.getByRole('grid');
+      Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 500 });
+      scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
+
+      for (const edge of ['before', 'after'] as const) {
+        expect(shadowStyle(grid.parentElement, edge, 'opacity')).toBe('1');
+        expect(shadowStyle(grid.parentElement, edge, 'inline-size')).toBe(expected);
+      }
+    });
+
+    it('updates shadow width when column tracks change without a parent render', async () => {
+      render(
+        <TableDataGrid
+          {...makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value', width: 200 }] })}
+        />
+      );
+      const grid = screen.getByRole('grid');
+      Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 500 });
+      scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
+      expect(shadowStyle(grid.parentElement, 'before', 'inline-size')).toBe('200px');
+
+      // react-data-grid can resize its tracks without changing the surrounding viewport.
+      grid.style.gridTemplateColumns = '350px';
+      await waitFor(() => {
+        expect(shadowStyle(grid.parentElement, 'before', 'inline-size')).toBe('350px');
+      });
+      expect(shadowStyle(grid.parentElement, 'after', 'inline-size')).toBe('350px');
+
+      Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 250 });
+      act(() => resizeObservers.at(-1)?.callback([], resizeObservers.at(-1) as unknown as ResizeObserver));
+      expect(shadowStyle(grid.parentElement, 'before', 'inline-size')).toBe('250px');
+      expect(shadowStyle(grid.parentElement, 'after', 'inline-size')).toBe('250px');
+    });
+
     // jsdom has no layout, so the grid reports every scroll metric as 0. Fake the viewport the hook
     // reads, then fire the scroll it would have listened to.
     function scrollTo(

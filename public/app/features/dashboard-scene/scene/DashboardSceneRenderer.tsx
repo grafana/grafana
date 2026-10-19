@@ -1,11 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { type SceneComponentProps } from '@grafana/scenes';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -16,6 +19,7 @@ import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanningControls } from './new-toolbar/PlanningControls';
+import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -23,12 +27,14 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     editview,
     body,
     editPanel,
+    loadingView,
     viewPanel,
     panelSearch,
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
     planning,
+    uid,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -66,20 +72,34 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       : getNavModel(navIndex, 'dashboards/browse');
   const isSettingsOpen = editview !== undefined;
   const soloPanelContext = useDefineSoloPanelContext(viewPanel);
+  const isPanelEditorLoading = loadingView === 'editPanel';
+  const subViewOpen = useRef(false);
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {
-    if (viewPanel || isSettingsOpen || editPanel) {
+    const isOpen = Boolean(viewPanel || isSettingsOpen || editPanel || isPanelEditorLoading);
+    if (isOpen && !subViewOpen.current) {
       model.rememberScrollPos();
     }
-  }, [isSettingsOpen, editPanel, viewPanel, model]);
+    subViewOpen.current = isOpen;
+  }, [isSettingsOpen, editPanel, viewPanel, isPanelEditorLoading, model]);
 
   // Restore scroll pos when coming back
   useEffect(() => {
-    if (!viewPanel && !isSettingsOpen && !editPanel) {
+    if (!viewPanel && !isSettingsOpen && !editPanel && !isPanelEditorLoading) {
       model.restoreScrollPos();
     }
-  }, [isSettingsOpen, editPanel, viewPanel, model]);
+  }, [isSettingsOpen, editPanel, viewPanel, isPanelEditorLoading, model]);
+
+  if (isPanelEditorLoading) {
+    return (
+      <Page navModel={navModel} layout={PageLayoutType.Canvas}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          <PageLoader />
+        </Box>
+      </Page>
+    );
+  }
 
   if (editview) {
     return (
@@ -124,10 +144,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
+        {!editPanel && <SandboxConsentBanner dashboardUid={uid} />}
         {!editPanel && (
           <DashboardSidebarSplitter
             dashboard={model}
-            isEditing={isEditing}
+            isEditing={isFullDashboardEditing(model.state)}
             isPlanning={Boolean(planning)}
             controls={renderControls()}
             body={renderBody()}

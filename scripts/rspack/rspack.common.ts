@@ -89,6 +89,12 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       // Required to load WASM modules.
       asyncWebAssembly: true,
     },
+    // Webpack's default. Rspack defaults to 'warn-mock', which mocks the same way but warns, and
+    // the dev server overlay turns that warning into a full-page block.
+    node: {
+      __dirname: 'mock',
+      __filename: 'mock',
+    },
     output: {
       // rspack.boot.ts writes boot.js into the build directory from its own compilation.
       // As the two compile concurrently we need to guarantee that boot.js doesn't get deleted.
