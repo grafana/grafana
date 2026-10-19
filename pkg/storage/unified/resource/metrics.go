@@ -10,7 +10,8 @@ import (
 
 const (
 	watchEventPhaseLive = "live"
-	// Written before the watch's initial list finished, so delayed by it.
+	// The event's resource version timestamp precedes the end of the watch's
+	// initial events, including the initial bookmark.
 	watchEventPhaseInitialList = "initial_list"
 )
 
@@ -40,7 +41,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 		}, []string{"group", "resource"}),
 		WatchEventReadyLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_storage_server_watch_event_ready_latency_seconds",
-			Help:                            "Time (in seconds) from resource version generation until the watch event is ready to be sent over gRPC. phase=initial_list marks events that waited for the watch's initial list to be sent",
+			Help:                            "Time (in seconds) from resource version generation until the watch event is ready to be sent over gRPC. phase=initial_list marks events whose resource version timestamp precedes the end of the watch's initial events, including the initial bookmark",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
