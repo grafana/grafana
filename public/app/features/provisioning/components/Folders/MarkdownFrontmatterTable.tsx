@@ -11,7 +11,7 @@ interface Props {
 }
 
 // Lists and mappings render as inner tables down to this depth; anything deeper
-// is shown as JSON so a deeply nested document can't blow up the layout.
+// is shown as a placeholder so a deeply nested document can't blow up the layout.
 const MAX_NESTING = 2;
 
 /**
@@ -26,8 +26,10 @@ export function MarkdownFrontmatterTable({ data }: Props) {
     return null;
   }
 
+  // `markdown-html` gives the table the same borders, padding and link styling
+  // as tables in the document body, so the two can't drift apart.
   return (
-    <div className={styles.scroll}>
+    <div className={cx('markdown-html', styles.scroll)}>
       <table className={styles.table} aria-label={t('browse-dashboards.readme.metadata-label', 'Document metadata')}>
         <MappingRows entries={entries} depth={0} />
       </table>
@@ -50,9 +52,25 @@ function MappingRows({ entries, depth }: { entries: Array<[string, unknown]>; de
   );
 }
 
-function FrontmatterValue({ value, depth }: { value: unknown; depth: number }) {
+// A list is one row of cells, like GitHub lays it out.
+function ListRow({ items, depth }: { items: unknown[]; depth: number }) {
   const styles = useStyles2(getStyles);
+  return (
+    <table className={styles.list}>
+      <tbody>
+        <tr>
+          {items.map((item, index) => (
+            <td key={index}>
+              <FrontmatterValue value={item} depth={depth} />
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
+function FrontmatterValue({ value, depth }: { value: unknown; depth: number }) {
   if (typeof value === 'string') {
     return isHttpUrl(value) ? (
       <TextLink href={value} external>
@@ -63,39 +81,28 @@ function FrontmatterValue({ value, depth }: { value: unknown; depth: number }) {
     );
   }
 
-  if (Array.isArray(value)) {
-    if (value.length === 0 || depth >= MAX_NESTING) {
-      return <>{JSON.stringify(value)}</>;
-    }
-    // A list is one row of cells, like GitHub lays it out.
-    return (
-      <table className={cx(styles.nested, styles.list)}>
-        <tbody>
-          <tr>
-            {value.map((item, index) => (
-              <td key={index}>
-                <FrontmatterValue value={item} depth={depth + 1} />
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-    );
+  const isList = Array.isArray(value);
+  if (!isList && !isYamlMapping(value)) {
+    return <>{String(value)}</>;
   }
 
-  if (isYamlMapping(value)) {
-    const entries = Object.entries(value);
-    if (entries.length === 0 || depth >= MAX_NESTING) {
-      return <>{JSON.stringify(value)}</>;
-    }
-    return (
-      <table className={styles.nested}>
-        <MappingRows entries={entries} depth={depth + 1} />
-      </table>
-    );
+  // Never serialize the parsed YAML: anchors can make it cyclic (JSON.stringify
+  // throws) or expand a few aliased lines into megabytes. Containers we don't
+  // expand get a fixed-size stand-in instead.
+  const isEmpty = Object.keys(value).length === 0;
+  if (isEmpty || depth >= MAX_NESTING) {
+    const inner = isEmpty ? '' : '…';
+    const placeholder = isList ? `[${inner}]` : `{${inner}}`;
+    return <>{placeholder}</>;
   }
 
-  return <>{String(value)}</>;
+  return isList ? (
+    <ListRow items={value} depth={depth + 1} />
+  ) : (
+    <table>
+      <MappingRows entries={Object.entries(value)} depth={depth + 1} />
+    </table>
+  );
 }
 
 function isHttpUrl(value: string): boolean {
@@ -113,28 +120,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowX: 'auto',
     marginBottom: theme.spacing(2),
   }),
-  // Borders and padding match the tables marked renders in the body below.
   table: css({
-    borderCollapse: 'collapse',
     'th, td': {
-      border: `1px solid ${theme.colors.border.medium}`,
-      padding: theme.spacing(0.5, 1),
-      textAlign: 'left',
       verticalAlign: 'top',
       // A long value (typically a URL) wraps rather than widening the table.
       overflowWrap: 'anywhere',
-    },
-    th: {
-      fontWeight: theme.typography.fontWeightMedium,
-      backgroundColor: theme.colors.background.secondary,
     },
     // Multi-line values (YAML block scalars) keep their line breaks.
     td: {
       whiteSpace: 'pre-line',
     },
-  }),
-  nested: css({
-    borderCollapse: 'collapse',
   }),
   // List items share one row; keep each one whole and let the row scroll rather
   // than squeezing them into letter-wrapped slivers.

@@ -64,18 +64,33 @@ describe('MarkdownFrontmatterTable', () => {
     expect(screen.getByRole('cell', { name: '#platform' })).toBeInTheDocument();
   });
 
-  it('shows containers nested more than two levels deep as JSON', () => {
-    render(<MarkdownFrontmatterTable data={{ a: { b: { c: [1, 2] } } }} />);
+  it('shows containers nested more than two levels deep as a placeholder', () => {
+    render(<MarkdownFrontmatterTable data={{ a: { b: { c: [1, 2], d: { e: 1 } } } }} />);
 
     expect(screen.getByRole('rowheader', { name: 'c' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '[1,2]' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '[…]' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'd' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '{…}' })).toBeInTheDocument();
   });
 
-  it('shows empty lists and mappings as JSON', () => {
+  it('shows empty lists and mappings as [] and {}', () => {
     render(<MarkdownFrontmatterTable data={{ tags: [], meta: {} }} />);
 
     expect(screen.getByRole('cell', { name: '[]' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: '{}' })).toBeInTheDocument();
+  });
+
+  it('cuts a self-referencing list off at the nesting limit instead of serializing it', () => {
+    // js-yaml resolves `loop: &x [*x]` to an array that contains itself.
+    const loop: unknown[] = [];
+    loop.push(loop);
+
+    render(<MarkdownFrontmatterTable data={{ loop }} />);
+
+    const row = screen.getByRole('rowheader', { name: 'loop' }).closest('tr')!;
+    // Expanded as a list twice (the nesting limit), then a placeholder.
+    expect(row.querySelectorAll('table')).toHaveLength(2);
+    expect(row).toHaveTextContent(/^loop\[…\]$/);
   });
 
   it('renders nothing for an empty mapping', () => {
