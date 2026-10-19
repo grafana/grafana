@@ -62,22 +62,14 @@ export function resolveTracesDrilldownLinks<T extends LinkModel>(
     return links;
   }
 
-  let changed = false;
-  const resolved = links.map((link) => {
-    const next = rewriteExploreTraceLink(link, path, sourceUid);
-    if (next !== link) {
-      changed = true;
-    }
-    return next;
-  });
-  return changed ? resolved : links;
+  return links.map((link) => (isExploreTempoTraceLink(link) ? rewriteExploreTraceLink(link, path, sourceUid) : link));
 }
 
 function rewriteExploreTraceLink<T extends LinkModel>(link: T, path: string, datasourceUid: string): T {
   const query = link.interpolatedParams?.query;
   const traceQuery = query ? getTempoQueryText(query) : undefined;
   const traceId = traceQuery ? getTraceIdFromTempoQuery(traceQuery) : undefined;
-  if (!isExploreTempoTraceLink(link) || !traceId || getDatasourceUid(query) !== datasourceUid) {
+  if (!traceId || getDatasourceUid(query) !== datasourceUid) {
     return link;
   }
 

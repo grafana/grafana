@@ -7,10 +7,10 @@ import { Badge, type BadgeColor, DataLinkButton, useStyles2 } from '@grafana/ui'
 
 import { createLogLineLinks } from '../logParser';
 
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
-import { TracesDrilldownLinkResolver } from './useTracesDrilldownLinks';
 
 interface LogLineDetailsSummaryProps {
   log: LogListModel;
@@ -45,7 +45,7 @@ export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
         <span className={styles.timestamp}>{timestamp}</span>
       </div>
       {links.length > 0 && (
-        <TracesDrilldownLinkResolver links={links}>
+        <LogLinksResolver links={links}>
           {(resolvedLinks) => (
             <div className={styles.links}>
               {linksMap.map(({ fieldKey }, index) => {
@@ -71,7 +71,7 @@ export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
               })}
             </div>
           )}
-        </TracesDrilldownLinkResolver>
+        </LogLinksResolver>
       )}
     </div>
   );

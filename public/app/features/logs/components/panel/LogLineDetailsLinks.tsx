@@ -10,10 +10,10 @@ import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
-import { TracesDrilldownLinkResolver } from './useTracesDrilldownLinks';
 
 interface LogLineDetailsLinksProps {
   fields: FieldDef[];
@@ -93,7 +93,7 @@ const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
   }, [app, field.keys, log.datasourceType, noInteractions]);
 
   return (
-    <TracesDrilldownLinkResolver links={field.links}>
+    <LogLinksResolver links={field.links}>
       {(links) => (
         <>
           <div className={styles.label}>
@@ -141,7 +141,7 @@ const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
           </div>
         </>
       )}
-    </TracesDrilldownLinkResolver>
+    </LogLinksResolver>
   );
 };
 

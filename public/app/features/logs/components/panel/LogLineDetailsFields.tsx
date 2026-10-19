@@ -24,10 +24,10 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
-import { TracesDrilldownLinkResolver } from './useTracesDrilldownLinks';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -387,7 +387,7 @@ const LogLineDetailsField = ({
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            <TracesDrilldownLinkResolver links={links}>
+            <LogLinksResolver links={links}>
               {(resolvedLinks) =>
                 singleValue ? (
                   <SingleValue
@@ -400,7 +400,7 @@ const LogLineDetailsField = ({
                   <MultipleValue showCopy={true} values={values} links={resolvedLinks} onLinkClick={reportLinkClick} />
                 )
               }
-            </TracesDrilldownLinkResolver>
+            </LogLinksResolver>
           </div>
         </div>
       </div>

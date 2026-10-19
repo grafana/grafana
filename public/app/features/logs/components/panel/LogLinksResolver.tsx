@@ -10,7 +10,7 @@ import {
   resolveTracesDrilldownLinks,
 } from './tracesDrilldownLink';
 
-export function TracesDrilldownLinkResolver<T extends LinkModel>({
+export function LogLinksResolver<T extends LinkModel>({
   links,
   children,
 }: {
