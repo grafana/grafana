@@ -40,6 +40,12 @@ export function TraceBanner({
   const { span, severity } = highlight;
   const [isOpen, setIsOpen] = useState(false);
   const [isStacktraceOpen, setIsStacktraceOpen] = useState(false);
+  const [expandedSpan, setExpandedSpan] = useState({ traceID: span.traceID, spanID: span.spanID });
+  if (expandedSpan.traceID !== span.traceID || expandedSpan.spanID !== span.spanID) {
+    setExpandedSpan({ traceID: span.traceID, spanID: span.spanID });
+    setIsOpen(false);
+    setIsStacktraceOpen(false);
+  }
   const exception = getSpanException(span);
   const serviceName = getServiceDisplayName(span.process);
   const operationLabel = getTraceBannerOperationLabel(span);

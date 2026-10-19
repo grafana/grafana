@@ -39,7 +39,7 @@ function createSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
 function renderBanner(span: TraceSpan, severity: TraceBannerHighlight['severity'] = 'error') {
   const onGoToSpan = jest.fn();
   const onLayoutChange = jest.fn();
-  render(
+  const view = render(
     <TraceBanner
       highlight={{ span, severity }}
       traceDuration={20_010_000}
@@ -47,7 +47,21 @@ function renderBanner(span: TraceSpan, severity: TraceBannerHighlight['severity'
       onLayoutChange={onLayoutChange}
     />
   );
-  return { onGoToSpan, onLayoutChange };
+
+  return {
+    onGoToSpan,
+    onLayoutChange,
+    rerenderSpan(nextSpan: TraceSpan, nextSeverity: TraceBannerHighlight['severity'] = severity) {
+      view.rerender(
+        <TraceBanner
+          highlight={{ span: nextSpan, severity: nextSeverity }}
+          traceDuration={20_010_000}
+          onGoToSpan={onGoToSpan}
+          onLayoutChange={onLayoutChange}
+        />
+      );
+    },
+  };
 }
 
 describe('TraceBanner', () => {
@@ -97,6 +111,33 @@ describe('TraceBanner', () => {
 
     await user.click(screen.getByRole('button', { name: /Hide stacktrace/ }));
 
+    expect(screen.queryByText(/QueryRunner\.run/)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { name: 'trace', traceID: 'trace-2', spanID: 'span-1' },
+    { name: 'span', traceID: 'trace-1', spanID: 'span-2' },
+  ])('collapses an expanded exception when the highlighted $name changes', async ({ traceID, spanID }) => {
+    const user = userEvent.setup();
+    const { rerenderSpan } = renderBanner(createSpan(exceptionLogs()));
+
+    await user.click(screen.getByTestId(selectors.components.TraceViewer.traceBanner.toggleButton));
+    await user.click(screen.getByRole('button', { name: /Show stacktrace/ }));
+    expect(screen.getByText(/QueryRunner\.run/)).toBeInTheDocument();
+
+    rerenderSpan(createSpan({ ...exceptionLogs(), traceID, spanID }));
+
+    expect(screen.getByText('Error: 504')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.TraceViewer.traceBanner.toggleButton)).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.queryByText('java.lang.TimeoutException')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId(selectors.components.TraceViewer.traceBanner.toggleButton));
+
+    expect(screen.getByText('java.lang.TimeoutException')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show stacktrace/ })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText(/QueryRunner\.run/)).not.toBeInTheDocument();
   });
 
