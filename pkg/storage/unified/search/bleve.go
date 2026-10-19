@@ -2360,13 +2360,15 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 			Error: resource.NewBadRequestError("missing query key"),
 		}
 	}
-	return &resourcepb.ResourceSearchResponse{
-		Error: b.verifyKey(req.Options.Key),
-		// For a global index this is the version it was built at: it replays no
-		// events, so its resource version does not move after the build.
-		ResourceVersion: b.resourceVersion.Load(),
-		ResultFormat:    resultFormat,
+	response := &resourcepb.ResourceSearchResponse{
+		Error:        b.verifyKey(req.Options.Key),
+		ResultFormat: resultFormat,
 	}
+	// A global index combines independent listings and writes, not one revision.
+	if !b.key.IsGlobal() {
+		response.ResourceVersion = b.resourceVersion.Load()
+	}
+	return response
 }
 
 func (b *bleveIndex) SearchFieldDefinitions() []resource.SearchFieldDefinition {
@@ -2782,7 +2784,11 @@ func (b *bleveIndex) writeDocumentTypesLocked(types map[schema.GroupResource]str
 
 // ReconciledAt implements resource.ResourceIndex.
 func (b *bleveIndex) ReconciledAt() (time.Time, error) {
-	raw, err := b.index.GetInternal([]byte(internalReconciledAtKey))
+	return getReconciledAt(b.index)
+}
+
+func getReconciledAt(index bleve.Index) (time.Time, error) {
+	raw, err := index.GetInternal([]byte(internalReconciledAtKey))
 	if err != nil || len(raw) < 8 {
 		return time.Time{}, err
 	}
