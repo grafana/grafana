@@ -23,6 +23,59 @@ func TestTxnRetryBackoff(t *testing.T) {
 	}
 }
 
+func TestRunAfterCommitWithoutTransaction(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	called := false
+	RunAfterCommit(ctx, "refresh", func(ctx context.Context) {
+		called = true
+		require.ErrorIs(t, ctx.Err(), context.Canceled)
+		require.Nil(t, ctx.Value(ContextSessionKey{}))
+	})
+	require.True(t, called)
+}
+
+func TestIntegrationRunAfterCommit(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ss := NewTestStore(t)
+	rollback := errors.New("rollback")
+	type contextKey struct{}
+	for _, transactionErr := range []error{nil, rollback} {
+		name := "commit"
+		if transactionErr != nil {
+			name = "rollback"
+		}
+		t.Run(name, func(t *testing.T) {
+			var calls []string
+			ctx := context.WithValue(t.Context(), contextKey{}, "request metadata")
+			err := ss.InTransaction(ctx, func(ctx context.Context) error {
+				RunAfterCommit(ctx, "refresh", func(context.Context) { t.Error("superseded callback ran") })
+				require.NoError(t, ss.InTransaction(ctx, func(ctx context.Context) error {
+					RunAfterCommit(ctx, "refresh", func(ctx context.Context) {
+						require.Nil(t, ctx.Value(ContextSessionKey{}))
+						require.Equal(t, "request metadata", ctx.Value(contextKey{}))
+						require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
+							require.False(t, sess.transactionOpen)
+							return nil
+						}))
+						calls = append(calls, "refresh")
+					})
+					return nil
+				}))
+				RunAfterCommit(ctx, "another", func(context.Context) { calls = append(calls, "another") })
+				require.Empty(t, calls)
+				return transactionErr
+			})
+			require.ErrorIs(t, err, transactionErr)
+			if transactionErr == nil {
+				require.Equal(t, []string{"refresh", "another"}, calls)
+			} else {
+				require.Empty(t, calls)
+			}
+		})
+	}
+}
+
 func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

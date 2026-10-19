@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -161,10 +163,14 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 		// It also clears the cache for basic roles and teams, which is required for the user to not have temporarily
 		// broken UI permissions when their source of elevated permissions comes from a cached team or basic role
 		// permission.
-		_, err = r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
-		if err != nil {
-			r.log.Debug("Failed to clear user permissions cache", "error", err)
-		}
+		// AuthZ cannot read the copied permissions until the enclosing transaction commits.
+		sqlstore.RunAfterCommit(ctx, "receiver-permissions:"+user.GetNamespace()+":"+user.GetCacheKey(), func(ctx context.Context) {
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			if _, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true}); err != nil {
+				r.log.Debug("Failed to clear user permissions cache", "error", err)
+			}
+		})
 	}
 
 	return countCustomPermissions(setPermissionCommands), nil
