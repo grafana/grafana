@@ -22,8 +22,6 @@ type PermissionsQuery struct {
 	TeamIDs       []int64
 	Role          string
 	IsServerAdmin bool
-	// Limit bounds presence checks without loading the complete permission set.
-	Limit int
 }
 
 func NewSQLPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer, forcePermissionRoleActionIndex bool) *SQLPermissionsStore {
@@ -113,7 +111,7 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 		perms = append(perms, perm)
 	}
 
-	return perms, res.Err()
+	return perms, nil
 }
 
 var _ PermissionStore = (*StaticPermissionStore)(nil)
@@ -144,9 +142,6 @@ func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns types
 		for _, p := range r.Permissions {
 			if query.Action == "" || p.Action == query.Action {
 				permissions = append(permissions, p)
-				if query.Limit > 0 && len(permissions) == query.Limit {
-					return permissions, nil
-				}
 			}
 		}
 	}
@@ -172,9 +167,6 @@ func (u *UnionPermissionStore) GetUserPermissions(ctx context.Context, ns types.
 			return nil, err
 		}
 		permissions = append(permissions, result...)
-	}
-	if query.Limit > 0 && len(permissions) > query.Limit {
-		permissions = permissions[:query.Limit]
 	}
 	return permissions, nil
 }

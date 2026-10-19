@@ -21,4 +21,3 @@ WHERE
   p.action = {{ .Arg .Query.Action }}
   {{ end }}
 {{ end }}
-{{ if .Query.Limit }}LIMIT {{ .Arg .Query.Limit }}{{ end }}

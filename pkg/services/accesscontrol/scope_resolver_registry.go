@@ -3,7 +3,7 @@ package accesscontrol
 import "sync"
 
 // ScopeResolverRegistry shares registrations without sharing evaluation caches.
-// Services can register after embedded AuthZ is constructed during startup.
+// Consumers holding the registry also see resolvers registered later.
 type ScopeResolverRegistry struct {
 	mu        sync.RWMutex
 	resolvers map[string]ScopeAttributeResolver

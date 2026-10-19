@@ -48,15 +48,4 @@ func TestStaticPermissionStoreGetUserPermissions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, permissions, got)
 	})
-
-	t.Run("bounds a presence check", func(t *testing.T) {
-		for _, permissionStore := range []PermissionStore{store, NewUnionPermissionStore(store, store)} {
-			got, err := permissionStore.GetUserPermissions(t.Context(), types.NamespaceInfo{}, PermissionsQuery{
-				Role:  "Viewer",
-				Limit: 1,
-			})
-			require.NoError(t, err)
-			require.Equal(t, permissions[:1], got)
-		}
-	})
 }
