@@ -788,16 +788,25 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 	b.blobGCMu.Lock()
 	defer b.blobGCMu.Unlock()
+	// Resource GC defers this call, including when shutdown cancels its context.
+	if ctx.Err() != nil {
+		return
+	}
 	if b.blobGC == nil {
 		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
+	if err != nil && ctx.Err() != nil {
+		b.log.Debug("blob garbage collection interrupted", "error", err)
+		return
+	}
 	b.blobGCMetrics.Record(count, dryRun, err)
 	skipped := b.blobGC.SkippedWithoutAge()
 	b.blobGCMetrics.RecordSkippedWithoutAge(skipped, err)
 	if err != nil {
 		b.log.Error("blob garbage collection failed", "error", err)
+		return
 	}
 	logArgs := []any{"blobs", count, "dryRun", dryRun}
 	if skipped > 0 {
