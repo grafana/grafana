@@ -50,7 +50,7 @@ describe('NotebookAnalytics.loaded', () => {
   it('reports edit mode when the url opened the notebook in edit mode', () => {
     locationService.push('/notebooks/nb-1?edit=true');
 
-    NotebookAnalytics.loaded(notebookScene(), false);
+    NotebookAnalytics.loaded(notebookScene(), false, false);
 
     expect(modes).toEqual(['edit']);
   });
@@ -58,7 +58,7 @@ describe('NotebookAnalytics.loaded', () => {
   it('reports view mode without the edit param', () => {
     locationService.push('/notebooks/nb-1');
 
-    NotebookAnalytics.loaded(notebookScene(), false);
+    NotebookAnalytics.loaded(notebookScene(), false, false);
 
     expect(modes).toEqual(['view']);
   });
@@ -69,7 +69,7 @@ describe('NotebookAnalytics.loaded', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     locationService.push('/notebooks/nb-1?edit=true');
 
-    NotebookAnalytics.loaded(notebookScene(), false);
+    NotebookAnalytics.loaded(notebookScene(), false, false);
 
     expect(modes).toEqual(['view']);
   });
@@ -80,9 +80,20 @@ describe('NotebookAnalytics.loaded', () => {
     scene.setState({ isEditing: true });
     locationService.push('/notebooks/nb-1');
 
-    NotebookAnalytics.loaded(scene, true);
+    NotebookAnalytics.loaded(scene, true, false);
 
     expect(modes).toEqual(['view']);
+  });
+
+  it('reports whether a host other than the notebook route is showing the notebook', () => {
+    const embedded: unknown[] = [];
+    const stop = onInteraction('grafana_notebook_loaded', (properties) => embedded.push(properties.embedded));
+
+    NotebookAnalytics.loaded(notebookScene(), false, false);
+    NotebookAnalytics.loaded(notebookScene(), false, true);
+    stop();
+
+    expect(embedded).toEqual([false, true]);
   });
 });
 
@@ -112,6 +123,8 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
         notebookUid: 'nb-1',
         source: 'explore',
         position: 2,
+        cellType: 'panel',
+        schema_version: 1,
         panelType: 'timeseries',
         datasourceTypes: [],
         queryCount: 0,
@@ -132,6 +145,16 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
 
     expect(events).toEqual([
       expect.objectContaining({ isLibraryPanel: true, panelType: 'timeseries', source: 'dashboard_panel' }),
+    ]);
+  });
+
+  // A chat answer brings text next to its panels. There is no panel to describe, so those properties
+  // are left off rather than sent empty.
+  it('reports a markdown cell with no panel properties', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 3);
+
+    expect(events).toEqual([
+      { notebookUid: 'nb-1', source: 'plugin', position: 3, cellType: 'markdown', schema_version: 1 },
     ]);
   });
 });
@@ -163,6 +186,7 @@ describe('NotebookAnalytics.created', () => {
         notebookUid: 'nb-1',
         source: 'dashboard_panel',
         cellCount: 1,
+        schema_version: 1,
         panelType: 'timeseries',
         datasourceTypes: [],
         queryCount: 0,
@@ -176,6 +200,6 @@ describe('NotebookAnalytics.created', () => {
   it('sends no panel properties for a create that came with no panel', () => {
     NotebookAnalytics.created('nb-2', 'notebook_list', 3);
 
-    expect(events).toEqual([{ notebookUid: 'nb-2', source: 'notebook_list', cellCount: 3 }]);
+    expect(events).toEqual([{ notebookUid: 'nb-2', source: 'notebook_list', cellCount: 3, schema_version: 1 }]);
   });
 });

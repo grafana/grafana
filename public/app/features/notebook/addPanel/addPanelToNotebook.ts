@@ -131,10 +131,14 @@ export async function addToExistingNotebook(
   const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
   // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
+  // Markdown too: a chat answer sends its text alongside its panels.
   cells.forEach((cell, index) => {
-    if (cell.kind === 'panel') {
-      NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition + index, addedPanel(cell));
-    }
+    NotebookAnalytics.cellAddedFromAddToNotebook(
+      uid,
+      entryPoint,
+      firstPosition + index,
+      cell.kind === 'panel' ? addedPanel(cell) : undefined
+    );
   });
 
   return { uid, title: spec.title };

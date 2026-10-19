@@ -800,7 +800,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: 'nb1', source: 'dashboard_panel', target: 'existing', reason: 'conflict' },
+          { notebookUid: 'nb1', source: 'dashboard_panel', target: 'existing', reason: 'conflict', schema_version: 1 },
         ])
       );
     });
@@ -815,7 +815,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'write_failed' },
+          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'write_failed', schema_version: 1 },
         ])
       );
     });
@@ -832,7 +832,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'build_failed' },
+          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'build_failed', schema_version: 1 },
         ])
       );
       expect(createWithContent).not.toHaveBeenCalled();

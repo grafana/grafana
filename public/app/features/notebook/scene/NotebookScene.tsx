@@ -182,7 +182,19 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // mounted. Its host decides that before handing it over.
       const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
 
+      // A reload or a closed tab tears nothing down inside the app, so the cleanup below never runs and
+      // an open session would end without a word. Not `beforeunload`, which stops the browser keeping
+      // the page for back/forward. In-app navigation never fires this, so it cannot report a session
+      // the cleanup already ended: that one turns `isEditing` off, and this reads it.
+      const onPageHide = () => {
+        if (this.state.isEditing) {
+          NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.PAGE_HIDE);
+        }
+      };
+      window.addEventListener('pagehide', onPageHide);
+
       return () => {
+        window.removeEventListener('pagehide', onPageHide);
         // A toggle-off already ended the session and turned isEditing back off; this only catches
         // the case where the page itself goes away while a session was still open.
         if (this.state.isEditing) {

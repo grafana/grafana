@@ -7,6 +7,7 @@ import { isNotebookEditUrl } from '../urls';
 
 import { readAddedPanelShape, readNotebookShape } from './shape';
 import {
+  NOTEBOOK_ADDED_CELL_TYPE,
   type NotebookAddFailedProperties,
   type NotebookAddFailedReason,
   type NotebookAddTarget,
@@ -38,7 +39,10 @@ import {
 } from './types';
 
 /** @owner sharing-squad */
-const createNotebookEvent = defineFeatureEvents('grafana', 'notebook');
+const createNotebookEvent = defineFeatureEvents('grafana', 'notebook', {
+  /** Version of the event schema, used to handle breaking changes in the properties contract. */
+  schema_version: 1,
+});
 
 /** Fired once per navigation that actually renders a notebook: a fresh fetch or a cache hit. */
 const createLoadedEvent = createNotebookEvent<NotebookLoadedProperties>('loaded');
@@ -63,8 +67,9 @@ const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('creat
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
 
 /**
- * Fired when a panel is added through "Add to notebook", from Explore or a dashboard. A cell added
- * inside an editing session is counted on `edit_session_ended` instead.
+ * Fired for each cell added through "Add to notebook", from Explore, a dashboard or a plugin: a panel,
+ * or the markdown a chat answer brings with it. A cell added from inside the notebook is counted on
+ * `edit_session_ended` instead. An add into a notebook that is open lands in both.
  */
 const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAddedFromAddToNotebookProperties>(
   'cell_added_from_add_to_notebook'
@@ -117,7 +122,7 @@ function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
  * turn a scene into what each event sends, here and once, instead of at every place that fires one.
  */
 export const NotebookAnalytics = {
-  loaded(scene: NotebookScene, wasCached: boolean): void {
+  loaded(scene: NotebookScene, wasCached: boolean, embedded: boolean): void {
     createLoadedEvent({
       // Both call sites only reach this with a scene that already has a uid, so the fallback here is
       // defensive, not expected to trigger.
@@ -128,6 +133,7 @@ export const NotebookAnalytics = {
       // Permission counts too: the sync refuses `?edit=true` for a reader and clears the param.
       mode: isNotebookEditUrl() && canEditNotebooks() ? 'edit' : 'view',
       wasCached,
+      embedded,
     });
   },
 
@@ -188,17 +194,19 @@ export const NotebookAnalytics = {
     createListFilteredEvent({ filterType, ...filters });
   },
 
+  /** `addedPanel` is left out for a markdown cell, which has no panel to describe. */
   cellAddedFromAddToNotebook(
     notebookUid: string,
     source: NotebookEntryPoint,
     position: number,
-    addedPanel: AddedPanel
+    addedPanel?: AddedPanel
   ): void {
     createCellAddedFromAddToNotebookEvent({
       notebookUid,
       source,
       position,
-      ...addedPanelProperties(addedPanel),
+      cellType: addedPanel ? NOTEBOOK_ADDED_CELL_TYPE.PANEL : NOTEBOOK_ADDED_CELL_TYPE.MARKDOWN,
+      ...(addedPanel && addedPanelProperties(addedPanel)),
     });
   },
 

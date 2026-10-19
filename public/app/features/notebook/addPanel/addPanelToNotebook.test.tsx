@@ -232,6 +232,37 @@ describe('addToExistingNotebook', () => {
     );
   });
 
+  // A chat answer sends its text next to its panels. The markdown has no panel to describe, so it goes
+  // without one, and its position follows the cells before it.
+  it('reports a markdown cell with no panel, at the index it landed on', async () => {
+    captureWrite();
+
+    await addToExistingNotebook(
+      'nb1',
+      [
+        { kind: 'markdown', text: 'p95 is up' },
+        { kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false },
+      ],
+      NOTEBOOK_ENTRY_POINT.PLUGIN
+    );
+
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledTimes(2);
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
+      1,
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.PLUGIN,
+      0,
+      undefined
+    );
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
+      2,
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.PLUGIN,
+      1,
+      { panel: panel('p95 latency'), isLibraryPanel: false }
+    );
+  });
+
   it('does not report an added cell when the write fails', async () => {
     server.use(
       http.get(NOTEBOOK_URL, () => HttpResponse.json(existingNotebook())),

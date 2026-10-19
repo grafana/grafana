@@ -243,7 +243,7 @@ describe('NotebookScene', () => {
 
         scene.onEnterEditMode();
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle', schema_version: 1 }]);
       });
 
       it('reports a navigation when the url brought the reader into edit mode', () => {
@@ -251,7 +251,7 @@ describe('NotebookScene', () => {
 
         scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.NAVIGATION);
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation', schema_version: 1 }]);
       });
 
       // The blank route opens in edit mode before autosave creates the notebook, so there is no uid yet.
@@ -260,7 +260,7 @@ describe('NotebookScene', () => {
 
         scene.onEnterEditMode();
 
-        expect(started).toEqual([{ notebookUid: '', source: 'new' }]);
+        expect(started).toEqual([{ notebookUid: '', source: 'new', schema_version: 1 }]);
       });
 
       it('reports one session when edit mode is entered again while already editing', () => {
@@ -269,7 +269,7 @@ describe('NotebookScene', () => {
         scene.onEnterEditMode();
         scene.onEnterEditMode();
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle', schema_version: 1 }]);
       });
 
       it('counts nothing from the previous session when edit mode is entered again', () => {
@@ -433,7 +433,7 @@ describe('NotebookScene', () => {
         new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
         unsubscribeStarted();
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation', schema_version: 1 }]);
         expect(scene.state.isEditing).toBe(true);
       });
 
@@ -444,6 +444,41 @@ describe('NotebookScene', () => {
         deactivate();
 
         expect(ended).toEqual([]);
+      });
+
+      // A reload or a closed tab tears nothing down inside the app, so only the page itself says so.
+      it('reports a page hide while a session is still open', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        window.dispatchEvent(new Event('pagehide'));
+        deactivate();
+
+        expect(ended[0]).toMatchObject({ endReason: 'page_hide' });
+      });
+
+      it('reports nothing on a page hide when the notebook is not being edited', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+
+        window.dispatchEvent(new Event('pagehide'));
+        deactivate();
+
+        expect(ended).toEqual([]);
+      });
+
+      // In-app navigation deactivates the scene, which ends the session itself and turns editing off.
+      it('does not report a page hide for a session that navigation already ended', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+        window.dispatchEvent(new Event('pagehide'));
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'navigation' });
       });
 
       it('does not double-fire when a toggle-off is followed by a deactivation', () => {

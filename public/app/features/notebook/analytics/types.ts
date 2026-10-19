@@ -54,17 +54,23 @@ interface AddedPanelProperties extends EventProperty, AddedPanelShape {
 export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
   /** Identifier and join key for this notebook. Never the title, see the decisions doc. */
   notebookUid: string;
-  /** Whether the url opened the notebook in edit mode. A toggle later in the session does not change it. */
+  /**
+   * Whether the url opened the notebook in edit mode. A toggle later in the session does not change
+   * it. An embedded host has no notebook url, so this is always `view` there, and edit mode shows up
+   * on `edit_session_started`.
+   */
   mode: 'view' | 'edit';
   /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
   wasCached: boolean;
+  /** Whether a host other than the notebook route is showing this notebook, such as the Assistant canvas. */
+  embedded: boolean;
 }
 
 /**
  * The surface a notebook came from, for every event that has to name one. `EXPLORE`,
  * `DASHBOARD_PANEL`, and `PLUGIN` are the callers of the add-panel modal, which creates a notebook
- * outright instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT`
- * or `WORKSPACE` yet.
+ * outright instead of opening a blank one, so only `created` sends them. `ASSISTANT` and `WORKSPACE`
+ * are sent by the Grafana Assistant app on `created`, for notebooks it creates itself.
  */
 export const NOTEBOOK_ENTRY_POINT = {
   NOTEBOOK_LIST: 'notebook_list',
@@ -105,11 +111,14 @@ export interface NotebookEditSessionStartedProperties extends EventProperty {
 /**
  * How an edit session ended. `TOGGLE` covers the Edit control turning edit mode off and the url
  * losing `?edit=true` while the notebook stays open. `NAVIGATION` is the notebook page itself
- * being torn down while a session was still open, such as navigating away or closing the tab.
+ * being torn down inside the app while a session was still open, such as navigating away or going
+ * back. `PAGE_HIDE` is the browser page going away with the session still open, such as closing the
+ * tab or reloading: nothing inside the app tears down then, so it is reported from `pagehide`.
  */
 export const NOTEBOOK_EDIT_SESSION_END_REASON = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
+  PAGE_HIDE: 'page_hide',
 } as const;
 
 export type NotebookEditSessionEndReason =
@@ -118,11 +127,21 @@ export type NotebookEditSessionEndReason =
 export interface NotebookEditSessionEndedProperties extends EventProperty, NotebookShape {
   /** Identifier and join key for this notebook. Empty for a session that ended before autosave created one. */
   notebookUid: string;
-  /** How long the session ran, from entering edit mode to leaving it. */
+  /**
+   * How long the session ran, from entering edit mode to leaving it. Wall-clock: it includes time
+   * the notebook sat in edit mode untouched, whatever the session's `source`.
+   */
   durationMs: number;
-  /** Edits recorded during the session. An edit rolled back before it stood is not counted. */
+  /**
+   * Edits recorded during the session. An edit rolled back before it stood is not counted. A whole-
+   * document write by the assistant is one edit.
+   */
   editCount: number;
-  /** Cells inserted during the session, by any gesture. Counts an insert that was later undone. */
+  /**
+   * Cells inserted during the session, by any gesture. Counts an insert that was later undone, and a
+   * panel sent by "Add to notebook" while the notebook is open. A whole-document write by the assistant
+   * is not counted here, so it undercounts for a session the assistant wrote into.
+   */
   cellsAdded: number;
   /** Cells deleted during the session. Counts a delete that was later undone. */
   cellsRemoved: number;
@@ -187,12 +206,15 @@ export const NOTEBOOK_LINK_COPY_SOURCE = {
 export type NotebookLinkCopySource = (typeof NOTEBOOK_LINK_COPY_SOURCE)[keyof typeof NOTEBOOK_LINK_COPY_SOURCE];
 
 /**
- * Where an export sent the notebook. Every action writes the same markdown, so the destination is
- * the only thing that changes between them.
+ * Where an export sent the notebook. The markdown actions write the same document, so for them the
+ * destination is the only thing that changes. The PDF is rendered from the saved notebook instead.
  */
 export const NOTEBOOK_EXPORT_DESTINATION = {
   CLIPBOARD: 'clipboard',
   DOWNLOAD: 'download',
+  // Reported once the PDF tab is pointed at the renderer. The render itself happens in that tab, so
+  // this says the export started, not that a PDF came out.
+  PDF: 'pdf',
 } as const;
 
 export type NotebookExportDestination = (typeof NOTEBOOK_EXPORT_DESTINATION)[keyof typeof NOTEBOOK_EXPORT_DESTINATION];
@@ -283,15 +305,28 @@ export const NOTEBOOK_AUTOSAVE_FAILED_REASON = {
 export type NotebookAutosaveFailedReason =
   (typeof NOTEBOOK_AUTOSAVE_FAILED_REASON)[keyof typeof NOTEBOOK_AUTOSAVE_FAILED_REASON];
 
+/** What kind of cell "Add to notebook" appended. A chat answer can bring text next to its panels. */
+export const NOTEBOOK_ADDED_CELL_TYPE = {
+  PANEL: 'panel',
+  MARKDOWN: 'markdown',
+} as const;
+
+export type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTEBOOK_ADDED_CELL_TYPE];
+
 /**
- * A cell added through the "Add to notebook" option. For a cell added inside an editing session, the
- * session counts it on `edit_session_ended` instead.
+ * A cell added through the "Add to notebook" option. A cell added from inside the notebook, by its own
+ * controls, is counted on `edit_session_ended` instead.
  *
- * No cell type: this option only ever appends a panel, so the value would be the same every time.
+ * The two overlap when the target notebook is open: it enters an edit session and inserts the cell as
+ * an ordinary edit, so `cellsAdded` on that session counts it as well. Do not add the two together.
+ *
+ * The panel properties are only there for a panel. A markdown cell has nothing to say about them.
  */
-export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, AddedPanelProperties {
+export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, Partial<AddedPanelProperties> {
   /** Identifier and join key for this notebook. */
   notebookUid: string;
+  /** Whether the appended cell is a panel or markdown. */
+  cellType: NotebookAddedCellType;
   /** Which surface the panel was sent from. */
   source: NotebookEntryPoint;
   /** Where the panel landed, counting from 0. Doubles as the notebook's size before the add. */
