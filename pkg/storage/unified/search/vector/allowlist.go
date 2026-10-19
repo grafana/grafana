@@ -35,9 +35,6 @@ func allowlistSet(entries []string) map[string]struct{} {
 // Allows reports whether the collection may be served. Internal and external
 // collections are gated by separate lists.
 func (a CollectionAllowlist) Allows(c Collection) bool {
-	if !c.IsTenantScoped() {
-		return false
-	}
 	key := c.Group + "/" + c.Resource
 	if c.IsExternal {
 		_, ok := a.external[key]

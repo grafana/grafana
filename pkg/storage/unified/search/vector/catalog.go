@@ -38,8 +38,6 @@ type Collection struct {
 	Scope        CollectionScope
 }
 
-func (c Collection) IsTenantScoped() bool { return c.Scope == "" || c.Scope == ScopeTenant }
-
 // InternalPartitionKey lets enrollment validate partition names before any
 // catalog or schema changes. Distinct resources may derive the same key;
 // callers must also reject conflicting ownership.
