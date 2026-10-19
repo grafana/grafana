@@ -200,7 +200,7 @@ Next, we'll establish an [alert rule](https://grafana.com/docs/grafana/latest/al
 
 In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
-1. Select the **Loki** datasource from the drop-down.
+1. Select the **Loki** data source from the drop-down.
 1. The query editor opens in **Code** mode by default. If it's showing **Builder** mode instead, click **Code** on the right.
 1. Paste the query below.
 
