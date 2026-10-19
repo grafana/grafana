@@ -39,10 +39,9 @@ v0alpha1: {
 							// Tag value.
 							tag: string
 							// Count of annotations with this tag.
-							count: int64
+							count: number
 						}]
 					}
-					responseMetadata: typeMeta: false
 				}
 			}
 			"/search": {
