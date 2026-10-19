@@ -500,16 +500,15 @@ func TestValidateCreate(t *testing.T) {
 
 func TestValidateCreateDetachedAncestors(t *testing.T) {
 	for _, tc := range []struct {
-		name        string
-		missingAt   string
-		forbiddenAt string
-		wantBadReq  bool
+		name     string
+		brokenAt string
+		getErr   error
 	}{
-		{name: "immediate parent missing", missingAt: "C", wantBadReq: true},
-		{name: "immediate parent unreadable", forbiddenAt: "C", wantBadReq: true},
-		{name: "grandparent missing", missingAt: "B"},
-		{name: "grandparent unreadable", forbiddenAt: "B"},
-		{name: "great-grandparent missing", missingAt: "A"},
+		{name: "immediate parent missing", brokenAt: "C", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "C")},
+		{name: "immediate parent unreadable", brokenAt: "C", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "C", errors.New("forbidden"))},
+		{name: "grandparent missing", brokenAt: "B", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "B")},
+		{name: "grandparent unreadable", brokenAt: "B", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "B", errors.New("forbidden"))},
+		{name: "great-grandparent missing", brokenAt: "A", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "A")},
 		{name: "full chain readable"},
 	} {
 		for _, dryRun := range []bool{false, true} {
@@ -517,14 +516,8 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 				storage := grafanarest.NewMockStorage(t)
 				parents := map[string]string{"C": "B", "B": "A", "A": folder.GeneralFolderUID}
 				for _, name := range []string{"C", "B", "A"} {
-					if name == tc.missingAt || name == tc.forbiddenAt {
-						if name == tc.missingAt {
-							storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).
-								Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), name)).Once()
-						} else {
-							storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).
-								Return(nil, apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), name, errors.New("forbidden"))).Once()
-						}
+					if name == tc.brokenAt {
+						storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(nil, tc.getErr).Once()
 						break
 					}
 					storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(&folders.Folder{
@@ -538,7 +531,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 					Spec:       folders.FolderSpec{Title: "new"},
 				}
 				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
-				if dryRun || !tc.wantBadReq {
+				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return
 				}
@@ -549,7 +542,6 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 		}
 	}
 }
-
 func TestValidateUpdate(t *testing.T) {
 	tests := []struct {
 		name         string

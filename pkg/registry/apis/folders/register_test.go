@@ -181,17 +181,17 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
 	for _, tc := range []struct {
-		name            string
-		parentName      string
-		missingAncestor bool
+		name               string
+		parentName         string
+		missingGrandparent bool
 	}{
 		{name: "immediate parent missing", parentName: "missing"},
-		{name: "grandparent missing", parentName: "parent", missingAncestor: true},
+		{name: "grandparent missing", parentName: "parent", missingGrandparent: true},
 	} {
 		for _, dryRun := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
 				storage := grafanarest.NewMockStorage(t)
-				if tc.missingAncestor {
+				if tc.missingGrandparent {
 					storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:        "parent",
@@ -219,7 +219,7 @@ func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
 					folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
 					nil, dryRun, &user.SignedInUser{},
 				), nil)
-				if dryRun || tc.missingAncestor {
+				if dryRun || tc.missingGrandparent {
 					require.NoError(t, err)
 				} else {
 					require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
