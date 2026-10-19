@@ -563,3 +563,49 @@ func TestFetchPluginManifestsPrefersPluralEntry(t *testing.T) {
 	require.Len(t, backends, 1)
 	require.Equal(t, "v1alpha1", backends[0].Group().Versions[0].Version)
 }
+
+func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
+	entry := func(id, group string) string {
+		return `{"definition": {"jsonData": {"id": "` + id + `", "type": "app"}, "manifests": [{
+			"appName": "app", "group": "` + group + `",
+			"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}`
+	}
+	for _, tc := range []struct {
+		name    string
+		source  string
+		id      string
+		group   string
+		loaded  bool
+		skipped int
+	}{
+		{name: "plugin", source: sourcePluginsURL, id: "example-app", group: "example.ext.grafana.app", loaded: true},
+		{name: "plugin without an ID", source: sourcePluginsURL, id: "", group: "example.ext.grafana.app", skipped: 1},
+		{name: "plugin ID with a dot", source: sourcePluginsURL, id: "folder.grafana.app", group: "example.ext.grafana.app", skipped: 1},
+		{name: "plugin ID without a hyphen", source: sourcePluginsURL, id: "example", group: "example.ext.grafana.app", skipped: 1},
+		{name: "core API without an ID", source: sourceCoreURL, id: "", group: "playlist.grafana.app", loaded: true},
+		{name: "core API with an invalid ID", source: sourceCoreURL, id: "playlist.grafana.app", group: "playlist.grafana.app", skipped: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(`{"key": "k", "plugins": [` + entry(tc.id, tc.group) + `]}`))
+			}))
+			defer srv.Close()
+
+			prefix := pluginsKeyPrefix
+			if tc.source == sourceCoreURL {
+				prefix = coreKeyPrefix
+			}
+			target, err := newPluginManifestsTarget(prefix, tc.source, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			require.NoError(t, err)
+			target.poll(t.Context(), make(chan struct{}, 1))
+
+			if tc.loaded {
+				require.Len(t, target.Backends(), 1)
+				require.Equal(t, tc.group, target.Backends()[0].Group().Name)
+			} else {
+				require.Empty(t, target.Backends())
+			}
+			require.Equal(t, tc.skipped, target.status.status(tc.source).Skipped)
+		})
+	}
+}

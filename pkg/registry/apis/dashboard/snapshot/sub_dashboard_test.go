@@ -59,8 +59,8 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			snap.Namespace = namespace
 			snap.Spec.Dashboard = nil
 			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
-			// Only blob-read credentials are exercised here. The initial snapshot lookup
-			// is mocked and can still reject anonymous callers under strict identity enforcement.
+			// Exercise blob credentials independently of the remote metadata lookup
+			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
 			getter := grafanarest.NewMockStorage(t)
 			getter.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 			r, err := NewDashboardREST(getter, client)

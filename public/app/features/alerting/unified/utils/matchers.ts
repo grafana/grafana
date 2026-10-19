@@ -7,7 +7,7 @@
 
 import { chain, compact } from 'lodash';
 
-import { type LabelMatcher } from '@grafana/alerting/unstable';
+import { type LabelMatcher } from '@grafana/alerting';
 import { parseFlags } from '@grafana/data';
 import {
   type Matcher,

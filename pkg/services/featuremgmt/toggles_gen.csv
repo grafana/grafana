@@ -163,9 +163,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
 2024-11-12,crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2024-11-27,azureMonitorEnableUserAuth,GA,@grafana/data-sources-plugins,false,false,false
-2025-07-16,alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
-2025-07-23,alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
-2025-07-16,alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 2025-07-16,alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
@@ -236,7 +233,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2026-06-24,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-20,grafana.newTextPanel,preview,@grafana/dataviz-squad,false,false,true
-2026-08-12,text.newFeatures,experimental,@grafana/dataviz-squad,false,false,true
+2026-08-12,text.newFeatures,preview,@grafana/dataviz-squad,false,false,true
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-07-31,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,graphiteBackendMode,privatePreview,@grafana/data-sources-plugins,false,false,false
@@ -354,6 +351,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-10-02,dataviz.tabularNums,preview,@grafana/dataviz-squad,false,false,true
 2026-08-05,datetime.useLuxon,GA,@grafana/grafana-frontend-platform,false,false,false
+2026-10-05,grafana.preserveLoginTabTitle,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-01,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-30,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false
