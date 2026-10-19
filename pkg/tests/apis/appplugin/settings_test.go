@@ -406,7 +406,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
-		OpenFeatureAPIEnabled:            true,
+		OpenFeatureStaticProvider:        true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{

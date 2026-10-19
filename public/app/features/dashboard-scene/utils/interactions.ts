@@ -3,12 +3,14 @@ import { reportInteraction } from '@grafana/runtime';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
+import { type DashboardMode } from '../scene/dashboardModes';
 import {
   type DashboardTrackingInfo,
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
+import { type DashboardEditSessionTracking, type DashboardModeTrigger } from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -45,7 +47,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('text_panel_usage', properties);
   },
 
-  dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
+  dashboardCopied: (
+    properties: { name: string; url: string; diff_count?: number } & Partial<DashboardEditSessionTracking>
+  ) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
 
@@ -74,7 +78,7 @@ export const DashboardInteractions = {
     ) & {
       // size of the saved edit (diffs between the initial and saved models); scene save path only
       diff_count?: number;
-    }
+    } & Partial<DashboardEditSessionTracking>
   ) => {
     reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
@@ -389,6 +393,52 @@ export const DashboardInteractions = {
   // fired when the dashboard scene enters edit mode; source = how it was opened (Edit button vs assistant)
   editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
     reportDashboardInteraction('edit_session_started', properties);
+  },
+
+  editPeriodStarted: (properties: {
+    dashboard_uid?: string;
+    source: 'assistant' | 'user';
+    edit_session_id: string;
+  }) => {
+    reportDashboardInteraction('edit_period_started', properties);
+  },
+
+  editPeriodEnded: (
+    properties: Partial<DashboardEditSessionTracking> & {
+      edit_session_id: string;
+      outcome: 'saved' | 'saved_as_copy' | 'discarded';
+      has_unsaved_changes?: boolean;
+    }
+  ) => {
+    reportDashboardInteraction('edit_period_ended', properties);
+  },
+
+  editActorFirstChange: (properties: { edit_session_id: string; actor: 'user' | 'assistant'; mode: DashboardMode }) => {
+    reportDashboardInteraction('edit_actor_first_change', properties);
+  },
+
+  modePickerShown: (properties: { dashboard_uid?: string; mode: DashboardMode }) => {
+    reportDashboardInteraction('mode_picker_shown', properties);
+  },
+
+  modePickerOpened: (properties: {
+    dashboard_uid?: string;
+    mode: DashboardMode;
+    edit_session_id?: string;
+    first_open: boolean;
+  }) => {
+    reportDashboardInteraction('mode_picker_opened', properties);
+  },
+
+  modeChanged: (properties: {
+    dashboard_uid?: string;
+    edit_session_id?: string;
+    previous_mode: DashboardMode;
+    mode: DashboardMode;
+    trigger: DashboardModeTrigger;
+    has_unsaved_changes: boolean;
+  }) => {
+    reportDashboardInteraction('mode_changed', properties);
   },
 
   // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model

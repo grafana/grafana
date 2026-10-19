@@ -15,9 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -82,6 +85,8 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.azureHostEnvVars(azureSettings, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
+	hostEnv = append(hostEnv, p.signingKeysEnvVars(plugin)...)
+	hostEnv = append(hostEnv, p.apiAccessEnvVars(plugin)...)
 
 	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
 	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
@@ -298,6 +303,75 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
 	return vars
+}
+
+// signingKeysEnvVars passes the plugin the keys that verify the access tokens
+// Grafana signs itself, so it can authenticate plugin protocol v3 requests
+// without insecure_skip_authentication.
+func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
+	if !p.cfg.LocalPluginTokens {
+		return nil
+	}
+	jwks, err := v3.LocalSigningKeys()
+	if err != nil {
+		p.logger.Error("Failed to get the local plugin signing keys", "pluginId", plugin.PluginID(), "error", err)
+		return nil
+	}
+	return []string{p.envVar(v3.EnvVarSigningKeys, jwks)}
+}
+
+// apiAccessHostEnvVars are the API_ACCESS_* variables that configure where and
+// how the app SDK calls Grafana's API. go-plugin forwards the host environment
+// after the variables Grafana sets, so host values would win over them.
+var apiAccessHostEnvVars = []string{
+	v3.EnvVarRouterURL,
+	v3.EnvVarTokenExchangeURL,
+	v3.EnvVarAccessPolicyToken,
+	"API_ACCESS_BEARER_TOKEN",
+}
+
+// apiAccessEnvVars passes an app plugin the credentials for Grafana's API when
+// Grafana signs plugin access tokens itself: this Grafana's URL, the local token
+// exchange, and an access policy token for it (see
+// v3.IssueLocalAccessPolicyToken). The app SDK then exchanges tokens to act as
+// the plugin or on behalf of its caller, as with a cloud access policy.
+//
+// Grafana builds a plugin's environment each time it starts the plugin's
+// process, so each process gets its own token, which the plugin's process
+// manager revokes when that process stops or is replaced.
+func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
+	// LocalAPIURL is only set when Grafana signs plugin tokens itself.
+	apiURL := strings.TrimRight(p.cfg.LocalAPIURL, "/")
+	if apiURL == "" || plugin.Type != plugins.TypeApp {
+		return nil
+	}
+	if !plugin.SkipHostEnvVars && slices.ContainsFunc(apiAccessHostEnvVars, func(key string) bool { return os.Getenv(key) != "" }) {
+		return nil
+	}
+	// The policy comes from the manifest of the plugin being started, not from
+	// other copies of it on disk. A plugin without one gets no credentials: a
+	// token on behalf of its caller would still carry the caller's org role.
+	if plugin.FS == nil {
+		return nil
+	}
+	manifest, err := definition.LoadManifest(plugin.FS)
+	if err != nil {
+		p.logger.Error("Failed to load the plugin's app manifest; it gets no credentials for Grafana's API", "pluginId", plugin.ID, "error", err)
+		return nil
+	}
+	if manifest == nil {
+		return nil
+	}
+	token, err := v3.IssueLocalAccessPolicyToken(plugin.ID, manifest)
+	if err != nil {
+		p.logger.Error("Failed to create the local plugin access policy token", "pluginId", plugin.ID, "error", err)
+		return nil
+	}
+	return []string{
+		p.envVar(v3.EnvVarRouterURL, apiURL),
+		p.envVar(v3.EnvVarTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
+		p.envVar(v3.EnvVarAccessPolicyToken, token),
+	}
 }
 
 // insecureSkipAuthenticationSetting makes a plugin serve plugin protocol v3

@@ -4,9 +4,10 @@ import { t } from '@grafana/i18n';
 import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { sceneUtils } from '@grafana/scenes';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
+import type { MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../../analytics/types';
-import { notebookResourceFor, readNotebookResourceVersion } from '../../api/notebookResource';
+import { notebookResourceFor } from '../../api/notebookResource';
 import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
@@ -71,6 +72,17 @@ const applyNotebookSpecPayloadSchema = z
 
 export type ApplyNotebookSpecPayload = z.infer<typeof applyNotebookSpecPayloadSchema>;
 
+const SAVED_ELSEWHERE: MutationResult = {
+  success: false,
+  error:
+    'Someone else saved this notebook after it was opened, so nothing was changed. Ask the person ' +
+    'whether to overwrite the other version with this change. If they agree, retry with onConflict ' +
+    'set to "overwrite". If not, do not retry: tell them the change was not saved.',
+  // The marker callers act on, so none of them has to recognise the wording of `error`.
+  data: { applied: false, conflict: true },
+  changes: [],
+};
+
 export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload, NotebookScene> = {
   name: 'APPLY_NOTEBOOK_SPEC',
   description:
@@ -105,31 +117,8 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // Same shape as the check above, and for the same reason: whoever asked for this write is in a
       // conversation and chooses there, so it is refused before the scene is touched rather than
       // raising the overwrite modal afterwards over a change that is already on screen.
-      if (
-        scene.state.uid &&
-        scene.autosave.state.savedResourceVersion !== undefined &&
-        payload.onConflict !== 'overwrite'
-      ) {
-        // Let a save of this scene's own that is already running land first. Otherwise the server can
-        // already hold a version this scene wrote but has not yet recorded, which would read as someone
-        // else's save. Only one already running: bringing a waiting edit forward could conflict and raise
-        // the overwrite modal for it while this check is about to ask the person in the chat.
-        await scene.autosave.awaitInFlightSave();
-        const serverVersion = await readNotebookResourceVersion(scene.state.uid);
-        // Read after the request, not before: a save that finished during it moved both versions.
-        const savedVersion = scene.autosave.state.savedResourceVersion;
-        if (serverVersion !== undefined && savedVersion !== undefined && serverVersion !== savedVersion) {
-          return {
-            success: false,
-            error:
-              'Someone else saved this notebook after it was opened, so nothing was changed. Ask the person ' +
-              'whether to overwrite the other version with this change. If they agree, retry with onConflict ' +
-              'set to "overwrite". If not, do not retry: tell them the change was not saved.',
-            // The marker callers act on, so none of them has to recognise the wording of `error`.
-            data: { applied: false, conflict: true },
-            changes: [],
-          };
-        }
+      if (payload.onConflict !== 'overwrite' && (await scene.autosave.isSavedElsewhere())) {
+        return SAVED_ELSEWHERE;
       }
 
       const warnings: string[] = [];

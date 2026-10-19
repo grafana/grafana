@@ -24,7 +24,7 @@ import {
   setDataSourcePluginImporter,
 } from './dataSource';
 import { setExpressionDataSourceInstance } from './expressionDs';
-import { _resetForTests as resetPluginCache } from './pluginCache';
+import { getRuntimePlugin, _resetForTests as resetPluginCache } from './pluginCache';
 import {
   reloadDataSourceInstanceSettings,
   setDataSourceInstanceSettings,
@@ -521,6 +521,27 @@ describe('plugin', () => {
       registerRuntimeDataSourceInstance({ dataSource: runtime });
       const duplicate = new TestRuntime('plugin-id', 'runtime-uid');
       expect(() => registerRuntimeDataSourceInstance({ dataSource: duplicate })).toThrow(/already been registered/);
+    });
+
+    it('exposes the registered instance through the synchronous lookup', () => {
+      setDataSourceInstanceSettings({}, '');
+      const runtime = new TestRuntime('plugin-id', 'runtime-uid');
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
+
+      expect(getRuntimePlugin('runtime-uid')).toBe(runtime);
+      expect(getRuntimePlugin('unknown-uid')).toBeUndefined();
+    });
+
+    it('forgets runtime instances when the cache is reseeded', () => {
+      setDataSourceInstanceSettings({}, '');
+      registerRuntimeDataSourceInstance({ dataSource: new TestRuntime('plugin-id', 'runtime-uid') });
+
+      setDataSourceInstanceSettings({}, '');
+
+      expect(getRuntimePlugin('runtime-uid')).toBeUndefined();
+      expect(() =>
+        registerRuntimeDataSourceInstance({ dataSource: new TestRuntime('plugin-id', 'runtime-uid') })
+      ).not.toThrow();
     });
   });
 

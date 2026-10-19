@@ -64,10 +64,12 @@ var legacyTextFields = map[string]struct{}{
 	fieldTitle: {},
 }
 
-// legacySortFields are the fields sort may name. The legacy store orders by
-// title only, so sorting on any other field would silently return title order.
+// legacySortFields are the fields sort may name: those perKindSortRules can
+// order legacy rules by. Other sortable fields would silently fall back to title
+// order on the legacy backend.
 var legacySortFields = map[string]struct{}{
 	fieldTitle: {},
+	fieldName:  {},
 }
 
 // scalarFilterFields are filterable fields the legacy backend applies as a

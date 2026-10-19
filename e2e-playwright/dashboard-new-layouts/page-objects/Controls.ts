@@ -129,6 +129,11 @@ export class Controls extends PageObject {
         await this.page.getByRole('listbox').getByRole('option', { name: key, exact: true }).click();
       });
     },
+    /** Returns every option of the open dropdown, in display order */
+    getOptions: (): Locator =>
+      // like getOption(), we match the ARIA role: the control's virtualized Select menu renders no listbox to anchor to, and a
+      // Select-specific testid would break once the control moves to Combobox, which also renders role="option" items
+      this.page.getByRole('option'),
     /** Returns the dropdown option with the given label (the dropdown must be open) */
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     /** Opens the variable's dropdown by clicking its input */

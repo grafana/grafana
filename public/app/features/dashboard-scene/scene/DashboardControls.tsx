@@ -39,11 +39,13 @@ import { filterSectionRepeatLocalVariables } from '../variables/utils';
 import { AddControlsButton } from './ControlsAddButton';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
+import { DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
+import { dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -319,8 +321,14 @@ function DashboardControlActions({
   const isEditingLibraryPanel = Boolean(editPanel && isLibraryPanel(editPanel.state.panelRef.resolve()));
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
-  const showSaveButton = isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel;
-  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable && !editPanel;
+  const modesEnabled = dashboardModesEnabled();
+  const hasChanges = dashboard.state.isDirty;
+  const showSaveButton =
+    isEditing &&
+    (canSave || canSaveAs) &&
+    !isEditingLibraryPanel &&
+    (!modesEnabled || getDashboardMode(dashboard.state) !== 'view' || hasChanges || !hasUid);
+  const showEditButton = (hasUid || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
   const showPanelEditButtons = Boolean(editPanel);
 
@@ -328,7 +336,7 @@ function DashboardControlActions({
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
-      {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
+      {!modesEnabled && showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
       {showPanelEditButtons && <PanelEditButtons dashboard={dashboard} />}
       {isPlaying && (
@@ -360,6 +368,7 @@ function DashboardControlActions({
           )}
         </ButtonGroup>
       )}
+      {modesEnabled && !isPlaying && <DashboardModePicker dashboard={dashboard} />}
     </>
   );
 }

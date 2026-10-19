@@ -166,11 +166,11 @@ export const SilencesEditor = ({
   const onSubmit = async (data: SilenceFormFields) => {
     const { id, startsAt, endsAt, comment, createdBy, matchers: matchersFields } = data;
 
-    if (ruleUid) {
-      matchersFields.push({ name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal });
-    }
+    const matchersWithRuleUid = ruleUid
+      ? [...matchersFields, { name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal }]
+      : matchersFields;
 
-    const matchersToSend = matchersFields.map(matcherFieldToMatcher).filter((field) => field.name && field.value);
+    const matchersToSend = matchersWithRuleUid.map(matcherFieldToMatcher).filter((field) => field.name);
     const payload = pickBy(
       {
         id,
@@ -182,11 +182,16 @@ export const SilencesEditor = ({
       },
       (value) => !!value
     ) as SilenceCreatePayload;
-    await createSilence({ datasourceUid: getDatasourceAPIUid(alertManagerSourceName), payload })
-      .unwrap()
-      .then((newSilenceResponse) => {
-        onSilenceCreatedHandler?.(newSilenceResponse);
-      });
+
+    try {
+      const newSilenceResponse = await createSilence({
+        datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
+        payload,
+      }).unwrap();
+      onSilenceCreatedHandler?.(newSilenceResponse);
+    } catch {
+      // The mutation's onQueryStarted already surfaces an error toast; keep the editor open so the user can retry.
+    }
   };
 
   // Keep duration and endsAt in sync
