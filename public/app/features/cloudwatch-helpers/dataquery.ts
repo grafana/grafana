@@ -1,3 +1,4 @@
+/* eslint-disable */
 import * as common from '@grafana/schema';
 
 export interface MetricStat {

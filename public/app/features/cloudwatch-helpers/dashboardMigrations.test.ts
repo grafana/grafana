@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { type AnnotationQuery, type DataQuery } from '@grafana/data';
 
 import { type CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './dataquery';

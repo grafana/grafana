@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { type DataQuery } from '@grafana/schema';
 
 import type * as raw from './dataquery';
