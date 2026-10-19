@@ -825,6 +825,49 @@ func TestAllowOrphanedUpdate(t *testing.T) {
 	})
 }
 
+// ctxCapturingRestConfigProvider records the context each rest config is requested with.
+type ctxCapturingRestConfigProvider struct {
+	fakeRestConfigProvider
+	ctx context.Context
+}
+
+func (p *ctxCapturingRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
+	p.ctx = ctx
+	return p.fakeRestConfigProvider.GetRestConfig(ctx)
+}
+
+func TestGetRepositoryIdentity(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"kind":"Repository","apiVersion":"provisioning.grafana.app/v0alpha1"}`))
+	}))
+	t.Cleanup(server.Close)
+
+	callerCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Login: "caller", OrgRole: identity.RoleNone})
+
+	tests := []struct {
+		name                      string
+		allowProvisioningIdentity bool
+		wantProvisioningIdentity  bool
+	}{
+		{"runs as the caller by default", false, false},
+		{"runs as the provisioning identity when allowed", true, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := &ctxCapturingRestConfigProvider{fakeRestConfigProvider: fakeRestConfigProvider{host: server.URL}}
+			s := &Storage{configProvider: provider}
+
+			require.NoError(t, s.getRepository(callerCtx, "default", "my-repo", tt.allowProvisioningIdentity))
+
+			requester, err := identity.GetRequester(provider.ctx)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantProvisioningIdentity, identity.IsProvisioningServiceIdentity(requester))
+		})
+	}
+}
+
 func TestContentChanged(t *testing.T) {
 	newDash := func(t *testing.T, mutate func(*dashboard.Dashboard)) utils.GrafanaMetaAccessor {
 		d := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default"}}
