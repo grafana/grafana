@@ -96,6 +96,15 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		}))
 	})
 
+	// How the search server leaves out the types it cannot search.
+	t.Run("a request can leave out types", func(t *testing.T) {
+		assert.ElementsMatch(t, []string{"dash-a", "dash-b"}, search(&resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_GROUP_RESOURCE,
+			Operator: string(selection.NotIn),
+			Values:   []string{"folder.grafana.app/folders"},
+		}))
+	})
+
 	t.Run("a hit is authorized against its own resource type", func(t *testing.T) {
 		// Permission on folders alone leaves the dashboards out, even though they
 		// share the index.
