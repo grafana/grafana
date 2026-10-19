@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { useStoredBoolean } from 'app/core/hooks/useStored';
@@ -13,13 +13,14 @@ import { getTelemetrySetupLink } from '../solutions/telemetrySetup';
 import { type SolutionId } from '../solutions/types';
 import { type HomepageSolutions } from '../useHomepageSolutions';
 
-import { RecommendationsSkeleton } from './RecommendationsSkeleton';
-import { RecommendationsView } from './RecommendationsView';
+import { RecommendationsSkeleton, RecommendationsView } from './RecommendationsView';
 import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
 import { orderCardsForSolution, type RecommendedCardId, selectRecommendations } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
+/** Whether the last selection in this browser found nothing to recommend; decides if the region reserves its space. */
+const HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.empty';
 
 interface RecommendationsProps {
   solutions: HomepageSolutions;
@@ -144,17 +145,27 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   }, [selectionEnabled, signals]);
 
   // The region renders once the selection settles; recommendations only decide the right column.
-  // Collapsed (gated-off) renders immediately as just the header row.
+  // Collapsed (gated-off) renders immediately as just the header row. While the selection runs, the region
+  // holds its space unless the last verdict in this browser was empty: for a stack with nothing left to
+  // recommend that verdict rarely changes, and reserving space only to collapse it moves the whole page.
+  // A verdict that does flip to non-empty mounts the region late, once.
+  const [knownEmpty, setKnownEmpty] = useStoredBoolean(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false);
   const state = selected.value;
+  const isEmpty = state ? state.recommendations.length === 0 : undefined;
+  useEffect(() => {
+    if (isEmpty !== undefined) {
+      setKnownEmpty(isEmpty);
+    }
+  }, [isEmpty, setKnownEmpty]);
   if (selectionEnabled && !state) {
-    return <RecommendationsSkeleton />;
+    return knownEmpty ? null : <RecommendationsSkeleton />;
   }
 
   // All-or-nothing: the region never renders one column alone. An empty right column —
   // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
   // or every card failing closed — hides the whole region. The collapsed-gated render
   // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
-  if (selectionEnabled && state && state.recommendations.length === 0) {
+  if (selectionEnabled && isEmpty) {
     return null;
   }
 

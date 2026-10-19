@@ -143,6 +143,28 @@ describe('Recommendations', () => {
     expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
   });
 
+  it('remembers an empty verdict and reserves no space on the next visit until a verdict says otherwise', async () => {
+    const unknown: SolutionState = { ...DEFAULT_STATE, logs: 'unknown' };
+    const first = render(<Recommendations solutions={homepageSolutions(unknown)} />);
+    await waitFor(() => expect(first.container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBe('true');
+    first.unmount();
+
+    // Next visit: the selection runs again, but nothing is reserved for it.
+    const state = deferred<SolutionState>();
+    const signals = jest.fn(() => state.promise);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByTestId('recommendations-skeleton')).not.toBeInTheDocument();
+
+    // A verdict with recommendations mounts the region and forgets the empty verdict.
+    await act(async () => state.resolve(DEFAULT_STATE));
+
+    expect(await carouselRegion()).toBeInTheDocument();
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBe('false');
+  });
+
   it('renders the matrix-selected cards in matrix order', async () => {
     render(<Recommendations solutions={homepageSolutions()} />);
 

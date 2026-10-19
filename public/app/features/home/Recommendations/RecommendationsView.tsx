@@ -11,7 +11,7 @@ import { recommendationsShown } from '../analytics/main';
 import { type Solution, type SolutionId } from '../solutions/types';
 
 import { RecommendationCard } from './RecommendationCard';
-import { RecommendationExisting } from './RecommendationExisting';
+import { RecommendationExisting, RecommendationExistingSkeleton } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
 import { type BaseRow } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
@@ -255,6 +255,32 @@ function RecommendedCardSkeleton() {
         <Skeleton height={20} />
         <Skeleton width={170} height={32} />
       </Stack>
+    </div>
+  );
+}
+
+/**
+ * Stands in for the whole region while the plugin list and data probes resolve: the heading row at the height
+ * of its Hide button, and the same two column skeletons the view itself shows while its facts settle, inside
+ * the same card shell. The region therefore keeps one height from skeleton to content.
+ */
+export function RecommendationsSkeleton() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div data-testid="recommendations-skeleton">
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <Skeleton width={280} height={24} />
+        <Skeleton width={60} height={32} />
+      </Stack>
+
+      <div className={styles.cards}>
+        <HomeGrid columns={2} gap={0}>
+          <div className={styles.card}>
+            <RecommendationExistingSkeleton />
+          </div>
+          <RecommendedCardSkeleton />
+        </HomeGrid>
+      </div>
     </div>
   );
 }
