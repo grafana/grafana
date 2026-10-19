@@ -28,7 +28,7 @@ const getDynamicFieldNameMatcherOptions: () => FieldMatcherUIRegistryItem<string
       'Fields with dynamic names'
     ),
     description: t(
-      'grafana-ui.matchers-ui.description-fields-by-query',
+      'transformers.config-from-query-transformer-editor.description-dynamic-field-name-matcher',
       'Set properties for field names that are returned by your config query'
     ),
   };
