@@ -296,6 +296,12 @@ describe('Silence create/edit', () => {
     setUserLogged(true);
   });
 
+  it('labels the matchers as matching labels when the silence is not scoped to a rule', async () => {
+    renderSilences(baseUrlPath);
+    expect(await screen.findByText(/^matching labels/i)).toBeInTheDocument();
+    expect(screen.queryByText(/refine affected alerts/i)).not.toBeInTheDocument();
+  });
+
   it('Should not render createdBy if user is logged in and has a name', async () => {
     renderSilences(baseUrlPath);
     await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());

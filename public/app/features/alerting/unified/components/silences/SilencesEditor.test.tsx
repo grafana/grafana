@@ -84,6 +84,7 @@ describe('SilencesEditor', () => {
     renderEditor();
 
     expect(await findRuleField()).toHaveValue(RULE_TITLE);
+    expect(screen.getByText('Refine affected alerts')).toBeInTheDocument();
     expect(screen.getByText('This silence applies only to alerts from this alert rule.')).toBeInTheDocument();
     expect(rulerRequests).toEqual([]);
     server.events.removeAllListeners('request:start');

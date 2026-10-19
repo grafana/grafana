@@ -275,7 +275,7 @@ export const SilencesEditor = ({
             </Box>
           )}
 
-          <MatchersField required={Boolean(!ruleUid)} />
+          <MatchersField scopedToRule={Boolean(ruleUid)} />
 
           <Field
             label={t('alerting.silences-editor.label-comment', 'Comment')}

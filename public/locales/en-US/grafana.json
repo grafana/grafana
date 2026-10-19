@@ -2120,6 +2120,7 @@
       "aria-label-operator": "operator",
       "aria-label-remove-matcher": "Remove matcher",
       "label-label": "Label",
+      "label-matching-labels": "Matching labels",
       "label-operator": "Operator",
       "label-refine-affected-alerts": "Refine affected alerts",
       "label-value": "Value",

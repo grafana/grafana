@@ -11,10 +11,12 @@ import { matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
   className?: string;
-  required: boolean;
+  /** A rule-scoped silence already targets one rule, so matchers only narrow it and are optional. */
+  scopedToRule: boolean;
 }
 
-const MatchersField = ({ className, required }: Props) => {
+const MatchersField = ({ className, scopedToRule }: Props) => {
+  const required = !scopedToRule;
   const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
@@ -28,7 +30,11 @@ const MatchersField = ({ className, required }: Props) => {
   return (
     <div className={className}>
       <Field
-        label={t('alerting.matchers-field.label-refine-affected-alerts', 'Refine affected alerts')}
+        label={
+          scopedToRule
+            ? t('alerting.matchers-field.label-refine-affected-alerts', 'Refine affected alerts')
+            : t('alerting.matchers-field.label-matching-labels', 'Matching labels')
+        }
         required={required}
       >
         <div>
