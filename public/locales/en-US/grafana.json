@@ -9015,10 +9015,6 @@
       "attribute-category": {
         "other": "Other"
       },
-      "exception-message": "Message:",
-      "exception-stacktrace": "Stacktrace",
-      "exception-title": "Exception",
-      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
