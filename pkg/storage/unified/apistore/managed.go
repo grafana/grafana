@@ -259,15 +259,26 @@ func (s *Storage) getManager(ctx context.Context, obj utils.GrafanaMetaAccessor)
 	}
 	switch manager.Kind {
 	case utils.ManagerKindRepo:
-		return manager, s.getRepository(ctx, obj.GetNamespace(), manager.Identity)
+		return manager, s.getRepository(ctx, obj.GetNamespace(), manager.Identity, true)
 	default:
 		return manager, nil
 	}
 }
 
-func (s *Storage) getRepository(ctx context.Context, namespace, name string) error {
+// with allowProvisioningIdentity, the
+// lookup runs as the provisioning identity instead of the caller. Only set it for existence
+// probes, where the caller may be allowed to write a resource without being allowed to read
+// repositories.
+func (s *Storage) getRepository(ctx context.Context, namespace, name string, allowProvisioningIdentity bool) error {
 	if s.configProvider == nil || name == "" {
 		return nil
+	}
+	if allowProvisioningIdentity {
+		var err error
+		ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+		if err != nil {
+			return err
+		}
 	}
 	client, err := s.provisioningClient(ctx)
 	if err != nil {

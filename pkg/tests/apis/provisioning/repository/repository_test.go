@@ -30,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -1835,6 +1837,58 @@ func TestIntegrationProvisioning_DeleteOrphanedManagedResources(t *testing.T) {
 		_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "root folder should be deleted, got: %v", err)
 	})
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedResourceWithoutRepositoryRead verifies that a
+// caller who may delete a resource, but may not read repositories, can still delete it once
+// its repository is gone.
+func TestIntegrationProvisioning_DeleteOrphanedResourceWithoutRepositoryRead(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphaned-no-repo-read"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Workflows:  []string{},
+	})
+
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 6)
+
+	// The basic role stays at None so the folder grant is the only access this user has.
+	deleter := helper.CreateUser("orphan-deleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+		Actions:           []string{"folders:read", "dashboards:read", "dashboards:delete"},
+		Resource:          "folders",
+		ResourceAttribute: "uid",
+		ResourceID:        repo,
+	}})
+	deleterDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      deleter,
+		Namespace: "default",
+		GVR:       helper.DashboardsV1.Args.GVR,
+	})
+
+	deleterRepositories := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      deleter,
+		Namespace: "default",
+		GVR:       helper.Repositories.Args.GVR,
+	})
+	_, err := deleterRepositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.True(t, apierrors.IsForbidden(err), "the caller must not be able to read repositories, got: %v", err)
+
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err)
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+	helper.WaitForRepositoryDeleted(t, repo)
+
+	name := dashboards[0].GetName()
+	require.NoError(t, deleterDashboards.Resource.Delete(t.Context(), name, metav1.DeleteOptions{}))
+
+	_, err = helper.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "dashboard should be deleted, got: %v", err)
 }
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
