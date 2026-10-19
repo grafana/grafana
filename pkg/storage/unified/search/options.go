@@ -146,6 +146,7 @@ func NewSearchOptions(
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 			GlobalIndexEnabled:        cfg.GlobalSearchIndexEnabled,
+			GlobalIndexStartupBuild:   cfg.GlobalSearchIndexStartupBuild,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,
@@ -158,6 +159,7 @@ func NewSearchOptions(
 			SearchFields:                    searchFields,
 			EmbeddingConfig:                 embeddingConfig,
 			HybridSearchConfig:              hybridSearchConfig,
+			GlobalSearchCoverage:            resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()),
 		}, nil
 	}
 	return resource.SearchOptions{

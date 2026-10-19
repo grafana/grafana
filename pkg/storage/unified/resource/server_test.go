@@ -2417,7 +2417,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	}
 	watchLatency, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
-	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, watchEventPhaseLive)
 	require.NoError(t, err)
 	sendDuration, err := metrics.WatchEventSendDuration.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
@@ -2435,6 +2435,118 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"total watch latency should comprise upstream ready latency plus send duration")
 }
 
+type initialListBackend struct {
+	StorageBackend
+	names []string
+	rv    int64
+}
+
+func (b *initialListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	return b.rv, cb(&namedListIterator{names: b.names, rv: b.rv})
+}
+
+func requireReadyPhaseCounts(t *testing.T, metrics *StorageMetrics, initialList, live uint64) {
+	t.Helper()
+	for phase, want := range map[string]uint64{watchEventPhaseInitialList: initialList, watchEventPhaseLive: live} {
+		observer, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, phase)
+		require.NoError(t, err)
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		assert.Equal(t, want, m.GetHistogram().GetSampleCount(), "phase %s", phase)
+	}
+}
+
+// TestWatchEventMetricsPhaseIncludesInitialBookmark checks that a write made while the
+// initial-events bookmark is being sent is labeled phase=initial_list, and a later one live.
+func TestWatchEventMetricsPhaseIncludesInitialBookmark(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		listedAt := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = 0
+		req.SendInitialEvents = true
+		var metrics *StorageMetrics
+		var wroteAt time.Time
+		events, _, _ := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
+			metrics = srv.storageMetrics
+			srv.backend = &initialListBackend{names: []string{"a", "b"}, rv: snowflakeFromTime(listedAt)}
+			stream.beforeSend = func(evt *resourcepb.WatchEvent) error {
+				if evt.Type == resourcepb.WatchEvent_BOOKMARK && wroteAt.IsZero() {
+					time.Sleep(time.Second)
+					wroteAt = time.Now()
+					time.Sleep(time.Second)
+				}
+				return nil
+			}
+		})
+		// Let the blocked bookmark send finish.
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		require.False(t, wroteAt.IsZero())
+
+		events <- bookmarkWrittenEvent(snowflakeFromTime(wroteAt))
+		events <- bookmarkWrittenEvent(snowflakeFromTime(time.Now()))
+		synctest.Wait()
+		requireReadyPhaseCounts(t, metrics, 1, 1)
+	})
+}
+
+// TestWatchEventMetricsPhaseWithStorageBackend checks phase=initial_list end to end, with a
+// real write landing during a real initial list.
+func TestWatchEventMetricsPhaseWithStorageBackend(t *testing.T) {
+	const initialItems = 3
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	defer cancel()
+
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	for range initialItems {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	}
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), initialItems)
+
+	wroteDuringList := false
+	stream := &bookmarkWatchServer{mockWatchServer: newMockWatchServer(ctx)}
+	stream.beforeSend = func(evt *resourcepb.WatchEvent) error {
+		// The first ADDED send is an initial-list item, so the list has already captured its RV.
+		if evt.Type == resourcepb.WatchEvent_ADDED && !wroteDuringList {
+			wroteDuringList = true
+			assert.NoError(t, createTestPlaylist(ctx, srv))
+		}
+		return nil
+	}
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			SendInitialEvents: true,
+		}, stream)
+	})
+
+	received := 0
+	timeout := time.After(10 * time.Second)
+	for received < initialItems+1 {
+		select {
+		case evt := <-stream.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				received++
+			}
+		case <-timeout:
+			t.Fatalf("timed out waiting for events: got %d, want %d", received, initialItems+1)
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+	require.True(t, wroteDuringList)
+	requireReadyPhaseCounts(t, metrics, 1, 0)
+}
+
 func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
 	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
 	sendStartedAt := time.Now()
@@ -2445,18 +2557,17 @@ func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
 	metrics.observeWatchEvent(
 		watchTestGroup,
 		watchTestResource,
+		watchEventPhaseLive,
 		sendStartedAt.Add(5*time.Millisecond),
 		sendStartedAt,
 		sendStartedAt.Add(10*time.Millisecond),
 	)
 
-	for name, collector := range map[string]*prometheus.HistogramVec{
-		"total": metrics.WatchEventLatency,
-		"ready": metrics.WatchEventReadyLatency,
-		"send":  metrics.WatchEventSendDuration,
+	for name, observer := range map[string]prometheus.Observer{
+		"total": metrics.WatchEventLatency.WithLabelValues(watchTestGroup, watchTestResource),
+		"ready": metrics.WatchEventReadyLatency.WithLabelValues(watchTestGroup, watchTestResource, watchEventPhaseLive),
+		"send":  metrics.WatchEventSendDuration.WithLabelValues(watchTestGroup, watchTestResource),
 	} {
-		observer, err := collector.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
-		require.NoError(t, err)
 		metric := &dto.Metric{}
 		require.NoError(t, observer.(prometheus.Metric).Write(metric))
 		assert.Zero(t, metric.GetHistogram().GetSampleCount(), "%s must drop the clock-skewed event", name)

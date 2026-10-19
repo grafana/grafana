@@ -21,6 +21,12 @@ func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error 
 	if o.EmbeddingConfig != nil {
 		o.EmbeddingConfig.Reload(builtin, live)
 	}
+	if o.GlobalSearchCoverage != nil {
+		added, dropped := o.GlobalSearchCoverage.Reload(builtin, live)
+		if len(added) > 0 || len(dropped) > 0 {
+			manifestMergeLogger.Info("global search coverage changed", "added", added, "dropped", dropped)
+		}
+	}
 	if o.SearchFields != nil {
 		return ApplyManifests(o.SearchFields, builtin, live)
 	}
