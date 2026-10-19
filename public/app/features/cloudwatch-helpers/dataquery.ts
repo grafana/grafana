@@ -111,7 +111,7 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   sqlExpression?: string;
 }
 
-export type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
+type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
 
 export enum MetricQueryType {
   Insights = 1,
@@ -124,7 +124,7 @@ export enum MetricEditorMode {
   Code = 1,
 }
 
-export interface SQLExpression {
+interface SQLExpression {
   /**
    * FROM part of the SQL expression
    */
@@ -155,17 +155,13 @@ export interface SQLExpression {
   where?: QueryEditorArrayExpression;
 }
 
-export interface QueryEditorFunctionExpression {
+interface QueryEditorFunctionExpression {
   name?: string;
   parameters?: Array<QueryEditorFunctionParameterExpression>;
   type: QueryEditorExpressionType.Function;
 }
 
-export const defaultQueryEditorFunctionExpression: Partial<QueryEditorFunctionExpression> = {
-  parameters: [],
-};
-
-export enum QueryEditorExpressionType {
+enum QueryEditorExpressionType {
   And = 'and',
   Function = 'function',
   FunctionParameter = 'functionParameter',
@@ -175,22 +171,22 @@ export enum QueryEditorExpressionType {
   Property = 'property',
 }
 
-export interface QueryEditorFunctionParameterExpression {
+interface QueryEditorFunctionParameterExpression {
   name?: string;
   type: QueryEditorExpressionType.FunctionParameter;
 }
 
-export interface QueryEditorPropertyExpression {
+interface QueryEditorPropertyExpression {
   property: QueryEditorProperty;
   type: QueryEditorExpressionType.Property;
 }
 
-export interface QueryEditorGroupByExpression {
+interface QueryEditorGroupByExpression {
   property: QueryEditorProperty;
   type: QueryEditorExpressionType.GroupBy;
 }
 
-export interface QueryEditorOperatorExpression {
+interface QueryEditorOperatorExpression {
   /**
    * TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
    */
@@ -202,27 +198,25 @@ export interface QueryEditorOperatorExpression {
 /**
  * TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
  */
-export interface QueryEditorOperator {
+interface QueryEditorOperator {
   name?: string;
   value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
 }
 
-export type QueryEditorOperatorValueType = (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
+type QueryEditorOperatorType = (string | boolean | number);
 
-export type QueryEditorOperatorType = (string | boolean | number);
-
-export interface QueryEditorProperty {
+interface QueryEditorProperty {
   name?: string;
   type: QueryEditorPropertyType;
 }
 
-export enum QueryEditorPropertyType {
+enum QueryEditorPropertyType {
   String = 'string',
 }
 
-export interface QueryEditorArrayExpression {
+interface QueryEditorArrayExpression {
   expressions: (Array<QueryEditorExpression> | Array<QueryEditorArrayExpression>);
   type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
 }
 
-export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
+type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);

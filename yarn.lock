@@ -10577,13 +10577,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jsurl@npm:^1.2.28":
-  version: 1.2.30
-  resolution: "@types/jsurl@npm:1.2.30"
-  checksum: 10/c51ff0d159f9e97ca7069cb5aa934ab4f94b1738250cddd1f3e19d12bdb0f6bca7b7ed2579b5de274778d1c3b26b3a89b21f0c108814383cf32f150ff74ca15a
-  languageName: node
-  linkType: hard
-
 "@types/lodash.memoize@npm:^4.1.7":
   version: 4.1.7
   resolution: "@types/lodash.memoize@npm:4.1.7"
@@ -18879,7 +18872,6 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.33"
     "@types/js-yaml": "npm:^4.0.5"
-    "@types/jsurl": "npm:^1.2.28"
     "@types/lodash": "npm:^4.17.25"
     "@types/logfmt": "npm:^1.2.3"
     "@types/mdx": "npm:^2.0.14"
@@ -19002,7 +18994,6 @@ __metadata:
     js-yaml: "npm:^4.1.0"
     json-schema-to-typescript: "npm:15.0.4"
     json-source-map: "npm:0.6.1"
-    jsurl: "npm:^0.1.5"
     kbar: "npm:0.1.0-beta.48"
     knip: "npm:^6.14.2"
     lodash: "npm:^4.17.23"
@@ -22374,13 +22365,6 @@ __metadata:
     graceful-fs:
       optional: true
   checksum: 10/03014769e7dc77d4cf05fa0b534907270b60890085dd5e4d60a382ff09328580651da0b8b4cdf44d91e4c8ae64d91791d965f05707beff000ed494a38b6fec85
-  languageName: node
-  linkType: hard
-
-"jsurl@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "jsurl@npm:0.1.5"
-  checksum: 10/00065413460c5d4f85b775cb6a37ff30e733af66f546c3cb376e2268ba02874c5d53166011c9490cf275f11ee53c7c072d5055507bdf3de8dc7507f2c90f7e03
   languageName: node
   linkType: hard
 
