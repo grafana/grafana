@@ -176,6 +176,34 @@ describe('LogLineDetailsOTelComponent', () => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
+  it('collapses every section when syntax highlighting is unavailable', async () => {
+    const user = userEvent.setup();
+    const view = renderDetails({ syntaxHighlighting: false });
+
+    await user.click(screen.getByRole('button', { name: 'Log line' }));
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Service/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /HTTP/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('GET')).toBeInTheDocument();
+
+    view.unmount();
+    renderDetails({ syntaxHighlighting: false, syntaxHighlightingUnavailable: true });
+
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Service/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('checkout')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /HTTP/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('GET')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Service/ }));
+
+    expect(screen.getByRole('button', { name: /Service/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+  });
+
   it('prettifies a JSON log line from the log line section', async () => {
     const user = userEvent.setup();
     const setPrettifyDetailsJSON = jest.fn();

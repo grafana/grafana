@@ -26,16 +26,25 @@ export const LogLineDetailsCollapsible = ({
   id,
   label,
 }: LogLineDetailsCollapsibleProps) => {
-  const { fontSize, logOptionsStorageKey } = useLogListContext();
+  const { fontSize, logOptionsStorageKey, syntaxHighlightingUnavailable } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
   const storageKey = getExpandedStorageKey(logOptionsStorageKey, id);
-  const [expanded, setExpanded] = useState(
-    logOptionsStorageKey ? store.getBool(storageKey, defaultExpanded) : defaultExpanded
-  );
+  // Heavy logs disable highlighting. Start collapsed instead of restoring a stored open state.
+  const [expanded, setExpanded] = useState(() => {
+    if (syntaxHighlightingUnavailable) {
+      return false;
+    }
+    return logOptionsStorageKey ? store.getBool(storageKey, defaultExpanded) : defaultExpanded;
+  });
 
   useEffect(() => {
+    // syntaxHighlightingUnavailable means heavy log lines or excessive fields. Collapse by default.
+    if (syntaxHighlightingUnavailable) {
+      setExpanded(false);
+      return;
+    }
     setExpanded((current) => (logOptionsStorageKey ? store.getBool(storageKey, current) : current));
-  }, [logOptionsStorageKey, storageKey]);
+  }, [logOptionsStorageKey, storageKey, syntaxHighlightingUnavailable]);
 
   const toggle = useCallback(() => {
     setExpanded((current) => {
