@@ -4690,7 +4690,7 @@ type permissionScopedQuery struct {
 	access    authlib.AccessClient
 	namespace string
 	group     string
-	resources map[string]string // resource -> verb mapping
+	resources map[string]string // {group}/{resource} -> verb, see authzResources
 	trash     *resource.TrashAuthorizer
 	log       log.Logger
 }
@@ -4699,7 +4699,7 @@ type permissionScopedQueryConfig struct {
 	access    authlib.AccessClient
 	namespace string
 	group     string
-	resources map[string]string // resource -> verb mapping
+	resources map[string]string // {group}/{resource} -> verb, see authzResources
 	// Set for a trash search, nil for a live one.
 	trash *resource.TrashAuthorizer
 }
@@ -4923,7 +4923,7 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 	}
 
 	// Check if we have a verb for this resource type
-	verb, ok := s.resources[resourceType]
+	verb, ok := authzVerb(s.resources, group, resourceType)
 	if !ok {
 		s.log.Debug("No verb found for resource", "resource", resourceType)
 		return docInfo{}, false
