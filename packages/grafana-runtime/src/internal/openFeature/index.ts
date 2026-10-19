@@ -93,6 +93,7 @@ export async function initOpenFeature() {
   await OpenFeature.setProviderAndWait(
     GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
     new MultiProvider([
+      // Grafana core only: plugins must not copy the Meticulous provider because it is wired to the private core domain.
       ...(meticulousProvider ? [{ provider: meticulousProvider }] : []),
       { provider: lsProvider },
       { provider: ofProvider },
