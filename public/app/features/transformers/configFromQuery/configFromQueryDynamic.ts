@@ -1,6 +1,5 @@
 import { type DataFrame, type Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
-import { FieldNameMatcherEditor } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNameMatcherEditor';
 import {
   type FieldToConfigMapHandler,
   type FieldToConfigMapping,
