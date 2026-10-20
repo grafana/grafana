@@ -275,7 +275,26 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
  * Hiding a parent also hides its descendants. This only controls menu visibility, not access.
  * Should be a temporary way to fix the menu sprawl until a more robust solution.
  */
-export const HIDDEN_NAV_ITEMS = new Set<string>([]);
+export const HIDDEN_NAV_ITEMS = new Set<string>([
+  '/a/grafana-adaptive-metrics-app/configuration',
+  '/a/grafana-adaptive-metrics-app/rule-management',
+  '/a/grafana-adaptive-metrics-app/segments',
+
+  '/a/grafana-adaptivelogs-app/drop-rules',
+  '/a/grafana-adaptivelogs-app/segments',
+  '/a/grafana-adaptivelogs-app/patterns',
+  '/a/grafana-adaptivelogs-app/exemptions',
+
+  '/a/grafana-adaptivetraces-app/policies',
+
+  '/a/grafana-cmab-app/usage',
+  '/a/grafana-cmab-app/cardinality',
+  '/a/grafana-cmab-app/attributions',
+  '/a/grafana-cmab-app/usage-alerts',
+  '/a/grafana-cmab-app/invoices',
+  '/a/grafana-cmab-app/settings',
+  '/a/grafana-cmab-app/resources',
+]);
 
 /**
  * The stable key identifying an item for hiding — its id, or its url when it has no id (plugin nav
