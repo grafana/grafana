@@ -4774,13 +4774,17 @@
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-05-27T12:28:06Z"
+        "resourceVersion": "1792489412857",
+        "creationTimestamp": "2024-05-27T12:28:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:43:32.857637 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }

@@ -383,10 +383,6 @@ const (
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
 
-	// FlagPreserveDashboardStateWhenNavigating
-	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
-	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
-
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
