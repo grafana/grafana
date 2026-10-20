@@ -213,7 +213,6 @@ func (r FreshnessRecorder) observe(ctx context.Context, namespace, name string, 
 	switch {
 	case apierrors.IsNotFound(err):
 		r.notFound.Inc()
-		// A missing object need not mean the read lagged: it may have been deleted after the announcement.
 		logging.FromContext(ctx).Info("reconcile read found no object while a notification for it was outstanding",
 			"resource", r.resourceName, "namespace", namespace, "name", name, "announced", announced)
 	case err != nil:
