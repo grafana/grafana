@@ -2281,7 +2281,7 @@
   },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/plugins/admin/hooks/usePluginConfig.tsx": {
@@ -2291,7 +2291,7 @@
   },
   "public/app/features/plugins/admin/hooks/usePluginDetailsTabs.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/plugins/admin/pages/Browse.tsx": {
