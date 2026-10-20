@@ -67,8 +67,10 @@ func newParentsGetterWithPolicy(getter rest.Getter, forCreate bool) parentsGette
 				return nil, tracing.Error(span, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent))
 			}
 
-			// Creation must read the immediate parent as the caller. Higher ancestors
-			// are needed for depth and k6 validation, regardless of the caller's access.
+			// Creation must read the immediate parent as the caller. Hierarchy checks
+			// must inspect all existing ancestors regardless of caller visibility, or
+			// hidden ancestors could bypass depth and k6 restrictions. Elevate only
+			// these reads; k6 eligibility and writes must retain the original caller.
 			if forCreate && len(info.Items) == 2 {
 				ns, err := request.NamespaceInfoFrom(ctx, true)
 				if err != nil {
