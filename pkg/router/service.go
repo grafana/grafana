@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const readinessPollInterval = time.Second
@@ -39,8 +40,11 @@ type Service struct {
 }
 
 // ProvideService creates the router service. RegisterTargetRoutes enables it
-// for the router module; otherwise the middleware feature toggle controls it.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
+// for the router module. Inside Grafana it always runs, so the /apis/discovery
+// tree is served and in-process storage can read its manifests through
+// discovery (nil in the router module); the middleware feature toggle controls
+// whether it routes any other request.
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer, discovery *resource.LocalManifestDiscovery) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
@@ -57,6 +61,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(loader, auth, reg)
 	s.standalone = standalone
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	if discovery != nil && !standalone {
+		discovery.Set(http.HandlerFunc(s.serveDiscovery))
+	}
 	return s, nil
 }
 
@@ -100,8 +107,9 @@ func newService(loader RoutesLoader, tokens authn.TokenAuthenticator, reg promet
 }
 
 // HandleFunc serves through the router when enabled and otherwise delegates.
+// The /apis/discovery tree is the router's own, so it is served either way.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if s.middleware {
+	if s.middleware || isDiscoveryPath(req.URL.Path) {
 		// Requests for groups the router doesn't serve belong to the embedded
 		// API server, which has its own metrics; don't count them as the router's.
 		if !s.router.owns(req) {
@@ -114,6 +122,16 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 	next.ServeHTTP(w, req)
 }
 
+// serveDiscovery serves only the /apis/discovery tree, for in-process clients
+// that must not reach the groups the router would otherwise proxy.
+func (s *Service) serveDiscovery(w http.ResponseWriter, req *http.Request) {
+	if !isDiscoveryPath(req.URL.Path) {
+		http.NotFound(w, req)
+		return
+	}
+	s.metrics.instrument(s.router, w, req, http.NotFoundHandler())
+}
+
 // Run adapts Service to the full server's background-service lifecycle.
 func (s *Service) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
@@ -122,9 +140,11 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(context.Background())
 }
 
-// IsDisabled avoids starting the reconcile loop when middleware routing is off.
+// IsDisabled is always false: inside Grafana the reconcile loop keeps the
+// /apis/discovery tree current even when middleware routing is off, and the
+// router module needs it to route.
 func (s *Service) IsDisabled() bool {
-	return !s.middleware && !s.standalone
+	return false
 }
 
 func (s *Service) starting(ctx context.Context) error {

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -33,7 +34,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
 
@@ -71,7 +72,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	_, err := ProvideService(cfg, features, nil, prometheus.NewRegistry())
+	_, err := ProvideService(cfg, features, nil, prometheus.NewRegistry(), nil)
 	require.ErrorContains(t, err, "routes loader is required")
 }
 
@@ -83,7 +84,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	features := featuremgmt.WithFeatures()
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	err = svc.RegisterTargetRoutes(httpRouter, nil)
 	require.NoError(t, err)
@@ -111,7 +112,7 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 	})
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
@@ -148,19 +149,45 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}
 
-	enabled, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	enabled, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.False(t, enabled.IsDisabled())
 
-	disabled, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+	// Without the toggle the router still runs, to keep /apis/discovery current,
+	// but leaves every other request to the embedded API server.
+	disabled, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
-	require.True(t, disabled.IsDisabled())
+	require.False(t, disabled.IsDisabled())
 
-	recorder := httptest.NewRecorder()
-	disabled.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-	}))
+	})
+	recorder := httptest.NewRecorder()
+	disabled.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), next)
 	require.Equal(t, http.StatusNoContent, recorder.Code)
+
+	recorder = httptest.NewRecorder()
+	disabled.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, manifestDiscoveryList, nil), next)
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Contains(t, recorder.Body.String(), `"kind":"AppManifestList"`)
+}
+
+// In-process storage reads the discovery tree through LocalManifestDiscovery,
+// which must reach nothing else the router serves.
+func TestProvideServiceSetsLocalManifestDiscovery(t *testing.T) {
+	discovery := resource.ProvideLocalManifestDiscovery()
+	_, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry(), discovery)
+	require.NoError(t, err)
+
+	get := func(path string) *http.Response {
+		req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost"+path, nil)
+		resp, err := discovery.RoundTrip(req)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = resp.Body.Close() })
+		return resp
+	}
+	require.Equal(t, http.StatusOK, get(manifestDiscoveryList).StatusCode)
+	require.Equal(t, http.StatusNotFound, get("/apis/dummy-backend-1.ext.grafana.app/v0alpha1").StatusCode)
 }
 
 func TestRouterTargetCloudFallback(t *testing.T) {
@@ -180,7 +207,7 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 			})
 		}
-		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
 		require.NoError(t, err)
 		httpRouter := mux.NewRouter()
 		httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
@@ -207,7 +234,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 		require.Equal(t, "https://discovery.example.com/apis", req.URL.String())
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"fallback.example.com","versions":[],"preferredVersion":{"groupVersion":"","version":""}}]}`))}, nil
 	})
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	httpRouter := mux.NewRouter()
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
@@ -222,7 +249,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := &cloudLoader{singleTenantFallback: newTestSingleTenantFallback(t)}
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
 	recorder := httptest.NewRecorder()

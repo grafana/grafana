@@ -53,7 +53,7 @@ func TestMiddlewareReplacesEmbeddedGroups(t *testing.T) {
 	loader := &mutableLoader{backends: []Backend{
 		&fakeBackend{group: metav1.APIGroup{Name: "playlist.grafana.app"}, key: "1", handler: served},
 	}}
-	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.True(t, svc.middleware)
 	require.NoError(t, svc.router.reconcile(t.Context()))
