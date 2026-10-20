@@ -3,6 +3,7 @@ package informer
 import (
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -48,7 +49,7 @@ func TestReadFresh(t *testing.T) {
 		reads := 0
 
 		got, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: rvAgo(time.Second)}, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) {
+			func(context.Context, int64) (*provisioningapis.Repository, error) {
 				reads++
 				return want, nil
 			})
@@ -64,7 +65,7 @@ func TestReadFresh(t *testing.T) {
 		var reads atomic.Int32
 
 		got, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: announced}, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) {
+			func(context.Context, int64) (*provisioningapis.Repository, error) {
 				if reads.Add(1) < 3 {
 					return repoAt(testNamespace, "r", rvString(rvAgo(5*time.Second))), nil
 				}
@@ -81,7 +82,7 @@ func TestReadFresh(t *testing.T) {
 		var reads atomic.Int32
 
 		got, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: rvAgo(0)}, rec, 3), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) {
+			func(context.Context, int64) (*provisioningapis.Repository, error) {
 				reads.Add(1)
 				return repoAt(testNamespace, "r", rvString(rvAgo(5*time.Second))), nil
 			})
@@ -100,7 +101,7 @@ func TestReadFresh(t *testing.T) {
 		reads := 0
 
 		_, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: rvAgo(0)}, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) {
+			func(context.Context, int64) (*provisioningapis.Repository, error) {
 				reads++
 				return nil, notFound
 			})
@@ -115,7 +116,7 @@ func TestReadFresh(t *testing.T) {
 		rec, _ := newFreshnessRecorder(t, res)
 
 		_, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: rvAgo(0)}, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) { return nil, boom })
+			func(context.Context, int64) (*provisioningapis.Repository, error) { return nil, boom })
 		assert.Same(t, boom, err)
 	})
 
@@ -124,7 +125,7 @@ func TestReadFresh(t *testing.T) {
 		want := repoAt(testNamespace, "r", rvString(rvAgo(time.Hour)))
 
 		got, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: 0}, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) { return want, nil })
+			func(context.Context, int64) (*provisioningapis.Repository, error) { return want, nil })
 		require.NoError(t, err)
 		assert.Same(t, want, got)
 	})
@@ -134,7 +135,7 @@ func TestReadFresh(t *testing.T) {
 		want := repoAt(testNamespace, "r", "not-a-version")
 
 		got, err := readFresh(ctx, fastStaleReads(&fixedAnnouncements{rv: rvAgo(0)}, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) { return want, nil })
+			func(context.Context, int64) (*provisioningapis.Repository, error) { return want, nil })
 		require.NoError(t, err)
 		assert.Same(t, want, got)
 	})
@@ -150,7 +151,7 @@ func TestReadFresh(t *testing.T) {
 		var reads atomic.Int32
 
 		got, err := readFresh(ctx, fastStaleReads(announced, rec, 4), testNamespace, "r",
-			func(context.Context) (*provisioningapis.Repository, error) {
+			func(context.Context, int64) (*provisioningapis.Repository, error) {
 				if reads.Add(1) == 1 {
 					// Announced while this read runs: it cannot indict it.
 					announced.rv = rvAgo(0)
@@ -170,7 +171,7 @@ func TestReadFresh(t *testing.T) {
 		p := newStaleReadPolicy(&fixedAnnouncements{rv: rvAgo(0)}, rec) // real backoff
 		p.attempts = 4
 
-		_, err := readFresh(ctx, p, testNamespace, "r", func(context.Context) (*provisioningapis.Repository, error) {
+		_, err := readFresh(ctx, p, testNamespace, "r", func(context.Context, int64) (*provisioningapis.Repository, error) {
 			cancel()
 			return repoAt(testNamespace, "r", rvString(rvAgo(5*time.Second))), nil
 		})
@@ -194,7 +195,7 @@ func TestRetryStaleRepositoryReads_WrapsTheObservedGetter(t *testing.T) {
 	}}
 	versions := &fixedAnnouncements{rv: announced}
 
-	getter := retryStaleRepositoryReads(observeRepositoryFreshness(inner, versions, rec), versions, rec)
+	getter := retryStaleRepositoryReads(observeRepositoryFreshness(inner, versions, rec), rec)
 	staleReadGetter, ok := getter.(staleReadRepositoryGetter)
 	require.True(t, ok)
 	staleReadGetter.policy.backoff = 0
@@ -294,4 +295,50 @@ func TestNewRepositoryDeltaSource_UndeliveredDeleteKeepsTheNotFound(t *testing.T
 	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeNotFound), "counted as ambiguous, not behind")
 	assert.Zero(t, freshnessCount(t, reg, res, outcomeBehind))
 	assert.Zero(t, staleReadsExhausted(t, reg, res))
+}
+
+// advancingAnnouncements answers a newer version on every sample, as a stream of
+// notifications would, and records what it handed out.
+type advancingAnnouncements struct {
+	mu      sync.Mutex
+	next    int64
+	samples []int64
+}
+
+func (a *advancingAnnouncements) Announced(string, string) int64 {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	rv := a.next
+	a.samples = append(a.samples, rv)
+	// A newer write commits and is announced before the next sample.
+	a.next = rv + 1000
+	return rv
+}
+
+func (a *advancingAnnouncements) taken() []int64 {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return append([]int64(nil), a.samples...)
+}
+
+// One read, one sample. Two samples taken around the same read can straddle an
+// announcement, and the observation and the decision then disagree about it:
+// recorded behind the newer sample while accepted against the older one, which
+// lets the reconcile act on state the metric just called superseded.
+func TestRetryStaleRepositoryReads_SamplesTheAnnouncementOncePerRead(t *testing.T) {
+	const res = "repositories"
+	versions := &advancingAnnouncements{next: rvAgo(time.Second)}
+	rec, reg := newFreshnessRecorder(t, res)
+	// Serves exactly the version the read's own sample announced.
+	inner := stubRepositoryGetter{get: func(context.Context, string, string) (*provisioningapis.Repository, error) {
+		return repoAt(testNamespace, "r", rvString(versions.taken()[0])), nil
+	}}
+
+	getter := retryStaleRepositoryReads(observeRepositoryFreshness(inner, versions, rec), rec)
+	_, err := getter.Get(context.Background(), testNamespace, "r")
+	require.NoError(t, err)
+
+	assert.Len(t, versions.taken(), 1, "the read must be judged and recorded from a single sample")
+	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeCurrent))
+	assert.Zero(t, freshnessCount(t, reg, res, outcomeBehind), "an accepted read must not be recorded behind")
 }

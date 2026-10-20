@@ -67,7 +67,7 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		source.SetAnnouncements(announced)
 		rec := freshness.Recorder(gvr.Resource)
 		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
-		return source, retryStaleRepositoryReads(observeRepositoryFreshness(getter, announced, rec), announced, rec)
+		return source, retryStaleRepositoryReads(observeRepositoryFreshness(getter, announced, rec), rec)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())

@@ -50,7 +50,7 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		source.SetAnnouncements(announced)
 		rec := freshness.Recorder(gvr.Resource)
 		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
-		return source, retryStaleConnectionReads(observeConnectionFreshness(getter, announced, rec), announced, rec)
+		return source, retryStaleConnectionReads(observeConnectionFreshness(getter, announced, rec), rec)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())

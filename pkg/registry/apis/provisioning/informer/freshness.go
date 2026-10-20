@@ -280,7 +280,10 @@ type announcedVersions interface {
 
 // observeRepositoryFreshness wraps a RepositoryGetter to record how each read
 // compared to the notification that triggered it. Calls pass through untouched.
-func observeRepositoryFreshness(inner RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) RepositoryGetter {
+//
+// It returns the concrete wrapper so a caller that must reach its own verdict
+// about the same read can share the sample it took (see getAt).
+func observeRepositoryFreshness(inner RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) freshnessRepositoryGetter {
 	return freshnessRepositoryGetter{RepositoryGetter: inner, announced: announced, rec: rec}
 }
 
@@ -292,14 +295,21 @@ type freshnessRepositoryGetter struct {
 
 func (g freshnessRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 	// Sampled before the read; see the top of the file.
-	announced := g.announced.Announced(namespace, name)
+	return g.getAt(ctx, namespace, name, g.announced.Announced(namespace, name))
+}
+
+// getAt is Get against a version the caller already sampled before the read. A
+// caller that acts on this comparison (see staleread.go) has to judge the read
+// against the same sample this records it against: two samples taken around one
+// read can straddle an announcement, and would then disagree about it.
+func (g freshnessRepositoryGetter) getAt(ctx context.Context, namespace, name string, announced int64) (*provisioningapis.Repository, error) {
 	repo, err := g.RepositoryGetter.Get(ctx, namespace, name)
 	g.rec.observe(ctx, namespace, name, announced, repo, err)
 	return repo, err
 }
 
 // observeConnectionFreshness is observeRepositoryFreshness for connections.
-func observeConnectionFreshness(inner ConnectionGetter, announced announcedVersions, rec FreshnessRecorder) ConnectionGetter {
+func observeConnectionFreshness(inner ConnectionGetter, announced announcedVersions, rec FreshnessRecorder) freshnessConnectionGetter {
 	return freshnessConnectionGetter{ConnectionGetter: inner, announced: announced, rec: rec}
 }
 
@@ -310,7 +320,11 @@ type freshnessConnectionGetter struct {
 }
 
 func (g freshnessConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	announced := g.announced.Announced(namespace, name)
+	return g.getAt(ctx, namespace, name, g.announced.Announced(namespace, name))
+}
+
+// getAt is Get against an already-sampled version; see freshnessRepositoryGetter.getAt.
+func (g freshnessConnectionGetter) getAt(ctx context.Context, namespace, name string, announced int64) (*provisioningapis.Connection, error) {
 	conn, err := g.ConnectionGetter.Get(ctx, namespace, name)
 	g.rec.observe(ctx, namespace, name, announced, conn, err)
 	return conn, err
