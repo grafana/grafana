@@ -10,9 +10,11 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// GetExternalDeleteURL derives the delete endpoint from the snapshot's original host,
-// rather than the current external snapshot configuration, which may have changed.
+// GetExternalDeleteURL prefers the server-provided endpoint; older snapshots may only have a public URL.
 func (s *Snapshot) GetExternalDeleteURL() string {
+	if s.Spec.ExternalDeleteUrl != nil && *s.Spec.ExternalDeleteUrl != "" {
+		return *s.Spec.ExternalDeleteUrl
+	}
 	if s.Spec.ExternalUrl == nil || s.Spec.DeleteKey == nil || *s.Spec.DeleteKey == "" {
 		return ""
 	}

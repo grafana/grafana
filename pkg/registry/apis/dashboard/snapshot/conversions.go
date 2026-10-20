@@ -77,6 +77,9 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 	if v.DeleteKey != "" {
 		snap.Spec.DeleteKey = &v.DeleteKey
 	}
+	if v.External && v.ExternalDeleteURL != "" {
+		snap.Spec.ExternalDeleteUrl = &v.ExternalDeleteURL
+	}
 
 	// Only show external settings when it is external
 	if v.External {
@@ -170,6 +173,9 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 
 	if cmd.External {
 		snap.Spec.External = &cmd.External
+		if cmd.ExternalDeleteURL != "" {
+			snap.Spec.ExternalDeleteUrl = &cmd.ExternalDeleteURL
+		}
 		if cmd.ExternalURL != "" {
 			snap.Spec.ExternalUrl = &cmd.ExternalURL
 		}

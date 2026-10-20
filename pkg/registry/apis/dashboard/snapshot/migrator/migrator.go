@@ -149,6 +149,9 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 
 			if row.external {
 				snap.Spec.External = &row.external
+				if row.externalDeleteURL.Valid && row.externalDeleteURL.String != "" {
+					snap.Spec.ExternalDeleteUrl = &row.externalDeleteURL.String
+				}
 				if row.externalURL.Valid && row.externalURL.String != "" {
 					snap.Spec.ExternalUrl = &row.externalURL.String
 				}

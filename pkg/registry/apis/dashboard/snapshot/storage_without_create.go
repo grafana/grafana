@@ -206,10 +206,12 @@ func externalSnapshotDeleteEndpoint(externalURL, deleteKey string, kubernetes bo
 	if strings.Contains(parsed.Path, targetPath) {
 		return externalURL, nil
 	}
-	basePath := ""
-	if index := strings.LastIndex(parsed.Path, sourcePath); index >= 0 {
-		basePath = parsed.Path[:index]
+	index := strings.LastIndex(parsed.Path, sourcePath)
+	if index < 0 {
+		// Custom endpoints are authoritative and cannot be translated between API versions.
+		return externalURL, nil
 	}
+	basePath := parsed.Path[:index]
 	parsed.Path = strings.TrimRight(basePath, "/") + targetPath + deleteKey
 	parsed.RawPath = ""
 	parsed.RawQuery = ""
@@ -260,6 +262,7 @@ func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	}
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
+	out.Spec.ExternalDeleteUrl = nil
 	out.Spec.Dashboard = nil
 	return out, nil
 }
@@ -276,6 +279,7 @@ func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, err
 	out := list.DeepCopy()
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
+		out.Items[i].Spec.ExternalDeleteUrl = nil
 		out.Items[i].Spec.Dashboard = nil
 	}
 	return out, nil
