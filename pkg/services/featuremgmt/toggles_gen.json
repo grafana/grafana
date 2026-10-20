@@ -3482,13 +3482,17 @@
     {
       "metadata": {
         "name": "groupByVariable",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-02-14T17:18:04Z"
+        "resourceVersion": "1792487860789",
+        "creationTimestamp": "2024-02-14T17:18:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:17:40.78967 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable groupBy variable support in scenes dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
