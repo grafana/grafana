@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -330,6 +331,46 @@ func TestCreateLookupFailuresPreserveStatusWithoutDiagnostics(t *testing.T) {
 						require.NotContains(t, w.Body.String(), private)
 					})
 				}
+			}
+		}
+	}
+}
+
+func TestCreateReasonOnlyLookupErrors(t *testing.T) {
+	const private = "PRIVATE_LOOKUP_DIAGNOSTIC"
+	for _, tc := range []struct {
+		name     string
+		reason   metav1.StatusReason
+		ancestor bool
+		code     int
+	}{
+		{"missing parent", metav1.StatusReasonNotFound, false, 400},
+		{"forbidden parent", metav1.StatusReasonForbidden, false, 400},
+		{"missing ancestor", metav1.StatusReasonNotFound, true, 0},
+		{"forbidden ancestor", metav1.StatusReasonForbidden, true, 403},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			for _, wrapped := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s/dryRun=%t/wrapped=%t", tc.name, dryRun, wrapped), func(t *testing.T) {
+					store := grafanarest.NewMockStorage(t)
+					failed := "C"
+					if tc.ancestor {
+						store.On("Get", mock.Anything, "C", mock.Anything).Return(ancestryTestFolder("C", "B"), nil).Once()
+						failed = "B"
+					}
+					lookupErr := resource.StatusError(&resourcepb.ErrorResult{Reason: string(tc.reason), Message: private})
+					store.On("Get", mock.Anything, failed, mock.Anything).Return(nil, lookupErr).Once()
+					err := validateAncestryTestCreateThroughStorage(ancestryTestContext(t, "org-42", false), store, 5, dryRun, ancestryTestStorageWrapper(t, wrapped))
+					if tc.code == 0 || (dryRun && !tc.ancestor) {
+						require.NoError(t, err)
+						return
+					}
+					require.Error(t, err)
+					w := httptest.NewRecorder()
+					responsewriters.ErrorNegotiated(err, scheme.Codecs, schema.GroupVersion{Version: "v1"}, w, httptest.NewRequest(http.MethodPost, "/folders", nil))
+					require.Equal(t, tc.code, w.Code)
+					require.NotContains(t, w.Body.String(), private)
+				})
 			}
 		}
 	}

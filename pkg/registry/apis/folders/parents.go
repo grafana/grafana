@@ -26,6 +26,12 @@ type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders
 func createParentLookupStatusError(err error) apierrors.StatusError {
 	mapped := foldererrors.ToFolderStatusError(err)
 	code := int(mapped.ErrStatus.Code)
+	switch {
+	case apierrors.IsNotFound(&mapped):
+		code = http.StatusNotFound
+	case apierrors.IsForbidden(&mapped):
+		code = http.StatusForbidden
+	}
 	if code < 400 || code > 599 {
 		code = http.StatusInternalServerError
 	}

@@ -195,7 +195,7 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 	if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
 		grafanaStatus := grafanaErr.Status()
 		status.Message = grafanaStatus.Message
-		if grafanaStatus.Reason != "" && int32(grafanaStatus.Code) == status.Code {
+		if grafanaStatus.Reason != "" && grafanaStatus.Code == status.Code {
 			status.Reason = grafanaStatus.Reason
 		}
 		status.Details = mergeFolderStatusDetails(status.Details, grafanaStatus.Details)
