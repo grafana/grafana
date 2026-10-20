@@ -109,7 +109,10 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
         <div className={styles.container}>
           <DataLayerControl
             layer={layer}
-            enabledLayer={sourceLayer instanceof DashboardAnnotationsDataLayer ? sourceLayer : undefined}
+            // Only repeat clones need the switch bound to their source; other layers keep their own scenes switch
+            enabledLayer={
+              sourceLayer !== layer && sourceLayer instanceof DashboardAnnotationsDataLayer ? sourceLayer : undefined
+            }
             inMenu={inMenu}
           />
         </div>

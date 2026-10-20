@@ -13,6 +13,16 @@ import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './edit-actions-popover/EditActi
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({}),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+  })),
+}));
+
 jest.mock('../settings/annotations/AnnotationQueryEditorModal', () => ({
   AnnotationQueryEditorModal: () => null,
 }));
@@ -56,6 +66,18 @@ function setupRepeatedRow() {
 }
 
 describe('DataLayerControlEditWrapper repeat edits', () => {
+  // Deactivating a layer drops all its state subscribers, which freezes an open options pane for it
+  it.each(['source', 'clone'] as const)('keeps the %s layer active while its control is mounted', (which) => {
+    const { sourceLayer, cloneLayer } = setupRepeatedRow();
+    const layer = which === 'source' ? sourceLayer : cloneLayer;
+
+    const { unmount } = render(<DataLayerControlEditWrapper layer={layer} />);
+    expect(layer.isActive).toBe(true);
+
+    unmount();
+    expect(layer.isActive).toBe(false);
+  });
+
   it('toggles the repeat source when the switch on a clone is clicked', () => {
     const { sourceLayer, cloneLayer } = setupRepeatedRow();
 

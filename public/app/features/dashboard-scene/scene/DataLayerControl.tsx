@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ControlsLabel, dataLayers, type SceneDataLayerProvider } from '@grafana/scenes';
+import { ControlsLabel, dataLayers, type SceneDataLayerProvider, useSceneObjectState } from '@grafana/scenes';
 import { InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isAnnotationLabelHidden } from '../settings/annotations/annotationDisplay';
@@ -128,21 +128,52 @@ function LayerEnableControl({
   // The scenes switch writes the model it is given. On a repeat clone that change is discarded,
   // so section controls bind the switch to the source layer instead.
   if (enabledLayer) {
-    if (isHidden) {
-      return null;
-    }
-
     return (
-      <InlineSwitch
+      <SourceLayerSwitch
+        layer={layer}
+        enabledLayer={enabledLayer}
+        elementId={elementId}
+        isEnabled={isEnabled}
+        isHidden={isHidden}
         className={styles.switch}
-        id={elementId}
-        value={isEnabled}
-        onChange={() => setAnnotationLayerEnabled(enabledLayer, !isEnabled)}
       />
     );
   }
 
   return <layer.Component model={layer} />;
+}
+
+function SourceLayerSwitch({
+  layer,
+  enabledLayer,
+  elementId,
+  isEnabled,
+  isHidden,
+  className,
+}: {
+  layer: SceneDataLayerProvider;
+  enabledLayer: DashboardAnnotationsDataLayer;
+  elementId: string;
+  isEnabled: boolean;
+  isHidden: boolean;
+  className: string;
+}) {
+  // layer.Component keeps the layer active while its control is mounted. Do the same here: when the last
+  // activation is released, scenes drops every state subscriber on the layer, including the open options pane.
+  useSceneObjectState(layer, { shouldActivateOrKeepAlive: true });
+
+  if (isHidden) {
+    return null;
+  }
+
+  return (
+    <InlineSwitch
+      className={className}
+      id={elementId}
+      value={isEnabled}
+      onChange={() => setAnnotationLayerEnabled(enabledLayer, !isEnabled)}
+    />
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
