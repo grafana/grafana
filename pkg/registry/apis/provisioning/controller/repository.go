@@ -949,7 +949,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		// Deletion is the expected terminal state; a stale read is recovered by the re-list.
+		// A deleted object has nothing to reconcile; if the read merely lagged the write, the re-list re-queues it.
 		logger.Warn("repository not found; nothing to reconcile")
 		return repoType, nil
 	case err != nil:
