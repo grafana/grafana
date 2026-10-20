@@ -64,7 +64,7 @@ export function NotebookScenePage() {
     return <PageNotFound />;
   }
 
-  if (!scene) {
+  if (!scene || (isNew && scene.state.uid)) {
     return loadError ? (
       <NotebookPageError error={loadError} />
     ) : (

@@ -183,6 +183,42 @@ describe('NotebookScenePage', () => {
       expect(new URLSearchParams(locationService.getLocation().search).has('notebookSource')).toBe(false);
     });
 
+    it.each(['view', 'edit'])('starts a fresh notebook from an existing notebook in %s mode', async (mode) => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const stateManager = getNotebookPageStateManager();
+      const existingScene = new NotebookScene({
+        title: 'Existing notebook',
+        uid: 'nb-existing',
+        body: new NotebookLayoutManager({ cells: [] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      jest.spyOn(stateManager, 'loadNotebook').mockImplementation(async () => {
+        stateManager.setState({ scene: existingScene, isLoading: false });
+      });
+
+      render(
+        <Routes>
+          <Route path="/notebooks/new" element={<NotebookScenePage />} />
+          <Route path="/notebooks/:uid" element={<NotebookScenePage />} />
+        </Routes>,
+        { historyOptions: { initialEntries: [`/notebooks/nb-existing${mode === 'edit' ? '?edit=true' : ''}`] } }
+      );
+      await screen.findByRole('button', { name: 'Copy link' });
+      expect(stateManager.state.scene).toBe(existingScene);
+
+      await act(async () => {
+        locationService.push('/notebooks/new?edit=true&notebookSource=command_palette');
+      });
+
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/new'));
+      expect(stateManager.state.scene?.state.uid).toBeUndefined();
+      expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
+      expect(NotebookAnalytics.newStarted).toHaveBeenCalledWith('command_palette');
+    });
+
     // The flag gate is what makes this route real, and a page that renders not-found started nothing.
     it('reports nothing when the notebooks flag is off', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
