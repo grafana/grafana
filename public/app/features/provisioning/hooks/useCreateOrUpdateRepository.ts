@@ -29,14 +29,31 @@ export function useCreateOrUpdateRepository(name?: string) {
 
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails
-      await testConfig({
-        // HACK: we need to provide a name to the test configuration
-        name: name || 'new',
-        body: {
-          spec: data,
-          secure,
-        },
-      }).unwrap();
+      const runTest = (spec: RepositorySpec) =>
+        testConfig({
+          // HACK: we need to provide a name to the test configuration
+          name: name || 'new',
+          body: {
+            spec,
+            secure,
+          },
+        }).unwrap();
+
+      try {
+        await runTest(data);
+      } catch (error) {
+        const gitUrl = data.type === 'git' ? data.git?.url?.trim().replace(/\/+$/, '') : undefined;
+        if (!data.git || !gitUrl || gitUrl.endsWith('.git')) {
+          throw error;
+        }
+        const withSuffix = { ...data, git: { ...data.git, url: `${gitUrl}.git` } };
+        try {
+          await runTest(withSuffix);
+        } catch {
+          throw error;
+        }
+        data = withSuffix;
+      }
 
       // If test passes, proceed with create/update
       if (name) {
