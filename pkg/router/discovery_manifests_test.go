@@ -661,3 +661,16 @@ func TestManifestDiscoveryListAndGet(t *testing.T) {
 	_, err = r.GetManifest(t.Context(), "gadgets.example.com")
 	require.True(t, apierrors.IsNotFound(err), "a group without a manifest is not found")
 }
+
+// Storage polls the router from the moment it is built, before the first
+// reconcile, so a new router must already answer with an empty set.
+func TestManifestDiscoveryBeforeFirstReconcile(t *testing.T) {
+	r := NewGrafanaRouter(nil, nil) // as ProvideGrafanaRouter builds it, without a loader
+
+	list, err := r.ListManifests(t.Context())
+	require.NoError(t, err)
+	require.Empty(t, list.Items)
+
+	_, err = r.GetManifest(t.Context(), manifestTestGroup)
+	require.True(t, apierrors.IsNotFound(err))
+}
