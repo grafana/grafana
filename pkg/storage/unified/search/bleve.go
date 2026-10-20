@@ -1052,6 +1052,10 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Skipping index build, using existing index")
 
 		idx.resourceVersion.Store(prepared.indexRV)
+		// The RV can come from open-indexes.json, newer than the one in the index.
+		if persisted, err := getRV(idx.index); err == nil && persisted < prepared.indexRV {
+			idx.rvDirty = true
+		}
 
 		b.indexMetrics.IndexBuildSkipped.Inc()
 	}
@@ -1939,6 +1943,7 @@ func (b *bleveBackend) newBleveIndex(
 		updaterFn:              updaterFn,
 		minUpdateInterval:      b.opts.IndexMinUpdateInterval,
 		rvPersistInterval:      rvPersistInterval,
+		rvPersistedAt:          time.Now(),
 		indexMetrics:           b.indexMetrics,
 		enforceSortCapability:  b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,

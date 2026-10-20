@@ -2634,12 +2634,32 @@ func TestShutdownKeepsUnpersistedRVInOpenIndexList(t *testing.T) {
 	require.NoError(t, index.Close())
 	require.Equal(t, int64(100), persisted)
 
-	backend = newBackend()
-	t.Cleanup(backend.Stop)
-	reopened, err := backend.BuildIndex(t.Context(), key, 3, "test", indexTestDocs(key, 3, 100), updater, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	reopen := func() *bleveIndex {
+		backend = newBackend()
+		reopened, err := backend.BuildIndex(t.Context(), key, 3, "test", indexTestDocs(key, 3, 100), updater, false, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		require.Equal(t, indexDir, reopened.(*bleveIndex).index.Name(), "the index should be reused")
+		return reopened.(*bleveIndex)
+	}
+	reopened := reopen()
+	require.Equal(t, int64(200), reopened.resourceVersion.Load())
+
+	// A shutdown without any update keeps the listed RV for the next process.
+	backend.Stop()
+	reopened = reopen()
+	require.Equal(t, int64(200), reopened.resourceVersion.Load())
+
+	// A freshly opened index does not persist the first update that changed nothing.
+	updater = func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+		return 300, 0, nil
+	}
+	reopened.updaterFn = updater
+	_, err = reopened.UpdateIndex(t.Context())
 	require.NoError(t, err)
-	require.Equal(t, indexDir, reopened.(*bleveIndex).index.Name(), "the index should be reused")
-	require.Equal(t, int64(200), reopened.(*bleveIndex).resourceVersion.Load())
+	persisted, err = getRV(reopened.index)
+	require.NoError(t, err)
+	require.Equal(t, int64(100), persisted)
+	backend.Stop()
 }
 
 func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
