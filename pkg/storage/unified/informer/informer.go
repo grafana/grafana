@@ -53,9 +53,11 @@ type ObjectFunc func(namespace, name string) runtime.Object
 //   - ErrPartialList — a deliberately truncated view (e.g. the jobs list stopped
 //     paginating under worker backpressure). The informer upserts it (adds/updates
 //     only) and never diffs for removals.
-//   - ErrPruneList — a complete, consistent snapshot delivered only to reconcile
-//     removals. The informer diffs it for deletes but does not re-dispatch the
-//     survivors, because a prior sequence of partial lists already delivered them.
+//   - ErrPruneList — a complete, consistent snapshot delivered to reconcile
+//     removals after a sequence of partial lists already delivered the objects it
+//     had seen. The informer diffs it for deletes and delivers adds for keys it has
+//     never seen, but suppresses the updates of already-known survivors so a prune
+//     does not re-enqueue the whole backlog.
 //
 // See relist. Any other non-nil error means the list failed.
 type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, err error)
@@ -68,13 +70,14 @@ type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, er
 var ErrPartialList = errors.New("nats informer: partial list")
 
 // ErrPruneList is returned by a ListFunc alongside a complete, consistent snapshot
-// that exists only to prune: the informer runs the delete diff (Store.Replace) so
-// the snapshot drops keys no longer present, but dispatches the removals only and
-// suppresses the adds/updates of survivors. It is used when a sequence of partial
-// lists has already rotated through and delivered every object, so re-dispatching
-// the full surviving set would re-enqueue the whole backlog in one pass — the very
-// spike the partial lists exist to avoid. Like ErrPartialList it is a signal, not a
-// failure.
+// that exists to prune: the informer runs the delete diff (Store.Replace) so the
+// snapshot drops keys no longer present. It is used when a sequence of partial
+// lists has already rotated through and delivered every object they saw, so
+// re-dispatching the full surviving set would re-enqueue the whole backlog in one
+// pass — the very spike the partial lists exist to avoid. The informer therefore
+// suppresses the updates (survivors) but still delivers the adds (keys the rotation
+// never saw, e.g. a job created since its snapshots whose live event this replica
+// missed) and the removals. Like ErrPartialList it is a signal, not a failure.
 var ErrPruneList = errors.New("nats informer: prune list")
 
 // Verb values passed to the Metrics event observations.
@@ -558,11 +561,16 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// already delivered here filtered out.
 	added, updated, removed := n.store.Replace(objs, listRV)
 	if prune {
-		// A prune re-list reconciles the snapshot (Replace already dropped the absent
-		// keys) but must not re-dispatch survivors: the partial lists that preceded it
-		// already delivered every object, so offering the whole surviving set again
-		// would re-enqueue the entire backlog in one pass. Only the removals matter.
-		added, updated = nil, nil
+		// A prune re-list reconciles the snapshot after a rotation of partial lists
+		// already delivered every object the rotation had seen. Those already-known
+		// survivors come back as updates; re-dispatching them would re-enqueue the
+		// whole backlog in one pass, so drop them. A key the rotation never saw — a
+		// job created after its snapshots whose live event this replica missed — comes
+		// back as an add, and this prune is its first observation: it must still be
+		// delivered or it waits a full rotation to be enqueued, even with idle workers.
+		// So suppress the updates (survivors) only, never the adds (new keys) or the
+		// removals.
+		updated = nil
 	}
 	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial, "prune", prune,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))

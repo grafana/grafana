@@ -1084,3 +1084,47 @@ func TestInformer_PruneListRemovesWithoutRedispatchingSurvivors(t *testing.T) {
 		assert.ElementsMatch(t, []string{"a"}, storeNames(store.List(ctx)), "the snapshot is pruned")
 	})
 }
+
+// A prune list reads a fresh snapshot, so it can surface a key the preceding
+// partial rotation never saw — a job created after the rotation's snapshots whose
+// live event this replica missed. That key is a first observation (an add), and
+// the prune must still deliver it: suppressing it would store the job silently and
+// leave it unenqueued until a later rotation reached its page, adding a full
+// rotation of recovery latency even with idle workers. Only already-known
+// survivors (updates) are suppressed.
+func TestInformer_PruneListDeliversNewlyDiscoveredKeys(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		ctx := context.Background()
+
+		// phase 0: complete list of a,b. phase 1: prune snapshot where b is gone, a
+		// survives, and c is newly created (first seen here, never delivered before).
+		var phase atomic.Int64
+		list := func(context.Context) ([]runtime.Object, int64, error) {
+			if phase.Load() == 0 {
+				return []runtime.Object{obj("a"), obj("b")}, 0, nil
+			}
+			return []runtime.Object{obj("a"), obj("c")}, 0, ErrPruneList
+		}
+		store := NewStore()
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, store, newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+
+		synctest.Wait()
+		require.True(t, n.HasSynced())
+		require.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+
+		phase.Store(1)
+		n.signalReconnect()
+		synctest.Wait()
+		assert.Contains(t, handler.addedNames(), "c", "a key first seen in a prune list is delivered as an add")
+		assert.Equal(t, []string{"b"}, handler.deletedNames(), "the absent key is still removed")
+		assert.Empty(t, handler.updatedNames(), "the survivor is still not re-dispatched")
+		assert.ElementsMatch(t, []string{"a", "c"}, storeNames(store.List(ctx)))
+	})
+}
