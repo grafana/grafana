@@ -126,7 +126,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, nil, prometheus.NewRegistry())
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: backends}, nil), prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))
@@ -136,7 +136,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrument(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {

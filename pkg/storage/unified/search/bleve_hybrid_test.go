@@ -39,7 +39,7 @@ func TestHybridSearchBleveTextFields(t *testing.T) {
 	})
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
-	}, 3, "test", noop, nil, false, time.Time{}, 0)
+	}, 3, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	for _, doc := range []*resource.IndexableDocument{
 		{Name: "description", Title: "Overview", Description: "Investigating DATABASE connection failures"},
@@ -182,7 +182,7 @@ func TestHybridSearchBleveTextFieldsFollowIndexRebuild(t *testing.T) {
 			if tc.rebuild {
 				_, err := backend.BuildIndex(ctx, namespacedResource, int64(len(items)), "test", func(index resource.ResourceIndex) (int64, error) {
 					return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
-				}, nil, true, time.Time{}, 0)
+				}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 				require.NoError(t, err)
 			}
 			scorer.texts = nil

@@ -1,12 +1,16 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { customLoginHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { RedirectToUrlKey } from 'app/core/services/context_srv';
+import { rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import LoginPage from './LoginPage';
@@ -152,5 +156,44 @@ describe('Login Page', () => {
     expect(alert).toHaveTextContent(
       'You have exceeded the number of login attempts for this user. Please try again later.'
     );
+  });
+});
+
+describe('section login title', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+    act(() => setTestFlags({}));
+  });
+
+  it('keeps the section name through login-page rerenders', async () => {
+    rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/api-latency');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/api-latency?orgId=2'));
+    const { rerender } = render(<LoginPage />);
+    expect(document.title).toBe('Dashboards - Sign in - Grafana');
+    await userEvent.type(screen.getByLabelText('Password'), 'test');
+    rerender(<LoginPage />);
+    expect(document.title).toBe('Dashboards - Sign in - Grafana');
+  });
+
+  it('returns to the normal title when the flag is disabled while on the login page', async () => {
+    rememberLoginSectionTitle({ id: 'explore', text: 'Explore' }, '/explore');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/explore'));
+    render(<LoginPage />);
+    expect(document.title).toBe('Explore - Sign in - Grafana');
+
+    await act(async () => setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: false }));
+    expect(document.title).toBe('Grafana');
+  });
+
+  it('uses the normal title without a matching destination', () => {
+    rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/test');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/other/test'));
+    render(<LoginPage />);
+    expect(document.title).toBe('Grafana');
   });
 });

@@ -47,6 +47,9 @@ type kindRef struct {
 	// so it cannot name one kind the way a per-kind route does, and a Kubernetes
 	// kind cannot be derived from a group and resource without its manifest.
 	kinds map[schema.GroupResource]string
+	// reportedKinds are the kinds the search server named for one response, by
+	// {group}/{resource}. They win over kinds.
+	reportedKinds map[string]string
 }
 
 // spansResourceTypes reports whether results of this route carry their own
@@ -114,7 +117,7 @@ func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.Ha
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return searchResults(res, kind, limit)
+			return globalSearchResults(res, kind, limit)
 		},
 	)
 }
