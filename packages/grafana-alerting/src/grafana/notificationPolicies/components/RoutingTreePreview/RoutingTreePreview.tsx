@@ -14,13 +14,13 @@ export interface RoutingTreePreviewProps {
 
 /** Shows which receivers the given alert instances would notify under a routing tree. */
 export function RoutingTreePreview({ routingTreeName, instances }: RoutingTreePreviewProps) {
-  const matchedRoutes = useRoutingTreePreview(routingTreeName, instances);
+  const { status, routes } = useRoutingTreePreview(routingTreeName, instances);
 
-  if (!matchedRoutes) {
+  if (status !== 'found') {
     return null;
   }
 
-  if (matchedRoutes.length === 0) {
+  if (routes.length === 0) {
     return (
       <Alert
         severity="info"
@@ -34,7 +34,7 @@ export function RoutingTreePreview({ routingTreeName, instances }: RoutingTreePr
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="alerting.routing-tree-preview.heading">Who would get notified</Trans>
       </Text>
-      {matchedRoutes.map((route) => (
+      {routes.map((route) => (
         <Text key={route.id}>
           {route.receiver || t('alerting.routing-tree-preview.default-receiver', 'Default receiver')}
         </Text>
