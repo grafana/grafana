@@ -3,11 +3,12 @@ import { useCallback, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneObjectBase, type SceneComponentProps, type SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, type SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { isNotebookCell } from './isNotebookCell';
 
 export class NotebookPanelTitle extends SceneObjectBase {
   public static Component = ({ model }: SceneComponentProps<NotebookPanelTitle>) => {
@@ -16,15 +17,11 @@ export class NotebookPanelTitle extends SceneObjectBase {
       return null;
     }
     const cell = panel.parent;
-    if (!isPanelCell(cell)) {
+    if (!isNotebookCell(cell)) {
       return null;
     }
     return <PanelTitleEditor cell={cell} panel={panel} isEditing={true} />;
   };
-}
-
-function isPanelCell(cell: SceneObject | undefined): cell is NotebookCellItem {
-  return Boolean(cell && 'isNotebookCell' in cell);
 }
 
 export function PanelTitleEditor({

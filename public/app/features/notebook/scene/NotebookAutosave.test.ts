@@ -1590,6 +1590,31 @@ describe('NotebookAutosave', () => {
       stopPanel();
     });
 
+    it.each([undefined, 'nb-1'])('does not persist visualization edits in a draft with uid %s', async (uid) => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      scene.setState({ uid, isDraft: true });
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      await cell.onVisualizationChange({ name: 'Table', pluginId: 'table', hash: 'table' });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+
+      scene.editHistory.undo();
+      await scene.state.body.whenVizChangesSettled();
+      scene.editHistory.redo();
+      await scene.state.body.whenVizChangesSettled();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
     it('leaves edit mode without waiting for visualization undo and saves its eventual result', async () => {
       const { scene, cell, panel } = buildSceneWithPanel();
       deactivate = scene.activate();

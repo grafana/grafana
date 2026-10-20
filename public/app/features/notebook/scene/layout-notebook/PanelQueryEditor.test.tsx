@@ -170,6 +170,7 @@ function buildPanel(queries?: Array<Record<string, unknown>>) {
   }
 
   const cell = new NotebookCellItem({ elementName: 'query-1', source: 'user', body: panel });
+  cell.initializeAutoSuggest(true);
   const scene = new NotebookScene({
     title: 'Test notebook',
     body: new NotebookLayoutManager({ cells: [cell] }),
@@ -438,16 +439,13 @@ describe('PanelQueryEditor', () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const lastSuggestedQuery = { current: undefined as DataQuery | undefined };
-    const firstEditor = render(<PanelQueryEditor panel={panel} cell={cell} lastSuggestedQuery={lastSuggestedQuery} />);
+    const firstEditor = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await firstEditor.user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
     firstEditor.unmount();
 
-    const reopenedEditor = render(
-      <PanelQueryEditor panel={panel} cell={cell} lastSuggestedQuery={lastSuggestedQuery} />
-    );
+    const reopenedEditor = render(<PanelQueryEditor panel={panel} cell={cell} />);
     await reopenedEditor.user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
 
@@ -458,8 +456,9 @@ describe('PanelQueryEditor', () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const lastSuggestedQuery = { current: runner.state.queries[0] };
-    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} lastSuggestedQuery={lastSuggestedQuery} />);
+    cell.disableAutoSuggest();
+    cell.recordSuggestedQuery(runner.state.queries[0]);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
@@ -471,7 +470,8 @@ describe('PanelQueryEditor', () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} autoSuggest={{ current: false }} />);
+    cell.disableAutoSuggest();
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
@@ -489,7 +489,7 @@ describe('PanelQueryEditor', () => {
     );
     const changeVisualization = jest.spyOn(cell, 'onVisualizationChange');
     const runQueries = jest.spyOn(getQueryRunnerFor(panel)!, 'runQueries');
-    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} autoSuggest={{ current: true }} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
@@ -498,6 +498,34 @@ describe('PanelQueryEditor', () => {
     await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
 
     expect(changeVisualization).not.toHaveBeenCalled();
+  });
+
+  it('ignores an in-flight automatic suggestion after a manual choice starts', async () => {
+    const { panel, cell } = buildPanel();
+    let finishSuggestion!: (suggestion: { pluginId: string; options: {} }) => void;
+    jest.mocked(getVizSuggestionForQuery).mockReturnValue(
+      new Promise((resolve) => {
+        finishSuggestion = resolve;
+      })
+    );
+    const changeVisualization = jest.spyOn(cell, 'onVisualizationChange');
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const editor = render(<PanelQueryEditor panel={panel} cell={cell} />);
+    await editor.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
+
+    cell.disableAutoSuggest();
+    finishSuggestion({ pluginId: 'table', options: {} });
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    expect(changeVisualization).not.toHaveBeenCalled();
+
+    editor.unmount();
+    cell.initializeAutoSuggest(true);
+    const reopened = render(<PanelQueryEditor panel={panel} cell={cell} />);
+    await reopened.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
+    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
   });
 
   it('fetches a fresh suggestion after the query changes', async () => {
@@ -536,19 +564,10 @@ describe('PanelQueryEditor', () => {
 
   it('renders nothing for a panel with no query runner', () => {
     const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
-    const { container } = render(<PanelQueryEditor panel={panel} />);
+    const cell = new NotebookCellItem({ elementName: 'text', source: 'user', body: panel });
+    const { container } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     expect(container).toBeEmptyDOMElement();
-  });
-
-  it('still writes queries when rendered without an owning cell', async () => {
-    const { panel } = buildPanel();
-    const runner = getQueryRunnerFor(panel)!;
-    const { user } = render(<PanelQueryEditor panel={panel} />);
-
-    await user.click(await screen.findByRole('button', { name: 'edit query A' }));
-
-    expect(runner.state.queries[0]).toEqual(expect.objectContaining({ expr: 'up' }));
   });
 
   describe('row collapse state', () => {

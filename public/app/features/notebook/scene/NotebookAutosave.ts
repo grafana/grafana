@@ -298,7 +298,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   public markVisualizationEdited(elementName: string, wasEditing = this.scene.state.isEditing): void {
-    if (!wasEditing) {
+    if (!wasEditing || this.scene.state.isDraft) {
       return;
     }
     this.vizConfigsEdited.add(elementName);

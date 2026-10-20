@@ -1,11 +1,8 @@
-import { isEqual } from 'lodash';
-import { type RefObject, useRef } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
@@ -17,11 +14,9 @@ import { applyQueries } from './applyQueries';
 
 interface Props {
   panel: VizPanel;
-  cell?: NotebookCellItem;
+  cell: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
-  lastSuggestedQuery?: RefObject<DataQuery | undefined>;
-  autoSuggest?: RefObject<boolean>;
 }
 
 /**
@@ -30,39 +25,24 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({
-  panel,
-  cell,
-  autoFocus,
-  lastSuggestedQuery: sharedLastSuggestedQuery,
-  autoSuggest,
-}: Props) {
+export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
-  // The last query we successfully fetched a viz suggestion for.
-  const localLastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
-  const lastSuggestedQuery = sharedLastSuggestedQuery ?? localLastSuggestedQuery;
 
   const [runState, runQuery] = useAsyncFn(async () => {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    if ((autoSuggest?.current ?? true) && !isEqual(lastSuggestedQuery.current, queries[0])) {
+    if (cell.shouldAutoSuggest(queries[0])) {
       try {
         const suggestion = await getVizSuggestionForQuery(queries[0], range);
-        if (suggestion && autoSuggest?.current !== false && cell?.getParentLayout().state.isEditing !== false) {
-          if (cell) {
-            await cell.onVisualizationChange(suggestion);
-          } else {
-            await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
-          }
-          if (autoSuggest) {
-            autoSuggest.current = false;
-          }
+        if (suggestion && cell.shouldAutoSuggest(queries[0]) && cell.getParentLayout().state.isEditing !== false) {
+          await cell.onVisualizationChange(suggestion);
+          cell.disableAutoSuggest();
         }
-        lastSuggestedQuery.current = queries[0];
+        cell.recordSuggestedQuery(queries[0]);
       } catch {
         console.error('Failed to get viz suggestion for query', queries[0]);
       }

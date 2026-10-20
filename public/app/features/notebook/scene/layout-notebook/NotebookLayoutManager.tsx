@@ -627,7 +627,6 @@ export class NotebookLayoutManager
         try {
           previous = panels.map(snapshotVisualization);
           await applyVisualizations(panels, getSnapshots());
-          this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
         } catch {
           failed = true;
           const restored =
@@ -648,7 +647,9 @@ export class NotebookLayoutManager
                   'Could not restore visualization. Check the panel before saving.'
                 ),
           ]);
+          return;
         }
+        this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
       });
     };
     const action: NotebookEditAction = {

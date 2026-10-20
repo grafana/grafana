@@ -4,7 +4,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { uniqBy } from 'lodash';
-import { type Ref, useRef, useState } from 'react';
+import { type Ref, useEffect, useRef, useState } from 'react';
 
 import {
   isDateTime,
@@ -44,6 +44,7 @@ interface Props {
   isEditing?: boolean;
   buttonRef?: Ref<HTMLElement>;
   onClear?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function NotebookCellTimeRangeControl({
@@ -52,9 +53,14 @@ export function NotebookCellTimeRangeControl({
   isEditing = true,
   buttonRef,
   onClear,
+  onOpenChange,
 }: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    onOpenChange?.(open);
+    return () => onOpenChange?.(false);
+  }, [open, onOpenChange]);
   const styles = useStyles2(getStyles);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const overlayRef = useRef<HTMLElement>(null);

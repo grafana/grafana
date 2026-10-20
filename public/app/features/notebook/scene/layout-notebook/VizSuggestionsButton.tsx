@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { type RefObject, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { type DataQuery } from '@grafana/schema';
 import { IconButton, Spinner, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { VisualizationSuggestionCard } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestionCard';
@@ -15,30 +14,24 @@ import { type NotebookCellItem } from './NotebookCellItem';
 export function VizSuggestionsButton({
   cell,
   panel,
-  lastSuggestedQuery,
-  autoSuggest,
+  onOpenChange,
 }: {
   cell: NotebookCellItem;
   panel: VizPanel;
-  lastSuggestedQuery?: RefObject<DataQuery | undefined>;
-  autoSuggest?: RefObject<boolean>;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    onOpenChange?.(open);
+    return () => onOpenChange?.(false);
+  }, [open, onOpenChange]);
 
   return (
     <Toggletip
       show={open}
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
-      content={
-        <SuggestionsContent
-          cell={cell}
-          panel={panel}
-          lastSuggestedQuery={lastSuggestedQuery}
-          autoSuggest={autoSuggest}
-          onSelect={() => setOpen(false)}
-        />
-      }
+      content={<SuggestionsContent cell={cell} panel={panel} onSelect={() => setOpen(false)} />}
       placement="bottom-end"
       closeButton={false}
     >
@@ -54,14 +47,10 @@ export function VizSuggestionsButton({
 function SuggestionsContent({
   cell,
   panel,
-  lastSuggestedQuery,
-  autoSuggest,
   onSelect,
 }: {
   cell: NotebookCellItem;
   panel: VizPanel;
-  lastSuggestedQuery?: RefObject<DataQuery | undefined>;
-  autoSuggest?: RefObject<boolean>;
   onSelect: () => void;
 }) {
   const styles = useStyles2(getStyles);
@@ -136,17 +125,13 @@ function SuggestionsContent({
                   return;
                 }
                 const selectedQuery = getQueryRunnerFor(panel)?.state.queries[0];
-                if (autoSuggest) {
-                  autoSuggest.current = false;
-                }
+                cell.disableAutoSuggest();
                 setChanging(true);
                 setChangeError(false);
                 void cell
                   .onVisualizationChange(suggestion)
                   .then(() => {
-                    if (lastSuggestedQuery) {
-                      lastSuggestedQuery.current = selectedQuery;
-                    }
+                    cell.recordSuggestedQuery(selectedQuery);
                     onSelect();
                   })
                   .catch(() => setChangeError(true))

@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import {
   isSceneObject,
@@ -37,6 +39,29 @@ export interface NotebookCellItemState extends SceneObjectState {
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
+  private lastSuggestedQuery?: DataQuery;
+  private autoSuggestEnabled = false;
+  private autoSuggestInitialized = false;
+
+  public initializeAutoSuggest(enabled: boolean): void {
+    if (!this.autoSuggestInitialized) {
+      this.autoSuggestEnabled = enabled;
+      this.autoSuggestInitialized = true;
+    }
+  }
+
+  public shouldAutoSuggest(query: DataQuery): boolean {
+    return this.autoSuggestEnabled && !isEqual(this.lastSuggestedQuery, query);
+  }
+
+  public disableAutoSuggest(): void {
+    this.autoSuggestEnabled = false;
+  }
+
+  public recordSuggestedQuery(query: DataQuery | undefined): void {
+    this.lastSuggestedQuery = query;
+  }
+
   public readonly isNotebookCell = true as const;
   // A panel cell is the panel's parent in the scene graph, so it must be a DashboardLayoutItem.
   public readonly isDashboardLayoutItem = true;

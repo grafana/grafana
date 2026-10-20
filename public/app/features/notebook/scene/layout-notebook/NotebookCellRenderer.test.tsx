@@ -25,6 +25,7 @@ import { NotebookScene } from '../NotebookScene';
 import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './edit/cellClassNames';
 
 setAppEvents(new EventBusSrv());
 setRunRequest(runRequest);
@@ -497,7 +498,10 @@ describe('NotebookCellRenderer', () => {
       const clock = await screen.findByRole('button', { name: 'Update time range' });
       act(() => clock.focus());
       await user.keyboard('{Enter}');
+      const toolbar = clock.closest('[data-notebook-panel-actions]');
+      expect(toolbar).toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
       await user.click(screen.getByRole('checkbox', { name: 'Last 24 hours' }));
+      expect(toolbar).not.toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
 
       const badge = await screen.findByRole('button', { name: 'Locked: Last 24 hours' });
       const title = screen.getByRole('heading', { name: 'Latency' });

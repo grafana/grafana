@@ -7,7 +7,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
-import { type DataQuery } from '@grafana/schema';
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
@@ -138,8 +137,10 @@ function PanelCell({
       });
     }
   }, []);
-  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
-  const autoSuggest = useRef(Boolean(autoFocus));
+  useEffect(() => {
+    cell.initializeAutoSuggest(Boolean(autoFocus));
+  }, [cell, autoFocus]);
+  const [timeRangeOpen, setTimeRangeOpen] = useState(false);
   const canEditQuery = isEditing && isEditableQueryPanel(panel);
   const [toolbarRef, { width: toolbarWidth }] = useMeasure<HTMLDivElement>();
   const panelStyle: CSSProperties & { '--notebook-panel-actions-width': string } = {
@@ -171,8 +172,7 @@ function PanelCell({
           panel={panel}
           isEditing={isEditing}
           toolbarRef={toolbarRef}
-          lastSuggestedQuery={lastSuggestedQuery}
-          autoSuggest={autoSuggest}
+          timeRangeOpen={timeRangeOpen}
           onToggleQueryEditor={
             canEditQuery
               ? () => {
@@ -184,7 +184,10 @@ function PanelCell({
           queryEditorOpen={queryEditorOpen}
           queryEditorId={queryEditorId}
           timeRangeControl={
-            isEditing && !hasTimeRange && <NotebookCellTimeRangeControl cell={cell} buttonRef={clockButtonRef} />
+            isEditing &&
+            !hasTimeRange && (
+              <NotebookCellTimeRangeControl cell={cell} buttonRef={clockButtonRef} onOpenChange={setTimeRangeOpen} />
+            )
           }
           onDuplicate={onDuplicate}
           onDelete={onDelete}
@@ -193,15 +196,7 @@ function PanelCell({
       </div>
       {canEditQuery && (
         <div id={queryEditorId} hidden={!queryEditorOpen} className={styles.queryEditor}>
-          {queryEditorMounted && (
-            <PanelQueryEditor
-              cell={cell}
-              panel={panel}
-              autoFocus={true}
-              lastSuggestedQuery={lastSuggestedQuery}
-              autoSuggest={autoSuggest}
-            />
-          )}
+          {queryEditorMounted && <PanelQueryEditor cell={cell} panel={panel} autoFocus={true} />}
         </div>
       )}
     </Stack>

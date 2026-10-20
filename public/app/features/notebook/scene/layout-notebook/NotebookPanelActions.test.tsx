@@ -12,6 +12,7 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 import { NotebookPanelActions } from './NotebookPanelActions';
 import { PanelTitleEditor } from './PanelTitleEditor';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './edit/cellClassNames';
 
 jest.mock('app/features/dashboard-scene/utils/urlBuilders', () => ({
   tryGetExploreUrlForPanel: jest.fn(),
@@ -139,7 +140,9 @@ describe('NotebookPanelActions', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     act(() => screen.getByRole('button', { name: 'Block actions' }).focus());
     await user.keyboard('{Enter}');
+    expect(toolbar).toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
     await user.click(await screen.findByRole('menuitem', { name: 'Duplicate block' }));
+    expect(toolbar).not.toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
     act(() => screen.getByRole('button', { name: 'Block actions' }).focus());
     await user.keyboard('{Enter}');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete block' }));
@@ -206,26 +209,22 @@ describe('NotebookPanelActions', () => {
       hasErrors: false,
     });
     jest.spyOn(cell, 'onVisualizationChange').mockResolvedValue(undefined);
-    const lastSuggestedQuery = { current: undefined };
-    const autoSuggest = { current: true };
-    const { user } = render(
-      <NotebookPanelControls
-        cell={cell}
-        panel={panel}
-        isEditing={true}
-        lastSuggestedQuery={lastSuggestedQuery}
-        autoSuggest={autoSuggest}
-      />
-    );
+    cell.initializeAutoSuggest(true);
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
     await user.keyboard('{Enter}');
     const suggestion = await screen.findByRole('button', { name: 'Table' });
     expect(suggestion).toBeVisible();
+    const toolbar = screen
+      .getByRole('button', { name: 'Change visualization' })
+      .closest('[data-notebook-panel-actions]');
+    expect(toolbar).toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
     await user.click(suggestion);
 
-    await waitFor(() => expect(lastSuggestedQuery.current).toBe(runner.state.queries[0]));
-    expect(autoSuggest.current).toBe(false);
+    await waitFor(() => expect(cell.onVisualizationChange).toHaveBeenCalled());
+    expect(cell.shouldAutoSuggest({ refId: 'B' })).toBe(false);
+    expect(toolbar).not.toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
     expect(cell.onVisualizationChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'table' }));
     expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change visualization' })).toHaveAttribute('aria-expanded', 'false');
@@ -253,6 +252,7 @@ describe('NotebookPanelActions', () => {
       .spyOn(cell, 'onVisualizationChange')
       .mockRejectedValueOnce(new Error('Plugin failed'))
       .mockResolvedValueOnce(undefined);
+    cell.initializeAutoSuggest(true);
     const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
 
     act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
@@ -260,6 +260,7 @@ describe('NotebookPanelActions', () => {
     await user.click(await screen.findByRole('button', { name: 'Table' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not change visualization. Try again.');
     expect(panel.state.pluginId).toBe('timeseries');
+    expect(cell.shouldAutoSuggest({ refId: 'A' })).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Table' }));
 
     await waitFor(() => expect(changeVisualization).toHaveBeenCalledTimes(2));

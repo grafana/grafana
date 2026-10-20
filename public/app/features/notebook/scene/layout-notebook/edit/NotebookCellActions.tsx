@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,11 +13,16 @@ interface Props {
   /** The frame's hover class, so these reveal with the rest of the cell's controls. */
   className?: string;
   inline?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function NotebookCellActions({ onDuplicate, onDelete, className, inline = false }: Props) {
+export function NotebookCellActions({ onDuplicate, onDelete, className, inline = false, onOpenChange }: Props) {
   const styles = useStyles2(getStyles);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  useEffect(() => {
+    onOpenChange?.(isMenuOpen);
+    return () => onOpenChange?.(false);
+  }, [isMenuOpen, onOpenChange]);
 
   return (
     <div

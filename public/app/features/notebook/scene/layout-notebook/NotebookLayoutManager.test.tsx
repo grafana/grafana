@@ -1763,6 +1763,34 @@ describe('NotebookLayoutManager', () => {
       expect(panel.state.options).toMatchObject({ showHeader: true });
     });
 
+    it.each(['undo', 'redo'] as const)('does not roll back a successful %s when autosave throws', async (direction) => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const originalPluginId = panel.state.pluginId;
+      const { manager, history } = withHistory([cell]);
+      await manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+      if (direction === 'redo') {
+        history.undo();
+        await manager.whenVizChangesSettled();
+      }
+      const markEdited = jest.spyOn(sceneGraph.getAncestor(manager, NotebookScene).autosave, 'markVisualizationEdited');
+      markEdited.mockImplementationOnce(() => {
+        throw new Error('Autosave failed');
+      });
+      const notify = jest.spyOn(appEvents, 'emit');
+
+      history[direction]();
+      await manager.whenVizChangesSettled();
+
+      expect(markEdited).toHaveBeenCalled();
+      expect(panel.state.pluginId).toBe(direction === 'undo' ? originalPluginId : 'table');
+      expect(history.state.canRedo).toBe(direction === 'undo');
+      expect(history.state.canUndo).toBe(direction === 'redo');
+      expect(notify).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
+      markEdited.mockRestore();
+      notify.mockRestore();
+    });
+
     it.each(['stat', 'gauge'])('preserves explicit %s suggestion options after plugin migration', async (pluginId) => {
       const { cell } = panelCell('viz');
       const panel = cell.state.body!;
