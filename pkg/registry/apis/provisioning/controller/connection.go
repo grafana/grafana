@@ -345,9 +345,8 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		// Nothing to reconcile; see the matching branch in RepositoryController.
-		// process for why the error this used to return recovered nothing, and
-		// where a read that lags its triggering event is counted instead.
+		// Nothing to reconcile; see the matching branch in
+		// RepositoryController.process for why returning an error recovered nothing.
 		logger.Warn("connection not found; nothing to reconcile")
 		return nil
 	case err != nil:
