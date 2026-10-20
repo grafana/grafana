@@ -2,12 +2,14 @@ import { useCallback } from 'react';
 
 import { generateUUID } from '@grafana/data';
 import {
+  handleProvisioningFormError,
   type RepositorySpec,
   type SecureValues,
   useCreateRepositoryMutation,
   useCreateRepositoryTestMutation,
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { useDispatch } from 'app/types/store';
 
 import { withGitSuffix } from '../utils/git';
 
@@ -17,6 +19,7 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
   const [update, updateRequest] = useReplaceRepositoryMutation();
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
+  const dispatch = useDispatch();
 
   const updateOrCreate = useCallback(
     async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
@@ -58,7 +61,10 @@ export function useCreateOrUpdateRepository(name?: string) {
           return withSuffix;
         }
       };
-      const spec = await testSpec();
+      const spec = await testSpec().catch((error) => {
+        handleProvisioningFormError({ error }, dispatch, 'Error validating repository');
+        throw error;
+      });
 
       // If test passes, proceed with create/update
       if (name) {
@@ -78,7 +84,7 @@ export function useCreateOrUpdateRepository(name?: string) {
       }
       return create({ repository: { metadata: generateRepositoryMetadata(spec), spec, secure } });
     },
-    [create, name, update, testConfig]
+    [create, name, update, testConfig, dispatch]
   );
 
   return [updateOrCreate, name ? updateRequest : createRequest, testRequest] as const;

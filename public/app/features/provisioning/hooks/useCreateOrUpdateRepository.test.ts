@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import {
+  handleProvisioningFormError,
   type RepositorySpec,
   useCreateRepositoryMutation,
   useCreateRepositoryTestMutation,
@@ -10,9 +11,15 @@ import {
 import { useCreateOrUpdateRepository } from './useCreateOrUpdateRepository';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  handleProvisioningFormError: jest.fn(),
   useCreateRepositoryMutation: jest.fn(),
   useCreateRepositoryTestMutation: jest.fn(),
   useReplaceRepositoryMutation: jest.fn(),
+}));
+
+const mockDispatch = jest.fn();
+jest.mock('app/types/store', () => ({
+  useDispatch: () => mockDispatch,
 }));
 
 const mockCreate = jest.fn();
@@ -51,6 +58,7 @@ describe('useCreateOrUpdateRepository', () => {
     expect(mockTest).toHaveBeenCalledTimes(2);
     expect(mockTest.mock.calls[1][0].body.spec.git.url).toBe('https://git.example.com/owner/repo.git');
     expect(mockCreate.mock.calls[0][0].repository.spec.git.url).toBe('https://git.example.com/owner/repo.git');
+    expect(handleProvisioningFormError).not.toHaveBeenCalled();
   });
 
   it('throws the original error when the retry with a .git suffix also fails', async () => {
@@ -61,6 +69,12 @@ describe('useCreateOrUpdateRepository', () => {
 
     await expect(submit(gitSpec('https://git.example.com/owner/repo'))).rejects.toBe(original);
     expect(mockCreate).not.toHaveBeenCalled();
+    expect(handleProvisioningFormError).toHaveBeenCalledTimes(1);
+    expect(handleProvisioningFormError).toHaveBeenCalledWith(
+      { error: original },
+      mockDispatch,
+      'Error validating repository'
+    );
   });
 
   it('does not retry when the URL already ends with .git', async () => {
@@ -68,6 +82,7 @@ describe('useCreateOrUpdateRepository', () => {
 
     await expect(submit(gitSpec('https://git.example.com/owner/repo.git'))).rejects.toThrow('not found');
     expect(mockTest).toHaveBeenCalledTimes(1);
+    expect(handleProvisioningFormError).toHaveBeenCalledTimes(1);
   });
 
   it('does not retry for other repository types', async () => {

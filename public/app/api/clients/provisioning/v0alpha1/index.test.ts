@@ -6,11 +6,9 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { createRepository } from 'app/features/provisioning/mocks/factories';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
-import { configureStore } from 'app/store/configureStore';
 
 import {
   type Repository,
-  type RepositorySpec,
   useCreateRepositoryTestMutation,
   useListRepositoryQuery,
   useReplaceRepositoryMutation,
@@ -128,39 +126,5 @@ describe('provisioningAPIv0alpha1 listRepository cache', () => {
     // an invalidation would have marked the list pending synchronously
     expect(result.current.mine.isFetching).toBe(false);
     expect(result.current.mine.currentData?.items[0].metadata?.resourceVersion).toBe('5');
-  });
-});
-
-describe('provisioningAPIv0alpha1 createRepositoryTest notifications', () => {
-  const gitSpec = (url: string): RepositorySpec => ({
-    title: 'Git',
-    type: 'git',
-    sync: { enabled: false, target: 'folder' },
-    workflows: [],
-    git: { url, branch: 'main' },
-  });
-
-  async function runFailingTest(spec: RepositorySpec) {
-    server.use(
-      http.post(`${BASE}/repositories/:name/test`, () =>
-        HttpResponse.json({ kind: 'Status', status: 'Failure', message: 'repository not found', code: 404 }, { status: 404 })
-      )
-    );
-    const store = configureStore();
-    const { result } = renderHook(() => useCreateRepositoryTestMutation()[0], { wrapper: getWrapper({ store }) });
-    await act(async () => {
-      await result.current({ name: 'new', body: { spec } }).catch(() => {});
-    });
-    return Object.values(store.getState().appNotifications.byId);
-  }
-
-  it('does not notify when a pure Git URL without .git fails, because the caller retries it', async () => {
-    expect(await runFailingTest(gitSpec('https://git.example.com/owner/repo'))).toHaveLength(0);
-  });
-
-  it('notifies when a pure Git URL with .git fails', async () => {
-    const notifications = await runFailingTest(gitSpec('https://git.example.com/owner/repo.git'));
-    expect(notifications).toHaveLength(1);
-    expect(notifications[0].title).toBe('Error validating repository');
   });
 });
