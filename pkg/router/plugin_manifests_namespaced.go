@@ -281,11 +281,15 @@ func (t *namespacedManifestsTarget) newBackend(owner *PluginBackend, ownerKey st
 	}
 	backend.info = owner.info
 	backend.hasBackend = owner.hasBackend
+	// The group's name is unbounded, so its API server's metrics are labelled
+	// by the owner group, as the router's are (backendMetricGroup).
+	backend.metricGroup = t.ownerGroup
 	return &namespacedPluginBackend{
-		Backend:   backend,
-		key:       namespacedKeyPrefix + ":" + owner.pluginID + ":" + hex.EncodeToString(sum)[:16],
-		source:    t.source,
-		namespace: namespace,
+		Backend:    backend,
+		key:        namespacedKeyPrefix + ":" + owner.pluginID + ":" + hex.EncodeToString(sum)[:16],
+		source:     t.source,
+		namespace:  namespace,
+		ownerGroup: t.ownerGroup,
 	}, nil
 }
 
@@ -330,9 +334,10 @@ func namespacedOwnerOf(group string, owners []string) (string, bool) {
 // namespacedPluginBackend serves one namespace's group for its owner plugin.
 type namespacedPluginBackend struct {
 	Backend
-	key       string
-	source    string
-	namespace string
+	key        string
+	source     string
+	namespace  string
+	ownerGroup string
 }
 
 var _ NamespacedBackend = (*namespacedPluginBackend)(nil)
@@ -342,6 +347,9 @@ func (b *namespacedPluginBackend) Source() string { return b.source }
 
 // Namespace implements [NamespacedBackend].
 func (b *namespacedPluginBackend) Namespace() string { return b.namespace }
+
+// OwnerGroup implements [NamespacedBackend].
+func (b *namespacedPluginBackend) OwnerGroup() string { return b.ownerGroup }
 
 // Load wraps the plugin handler in the namespace guard.
 func (b *namespacedPluginBackend) Load(ctx context.Context) (http.Handler, error) {

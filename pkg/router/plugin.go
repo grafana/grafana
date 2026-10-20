@@ -370,6 +370,11 @@ type PluginBackend struct {
 	// hasBackend is whether the plugin runs a backend process, for the
 	// status page.
 	hasBackend bool
+
+	// metricGroup, when set, labels the in-process API server's own metrics
+	// in place of the group (pluginroute.Options.MetricGroup), for a group
+	// whose name is not from a bounded set.
+	metricGroup string
 }
 
 // PluginStatus implements [PluginStatusProvider].
@@ -440,6 +445,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		Features:        b.deps.Features,
 		BuildVersion:    cfg.BuildVersion,
 		MetricsRegister: b.deps.MetricsRegister,
+		MetricGroup:     b.metricGroup,
 		DualWrite:       b.deps.DualWrite,
 		StorageOpts:     &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage},
 		BuilderMetrics:  b.deps.BuilderMetrics,

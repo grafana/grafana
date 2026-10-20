@@ -236,6 +236,7 @@ func TestNamespacedManifestsTargetPoll(t *testing.T) {
 		ns, ok := b.(NamespacedBackend)
 		require.True(t, ok)
 		namespaces[b.Group().Name] = ns.Namespace()
+		require.Equal(t, testOwnerGroup, ns.OwnerGroup())
 		require.Equal(t, "namespaced:gas.ext.grafana.app", b.Source())
 		require.Regexp(t, `^namespaced:grafana-gas-app:[0-9a-f]{16}$`, b.Key())
 
@@ -246,6 +247,9 @@ func TestNamespacedManifestsTargetPoll(t *testing.T) {
 		manifest, ok := b.(ManifestProvider).Manifest()
 		require.True(t, ok)
 		require.Equal(t, b.Group().Name, manifest.Group)
+		inner, ok := pluginBackendOf(b.(*namespacedPluginBackend).Backend)
+		require.True(t, ok)
+		require.Equal(t, testOwnerGroup, inner.metricGroup, "the API server's metrics are labelled by the owner")
 	}
 	require.Equal(t, map[string]string{
 		"myapp.stacks-1.gas.ext.grafana.app": "stacks-1",

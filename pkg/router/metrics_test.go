@@ -203,7 +203,7 @@ func TestRouterCollector(t *testing.T) {
 	}
 
 	expected := `
-# HELP grafana_router_breaker_state Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others.
+# HELP grafana_router_breaker_state Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others. Namespaced groups count under their owner group, whose value is the number of its groups in each state.
 # TYPE grafana_router_breaker_state gauge
 grafana_router_breaker_state{group="dummy.ext.grafana.app",state="closed"} 1
 grafana_router_breaker_state{group="dummy.ext.grafana.app",state="half-open"} 0

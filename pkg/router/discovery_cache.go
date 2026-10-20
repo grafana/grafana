@@ -109,7 +109,7 @@ func (c *discoveryCache) retain(snapshot map[string]servingEntry) {
 func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	c := &r.discoveryCache
 	if d, found, fresh := c.lookup(name, entry.key); found && fresh {
-		r.observeDiscovery(name, discoveryCached)
+		r.observeDiscovery(entry.metricLabel(name), discoveryCached)
 		return d
 	}
 	key := name + "\x00" + entry.key
@@ -137,7 +137,7 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 	case result := <-results:
 		fetched := result.Val.(fetchedDiscovery)
 		if fetched.complete {
-			r.observeDiscovery(name, discoveryFetched)
+			r.observeDiscovery(entry.metricLabel(name), discoveryFetched)
 			return fetched.discovery
 		}
 		return r.missedDiscovery(name, entry)
@@ -151,10 +151,10 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 // versions alone.
 func (r *GrafanaRouter) missedDiscovery(name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	if d, found, _ := r.discoveryCache.lookup(name, entry.key); found {
-		r.observeDiscovery(name, discoveryStale)
+		r.observeDiscovery(entry.metricLabel(name), discoveryStale)
 		return staleDiscovery(d)
 	}
-	r.observeDiscovery(name, discoveryUnavailable)
+	r.observeDiscovery(entry.metricLabel(name), discoveryUnavailable)
 	return unavailableDiscovery(name, entry)
 }
 
@@ -180,6 +180,8 @@ const (
 	discoveryUnavailable = "unavailable" // nothing to serve but the group's versions
 )
 
+// observeDiscovery counts a discovery result under the group's metric label
+// (servingEntry.metricLabel).
 func (r *GrafanaRouter) observeDiscovery(group, result string) {
 	if r.onDiscovery != nil {
 		r.onDiscovery(group, result)

@@ -60,10 +60,11 @@ type handlerEntry struct {
 func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
 	watches, endWatches := context.WithCancel(context.Background())
 	view := &breakerView{}
-	onChange := func(group string, to gobreaker.State) {
+	metricGroup := backendMetricGroup(b)
+	onChange := func(_ string, to gobreaker.State) {
 		view.record(to)
 		if r.onBreakerChange != nil {
-			r.onBreakerChange(group, to)
+			r.onBreakerChange(metricGroup, to)
 		}
 	}
 	return &handlerEntry{
@@ -104,6 +105,30 @@ type servingEntry struct {
 	// only those listedFor allows see it listed.
 	namespaced bool
 	namespace  string
+
+	// metricGroup labels the group's metrics; see backendMetricGroup.
+	metricGroup string
+}
+
+// backendMetricGroup is the group label of b's metrics: its group, or the
+// owner group of a namespaced backend, which keeps the labels bounded.
+func backendMetricGroup(b Backend) string {
+	if b, ok := b.(NamespacedBackend); ok {
+		if owner := b.OwnerGroup(); owner != "" {
+			return owner
+		}
+		return unknownGroupLabel
+	}
+	return b.Group().Name
+}
+
+// metricLabel is the group label of the entry's metrics. Only entries built
+// outside publish, in tests, lack one.
+func (e servingEntry) metricLabel(group string) string {
+	if e.metricGroup != "" {
+		return e.metricGroup
+	}
+	return group
 }
 
 // visibleTo reports whether a caller in namespace may see and use the group
@@ -469,12 +494,21 @@ func GroupFromPath(path string) string {
 }
 
 // KnownGroup reports whether group has a live backend in the current
-// snapshot. Check it before using a client-supplied group as a metric label,
-// or every unique path segment creates a new series.
+// snapshot.
 func (r *GrafanaRouter) KnownGroup(group string) bool {
 	handlers := *r.snapshot.Load()
 	_, ok := handlers[group]
 	return ok
+}
+
+// metricGroup is the group label for a client-supplied group: the served
+// group's label (see backendMetricGroup), or unknownGroupLabel for any other,
+// so that unique path segments can't create new series.
+func (r *GrafanaRouter) metricGroup(group string) string {
+	if entry, ok := (*r.snapshot.Load())[group]; ok {
+		return entry.metricLabel(group)
+	}
+	return unknownGroupLabel
 }
 
 // serveCachedDoc writes a synthesized document, honoring conditional GET via
@@ -827,6 +861,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()
+			entry.metricGroup = backendMetricGroup(e.backend)
 			backends = append(backends, e.backend)
 			if provider, ok := e.backend.(DiscoveryProvider); ok {
 				if d, ok := provider.Discovery(); ok {

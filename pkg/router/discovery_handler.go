@@ -135,13 +135,13 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 		}
 		if entry.discovery != nil {
 			groups[name] = *entry.discovery
-			r.observeDiscovery(name, discoveryProvided)
+			r.observeDiscovery(entry.metricLabel(name), discoveryProvided)
 			continue
 		}
 		if entry.callerScoped {
 			// The discovery cache is shared, so it must not hold one caller's view.
 			groups[name] = unavailableDiscovery(name, entry)
-			r.observeDiscovery(name, discoveryUnavailable)
+			r.observeDiscovery(entry.metricLabel(name), discoveryUnavailable)
 			continue
 		}
 		f := &fetch{name: name}

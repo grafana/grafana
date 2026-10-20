@@ -31,7 +31,8 @@ type fakeNamespacedBackend struct {
 	namespace string
 }
 
-func (b *fakeNamespacedBackend) Namespace() string { return b.namespace }
+func (b *fakeNamespacedBackend) Namespace() string  { return b.namespace }
+func (b *fakeNamespacedBackend) OwnerGroup() string { return testOwnerGroup }
 
 // namespacedRouter serves a shared group and one namespaced group in each of
 // stacks-1 and stacks-2, each answering aggregated discovery and counting
@@ -208,7 +209,8 @@ type fakeNamespacedManifestBackend struct {
 	namespace string
 }
 
-func (b *fakeNamespacedManifestBackend) Namespace() string { return b.namespace }
+func (b *fakeNamespacedManifestBackend) Namespace() string  { return b.namespace }
+func (b *fakeNamespacedManifestBackend) OwnerGroup() string { return testOwnerGroup }
 
 func namespacedManifestBackend(group, namespace string) Backend {
 	backend := fakeManifestBackend{

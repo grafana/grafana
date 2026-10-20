@@ -148,8 +148,8 @@ func requestGroup(path string) string {
 func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
 	group := requestGroup(req.URL.Path)
 	metricGroup := group
-	if group != "" && !gr.KnownGroup(group) {
-		metricGroup = unknownGroupLabel
+	if group != "" {
+		metricGroup = gr.metricGroup(group)
 	}
 	verb := metricVerb(requestVerb(req))
 	start := time.Now()
@@ -237,7 +237,7 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 		groups: prometheus.NewDesc(name("groups"),
 			"Number of API groups the router serves, by route source.", []string{"source"}, nil),
 		breaker: prometheus.NewDesc(name("breaker_state"),
-			"Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others.", []string{"group", "state"}, nil),
+			"Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others. Namespaced groups count under their owner group, whose value is the number of its groups in each state.", []string{"group", "state"}, nil),
 		shadowed: prometheus.NewDesc(name("shadowed_groups"),
 			"Number of API groups a source offered that a higher-priority source serves instead, in the latest load.", []string{"source"}, nil),
 		skipped: prometheus.NewDesc(name("skipped_backends"),
@@ -277,19 +277,31 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.reconcileErrors, prometheus.CounterValue, float64(c.router.reconcileErrors.Load()))
 
 	perSource := map[string]int{}
+	// Namespaced groups share their owner group's label, so breakers are
+	// counted per label: one series per label and state.
+	breakers := map[string]*[3]int{}
 	for group, entry := range *c.router.snapshot.Load() {
 		perSource[entry.source]++
 		// The single-tenant fallback keeps a breaker per stack, not per group.
 		if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination || entry.breaker == nil {
 			continue
 		}
+		label := entry.metricLabel(group)
+		counts, ok := breakers[label]
+		if !ok {
+			counts = &[3]int{}
+			breakers[label] = counts
+		}
 		current := entry.breakerState()
-		for _, state := range breakerStates {
-			value := 0.0
+		for i, state := range breakerStates {
 			if state == current {
-				value = 1
+				counts[i]++
 			}
-			ch <- prometheus.MustNewConstMetric(c.breaker, prometheus.GaugeValue, value, group, state.String())
+		}
+	}
+	for label, counts := range breakers {
+		for i, state := range breakerStates {
+			ch <- prometheus.MustNewConstMetric(c.breaker, prometheus.GaugeValue, float64(counts[i]), label, state.String())
 		}
 	}
 	for source, n := range perSource {

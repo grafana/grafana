@@ -70,10 +70,13 @@ type CallerScopedDiscovery interface {
 }
 
 // NamespacedBackend is an optional Backend interface for a backend whose group
-// belongs to one namespace. Only callers in that namespace may use it, and
-// only within it.
+// belongs to one namespace. Only callers in that namespace (or with the
+// wildcard namespace) may see or use it, and only within it. OwnerGroup is the
+// group whose backend serves it, and labels its metrics: namespaced groups come
+// and go at runtime, so their own names would leave the labels unbounded.
 type NamespacedBackend interface {
 	Namespace() string
+	OwnerGroup() string
 }
 
 type RoutesLoader interface {
