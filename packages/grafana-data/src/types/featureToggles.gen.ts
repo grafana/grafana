@@ -901,11 +901,6 @@ export interface FeatureToggles {
   */
   newInfluxDSConfigPageDesign?: boolean;
   /**
-  * Set this to true to enable all app chrome extensions registered by plugins.
-  * @default false
-  */
-  enableAppChromeExtensions?: boolean;
-  /**
   * Enables use of app platform API for folders
   * @default true
   */
@@ -951,8 +946,9 @@ export interface FeatureToggles {
   */
   interactiveLearning?: boolean;
   /**
-  * Enables the alerting triage feature
-  * @default false
+  * Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
+  * @deprecated
+  * @default true
   */
   alertingTriage?: boolean;
   /**

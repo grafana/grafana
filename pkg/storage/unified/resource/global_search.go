@@ -129,6 +129,17 @@ func (r *GlobalSearchCoverageRegistry) Types() []schema.GroupResource {
 	return slices.Clone(r.coverage.types)
 }
 
+// Snapshot returns the covered resource types, sorted, and the Kubernetes kind
+// of each, read together.
+func (r *GlobalSearchCoverageRegistry) Snapshot() ([]schema.GroupResource, map[schema.GroupResource]string) {
+	if r == nil {
+		return GlobalSearchResourceTypes(), GlobalSearchKinds()
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return slices.Clone(r.coverage.types), maps.Clone(r.coverage.kinds)
+}
+
 // Covers reports whether global indexes hold documents of this resource type.
 func (r *GlobalSearchCoverageRegistry) Covers(gr schema.GroupResource) bool {
 	if r == nil {
@@ -274,11 +285,15 @@ func (s *searchServer) indexSources(key NamespacedResource) []NamespacedResource
 	if !key.IsGlobal() {
 		return []NamespacedResource{key}
 	}
-	types := s.globalCoverage.Types()
+	return globalSources(key.Namespace, s.globalCoverage.Types())
+}
+
+// globalSources returns the given resource types in a namespace.
+func globalSources(namespace string, types []schema.GroupResource) []NamespacedResource {
 	out := make([]NamespacedResource, 0, len(types))
 	for _, gr := range types {
 		out = append(out, NamespacedResource{
-			Namespace: key.Namespace,
+			Namespace: namespace,
 			Group:     gr.Group,
 			Resource:  gr.Resource,
 		})

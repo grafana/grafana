@@ -224,9 +224,9 @@ func TestServeManifestDiscovery(t *testing.T) {
 	})
 
 	t.Run("not a group", func(t *testing.T) {
-		require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS.md", nil)))
-		require.False(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discoveryx", nil)))
-		require.Empty(t, requestGroup("/apis/discovery/v1alpha2"), "no group metric label")
+		require.True(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS.md", nil)))
+		require.False(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/apis/discoveryx", nil)))
+		require.Empty(t, requestGroupOf(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2", nil)), "no group metric label")
 		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discoveryx/v1", nil))
 		require.Equal(t, http.StatusTeapot, rec.Code, "only the exact segment is the discovery tree")
 	})
@@ -334,8 +334,8 @@ func TestDiscoveryOpenAPI(t *testing.T) {
 	require.Equal(t, discoveryOpenAPIDoc.etag, rec.Header().Get("ETag"))
 	require.Equal(t, http.StatusNotFound, serve(http.MethodGet, "/openapi/v3/apis/discovery/v9").Code)
 	require.Equal(t, http.StatusMethodNotAllowed, serve(http.MethodPost, "/openapi/v3/apis/discovery/v1alpha2").Code)
-	require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)))
-	require.Empty(t, requestGroup("/openapi/v3/apis/discovery/v1alpha2"), "no group metric label")
+	require.True(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)))
+	require.Empty(t, requestGroupOf(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)), "no group metric label")
 
 	var index handler3.OpenAPIV3Discovery
 	require.NoError(t, json.Unmarshal(serve(http.MethodGet, "/openapi/v3").Body.Bytes(), &index))
@@ -355,6 +355,25 @@ func TestBuildDiscoveryOpenAPIWithoutSchemas(t *testing.T) {
 // TestReconcileSkipsTheReservedDiscoveryGroup checks that no source can
 // install a backend for the discovery group, which the router serves itself,
 // even one whose source did not drop it.
+func TestReconcileSkipsInvalidGroupNames(t *testing.T) {
+	invalid := &fakeBackend{key: "invalid", group: testAPIGroup("Not_A.Group", "v1")}
+	other := &fakeBackend{key: "other", group: testAPIGroup(manifestTestGroup, "v1")}
+	r := NewGrafanaRouter(staticLoader{backends: []Backend{invalid, other}}, nil)
+	require.NoError(t, r.reconcile(t.Context()))
+	require.NotContains(t, r.served, "Not_A.Group")
+	require.Contains(t, r.served, manifestTestGroup)
+
+	// Every advertised group can be dispatched.
+	var list metav1.APIGroupList
+	require.NoError(t, json.Unmarshal(r.apiGroupList.Load().body, &list))
+	for _, g := range list.Groups {
+		require.NotEqual(t, "Not_A.Group", g.Name)
+	}
+	var index handler3.OpenAPIV3Discovery
+	require.NoError(t, json.Unmarshal(r.openapiIndex.Load().body, &index))
+	require.NotContains(t, index.Paths, "apis/Not_A.Group/v1")
+}
+
 func TestReconcileSkipsTheReservedDiscoveryGroup(t *testing.T) {
 	claim := &fakeBackend{key: "claim", group: testAPIGroup(discoveryGroup, "v1")}
 	other := &fakeBackend{key: "other", group: testAPIGroup(manifestTestGroup, "v1")}
