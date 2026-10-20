@@ -180,7 +180,7 @@ func TestProvideServiceSetsManifestDiscovery(t *testing.T) {
 	require.NoError(t, err)
 	svc.router.publishManifestDocs(t.Context(), testManifestBackends())
 
-	list, err := discovery.List(t.Context())
+	list, err := discovery.ListManifests(t.Context())
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, manifestTestGroup, list.Items[0].Name)

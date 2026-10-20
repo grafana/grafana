@@ -638,7 +638,7 @@ func TestManifestDiscoveryListAndGet(t *testing.T) {
 	r := NewGrafanaRouter(dummyRoutesLoader{}, nil)
 	r.publishManifestDocs(t.Context(), testManifestBackends())
 
-	list, err := r.List(t.Context())
+	list, err := r.ListManifests(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, "AppManifestList", list.Kind)
 	require.Equal(t, appmanifestv1alpha2.GroupVersion.String(), list.APIVersion)
@@ -649,15 +649,15 @@ func TestManifestDiscoveryListAndGet(t *testing.T) {
 	require.NoError(t, json.Unmarshal(body.Bytes(), &served))
 	require.Equal(t, served.Items, list.Items)
 
-	manifest, err := r.Get(t.Context(), manifestTestGroup)
+	manifest, err := r.GetManifest(t.Context(), manifestTestGroup)
 	require.NoError(t, err)
 	require.Equal(t, list.Items[0], *manifest)
 
 	manifest.Spec.AppName = "changed"
-	again, err := r.Get(t.Context(), manifestTestGroup)
+	again, err := r.GetManifest(t.Context(), manifestTestGroup)
 	require.NoError(t, err)
 	require.Equal(t, "widgets", again.Spec.AppName)
 
-	_, err = r.Get(t.Context(), "gadgets.example.com")
+	_, err = r.GetManifest(t.Context(), "gadgets.example.com")
 	require.True(t, apierrors.IsNotFound(err), "a group without a manifest is not found")
 }

@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -369,12 +368,12 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 	return docs, next
 }
 
-var _ resource.ManifestDiscovery = (*GrafanaRouter)(nil)
+var _ ManifestDiscovery = (*GrafanaRouter)(nil)
 
-// List returns the published manifests, decoded from the documents
+// ListManifests returns the published manifests, decoded from the documents
 // /apis/discovery serves, so in-process readers see exactly what HTTP clients
 // do. Each call decodes fresh copies the caller may keep or change.
-func (r *GrafanaRouter) List(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
+func (r *GrafanaRouter) ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
 	docs := r.manifestDocs.Load()
 	list := &appmanifestv1alpha2.AppManifestList{
 		TypeMeta: metav1.TypeMeta{APIVersion: appmanifestv1alpha2.GroupVersion.String(), Kind: "AppManifestList"},
@@ -388,8 +387,8 @@ func (r *GrafanaRouter) List(ctx context.Context) (*appmanifestv1alpha2.AppManif
 	return list, nil
 }
 
-// Get returns the published manifest of group.
-func (r *GrafanaRouter) Get(ctx context.Context, group string) (*appmanifestv1alpha2.AppManifest, error) {
+// GetManifest returns the published manifest of group.
+func (r *GrafanaRouter) GetManifest(ctx context.Context, group string) (*appmanifestv1alpha2.AppManifest, error) {
 	doc, ok := r.manifestDocs.Load().manifests[group]
 	if !ok {
 		return nil, apierrors.NewNotFound(manifestsResource, group)
