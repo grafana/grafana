@@ -18,52 +18,30 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// Under the NATS informers a reconcile reads the object it reconciles straight
-// from the API, and the notification that woke it carries the resource version
-// of the write that caused it. Unified storage publishes that notification only
-// after the write is committed and a latest GET reads the data store directly,
-// so a read the worker starts *after* the notification was delivered here is
-// expected to observe that version or newer. Whether it always does is an open
-// question: the storage team's contract says yes, operational experience has
-// suggested otherwise, and no production signal exists either way today.
+// Measures whether a reconcile read that follows a NATS notification observes
+// the version that notification announced. Instrumentation only: results pass
+// through untouched and nothing here feeds a retry or cache decision.
 //
-// This is that signal, and nothing more: the read path is unchanged, every
-// result is returned exactly as the API produced it, and no retry, error or
-// cache decision is derived from what is recorded.
+// Two legal executions are excluded by construction, so a non-zero behind count
+// cannot be explained away as ordinary concurrency:
 //
-// It is built to produce evidence that survives scrutiny, so it only counts
-// against the premise in the one execution where the premise cannot be excused:
-//
-//   - the announcement is sampled *before* the read is issued. A read already in
-//     flight when a newer write commits may legally return the earlier state, so
-//     comparing against an announcement that landed mid-read would manufacture
-//     disagreement out of ordinary concurrency;
-//   - a NotFound is never counted as a lagging read. An object announced at rv
-//     and deleted straight after is correctly absent, and under the round-robin
-//     queue group the delete that proves it may be delivered to a different
-//     replica; such a 404 gets its own, explicitly ambiguous outcome rather than
-//     being folded into the anomaly it resembles;
-//   - every read counted as behind is also logged with both versions, so a
-//     non-zero counter can be taken apart into concrete objects and timestamps
-//     instead of being argued about in the abstract.
+//   - the announcement is sampled before the read is issued, because a read
+//     already in flight when a newer write commits may return the earlier state;
+//   - a NotFound is never counted as behind, because an object deleted after its
+//     announcement is correctly absent and the DELETED proving it may be
+//     round-robined to another replica.
 
 const (
-	// announcementTTL bounds how long an announcement is remembered. Only a
-	// read that follows the announcement closely can say anything about read
-	// visibility; an entry nobody reads again — because the live ADDED for the
-	// next change went to another replica, or the object was hard-deleted and
-	// the DELETED was routed elsewhere — ages out rather than accumulating.
+	// Only a read taken soon after an announcement says anything about
+	// visibility, so entries whose next event lands on another replica age out
+	// instead of accumulating.
 	announcementTTL = 15 * time.Minute
-	// announcementSweep is the minimum interval between the expiry scans that
-	// recorded announcements amortize over the event stream, so TTL costs
-	// nothing per call.
+	// Expiry is amortized over the event stream rather than paid per call.
 	announcementSweep = time.Minute
 )
 
-// announcements remembers, per object, the highest resource version a live
-// notification has announced to this replica, with a TTL. It implements
-// usinformer.Announcements, and is read only by the freshness instrumentation
-// on the getters.
+// announcements remembers, per object, the newest resource version a live
+// notification has announced to this replica.
 type announcements struct {
 	mu        sync.Mutex
 	seen      map[string]announcement
@@ -82,15 +60,13 @@ func newAnnouncements() *announcements {
 
 var _ usinformer.Announcements = (*announcements)(nil)
 
-// Announce records rv for the key when it is the newest version announced so
-// far, refreshing the entry's age either way.
+// Announce keeps the newest version seen for the key and refreshes its age.
 func (a *announcements) Announce(namespace, name string, rv int64) {
 	if rv <= 0 {
 		return
 	}
-	// Wire versions are snowflakes; a read of a row unwritten since the
-	// migration can still carry a legacy microsecond value. Normalizing on the
-	// way in keeps both in one comparable space.
+	// Wire versions are snowflakes, but a row unwritten since the migration
+	// reads back as legacy microseconds; normalize so the two compare.
 	rv = resource.ToSnowflakeRV(rv)
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -104,8 +80,8 @@ func (a *announcements) Announce(namespace, name string, rv int64) {
 	a.seen[key] = e
 }
 
-// Forget drops the key: its object is gone from storage, so there is no version
-// a subsequent read is expected to reach.
+// Forget drops the key: the object is gone, so no read is expected to reach a
+// version for it.
 func (a *announcements) Forget(namespace, name string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -114,9 +90,8 @@ func (a *announcements) Forget(namespace, name string) {
 }
 
 // Announced returns the newest version announced for the key, or 0 when none is
-// outstanding — including one past its TTL, which is dropped on the way out so
-// an entry cannot outlive the TTL just because the informer is too quiet to
-// sweep.
+// outstanding. Expiry is enforced here too, so an entry cannot outlive the TTL
+// on an informer too quiet to sweep.
 func (a *announcements) Announced(namespace, name string) int64 {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -149,36 +124,23 @@ func announcementKey(namespace, name string) string {
 	return namespace + "/" + name
 }
 
-// Freshness outcomes, the values of the outcome label.
+// Values of the outcome label. behind is the one the storage contract says
+// cannot happen; not_found is ambiguous and kept apart from it.
 const (
-	// outcomeCurrent: the read observed the announced version or newer. The
-	// expected result.
-	outcomeCurrent = "current"
-	// outcomeBehind: the read returned an object strictly older than a version
-	// already announced to this replica before the read was issued. This is the
-	// outcome the premise says cannot happen.
-	outcomeBehind = "behind"
-	// outcomeNotFound: the read returned NotFound with an announcement
-	// outstanding. Ambiguous by construction: the object may have been deleted
-	// after the announcement, with the DELETED that would have cleared it
-	// round-robined to another replica. Counted separately and never read as
-	// evidence of a lagging read.
+	outcomeCurrent  = "current"
+	outcomeBehind   = "behind"
 	outcomeNotFound = "not_found"
 )
 
-// FreshnessMetrics reports how reconcile reads compare against the
-// notification that triggered them:
+// FreshnessMetrics reports how reconcile reads compare against the notification
+// that triggered them:
 //
 //	grafana_provisioning_reconcile_read_freshness_total{resource,outcome}
 //	grafana_provisioning_reconcile_read_version_lag_seconds{resource}
 //
-// Only reads taken with an announcement outstanding are counted — there is
-// nothing to compare the rest against — so current+behind+not_found is the
-// population of "read that followed a live notification for the same object",
-// and behind/(current+behind) is the rate at which such a read failed to
-// observe the announced write. The histogram sizes those failures, in the write
-// timestamps the resource versions embed, so an anomaly can be told apart from
-// a rounding artefact.
+// Only reads with an announcement outstanding are counted, so the three
+// outcomes sum to that population and behind/(current+behind) is the rate at
+// which such a read missed the announced write.
 type FreshnessMetrics struct {
 	reads *prometheus.CounterVec
 	lag   *prometheus.HistogramVec
@@ -186,18 +148,18 @@ type FreshnessMetrics struct {
 
 // NewFreshnessMetrics builds the read-freshness metrics on reg. Build it once
 // per process and hand it to each delta source: the collectors are shared across
-// resources and told apart by the resource label, so registering them per delta
-// source would be a duplicate registration. A nil reg leaves them unregistered;
-// a nil *FreshnessMetrics yields discarding recorders.
+// resources and told apart by the resource label, so building them per delta
+// source would register a duplicate. A nil reg leaves them unregistered; a nil
+// *FreshnessMetrics yields discarding recorders.
 func NewFreshnessMetrics(reg prometheus.Registerer) *FreshnessMetrics {
 	return &FreshnessMetrics{
 		reads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_reconcile_read_freshness_total",
-			Help: "Reconcile reads taken while a live notification for the same object was outstanding, by resource and how the read compared to the announced resource version: current (at or above it), behind (strictly below it — the read did not observe a write already announced to this replica before the read started), not_found (absent, which is also the correct result for an object deleted after the announcement).",
+			Help: "Reconcile reads taken while a live notification for the same object was outstanding, by resource and outcome: current (at or above the announced resource version), behind (below it — the read missed a write already announced to this replica), not_found (absent, which is also correct for an object deleted after the announcement).",
 		}, []string{"resource", "outcome"}),
 		lag: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_provisioning_reconcile_read_version_lag_seconds",
-			Help:                            "For reconcile reads that came back behind, how far: the time between the announced resource version and the older version the read observed, from the write timestamps the versions embed.",
+			Help:                            "How far behind a reconcile read came back: the time between the announced resource version and the older one the read observed.",
 			Buckets:                         prometheus.ExponentialBuckets(0.005, 4, 8),
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
@@ -206,9 +168,9 @@ func NewFreshnessMetrics(reg prometheus.Registerer) *FreshnessMetrics {
 	}
 }
 
-// Recorder binds the metrics to one kind, resolving the label values once. It
-// creates all three outcome series at zero, so "no reads came back behind" is
-// visible as a flat zero rather than as an absent series.
+// Recorder binds the metrics to one kind. It creates all three outcome series
+// at zero, so "nothing came back behind" reads as a flat zero rather than as an
+// absent series.
 func (m *FreshnessMetrics) Recorder(resourceName string) FreshnessRecorder {
 	if m == nil {
 		return FreshnessRecorder{}
@@ -233,10 +195,9 @@ type FreshnessRecorder struct {
 }
 
 // observe records one read against the version announced before it was issued
-// (announced is in the normalized space announcements.Announced returns; 0 means
-// nothing was outstanding). Reads with no announcement outstanding, failures
-// other than NotFound, and objects whose version does not parse are not counted:
-// none of them can say anything about read visibility.
+// (normalized, as announcements.Announced returns it; 0 means none was
+// outstanding). Reads with nothing to compare against, failures other than
+// NotFound, and unparseable versions are not counted.
 func (r FreshnessRecorder) observe(ctx context.Context, namespace, name string, announced int64, obj runtime.Object, err error) {
 	if r.current == nil || announced <= 0 {
 		return
@@ -256,25 +217,22 @@ func (r FreshnessRecorder) observe(ctx context.Context, namespace, name string, 
 			return
 		}
 		r.behind.Inc()
-		// Observed for every behind read, zero included: both versions are in
-		// snowflake space and rv < announced, so the lag cannot be negative, and
-		// two versions issued in the same millisecond differ only in the
-		// sequence bits — a lag that rounds to zero. That is the mildest
-		// disagreement there is, and dropping it would leave the histogram empty
-		// while the counter climbed.
+		// Zero included: two versions from the same millisecond differ only in
+		// the sequence bits, and dropping those would leave the histogram empty
+		// while the counter climbed. Both versions are snowflakes with
+		// rv < announced, so the lag cannot be negative.
 		lag := resource.ResourceVersionTime(announced).Sub(resource.ResourceVersionTime(rv)).Seconds()
 		r.lag.Observe(lag)
-		// Logged as well as counted: the counter says the premise was
-		// contradicted, this says which object, when, and by how far — the part
-		// that can be checked against the storage logs for the same write.
+		// The counter says the premise was contradicted; this says which write,
+		// so it can be matched against the storage logs.
 		logging.FromContext(ctx).Warn("reconcile read observed an older version than the notification that triggered it",
 			"resource", r.resourceName, "namespace", namespace, "name", name,
 			"announced", announced, "observed", rv, "lagSeconds", lag)
 	}
 }
 
-// objectSnowflakeRV parses an object's resource version normalized to snowflake
-// form, the space announcements are stored in; 0 when it does not parse.
+// objectSnowflakeRV parses an object's resource version into the space
+// announcements are stored in; 0 when it does not parse.
 func objectSnowflakeRV(obj runtime.Object) int64 {
 	acc, err := apimeta.Accessor(obj)
 	if err != nil {
@@ -287,15 +245,14 @@ func objectSnowflakeRV(obj runtime.Object) int64 {
 	return resource.ToSnowflakeRV(rv)
 }
 
-// announcedVersions is the read side of announcements, so the getters take only
-// what they use (and tests can substitute a fixed version).
+// announcedVersions is the read side of announcements, so a getter takes only
+// what it uses.
 type announcedVersions interface {
 	Announced(namespace, name string) int64
 }
 
-// observeRepositoryFreshness wraps a RepositoryGetter to record how each
-// reconcile read compared to the notification that triggered it. Every call is
-// passed through untouched — the wrapper decides nothing.
+// observeRepositoryFreshness wraps a RepositoryGetter to record how each read
+// compared to the notification that triggered it. Calls pass through untouched.
 func observeRepositoryFreshness(inner RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) RepositoryGetter {
 	return freshnessRepositoryGetter{RepositoryGetter: inner, announced: announced, rec: rec}
 }
@@ -307,7 +264,7 @@ type freshnessRepositoryGetter struct {
 }
 
 func (g freshnessRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	// Sampled before the read is issued; see the file comment.
+	// Sampled before the read; see the top of the file.
 	announced := g.announced.Announced(namespace, name)
 	repo, err := g.RepositoryGetter.Get(ctx, namespace, name)
 	g.rec.observe(ctx, namespace, name, announced, repo, err)
