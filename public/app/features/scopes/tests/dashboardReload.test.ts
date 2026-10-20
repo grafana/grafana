@@ -27,7 +27,6 @@ describe('Dashboard reload', () => {
   });
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
   });
 
   it.each([

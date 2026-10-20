@@ -9,7 +9,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   SceneRefreshPicker,
@@ -31,7 +30,6 @@ import {
   defaultConstantVariableKind,
   defaultCustomVariableKind,
   defaultDatasourceVariableKind,
-  defaultGroupByVariableKind,
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
@@ -511,31 +509,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       value: val,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-    });
-  } else if (config.featureToggles.groupByVariable && variable.kind === defaultGroupByVariableKind().kind) {
-    const ds = getDataSourceForQuery(
-      {
-        type: variable.group,
-        uid: variable.datasource?.name,
-      },
-      variable.group
-    );
-
-    return new GroupByVariable({
-      ...commonProperties,
-      datasource: ds,
-      value: variable.spec.current?.value || [],
-      text: variable.spec.current?.text || [],
-      skipUrlSync: variable.spec.skipUrlSync,
-      isMulti: variable.spec.multi,
-      hide: transformVariableHideToEnumV1(variable.spec.hide),
-      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: true,
-      // @ts-expect-error
-      defaultOptions: variable.options,
-      defaultValue: variable.spec.defaultValue
-        ? { value: variable.spec.defaultValue.value, text: variable.spec.defaultValue.text }
-        : undefined,
     });
   } else if (variable.kind === defaultSwitchVariableKind().kind) {
     return new SwitchVariable({

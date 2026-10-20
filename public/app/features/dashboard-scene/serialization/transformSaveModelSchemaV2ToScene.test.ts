@@ -91,14 +91,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
-  beforeAll(() => {
-    config.featureToggles.groupByVariable = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.groupByVariable = false;
-  });
-
   it('should initialize the DashboardScene with the model state', () => {
     const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
     const dashboardControls = scene.state.controls!;

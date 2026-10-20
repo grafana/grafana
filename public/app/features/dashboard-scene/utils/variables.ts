@@ -6,7 +6,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   sceneGraph,
@@ -354,22 +353,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-    });
-    // Groupby variable
-  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
-    return new GroupByVariable({
-      ...commonProperties,
-      datasource: variable.datasource,
-      value: variable.current?.value || [],
-      text: variable.current?.text || [],
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      // @ts-expect-error
-      defaultOptions: variable.options,
-      defaultValue: variable.defaultValue,
-      allowCustomValue: variable.allowCustomValue,
-      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: true,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:
