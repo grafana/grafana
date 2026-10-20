@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"gopkg.in/ini.v1"
 
 	"github.com/stretchr/testify/assert"
@@ -55,6 +57,31 @@ func (e *fakeMarketplaceLicensing) LicenseToken(_ context.Context, pluginID stri
 }
 
 var _ marketplacelicensing.Licensing = (*fakeMarketplaceLicensing)(nil)
+
+// contextCheckingMarketplaceLicensing records the context error seen by LicenseToken.
+type contextCheckingMarketplaceLicensing struct {
+	*fakeMarketplaceLicensing
+	ctxErr error
+}
+
+func (e *contextCheckingMarketplaceLicensing) LicenseToken(ctx context.Context, pluginID string) (string, error) {
+	e.ctxErr = ctx.Err()
+	return e.fakeMarketplaceLicensing.LicenseToken(ctx, pluginID)
+}
+
+var marketplaceLicensingOn = map[string]bool{featuremgmt.FlagPluginsMarketplaceLicensing: true}
+
+// setOpenFeatureFlags installs an in-memory OpenFeature provider with flags until t ends.
+// Flags that are not in the map fail to evaluate.
+func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
+	t.Helper()
+	inMemory := make(map[string]memprovider.InMemoryFlag, len(flags))
+	for key, enabled := range flags {
+		inMemory[key] = setting.NewInMemoryFlag(key, enabled)
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(inMemory)))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+}
 
 func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
@@ -240,7 +267,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 
 	for _, tc := range []struct {
 		name        string
-		features    featuremgmt.FeatureToggles
+		flags       map[string]bool
 		directory   string
 		pluginID    string
 		appURL      string
@@ -250,30 +277,30 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 	}{
 		{
 			name:      "feature disabled",
-			features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing, false),
+			flags:     map[string]bool{featuremgmt.FlagPluginsMarketplaceLicensing: false},
 			directory: marketplaceLicenseDirectory,
 			pluginID:  "acme-widget",
 		},
 		{
-			name:      "nil features",
+			name:      "feature flag evaluation fails",
 			directory: marketplaceLicenseDirectory,
 			pluginID:  "acme-widget",
 		},
 		{
 			name:     "empty directory",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			flags:    marketplaceLicensingOn,
 			pluginID: "acme-widget",
 		},
 		{
 			name:      "no licensing",
-			features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			flags:     marketplaceLicensingOn,
 			directory: marketplaceLicenseDirectory,
 			pluginID:  "acme-widget",
 			appURL:    grafanaAppURL,
 		},
 		{
 			name:      "license is not valid",
-			features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			flags:     marketplaceLicensingOn,
 			directory: marketplaceLicenseDirectory,
 			pluginID:  "acme-widget",
 			appURL:    grafanaAppURL,
@@ -281,7 +308,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 		},
 		{
 			name:        "valid license",
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			flags:       marketplaceLicensingOn,
 			directory:   marketplaceLicenseDirectory,
 			pluginID:    "acme-datasource",
 			appURL:      grafanaAppURL,
@@ -291,7 +318,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 		},
 		{
 			name:        "relative directory becomes absolute",
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			flags:       marketplaceLicensingOn,
 			directory:   "marketplace-licenses",
 			pluginID:    "acme-widget",
 			appURL:      grafanaAppURL,
@@ -301,7 +328,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 		},
 		{
 			name:        "safe ID without known suffix",
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+			flags:       marketplaceLicensingOn,
 			directory:   marketplaceLicenseDirectory,
 			pluginID:    "acme-widget",
 			appURL:      grafanaAppURL,
@@ -311,8 +338,8 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			setOpenFeatureFlags(t, tc.flags)
 			provider := NewEnvVarsProvider(&PluginInstanceCfg{
-				Features:                    tc.features,
 				MarketplaceLicenseDirectory: tc.directory,
 				GrafanaAppURL:               tc.appURL,
 			}, tc.license, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(tc.appURL))
@@ -336,9 +363,9 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 
 // TestPluginEnvVarsProvider_marketplaceLicensing verifies marketplace environment variables.
 func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
-	newProvider := func(environment marketplacelicensing.Licensing) *EnvVarsProvider {
+	newProvider := func(t *testing.T, environment marketplacelicensing.Licensing) *EnvVarsProvider {
+		setOpenFeatureFlags(t, marketplaceLicensingOn)
 		return NewEnvVarsProvider(&PluginInstanceCfg{
-			Features:                    featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
 			MarketplaceLicenseDirectory: "marketplace-licenses",
 			GrafanaAppURL:               "https://configured.example.com/",
 		}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{}, environment)
@@ -346,7 +373,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 
 	t.Run("prepares the environment for the plugin and uses its identity", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := newProvider(t, environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
 
 		require.Equal(t, "acme-widget", environment.preparedWith)
 		require.Equal(t, 1, environment.prepareCalls)
@@ -360,7 +387,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		environment.token = "parent-token"
 		parent := &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-app"}}
 		child := &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-datasource"}, Parent: parent}
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), child)
+		envVars := newProvider(t, environment).PluginEnvVars(context.Background(), child)
 
 		require.Equal(t, "acme-app", environment.preparedWith)
 		require.Equal(t, "parent-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
@@ -370,17 +397,29 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 	t.Run("passes selected token verbatim with path when available", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
 		environment.token = " token\n"
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := newProvider(t, environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
 
 		require.Equal(t, " token\n", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
 		require.NotEmpty(t, getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_PATH"))
 		require.Equal(t, "hmac:marketplace-environment", getEnvVar(envVars, "GF_MARKETPLACE_APP_URL"))
 	})
 
+	t.Run("uses a live context when the initialization context is canceled", func(t *testing.T) {
+		environment := &contextCheckingMarketplaceLicensing{fakeMarketplaceLicensing: newTestMarketplaceLicensing("hmac:marketplace-environment")}
+		environment.token = "database-token"
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		envVars := newProvider(t, environment).PluginEnvVars(ctx, &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+
+		require.NoError(t, environment.ctxErr)
+		require.Equal(t, "database-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
+	})
+
 	t.Run("passes token without a configured directory", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
 		environment.token = "database-token"
-		provider := NewEnvVarsProvider(&PluginInstanceCfg{Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing)}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{}, environment)
+		setOpenFeatureFlags(t, marketplaceLicensingOn)
+		provider := NewEnvVarsProvider(&PluginInstanceCfg{}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{}, environment)
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
 
 		require.Equal(t, "database-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
@@ -393,7 +432,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		environment := newTestMarketplaceLicensing("https://grafana.example.com/")
 		environment.token = "partial-token"
 		environment.prepareErr = errors.New("prepare environment")
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := newProvider(t, environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
 
 		licensePath, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
 		appURL, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
@@ -408,42 +447,42 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 	t.Run("does not prepare when a marketplace gate fails", func(t *testing.T) {
 		for _, tc := range []struct {
 			name      string
-			features  featuremgmt.FeatureToggles
+			flags     map[string]bool
 			directory string
 			license   plugins.Licensing
 			pluginID  string
 		}{
 			{
 				name:      "feature disabled",
-				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing, false),
+				flags:     map[string]bool{featuremgmt.FlagPluginsMarketplaceLicensing: false},
 				directory: "marketplace-licenses",
 				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
 				pluginID:  "acme-widget",
 			},
 			{
-				name:      "nil features",
+				name:      "feature flag evaluation fails",
 				directory: "marketplace-licenses",
 				license:   &pluginfakes.FakeLicensingService{ValidLicense: true},
 				pluginID:  "acme-widget",
 			},
 			{
 				name:      "missing host license",
-				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				flags:     marketplaceLicensingOn,
 				directory: "marketplace-licenses",
 				pluginID:  "acme-widget",
 			},
 			{
 				name:      "invalid host license",
-				features:  featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing),
+				flags:     marketplaceLicensingOn,
 				directory: "marketplace-licenses",
 				license:   &pluginfakes.FakeLicensingService{},
 				pluginID:  "acme-widget",
 			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
+				setOpenFeatureFlags(t, tc.flags)
 				environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
 				provider := NewEnvVarsProvider(&PluginInstanceCfg{
-					Features:                    tc.features,
 					MarketplaceLicenseDirectory: tc.directory,
 				}, tc.license, &fakeSSOSettingsProvider{}, environment)
 
