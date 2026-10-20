@@ -45,6 +45,12 @@ func perKindFilterLeaf(field, op string, values ...string) searchv0.WhereNode {
 	}
 }
 
+func perKindRegexLeaf(field, pattern string, negate bool) searchv0.WhereNode {
+	return searchv0.WhereNode{
+		Regex: &searchv0.RegexPredicate{Field: field, Pattern: pattern, Negate: negate},
+	}
+}
+
 func perKindTextLeaf(value string) searchv0.WhereNode {
 	return searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: value}}
 }
@@ -179,6 +185,55 @@ func TestPerKindValidateQuery_futureWhereNodes(t *testing.T) {
 		node := &searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: "cpu", Boost: &boost}}
 		assert.Equal(t, []string{"where.text.boost"}, validate(t, whereQuery(node)))
 	})
+}
+
+func TestPerKindValidateQuery_regexLeaf(t *testing.T) {
+	t.Run("accepts a labels regex at the top level and inside and", func(t *testing.T) {
+		regex := perKindRegexLeaf(fieldLabels, "team=a|b", false)
+		assert.Empty(t, validate(t, whereQuery(&regex)))
+		assert.Empty(t, validate(t, whereQuery(perKindAndNode(
+			perKindTextLeaf("cpu"),
+			perKindFilterLeaf(fieldLabels, perKindFilterOperatorIn, "env=prod"),
+			regex,
+			perKindRegexLeaf(fieldLabels, "severity=crit.*", true),
+		))))
+	})
+
+	t.Run("accepts a labels regex on recording rules", func(t *testing.T) {
+		regex := perKindRegexLeaf(fieldLabels, "team=a", false)
+		assert.Empty(t, validateFor(t, recordingRuleKind(t), whereQuery(&regex)))
+	})
+
+	t.Run("rejects a node that also sets a filter", func(t *testing.T) {
+		// Counting only the filter would answer the query without its regex.
+		node := perKindFilterLeaf(fieldLabels, perKindFilterOperatorIn, "team=a")
+		node.Regex = &searchv0.RegexPredicate{Field: fieldLabels, Pattern: "env=.*"}
+		assert.Equal(t, []string{"where"}, validate(t, whereQuery(&node)))
+	})
+
+	for name, tc := range map[string]struct {
+		field   string
+		pattern string
+		path    string
+	}{
+		"missing field":                {"", "team=a", "where.regex.field"},
+		"unknown field":                {"nope", "team=a", "where.regex.field"},
+		"field not filterable":         {fieldAnnotations, "team=a", "where.regex.field"},
+		"filterable field not labels":  {fieldReceiver, "a.*", "where.regex.field"},
+		"lowercased title":             {fieldTitle, "CPU.*", "where.regex.field"},
+		"missing pattern":              {fieldLabels, "", "where.regex.pattern"},
+		"no literal key":               {fieldLabels, "team", "where.regex.pattern"},
+		"empty key":                    {fieldLabels, "=a", "where.regex.pattern"},
+		"lazy quantifier":              {fieldLabels, "team=crit.*?", "where.regex.pattern"},
+		"word boundary":                {fieldLabels, `team=\bcrit`, "where.regex.pattern"},
+		"case folding after the start": {fieldLabels, "team=a(?i)b", "where.regex.pattern"},
+		"invalid syntax":               {fieldLabels, "team=(a", "where.regex.pattern"},
+	} {
+		t.Run("rejects "+name, func(t *testing.T) {
+			regex := perKindRegexLeaf(tc.field, tc.pattern, false)
+			assert.Equal(t, []string{tc.path}, validate(t, whereQuery(&regex)))
+		})
+	}
 }
 
 func TestPerKindValidateQuery_textLeaf(t *testing.T) {
@@ -415,10 +470,19 @@ func TestPerKindValidateQuery_sort(t *testing.T) {
 		return q
 	}
 
-	t.Run("accepts title in either direction", func(t *testing.T) {
-		for _, dir := range []string{"", sortAscending, sortDescending} {
-			assert.Empty(t, validate(t, sortQuery(searchv0.SortField{Field: fieldTitle, Direction: dir})), "direction %q", dir)
+	t.Run("accepts title and name in either direction", func(t *testing.T) {
+		for _, name := range []string{fieldTitle, fieldName} {
+			for _, dir := range []string{"", sortAscending, sortDescending} {
+				assert.Empty(t, validate(t, sortQuery(searchv0.SortField{Field: name, Direction: dir})), "field %q direction %q", name, dir)
+			}
 		}
+	})
+
+	t.Run("accepts title then name", func(t *testing.T) {
+		assert.Empty(t, validate(t, sortQuery(
+			searchv0.SortField{Field: fieldTitle},
+			searchv0.SortField{Field: fieldName, Direction: sortDescending},
+		)))
 	})
 
 	t.Run("rejects an unknown direction", func(t *testing.T) {
@@ -426,13 +490,10 @@ func TestPerKindValidateQuery_sort(t *testing.T) {
 			validate(t, sortQuery(searchv0.SortField{Field: fieldTitle, Direction: "descending"})))
 	})
 
-	// folder and name declare the sort capability, but the legacy store orders by
-	// title whatever it is asked for, so sorting on them would silently lie.
+	// folder declares the sort capability, but the legacy backend cannot order by
+	// it, so sorting on it would silently return title order.
 	t.Run("rejects fields the legacy backend cannot order by", func(t *testing.T) {
-		for _, name := range []string{fieldFolder, fieldName} {
-			assert.Equal(t, []string{"sort[0].field"},
-				validate(t, sortQuery(searchv0.SortField{Field: name})), "field %q", name)
-		}
+		assert.Equal(t, []string{"sort[0].field"}, validate(t, sortQuery(searchv0.SortField{Field: fieldFolder})))
 	})
 
 	t.Run("rejects a field that is not sortable", func(t *testing.T) {

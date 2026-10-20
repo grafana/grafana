@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -56,6 +55,7 @@ type service struct {
 
 	// -- Shared Components
 	watchExpiry   resource.WatchExpiry
+	blobBackend   resource.BlobSupport
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -103,6 +103,10 @@ func WithAuthenticator(authn func(ctx context.Context) (context.Context, error))
 	return func(s *service) {
 		s.authenticator = authn
 	}
+}
+
+func WithBlobBackend(blob resource.BlobSupport) ServiceOption {
+	return func(s *service) { s.blobBackend = blob }
 }
 
 // WithDashboardStats sets the dashboard stats used by the vector backfiller
@@ -189,8 +193,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 
 	if cfg.QOSEnabled {
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
-			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       reg,
+			MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+			MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+			Registerer:             reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
@@ -419,13 +424,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	// its initial poll completes before the index is built.
 	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []*appsdk.ManifestData) {
-				if err := searchOptions.ReloadManifests(resource.AppManifests(), live); err != nil {
-					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
-					return
-				}
-				s.log.Info("manifest reload applied", "live_manifests", len(live))
-			})
+			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, searchOptions.ManifestReloader(s.log))
 			if err != nil {
 				return err
 			}
@@ -436,6 +435,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	serverOptions := ServerOptions{
 		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,
+		BlobBackend:    s.blobBackend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
 		Reranker:       s.reranker,
@@ -645,6 +645,7 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BlobStoreStreaming_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -653,6 +654,9 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
 		}
 		srv.RegisterService(wrapped, handler)
 	}
@@ -671,7 +675,11 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 
 func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
 	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
-		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), nil)
+		var streamInterceptor grpc.StreamServerInterceptor
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
+		}
+		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
 	}
 	return desc
 }

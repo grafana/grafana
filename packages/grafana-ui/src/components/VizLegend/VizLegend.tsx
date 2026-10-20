@@ -39,7 +39,7 @@ export function VizLegend<T>({
 
   const onMouseOver = useCallback(
     (
-      item: VizLegendItem,
+      item: VizLegendItem<T>,
       event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>
     ) => {
       eventBus?.publish({
@@ -57,7 +57,7 @@ export function VizLegend<T>({
 
   const onMouseOut = useCallback(
     (
-      item: VizLegendItem,
+      item: VizLegendItem<T>,
       event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>
     ) => {
       eventBus?.publish({
@@ -74,7 +74,7 @@ export function VizLegend<T>({
   );
 
   const onLegendLabelClick = useCallback(
-    (item: VizLegendItem, event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (onLabelClick) {
         onLabelClick(item, event);
       }
@@ -91,7 +91,7 @@ export function VizLegend<T>({
   );
 
   const makeVizLegendList = useCallback(
-    (items: VizLegendItem[]) => {
+    (items: Array<VizLegendItem<T>>) => {
       return (
         <VizLegendList<T>
           className={className}

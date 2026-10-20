@@ -57,7 +57,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     folder: folderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
-  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
@@ -94,22 +93,17 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
   }, [isSearching, searchState.result, stateManager]);
 
-  // Emit exposure event for A/A test once when page loads
-  const hasEmittedExposureEvent = useRef(false);
+  // Report once per page load when the recently viewed section is shown
+  const hasReportedListViewed = useRef(false);
 
   useEffect(() => {
-    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
+    if (!isRecentlyViewedEnabled || hasReportedListViewed.current) {
       return;
     }
 
-    hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
-
-    reportInteraction('dashboards_browse_list_viewed', {
-      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
-      has_recently_viewed_component: isExperimentTreatment,
-    });
-  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
+    hasReportedListViewed.current = true;
+    reportInteraction('dashboards_browse_list_viewed');
+  }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');

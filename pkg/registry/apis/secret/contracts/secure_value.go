@@ -27,6 +27,8 @@ var (
 	ErrReferenceWithSystemKeeper      = errors.New("tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers")
 	ErrSecureValueMissingSecretAndRef = errors.New("secure value spec doesn't have neither a secret or reference")
 	ErrTooManyOwnerReferences         = errors.New("secure values can have at most one owner reference")
+	ErrSecureValueNamespaceEmpty      = errors.New("namespace cannot be empty")
+	ErrSecureValueNameEmpty           = errors.New("name cannot be empty")
 )
 
 type ReadOpts struct {
