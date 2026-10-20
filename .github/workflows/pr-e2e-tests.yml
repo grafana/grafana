@@ -56,11 +56,8 @@ jobs:
           path: bin
 
       - name: Setup Go
-        uses: actions/setup-go@v6.3.0
+        uses: ./.github/actions/setup-go
         if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          go-version-file: 'go.mod'
-          cache: true
 
       - name: Build backend
         if: steps.cache.outputs.cache-hit != 'true'
