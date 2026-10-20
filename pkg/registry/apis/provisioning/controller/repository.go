@@ -961,7 +961,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// announcement is known, as
 		// grafana_provisioning_reconcile_read_freshness_total{outcome="not_found"},
 		// and recovered by the periodic re-list.
-		logger.Debug("repository not found; nothing to reconcile")
+		logger.Warn("repository not found; nothing to reconcile")
 		return repoType, nil
 	case err != nil:
 		return repoType, err

@@ -348,7 +348,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 		// Nothing to reconcile; see the matching branch in RepositoryController.
 		// process for why the error this used to return recovered nothing, and
 		// where a read that lags its triggering event is counted instead.
-		logger.Debug("connection not found; nothing to reconcile")
+		logger.Warn("connection not found; nothing to reconcile")
 		return nil
 	case err != nil:
 		logger.Error("getting connection", "error", err)

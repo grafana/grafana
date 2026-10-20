@@ -213,11 +213,11 @@ func (r FreshnessRecorder) observe(ctx context.Context, namespace, name string, 
 	switch {
 	case apierrors.IsNotFound(err):
 		r.notFound.Inc()
-		// The controllers treat a missing object as a finished reconcile and say
-		// so at debug, so this is the only line that names an absence taken while
-		// a notification for the same object was outstanding -- the shape a read
-		// that outran its own write would take. It is not proof of one: the
-		// object may simply have been deleted after the announcement.
+		// The controllers also report a missing object, but they cannot say
+		// whether a notification for it was outstanding, so this is the only line
+		// carrying the version one announced -- the shape a read that outran its
+		// own write would take. It is not proof of one: the object may simply
+		// have been deleted after the announcement.
 		logging.FromContext(ctx).Info("reconcile read found no object while a notification for it was outstanding",
 			"resource", r.resourceName, "namespace", namespace, "name", name, "announced", announced)
 	case err != nil:
