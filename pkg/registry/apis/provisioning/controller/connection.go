@@ -315,7 +315,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	// repository controller.
 	switch {
 	case errors.Is(err, usinformer.ErrStaleRead):
-		logger.Info("ConnectionController will retry as read is staler than the triggering event", "queue_len", cc.queue.Len())
+		logger.Warn("ConnectionController will retry as read is staler than the triggering event", "queue_len", cc.queue.Len())
 	default:
 		logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 	}

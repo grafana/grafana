@@ -437,7 +437,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	// infrastructure.
 	switch {
 	case errors.Is(err, usinformer.ErrStaleRead):
-		logger.Info("RepositoryController will retry as read is staler than the triggering event", "queue_len", rc.queue.Len())
+		logger.Warn("RepositoryController will retry as read is staler than the triggering event", "queue_len", rc.queue.Len())
 	case apierrors.IsServiceUnavailable(err):
 		logger.Info("RepositoryController will retry as service is unavailable", "queue_len", rc.queue.Len())
 	default:
