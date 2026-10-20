@@ -412,6 +412,13 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	sub := newFakeSubscriber()
 	source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+	// Every attempt is measured (see staleread.go), so the re-reads the getter
+	// now performs are part of what this test observes; the waiting between them
+	// is not.
+	enforcing, ok := getter.(staleReadRepositoryGetter)
+	require.True(t, ok)
+	enforcing.policy.backoff = 0
+	getter = enforcing
 
 	stop := make(chan struct{})
 	t.Cleanup(func() { close(stop) })
@@ -429,19 +436,22 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 		Type: resourcepb.WatchNotification_MODIFIED, Namespace: testNamespace, Name: "r", ResourceVersion: announced,
 	})
 
+	// The API stays behind for the whole budget, so the read is surrendered to
+	// the work queue rather than reconciled, and each attempt is counted.
 	_, err = getter.Get(ctx, testNamespace, "r")
-	require.NoError(t, err)
-	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeBehind))
+	require.ErrorIs(t, err, ErrStaleRead)
+	assert.Equal(t, float64(staleReadAttempts), freshnessCount(t, reg, res, outcomeBehind))
+	assert.Equal(t, float64(1), staleReadsExhausted(t, reg, res))
 	count, sum := lagObservations(t, reg, res)
-	assert.Equal(t, uint64(1), count)
-	assert.InDelta(t, 3.0, sum, 1.0)
+	assert.Equal(t, uint64(staleReadAttempts), count)
+	assert.InDelta(t, 3.0*staleReadAttempts, sum, staleReadAttempts)
 
 	// Once the API catches up, the same read is current.
 	served.Store(announced)
 	_, err = getter.Get(ctx, testNamespace, "r")
 	require.NoError(t, err)
 	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeCurrent))
-	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeBehind), "the earlier observation stands on its own")
+	assert.Equal(t, float64(staleReadAttempts), freshnessCount(t, reg, res, outcomeBehind), "the earlier observations stand on their own")
 }
 
 // The create -> delete -> queued read case, end to end: the DELETED forgets the
@@ -496,6 +506,10 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	sub := newFakeSubscriber()
 	source, getter := NewConnectionDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+	enforcing, ok := getter.(staleReadConnectionGetter)
+	require.True(t, ok)
+	enforcing.policy.backoff = 0
+	getter = enforcing
 
 	stop := make(chan struct{})
 	t.Cleanup(func() { close(stop) })
@@ -506,7 +520,10 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 		Type: resourcepb.WatchNotification_MODIFIED, Namespace: testNamespace, Name: "c", ResourceVersion: announced,
 	})
 
+	// As for repositories: the read is re-taken for the whole budget, every
+	// attempt is measured, and the stale object never reaches the controller.
 	_, err := getter.Get(context.Background(), testNamespace, "c")
-	require.NoError(t, err)
-	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeBehind))
+	require.ErrorIs(t, err, ErrStaleRead)
+	assert.Equal(t, float64(staleReadAttempts), freshnessCount(t, reg, res, outcomeBehind))
+	assert.Equal(t, float64(1), staleReadsExhausted(t, reg, res))
 }

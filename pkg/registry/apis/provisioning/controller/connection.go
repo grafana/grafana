@@ -296,7 +296,10 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	if !apierrors.IsServiceUnavailable(err) {
+	// Retry transient conditions: the service being unavailable, and a read that
+	// kept coming back older than the notification that triggered it — the write
+	// is committed, so re-queueing is what lets the reconcile see it.
+	if !apierrors.IsServiceUnavailable(err) && !errors.Is(err, informer.ErrStaleRead) {
 		logger.Info("ConnectionController will not retry")
 		cc.queue.Forget(key)
 		return true
@@ -310,7 +313,14 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	}
 	cc.queueLag.add(key)
 	cc.queue.AddRateLimited(key)
-	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
+	// Name the transient condition being retried, the same shape as the
+	// repository controller.
+	switch {
+	case errors.Is(err, informer.ErrStaleRead):
+		logger.Info("ConnectionController will retry as the read is older than the triggering event", "queue_len", cc.queue.Len())
+	default:
+		logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
+	}
 
 	return true
 }

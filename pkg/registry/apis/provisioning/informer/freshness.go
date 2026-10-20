@@ -149,9 +149,15 @@ const (
 // Only reads with an announcement outstanding are counted, so the three
 // outcomes sum to that population and behind/(current+behind) is the rate at
 // which such a read missed the announced write.
+//
+// It also carries the one outcome of acting on that measurement (see
+// staleread.go), since it is the same subject and the same lifecycle:
+//
+//	grafana_provisioning_stale_reads_exhausted_total{resource}
 type FreshnessMetrics struct {
-	reads *prometheus.CounterVec
-	lag   *prometheus.HistogramVec
+	reads     *prometheus.CounterVec
+	lag       *prometheus.HistogramVec
+	exhausted *prometheus.CounterVec
 }
 
 // NewFreshnessMetrics builds the read-freshness metrics on reg. Build it once
@@ -173,6 +179,10 @@ func NewFreshnessMetrics(reg prometheus.Registerer) *FreshnessMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"resource"}),
+		exhausted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_stale_reads_exhausted_total",
+			Help: "Reconcile reads that stayed behind the announced resource version for a whole re-read budget and were surrendered to the work queue, by resource. Retries are not counted separately: the behind outcome above is recorded per attempt, so behind = re-reads + exhausted budgets.",
+		}, []string{"resource"}),
 	}
 }
 
@@ -189,6 +199,7 @@ func (m *FreshnessMetrics) Recorder(resourceName string) FreshnessRecorder {
 		behind:       m.reads.WithLabelValues(resourceName, outcomeBehind),
 		notFound:     m.reads.WithLabelValues(resourceName, outcomeNotFound),
 		lag:          m.lag.WithLabelValues(resourceName),
+		exhausted:    m.exhausted.WithLabelValues(resourceName),
 	}
 }
 
@@ -200,6 +211,14 @@ type FreshnessRecorder struct {
 	behind       prometheus.Counter
 	notFound     prometheus.Counter
 	lag          prometheus.Observer
+	exhausted    prometheus.Counter
+}
+
+// recordExhausted counts a read that never caught up with the announced version.
+func (r FreshnessRecorder) recordExhausted() {
+	if r.exhausted != nil {
+		r.exhausted.Inc()
+	}
 }
 
 // observe records one read against the version announced before it was issued

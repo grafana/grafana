@@ -33,8 +33,9 @@ type ConnectionGetter interface {
 // keys_only_relist, in process over storage and in the operator over HTTP.
 //
 // freshness instruments how the getter's reads compare to the notifications
-// that triggered them (see freshness.go); nil disables the observation, and it
-// applies to the NATS path only.
+// that triggered them (see freshness.go), and carries the counter for the
+// re-reads that comparison drives (see staleread.go); nil disables the
+// observation, and both apply to the NATS path only.
 func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
 		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
@@ -47,8 +48,9 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		source.AllowDegradedStart()
 		announced := newAnnouncements()
 		source.SetAnnouncements(announced)
+		rec := freshness.Recorder(gvr.Resource)
 		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
-		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource))
+		return source, retryStaleConnectionReads(observeConnectionFreshness(getter, announced, rec), announced, rec)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
