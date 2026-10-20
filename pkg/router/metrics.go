@@ -259,7 +259,7 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 		breaker: prometheus.NewDesc(name("breaker_state"),
 			"Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others.", []string{"group", "state"}, nil),
 		shadowed: prometheus.NewDesc(name("shadowed_groups"),
-			"Number of API groups a source offered that a higher-priority source serves instead, in the latest load.", []string{"source"}, nil),
+			"Number of API groups a source other than the single-tenant fallback offered that a higher-priority source serves instead, in the latest load.", []string{"source"}, nil),
 		skipped: prometheus.NewDesc(name("skipped_backends"),
 			"Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.", []string{"source"}, nil),
 		lastSuccess: prometheus.NewDesc(name("source_last_success_timestamp_seconds"),
