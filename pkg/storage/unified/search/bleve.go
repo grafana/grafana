@@ -252,10 +252,6 @@ type bleveBackend struct {
 	cacheMx sync.RWMutex
 	cache   map[resource.NamespacedResource]*bleveIndex
 
-	// RVs the last graceful shutdown kept in the open index list instead of the
-	// indexes, by index directory. Read-only after construction.
-	shutdownRVs map[string]int64
-
 	indexMetrics *resource.BleveIndexMetrics
 
 	fields *resource.SearchFieldsRegistry
@@ -365,7 +361,6 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
 		inFlightBuildDirs:       map[string]int{},
-		shutdownRVs:             loadShutdownRVs(opts.Root, l),
 		reportedIndexedKinds:    map[string]struct{}{},
 	}
 
@@ -1052,10 +1047,6 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Skipping index build, using existing index")
 
 		idx.resourceVersion.Store(prepared.indexRV)
-		// The RV can come from open-indexes.json, newer than the one in the index.
-		if persisted, err := getRV(idx.index); err == nil && persisted < prepared.indexRV {
-			idx.rvDirty = true
-		}
 
 		b.indexMetrics.IndexBuildSkipped.Inc()
 	}
@@ -1754,8 +1745,6 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 			_ = idx.Close()
 			continue
 		}
-		// Both are no newer than the index contents, so the newer one is safe.
-		indexRV = max(indexRV, b.shutdownRV(indexDir))
 		if indexRV <= 0 {
 			b.log.Warn("index has non-positive rv, not reusing it", "indexDir", indexDir, "rv", indexRV)
 			_ = idx.Close()
@@ -1775,45 +1764,26 @@ func (b *bleveBackend) Stop() {
 	b.bgTasksWg.Wait()
 
 	// Stop the periodic writer before the final write so shutdown writes one stable list.
-	entries := b.openIndexListEntries()
-	rvs := b.closeAllIndexes()
-	// Written after closing, so every RV in the list has its index contents on disk.
-	if err := b.writeOpenIndexList(time.Now(), entries, rvs); err != nil {
+	if err := b.WriteOpenIndexStats(time.Now()); err != nil {
 		b.log.Warn("failed to write open index stats during shutdown", "err", err)
 	}
+
+	b.closeAllIndexes()
 }
 
-// closeAllIndexes returns, by index directory, the RVs of file indexes that are
-// newer than the RV persisted in the index. Persisting each of them would cost
-// a scorch epoch per index during shutdown.
-func (b *bleveBackend) closeAllIndexes() map[string]int64 {
+func (b *bleveBackend) closeAllIndexes() {
 	b.cacheMx.Lock()
 	defer b.cacheMx.Unlock()
 
-	rvs := map[string]int64{}
 	for key, idx := range b.cache {
 		b.clearUploadTracking(key)
-		idx.stopUpdater()
-		if err := idx.index.Close(); err != nil {
+		if err := idx.stopUpdaterAndCloseIndex(); err != nil {
 			b.log.Error("Failed to close index", "err", err)
-		} else if idx.rvDirty && idx.indexStorage == indexStorageFile {
-			if dir, err := filepath.Rel(b.opts.Root, idx.index.Name()); err == nil {
-				rvs[dir] = idx.resourceVersion.Load()
-			}
 		}
 		delete(b.cache, key)
 
 		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
 	}
-	return rvs
-}
-
-func (b *bleveBackend) shutdownRV(indexDir string) int64 {
-	dir, err := filepath.Rel(b.opts.Root, indexDir)
-	if err != nil {
-		return 0
-	}
-	return b.shutdownRVs[dir]
 }
 
 type updateRequest struct {
@@ -1875,10 +1845,9 @@ type bleveIndex struct {
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
 
-	// Owned by the updater goroutine, and by close after the updater has stopped.
+	// Owned by the updater goroutine.
 	rvPersistInterval time.Duration
 	rvPersistedAt     time.Time
-	rvDirty           bool // resourceVersion is newer than the RV persisted in the index.
 
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
@@ -2118,7 +2087,6 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 
 	b.resourceVersion.Store(rv)
 	b.rvPersistedAt = time.Now()
-	b.rvDirty = false
 
 	return nil
 }
@@ -2130,7 +2098,6 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 func (b *bleveIndex) advanceResourceVersion(rv int64, docs int) error {
 	if docs == 0 && b.rvPersistInterval > 0 && time.Since(b.rvPersistedAt) < b.rvPersistInterval {
 		b.resourceVersion.Store(rv)
-		b.rvDirty = true
 		return nil
 	}
 	return b.updateResourceVersion(rv)
@@ -3856,12 +3823,6 @@ func removeSmallTerms(query string) string {
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
-	b.stopUpdater()
-	// Close index only after updater is not working on it anymore.
-	return b.index.Close()
-}
-
-func (b *bleveIndex) stopUpdater() {
 	// Signal updater to stop. We do this by 1) setting updaterShuttingDown + sending signal, and by 2) calling cancel.
 	b.updaterMu.Lock()
 	b.updaterShutdown = true
@@ -3873,6 +3834,8 @@ func (b *bleveIndex) stopUpdater() {
 	b.updaterMu.Unlock()
 
 	b.updaterWg.Wait()
+	// Close index only after updater is not working on it anymore.
+	return b.index.Close()
 }
 
 func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
