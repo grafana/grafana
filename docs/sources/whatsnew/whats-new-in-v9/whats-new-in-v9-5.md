@@ -106,7 +106,7 @@ Learn more about the deprecation strategy for API keys and how to manage them in
 
 _Generally available in all editions of Grafana._
 
-Support bundles provide a simple way to collect information about your Grafana instance through Grafana's user interface. In a few clicks, you can create a support bundle containing data about migrations, plugins, settings, and more. Once you've created a support bundle, you can either examine it yourself, or share it with your colleagues or Grafana engineers to aid in troubleshooting of your Grafana instance.
+Support bundles provide a simple way to collect information about your Grafana instance through Grafana's user interface. In a few clicks, you can create a support bundle containing data about migrations, plugins, settings, and more. After you've created a support bundle, you can either examine it yourself, or share it with your colleagues or Grafana engineers to aid in troubleshooting of your Grafana instance.
 
 Learn more about support bundles and how to configure them in our [support bundle documentation](../../../troubleshooting/support-bundles/).
 
