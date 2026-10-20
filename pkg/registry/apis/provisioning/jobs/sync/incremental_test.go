@@ -1872,6 +1872,34 @@ func TestDeleteFolders(t *testing.T) {
 		require.Equal(t, "mid-uid", deletionOrder[2])
 		require.Equal(t, "shallow-uid", deletionOrder[3])
 	})
+
+	t.Run("never deletes the repository root folder", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "alpha/").Return(false)
+		repoResources.On("RemoveFolder", mock.Anything, "alpha-uid").Return(nil).Once()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionDeleted && r.Name() == "alpha-uid" && r.Error() == nil
+		})).Return().Once()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Path() == "" &&
+				r.Name() == "test-repo" &&
+				r.Error() == nil &&
+				r.Warning() != nil
+		})).Return().Once()
+
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "", UID: "test-repo", Reason: provisioning.ReasonFolderMetadataCreated},
+			{Path: "alpha/", UID: "alpha-uid"},
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, "test-repo")
+	})
 }
 
 func folderJSON(t *testing.T, uid, title string) []byte {
