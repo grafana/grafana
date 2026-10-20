@@ -54,21 +54,125 @@ const maxIndexTextLen = 200
 // manifestDocs holds the /apis/discovery documents for one set of served
 // backends. publishManifestDocs rebuilds it only when that set changes.
 type manifestDocs struct {
-	// manifests holds each group's AppManifest, and items the same documents
-	// in group order. The list is written from items on request, so each
-	// manifest is held in memory once and never copied into a list buffer.
+	// manifests holds each group's AppManifest, and items the documents of
+	// the groups every caller sees, in group order. The list is written from
+	// items on request, so each manifest is held in memory once and never
+	// copied into a list buffer.
 	manifests map[string]*cachedDoc
 	items     []*cachedDoc
 	names     []string // each item's name, its group
 	listETag  string
 	listLen   int
 
-	// The index is rendered on its first request, since most route changes
-	// are never followed by one.
+	// namespaced are the namespaced groups, in group order, and namespaces
+	// each one's namespace. They are left out of the list and the index, and
+	// added per request for the callers they are listed to.
+	namespaced []namespacedManifest
+	namespaces map[string]string
+
+	// The index of the groups every caller sees is rendered on its first
+	// request, since most route changes are never followed by one.
 	backends  []Backend
 	indexOnce sync.Once
 	index     cachedDoc // markdown, for agents
 	indexHTML cachedDoc // the same index, for browsers
+}
+
+// namespacedManifest is a namespaced group's backend, and its document when
+// one is published.
+type namespacedManifest struct {
+	namespace string
+	backend   Backend
+	doc       *cachedDoc
+}
+
+// manifestList is the AppManifestList a caller sees.
+type manifestList struct {
+	items  []*cachedDoc
+	names  []string
+	etag   string
+	length int
+}
+
+// listedNamespaced returns the namespaced groups listed to a caller in
+// namespace (servingEntry.listedFor).
+func (d *manifestDocs) listedNamespaced(namespace string) []namespacedManifest {
+	var visible []namespacedManifest
+	for _, m := range d.namespaced {
+		if namespaceListed(namespace, m.namespace) {
+			visible = append(visible, m)
+		}
+	}
+	return visible
+}
+
+// private reports whether the documents differ by caller.
+func (d *manifestDocs) private() bool { return len(d.namespaced) > 0 }
+
+// listFor returns the list a caller in namespace sees: the published list,
+// with the caller's namespaced groups merged in by name.
+func (d *manifestDocs) listFor(namespace string) manifestList {
+	shared := manifestList{items: d.items, names: d.names, etag: d.listETag, length: d.listLen}
+	var visible []namespacedManifest
+	for _, m := range d.listedNamespaced(namespace) {
+		if m.doc != nil {
+			visible = append(visible, m)
+		}
+	}
+	if len(visible) == 0 {
+		return shared
+	}
+	list := manifestList{length: len(manifestListPrefix) + len(manifestListSuffix)}
+	etag := sha256.New()
+	_, _ = io.WriteString(etag, d.listETag)
+	add := func(name string, doc *cachedDoc) {
+		if len(list.items) > 0 {
+			list.length++ // the separating comma
+		}
+		list.items = append(list.items, doc)
+		list.names = append(list.names, name)
+		list.length += len(doc.body)
+	}
+	i := 0
+	for _, m := range visible {
+		name := m.backend.Group().Name
+		for ; i < len(shared.names) && shared.names[i] < name; i++ {
+			add(shared.names[i], shared.items[i])
+		}
+		add(name, m.doc)
+		_, _ = io.WriteString(etag, "\x00"+m.doc.etag)
+	}
+	for ; i < len(shared.names); i++ {
+		add(shared.names[i], shared.items[i])
+	}
+	list.etag = quoteETag(hex.EncodeToString(etag.Sum(nil))[:16])
+	return list
+}
+
+// indexFor returns the markdown and HTML index a caller in namespace sees.
+// A caller with namespaced groups listed to it gets an index rendered for it.
+func (d *manifestDocs) indexFor(namespace string) (index, page *cachedDoc) {
+	visible := d.listedNamespaced(namespace)
+	if len(visible) == 0 {
+		return d.indexDocs()
+	}
+	backends := slices.Clone(d.backends)
+	for _, m := range visible {
+		backends = append(backends, m.backend)
+	}
+	markdown := []byte(renderManifestIndex(sortedManifestBackends(backends), d.manifests))
+	md := newCachedDoc("text/markdown; charset=utf-8", markdown)
+	html := newCachedDoc("text/html; charset=utf-8", renderIndexHTML(markdown))
+	return &md, &html
+}
+
+// manifest returns the group's document, if a caller in namespace sees it.
+func (d *manifestDocs) manifest(group, namespace string) (*cachedDoc, bool) {
+	doc, ok := d.manifests[group]
+	if groupNamespace, namespaced := d.namespaces[group]; ok && namespaced && !namespaceVisible(namespace, groupNamespace) {
+		return nil, false
+	}
+	return doc, ok
 }
 
 var (
@@ -158,23 +262,28 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		return
 	}
 	docs := r.manifestDocs.Load()
+	namespace := callerNamespace(req)
+	if docs.private() {
+		// Callers see the namespaced groups of their own namespace only.
+		w.Header().Set("Cache-Control", "private")
+	}
 	switch path := strings.TrimSuffix(req.URL.Path, "/"); path {
 	case discoveryPrefix:
 		serveCachedDoc(w, req, &discoveryGroupDoc)
 	case manifestDiscoveryPrefix:
 		serveCachedDoc(w, req, &discoveryResourcesDoc)
 	case manifestDiscoveryList:
-		serveManifestList(w, req, docs)
+		serveManifestList(w, req, docs.listFor(namespace))
 	case manifestDiscoveryStatus:
 		r.serveRouterStatus(w, req)
 	case discoveryAgentsMD:
-		index, _ := docs.indexDocs()
+		index, _ := docs.indexFor(namespace)
 		serveCachedDoc(w, req, index)
 	case discoveryAgentsHTML:
 		// The page is static: nothing in it may run or load from elsewhere.
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		_, page := docs.indexDocs()
+		_, page := docs.indexFor(namespace)
 		serveCachedDoc(w, req, page)
 	default:
 		group, ok := strings.CutPrefix(path, manifestDiscoveryGroups)
@@ -182,7 +291,7 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 			_ = errhttp.Write(req.Context(), apierrors.NewGenericServerResponse(http.StatusNotFound, req.Method, schema.GroupResource{}, "", "", 0, false), w)
 			return
 		}
-		doc, found := docs.manifests[group]
+		doc, found := docs.manifest(group, namespace)
 		if !found {
 			_ = errhttp.Write(req.Context(), apierrors.NewNotFound(manifestsResource, group), w)
 			return
@@ -194,8 +303,8 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 // serveManifestList writes the AppManifestList from the group documents,
 // filtered by labelSelector and fieldSelector as Kubernetes clients expect.
 // Without either, it serves the precomputed list.
-func serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestDocs) {
-	items, etag, length := docs.items, docs.listETag, docs.listLen
+func serveManifestList(w http.ResponseWriter, req *http.Request, list manifestList) {
+	items, etag, length := list.items, list.etag, list.length
 	selector, err := parseManifestSelector(req.URL.Query())
 	if err != nil {
 		_ = errhttp.Write(req.Context(), apierrors.NewBadRequest(err.Error()), w)
@@ -203,8 +312,8 @@ func serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestD
 	}
 	if selector != nil {
 		items, length = nil, len(manifestListPrefix)+len(manifestListSuffix)
-		for i, item := range docs.items {
-			if selector.matches(docs.names[i]) {
+		for i, item := range list.items {
+			if selector.matches(list.names[i]) {
 				if len(items) > 0 {
 					length++ // the separating comma
 				}
@@ -212,7 +321,7 @@ func serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestD
 				length += len(item.body)
 			}
 		}
-		etag = quoteETag(hashHex(docs.listETag + "\x00" + selector.String()))
+		etag = quoteETag(hashHex(list.etag + "\x00" + selector.String()))
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -332,14 +441,22 @@ func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
 // fails to convert is left out of the manifests, but its group stays in the
 // index; the cache remembers the failure, so it is logged once.
 func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
-	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted}
+	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, namespaces: map[string]string{}}
 	next := make(map[string]*cachedDoc, len(sorted))
 	listHash := sha256.New()
 	_, _ = io.WriteString(listHash, manifestListPrefix)
 	docs.listLen = len(manifestListPrefix) + len(manifestListSuffix)
 	for _, b := range sorted {
+		namespaced, isNamespaced := b.(NamespacedBackend)
+		if !isNamespaced {
+			docs.backends = append(docs.backends, b)
+		}
 		manifest, ok := backendManifest(b)
 		if !ok {
+			if isNamespaced {
+				docs.namespaced = append(docs.namespaced, namespacedManifest{namespace: namespaced.Namespace(), backend: b})
+				docs.namespaces[b.Group().Name] = namespaced.Namespace()
+			}
 			continue
 		}
 		doc, seen := cache[b.Key()]
@@ -352,6 +469,14 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 			}
 		}
 		next[b.Key()] = doc // nil remembers a failed conversion
+		if isNamespaced {
+			docs.namespaced = append(docs.namespaced, namespacedManifest{namespace: namespaced.Namespace(), backend: b, doc: doc})
+			docs.namespaces[b.Group().Name] = namespaced.Namespace()
+			if doc != nil {
+				docs.manifests[b.Group().Name] = doc
+			}
+			continue
+		}
 		if doc == nil {
 			continue
 		}

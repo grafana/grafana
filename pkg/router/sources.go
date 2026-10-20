@@ -39,6 +39,21 @@ type shadowedGroup struct {
 	Group  string `json:"group"`
 	Source string `json:"source"`
 	By     string `json:"servedBy"`
+
+	// Namespace is the namespace of the offering or serving backend, when
+	// either is a NamespacedBackend. The entry is then listed only to callers
+	// in that namespace, like the group itself.
+	Namespace string `json:"-"`
+}
+
+// shadowedNamespace is the Namespace of a shadowedGroup between backends.
+func shadowedNamespace(backends ...Backend) string {
+	for _, b := range backends {
+		if b, ok := b.(NamespacedBackend); ok {
+			return b.Namespace()
+		}
+	}
+	return ""
 }
 
 // loaderStatus is an optional RoutesLoader interface for loaders that report

@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -424,10 +427,13 @@ func TestCloudLoaderNamespacedPriority(t *testing.T) {
 	loader.pluginsTarget.snapshot.Store(&plugins)
 
 	target := newNamespacedManifestsTarget(testOwnerGroup, nil)
+	namespacedBackend := func(group string) Backend {
+		return &fakeNamespacedBackend{fakeBackend: *priorityBackend(group, "namespaced").(*fakeBackend), namespace: "stacks-1"}
+	}
 	namespaced := []Backend{
-		priorityBackend("aggregate.stacks-1.gas.ext.grafana.app", "namespaced"),
-		priorityBackend("plugin.stacks-1.gas.ext.grafana.app", "namespaced"),
-		priorityBackend("myapp.stacks-1.gas.ext.grafana.app", "namespaced"),
+		namespacedBackend("aggregate.stacks-1.gas.ext.grafana.app"),
+		namespacedBackend("plugin.stacks-1.gas.ext.grafana.app"),
+		namespacedBackend("myapp.stacks-1.gas.ext.grafana.app"),
 	}
 	target.snapshot.Store(&namespaced)
 	loader.namespacedTargets = []*namespacedManifestsTarget{target}
@@ -443,6 +449,13 @@ func TestCloudLoaderNamespacedPriority(t *testing.T) {
 		"plugin.stacks-1.gas.ext.grafana.app":    "plugin",
 		"myapp.stacks-1.gas.ext.grafana.app":     "namespaced",
 	}, keys)
+
+	// The shadowed entries carry the namespace, so the status page lists them
+	// only to it.
+	for _, s := range loader.shadowedGroups() {
+		require.Equal(t, "stacks-1", s.Namespace, s.Group)
+	}
+	require.Len(t, loader.shadowedGroups(), 2)
 }
 
 // signallingLoader returns backends and signals on notify.
@@ -512,6 +525,97 @@ func TestNamespacedLoader(t *testing.T) {
 	}, time.Second, time.Millisecond)
 }
 
+func TestNamespaceGuard(t *testing.T) {
+	const group = "myapp.stacks-1.gas.ext.grafana.app"
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=60")
+		w.WriteHeader(http.StatusOK)
+	})
+	guard := &namespaceGuard{next: next, group: group, namespace: "stacks-1"}
+
+	for _, tc := range []struct {
+		name, path, callerNamespace string
+		noCaller                    bool
+		want                        int
+	}{
+		{name: "namespaced", path: "/apis/" + group + "/v1/namespaces/stacks-1/widgets", callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "namespaced object", path: "/apis/" + group + "/v1/namespaces/stacks-1/widgets/a/status", callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "wildcard caller", path: "/apis/" + group + "/v1/namespaces/stacks-1/widgets", callerNamespace: "*", want: http.StatusOK},
+		{name: "root discovery", path: "/apis", callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "other caller root discovery", path: "/apis", callerNamespace: "stacks-2", want: http.StatusNotFound},
+		{name: "group discovery", path: "/apis/" + group, callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "group discovery slash", path: "/apis/" + group + "/", callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "version discovery", path: "/apis/" + group + "/v1", callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "openapi", path: "/openapi/v3/apis/" + group + "/v1", callerNamespace: "stacks-1", want: http.StatusOK},
+		{name: "other caller namespace", path: "/apis/" + group + "/v1/namespaces/stacks-1/widgets", callerNamespace: "stacks-2", want: http.StatusNotFound},
+		{name: "other caller discovery", path: "/apis/" + group + "/v1", callerNamespace: "stacks-2", want: http.StatusNotFound},
+		{name: "other caller openapi", path: "/openapi/v3/apis/" + group + "/v1", callerNamespace: "stacks-2", want: http.StatusNotFound},
+		{name: "no caller", path: "/apis/" + group + "/v1", noCaller: true, want: http.StatusNotFound},
+		{name: "other path namespace", path: "/apis/" + group + "/v1/namespaces/stacks-2/widgets", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "wildcard caller other path namespace", path: "/apis/" + group + "/v1/namespaces/stacks-2/widgets", callerNamespace: "*", want: http.StatusNotFound},
+		{name: "cluster-scoped list", path: "/apis/" + group + "/v1/widgets", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "namespaces list", path: "/apis/" + group + "/v1/namespaces", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "dot segments", path: "/apis/" + group + "/v1/namespaces/stacks-1/../../widgets", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "longer group", path: "/apis/" + group + "x/v1", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		// Empty segments are refused, not trimmed.
+		{name: "group discovery two slashes", path: "/apis/" + group + "//", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "leading empty segment", path: "/apis/" + group + "//v1/namespaces/stacks-1/widgets", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "repeated slash", path: "/apis/" + group + "/v1//namespaces/stacks-1/widgets", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "version discovery slash", path: "/apis/" + group + "/v1/", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "trailing slash", path: "/apis/" + group + "/v1/namespaces/stacks-1/widgets/", callerNamespace: "stacks-1", want: http.StatusNotFound},
+		{name: "openapi subpath", path: "/openapi/v3/apis/" + group + "/v1/extra", callerNamespace: "stacks-1", want: http.StatusNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			if !tc.noCaller {
+				req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+					Type: types.TypeUser, UserUID: "u", Namespace: tc.callerNamespace,
+				}))
+			}
+			rec := httptest.NewRecorder()
+			guard.ServeHTTP(rec, req)
+			require.Equal(t, tc.want, rec.Code)
+		})
+	}
+
+	t.Run("openapi is private", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/"+group+"/v1", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Type: types.TypeUser, UserUID: "u", Namespace: "stacks-1"}))
+		w := newCaptureWriter(1<<20, nil)
+		guard.ServeHTTP(w, req)
+		require.False(t, cacheableOpenAPIResponse(w.header))
+	})
+}
+
+func TestNamespacedPluginBackendLoadIsGuarded(t *testing.T) {
+	backend := &namespacedPluginBackend{
+		Backend:   &fakeBackend{group: metav1.APIGroup{Name: "myapp.stacks-1.gas.ext.grafana.app"}},
+		namespace: "stacks-1",
+	}
+	handler, err := backend.Load(t.Context())
+	require.NoError(t, err)
+	guard, ok := handler.(*namespaceGuard)
+	require.True(t, ok)
+	require.Equal(t, "stacks-1", guard.namespace)
+	require.Equal(t, "myapp.stacks-1.gas.ext.grafana.app", guard.group)
+}
+
+func TestNamespacedOwnerOf(t *testing.T) {
+	owners := []string{"a.ext.grafana.app", testOwnerGroup}
+	for group, want := range map[string]string{
+		"myapp.stacks-1.gas.ext.grafana.app": testOwnerGroup,
+		"x.gas.ext.grafana.app":              testOwnerGroup,
+		"x.a.ext.grafana.app":                "a.ext.grafana.app",
+		testOwnerGroup:                       "",
+		"xgas.ext.grafana.app":               "",
+		"other.ext.grafana.app":              "",
+	} {
+		owner, ok := namespacedOwnerOf(group, owners)
+		require.Equal(t, want != "", ok, group)
+		require.Equal(t, want, owner, group)
+	}
+}
+
 func TestNamespacedManifestsVersion(t *testing.T) {
 	versions := func(vs ...app.ManifestVersion) *app.ManifestData { return &app.ManifestData{Versions: vs} }
 	for _, tc := range []struct {
@@ -553,20 +657,4 @@ func TestNamespacedManifestsTargetPollsTheRoutesVersion(t *testing.T) {
 	owner = newTestOwnerWithVersions(t, client, []app.ManifestVersion{{Name: "v1alpha1", Served: true}})
 	_, err = (&namespacedManifestsTarget{ownerGroup: testOwnerGroup, serviceContext: routerServiceContext}).fetch(t.Context(), owner)
 	require.ErrorContains(t, err, "_manifests")
-}
-
-func TestNamespacedOwnerOf(t *testing.T) {
-	owners := []string{"a.ext.grafana.app", testOwnerGroup}
-	for group, want := range map[string]string{
-		"myapp.stacks-1.gas.ext.grafana.app": testOwnerGroup,
-		"x.gas.ext.grafana.app":              testOwnerGroup,
-		"x.a.ext.grafana.app":                "a.ext.grafana.app",
-		testOwnerGroup:                       "",
-		"xgas.ext.grafana.app":               "",
-		"other.ext.grafana.app":              "",
-	} {
-		owner, ok := namespacedOwnerOf(group, owners)
-		require.Equal(t, want != "", ok, group)
-		require.Equal(t, want, owner, group)
-	}
 }

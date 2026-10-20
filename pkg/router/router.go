@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/sony/gobreaker/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -97,6 +98,70 @@ type servingEntry struct {
 
 	// callerScoped is set when the backend is a CallerScopedDiscovery.
 	callerScoped bool
+
+	// namespaced is set when the backend is a NamespacedBackend, whose group
+	// belongs to namespace: only callers that visibleTo allows may use it, and
+	// only those listedFor allows see it listed.
+	namespaced bool
+	namespace  string
+}
+
+// visibleTo reports whether a caller in namespace may see and use the group
+// on its own: dispatch, its group, version and OpenAPI documents, and its
+// manifest. A namespaced group is visible in its own namespace, and to
+// callers with the wildcard namespace (such as service identities), as
+// authlib.NamespaceMatches decides. A request without a caller has no
+// namespace, and sees no namespaced group.
+func (e servingEntry) visibleTo(namespace string) bool {
+	return !e.namespaced || namespaceVisible(namespace, e.namespace)
+}
+
+// listedFor reports whether the group is listed to a caller in namespace, in
+// the documents that list every group: root discovery, the /apis/discovery
+// manifest list and index, and the status page. A namespaced group is listed
+// only in its own namespace. Wildcard callers can use every namespace's
+// groups, but listing them would grow with the number of namespaces.
+func (e servingEntry) listedFor(namespace string) bool {
+	return !e.namespaced || namespaceListed(namespace, e.namespace)
+}
+
+// namespaceVisible reports whether a caller in namespace may see a group of
+// groupNamespace; see servingEntry.visibleTo.
+func namespaceVisible(namespace, groupNamespace string) bool {
+	return namespace != "" && authlib.NamespaceMatches(namespace, groupNamespace)
+}
+
+// namespaceListed reports whether a group of groupNamespace is listed to a
+// caller in namespace; see servingEntry.listedFor.
+func namespaceListed(namespace, groupNamespace string) bool {
+	return namespace != "" && namespace == groupNamespace
+}
+
+// callerNamespace is the namespace of the request's caller, or "" when it
+// has none.
+func callerNamespace(req *http.Request) string {
+	requester, err := identity.GetRequester(req.Context())
+	if err != nil || requester == nil {
+		return ""
+	}
+	return requester.GetNamespace()
+}
+
+// namespacedGroups counts the served namespaced groups by namespace, so a
+// request can tell cheaply whether any of them are listed to it. Published
+// with the snapshot.
+type namespacedGroups struct {
+	total       int
+	byNamespace map[string]int
+}
+
+// any reports whether any namespaced group is served.
+func (n *namespacedGroups) any() bool { return n != nil && n.total > 0 }
+
+// listedFor reports whether any namespaced group is listed to a caller in
+// namespace, by the rule of servingEntry.listedFor.
+func (n *namespacedGroups) listedFor(namespace string) bool {
+	return n.any() && namespace != "" && n.byNamespace[namespace] > 0
 }
 
 type phase int
@@ -135,9 +200,15 @@ type GrafanaRouter struct {
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
 	snapshot atomic.Pointer[map[string]servingEntry]
 
+	// namespaced counts the snapshot's namespaced groups. It is stored before
+	// the snapshot, so a request that may see one builds its documents.
+	namespaced atomic.Pointer[namespacedGroups]
+
 	// apiGroupList and openapiIndex are the synthesized /apis and /openapi/v3
 	// root documents, rebuilt from served (not the raw Load result) on every
-	// reconcile so discovery only advertises what is actually served.
+	// reconcile so discovery only advertises what is actually served. They
+	// leave out namespaced groups, which are added per request for the
+	// callers they are listed to.
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
 
@@ -248,7 +319,9 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 	group := groupFromPath(path)
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
-	if !ok {
+	if !ok || !entry.visibleTo(callerNamespace(req)) {
+		// Another namespace's group is served as an unknown group, so nothing
+		// reveals that it exists.
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
@@ -447,7 +520,8 @@ func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request,
 func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, next http.Handler, group, version string) {
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
-	if !ok {
+	// Checked before the cache, which is keyed by group alone.
+	if !ok || !entry.visibleTo(callerNamespace(req)) {
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
@@ -744,6 +818,10 @@ func loadBackend(ctx context.Context, b Backend) (handler http.Handler, err erro
 func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
+	// shared are the backends every caller sees, which the root documents
+	// are built from.
+	shared := make([]Backend, 0, len(r.served))
+	namespaced := &namespacedGroups{byNamespace: map[string]int{}}
 	for group, e := range r.served {
 		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, breakerView: e.breakerView, watches: e.watches, loadedAt: e.loadedAt, watching: e.watching}
 		if e.backend != nil {
@@ -762,17 +840,25 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 			}
 			_, entry.hasManifest = backendManifest(e.backend)
 			_, entry.callerScoped = e.backend.(CallerScopedDiscovery)
+			if b, ok := e.backend.(NamespacedBackend); ok {
+				entry.namespaced, entry.namespace = true, b.Namespace()
+				namespaced.total++
+				namespaced.byNamespace[entry.namespace]++
+			} else {
+				shared = append(shared, e.backend)
+			}
 		}
 		snap[group] = entry
 	}
+	r.namespaced.Store(namespaced)
 	r.snapshot.Store(&snap)
 	r.discoveryCache.retain(snap)
 	r.retainOpenAPIDocs(snap)
 
-	groupList := buildAPIGroupList(ctx, backends)
+	groupList := buildAPIGroupList(ctx, shared)
 	r.apiGroupList.Store(&groupList)
 
-	index := buildOpenAPIV3Index(ctx, backends)
+	index := buildOpenAPIV3Index(ctx, shared)
 	r.openapiIndex.Store(&index)
 
 	r.publishManifestDocs(ctx, backends)

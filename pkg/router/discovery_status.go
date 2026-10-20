@@ -122,14 +122,32 @@ func (r *GrafanaRouter) routerStatus(req *http.Request) routerStatusDoc {
 		t := time.Unix(0, ns).UTC()
 		doc.Reconciler.Last = &t
 	}
+	snapshot := *r.snapshot.Load()
+	// Namespaced groups are listed only to callers in their namespace, and so
+	// are shadowed entries that a namespaced backend offered or serves, even
+	// where a real group serves the name.
+	namespace := callerNamespace(req)
+	hidden := func(s shadowedGroup) bool {
+		if s.Namespace != "" && !namespaceListed(namespace, s.Namespace) {
+			return true
+		}
+		entry, ok := snapshot[s.Group]
+		return ok && !entry.listedFor(namespace)
+	}
 	if status, ok := r.loader.(loaderStatus); ok {
 		doc.Sources = status.sourceStatuses()
-		doc.Shadowed = status.shadowedGroups()
+		for _, s := range status.shadowedGroups() {
+			if !hidden(s) {
+				doc.Shadowed = append(doc.Shadowed, s)
+			}
+		}
 		doc.StackLookups = status.stackLookups()
 	}
 
-	for name, entry := range *r.snapshot.Load() {
-		doc.Groups = append(doc.Groups, r.groupStatus(name, entry))
+	for name, entry := range snapshot {
+		if entry.listedFor(namespace) {
+			doc.Groups = append(doc.Groups, r.groupStatus(name, entry))
+		}
 	}
 	sort.Slice(doc.Groups, func(i, j int) bool { return doc.Groups[i].Group < doc.Groups[j].Group })
 	return doc

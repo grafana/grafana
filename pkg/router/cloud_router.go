@@ -369,7 +369,7 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	put := func(b Backend) {
 		group := b.Group().Name
 		if previous, ok := lookup[group]; ok {
-			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
+			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source(), Namespace: shadowedNamespace(previous, b)})
 		}
 		lookup[group] = b
 	}

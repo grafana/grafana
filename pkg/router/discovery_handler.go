@@ -43,8 +43,13 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 	var fallback metav1.APIGroupList
 	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback)
 	if err != nil || fallback.Kind != "APIGroupList" {
-		serveCachedDoc(w, req, r.apiGroupList.Load())
-		return
+		if !r.listsNamespaced(req) {
+			serveCachedDoc(w, req, r.apiGroupList.Load())
+			return
+		}
+		// The published document leaves out the namespaced groups, so build
+		// the caller's from the snapshot alone.
+		fallback, scoped = metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}}, false
 	}
 	r.serveMergedAPIGroupList(w, req, fallback, scoped)
 }
@@ -57,7 +62,13 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 	for _, group := range fallback.Groups {
 		groups[group.Name] = group
 	}
+	namespace := callerNamespace(req)
 	for name, entry := range *r.snapshot.Load() {
+		if !entry.listedFor(namespace) {
+			// The router owns the group, so the source's copy is not served either.
+			delete(groups, name)
+			continue
+		}
 		// The source answered for this caller, so it replaces the defaults.
 		if !entry.callerScoped || !scoped {
 			groups[name] = entry.group
@@ -109,8 +120,16 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	}
 	snapshot := *r.snapshot.Load()
 	fetches := make([]*fetch, 0, len(snapshot))
+	namespace := callerNamespace(req)
 	var wg sync.WaitGroup
 	for name, entry := range snapshot {
+		// Checked before any fetch, so the shared discovery cache is only
+		// filled, and its fetches only made, for callers the group is listed
+		// to: wildcard callers would fetch every namespace's groups.
+		if !entry.listedFor(namespace) {
+			delete(groups, name)
+			continue
+		}
 		if entry.callerScoped && scoped {
 			continue
 		}
@@ -149,7 +168,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 			manager.SetGroupVersionPriority(metav1.GroupVersion{Group: group.Name, Version: version.Version}, 1000, len(group.Versions)-i)
 		}
 	}
-	if _, callerScoped := r.discoverySource(next); callerScoped {
+	if r.rootDiscoveryIsPrivate(next) {
 		w = &privateCacheWriter{ResponseWriter: w}
 	}
 	manager.ServeHTTP(w, req)
@@ -222,20 +241,26 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 	var fallback handler3.OpenAPIV3Discovery
 	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback)
 	if err != nil || fallback.Paths == nil {
-		serveCachedDoc(w, req, r.openapiIndex.Load())
-		return
+		if !r.listsNamespaced(req) {
+			serveCachedDoc(w, req, r.openapiIndex.Load())
+			return
+		}
+		// As for /apis, the published index has no namespaced groups.
+		fallback, scoped = handler3.OpenAPIV3Discovery{Paths: map[string]handler3.OpenAPIV3DiscoveryGroupVersion{}}, false
 	}
 	handlers := *r.snapshot.Load()
+	namespace := callerNamespace(req)
 	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
 	fallback.Paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
 	for path := range fallback.Paths {
 		group, _, ok := parseOpenAPIGroupVersionPath(openapiV3Prefix + "/" + path)
-		if entry, owned := handlers[group]; ok && owned && (!entry.callerScoped || !scoped) {
+		// The router owns a namespaced group even where it isn't listed to the caller.
+		if entry, owned := handlers[group]; ok && owned && (!entry.callerScoped || !scoped || !entry.listedFor(namespace)) {
 			delete(fallback.Paths, path)
 		}
 	}
 	for _, entry := range handlers {
-		if entry.callerScoped && scoped {
+		if (entry.callerScoped && scoped) || !entry.listedFor(namespace) {
 			continue
 		}
 		for _, gv := range entry.group.Versions {
@@ -268,9 +293,23 @@ func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, re
 // it depends on the caller: credentials may arrive in X-Access-Token, which a
 // cache keyed on Authorization would not tell apart.
 func (r *GrafanaRouter) setRootDiscoveryCacheControl(w http.ResponseWriter, next http.Handler) {
-	if _, scoped := r.discoverySource(next); scoped {
+	if r.rootDiscoveryIsPrivate(next) {
 		w.Header().Set("Cache-Control", "private")
 	}
+}
+
+// rootDiscoveryIsPrivate reports whether root discovery depends on the
+// caller: when the source of unserved groups answers for the caller, or when
+// any namespaced group is served, since only some callers see it.
+func (r *GrafanaRouter) rootDiscoveryIsPrivate(next http.Handler) bool {
+	_, scoped := r.discoverySource(next)
+	return scoped || r.namespaced.Load().any()
+}
+
+// listsNamespaced reports whether any namespaced group is listed to the
+// caller of req, so its root documents can't be the published ones.
+func (r *GrafanaRouter) listsNamespaced(req *http.Request) bool {
+	return r.namespaced.Load().listedFor(callerNamespace(req))
 }
 
 // readRootDiscovery reads root discovery from the source of unserved groups.

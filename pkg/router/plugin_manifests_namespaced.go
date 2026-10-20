@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -341,6 +342,88 @@ func (b *namespacedPluginBackend) Source() string { return b.source }
 
 // Namespace implements [NamespacedBackend].
 func (b *namespacedPluginBackend) Namespace() string { return b.namespace }
+
+// Load wraps the plugin handler in the namespace guard.
+func (b *namespacedPluginBackend) Load(ctx context.Context) (http.Handler, error) {
+	handler, err := b.Backend.Load(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &namespaceGuard{next: handler, group: b.Group().Name, namespace: b.namespace}, nil
+}
+
+// namespaceGuard keeps a namespace's group to its own namespace: only callers
+// in the namespace (or with the wildcard namespace, such as service
+// identities) may use it, and only within it. Of the paths without a
+// namespace, only root, group and version discovery and the version's
+// OpenAPI document are served. Anything else is a 404, so nothing reveals
+// that the group exists.
+//
+// The router itself treats the group as unknown to callers in other
+// namespaces, in dispatch and in its discovery documents and caches
+// (servingEntry.visibleTo). The guard repeats the caller check, so the
+// handler is safe wherever it is reached from, and alone checks the path.
+// The OpenAPI cache is kept out by marking the documents private.
+type namespaceGuard struct {
+	next      http.Handler
+	group     string
+	namespace string
+}
+
+func (g *namespaceGuard) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	requester, err := identity.GetRequester(req.Context())
+	if err != nil || requester == nil || !authlib.NamespaceMatches(requester.GetNamespace(), g.namespace) {
+		http.NotFound(w, req)
+		return
+	}
+	openapi, ok := g.allowedPath(req.URL.Path)
+	if !ok {
+		http.NotFound(w, req)
+		return
+	}
+	g.next.ServeHTTP(w, req)
+	if openapi {
+		// The document is served only to this namespace, so the router's
+		// shared OpenAPI cache must not store it.
+		w.Header().Add("Cache-Control", "private")
+	}
+}
+
+// allowedPath reports whether path may be served, and whether it is an
+// OpenAPI document.
+func (g *namespaceGuard) allowedPath(path string) (openapi, ok bool) {
+	if path == apisPrefix {
+		// The handler's own root discovery, which the router reads to build
+		// aggregated discovery, keeping only this group.
+		return false, true
+	}
+	if rest, found := strings.CutPrefix(path, "/openapi/v3/apis/"+g.group+"/"); found {
+		// Only /openapi/v3/apis/<group>/<version>.
+		return true, rest != "" && !strings.Contains(rest, "/")
+	}
+	rest, found := strings.CutPrefix(path, "/apis/"+g.group)
+	if !found || (rest != "" && rest[0] != '/') {
+		return false, false
+	}
+	if rest == "" || rest == "/" {
+		// Group discovery. Dispatch forwards the trailing slash to every
+		// group's handler alike.
+		return false, true
+	}
+	// Any other empty segment, leading, trailing or repeated, is refused
+	// rather than trimmed, so the path checked is the path served.
+	segments := strings.Split(rest[1:], "/")
+	if slices.ContainsFunc(segments, func(s string) bool { return s == "" || s == "." || s == ".." }) {
+		return false, false
+	}
+	switch {
+	case len(segments) == 1:
+		return false, true // version discovery
+	case len(segments) >= 3 && segments[1] == "namespaces":
+		return false, segments[2] == g.namespace
+	}
+	return false, false
+}
 
 // PluginStatus implements [PluginStatusProvider]; the embedded Backend
 // interface does not promote it.
