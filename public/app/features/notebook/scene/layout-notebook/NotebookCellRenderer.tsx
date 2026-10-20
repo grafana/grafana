@@ -9,6 +9,7 @@ import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafa
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+import { NOTEBOOK_BLOCK_INSERT_VIA } from 'app/features/notebook/analytics/types';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
@@ -284,7 +285,7 @@ function SpecialMarkdownCell({
   };
 
   const handlePick = (type: NotebookBlockType) => {
-    cell.onConvert(type);
+    cell.onConvert(type, NOTEBOOK_BLOCK_INSERT_VIA.SLASH_MENU);
     setMenuOpen(false);
     // Picking a type is a mouse click, which moves DOM focus to the button that was clicked, and a
     // pick that changes content.kind (e.g. "Code") unmounts this cell's editor for a different one

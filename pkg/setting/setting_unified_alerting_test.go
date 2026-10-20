@@ -594,3 +594,53 @@ func TestQueriesServedByLoki(t *testing.T) {
 		})
 	}
 }
+
+func TestWritesToPrometheus(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stateHistory UnifiedAlertingStateHistorySettings
+		want         bool
+	}{
+		{
+			name:         "disabled state history",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: false, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+		{
+			name:         "prometheus backend",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			name:         "prometheus backend without a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus"},
+			want:         false,
+		},
+		{
+			name:         "non-prometheus backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+		{
+			name:         "multiple backend with prometheus primary, with padding and mixed casing",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: " Multiple ", MultiPrimary: " Prometheus ", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			name:         "multiple backend with prometheus as a secondary",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "loki", MultiSecondaries: []string{"annotations", "prometheus"}, PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			name:         "multiple backend without prometheus",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "loki", MultiSecondaries: []string{"annotations"}, PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.stateHistory.WritesToPrometheus())
+		})
+	}
+}

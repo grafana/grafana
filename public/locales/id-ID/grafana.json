@@ -1695,8 +1695,12 @@
       },
       "preview": {
         "error": "Gagal memuat konten: {{error}}",
+        "hide-secrets": "",
         "loading": "Memuat konten...",
         "notifications-title": "Pratinjau Konfigurasi Notifikasi",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Pratinjau Aturan Peringatan"
       },
       "recording-rules": "Aturan perekaman",
@@ -2722,7 +2726,8 @@
     "recording-rules": {
       "description-target-data-source": "Sumber data Prometheus untuk menyimpan aturan perekaman",
       "label-target-data-source": "Sumber data target",
-      "target-data-source-required": "Pilih sumber data target"
+      "target-data-source-required": "Pilih sumber data target",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Pilih Namespace dan Grup untuk aturan perekaman Anda.",
@@ -5990,6 +5995,24 @@
       "tooltip-next": "Berikutnya",
       "tooltip-previous": "Sebelumnya"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Edit skema Assistant"
@@ -6107,6 +6130,9 @@
           "no-template-variables-found": "Tidak ada variabel templat yang ditemukan"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Batalkan",
@@ -7547,6 +7573,26 @@
       "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
       "confirmText-restore-version": "Ya, pulihkan ke versi {{version}}",
       "title-restore-version": "Pulihkan versi"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_other": "",
+      "allowed-panels_other": "",
+      "banner-title_other": "",
+      "resources_other": "",
+      "resources-at-least_other": "",
+      "sources_other": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Simpan",
@@ -10019,6 +10065,7 @@
             "name-humidity": "Kelembapan (%H)",
             "name-locale": "Format lokal",
             "name-number": "Jumlah",
+            "name-ordinal": "",
             "name-percent-1": "Persen (0,0-1,0)",
             "name-percent-100": "Persen (0-100)",
             "name-pixels": "Piksel",
@@ -10144,7 +10191,8 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13126,6 +13174,7 @@
       "created-by-me": "Dibuat oleh saya",
       "error-conflict": "Notebook ini berubah saat Anda menambahkan isinya. Coba lagi untuk menambahkan panel ke versi terbaru.",
       "error-generic": "Gagal menambahkan panel ke notebook",
+      "error-open-conflict": "",
       "list-error": "Gagal memuat notebook",
       "list-error-body": "Terjadi kesalahan saat memuat notebook Anda. Coba lagi, atau buat yang baru.",
       "list-no-matches": "Tidak ada notebook yang cocok dengan filter ini.",
@@ -13134,6 +13183,8 @@
       "list-truncated": "Tidak semua notebook ditampilkan. Persempit pencarian untuk menemukan yang lain.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Cari berdasarkan Judul",
       "sort-alphabetical": "Sesuai abjad (A–Z)",
       "sort-label": "Urutkan notebook",
@@ -13141,13 +13192,15 @@
       "sort-updated": "Baru diperbarui",
       "submit": "Tambahkan ke notebook",
       "success": "Panel ditambahkan ke {{title}}",
+      "success-cells": "",
       "success-link": "Lihat notebook",
       "tag-placeholder": "Filter menurut tag",
       "target-description": "Pilih tempat untuk menambahkan panel.",
       "target-existing": "Notebook yang ada",
       "target-label": "Notebook target",
       "target-new": "Notebook baru",
-      "title": "Tambahkan panel ke notebook"
+      "title": "Tambahkan panel ke notebook",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16490,6 +16543,7 @@
     "name-page-size": "Ukuran halaman",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Penataan dari bidang",
     "name-tooltip-from-field": "Tooltip dari bidang",
     "name-tooltip-placement": "Penempatan tooltip",

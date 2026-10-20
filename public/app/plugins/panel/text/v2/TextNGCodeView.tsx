@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, useTheme2, CodeMirrorEditor, createCodeEditorTheme } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor, createCodeEditorTheme } from '@grafana/ui/unstable';
 
 import { type CodeLanguage } from '../panelcfg.gen';
 
