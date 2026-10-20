@@ -103,7 +103,7 @@ The editor provides syntax highlighting in the authoring block.
 
 {{< admonition type="note" >}}
 When a text visualization has query data, an iframe only loads after you allow its source.
-For more information, refer to [Security and external content](#security-and-external-content).
+For more information, refer to the [Security and external documentation](#security-and-external-content).
 
 To embed Grafana pages in an iframe, also set [`allow_embedding`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_embedding) to `true` in your Grafana configuration file or environment variables.
 This setting controls whether browsers can show Grafana in a frame. Other websites control this with their own settings.
