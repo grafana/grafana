@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -181,7 +182,7 @@ func provideTestService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, l
 func TestProvideServiceUsesTheProvidedRouter(t *testing.T) {
 	r, err := ProvideGrafanaRouter(setting.NewCfg())
 	require.NoError(t, err)
-	var discovery ManifestDiscovery = r
+	var discovery resource.ManifestDiscovery = r
 
 	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(), dummyRoutesLoader{}, prometheus.NewRegistry(), r)
 	require.NoError(t, err)

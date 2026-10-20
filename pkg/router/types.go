@@ -8,8 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type Backend interface {
@@ -99,8 +97,3 @@ type Router interface {
 	// HandleFunc serves routes for /apis*; everything else falls through to next.
 	HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler)
 }
-
-// ManifestDiscovery reads the AppManifests the router publishes under
-// /apis/discovery. It is defined in resource because storage reads it and
-// can't import this package, which depends on storage.
-type ManifestDiscovery = resource.ManifestDiscovery

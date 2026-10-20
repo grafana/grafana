@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -368,7 +369,7 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 	return docs, next
 }
 
-var _ ManifestDiscovery = (*GrafanaRouter)(nil)
+var _ resource.ManifestDiscovery = (*GrafanaRouter)(nil)
 
 // ListManifests returns the published manifests, decoded from the documents
 // /apis/discovery serves, so in-process readers see exactly what HTTP clients
