@@ -235,6 +235,39 @@ export class VariableOptions extends PageObject {
         await queryInput.blur();
       });
     },
+    /** Sets the regex filtering the returned values; the field applies it on blur */
+    setRegex: async (regex: string) => {
+      await test.step(`Set regex to "${regex}"`, async () => {
+        const regexInput = this.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2,
+          { root: this.query.getEditor() }
+        );
+        await regexInput.fill(regex);
+        await regexInput.blur();
+      });
+    },
+    /** Selects the sort order of the returned values (e.g. "Alphabetical (desc)") */
+    selectSort: async (sortLabel: string) => {
+      await test.step(`Select sort "${sortLabel}"`, async () => {
+        await this.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2,
+          { root: this.query.getEditor() }
+        ).click();
+        await this.page.getByRole('listbox').getByRole('option', { name: sortLabel, exact: true }).click();
+      });
+    },
+    /** Returns the sidebar's refresh combobox input; its value is the selected option's label */
+    getRefreshInput: (): Locator =>
+      this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('variable-type Refresh'), {
+        root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+      }).getByRole('combobox'),
+    /** Selects when the variable's options are refreshed ("On dashboard load" or "On time range change") */
+    selectRefresh: async (refreshLabel: 'On dashboard load' | 'On time range change') => {
+      await test.step(`Select refresh "${refreshLabel}"`, async () => {
+        await this.query.getRefreshInput().click();
+        await this.page.getByRole('listbox').getByRole('option', { name: refreshLabel, exact: true }).click();
+      });
+    },
     /** Returns the editor's "Static options (<count>)" tab */
     getStaticOptionsTab: (): Locator => this.query.getEditor().getByRole('tab', { name: /^Static options \(\d+\)$/ }),
     /** Opens the editor's static options tab */

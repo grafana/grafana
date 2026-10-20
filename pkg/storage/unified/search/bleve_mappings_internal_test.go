@@ -1294,7 +1294,7 @@ func TestBulkIndexPopulatesFieldVariants(t *testing.T) {
 				},
 			}},
 		})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	bi, ok := index.(*bleveIndex)

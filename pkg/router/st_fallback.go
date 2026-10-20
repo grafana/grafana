@@ -110,7 +110,8 @@ type singleTenantDiscovery struct {
 }
 
 // singleTenantFallback forwards requests without a matching multi-tenant route to
-// the single-tenant stack identified by the request namespace. Although this is
+// the single-tenant stack identified by the request namespace, or for
+// cluster-scoped requests and discovery, by the requester's namespace. Although this is
 // not an ideal routing path, it gives clients a single entry point that will
 // resolve ALL /apis requests regardless where they live (MT, or ST)
 type singleTenantFallback struct {
@@ -310,7 +311,53 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 		st.serveDiscovery(w, req)
 		return
 	}
+	if len(parts) > 3 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] != "" && parts[3] != "namespaces" {
+		st.serveClusterScoped(parts[1], w, req)
+		return
+	}
 	http.NotFound(w, req)
+}
+
+// serveClusterScoped forwards a cluster-scoped request, such as iam's whoami,
+// to the requester's own stack, since the URL names none. The stack checks
+// that the token's namespace is its own, as it does for namespaced requests.
+// A requester whose namespace is not a stack, such as "*", gets a 404.
+func (st *singleTenantFallback) serveClusterScoped(group string, w http.ResponseWriter, req *http.Request) {
+	var host *singleTenantTarget
+	var err error
+	if requester, _ := identity.GetRequester(req.Context()); requester != nil {
+		host, err = st.hostForNamespace(req.Context(), requester.GetNamespace())
+	}
+	if writePrivateLookupError(w, err) {
+		return
+	}
+	if host == nil {
+		w.Header().Set("Cache-Control", "private")
+		http.NotFound(w, req)
+		return
+	}
+	st.forward(host, group, w, req, func(resp *http.Response) {
+		// The same URL answers each caller from their own stack.
+		resp.Header.Set("Cache-Control", privateCacheControl(resp.Header.Values("Cache-Control")))
+	})
+}
+
+// writePrivateLookupError answers a failed lookup of the requester's own stack,
+// on a URL that does not name it, so the answer is for this caller alone. It
+// reports whether it wrote a response.
+func writePrivateLookupError(w http.ResponseWriter, err error) bool {
+	switch {
+	case err == nil:
+		return false
+	case errors.Is(err, errStackLookupThrottled):
+		w.Header().Set("Cache-Control", "private")
+		w.Header().Set("Retry-After", "1")
+		http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
+	default:
+		w.Header().Set("Cache-Control", "private")
+		http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
+	}
+	return true
 }
 
 // serveDiscovery answers discovery from the requester's own stack. Only a
@@ -323,16 +370,10 @@ func (st *singleTenantFallback) serveDiscovery(w http.ResponseWriter, req *http.
 	if requester, _ := identity.GetRequester(req.Context()); requester != nil {
 		host, err = st.hostForNamespace(req.Context(), requester.GetNamespace())
 	}
-	// The errors below answer for this caller alone, on a URL that does not
-	// name their stack.
+	if writePrivateLookupError(w, err) {
+		return
+	}
 	switch {
-	case errors.Is(err, errStackLookupThrottled):
-		w.Header().Set("Cache-Control", "private")
-		w.Header().Set("Retry-After", "1")
-		http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
-	case err != nil:
-		w.Header().Set("Cache-Control", "private")
-		http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
 	case host != nil:
 		st.forwardDiscovery(host, w, req)
 	case st.discoveryHost == nil || isRootDiscoveryPath(req.URL.Path):

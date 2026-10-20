@@ -130,13 +130,19 @@ The cloud loader merges its sources by group. When sources conflict, later entri
 earlier ones:
 
 1. **ST fallback discovery** (`st_discovery_url`). Groups found on a single-tenant instance are
-   routed to the right stack by the namespace in the path.
+   routed to the right stack by the namespace in the path. Cluster-scoped requests, such as
+   `iam.grafana.app`'s `whoami`, go to the requester's own stack, and get a 404 when the
+   requester's namespace is not a stack (for example `*`).
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
 3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
    plugins, without `plugins_group_regex` filtering.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
+
+Entries from `plugins_url` must have an app plugin ID (with a hyphen and no dots), as local plugins
+must, since the tokens the router sends them name that ID as their audience. Entries from
+`core_url` may have no ID; their tokens name their API group instead.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 `managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
@@ -278,12 +284,18 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   and the `Service`. The loader is `ProvideCloudRoutesLoader` when `[cloud_router]` configures a
   source or any `[router.aggregate.<name>]` target is set, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
   migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
-  the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
-  implements `services.Service` (such as `cloudLoader`, which runs poll loops) is run
-  alongside it with `newCompositeService`, so both start and stop together.
+  the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`.
+- **Loader lifecycle:** a loader that also implements `services.Service` (such as `cloudLoader`,
+  which runs poll loops) is started, stopped and watched by the `Service`, in every mode, so both
+  start and stop together and a failed loader fails the router.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
+- **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
+  current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
+  `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
+  in-process storage as a `resource.ManifestDiscovery`. `ProvideService` then attaches the loader.
+  The loader depends on storage, so this order keeps the graph acyclic.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
   port.
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so
@@ -297,7 +309,6 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | Key | Meaning |
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
-| `appmanifest_apiserver_url`, `apiserver_url` | Removed. When no other source is configured, either one is a startup error rather than a silent fallback to the dummy loader. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
@@ -312,16 +323,15 @@ priority order. Repeating a section name merges its keys; it does not create ano
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.
-The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
-remain supported during rollout, including environment overrides. New sections take priority; a
-section with the same target name replaces the entire legacy target (an empty URL disables it).
-Legacy targets keep their previous relative priority: cloud app platform before BaaS.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys are no
+longer read. A deployment that still sets them gets no aggregate target, so configure
+`[router.aggregate.<name>]` sections instead.
 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |

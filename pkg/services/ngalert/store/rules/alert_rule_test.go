@@ -755,7 +755,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
@@ -822,7 +821,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		cfg.UnifiedAlerting.DeletedRuleRetention = 0
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
@@ -875,7 +873,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
@@ -1025,7 +1022,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{},
-		featuremgmt.FlagAlertingFolderHasRulesLabel, featuremgmt.FlagAlertRuleRestore)
+		featuremgmt.FlagAlertingFolderHasRulesLabel)
 
 	var requestedTables []string
 	spy := &dbSpy{DB: sqlStore}
@@ -1209,7 +1206,7 @@ func TestIntegration_DeleteAlertRulesByUID_SingleConnectionPool(t *testing.T) {
 	sqlStore.GetEngine().SetMaxOpenConns(1)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{}, featuremgmt.FlagAlertRuleRestore)
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
 			DB:    sqlStore,
@@ -3595,6 +3592,69 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 			require.GreaterOrEqual(t, recordingCount, len(recordingRules))
 		})
 	})
+	t.Run("alert rules with NULL record are treated as alerting rules", func(t *testing.T) {
+		sqlStore := db.NewTestStore(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		recordingGen := ruleGen.With(models.RuleMuts.WithAllRecordingRules(), models.RuleMuts.WithMetric("metric1"), models.RuleMuts.WithRecordFrom("A"), func(rule *models.AlertRule) {
+			rule.Record.TargetDatasourceUID = "target-ds-uid"
+		})
+
+		emptyRecordRule := createRule(t, store, ruleGen)
+		nullRecordRule := createRule(t, store, ruleGen)
+		recordingRule := createRule(t, store, recordingGen)
+
+		// The model always writes '' for alert rules, so set NULL directly to mimic rows that
+		// predate the record column.
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE alert_rule SET record = NULL WHERE org_id = ? AND uid = ?", orgID, nullRecordRule.UID)
+			return err
+		})
+		require.NoError(t, err)
+		var nullCount int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			nullCount, err = sess.Table(alertRule{}).Where("uid = ? AND record IS NULL", nullRecordRule.UID).Count()
+			return err
+		})
+		require.NoError(t, err)
+		require.EqualValues(t, 1, nullCount, "test setup should have stored a NULL record")
+
+		listUIDs := func(t *testing.T, query *models.ListAlertRulesExtendedQuery) []string {
+			t.Helper()
+			query.OrgID = orgID
+			result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			uids := make([]string, 0, len(result))
+			for _, r := range result {
+				uids = append(uids, r.UID)
+			}
+			return uids
+		}
+
+		t.Run("alerting filter includes NULL record", func(t *testing.T) {
+			uids := listUIDs(t, &models.ListAlertRulesExtendedQuery{RuleType: models.RuleTypeFilterAlerting})
+			require.ElementsMatch(t, []string{emptyRecordRule.UID, nullRecordRule.UID}, uids)
+		})
+
+		t.Run("recording filter excludes NULL record", func(t *testing.T) {
+			uids := listUIDs(t, &models.ListAlertRulesExtendedQuery{RuleType: models.RuleTypeFilterRecording})
+			require.ElementsMatch(t, []string{recordingRule.UID}, uids)
+		})
+
+		t.Run("exclude record filters keep NULL record", func(t *testing.T) {
+			uids := listUIDs(t, &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{ExcludeRecordMetric: "metric1"},
+				RuleType:            models.RuleTypeFilterAll,
+			})
+			require.ElementsMatch(t, []string{emptyRecordRule.UID, nullRecordRule.UID}, uids)
+
+			uids = listUIDs(t, &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{ExcludeRecordTargetDatasourceUID: "target-ds-uid"},
+				RuleType:            models.RuleTypeFilterAll,
+			})
+			require.ElementsMatch(t, []string{emptyRecordRule.UID, nullRecordRule.UID}, uids)
+		})
+	})
 	t.Run("list rules with pagination", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		alertingGen := ruleGen.With(ruleGen.WithNamespaceUID("paginate-test"))
@@ -4340,7 +4400,6 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	oldT := timeNow
 	t.Cleanup(func() {
@@ -4436,7 +4495,6 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
-	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	gen := models.RuleGen
 	orgID := int64(rand.IntN(1000)) + 1

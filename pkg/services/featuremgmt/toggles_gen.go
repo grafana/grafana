@@ -143,6 +143,10 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagLibraryelementsKubernetesLibraryPanels = "libraryelements.kubernetesLibraryPanels"
 
+	// FlagFolderPickerCreatePermission
+	// Allow searching folders by dashboards:create (permission=create). When off, permission=create is treated as edit
+	FlagFolderPickerCreatePermission = "folderPickerCreatePermission"
+
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
@@ -395,6 +399,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzLegacyUserPermissions
+	// Load legacy Access Control permissions through embedded AuthZ.
+	FlagAuthzLegacyUserPermissions = "authz.legacyUserPermissions"
+
 	// FlagAuthzUserPermissions
 	// Route user permission snapshots through the AuthZ service.
 	FlagAuthzUserPermissions = "authz.userPermissions"
@@ -447,10 +455,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagPluginsSriChecks
-	// Enables SRI checks for plugin assets
-	FlagPluginsSriChecks = "pluginsSriChecks"
-
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
@@ -466,18 +470,6 @@ const (
 	// FlagAzureMonitorEnableUserAuth
 	// Enables user auth for Azure Monitor datasource only
 	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
-
-	// FlagAlertingAIGenAlertRules
-	// Enable AI-generated alert rules.
-	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
-
-	// FlagAlertingAIFeedback
-	// Enable AI-generated feedback from the Grafana UI.
-	FlagAlertingAIFeedback = "alertingAIFeedback"
-
-	// FlagAlertingAIImproveAlertRules
-	// Enable AI-improve alert rules labels and annotations.
-	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
 
 	// FlagAlertingAIGenTemplates
 	// Enable AI-generated alerting templates.
@@ -530,6 +522,10 @@ const (
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
+	// FlagTeamlbacUsageFromAppPlatform
+	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
+	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
 	// FlagTeamLBACApiWriteFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
@@ -675,7 +671,7 @@ const (
 	FlagInteractiveLearning = "interactiveLearning"
 
 	// FlagAlertingTriage
-	// Enables the alerting triage feature
+	// Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
 	FlagAlertingTriage = "alertingTriage"
 
 	// FlagGraphiteBackendMode
@@ -994,10 +990,6 @@ const (
 	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
 	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
 
-	// FlagFeaturesBulkFlagEvalFiltering
-	// Filters bulk OFREP flag evaluations to public-metadata flags only
-	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
-
 	// FlagFeaturesLegacyOverrideLookupBypass
 	// Skips checking for flag overrides.
 	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
@@ -1005,6 +997,10 @@ const (
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
 	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
+
+	// FlagGrafanaNavigationInfoArchRefresh
+	// Enables the refreshed information architecture for Grafana's navigation
+	FlagGrafanaNavigationInfoArchRefresh = "grafana.navigationInfoArchRefresh"
 
 	// FlagAuthzListFoldersViaSearch
 	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
@@ -1050,15 +1046,11 @@ const (
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
 
-	// FlagUnifiedStorageClientRequireCallerIdentity
-	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
-	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
-
-	// FlagUnifiedStorageClientOnBehalfOf
-	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
-	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
-
 	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
 	// Connect to hosted grafana databases from datasource API servers
 	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
+
+	// FlagDatasourcesGatewayAuditPolicy
+	// Enable support for the query gateway audit policies
+	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
 )

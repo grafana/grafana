@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.27.2
+go 1.27.3
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(
@@ -34,7 +34,9 @@ replace (
 	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 	github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
+	github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 	github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
+	github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ../../pkg/storage/unified/apistore
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
@@ -42,7 +44,7 @@ replace (
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
 )
 
 require (
