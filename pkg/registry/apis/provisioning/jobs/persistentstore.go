@@ -638,11 +638,11 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 	var deleted int
 	for i := range list.Items {
 		job := &list.Items[i]
-		if job.Spec.Repository != repository || IsOrphanCleanupAction(job.Spec.Action) {
+		if !isCleanupCandidate(job, repository) {
 			continue
 		}
 
-		removed, err := s.deleteUnclaimedJob(ctx, namespace, job)
+		removed, err := s.deleteUnclaimedJob(ctx, logger, namespace, repository, job)
 		if err != nil {
 			span.RecordError(err)
 			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
@@ -663,6 +663,14 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 // up and failed by a worker, whereas deleting a possibly-claimed job is not.
 const cleanupConflictRetries = 3
 
+// isCleanupCandidate reports whether a pending job belongs to the queue being
+// cleaned for repository: it must target that repository and must not be an
+// orphan-cleanup action (those are a recovery path that has to survive
+// termination, see CleanupQueue).
+func isCleanupCandidate(job *provisioning.Job, repository string) bool {
+	return job.Spec.Repository == repository && !IsOrphanCleanupAction(job.Spec.Action)
+}
+
 // deleteUnclaimedJob deletes a single pending job under a ResourceVersion
 // precondition, so a job that gets claimed after the List is never removed.
 //
@@ -671,12 +679,16 @@ const cleanupConflictRetries = 3
 // update to a still-pending job or a delete+recreate of the deterministic job
 // name between our List and Delete. Treating every conflict as "claimed" would
 // leave such an unclaimed job behind for a repository that is being deleted. So
-// on conflict we re-fetch and only bail out when the job actually carries the
-// claim label; otherwise we retry the delete against the current RV.
+// on conflict we re-fetch and only retry the delete when the refetched object is
+// still an unclaimed candidate for this cleanup; otherwise we leave it in place.
+//
+// Re-checking the candidate predicate matters because a delete+recreate under
+// the same deterministic name can surface a *different* job — one targeting
+// another repository, or an orphan-cleanup action — which must not be deleted
+// just because it happens to reuse the name and lacks the claim label.
 //
 // Returns true when a job was deleted.
-func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, namespace string, job *provisioning.Job) (bool, error) {
-	logger := logging.FromContext(ctx)
+func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, logger logging.Logger, namespace, repository string, job *provisioning.Job) (bool, error) {
 	name := job.GetName()
 	rv := job.ResourceVersion
 
@@ -694,8 +706,8 @@ func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, namespace stri
 			return false, err
 		}
 
-		// Conflict: re-fetch to tell a genuine claim apart from an unrelated
-		// change to a job we should still clear.
+		// Conflict: re-fetch to tell a genuine claim (or an unrelated job that
+		// reused the name) apart from a job we should still clear.
 		current, getErr := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		switch {
 		case apierrors.IsNotFound(getErr):
@@ -707,7 +719,12 @@ func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, namespace stri
 			logger.Debug("skipping job claimed during queue clean-up", "job", name)
 			return false, nil
 		}
-		// Still unclaimed: retry the delete against the current ResourceVersion.
+		if !isCleanupCandidate(current, repository) {
+			logger.Debug("skipping recreated job that is no longer a cleanup candidate",
+				"job", name, "job_repository", current.Spec.Repository, "job_action", current.Spec.Action)
+			return false, nil
+		}
+		// Still an unclaimed candidate: retry the delete against the current RV.
 		rv = current.ResourceVersion
 	}
 

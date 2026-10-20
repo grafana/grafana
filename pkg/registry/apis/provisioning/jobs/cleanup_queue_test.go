@@ -222,6 +222,63 @@ func TestCleanupQueue_SkipsJobClaimedAfterList(t *testing.T) {
 	assert.Equal(t, "repo-a-pending", remaining.Items[0].GetName())
 }
 
+// TestCleanupQueue_SkipsRecreatedJobThatIsNotACandidate verifies that when the
+// candidate is deleted and a different job is recreated under the same
+// deterministic name between the List and the Delete, the store does not delete
+// the replacement just because it is unclaimed. On the delete conflict it
+// re-fetches, sees a job that no longer matches this cleanup (another repository
+// or an orphan-cleanup action), and leaves it in place.
+func TestCleanupQueue_SkipsRecreatedJobThatIsNotACandidate(t *testing.T) {
+	tests := []struct {
+		name      string
+		refetched provisioning.JobSpec
+	}{
+		{
+			name:      "different repository",
+			refetched: provisioning.JobSpec{Repository: "repo-b", Action: provisioning.JobActionPull},
+		},
+		{
+			name:      "orphan-cleanup action",
+			refetched: provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionReleaseResources},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fakeClient := newFilteringClientset()
+			store := newTestStore(fakeClient.ProvisioningV0alpha1())
+
+			ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+			require.NoError(t, err)
+
+			createJob(ctx, t, fakeClient, "stacks-123", "repo-a-sync", "repo-a", false)
+
+			// The delete always conflicts; the re-fetch returns an unclaimed job
+			// that reused the name but is not a candidate for cleaning repo-a.
+			var deleteCalls int
+			fakeClient.PrependReactor("delete", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
+				deleteCalls++
+				return true, nil, newConflictError()
+			})
+			fakeClient.PrependReactor("get", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
+				return true, &provisioning.Job{
+					ObjectMeta: metav1.ObjectMeta{Name: "repo-a-sync", Namespace: "stacks-123"},
+					Spec:       tt.refetched,
+				}, nil
+			})
+
+			deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
+			require.NoError(t, err)
+			assert.Equal(t, 0, deleted)
+			assert.Equal(t, 1, deleteCalls, "replacement must not be re-deleted after the conflict")
+
+			remaining, err := fakeClient.ProvisioningV0alpha1().Jobs("stacks-123").List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, remaining.Items, 1)
+			assert.Equal(t, "repo-a-sync", remaining.Items[0].GetName())
+		})
+	}
+}
+
 // TestCleanupQueue_PreservesOrphanCleanupJobs verifies that releaseResources and
 // deleteResources jobs are left in the queue: an admin may enqueue them against a
 // terminating repository as a recovery path, so clearing them would defeat it.
