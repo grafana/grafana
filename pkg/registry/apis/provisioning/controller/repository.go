@@ -962,7 +962,14 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return repoType, errors.New("repository not found")
+		// Nothing to reconcile: the repository is confirmed gone. The read seam
+		// retries a read that lags the triggering event (ErrStaleRead), so a
+		// NotFound here is a completed delete or a stale re-list ghost, not a
+		// create that has not landed yet. Returning an error would log a spurious
+		// failure and record a processing failure for the expected terminal state
+		// of every delete.
+		logger.Warn("repository not found; nothing to reconcile")
+		return repoType, nil
 	case err != nil:
 		return repoType, err
 	}

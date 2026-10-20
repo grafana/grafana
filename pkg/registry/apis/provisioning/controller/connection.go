@@ -353,7 +353,14 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found")
+		// Nothing to reconcile: the connection is confirmed gone. The read seam
+		// retries a read that lags the triggering event (ErrStaleRead), so a
+		// NotFound here is a completed delete or a stale re-list ghost, not a
+		// create that has not landed yet. Returning an error would log a spurious
+		// failure and record a processing failure for the expected terminal state
+		// of every delete.
+		logger.Warn("connection not found; nothing to reconcile")
+		return nil
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err

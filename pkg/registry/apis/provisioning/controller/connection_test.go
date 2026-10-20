@@ -823,7 +823,11 @@ func TestConnectionController_process(t *testing.T) {
 			errorContains: "failed to update connection status",
 		},
 		{
-			name: "connection not found",
+			// The read seam retries a stale read as ErrStaleRead, so a NotFound here
+			// is a confirmed delete (a completed delete or a stale re-list ghost).
+			// There is nothing to reconcile, so process returns nil rather than a
+			// spurious error / recorded processing failure.
+			name: "connection not found - no-op",
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{}
 
@@ -835,7 +839,7 @@ func TestConnectionController_process(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "build connection error",
