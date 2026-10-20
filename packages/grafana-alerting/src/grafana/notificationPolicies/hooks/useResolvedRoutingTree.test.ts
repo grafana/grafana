@@ -52,6 +52,16 @@ describe('useResolvedRoutingTree', () => {
     });
   });
 
+  it('returns the same tree object across rerenders, so callers can use it as a dependency', async () => {
+    const { result, rerender } = renderResolved('team-platform');
+
+    await waitFor(() => expect(result.current.tree).not.toBeNull());
+    const first = result.current.tree;
+    rerender();
+
+    expect(result.current.tree).toBe(first);
+  });
+
   it('reports a name that matches no tree as not found', async () => {
     const { result } = renderResolved('deleted-tree');
 
