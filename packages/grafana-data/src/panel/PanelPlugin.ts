@@ -197,6 +197,8 @@ export interface PanelInteraction {
  * @alpha
  */
 export interface PanelInteractions {
+  /** Owner key the panel's interactions use when writing runtime transformations. */
+  transformationsOwner?: string;
   interactions: PanelInteraction[];
 }
 

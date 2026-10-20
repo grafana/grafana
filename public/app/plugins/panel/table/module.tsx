@@ -9,6 +9,7 @@ import {
 } from '@grafana/schema';
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
@@ -149,6 +150,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setSuggestionsSupplier(tableSuggestionsSupplier)
   // Prototype: settings and promotionPath are placeholders until promotion is implemented.
   .setPanelInteractions({
+    transformationsOwner: TABLE_TRANSFORMATIONS_OWNER,
     interactions: [
       {
         id: 0,
