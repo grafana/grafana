@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 
 import {
   applyFieldOverrides,
-  CoreApp,
   type DataFrame,
   type GrafanaTheme2,
   getFrameDisplayName,
@@ -62,7 +61,7 @@ export function TablePanel(props: Props) {
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
-  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled;
   const onFieldAddToAssistant = useTableFieldAssistant(props);
   const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
@@ -132,9 +131,9 @@ export function TablePanel(props: Props) {
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
-        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns), adHocTransformationsEnabled)
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
         : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns, adHocTransformationsEnabled]
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.

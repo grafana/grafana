@@ -108,21 +108,17 @@ function panel(
   );
 }
 
-it('keeps row filtering unavailable in panel edit until saved-stack editing is supported', async () => {
+it('writes row filters to runtime transformations in panel edit', async () => {
   const sourceSeries = [makeFrame()];
-  render(
-    panel(
-      sourceSeries,
-      ({ linkModel }) => linkModel,
-      0,
-      sourceSeries,
-      () => {},
-      CoreApp.PanelEditor
-    )
-  );
+  const set = jest.fn();
+  render(panel(sourceSeries, ({ linkModel }) => linkModel, 0, sourceSeries, set, CoreApp.PanelEditor));
+  const user = userEvent.setup();
+  await user.click(screen.getByLabelText('Column options for metric'));
+  await user.click(await screen.findByText('Filter values'));
+  await user.click(screen.getByRole('checkbox', { name: '20' }));
+  await user.click(screen.getByRole('button', { name: 'Ok' }));
 
-  expect(screen.queryByLabelText('Column options for metric')).not.toBeInTheDocument();
-  expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+  expect(set).toHaveBeenCalledWith('grafana:table-view', [expect.objectContaining({ id: 'filterByValue' })]);
 });
 
 it('rebuilds row links with the current data-link processor', async () => {
