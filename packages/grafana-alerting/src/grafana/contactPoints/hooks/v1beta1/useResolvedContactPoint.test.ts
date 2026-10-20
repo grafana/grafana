@@ -65,7 +65,7 @@ describe('useResolvedContactPoint', () => {
     await waitFor(() => expect(result.current.status).toBe('found'));
   });
 
-  it('is idle when no receiver is given', async () => {
+  it('is unset when no receiver is given', async () => {
     const { result } = renderHook(
       () => ({ resolved: useResolvedContactPoint(undefined), list: useListContactPoints() }),
       {
@@ -74,7 +74,7 @@ describe('useResolvedContactPoint', () => {
     );
 
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
-    expect(result.current.resolved).toEqual({ status: 'idle', selectorValue: null });
+    expect(result.current.resolved).toEqual({ status: 'unset', selectorValue: null });
   });
 
   it('reports an error when the list failed to load, not "not found"', async () => {

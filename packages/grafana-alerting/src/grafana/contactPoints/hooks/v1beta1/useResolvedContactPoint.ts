@@ -3,12 +3,9 @@ import { isUsableContactPoint } from '../../utils';
 import { useListContactPoints } from './useContactPoints';
 
 type ContactPointStatus =
-  /** No receiver was given, so there is nothing to resolve. */
-  | 'idle'
-  /** The list hasn't loaded yet, so a null `selectorValue` doesn't mean the receiver is unset. */
+  | 'unset'
   | 'resolving'
   | 'found'
-  /** The list loaded and no contact point has this receiver's title - e.g. it was deleted. */
   | 'notFound'
   /** The contact point exists but can't be used in rules, e.g. it was imported from an external Alertmanager. */
   | 'unusable'
@@ -31,7 +28,7 @@ export function useResolvedContactPoint(receiver?: string): ResolvedContactPoint
     return { status: 'error', selectorValue: null };
   }
   if (!receiver) {
-    return { status: 'idle', selectorValue: null };
+    return { status: 'unset', selectorValue: null };
   }
   if (!currentData) {
     return { status: 'resolving', selectorValue: null };
