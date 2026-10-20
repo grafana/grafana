@@ -1589,11 +1589,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/LibraryPanelBehavior.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
