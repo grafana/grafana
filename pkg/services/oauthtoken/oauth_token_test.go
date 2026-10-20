@@ -741,6 +741,28 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
+			desc:         "should specify the auth module when querying auth info",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{
+					UserId:     1234,
+					AuthModule: login.GenericOAuthModule,
+				}).Return(&login.UserAuth{UserId: 1234, AuthModule: login.GenericOAuthModule, AuthId: "subject"}, nil).Once()
+
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AuthModule:   login.GenericOAuthModule,
+					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
+					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
+					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
+					IDToken:      UNEXPIRED_ID_TOKEN,
+				}, nil).Once()
+			},
+			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
 			desc:         "should refresh token when the access token is expired",
 			identity:     userIdentity,
 			sessionToken: &auth.UserToken{ExternalSessionId: 1},

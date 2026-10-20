@@ -129,7 +129,8 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	tokenRefreshMetadata.ExternalSessionID = externalSession.ID
 
 	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
-		UserId: userID,
+		UserId:     userID,
+		AuthModule: externalSession.AuthModule,
 	})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
