@@ -1531,7 +1531,7 @@
   },
   "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 8
+      "count": 5
     }
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.tsx": {
@@ -1713,11 +1713,6 @@
   },
   "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/dashboardSessionState.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
