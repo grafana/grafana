@@ -192,8 +192,12 @@ func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
 }
 
+// getCacheKey must include every input of the signed claims that can differ between two
+// authentications of the same identity. authenticatedBy is one of them: a render (for example a
+// scheduled report) and the user's browser session sign in as the same user, and without it in
+// the key one would get the other's token.
 func getCacheKey(ident identity.Requester) string {
-	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole())
+	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + ident.GetAuthenticatedBy()
 }
 
 func shouldLogErr(err error) bool {
