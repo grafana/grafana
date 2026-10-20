@@ -151,8 +151,8 @@ You can't allow a source that requests too many URLs to list, because you can't 
 
 The two options differ in where the approval applies and how long it lasts:
 
-- **Allow:** Loads content from the source in the panels listed in the review, on the current dashboard. The approval ends when you close the browser tab.
-- **Always allow:** Loads content from the source in any text visualization, on any dashboard, for 30 days.
+- **Allow**: Loads content from the source in the panels listed in the review, on the current dashboard. The approval ends when you close the browser tab.
+- **Always allow**: Loads content from the source in any text visualization, on any dashboard, for 30 days.
 
 Approvals apply only to you, in the current organization and browser.
 They're stored in your browser, not in Grafana, and they aren't shared with other users.
