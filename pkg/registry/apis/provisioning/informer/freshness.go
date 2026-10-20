@@ -213,9 +213,7 @@ func (r FreshnessRecorder) observe(ctx context.Context, namespace, name string, 
 	switch {
 	case apierrors.IsNotFound(err):
 		r.notFound.Inc()
-		// The controllers report the absence too, but only here is the announced
-		// version known. It is not proof of a read outrunning its write: the object
-		// may have been deleted after the announcement.
+		// Not proof of a stale read: the object may have been deleted since the announcement.
 		logging.FromContext(ctx).Info("reconcile read found no object while a notification for it was outstanding",
 			"resource", r.resourceName, "namespace", namespace, "name", name, "announced", announced)
 	case err != nil:

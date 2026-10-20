@@ -823,7 +823,6 @@ func TestConnectionController_process(t *testing.T) {
 			errorContains: "failed to update connection status",
 		},
 		{
-			// Nothing is left to reconcile, so process returns nil, not a failure.
 			name: "connection not found - no-op",
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{}

@@ -2909,8 +2909,6 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 	}
 }
 
-// TestRepositoryController_process_NotFoundIsNoOp verifies that a key whose
-// repository is already gone reconciles as a no-op rather than a failure.
 func TestRepositoryController_process_NotFoundIsNoOp(t *testing.T) {
 	namespace := "default"
 	repoName := "deleted-repo"

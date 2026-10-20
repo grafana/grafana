@@ -949,12 +949,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		// The error this used to return recovered nothing: it is not retryable, so
-		// the worker dropped the key regardless, and every delete ends here. A read
-		// that lags the write that woke it is indistinguishable from a real delete
-		// at this point; it is counted as
-		// grafana_provisioning_reconcile_read_freshness_total{outcome="not_found"}
-		// and recovered by the periodic re-list.
+		// Deletion is the expected terminal state; a stale read is recovered by the re-list.
 		logger.Warn("repository not found; nothing to reconcile")
 		return repoType, nil
 	case err != nil:
