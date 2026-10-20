@@ -13,6 +13,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -28,6 +29,9 @@ type openIndexListFile struct {
 	WrittenAt string `json:"writtenAt"`
 	// Indexes contains one entry for each open index with at least one document.
 	Indexes []openIndexListEntry `json:"indexes"`
+	// ResourceVersions holds, by index directory relative to the root, RVs newer
+	// than the one persisted in that index. Only a graceful shutdown writes them.
+	ResourceVersions map[string]int64 `json:"resourceVersions,omitempty"`
 }
 
 type openIndexListEntry struct {
@@ -74,6 +78,9 @@ func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([
 		return nil, err
 	}
 	if len(list.Indexes) == 0 {
+		if len(list.ResourceVersions) > 0 {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("open index list has no indexes")
 	}
 
@@ -124,11 +131,38 @@ func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) 
 	}, true
 }
 
-func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
-	if err := os.MkdirAll(b.opts.Root, 0o750); err != nil {
-		return err
+// loadShutdownRVs reads the RVs the last graceful shutdown kept in the open
+// index list. They only add to what each index persisted, so a missing or
+// unreadable list just means a longer replay.
+func loadShutdownRVs(root string, logger log.Logger) map[string]int64 {
+	dir, err := os.OpenRoot(root)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			logger.Warn("failed to open the open index list root", "path", root, "err", err)
+		}
+		return nil
 	}
+	defer func() { _ = dir.Close() }()
+	data, err := dir.ReadFile(openIndexListFileName)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			logger.Warn("failed to read open index list", "err", err)
+		}
+		return nil
+	}
+	var list openIndexListFile
+	if err := json.Unmarshal(data, &list); err != nil {
+		logger.Warn("failed to parse open index list", "err", err)
+		return nil
+	}
+	return list.ResourceVersions
+}
 
+func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
+	return b.writeOpenIndexList(now, b.openIndexListEntries(), nil)
+}
+
+func (b *bleveBackend) openIndexListEntries() []openIndexListEntry {
 	keys := b.GetOpenIndexes()
 	slices.SortFunc(keys, compareNamespacedResource)
 
@@ -160,11 +194,18 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 			DocCount:  int64(docCount),
 		})
 	}
+	return indexes
+}
+
+func (b *bleveBackend) writeOpenIndexList(now time.Time, indexes []openIndexListEntry, rvs map[string]int64) error {
+	if err := os.MkdirAll(b.opts.Root, 0o750); err != nil {
+		return err
+	}
 
 	path := filepath.Join(b.opts.Root, openIndexListFileName)
 
 	// If no currently-open index has documents, remove any previous open index list so startup falls back to storage stats.
-	if len(indexes) == 0 {
+	if len(indexes) == 0 && len(rvs) == 0 {
 		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
@@ -172,8 +213,9 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 	}
 
 	contents, err := json.Marshal(openIndexListFile{
-		WrittenAt: now.UTC().Format(time.RFC3339Nano),
-		Indexes:   indexes,
+		WrittenAt:        now.UTC().Format(time.RFC3339Nano),
+		Indexes:          indexes,
+		ResourceVersions: rvs,
 	})
 	if err != nil {
 		return err

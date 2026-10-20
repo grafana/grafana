@@ -2556,6 +2556,47 @@ func TestIndexUpdateRVPersistInterval(t *testing.T) {
 	}
 }
 
+func TestShutdownKeepsUnpersistedRVInOpenIndexList(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	root := t.TempDir()
+	newBackend := func() *bleveBackend {
+		backend, err := NewBleveBackend(BleveOptions{
+			Root:          root,
+			FileThreshold: 1,
+			Logger:        log.NewNopLogger(),
+		}, nil)
+		require.NoError(t, err)
+		return backend
+	}
+	updater := func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+		return 200, 0, nil
+	}
+
+	backend := newBackend()
+	built, err := backend.BuildIndex(t.Context(), key, 3, "test", indexTestDocs(key, 3, 100), updater, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	rv, err := built.UpdateIndex(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, int64(200), rv)
+	indexDir := built.(*bleveIndex).index.Name()
+	backend.Stop()
+
+	// Shutdown does not persist the RV in the index itself.
+	index, err := bleve.Open(indexDir)
+	require.NoError(t, err)
+	persisted, err := getRV(index)
+	require.NoError(t, err)
+	require.NoError(t, index.Close())
+	require.Equal(t, int64(100), persisted)
+
+	backend = newBackend()
+	t.Cleanup(backend.Stop)
+	reopened, err := backend.BuildIndex(t.Context(), key, 3, "test", indexTestDocs(key, 3, 100), updater, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	require.Equal(t, indexDir, reopened.(*bleveIndex).index.Name(), "the index should be reused")
+	require.Equal(t, int64(200), reopened.(*bleveIndex).resourceVersion.Load())
+}
+
 func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
