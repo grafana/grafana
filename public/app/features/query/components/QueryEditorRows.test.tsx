@@ -3,8 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  type DataSourceSrv,
+  type GetDataSourceListFilters,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -43,14 +47,9 @@ jest.mock('@grafana/runtime', () => ({
     containsTemplate: () => false,
     updateTimeRange: () => {},
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));
-
 jest
   .mocked(getDataSourceInstance)
   .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
@@ -708,6 +707,53 @@ describe('QueryEditorRows', () => {
       );
 
       expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+    });
+  });
+
+  describe('callbacks handed to a datasource query editor', () => {
+    const queryA: DataQuery & { expr?: string } = { refId: 'A', datasource: mockDS };
+    const queryB: DataQuery & { expr?: string } = { refId: 'B', datasource: mockDS };
+    let firstOnChangeForA: ((query: DataQuery) => void) | undefined;
+
+    // Holds on to the first onChange it receives, like editors that register a Monaco listener or build a
+    // debounced handler once on mount.
+    const RetainingQueryEditor = ({ query, onChange }: { query: DataQuery; onChange: (q: DataQuery) => void }) => {
+      if (query.refId === 'A' && !firstOnChangeForA) {
+        firstOnChangeForA = onChange;
+      }
+      return <div data-testid={`query-editor-${query.refId}`} />;
+    };
+
+    beforeEach(() => {
+      firstOnChangeForA = undefined;
+      jest.mocked(getDataSourceInstance).mockResolvedValue({
+        type: DataSourceType.Alertmanager,
+        getDefaultQuery: undefined,
+        components: { QueryEditor: RetainingQueryEditor },
+      } as unknown as DataSourceApi);
+    });
+
+    afterEach(() => {
+      jest
+        .mocked(getDataSourceInstance)
+        .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
+    });
+
+    // An editor calling an onChange it got on an earlier render must still merge into the latest queries,
+    // rather than reverting edits made to other rows since then.
+    it('merges an edit from an onChange received on an earlier render into the latest queries', async () => {
+      const onQueriesChange = jest.fn();
+      const rowsProps = { ...props, onQueriesChange, queries: [queryA, queryB] };
+      const { rerender } = render(<QueryEditorRows {...rowsProps} />);
+      await screen.findByTestId('query-editor-A');
+
+      const editedB = { ...queryB, expr: 'edited B' };
+      rerender(<QueryEditorRows {...rowsProps} queries={[queryA, editedB]} />);
+
+      const editedA = { ...queryA, expr: 'edited A' };
+      act(() => firstOnChangeForA!(editedA));
+
+      expect(onQueriesChange).toHaveBeenLastCalledWith([editedA, editedB]);
     });
   });
 });

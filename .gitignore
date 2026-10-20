@@ -62,6 +62,7 @@ docs/changed-files
 
 # locally required config files
 public/css/*.min.css
+/public/sass/_variables*.generated.scss
 
 # Editor junk
 *.sublime-workspace
@@ -73,6 +74,8 @@ public/css/*.min.css
 .DS_Store
 .vscode/
 !.vscode/launch.json
+.zed/*
+!.zed/debug.json
 .vs/
 .cursor/
 .devcontainer/

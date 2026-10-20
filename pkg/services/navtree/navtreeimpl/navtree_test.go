@@ -273,13 +273,143 @@ func TestBuildAlertNavLinks(t *testing.T) {
 }
 
 func hasHistoryLink(alertNav *navtree.NavLink) bool {
-	if alertNav == nil {
-		return false
+	return findChildLink(alertNav, "alerts-history") != nil
+}
+
+func TestBuildAlertNavLinks_RecentlyDeleted(t *testing.T) {
+	testCases := []struct {
+		name            string
+		role            org.RoleType
+		features        []any
+		expectedVisible bool
+	}{
+		{
+			name:            "admin sees the page",
+			role:            org.RoleAdmin,
+			expectedVisible: true,
+		},
+		{
+			name:            "editor does not see the page",
+			role:            org.RoleEditor,
+			expectedVisible: false,
+		},
+		{
+			name:            "navigation V2 shows the page as a tab instead",
+			role:            org.RoleAdmin,
+			features:        []any{featuremgmt.FlagAlertingNavigationV2},
+			expectedVisible: false,
+		},
 	}
-	for _, link := range alertNav.Children {
-		if link.Id == "alerts-history" {
-			return true
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			service := ServiceImpl{
+				cfg:           setting.NewCfg(),
+				accessControl: accesscontrolmock.New(),
+				features:      featuremgmt.WithFeatures(tc.features...),
+			}
+
+			httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: tc.role},
+				IsSignedIn:   true,
+				Context:      &web.Context{Req: httpReq},
+			}
+
+			link := findChildLink(service.buildAlertNavLinks(reqCtx), "alerts/recently-deleted")
+
+			require.Equal(t, tc.expectedVisible, link != nil, "unexpected visibility of the recently deleted nav link")
+		})
+	}
+}
+
+func TestBuildAlertNavLinks_AlertActivity(t *testing.T) {
+	prometheusStateHistory := setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom-uid"}
+	permissions := []ac.Permission{
+		{Action: ac.ActionAlertingRuleRead, Scope: "*"},
+		{Action: ac.ActionAlertingInstanceRead, Scope: "*"},
+	}
+
+	testCases := []struct {
+		name               string
+		stateHistory       setting.UnifiedAlertingStateHistorySettings
+		features           []any
+		expectedActivityID string
+		expectedGroups     bool
+	}{
+		{
+			name:               "shown when state history writes to prometheus",
+			stateHistory:       prometheusStateHistory,
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "alert-alerts",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when state history does not write to prometheus",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom-uid"},
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when the feature flag is turned off",
+			stateHistory:       prometheusStateHistory,
+			features:           nil,
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+		{
+			name:               "navigation V2 moves alert groups into a tab of alert activity",
+			stateHistory:       prometheusStateHistory,
+			features:           []any{featuremgmt.FlagAlertingTriage, featuremgmt.FlagAlertingNavigationV2},
+			expectedActivityID: "alert-activity",
+			expectedGroups:     false,
+		},
+		{
+			name:               "navigation V2 keeps alert groups when alert activity is unavailable",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations"},
+			features:           []any{featuremgmt.FlagAlertingTriage, featuremgmt.FlagAlertingNavigationV2},
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.StateHistory = tc.stateHistory
+
+			service := ServiceImpl{
+				cfg:           cfg,
+				accessControl: accesscontrolmock.New().WithPermissions(permissions),
+				features:      featuremgmt.WithFeatures(tc.features...),
+			}
+
+			httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+				IsSignedIn:   true,
+				Context:      &web.Context{Req: httpReq},
+			}
+
+			alertNav := service.buildAlertNavLinks(reqCtx)
+
+			for _, id := range []string{"alert-alerts", "alert-activity"} {
+				require.Equal(t, id == tc.expectedActivityID, findChildLink(alertNav, id) != nil, "unexpected visibility of the %q nav link", id)
+			}
+			require.Equal(t, tc.expectedGroups, findChildLink(alertNav, "groups") != nil, "unexpected visibility of the alert groups nav link")
+		})
+	}
+}
+
+func findChildLink(nav *navtree.NavLink, id string) *navtree.NavLink {
+	if nav == nil {
+		return nil
+	}
+	for _, link := range nav.Children {
+		if link.Id == id {
+			return link
 		}
 	}
-	return false
+	return nil
 }

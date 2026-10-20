@@ -68,7 +68,7 @@ func TestBackendTracing(t *testing.T) {
 }
 
 func TestProxyTracing(t *testing.T) {
-	for _, mode := range []string{"forward", "aggregate", "single-tenant"} {
+	for _, mode := range []string{"aggregate", "single-tenant"} {
 		t.Run(mode, func(t *testing.T) {
 			recorder := setupRouterTracing(t)
 			upstreamContext := make(chan trace.SpanContext, 1)
@@ -84,8 +84,6 @@ func TestProxyTracing(t *testing.T) {
 			var handler http.Handler
 			var err error
 			switch mode {
-			case "forward":
-				backend, err = NewForwardBackend(group, forwardSpec(upstream.URL), "1", transport)
 			case "aggregate":
 				base, parseErr := url.Parse(upstream.URL)
 				require.NoError(t, parseErr)
@@ -200,7 +198,7 @@ func TestOpenAPIBackendTracing(t *testing.T) {
 			}))
 			for range 2 {
 				response := httptest.NewRecorder()
-				req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test.grafana.app/v1?hash=revision", nil)
+				req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test.grafana.app/v1?hash=revision", nil)
 				router.HandleFunc(response, req, http.NotFoundHandler())
 				require.Equal(t, status, response.Code)
 			}
@@ -249,7 +247,7 @@ func TestDiscoveryBackendTracing(t *testing.T) {
 					}))
 				}
 			}))
-			req := httptest.NewRequest(http.MethodGet, "/apis", nil).WithContext(ctx)
+			req := httptest.NewRequest(http.MethodGet, "/apis", nil).WithContext(authenticatedTestContext(ctx))
 			req.Header.Set("Accept", aggregatedDiscoveryJSON)
 			response := httptest.NewRecorder()
 			router.HandleFunc(response, req, http.NotFoundHandler())

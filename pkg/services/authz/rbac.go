@@ -7,6 +7,12 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/middleware"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,13 +24,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
-	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/cache"
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/middleware"
-
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
@@ -75,9 +75,11 @@ func ProvideAuthZClients(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	actionResolver accesscontrol.ActionResolver,
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
+	legacyLoader *legacypermissions.Loader,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -112,9 +114,9 @@ func ProvideAuthZClients(
 		}
 		return newAuthZClients(accessClient, rbacClient), nil
 	default:
-		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
-		if !ok {
-			return nil, errors.New("access control service does not support local user permission evaluation")
+		serverCfg := readEmbeddedRBACServerSettings(cfg)
+		if legacyLoader == nil {
+			return nil, errors.New("embedded user permission loader is not configured")
 		}
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
@@ -140,11 +142,11 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer),
+				store.NewSQLPermissionStore(sql, tracer, serverCfg.ForcePermissionRoleActionIndex),
 			),
-			userPermissionsEvaluator,
+			legacyLoader,
 			nil,
-			nil,
+			actionResolver,
 			log.New("authz-grpc-server"),
 			tracer,
 			reg,
@@ -399,7 +401,7 @@ func RegisterRBACAuthZService(
 		db,
 		folderStore,
 		legacy.NewLegacySQLStores(db),
-		store.NewSQLPermissionStore(db, tracer),
+		store.NewSQLPermissionStore(db, tracer, cfg.ForcePermissionRoleActionIndex),
 		nil,
 		userPermissionsResolver,
 		actionResolver,
@@ -436,8 +438,8 @@ func (lc *NoopCache) Delete(ctx context.Context, key string) error {
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }

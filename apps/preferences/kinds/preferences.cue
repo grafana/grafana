@@ -13,7 +13,10 @@ package preferences
 	// Explicit home URL (NOTE: this can only be modified in the system settings)
 	homeURL?: string
 
-	// UID for the home dashboard
+	// UID for the home dashboard. The reserved value "global-home" is not a
+	// dashboard UID: it selects the instance default home (home_page, the
+	// configured home dashboard file, or the built-in home page) instead of
+	// falling through to lower-precedence preferences.
 	homeDashboardUID?: string
 
 	// The timezone selection
@@ -40,7 +43,8 @@ preferencesV1alpha1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
-	// Normal list reads are restricted to the caller's owners.
+	// Generic read routes cannot apply the owner filtering used by normal list reads.
+	listKeys: false
 	search: {
 		endpoint: false
 	}
@@ -61,7 +65,8 @@ preferencesV1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
-	// Normal list reads are restricted to the caller's owners.
+	// Generic read routes cannot apply the owner filtering used by normal list reads.
+	listKeys: false
 	search: {
 		endpoint: false
 	}

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // BenchmarkGrafanaRouter measures steady-state handling without network I/O or
@@ -17,7 +19,7 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 		for i := range groups {
 			groups[i] = fmt.Sprintf("app-%d.grafana.app", i)
 		}
-		router := NewGrafanaRouter(dummyRoutesLoader{groups: groups})
+		router := NewGrafanaRouter(dummyRoutesLoader{groups: groups}, nil)
 		// Reconcile synchronously so every measurement starts with loaded routes.
 		if err := router.reconcile(b.Context()); err != nil {
 			b.Fatal(err)
@@ -42,7 +44,7 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 			{"openapi_invalid_path", "/openapi/v3/apis/" + group, http.StatusNoContent},
 		} {
 			b.Run(tc.name, func(b *testing.B) {
-				req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+				req := newAuthenticatedRequest(http.MethodGet, tc.path, nil)
 				rec := httptest.NewRecorder()
 				// Validate dispatch and warm the OpenAPI cache before timing.
 				router.HandleFunc(rec, req, next)
@@ -60,12 +62,46 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 	})
 }
 
+// BenchmarkServiceMiddleware measures the router as Grafana's API server
+// middleware, with request metrics: requests for its own groups, and the
+// embedded API server's requests it passes on.
+func BenchmarkServiceMiddleware(b *testing.B) {
+	groups := make([]string, 100)
+	for i := range groups {
+		groups[i] = fmt.Sprintf("app-%d.grafana.app", i)
+	}
+	svc := newService(NewGrafanaRouter(dummyRoutesLoader{groups: groups}, nil), prometheus.NewRegistry())
+	svc.middleware = true
+	if err := svc.router.reconcile(b.Context()); err != nil {
+		b.Fatal(err)
+	}
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	group := groups[len(groups)-1]
+	for _, tc := range []struct{ name, path string }{
+		{"resource", "/apis/" + group + "/v0alpha1/namespaces/default/widgets/abc"},
+		{"embedded_group", "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards/abc"},
+		{"outside_apis", "/api/dashboards/uid/abc"},
+	} {
+		b.Run(tc.name, func(b *testing.B) {
+			req := newAuthenticatedRequest(http.MethodGet, tc.path, nil)
+			w := &benchmarkResponseWriter{header: make(http.Header)}
+			b.ReportAllocs()
+			for b.Loop() {
+				clear(w.header)
+				svc.HandleFunc(w, req, next)
+			}
+		})
+	}
+}
+
 func BenchmarkGrafanaRouterConditional(b *testing.B) {
 	router := newBenchmarkRouter(b)
 	next := http.NotFoundHandler()
 	for _, path := range []string{"/apis", "/openapi/v3", "/openapi/v3/apis/app-0.grafana.app/v0alpha1"} {
 		b.Run(path, func(b *testing.B) {
-			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req := newAuthenticatedRequest(http.MethodGet, path, nil)
 			rec := httptest.NewRecorder()
 			router.HandleFunc(rec, req, next)
 			etag := rec.Header().Get("ETag")
@@ -93,7 +129,7 @@ func BenchmarkGrafanaRouterOpenAPICacheMiss(b *testing.B) {
 		b.Run(fmt.Sprintf("stale=%t", stale), func(b *testing.B) {
 			router := newBenchmarkRouter(b)
 			const cacheKey = "app-0.grafana.app/v0alpha1"
-			req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/"+cacheKey, nil)
+			req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/"+cacheKey, nil)
 			next := http.NotFoundHandler()
 			w := &benchmarkResponseWriter{header: make(http.Header)}
 			b.ReportAllocs()
@@ -122,7 +158,7 @@ func BenchmarkGrafanaRouterParallel(b *testing.B) {
 			router := newBenchmarkRouter(b)
 			requests := make([]*http.Request, groupCount)
 			for i := range requests {
-				requests[i] = httptest.NewRequest(http.MethodGet,
+				requests[i] = newAuthenticatedRequest(http.MethodGet,
 					fmt.Sprintf("/apis/app-%d.grafana.app/v0alpha1/namespaces/default/widgets", i), nil)
 			}
 			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
@@ -154,7 +190,7 @@ func BenchmarkGrafanaRouterReconcile(b *testing.B) {
 			b.ReportAllocs()
 			for b.Loop() {
 				if scenario == "initial" {
-					router = NewGrafanaRouter(loader)
+					router = NewGrafanaRouter(loader, nil)
 				}
 				if scenario == "update_one" {
 					if loader.key == "static" {
@@ -187,7 +223,7 @@ func newBenchmarkRouter(b *testing.B) *GrafanaRouter {
 	for i := range groups {
 		groups[i] = fmt.Sprintf("app-%d.grafana.app", i)
 	}
-	router := NewGrafanaRouter(dummyRoutesLoader{groups: groups})
+	router := NewGrafanaRouter(dummyRoutesLoader{groups: groups}, nil)
 	if err := router.reconcile(b.Context()); err != nil {
 		b.Fatal(err)
 	}
@@ -214,6 +250,8 @@ type benchmarkBackend struct {
 }
 
 func (b *benchmarkBackend) Key() string { return b.key }
+
+func (b *benchmarkBackend) Source() string { return "test" }
 
 // Discard bodies to avoid measuring recorder allocations or retaining responses
 // across iterations, while preserving header writes performed by the router.

@@ -13,16 +13,20 @@ const (
 
 	// KindSearchQuery and friends are the envelope kinds carried in the
 	// request/response TypeMeta. Each endpoint accepts one request kind and
-	// rejects the other.
-	KindSearchQuery   = "SearchQuery"
-	KindSearchResults = "SearchResults"
-	KindTrashQuery    = "TrashQuery"
-	KindTrashResults  = "TrashResults"
+	// rejects the others.
+	KindSearchQuery         = "SearchQuery"
+	KindSearchResults       = "SearchResults"
+	KindGlobalSearchResults = "GlobalSearchResults"
+	KindTrashQuery          = "TrashQuery"
+	KindTrashResults        = "TrashResults"
+	KindHybridSearchQuery   = "HybridSearchQuery"
+	KindHybridSearchResults = "HybridSearchResults"
 
 	// Here rather than beside the routes because the authorization chain needs
 	// them and cannot depend on the handler package.
-	SearchPathSegment = "search"
-	TrashPathSegment  = "trash"
+	SearchPathSegment       = "search"
+	TrashPathSegment        = "trash"
+	HybridSearchPathSegment = "hybrid"
 )
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
@@ -135,15 +139,18 @@ type SortField struct {
 	Direction string `json:"direction,omitempty"`
 }
 
-// SearchQuery is the request body for POST .../{resource}/search.
+// SearchQuery is the request body for POST .../{resource}/search, which searches
+// one kind, and for POST .../namespaces/{namespace}/global/search, which
+// searches several resource types at once.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SearchQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Where is the search predicate tree. Omitting it matches all resources of
-	// the kind (subject to labelSelector and per-item authz).
+	// Where is the search predicate tree. Omitting it matches everything the
+	// endpoint searches: all resources of the kind, or of every type the global
+	// search covers (subject to labelSelector and per-item authz).
 	Where *WhereNode `json:"where,omitempty"`
 
 	// LabelSelector filters on metadata.labels, ANDed with Where.
@@ -200,6 +207,37 @@ type SearchResults struct {
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
 }
 
+// GlobalSearchResults is the response body for POST
+// .../namespaces/{namespace}/global/search. Each item names its own resource
+// type.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Metadata GlobalResultsMetadata `json:"metadata"`
+	Items    []ResultItem          `json:"items"`
+
+	// Facets holds term counts per requested facet field. Counts are computed
+	// over a bounded sample window, so they are best-effort/approximate.
+	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalResultsMetadata carries the pagination token, the total hit count, and
+// the types the search left out.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultsMetadata struct {
+	ResultsMetadata `json:",inline"`
+
+	// SkippedTypes lists the types, as {group}/{resource}, that the search left
+	// out, so the results are incomplete. A type is left out when the calling
+	// service may not search it on the user's behalf, or when this deployment
+	// does not check its results against the user. Both are deployment problems.
+	SkippedTypes []string `json:"skippedTypes,omitempty"`
+}
+
 // TrashResults is the response body for POST .../{resource}/trash. It has the
 // same item shape as SearchResults but never carries facets.
 //
@@ -224,6 +262,9 @@ const (
 	// than or equal to it. The server falls back to this when counting exactly
 	// would be too expensive.
 	TotalHitsAtMost TotalHitsRelation = "lte"
+
+	// TotalHitsUnknown means no count is available; TotalHits is a zero placeholder.
+	TotalHitsUnknown TotalHitsRelation = "unknown"
 )
 
 // ResultsMetadata carries the pagination token and the total hit count.
@@ -233,11 +274,12 @@ type ResultsMetadata struct {
 	Continue string `json:"continue,omitempty"`
 
 	// TotalHits counts the resources matching the query. Always read it together
-	// with TotalHitsRelation, which says whether the count is exact.
+	// with TotalHitsRelation. When the relation is "unknown", this is a zero
+	// placeholder that must not be interpreted as a count.
 	TotalHits int64 `json:"totalHits"`
 
 	// TotalHitsRelation is "eq" when TotalHits is exact and "lte" when it is an
-	// upper bound.
+	// upper bound. "unknown" means no count is available and TotalHits must be ignored.
 	TotalHitsRelation TotalHitsRelation `json:"totalHitsRelation"`
 }
 

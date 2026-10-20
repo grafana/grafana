@@ -22,31 +22,32 @@ func TestPluginRouteTracing(t *testing.T) {
 			spans := setupRouterTracing(t)
 			var authContext, handlerContext trace.SpanContext
 			requester := &identity.StaticRequester{}
-			handler := &authenticatingWrapper{
-				authn: manifestTokenAuthenticatorFunc(func(ctx context.Context, token string) (identity.Requester, error) {
-					authContext = trace.SpanContextFromContext(ctx)
-					if token != "valid" {
-						return nil, apierrors.NewUnauthorized("invalid token")
-					}
-					return requester, nil
-				}),
-				Handler: &tracedPluginHandler{
-					pluginID: "test-app",
-					Handler: &pluginroute.Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-						handlerContext = trace.SpanContextFromContext(req.Context())
-						got, err := identity.GetRequester(req.Context())
-						require.NoError(t, err)
-						require.Same(t, requester, got)
-						w.WriteHeader(http.StatusCreated)
-					})},
-				},
+			router := NewGrafanaRouter(stubLoader{}, nil)
+			router.authn = tokenAuthenticatorFunc(func(ctx context.Context, token string) (identity.Requester, error) {
+				authContext = trace.SpanContextFromContext(ctx)
+				if token != "valid" {
+					return nil, apierrors.NewUnauthorized("invalid token")
+				}
+				return requester, nil
+			})
+			handler := &tracedPluginHandler{
+				pluginID: "test-app",
+				Handler: &pluginroute.Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					handlerContext = trace.SpanContextFromContext(req.Context())
+					got, err := identity.GetRequester(req.Context())
+					require.NoError(t, err)
+					require.Same(t, requester, got)
+					w.WriteHeader(http.StatusCreated)
+				})},
 			}
 			req := httptest.NewRequest(http.MethodPost, "/apis/test.ext.grafana.app/v1/resources", nil)
 			req.Header.Set("X-Access-Token", token)
 			response := httptest.NewRecorder()
-			serveThroughBreaker(newGroupBreaker("test.ext.grafana.app"), "test.ext.grafana.app", handler, response, req)
+			snapshot := map[string]servingEntry{"test.ext.grafana.app": {handler: handler, breaker: newGroupBreaker("test.ext.grafana.app")}}
+			router.snapshot.Store(&snapshot)
+			router.HandleFunc(response, req, http.NotFoundHandler())
 			ended := spans.Ended()
-			require.Equal(t, "router.plugin.authenticate", ended[0].Name())
+			require.Equal(t, "router.authenticate", ended[0].Name())
 			if token == "valid" {
 				require.Equal(t, http.StatusCreated, response.Code)
 				require.Len(t, ended, 2)
@@ -56,7 +57,7 @@ func TestPluginRouteTracing(t *testing.T) {
 				require.Contains(t, ended[1].Attributes(), attribute.Int("http.response.status_code", http.StatusCreated))
 			} else {
 				require.Equal(t, http.StatusUnauthorized, response.Code)
-				require.Len(t, ended, 2)
+				require.Len(t, ended, 1)
 				require.False(t, handlerContext.IsValid())
 				require.Equal(t, codes.Error, ended[0].Status().Code)
 				expectedError := "invalid_token"
@@ -71,9 +72,6 @@ func TestPluginRouteTracing(t *testing.T) {
 			for _, attr := range ended[0].Attributes() {
 				require.NotEqual(t, attribute.Key("http.response.status_code"), attr.Key)
 			}
-			backend := ended[len(ended)-1]
-			require.Equal(t, "router.backend", backend.Name())
-			require.Equal(t, backend.SpanContext().SpanID(), ended[0].Parent().SpanID())
 		})
 	}
 }

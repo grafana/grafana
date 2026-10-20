@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -24,6 +25,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,12 +41,6 @@ type receiverAuthz interface {
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
 }
 
-type AlertRuleNotificationSettingsStore interface {
-	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
-}
-
 type emailIntegrationValidator interface {
 	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
@@ -54,7 +50,7 @@ type ContactPointService struct {
 	configStore               alertmanagerConfigStore
 	encryptionService         secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	provenanceStore           ProvisioningStore
-	notificationSettingsStore AlertRuleNotificationSettingsStore
+	notificationSettingsStore rulestore.ContactPointRoutingReader
 	xact                      TransactionManager
 	receiverService           receiverService
 	log                       log.Logger
@@ -77,7 +73,7 @@ func NewContactPointService(
 	xact TransactionManager,
 	receiverService receiverService,
 	log log.Logger,
-	nsStore AlertRuleNotificationSettingsStore,
+	nsStore rulestore.ContactPointRoutingReader,
 	resourcePermissions ac.ReceiverPermissionsService,
 	allowedIntegrations map[schema.IntegrationType]struct{},
 	emailValidator emailIntegrationValidator,
@@ -565,7 +561,10 @@ func (ecp *ContactPointService) checkProtectedFields(
 
 	// Check if user has permission to update protected fields first, before doing
 	// expensive conversion and diff calculations.
-	canUpdateProtected, _ := ecp.authz.HasUpdateProtected(ctx, user, receiver)
+	canUpdateProtected, err := ecp.authz.HasUpdateProtected(ctx, user, receiver)
+	if err != nil && !errors.Is(err, ngalertac.ErrAuthorizationBase) {
+		return fmt.Errorf("failed to check protected fields permission: %w", err)
+	}
 	if canUpdateProtected {
 		return nil
 	}

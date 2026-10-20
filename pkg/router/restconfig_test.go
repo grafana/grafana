@@ -25,9 +25,7 @@ func TestLoopbackRestConfigProvider(t *testing.T) {
 		_, _ = w.Write([]byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":"fw9lwk","namespace":"stacks-5457"}}`))
 	}))
 	defer backend.Close()
-	forward, err := NewForwardBackend(metav1.APIGroup{Name: "folder.grafana.app"}, forwardSpec(backend.URL), "1", backend.Client().Transport.(*http.Transport))
-	require.NoError(t, err)
-	proxy, err := forward.Load(t.Context())
+	proxy, err := proxyBackend(t, "folder.grafana.app", backend.URL, backend.Client().Transport).Load(t.Context())
 	require.NoError(t, err)
 	router := withGroups("folder.grafana.app")
 	router.served["folder.grafana.app"].handler = proxy

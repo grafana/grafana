@@ -5,7 +5,7 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, type FetchError } from '@grafana/runtime';
-import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
+import { ConstantVariable, sceneGraph, SceneRefreshPicker, VizPanel } from '@grafana/scenes';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerKind,
@@ -20,6 +20,7 @@ import {
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -42,7 +43,9 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
 
 // Monaco can't boot web workers in jsdom
 jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
-  MonacoDiffEditor: () => <div data-testid="schema-diff-editor" />,
+  MonacoDiffEditor: ({ modified }: { modified: string }) => (
+    <div data-testid="schema-diff-editor" data-modified={modified} />
+  ),
 }));
 
 const saveDashboardMutationMock = jest.fn();
@@ -82,6 +85,62 @@ const ui = {
 };
 
 describe('SaveDashboardDrawer', () => {
+  it('updates an open Changes tab after successive panel edits while the dashboard stays dirty', async () => {
+    const { dashboard, openAndRender } = setup();
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'First title' });
+    dashboard.activateSidebar();
+    dashboard.addPanel(panel);
+    dashboard.setState({ isDirty: true });
+    await act(async () => {
+      await openAndRender({ showDiff: true });
+    });
+
+    const readPanelTitle = () => {
+      const json = screen.getByTestId('schema-diff-editor').getAttribute('data-modified')!;
+      return JSON.parse(json).panels[0].title;
+    };
+    await waitFor(() => expect(readPanelTitle()).toBe('First title'));
+    act(() => panel.setState({ title: 'Second title' }));
+    await waitFor(() => expect(readPanelTitle()).toBe('Second title'));
+    act(() => panel.setState({ title: 'Third title' }));
+    await waitFor(() => expect(readPanelTitle()).toBe('Third title'));
+    expect(dashboard.state.isDirty).toBe(true);
+  });
+
+  it('updates Changes when an auto-grid panel is removed from an already dirty dashboard', async () => {
+    const { dashboard, openAndRender } = setup();
+    const layout = AutoGridLayoutManager.createEmpty();
+    dashboard.setState({ body: layout });
+    dashboard.activateSidebar();
+    const first = new VizPanel({ pluginId: 'text', title: 'Keep this panel' });
+    const second = new VizPanel({ pluginId: 'text', title: 'Remove this panel' });
+    layout.addPanel(first);
+    layout.addPanel(second);
+    dashboard.setState({ isDirty: true });
+    await act(async () => {
+      await openAndRender({ showDiff: true });
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('schema-diff-editor').getAttribute('data-modified')).toContain('Remove this panel')
+    );
+
+    act(() => layout.removePanel(second));
+    await waitFor(() => {
+      const current = screen.getByTestId('schema-diff-editor').getAttribute('data-modified');
+      expect(current).toContain('Keep this panel');
+      expect(current).not.toContain('Remove this panel');
+    });
+  });
+
+  it('opens Changes for a clean dashboard and keeps the empty state selected', async () => {
+    const { openAndRender } = setup();
+    await act(async () => {
+      await openAndRender({ showDiff: true });
+    });
+    expect(await screen.findByRole('tab', { name: 'Changes 0' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('No changes to save', { selector: 'span' })).toBeVisible();
+  });
+
   describe('Given an already saved dashboard', () => {
     it('should render save drawer with only message textarea', async () => {
       await setup().openAndRender();
@@ -617,6 +676,7 @@ describe('SaveDashboardDrawer', () => {
         status,
         isNewSave: true,
         isProvisioned: false,
+        canChooseTarget: false,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
         isMissingRepo: false,
@@ -700,7 +760,7 @@ describe('SaveDashboardDrawer', () => {
     it('offers the database save only at the root of a folderless repository', async () => {
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true }));
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
@@ -720,7 +780,7 @@ describe('SaveDashboardDrawer', () => {
       // Inside a folder the folder decides, so there is nothing to choose
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, folderUid: 'f1' }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: false }));
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f1' } });
       });
@@ -780,7 +840,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('keeps the database form up while a folder picked in it resolves', async () => {
-      let repoState = view({ isProvisioned: true, repository: folderlessRepo });
+      let repoState = view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true });
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
@@ -797,6 +857,7 @@ describe('SaveDashboardDrawer', () => {
       repoState = view({
         isProvisioned: true,
         repository: folderlessRepo,
+        canChooseTarget: true,
         isHeld: true,
         lookup: { status: RepoViewStatus.Loading },
       });
@@ -815,7 +876,7 @@ describe('SaveDashboardDrawer', () => {
       expect(saveDashboardMutationMock).not.toHaveBeenCalled();
       expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
 
-      repoState = view({ isProvisioned: false, folderUid: 'f1' });
+      repoState = view({ isProvisioned: false, canChooseTarget: false });
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta } });
       });
@@ -857,7 +918,7 @@ describe('SaveDashboardDrawer', () => {
 
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true }));
 
       const fresh = setup();
       fresh.dashboard.setState({ uid: '', version: 0 });
@@ -867,6 +928,20 @@ describe('SaveDashboardDrawer', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
       expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeInTheDocument();
     });
+  });
+
+  it.each([false, true])('continues the pending action after saving (new dashboard: %s)', async (isNew) => {
+    const { dashboard, openAndRender } = setup();
+    if (isNew) {
+      dashboard.setState({ uid: '', version: 0 });
+    }
+    dashboard.setState({ title: 'Updated title' });
+    const onSaveSuccess = jest.fn();
+    await openAndRender({ onSaveSuccess });
+    mockSaveDashboard();
+    await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+    await waitFor(() => expect(onSaveSuccess).toHaveBeenCalledTimes(1));
+    expect(dashboard.state.isDirty).toBe(false);
   });
 
   describe('Tags', () => {
@@ -1060,7 +1135,13 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   dashboard.onEnterEditMode();
 
   const openAndRender = async (
-    opts: { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean } = {}
+    opts: {
+      showDiff?: boolean;
+      saveAsCopy?: boolean;
+      saveAsDashboardTemplate?: boolean;
+      saveDashboardTemplate?: boolean;
+      onSaveSuccess?: () => void;
+    } = {}
   ) => {
     await dashboard.openSaveDrawer(opts);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;

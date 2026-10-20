@@ -422,8 +422,12 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
+	// The alert activity page reads alert states from the metrics that state history writes to Prometheus,
+	// so it only shows up when that is configured. The feature flag is kept so the page can still be turned off.
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
+	alertActivityEnabled := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) && s.cfg.UnifiedAlerting.StateHistory.WritesToPrometheus()
+
+	if alertActivityEnabled {
 		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
 		instanceAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead)))
 
@@ -531,9 +535,9 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		// In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity
+		// In V2 navigation with alert activity enabled, Alert groups is shown as a tab under Alert activity
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage)
+		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && alertActivityEnabled
 		if !isV2WithTriage {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 		}
@@ -550,8 +554,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+	if c.GetOrgRole() == org.RoleAdmin {
 		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
@@ -562,9 +565,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
 			})
 		}
-	}
 
-	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",

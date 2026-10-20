@@ -16,15 +16,15 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 
-var _ accesscontrol.AccessControl = new(AccessControl)
+var _ accesscontrol.AccessControl = (*AccessControl)(nil)
 
 func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
 
 	return &AccessControl{
-		features,
-		logger,
-		accesscontrol.NewResolvers(logger),
+		features:  features,
+		log:       logger,
+		resolvers: accesscontrol.NewResolvers(logger),
 	}
 }
 
@@ -32,10 +32,15 @@ func ProvideAccessControlTest() *AccessControl {
 	return ProvideAccessControl(featuremgmt.WithFeatures())
 }
 
+func ProvideScopeResolverRegistry(ac *AccessControl) *accesscontrol.ScopeResolverRegistry {
+	return ac.resolvers.ScopeResolverRegistry()
+}
+
 type AccessControl struct {
-	features  featuremgmt.FeatureToggles
-	log       log.Logger
-	resolvers accesscontrol.Resolvers
+	features            featuremgmt.FeatureToggles
+	log                 log.Logger
+	resolvers           accesscontrol.Resolvers
+	skipScopeResolution bool
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -92,9 +97,10 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 
 func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return &AccessControl{
-		features:  a.features,
-		log:       a.log,
-		resolvers: accesscontrol.NewResolvers(a.log),
+		features:            a.features,
+		log:                 a.log,
+		resolvers:           accesscontrol.NewResolvers(a.log),
+		skipScopeResolution: true,
 	}
 }
 

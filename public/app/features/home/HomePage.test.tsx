@@ -16,9 +16,8 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
+import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
 import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -125,11 +124,11 @@ describe('HomePage', () => {
     expect(await screen.findByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
   });
 
-  it('scopes firing alerts to the team stored in local storage', async () => {
+  it('scopes firing alerts to the label stored in local storage', async () => {
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
-    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(ALERTS_FILTER_STORAGE_KEY, 'team:platform');
     const filters: string[][] = [];
     server.use(
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -141,8 +140,7 @@ describe('HomePage', () => {
     render(<HomePage />);
 
     await waitFor(() => expect(filters.length).toBeGreaterThan(0));
-    expect(filters[0]).toEqual([expect.stringContaining('team=~')]);
-    expect(filters[0][0]).toContain('platform');
+    expect(filters[0]).toEqual(['team="platform"']);
   });
 
   it('scopes active incidents to their own stored filter, not the alerts team', async () => {
@@ -151,7 +149,7 @@ describe('HomePage', () => {
       loading: false,
       settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
     });
-    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
+    window.localStorage.setItem(ALERTS_FILTER_STORAGE_KEY, 'team:backend');
     window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'squad:Frontend');
     const queries = mockIncidents([]);
 
@@ -171,7 +169,7 @@ describe('HomePage', () => {
   it('renders dashboard tabs and auto-switches to starred', async () => {
     render(<HomePage />);
 
-    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
+    // Default mocks have starred dashboards but no recent activity, so DashboardTabs
     // auto-switches to the Starred tab once its fetches settle.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
@@ -366,13 +364,13 @@ describe('HomePage', () => {
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
   });
 
-  it('renders the dashboards grid above the stack overview on the redesigned homepage', async () => {
+  it('renders the jump-back-in grid above the stack overview on the redesigned homepage', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
 
     render(<HomePage />);
 
-    const dashboards = await screen.findByRole('heading', { name: 'Dashboards' });
+    const dashboards = await screen.findByRole('heading', { name: 'Jump back in' });
     const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
     expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });

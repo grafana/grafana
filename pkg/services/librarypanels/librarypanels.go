@@ -32,7 +32,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		log:                   log.New("library-panels"),
 	}
 
-	if err := folderService.RegisterService(lps); err != nil {
+	if err := folderService.RegisterService(&lps); err != nil {
 		return nil, err
 	}
 

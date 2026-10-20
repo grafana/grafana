@@ -156,7 +156,7 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 		       text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at
 		FROM annotations
 		WHERE namespace = $1 AND name = $2
-		ORDER BY time DESC
+		ORDER BY time_end DESC
 		LIMIT 1
 	`
 
@@ -190,11 +190,6 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 
 // Create creates a new annotation
 func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
-	// Ensure partition exists for this timestamp
-	if err := ensurePartition(ctx, s.pool, anno.Spec.Time); err != nil {
-		return nil, fmt.Errorf("failed to ensure partition: %w", err)
-	}
-
 	namespace := anno.Namespace
 	name := anno.Name
 	timeMs := anno.Spec.Time
@@ -218,6 +213,10 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	var legacyData *string
 	if d, ok := GetLegacyData(anno); ok {
 		legacyData = &d
+	}
+
+	if err := ensurePartition(ctx, s.pool, timeEnd); err != nil {
+		return nil, fmt.Errorf("failed to ensure partition: %w", err)
 	}
 
 	_, err := s.pool.Exec(ctx, insertAnnotationSQL,

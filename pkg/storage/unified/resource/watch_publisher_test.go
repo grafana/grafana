@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // newTestKVStorageBackend builds just enough of a kvStorageBackend to publish
 // watch notifications.
 func newTestKVStorageBackend(pub EventPublisher) *kvStorageBackend {
-	return &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: newKVBackendMetrics(nil)}
+	return &kvStorageBackend{log: &logging.NoOpLogger{}, eventPublisher: pub, metrics: newKVBackendMetrics(nil)}
 }
 
 // fakeEventPublisher records what publishWatchNotification hands to the bus.

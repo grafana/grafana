@@ -103,7 +103,14 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 
 			tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 			require.NoError(t, err)
-			require.Len(t, tuples, 1)
+			if tt.verb == "edit" || tt.verb == "admin" {
+				require.Len(t, tuples, 2)
+				assert.Equal(t, tt.expectedUser, tuples[1].GetUser())
+				assert.Equal(t, "create", tuples[1].GetRelation())
+				assert.Equal(t, "resource:dashboard.grafana.app/dashboards/annotations/dash1", tuples[1].GetObject())
+			} else {
+				require.Len(t, tuples, 1)
+			}
 
 			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
 			assert.Equal(t, tt.expectedRelation, tuples[0].GetRelation())
@@ -114,7 +121,7 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 
 func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 	const (
-		group    = "loki.datasource.grafana.app"
+		group    = "datasource.grafana.app"
 		resource = "datasources"
 		name     = "ds-1"
 	)
@@ -144,7 +151,7 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 		for _, level := range levels {
 			t.Run(subject.name+"/"+level.name, func(t *testing.T) {
 				rp := &iamv0.ResourcePermission{
-					ObjectMeta: metav1.ObjectMeta{Name: "loki.datasource.grafana.app-datasources-ds-1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "datasource.grafana.app-datasources-ds-1"},
 					Spec: iamv0.ResourcePermissionSpec{
 						Resource: iamv0.ResourcePermissionspecResource{
 							ApiGroup: group,
@@ -161,13 +168,19 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 
 				tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 				require.NoError(t, err)
-				require.ElementsMatch(t,
-					tupleKeyStrings([]*openfgav1.TupleKey{
-						common.NewResourceTuple(subject.user, level.relation, group, resource, "", name),
-						common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "query", name),
-					}),
-					tupleKeyStrings(tuples),
-				)
+				expected := []*openfgav1.TupleKey{
+					common.NewResourceTuple(subject.user, level.relation, group, resource, "", name),
+					common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "query", name),
+				}
+				if level.verb == "Admin" {
+					expected = append(expected,
+						common.NewResourceTuple(subject.user, common.RelationGet, group, resource, "caching", name),
+						common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "caching", name),
+						common.NewResourceTuple(subject.user, common.RelationUpdate, group, resource, "caching", name),
+						common.NewResourceTuple(subject.user, common.RelationDelete, group, resource, "caching", name),
+					)
+				}
+				require.ElementsMatch(t, tupleKeyStrings(expected), tupleKeyStrings(tuples))
 			})
 		}
 	}
@@ -714,7 +727,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 // TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler
 // end-to-end (Role CRD → tuples) for the three legacy role-management actions:
 //
-//   - roles:write + permissions:type:delegate → edit on group_resource:.../roles
+//   - roles:write + permissions:type:delegate → create and update on group_resource:.../roles
 //   - roles:delete + permissions:type:delegate → delete on group_resource:.../roles
 //   - roles:read + roles:* → get on both .../roles and .../globalroles
 //
@@ -739,7 +752,8 @@ func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
 		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
-		{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/roles"},
 		{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
 	}), tupleKeyStrings(tuples))
 
@@ -920,7 +934,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{Name: "rp-datasource-schema-test"},
 						Spec: iamv0.ResourcePermissionSpec{
 							Resource: iamv0.ResourcePermissionspecResource{
-								ApiGroup: "loki.datasource.grafana.app",
+								ApiGroup: "datasource.grafana.app",
 								Resource: "datasources",
 								Name:     "ds-1",
 							},
@@ -932,7 +946,11 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 
 					tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 					require.NoError(t, err)
-					require.Len(t, tuples, 2)
+					if verb == "Admin" {
+						require.Len(t, tuples, 6)
+					} else {
+						require.Len(t, tuples, 2)
+					}
 					for _, tuple := range tuples {
 						validateTupleAgainstSchema(t, ts, tuple)
 					}
@@ -1060,4 +1078,11 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			validateTupleAgainstSchema(t, ts, tuple)
 		}
 	})
+}
+
+func TestTranslateFolderCanonicalRoot(t *testing.T) {
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "top-level", "annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}
+	tuples, err := TranslateFolderToTuples(obj)
+	require.NoError(t, err)
+	require.Empty(t, tuples)
 }

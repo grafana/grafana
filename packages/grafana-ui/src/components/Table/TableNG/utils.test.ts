@@ -25,7 +25,6 @@ import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_ROW_CLASS, STRIPE
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
-  type FromFieldsResult,
   type GetActionsFunctionLocal,
   type MeasureCellHeightEntry,
   type TableColumn,
@@ -58,14 +57,18 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
+  getHeaderAffordanceWidth,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   inferPills,
+  isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
+  filterFieldsByHiddenColumns,
   migrateTableDisplayModeToCellOptions,
+  orderFieldsByDisplayNames,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -75,6 +78,42 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([true, false])('uses supplied menu availability for width (hasColumnOptions=%s)', (hasColumnOptions) => {
+    const field: Field = {
+      name: 'A',
+      type: FieldType.string,
+      values: [],
+      config: { custom: { sortable: false, filterable: true, hideable: true } },
+    };
+    expect(
+      getHeaderAffordanceWidth(field, {
+        showTypeIcons: false,
+        tableRefreshEnabled: true,
+        isFiltered: false,
+        hasColumnOptions,
+      })
+    ).toBe(hasColumnOptions ? 22 : 0);
+  });
+  it.each([
+    [true, false, 22],
+    [true, true, 22],
+    [false, false, 0],
+  ])('reserves Assistant menu space once (refresh=%s filterable=%s)', (tableRefreshEnabled, filterable, expected) => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.string, values: [], config: { custom: { sortable: false, filterable } } },
+      ],
+    });
+    expect(
+      getHeaderAffordanceWidth(frame.fields[0], {
+        showTypeIcons: false,
+        tableRefreshEnabled,
+        isFiltered: false,
+        hasColumnOptions: true,
+      })
+    ).toBe(expected);
+  });
+
   describe('inferPills', () => {
     it('returns an empty array for empty/nullish values', () => {
       expect(inferPills('')).toEqual([]);
@@ -1186,6 +1225,8 @@ describe('TableNG utils', () => {
           measureHeight: expect.any(Function),
           estimateHeight: expect.any(Function),
           avgCharWidth: expect.any(Number),
+          numericCharWidth: expect.any(Number),
+          monoCharWidth: expect.any(Number),
         })
       );
       expect(ctx.measureHeight('the quick brown fox jumps over the lazy dog', 100, field, 0, 20)).toEqual(
@@ -1209,6 +1250,15 @@ describe('TableNG utils', () => {
     // (The real uwrap is ESM-only and Jest substitutes an inert stub for it — see `__mocks__/uwrap.ts`.)
     const lineCounter = (test: uWrap['test']): uWrap => ({ test, count: () => 1, each: () => {}, split: () => [] });
     const perCharWidths = lineCounter((text, width) => text.length * CHAR_W > width);
+
+    it('caps the total text passed to canvas and uwrap before splitting lines', () => {
+      const test = jest.fn(() => false);
+      const measureWidth = createFitWidthMeasurer(ctx, lineCounter(test));
+
+      expect(measureWidth('a'.repeat(10_000) + '\n' + 'b'.repeat(20_000))).toBe(79_998);
+      expect(test).toHaveBeenCalledTimes(1);
+      expect(test).toHaveBeenCalledWith('a'.repeat(10_000), 79_998);
+    });
 
     it('returns a width the line counter agrees keeps the text on one line', () => {
       const measureWidth = createFitWidthMeasurer(ctx, perCharWidths);
@@ -1241,6 +1291,14 @@ describe('TableNG utils', () => {
 
   describe('getTextHeightMeasurerFromUwrapCount', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
+
+    it.each([9_999, 10_000, 10_001, 28_000])('bounds a %i-character input before counting lines', (length) => {
+      const count = jest.fn(() => 2);
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(count);
+
+      expect(measureHeight('a'.repeat(length), 100, field, 0, 20)).toBe(40);
+      expect(count).toHaveBeenCalledWith('a'.repeat(Math.min(length, 10_000)), 100);
+    });
 
     it('wraps the uwrap count function', () => {
       const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));
@@ -1410,6 +1468,8 @@ describe('TableNG utils', () => {
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
       measureWidth: (text: string) => text.length * 8,
@@ -1456,6 +1516,8 @@ describe('TableNG utils', () => {
       estimateHeight: jest.fn(() => 2),
       measureWidth: (text: string) => text.length * 8,
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
     };
 
     it('sets up text height measurers for each text column if wrapping is on', () => {
@@ -1902,6 +1964,11 @@ describe('TableNG utils', () => {
           width: String(text).length * CHAR_W,
         })) as typeof typographyCtx.ctx.measureText);
       typographyCtx.avgCharWidth = CHAR_W;
+      // numeric/date columns use numericCharWidth and JSON uses monoCharWidth; pin them to CHAR_W too
+      // so the existing char-count math stays deterministic (tests that exercise the difference set
+      // these explicitly).
+      typographyCtx.numericCharWidth = CHAR_W;
+      typographyCtx.monoCharWidth = CHAR_W;
       return typographyCtx;
     };
 
@@ -1944,6 +2011,69 @@ describe('TableNG utils', () => {
 
       expect(width).toBe(75);
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
+    });
+
+    it.each([false, true])(
+      'sizes numeric columns by tabular digit width with table.refresh=%s',
+      (tableRefreshEnabled) => {
+        const theme = createTheme();
+        const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+        const widthWith = (numericCharWidth: number) => {
+          const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+          typographyCtx.numericCharWidth = numericCharWidth;
+          // availWidth 1 => no leftover, so the column is sized purely to its content.
+          return computeContentAwareColWidths([numberField], 1, {
+            typographyCtx,
+            headerTypographyCtx: makeTypographyCtx(),
+            showTypeIcons: false,
+            tableRefreshEnabled,
+            theme: { ...theme, flags: { ...theme.flags, tabularNums: true } },
+          })[0];
+        };
+        // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
+        expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
+      }
+    );
+
+    it.each([false, true])(
+      'uses proportional digit widths when tabularNums is off and table.refresh=%s',
+      (tableRefreshEnabled) => {
+        const theme = createTheme();
+        const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+        const widthWith = (numericCharWidth: number) => {
+          const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+          typographyCtx.numericCharWidth = numericCharWidth;
+          // With tabular-nums off, numeric columns fall back to avgCharWidth.
+          return computeContentAwareColWidths([numberField], 1, {
+            typographyCtx,
+            headerTypographyCtx: makeTypographyCtx(),
+            showTypeIcons: false,
+            tableRefreshEnabled,
+            theme: { ...theme, flags: { ...theme.flags, tabularNums: false } },
+          })[0];
+        };
+        // Widening the (unused) tabular advance must not change the width when the toggle is off.
+        expect(widthWith(2 * CHAR_W)).toBe(widthWith(CHAR_W));
+      }
+    );
+
+    it('sizes a JSON column by monoCharWidth (its monospace font), not avgCharWidth', () => {
+      const jsonField: Field = {
+        name: 'J',
+        type: FieldType.other,
+        values: [{ hello: 'world' }],
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      };
+      const widthWith = (monoCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx();
+        typographyCtx.monoCharWidth = monoCharWidth;
+        return computeContentAwareColWidths([jsonField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
     });
 
     it('keeps a configured width verbatim and grows the auto column into the leftover space', () => {
@@ -2511,6 +2641,19 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves header space for the drag handle on a reorderable column', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // 32px label + 22px sort + 20px drag handle + 13px chrome.
+      const widths = computeContentAwareColWidths(fields, 80, {
+        reorderable: true,
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      expect(widths).toEqual([87]);
+      const notReorderable: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(compute(notReorderable, 60)).toEqual([67]);
+    });
+
     it('reserves the first column’s extra padding when the panel has none of its own', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
@@ -2582,9 +2725,6 @@ describe('TableNG utils', () => {
     });
 
     it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
-      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
-      // non-filterable column must not pay for it: header 32 + sort arrow 22 + chrome 13 = 67, not
-      // the 89 it would need if the menu were reserved as well.
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
         computeContentAwareColWidths(fields, 60, {
@@ -2593,6 +2733,31 @@ describe('TableNG utils', () => {
           tableRefreshEnabled: true,
         })
       ).toEqual([67]);
+    });
+
+    it('reserves column menu space for a non-filterable column when hide/pin are available', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          hasColumnSidebar: true,
+        })
+      ).toEqual([89]);
+    });
+
+    it('reserves both the drag handle and the menu on a reorderable column with a sidebar', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(
+        computeContentAwareColWidths(fields, 100, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          reorderable: true,
+          hasColumnSidebar: true,
+        })
+      ).toEqual([109]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
@@ -2851,14 +3016,8 @@ describe('TableNG utils', () => {
         ...overrides,
       }) as TableColumn;
 
-    // markEdgeColumns mutates the passed-in FromFieldsResult's columns in place rather than
-    // returning a new list, so tests build one of these and read back `.columns` after the call.
-    const withColumns = (columns: TableColumn[]): FromFieldsResult => ({ columns, cellRootRenderers: {} });
-
     it('tags the first and last columns on every cell variant', () => {
-      const result = withColumns([col('a'), col('b'), col('c')]);
-      markEdgeColumns(result);
-      const [first, middle, last] = result.columns;
+      const [first, middle, last] = markEdgeColumns([col('a'), col('b'), col('c')]);
 
       expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
@@ -2870,20 +3029,29 @@ describe('TableNG utils', () => {
     });
 
     it('tags a single column as both edges', () => {
-      const result = withColumns([col('a')]);
-      markEdgeColumns(result);
-      const [only] = result.columns;
-
+      const [only] = markEdgeColumns([col('a')]);
       expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
     });
 
+    it('keeps edge markers out of columns reused in a reordered view', () => {
+      const a = col('a', { headerCellClass: 'a' });
+      const b = col('b', { headerCellClass: 'b' });
+      const c = col('c', { headerCellClass: 'c' });
+
+      const original = markEdgeColumns([a, b, c]);
+      const reordered = markEdgeColumns([b, a, c]);
+
+      expect(original[0].headerCellClass).toBe(`a ${FIRST_COLUMN_CLASS}`);
+      expect(reordered[0].headerCellClass).toBe(`b ${FIRST_COLUMN_CLASS}`);
+      expect(reordered[1].headerCellClass).toBe('a');
+      expect([a.headerCellClass, b.headerCellClass, c.headerCellClass]).toEqual(['a', 'b', 'c']);
+    });
+
     it('keeps existing classes, including ones computed per row', () => {
-      const result = withColumns([
+      const [first] = markEdgeColumns([
         col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
       ]);
-      markEdgeColumns(result);
-      const [first] = result.columns;
 
       expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
       expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
@@ -2891,10 +3059,34 @@ describe('TableNG utils', () => {
       );
     });
 
-    it('leaves the list unchanged when there are no columns', () => {
-      const result = withColumns([]);
-      markEdgeColumns(result);
-      expect(result.columns).toEqual([]);
+    it('returns the list unchanged when there are no columns', () => {
+      expect(markEdgeColumns([])).toEqual([]);
+    });
+  });
+
+  describe('isShiftTabToHeader', () => {
+    const shiftTab = { shiftKey: true, key: 'Tab' };
+
+    it('is true for Shift+Tab on the first cell of the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, shiftTab, 'c0')).toBe(true);
+    });
+
+    it('is false when the column is not the first column', () => {
+      expect(isShiftTabToHeader({ key: 'c1' }, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when the row is not the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 3 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when Shift is not held or the key is not Tab', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: false, key: 'Tab' }, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: true, key: 'Enter' }, 'c0')).toBe(false);
+    });
+
+    it('is false when column or row is undefined (keydown outside a data cell)', () => {
+      expect(isShiftTabToHeader(undefined, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, undefined, shiftTab, 'c0')).toBe(false);
     });
   });
 
@@ -3499,6 +3691,52 @@ describe('TableNG utils', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
       const predicate = predicateByName('other');
       expect(predicate(field)).toBe(false);
+    });
+  });
+
+  describe('orderFieldsByDisplayNames', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when order is undefined', () => {
+      expect(orderFieldsByDisplayNames(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when order is empty', () => {
+      expect(orderFieldsByDisplayNames(fields, [])).toBe(fields);
+    });
+
+    it('reorders fields to match the given display names', () => {
+      expect(orderFieldsByDisplayNames(fields, ['C', 'A', 'B'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+
+    it('appends fields missing from order, preserving their original relative order', () => {
+      expect(orderFieldsByDisplayNames(fields, ['B'])).toEqual([fieldB, fieldA, fieldC]);
+    });
+
+    it('ignores names in order that do not match any field', () => {
+      expect(orderFieldsByDisplayNames(fields, ['D', 'C'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when hiddenColumns is undefined', () => {
+      expect(filterFieldsByHiddenColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when hiddenColumns is empty', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('filters out fields whose display name is hidden', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set(['B']))).toEqual([fieldA, fieldC]);
     });
   });
 

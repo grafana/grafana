@@ -14,43 +14,62 @@ type evaluateTestCase struct {
 	permissions map[string][]string
 }
 
-func TestPermission_Evaluate(t *testing.T) {
-	tests := []evaluateTestCase{
-		{
-			desc:      "should evaluate to true",
-			expected:  true,
-			evaluator: EvalPermission("reports:read", "reports:1"),
-			permissions: map[string][]string{
-				"reports:read": {"reports:1"},
-			},
+var permissionEvaluateTestCases = []evaluateTestCase{
+	{
+		desc:      "should deny without permissions",
+		evaluator: EvalPermission("reports:read"),
+	},
+	{
+		desc:      "should allow action-only checks when the action has no scopes",
+		evaluator: EvalPermission("reports:read"),
+		permissions: map[string][]string{
+			"reports:read": {},
 		},
-		{
-			desc:      "should evaluate to true when at least one scope matches",
-			expected:  true,
-			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
-			permissions: map[string][]string{
-				"reports:read": {"reports:2"},
-			},
+		expected: true,
+	},
+	{
+		desc:      "should deny an explicit empty scope when the granted scope is empty",
+		evaluator: EvalPermission("reports:read", ""),
+		permissions: map[string][]string{
+			"reports:read": {""},
 		},
-		{
-			desc:      "should evaluate to true for empty scope",
-			expected:  true,
-			evaluator: EvalPermission("reports:read"),
-			permissions: map[string][]string{
-				"reports:read": {"reports:1"},
-			},
+	},
+	{
+		desc:      "should evaluate to true",
+		expected:  true,
+		evaluator: EvalPermission("reports:read", "reports:1"),
+		permissions: map[string][]string{
+			"reports:read": {"reports:1"},
 		},
-		{
-			desc:      "should evaluate to false when no scopes matches",
-			expected:  false,
-			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
-			permissions: map[string][]string{
-				"reports:read": {"reports:9", "reports:10"},
-			},
+	},
+	{
+		desc:      "should evaluate to true when at least one scope matches",
+		expected:  true,
+		evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
+		permissions: map[string][]string{
+			"reports:read": {"reports:2"},
 		},
-	}
+	},
+	{
+		desc:      "should evaluate to true for empty scope",
+		expected:  true,
+		evaluator: EvalPermission("reports:read"),
+		permissions: map[string][]string{
+			"reports:read": {"reports:1"},
+		},
+	},
+	{
+		desc:      "should evaluate to false when no scopes matches",
+		expected:  false,
+		evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
+		permissions: map[string][]string{
+			"reports:read": {"reports:9", "reports:10"},
+		},
+	},
+}
 
-	for _, test := range tests {
+func TestPermission_Evaluate(t *testing.T) {
+	for _, test := range permissionEvaluateTestCases {
 		t.Run(test.desc, func(t *testing.T) {
 			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
@@ -128,47 +147,64 @@ func TestPermission_Inject(t *testing.T) {
 	}
 }
 
-func TestAll_Evaluate(t *testing.T) {
-	tests := []evaluateTestCase{
-		{
-			desc: "should return true for one that matches",
-			evaluator: EvalAll(
-				EvalPermission("settings:write", Scope("settings", "*")),
-			),
-			permissions: map[string][]string{
-				"settings:write": {"settings:*"},
-			},
-			expected: true,
+var allEvaluateTestCases = []evaluateTestCase{
+	{
+		desc:      "should allow empty all without permissions at evaluator level",
+		evaluator: EvalAll(),
+		expected:  true,
+	},
+	{
+		desc:      "should allow empty all with unrelated permissions",
+		evaluator: EvalAll(),
+		permissions: map[string][]string{
+			"folders:read": {"folders:uid:folder-1"},
 		},
-		{
-			desc: "should return true for several that matches",
-			evaluator: EvalAll(
-				EvalPermission("settings:write", Scope("settings", "*")),
-				EvalPermission("settings:read", Scope("settings", "auth.saml", "*")),
-			),
-			permissions: map[string][]string{
-				"settings:write": {"settings:*"},
-				"settings:read":  {"settings:*"},
-			},
-			expected: true,
+		expected: true,
+	},
+	{
+		desc:      "should deny nonempty all without permissions",
+		evaluator: EvalAll(EvalPermission("reports:read")),
+	},
+	{
+		desc: "should return true for one that matches",
+		evaluator: EvalAll(
+			EvalPermission("settings:write", Scope("settings", "*")),
+		),
+		permissions: map[string][]string{
+			"settings:write": {"settings:*"},
 		},
-		{
-			desc: "should return false if one does not match",
-			evaluator: EvalAll(
-				EvalPermission("settings:write", Scope("settings", "*")),
-				EvalPermission("settings:read", Scope("settings", "auth.saml", "*")),
-				EvalPermission("report:read", Scope("reports", "*")),
-			),
-			permissions: map[string][]string{
-				"settings:write": {"settings:*"},
-				"settings:read":  {"settings:*"},
-				"report:read":    {"report:1"},
-			},
-			expected: false,
+		expected: true,
+	},
+	{
+		desc: "should return true for several that matches",
+		evaluator: EvalAll(
+			EvalPermission("settings:write", Scope("settings", "*")),
+			EvalPermission("settings:read", Scope("settings", "auth.saml", "*")),
+		),
+		permissions: map[string][]string{
+			"settings:write": {"settings:*"},
+			"settings:read":  {"settings:*"},
 		},
-	}
+		expected: true,
+	},
+	{
+		desc: "should return false if one does not match",
+		evaluator: EvalAll(
+			EvalPermission("settings:write", Scope("settings", "*")),
+			EvalPermission("settings:read", Scope("settings", "auth.saml", "*")),
+			EvalPermission("report:read", Scope("reports", "*")),
+		),
+		permissions: map[string][]string{
+			"settings:write": {"settings:*"},
+			"settings:read":  {"settings:*"},
+			"report:read":    {"report:1"},
+		},
+		expected: false,
+	},
+}
 
-	for _, test := range tests {
+func TestAll_Evaluate(t *testing.T) {
+	for _, test := range allEvaluateTestCases {
 		t.Run(test.desc, func(t *testing.T) {
 			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
@@ -240,45 +276,56 @@ func TestAll_Inject(t *testing.T) {
 	}
 }
 
-func TestAny_Evaluate(t *testing.T) {
-	tests := []evaluateTestCase{
-		{
-			desc: "should return true for one that matches",
-			evaluator: EvalAny(
-				EvalPermission("settings:write", Scope("settings", "*")),
-			),
-			permissions: map[string][]string{
-				"settings:write": {"settings:*"},
-			},
-			expected: true,
+var anyEvaluateTestCases = []evaluateTestCase{
+	{
+		desc:      "should deny empty any without permissions",
+		evaluator: EvalAny(),
+	},
+	{
+		desc:      "should deny empty any with unrelated permissions",
+		evaluator: EvalAny(),
+		permissions: map[string][]string{
+			"folders:read": {"folders:uid:folder-1"},
 		},
-		{
-			desc: "should return true when at least one matches",
-			evaluator: EvalAny(
-				EvalPermission("settings:write", Scope("settings", "auth.saml", "*")),
-				EvalPermission("report:read", Scope("reports", "1")),
-				EvalPermission("report:write", Scope("reports", "10")),
-			),
-			permissions: map[string][]string{
-				"settings:write": {"settings:*"},
-			},
-			expected: true,
+	},
+	{
+		desc: "should return true for one that matches",
+		evaluator: EvalAny(
+			EvalPermission("settings:write", Scope("settings", "*")),
+		),
+		permissions: map[string][]string{
+			"settings:write": {"settings:*"},
 		},
-		{
-			desc: "should return false when there is no match",
-			evaluator: EvalAny(
-				EvalPermission("settings:write", Scope("settings", "auth.saml", "*")),
-				EvalPermission("report:read", Scope("reports", "1")),
-				EvalPermission("report:write", Scope("reports", "10")),
-			),
-			permissions: map[string][]string{
-				"permissions:write": {"permissions:type:delegate"},
-			},
-			expected: false,
+		expected: true,
+	},
+	{
+		desc: "should return true when at least one matches",
+		evaluator: EvalAny(
+			EvalPermission("settings:write", Scope("settings", "auth.saml", "*")),
+			EvalPermission("report:read", Scope("reports", "1")),
+			EvalPermission("report:write", Scope("reports", "10")),
+		),
+		permissions: map[string][]string{
+			"settings:write": {"settings:*"},
 		},
-	}
+		expected: true,
+	},
+	{
+		desc: "should return false when there is no match",
+		evaluator: EvalAny(
+			EvalPermission("settings:write", Scope("settings", "auth.saml", "*")),
+			EvalPermission("report:read", Scope("reports", "1")),
+			EvalPermission("report:write", Scope("reports", "10")),
+		),
+		permissions: map[string][]string{
+			"permissions:write": {"permissions:type:delegate"},
+		},
+		expected: false,
+	},
+}
 
-	for _, test := range tests {
+func TestAny_Evaluate(t *testing.T) {
+	for _, test := range anyEvaluateTestCases {
 		t.Run(test.desc, func(t *testing.T) {
 			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
@@ -350,60 +397,91 @@ func TestAny_Inject(t *testing.T) {
 	}
 }
 
-type combinedTestCase struct {
-	desc        string
-	evaluator   Evaluator
-	expected    bool
-	permissions map[string][]string
+type combinedTestCase = evaluateTestCase
+
+var combinedEvaluateTestCases = []combinedTestCase{
+	{
+		desc: "should allow nested empty all with unrelated permissions",
+		evaluator: EvalAny(
+			EvalPermission("reports:read", "reports:1"),
+			EvalAll(),
+		),
+		permissions: map[string][]string{
+			"folders:read": {"folders:uid:folder-1"},
+		},
+		expected: true,
+	},
+	{
+		desc: "should deny nested empty any despite another matching child",
+		evaluator: EvalAll(
+			EvalPermission("reports:read", "reports:1"),
+			EvalAny(),
+		),
+		permissions: map[string][]string{
+			"reports:read": {"reports:1"},
+		},
+	},
+	{
+		desc: "should evaluate all containing any with alternative scopes",
+		evaluator: EvalAll(
+			EvalAny(
+				EvalPermission("reports:write", "reports:1"),
+				EvalPermission("reports:read", "reports:missing", "reports:1"),
+			),
+			EvalPermission("folders:read", "folders:uid:folder-1"),
+		),
+		permissions: map[string][]string{
+			"reports:read": {"reports:1"},
+			"folders:read": {"folders:uid:folder-1"},
+		},
+		expected: true,
+	},
+	{
+		desc: "should return true when first is true",
+		evaluator: EvalAny(
+			EvalPermission("settings:write", Scope("settings", "*")),
+			EvalAll(
+				EvalPermission("settings:write", "settings:auth.saml:enabled"),
+				EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
+			),
+		),
+		expected: true,
+		permissions: map[string][]string{
+			"settings:write": {"settings:*"},
+		},
+	},
+	{
+		desc: "should return true when first is false and all is true",
+		evaluator: EvalAny(
+			EvalPermission("settings:write", Scope("settings", "*")),
+			EvalAll(
+				EvalPermission("settings:write", "settings:auth.saml:enabled"),
+				EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
+			),
+		),
+		expected: true,
+		permissions: map[string][]string{
+			"settings:write": {"settings:auth.saml:enabled", "settings:auth.saml:max_issue_delay"},
+		},
+	},
+	{
+		desc: "should return false when both are false",
+		evaluator: EvalAny(
+			EvalPermission("settings:write", Scope("settings", "*")),
+			EvalAll(
+				EvalPermission("settings:write", "settings:auth.saml:enabled"),
+				EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
+			),
+		),
+		expected: false,
+		permissions: map[string][]string{
+			"settings:write": {"settings:auth.saml:enabled"},
+		},
+	},
 }
 
 func TestEval(t *testing.T) {
-	tests := []combinedTestCase{
-		{
-			desc: "should return true when first is true",
-			evaluator: EvalAny(
-				EvalPermission("settings:write", Scope("settings", "*")),
-				EvalAll(
-					EvalPermission("settings:write", "settings:auth.saml:enabled"),
-					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
-				),
-			),
-			expected: true,
-			permissions: map[string][]string{
-				"settings:write": {"settings:*"},
-			},
-		},
-		{
-			desc: "should return true when first is false and all is true",
-			evaluator: EvalAny(
-				EvalPermission("settings:write", Scope("settings", "*")),
-				EvalAll(
-					EvalPermission("settings:write", "settings:auth.saml:enabled"),
-					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
-				),
-			),
-			expected: true,
-			permissions: map[string][]string{
-				"settings:write": {"settings:auth.saml:enabled", "settings:auth.saml:max_issue_delay"},
-			},
-		},
-		{
-			desc: "should return false when both are false",
-			evaluator: EvalAny(
-				EvalPermission("settings:write", Scope("settings", "*")),
-				EvalAll(
-					EvalPermission("settings:write", "settings:auth.saml:enabled"),
-					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
-				),
-			),
-			expected: false,
-			permissions: map[string][]string{
-				"settings:write": {"settings:auth.saml:enabled"},
-			},
-		},
-	}
-
-	for _, test := range tests {
+	for _, test := range combinedEvaluateTestCases {
 		t.Run(test.desc, func(t *testing.T) {
 			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
@@ -455,4 +533,65 @@ func TestEval_MutateScopes(t *testing.T) {
 		})
 		assert.True(t, hasAccess)
 	})
+}
+
+func TestEval_ShortCircuit(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		compose     func(...Evaluator) Evaluator
+		permissions map[string][]string
+		wantCalls   []string
+		allowed     bool
+	}{
+		{
+			name:      "all stops at the first denial",
+			compose:   EvalAll,
+			wantCalls: []string{"first"},
+		},
+		{
+			name:    "any stops at the first grant",
+			compose: EvalAny,
+			permissions: map[string][]string{
+				"first": {},
+			},
+			wantCalls: []string{"first"},
+			allowed:   true,
+		},
+		{
+			name:    "all visits matching children in order",
+			compose: EvalAll,
+			permissions: map[string][]string{
+				"first":  {},
+				"second": {},
+			},
+			wantCalls: []string{"first", "second"},
+			allowed:   true,
+		},
+		{
+			name:      "any visits denied children in order",
+			compose:   EvalAny,
+			wantCalls: []string{"first", "second"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls []string
+			evaluator := tc.compose(
+				recordingEvaluator{Evaluator: EvalPermission("first"), calls: &calls},
+				recordingEvaluator{Evaluator: EvalPermission("second"), calls: &calls},
+			)
+
+			assert.Equal(t, tc.allowed, evaluator.Evaluate(tc.permissions))
+			assert.Equal(t, tc.wantCalls, calls)
+		})
+	}
+}
+
+type recordingEvaluator struct {
+	Evaluator
+	calls *[]string
+}
+
+func (e recordingEvaluator) Evaluate(permissions map[string][]string) bool {
+	*e.calls = append(*e.calls, e.String())
+	return e.Evaluator.Evaluate(permissions)
 }

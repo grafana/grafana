@@ -217,7 +217,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *collections.Star
 			UserID:       user.ID,
 			OrgID:        user.OrgID,
 			DashboardUID: dashboard,
-			DashboardID:  randID,
+			DashboardID:  randID, //nolint:staticcheck // Preserve legacy field compatibility.
 			Updated:      now,
 		})
 		if err != nil {

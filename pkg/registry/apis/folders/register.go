@@ -33,6 +33,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -142,6 +143,7 @@ func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.Namespa
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	iamFeatures iamapi.Features,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessClient authlib.AccessClient,
@@ -163,7 +165,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
 	// unwired (so its folderStorage wrapper isn't installed); otherwise keep the legacy path.
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if iamFeatures.ResourcePermissionsAPI {
 		builder.restConfigProvider = restConfigProvider
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
@@ -576,7 +578,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		return validateOnCreate(ctx, f, newCreateParentsGetter(b.storage, b.maxNestedFolderDepth), b.maxNestedFolderDepth, a.IsDryRun())
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
 		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))

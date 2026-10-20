@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -1073,6 +1074,45 @@ func TestReceiverService_Update(t *testing.T) {
 				tc.expectedProvenances = make(map[string]models.Provenance)
 			}
 			assert.Equal(t, tc.expectedProvenances, provenances)
+		})
+	}
+}
+
+func TestReceiverService_Update_HasUpdateProtectedError(t *testing.T) {
+	writer := &user.SignedInUser{OrgID: 1}
+	existing := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"),
+		models.ReceiverMuts.WithIntegrations(models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()))()
+
+	for _, tc := range []struct {
+		name        string
+		hasErr      error
+		expectedErr string
+	}{
+		{name: "backend error is returned", hasErr: errors.New("boom"), expectedErr: "failed to check protected fields permission"},
+		{name: "authorization error is treated as no permission", hasErr: ac.NewAuthorizationErrorGeneric("update protected")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sut := createReceiverServiceSut(t, fake_secrets.NewFakeSecretsService())
+			revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
+			require.NoError(t, err)
+			created, err := revision.CreateReceiver(&existing)
+			require.NoError(t, err)
+			require.NoError(t, sut.cfgStore.Save(context.Background(), revision, writer.GetOrgID()))
+
+			sut.authz = &acfakes.FakeReceiverAccessService[*models.Receiver]{
+				HasUpdateProtectedFunc: func(context.Context, identity.Requester, *models.Receiver) (bool, error) {
+					return false, tc.hasErr
+				},
+			}
+
+			// No protected field changes.
+			_, err = sut.UpdateReceiver(context.Background(), created, nil, writer.GetOrgID(), writer)
+			if tc.expectedErr != "" {
+				require.ErrorIs(t, err, tc.hasErr)
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -128,7 +127,7 @@ func (s *SSOSettingsStore) Upsert(ctx context.Context, settings *models.SSOSetti
 			}
 			_, err = sess.Table(dbHelper.Table("sso_setting")).UseBool(isDeletedColumn).Update(updated, existing)
 		} else {
-			settings.ID = uuid.New().String()
+			settings.ID = uuid.NewV4().String()
 			settings.Created = now
 			settings.Updated = now
 			_, err = sess.Table(dbHelper.Table("sso_setting")).Insert(settings)

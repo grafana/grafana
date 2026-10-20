@@ -280,7 +280,7 @@ func TestProxy_Test(t *testing.T) {
 	}
 }
 
-var _ proxyCache = new(fakeCache)
+var _ proxyCache = (*fakeCache)(nil)
 
 type fakeCache struct {
 	data        map[string][]byte
