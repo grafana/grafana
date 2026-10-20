@@ -16,10 +16,12 @@ import (
 	otelcodes "go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/app"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -595,7 +597,7 @@ func TestSearchServicePermissions(t *testing.T) {
 				}
 				ctx := authlib.WithAuthInfo(t.Context(), id)
 				if tc.wantPermission == "" {
-					_, err := s.checkSearchServicePermissions(ctx, req)
+					_, err := checkPermissions(s, ctx, req)
 					require.NoError(t, err)
 					requirePermissionFailures(t, s.indexMetrics.SearchServicePermissionFailures, "grafana_index_server_search_service_permission_failures_total")
 					require.Zero(t, logger.WarnLogs.Calls)
@@ -687,7 +689,7 @@ func TestSearchServicePermissionExemptions(t *testing.T) {
 						testID = userWithDelegatedPermissions()
 					}
 				}
-				_, err := s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), testID), req)
+				_, err := checkPermissions(s, authlib.WithAuthInfo(t.Context(), testID), req)
 				require.ErrorIs(t, err, wantErr)
 				var failures []prometheus.Labels
 				if tc.wantExempt > 0 {
@@ -768,6 +770,12 @@ func TestAuthzLimitedClient_BatchCheckReturnsMissingResultError(t *testing.T) {
 	require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
 }
 
+// checkPermissions checks req against the types its index draws from, as Search does.
+func checkPermissions(s *searchServer, ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]string, error) {
+	key := req.Options.Key
+	return s.checkSearchServicePermissions(ctx, req, s.indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}))
+}
+
 func newPermissionTestSearchServer(client authlib.AccessClient) *searchServer {
 	return &searchServer{access: client, indexMetrics: ProvideIndexMetrics(nil), log: log.NewNopLogger()}
 }
@@ -791,10 +799,15 @@ func (allUncheckedClient) IsCompatibleWithRBAC(string, string) bool { return fal
 type recordingIndex struct {
 	*MockResourceIndex
 	req *resourcepb.ResourceSearchRequest
+	// duringSearch, if set, runs while the index is searched.
+	duringSearch func()
 }
 
 func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	r.req = req
+	if r.duringSearch != nil {
+		r.duringSearch()
+	}
 	return &resourcepb.ResourceSearchResponse{}, nil
 }
 
@@ -823,7 +836,7 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 			s.log = logger
 			ctx := authlib.WithAuthInfo(t.Context(), withPermissions("dashboard.grafana.app:get"))
 
-			excluded, err := s.checkSearchServicePermissions(ctx, globalRequest())
+			excluded, err := checkPermissions(s, ctx, globalRequest())
 			require.NoError(t, err)
 			assert.Equal(t, []string{folders}, excluded)
 			requirePermissionFailures(t, s.indexMetrics.SearchServicePermissionFailures, "grafana_index_server_search_service_permission_failures_total",
@@ -835,7 +848,7 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 			s := newPermissionTestSearchServer(newLimitedClient(t))
 			ctx := authlib.WithAuthInfo(t.Context(), withPermissions("playlist.grafana.app:get"))
 
-			excluded, err := s.checkSearchServicePermissions(ctx, globalRequest())
+			excluded, err := checkPermissions(s, ctx, globalRequest())
 			require.Error(t, err)
 			assert.Equal(t, []string{dashboards, folders}, excluded)
 		})
@@ -848,7 +861,7 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get"))
 
 		for range 2 {
-			excluded, err := s.checkSearchServicePermissions(ctx, globalRequest())
+			excluded, err := checkPermissions(s, ctx, globalRequest())
 			require.NoError(t, err)
 			assert.Equal(t, []string{folders}, excluded)
 		}
@@ -860,15 +873,109 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("folder.grafana.app:get"))
 
 		// Dashboards are skipped for the missing grant, folders for being unchecked.
-		_, err := s.checkSearchServicePermissions(ctx, globalRequest())
+		_, err := checkPermissions(s, ctx, globalRequest())
 		require.Error(t, err)
 
 		s = newPermissionTestSearchServer(allUncheckedClient{newLimitedClient(t)})
-		_, err = s.checkSearchServicePermissions(ctx, globalRequest())
+		_, err = checkPermissions(s, ctx, globalRequest())
 		require.ErrorContains(t, err, "no type whose results this server checks")
 	})
 
-	t.Run("the search leaves the types out of the query and reports the skipped ones", func(t *testing.T) {
+	t.Run("a type dropped from the coverage is not searched while the index still holds it", func(t *testing.T) {
+		yes := true
+		pages := testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		// The index holds pages, and type sync has not removed them yet.
+		require.NoError(t, index.RecordCompletedTypeBuild(schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}, TypeBuild{}))
+		s := newPermissionTestSearchServer(newLimitedClient(t))
+		s.globalIndexEnabled = true
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{pages})
+		s.globalCoverage.Reload(AppManifests(), nil)
+		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
+
+		rsp, err := s.Search(ctx, globalRequest())
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		assert.Empty(t, rsp.SkippedTypes)
+		require.NotNil(t, index.req)
+		assert.Equal(t, []*resourcepb.Requirement{{
+			Key: SEARCH_FIELD_GROUP_RESOURCE, Operator: string(selection.In), Values: []string{dashboards, folders},
+		}}, index.req.Options.Fields)
+	})
+
+	t.Run("the kinds of the covered types are reported, including live ones", func(t *testing.T) {
+		yes := true
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		s := newPermissionTestSearchServer(newLimitedClient(t))
+		s.globalIndexEnabled = true
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
+		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
+
+		rsp, err := s.Search(ctx, globalRequest())
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		assert.Equal(t, map[string]string{
+			dashboards:                "Dashboard",
+			folders:                   "Folder",
+			"x.ext.grafana.app/pages": "Page",
+		}, rsp.Kinds)
+	})
+
+	t.Run("the kinds reported are those of the types searched, even if the coverage changes meanwhile", func(t *testing.T) {
+		yes := true
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		s := newPermissionTestSearchServer(newLimitedClient(t))
+		s.globalIndexEnabled = true
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
+		index.duringSearch = func() { s.globalCoverage.Reload(AppManifests(), nil) }
+		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
+
+		rsp, err := s.Search(ctx, globalRequest())
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		assert.Equal(t, "Page", rsp.Kinds["x.ext.grafana.app/pages"])
+	})
+
+	t.Run("kinds are reported for a global search that also federates another index", func(t *testing.T) {
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		s := newPermissionTestSearchServer(newLimitedClient(t))
+		s.globalIndexEnabled = true
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{
+			GlobalSearchKey("stacks-1"): index,
+			{Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards"}: &MockResourceIndex{},
+		}}
+		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get"))
+		req := globalRequest()
+		req.Federated = []*resourcepb.ResourceKey{{Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards"}}
+
+		rsp, err := s.Search(ctx, req)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		assert.Equal(t, map[string]string{dashboards: "Dashboard", folders: "Folder"}, rsp.Kinds)
+	})
+
+	t.Run("a global search covering no types fails", func(t *testing.T) {
+		// No access client and no caller identity: the permission check passes
+		// everything, and a filter on no types would match everything.
+		s := &searchServer{indexMetrics: ProvideIndexMetrics(nil), log: log.NewNopLogger(), globalIndexEnabled: true,
+			globalCoverage: NewGlobalSearchCoverageRegistry(nil)}
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
+
+		rsp, err := s.Search(t.Context(), globalRequest())
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		assert.Contains(t, rsp.Error.Message, "covers no types")
+		assert.Nil(t, index.req, "the index is not searched")
+	})
+
+	t.Run("the search names the types it searches and reports the skipped ones", func(t *testing.T) {
 		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
@@ -882,7 +989,7 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		assert.Equal(t, []string{folders}, rsp.SkippedTypes)
 		require.NotNil(t, index.req)
 		assert.Equal(t, []*resourcepb.Requirement{{
-			Key: SEARCH_FIELD_GROUP_RESOURCE, Operator: string(selection.NotIn), Values: []string{folders},
+			Key: SEARCH_FIELD_GROUP_RESOURCE, Operator: string(selection.In), Values: []string{dashboards},
 		}}, index.req.Options.Fields)
 		assert.Empty(t, req.Options.Fields, "the caller's request is left as it was")
 	})
@@ -952,7 +1059,7 @@ func TestSearchServicePermissionsDoesNotDependOnClient(t *testing.T) {
 				})
 			}
 			// Local callers without tokens still use their access client's rules.
-			_, err := s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), userWithDelegatedPermissions()), req)
+			_, err := checkPermissions(s, authlib.WithAuthInfo(t.Context(), userWithDelegatedPermissions()), req)
 			require.NoError(t, err)
 		})
 	}

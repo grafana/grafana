@@ -221,11 +221,11 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
           <Box paddingTop={3}>
             <Stack>
-              <Button variant="secondary" onClick={model.onClose}>
-                <Trans i18nKey="common.cancel">Cancel</Trans>
-              </Button>
               <Button variant="primary" onClick={model.onApply}>
                 <Trans i18nKey="common.apply">Apply</Trans>
+              </Button>
+              <Button variant="secondary" onClick={model.onClose}>
+                <Trans i18nKey="common.cancel">Cancel</Trans>
               </Button>
             </Stack>
           </Box>

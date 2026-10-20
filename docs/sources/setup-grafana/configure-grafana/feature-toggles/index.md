@@ -98,6 +98,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `grafana.newTextPanel`             | Enables the new text panel                                                                                                     |
+| `text.newFeatures`                 | Enables the new features in text panel                                                                                         |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |

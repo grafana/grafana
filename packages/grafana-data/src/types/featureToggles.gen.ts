@@ -837,7 +837,7 @@ export interface FeatureToggles {
   kubernetesAuthzRolesApi?: boolean;
   /**
   * Registers AuthZ TeamLBACRule /apis endpoint
-  * @default false
+  * @default true
   */
   kubernetesAuthzTeamLBACRuleApi?: boolean;
   /**
@@ -900,11 +900,6 @@ export interface FeatureToggles {
   * @default false
   */
   newInfluxDSConfigPageDesign?: boolean;
-  /**
-  * Set this to true to enable all app chrome extensions registered by plugins.
-  * @default false
-  */
-  enableAppChromeExtensions?: boolean;
   /**
   * Enables use of app platform API for folders
   * @default true

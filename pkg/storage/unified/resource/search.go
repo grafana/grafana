@@ -523,6 +523,7 @@ type searchServer struct {
 	buildVersion         *semver.Version
 	searchFields         *SearchFieldsRegistry
 	hybridSearchConfig   *HybridSearchConfigRegistry
+	globalCoverage       *GlobalSearchCoverageRegistry
 	requiredFeatures     []IndexFeature
 
 	bgTaskWg     sync.WaitGroup
@@ -640,6 +641,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		buildVersion:              opts.BuildVersion,
 		searchFields:              searchFields,
 		hybridSearchConfig:        opts.HybridSearchConfig,
+		globalCoverage:            opts.GlobalSearchCoverage,
 		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
@@ -942,30 +944,52 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
-	excluded, err := s.checkSearchServicePermissions(ctx, req)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
-	}
-	if len(excluded) > 0 {
-		// Cloned so the caller's request is not changed underneath it.
-		req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
-		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
-			Key:      SEARCH_FIELD_GROUP_RESOURCE,
-			Operator: string(selection.NotIn),
-			Values:   excluded,
-		})
-	}
-
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
+	// Read once, so the types checked are the types searched, and the kinds
+	// reported are theirs, even if the coverage changes meanwhile.
+	// Kept, because the federated lookup below reuses nsr for other keys.
+	global := nsr.IsGlobal()
+	sources := []NamespacedResource{nsr}
+	var kinds map[schema.GroupResource]string
+	if global {
+		var types []schema.GroupResource
+		types, kinds = s.globalCoverage.Snapshot()
+		sources = globalSources(nsr.Namespace, types)
+	}
+	excluded, err := s.checkSearchServicePermissions(ctx, req, sources)
+	if err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+	}
+	if global {
+		// Named rather than the excluded ones left out, so the index also hides a
+		// type it still holds documents of after the coverage dropped it.
+		searched := make([]string, 0, len(sources))
+		for _, src := range sources {
+			if gr := src.Group + "/" + src.Resource; !slices.Contains(excluded, gr) {
+				searched = append(searched, gr)
+			}
+		}
+		// A filter on no values matches everything.
+		if len(searched) == 0 {
+			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(errors.New("the global search covers no types"))}, nil
+		}
+		// Cloned so the caller's request is not changed underneath it.
+		req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key:      SEARCH_FIELD_GROUP_RESOURCE,
+			Operator: string(selection.In),
+			Values:   searched,
+		})
+	}
 	// Unavailable rather than failed: the API that serves this search is enabled
 	// separately, and may be on before this server builds the index.
-	if nsr.IsGlobal() && !s.globalIndexEnabled {
+	if global && !s.globalIndexEnabled {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
 		}, nil
@@ -996,6 +1020,12 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	rsp, err := idx.Search(ctx, s.access, req, federate, stats)
 	if rsp != nil && len(excluded) > 0 {
 		rsp.SkippedTypes = excluded
+	}
+	if rsp != nil && global {
+		rsp.Kinds = make(map[string]string, len(kinds))
+		for gr, kind := range kinds {
+			rsp.Kinds[gr.Group+"/"+gr.Resource] = kind
+		}
 	}
 	return rsp, err
 }
@@ -1614,7 +1644,7 @@ func (s *searchServer) globalIndexStats(stats []ResourceStats) []ResourceStats {
 	}
 
 	covered := map[NamespacedResource]bool{}
-	for _, gr := range GlobalSearchResourceTypes() {
+	for _, gr := range s.globalCoverage.Types() {
 		covered[NamespacedResource{Group: gr.Group, Resource: gr.Resource}] = true
 	}
 
@@ -1863,6 +1893,9 @@ func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthChec
 func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
+	// Types added to or dropped from global indexes are synced at once. Taken
+	// before each scan, so a change while it runs starts another.
+	changed := s.globalCoverage.Changed()
 	// A global index reused at startup may predate a type being added or
 	// dropped, so that is checked now rather than at the first tick.
 	s.scanForIndexesToRebuild(ctx, false)
@@ -1876,7 +1909,11 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
+			changed = s.globalCoverage.Changed()
 			s.scanForIndexesToRebuild(ctx, true)
+		case <-changed:
+			changed = s.globalCoverage.Changed()
+			s.scanForIndexesToRebuild(ctx, false)
 		}
 	}
 }
@@ -2495,7 +2532,7 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 	// A namespace-wide index draws from several resource types; every other index
 	// draws from its own. Documents of a namespace-wide index keep the standard
 	// fields only, because it declares no others.
-	sources := indexSources(nsr)
+	sources := s.indexSources(nsr)
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
