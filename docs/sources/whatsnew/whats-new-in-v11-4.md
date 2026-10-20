@@ -22,7 +22,7 @@ weight: -46
 
 Welcome to Grafana 11.4! This is a special release with one new feature, created in partnership with AWS. We’ve made improvements to Cloudwatch so you can query your logs using two additional query languages: Opensearch PPL and Opensearch SQL. We’ve also updated the querying experience by providing a sample of commonly-used queries, syntax highlighting in the query editor, and auto-completion suggestions for complex queries. Read on to learn more about this new feature.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.4, check out our [Upgrade Guide](https://archive.grafana.com/docs/grafana/v11.4/upgrade-guide/upgrade-v11.4/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.4, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.4/).
 
 ## Query Cloudwatch Logs Insights with PPL and SQL
 

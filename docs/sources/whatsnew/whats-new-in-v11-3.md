@@ -24,7 +24,7 @@ Welcome to Grafana 11.3! Scenes-powered dashboards are now generally available a
 
 {{< youtube id="a0rdRbYPCls" >}}
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.3, check out our [Upgrade Guide](https://archive.grafana.com/docs/grafana/v11.3/upgrade-guide/upgrade-v11.3/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.3/).
 
 ## Scenes-powered Dashboards are generally available
 

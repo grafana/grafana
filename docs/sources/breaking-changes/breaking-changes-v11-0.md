@@ -38,7 +38,7 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v11.0 What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade guide](https://archive.grafana.com/docs/grafana/v11.0/upgrade-guide/upgrade-v11.0/).
+For release highlights and deprecations, refer to our [v11.0 What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
 <!--
 ## Feature
