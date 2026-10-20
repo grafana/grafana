@@ -2,6 +2,7 @@ import { type SceneObjectState, SceneObjectBase, type SceneTimeRangeLike, type V
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
+import { type NotebookBlockInsertVia } from '../../analytics/types';
 import { type CellContentKind } from '../../types';
 
 import { type NotebookLayoutManager } from './NotebookLayoutManager';
@@ -47,8 +48,8 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
   }
 
   /** Converts this cell's content to `type` in place — see NotebookLayoutManager.convertCell. */
-  public onConvert(type: NotebookBlockType): void {
-    this.getParentLayout().convertCell(this, type);
+  public onConvert(type: NotebookBlockType, via?: NotebookBlockInsertVia): void {
+    this.getParentLayout().convertCell(this, type, via);
   }
 
   public onQueryChange(queries: DataQuery[]): void {
