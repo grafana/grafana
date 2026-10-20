@@ -82,7 +82,7 @@ func newParentsGetterWithPolicy(getter rest.Getter, forCreate bool) parentsGette
 			obj, e2 := getter.Get(lookupCtx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
 				_ = tracing.Error(span, e2)
-				if forCreate && !apierrors.IsNotFound(e2) && !(len(info.Items) == 1 && apierrors.IsForbidden(e2)) {
+				if forCreate && !apierrors.IsNotFound(e2) && (len(info.Items) != 1 || !apierrors.IsForbidden(e2)) {
 					return nil, folderLegacy.ErrInternal.Errorf("unable to read folder ancestry: %w", e2)
 				}
 				info.Items = append(info.Items, folders.FolderInfo{
