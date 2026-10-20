@@ -26,6 +26,7 @@ import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
@@ -47,6 +48,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 /**
@@ -90,7 +92,13 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
+    if (
+      (canManuallyEditDashboard(dashboard.state) || isViewingDashboard(dashboard.state)) &&
+      dashboard.canEditDashboard() &&
+      dashboard.state.editable &&
+      !isReadOnlyRepeat &&
+      !isEditingPanel
+    ) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -99,6 +107,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
+          if (dashboardModesEnabled() && isViewingDashboard(dashboard.state)) {
+            dashboard.setDashboardMode('edit', 'panel_menu');
+          }
           DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
@@ -170,7 +181,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
@@ -194,7 +205,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -242,7 +253,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
+    if (canManuallyEditDashboard(dashboard.state) && hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -294,7 +305,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings) {
+    if (
+      getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true) &&
+      canManuallyEditDashboard(dashboard.state)
+    ) {
       items.push({
         text: t('panel.header-menu.time-settings', 'Time settings'),
         iconClassName: 'clock-nine',
@@ -313,7 +327,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       })
     );
 
-    if (extensions.length > 0 && !dashboard.state.isEditing) {
+    if (extensions.length > 0 && !isFullDashboardEditing(dashboard.state)) {
       const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
       const reservedNames = new Set<string>(items.map((m) => m.text));
       reservedNames.add(t('panel.header-menu.styles', `Styles`));
@@ -329,7 +343,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (getPanelStyleConfig(panel.state.pluginId) && dashboard.state.isEditing) {
+    if (getPanelStyleConfig(panel.state.pluginId) && isFullDashboardEditing(dashboard.state)) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
@@ -400,7 +414,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       items.push({
         text: '',
         type: 'divider',
@@ -635,6 +649,9 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
+  if (dashboardModesEnabled() && !canManuallyEditDashboard(getDashboardSceneFor(vizPanel).state)) {
+    return;
+  }
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
     if (shouldShowLegend(options.legend)) {

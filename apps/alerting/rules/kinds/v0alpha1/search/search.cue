@@ -1,5 +1,6 @@
 // Package search mirrors pkg/apis/search/v0alpha1 for alerting's per-kind
-// /searchRules compatibility routes, including the search.grafana.app envelopes.
+// /searchAlertRules and /searchRecordingRules routes, including the
+// search.grafana.app envelopes.
 // Keep these schemas aligned with the generic contract.
 package search
 

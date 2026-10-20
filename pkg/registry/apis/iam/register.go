@@ -234,6 +234,7 @@ func NewAPIService(
 	roleBindingsAuthorizer := roleBindingsApiInstaller.GetAuthorizer()
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
+	teamLBACUsageAuthorizer := teamLBACApiInstaller.GetTeamLBACUsageAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
 	whoamiAuthorizer := newWhoamiAuthorizer()
@@ -300,6 +301,9 @@ func NewAPIService(
 
 				if a.GetResource() == "teamlbacrules" {
 					return teamLBACAuthorizer.Authorize(ctx, a)
+				}
+				if a.GetResource() == "teamlbacusage" {
+					return teamLBACUsageAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
@@ -1134,6 +1138,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		routes = append(routes, b.ssoLoginConfig.GetAPIRoutes(defs))
 	}
 	routes = append(routes, searchRoutes...)
+	if b.features.TeamLBACRulesAPI {
+		routes = append(routes, b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(defs))
+	}
 	return mergeAPIRoutes(routes...)
 }
 

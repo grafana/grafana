@@ -42,8 +42,11 @@ func TestLegacyCheck_AccessControlEvaluate(t *testing.T) {
 				&authzextv1.LegacyCheckRequest{
 					Namespace: namespace,
 					Subject:   tc.user.GetUID(),
-					Action:    tc.action,
-					Scope:     tc.scope,
+					Expression: &authzextv1.LegacyExpression{
+						Node: &authzextv1.LegacyExpression_Permission{
+							Permission: &authzextv1.LegacyPermission{Action: tc.action, Scopes: []string{tc.scope}},
+						},
+					},
 				},
 			)
 			require.NoError(t, err)

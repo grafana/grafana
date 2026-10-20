@@ -41,6 +41,7 @@ import {
   COLUMN,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
@@ -62,7 +63,6 @@ import type {
   FilterType,
   GetActionsFunctionLocal,
   TableColumn,
-  FromFieldsResult,
   TextWrapFallback,
 } from './types';
 
@@ -1228,6 +1228,28 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
+/** Reorders fields by display name and appends unmentioned fields. @internal */
+export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
+  if (!order || order.length === 0) {
+    return fields;
+  }
+  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+  for (const name of order) {
+    const field = byDisplayName.get(name);
+    if (field) {
+      ordered.push(field);
+      byDisplayName.delete(name);
+    }
+  }
+  for (const field of fields) {
+    if (byDisplayName.has(getDisplayName(field))) {
+      ordered.push(field);
+    }
+  }
+  return ordered;
+}
+
 /** Removes fields hidden through table controls. @internal */
 export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
   if (!hiddenColumns || hiddenColumns.size === 0) {
@@ -1342,6 +1364,7 @@ export interface ContentAwareColWidthsOptions {
    */
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /**
@@ -1472,6 +1495,7 @@ export interface HeaderAffordanceOptions {
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
+  reorderable?: boolean;
 }
 
 /**
@@ -1483,7 +1507,13 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered, hasColumnOptions = false }: HeaderAffordanceOptions
+  {
+    showTypeIcons,
+    tableRefreshEnabled,
+    isFiltered,
+    hasColumnOptions = false,
+    reorderable = false,
+  }: HeaderAffordanceOptions
 ): number {
   const isFilterable = isFieldFilterable(field);
   let width = 0;
@@ -1494,6 +1524,7 @@ export function getHeaderAffordanceWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  width += reorderable ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     width += hasColumnOptions ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
@@ -1802,6 +1833,7 @@ export function computeContentAwareColWidths(
     filter,
     sampleSize,
     hasColumnSidebar = false,
+    reorderable = false,
     noPanelPadding = false,
     preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
@@ -1850,6 +1882,7 @@ export function computeContentAwareColWidths(
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
               filterable: isFieldFilterable(field),
@@ -1946,37 +1979,28 @@ type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null
 const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
   typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
 
-// react-data-grid types these fields `readonly` for callers building a column once; here we're
-// intentionally mutating an already-built one in place, so we cast that guard away locally.
-type MutableColumnClasses = {
-  -readonly [K in 'headerCellClass' | 'cellClass' | 'summaryCellClass']?: TableColumn[K];
-};
-
-const addEdgeClass = (column: TableColumn, edgeClass: string): void => {
-  const mutable: MutableColumnClasses = column;
-  mutable.headerCellClass = clsx(column.headerCellClass, edgeClass);
-  mutable.cellClass = appendCellClass(column.cellClass, edgeClass);
-  mutable.summaryCellClass = appendCellClass(column.summaryCellClass, edgeClass);
-};
+const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+  ...column,
+  headerCellClass: clsx(column.headerCellClass, edgeClass),
+  cellClass: appendCellClass(column.cellClass, edgeClass),
+  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
+});
 
 /**
  * @internal
  * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
  * finished column list, after any programmatically injected columns (the nested table's row
  * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
- *
- * Mutates `columns` (and the edge column objects) in place rather than copying: the list is always
- * freshly built by the caller right before this call, so there's nothing else holding a reference
- * that immutability would protect, and it's the same assumption `result.columns.unshift(...)`
- * already makes elsewhere for the nested expander column.
  */
-export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
-  const { columns } = fromFieldsResult;
+export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
   if (columns.length === 0) {
-    return;
+    return columns;
   }
-  addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
-  addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
+  const marked = [...columns];
+  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
+  const lastIdx = marked.length - 1;
+  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
+  return marked;
 }
 
 /**

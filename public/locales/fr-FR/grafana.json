@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Échec du chargement du contenu : {{error}}",
+        "hide-secrets": "",
         "loading": "Chargement du contenu en cours…",
         "notifications-title": "Aperçu de la configuration des notifications",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Aperçu des règles d’alerte"
       },
       "recording-rules": "Règles d’enregistrement",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "La source de données Prometheus dans laquelle stocker les règles d’enregistrement",
       "label-target-data-source": "Source de données cible",
-      "target-data-source-required": "Veuillez sélectionner une source de données cible"
+      "target-data-source-required": "Veuillez sélectionner une source de données cible",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Sélectionnez le namespace et le groupe pour votre règle d’enregistrement.",
@@ -3918,6 +3923,11 @@
     },
     "viz-wrapper": {
       "table": "Tableau"
+    },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "welcome-header": {
       "description-alert-activity": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés.",
@@ -6032,6 +6042,24 @@
       "tooltip-next": "Suivant",
       "tooltip-previous": "Précédent"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Modification du schéma de l’assistant"
@@ -6109,6 +6137,9 @@
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
     "plan-placeholder-badge": {
       "text": "Données d’exemple",
       "tooltip": "Les chiffres affichés sont des données d’exemple fournies à titre d’illustration et ne proviennent pas de requêtes réelles."
@@ -6147,6 +6178,9 @@
           "no-template-variables-found": "Aucune variable de modèle trouvée"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Annuler",
@@ -7590,6 +7624,33 @@
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
       "confirmText-restore-version": "Oui, restaurer à la version {{version}}",
       "title-restore-version": "Restaurer la version"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Enregistrer",
@@ -10081,6 +10142,7 @@
             "name-humidity": "Humidité (%H)",
             "name-locale": "Format local",
             "name-number": "Nombre",
+            "name-ordinal": "",
             "name-percent-1": "Pourcentage (0,0-1,0)",
             "name-percent-100": "Pourcentage (0-100)",
             "name-pixels": "Pixels",
@@ -10206,7 +10268,9 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10821,6 +10885,7 @@
       "no-rows": "Aucune ligne",
       "no-values-label": "Aucune valeur",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Trier par colonne {{column}}",
       "sort-by-column-ascending": "Trier par colonne {{column}}, en ordre croissant",
@@ -11129,6 +11194,8 @@
       "incident-filter-all": "Tous les incidents",
       "incident-filter-label": "Filtrer les incidents par étiquette",
       "incident-tab-label": "Incidents",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Vos équipes",
       "title": "Alertes et incidents",
       "title-alerts": "Alertes",
@@ -11205,6 +11272,17 @@
       "error-title": "Impossible de charger les articles de blog récents",
       "read-more": "En savoir plus sur le blog de Grafana Labs",
       "title": "Les nouveautés du blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +12045,11 @@
       "load-newer": "Chargement des journaux les plus récents...",
       "load-older": "Chargement des journaux plus anciens..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Réduire les étiquettes",
       "expand": "Développer les étiquettes"
@@ -12017,6 +12100,7 @@
       "inline-mode": "Afficher en ligne",
       "inline-no-scrolls": "Passer à la vue étendue",
       "inline-with-scrolls": "Passer à la vue condensée",
+      "link-fallback-label": "",
       "link-value-tooltip": "Valeur du lien",
       "links-section": "Liens",
       "log-attributes-field": "Attributs du journal",
@@ -12026,13 +12110,14 @@
       "move-displayed-field-up": "Déplacer vers le haut",
       "no-details": "Aucun champ à afficher.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Épingler ce log",
       "prettify": "Mettre en forme",
       "remove-displayed-field": "Supprimer le champ",
       "remove-log": "Supprimer le journal",
       "scroll-to-logline": "Faire défiler jusqu’à la ligne du journal",
       "search": {
-        "no-results": "Aucun résultat à afficher."
+        "no-results": ""
       },
       "search-placeholder": "Rechercher des noms de champs ou des valeurs",
       "show-context": "Afficher le contexte",
@@ -13196,6 +13281,7 @@
       "created-by-me": "Créés par moi",
       "error-conflict": "Ce notebook a été modifié pendant que vous y ajoutiez des éléments. Réessayez d’ajouter le panneau à la version la plus récente.",
       "error-generic": "Échec de l’ajout du panneau au notebook",
+      "error-open-conflict": "",
       "list-error": "Échec du chargement des notebooks",
       "list-error-body": "Une erreur est survenue lors du chargement de vos notebooks. Réessayez ou créez-en un nouveau.",
       "list-no-matches": "Aucun notebook ne correspond à ces filtres.",
@@ -13204,6 +13290,8 @@
       "list-truncated": "Les notebooks ne sont pas tous affichés. Affinez la recherche pour trouver les autres.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Rechercher par titre",
       "sort-alphabetical": "Par ordre alphabétique (A-Z)",
       "sort-label": "Trier les notebooks",
@@ -13211,13 +13299,20 @@
       "sort-updated": "Récemment mis à jour",
       "submit": "Ajouter au notebook",
       "success": "Panneau ajouté à {{title}}",
+      "success-cells": "",
       "success-link": "Ajouter au notebook",
       "tag-placeholder": "Filtrer par balise",
       "target-description": "Choisissez où ajouter le panneau.",
       "target-existing": "Notebook existant",
       "target-label": "Notebook cible",
       "target-new": "Nouveau notebook",
-      "title": "Ajouter le panneau au notebook"
+      "title": "Ajouter le panneau au notebook",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -16586,6 +16681,7 @@
     "name-page-size": "Taille de la page",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Style basé sur le champ",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
