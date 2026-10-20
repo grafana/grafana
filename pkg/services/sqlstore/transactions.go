@@ -14,40 +14,6 @@ import (
 
 var tsclogger = log.New("sqlstore.transactions")
 
-type afterCommitCallback struct {
-	key string
-	run func()
-}
-
-// RunAfterCommit runs fn synchronously after the outermost transaction commits,
-// or immediately when ctx has no transaction. Only the last callback for a key
-// runs within a transaction; rolled-back attempts discard their callbacks.
-// The callback keeps ctx's values and cancellation, but cannot reuse its SQL session.
-// Callbacks must handle their own errors: the transaction is already committed.
-func RunAfterCommit(ctx context.Context, key string, fn func(context.Context)) {
-	run := func() { fn(withoutSessionContext{ctx}) }
-	if sess, ok := ctx.Value(ContextSessionKey{}).(*DBSession); ok && sess != nil && sess.transactionOpen {
-		for i := range sess.afterCommit {
-			if sess.afterCommit[i].key == key {
-				sess.afterCommit[i].run = run
-				return
-			}
-		}
-		sess.afterCommit = append(sess.afterCommit, afterCommitCallback{key: key, run: run})
-		return
-	}
-	run()
-}
-
-type withoutSessionContext struct{ context.Context }
-
-func (ctx withoutSessionContext) Value(key any) any {
-	if _, ok := key.(ContextSessionKey); ok {
-		return nil
-	}
-	return ctx.Context.Value(key)
-}
-
 // SQLITE_BUSY backoff parameters for retrying transactions. We use exponential
 // backoff with full jitter so concurrent writers don't all wake up and collide
 // again on the same tick.
@@ -145,9 +111,6 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 		if err = bus.Publish(ctx, e); err != nil {
 			ctxLogger.Error("Failed to publish event after commit.", "error", err)
 		}
-	}
-	for _, callback := range sess.afterCommit {
-		callback.run()
 	}
 
 	return nil

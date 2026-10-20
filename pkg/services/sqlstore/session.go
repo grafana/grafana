@@ -27,7 +27,6 @@ type DBSession struct {
 	*xorm.Session
 	transactionOpen bool
 	events          []any
-	afterCommit     []afterCommitCallback
 }
 
 type DBTransactionFunc func(sess *DBSession) error

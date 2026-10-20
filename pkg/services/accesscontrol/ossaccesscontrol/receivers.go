@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -56,7 +57,7 @@ func ProvideReceiverPermissionsService(
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
-	actionSetService resourcepermissions.ActionSetService,
+	actionSetService resourcepermissions.ActionSetService, events bus.Bus,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
@@ -85,7 +86,9 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
+	r := &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}
+	events.AddEventListener(r.onReceiverPermissionsRefresh)
+	return r, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(nil)
@@ -163,17 +166,45 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 		// It also clears the cache for basic roles and teams, which is required for the user to not have temporarily
 		// broken UI permissions when their source of elevated permissions comes from a cached team or basic role
 		// permission.
-		// AuthZ cannot read the copied permissions until the enclosing transaction commits.
-		sqlstore.RunAfterCommit(ctx, "receiver-permissions:"+user.GetNamespace()+":"+user.GetCacheKey(), func(ctx context.Context) {
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			if _, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true}); err != nil {
-				r.log.Debug("Failed to clear user permissions cache", "error", err)
-			}
-		})
+		event := &receiverPermissionsRefreshRequested{ctx: withoutSQLSessionContext{ctx}, user: user}
+		// Remote AuthZ can read the copied permissions only after the outermost transaction commits.
+		if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+			sess.PublishAfterCommit(event)
+		} else {
+			r.refreshUserPermissions(event.ctx, event.user)
+		}
 	}
 
 	return countCustomPermissions(setPermissionCommands), nil
+}
+
+// The bus supplies the outer transaction's context. Keep the originating context for request-specific feature evaluation.
+type receiverPermissionsRefreshRequested struct {
+	ctx  context.Context
+	user identity.Requester
+}
+
+func (r ReceiverPermissionsService) onReceiverPermissionsRefresh(_ context.Context, event *receiverPermissionsRefreshRequested) error {
+	r.refreshUserPermissions(event.ctx, event.user)
+	return nil
+}
+
+func (r ReceiverPermissionsService) refreshUserPermissions(ctx context.Context, user identity.Requester) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if _, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true}); err != nil {
+		r.log.Debug("Failed to clear user permissions cache", "error", err)
+	}
+}
+
+// The originating context must not expose the SQL session after commit.
+type withoutSQLSessionContext struct{ context.Context }
+
+func (ctx withoutSQLSessionContext) Value(key any) any {
+	if _, ok := key.(sqlstore.ContextSessionKey); ok {
+		return nil
+	}
+	return ctx.Context.Value(key)
 }
 
 func (r ReceiverPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {
