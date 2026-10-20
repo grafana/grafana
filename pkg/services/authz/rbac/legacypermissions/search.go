@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"sort"
 	"strconv"
@@ -20,6 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const LegacySearchDelegatedGrant = "authz.grafana.app/legacyuserpermissions:search"
@@ -29,6 +34,7 @@ const userPermissionsChunkSize = 1000
 type LegacySearchService struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
 	store              store.SearchPermissionStore
+	callerDirectory    user.Service
 	staticRoles        func(context.Context) map[string]*accesscontrol.RoleDTO
 	actions            accesscontrol.ActionResolver
 	enforcementEnabled func() bool
@@ -77,7 +83,7 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		return status.Error(codes.InvalidArgument, "action and action prefix are mutually exclusive")
 	}
 	ctx = request.WithNamespace(ctx, ns.Value)
-	callerID, err := s.store.GetSearchCallerID(ctx, ns, kind, uid, req.Caller.InternalId)
+	callerID, err := s.resolveSearchCallerID(ctx, ns, req.Caller)
 	if err != nil {
 		return searchRPCError(err, codes.PermissionDenied, "caller could not be resolved")
 	}
@@ -105,9 +111,40 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		return searchRPCError(err, codes.Internal, err.Error())
 	}
 	if s.mergePermissions != nil {
-		results = s.mergePermissions(ctx, searchRequester(ns, caller, callerPermissions), options, results, enforced)
+		requester := searchRequester(ns, caller, callerPermissions)
+		results = s.mergePermissions(withSearchDirectoryContext(ctx, requester, ns.Value), requester, options, results, enforced)
 	}
 	return streamSearchResults(ctx, stream, results, visible)
+}
+
+func (s *LegacySearchService) resolveSearchCallerID(ctx context.Context, ns types.NamespaceInfo, assertion *authzv1.LegacyPermissionIdentity) (int64, error) {
+	kind, uid := types.IdentityType(assertion.Type), assertion.Uid
+	callerID, err := s.store.GetSearchCallerID(ctx, ns, kind, uid, assertion.InternalId)
+	if !errors.Is(err, store.ErrSearchCallerNotFound) || s.callerDirectory == nil {
+		return callerID, err
+	}
+	requester := searchRequester(ns, assertion, nil)
+	found, lookupErr := s.callerDirectory.GetByUID(withSearchDirectoryContext(ctx, requester, ns.Value), &user.GetUserByUIDQuery{UID: uid})
+	if lookupErr != nil || found == nil || found.ID <= 0 || found.UID != uid || found.IsServiceAccount != (kind == types.TypeServiceAccount) || (assertion.InternalId != nil && *assertion.InternalId != found.ID) {
+		return 0, err
+	}
+	return found.ID, nil
+}
+
+func withSearchDirectoryContext(ctx context.Context, requester *legacyRequester, namespace string) context.Context {
+	// Native IAM's directory needs a request context and service authorization
+	// for broad searches. The RPC has already checked caller visibility and
+	// filters results again before streaming; only validated caller data is
+	// placed in this context.
+	ctx = identity.WithOrgID(ctx, requester.GetOrgID())
+	ctx = identity.WithServiceIdentityContext(ctx, requester.GetOrgID(), func(service *identity.StaticRequester) {
+		service.Namespace = namespace
+	})
+	req := (&http.Request{Method: http.MethodGet}).WithContext(ctx)
+	return ctxkey.Set(ctx, &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req},
+		SignedInUser: requester.SignedInUser,
+	})
 }
 
 func searchRPCError(err error, fallback codes.Code, message string) error {

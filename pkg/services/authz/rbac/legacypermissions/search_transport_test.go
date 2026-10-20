@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -21,11 +22,23 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestSearchDirectoryContextScopesServiceIdentity(t *testing.T) {
+	ctx := withSearchDirectoryContext(t.Context(), &legacyRequester{SignedInUser: &user.SignedInUser{OrgID: 2}}, "org-2")
+	service, err := identity.GetRequester(ctx)
+	require.NoError(t, err)
+	require.True(t, identity.IsServiceIdentity(ctx))
+	require.Equal(t, "org-2", service.GetNamespace())
+	require.Equal(t, int64(2), service.GetOrgID())
+	require.True(t, authz.CheckServicePermissions(service, "iam.grafana.app", "searchUsers", "list").Allowed)
+}
 
 type legacySearchTestCaller struct {
 	kind       authlib.IdentityType
