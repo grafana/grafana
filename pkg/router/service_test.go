@@ -292,3 +292,21 @@ func TestServiceFailsWhenLoaderFails(t *testing.T) {
 	err = svc.AwaitTerminated(t.Context())
 	require.ErrorContains(t, err, "poll loop crashed")
 }
+
+// notifyFailingLoader makes the router fail to start after its loader has.
+type notifyFailingLoader struct{ lifecycleLoader }
+
+func (notifyFailingLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return nil, errors.New("notify unavailable")
+}
+
+// dskit doesn't call stopping when starting fails, so the service must stop a
+// loader it already started.
+func TestServiceStopsLoaderWhenStartingFails(t *testing.T) {
+	loader := notifyFailingLoader{lifecycleLoader{Service: services.NewIdleService(nil, nil)}}
+	svc, err := provideTestService(setting.NewCfg(), featuremgmt.WithFeatures(), loader)
+	require.NoError(t, err)
+
+	require.ErrorContains(t, services.StartAndAwaitRunning(t.Context(), svc), "notify unavailable")
+	require.Equal(t, services.Terminated, loader.State())
+}

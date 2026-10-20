@@ -144,10 +144,17 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(context.Background())
 }
 
-func (s *Service) starting(ctx context.Context) error {
+func (s *Service) starting(ctx context.Context) (err error) {
 	// A loader with a lifecycle fills its routes only while it runs, so start
 	// it before the router's first reconcile.
 	if s.loaderLifecycle != nil {
+		// dskit doesn't call stopping when starting fails, so stop the loader
+		// here, or its poll loops would outlive the failed router.
+		defer func() {
+			if err != nil {
+				_ = services.StopAndAwaitTerminated(context.Background(), s.loaderLifecycle)
+			}
+		}()
 		if err := services.StartAndAwaitRunning(ctx, s.loaderLifecycle); err != nil {
 			return fmt.Errorf("starting routes loader: %w", err)
 		}
