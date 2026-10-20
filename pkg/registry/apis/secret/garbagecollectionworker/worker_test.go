@@ -236,8 +236,8 @@ func (k *fakeKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig,
 
 func TestProperty(t *testing.T) {
 	for _, tc := range []struct {
-		name                   string
-		opts                   []func(*testutils.SetupConfig)
+		name       string
+		opts       []func(*testutils.SetupConfig)
 		kvBehavior bool
 	}{
 		{name: "sql", opts: nil},
