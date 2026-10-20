@@ -770,10 +770,12 @@ func TestAuthzLimitedClient_BatchCheckReturnsMissingResultError(t *testing.T) {
 	require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
 }
 
-// checkPermissions checks req against the types its index draws from, as Search does.
+// checkPermissions checks req as Search does, returning the types a global
+// search leaves out.
 func checkPermissions(s *searchServer, ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]string, error) {
-	key := req.Options.Key
-	return s.checkSearchServicePermissions(ctx, req, s.indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}))
+	key := NamespacedResource{Namespace: req.Options.Key.Namespace, Group: req.Options.Key.Group, Resource: req.Options.Key.Resource}
+	_, skipped, err := s.checkSearchServicePermissions(ctx, req, s.indexSources(key))
+	return skipped, err
 }
 
 func newPermissionTestSearchServer(client authlib.AccessClient) *searchServer {
