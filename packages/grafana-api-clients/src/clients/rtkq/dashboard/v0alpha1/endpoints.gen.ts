@@ -1311,6 +1311,8 @@ export type SnapshotSpec = {
   expires?: number;
   /** When set to true, the snapshot exists in a remote server */
   external?: boolean;
+  /** The server-provided URL for deleting the external snapshot */
+  externalDeleteUrl?: string;
   /** The external URL where the snapshot can be seen */
   externalUrl?: string;
   /** The URL that created the dashboard originally */

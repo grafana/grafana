@@ -193,6 +193,7 @@ func latestVersionOfRulesByUID(sess *db.Session, logger log.Logger, orgID int64,
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = rows.Close() }()
 	result := make([]alertRuleVersion, 0, len(ruleUIDs))
 	for rows.Next() {
 		rule := new(alertRuleVersion)
@@ -324,6 +325,7 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		var previousVersion *alertRuleVersion
 		for rows.Next() {
@@ -345,6 +347,9 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 			}
 			previousVersion = rule
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.IterationErr(); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -395,6 +400,7 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(alertRuleVersion)
@@ -410,6 +416,9 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 				continue
 			}
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.IterationErr(); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -938,7 +947,9 @@ func (st RuleStore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.L
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesByGroup", "error", err)
+			}
 		}()
 
 		opts := alertRuleConvertOptions{}
@@ -1200,7 +1211,9 @@ func (st RuleStore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesPaginated", "error", err)
+			}
 		}()
 
 		// Deserialize each rule separately in case any of them contain invalid JSON.
@@ -1697,6 +1710,33 @@ func (st RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 		return nil
 	})
 	return r.Count, err
+}
+
+// CountRuleGroups counts distinct rule group names, across all organizations when orgID is zero.
+// Groups with the same name in different folders or organizations count only once.
+func (st RuleStore) CountRuleGroups(ctx context.Context, orgID int64) (int64, error) {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if st.LegacyDatabaseProvider != nil {
+		ctx = ambientSessionFor(ctx, dbHelper.DB)
+	}
+
+	var result struct {
+		Count int64
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := "SELECT COUNT(DISTINCT rule_group) AS count FROM " + dbHelper.Table("alert_rule")
+		args := make([]any, 0, 1)
+		if orgID != 0 {
+			query += " WHERE org_id = ?"
+			args = append(args, orgID)
+		}
+		_, err := sess.SQL(query, args...).Get(&result)
+		return err
+	})
+	return result.Count, err
 }
 
 func (st RuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {

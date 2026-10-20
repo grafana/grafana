@@ -454,7 +454,7 @@ func TestPluginBreakerRejectionMetrics(t *testing.T) {
 			router := withGroupHandlerAndBreaker(group, handler, cb)
 			metrics := newRouterMetrics(prometheus.NewRegistry())
 			response := httptest.NewRecorder()
-			metrics.instrument(router, response, newAuthenticatedRequest(http.MethodPost, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
+			metrics.instrumentRequest(router, response, newAuthenticatedRequest(http.MethodPost, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
 			require.Equal(t, http.StatusServiceUnavailable, response.Code)
 			require.Equal(t, 1.0, testutil.ToFloat64(metrics.backendFailures.WithLabelValues(group, "test-app", failureBreakerOpen)))
 			require.Zero(t, raw.calls)

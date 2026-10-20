@@ -5,13 +5,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Badge, Button, Icon, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 
-import { type DashboardPlanningState } from '../types/dashboard';
+import { type DashboardPlanPreviewState } from '../types/dashboard';
 
 /**
  * Plan actions replace normal dashboard actions until the user builds or dismisses
  * the proposal.
  */
-export function PlanningBanner({ planning }: { planning: DashboardPlanningState }) {
+export function PlanningBanner({ planning }: { planning: DashboardPlanPreviewState }) {
   const { planTitle, onBuild, onDismiss } = planning;
   const styles = useStyles2(getStyles);
 

@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 	"time"
 
@@ -61,9 +60,27 @@ func proxyErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 // as sent: no empty, "." or ".." segments, and no encoded slash. Otherwise the
 // group the router routes by could differ from the path the backend receives.
 func canonicalAPIPath(u *url.URL) bool {
-	p := strings.TrimSuffix(u.Path, "/")
-	if path.Clean(p) != p {
+	// Escaping Path never escapes a slash, so an encoded slash can only come
+	// from RawPath. EscapedPath also checks that RawPath still encodes Path.
+	if raw := u.RawPath; raw != "" && (strings.Contains(raw, "%2f") || strings.Contains(raw, "%2F")) && u.EscapedPath() == raw {
 		return false
 	}
-	return !strings.Contains(strings.ToLower(u.EscapedPath()), "%2f")
+	// The same as path.Clean(p) == p, segment by segment and without
+	// building the cleaned path.
+	p := strings.TrimSuffix(u.Path, "/")
+	if p == "/" {
+		return true
+	}
+	rest, ok := strings.CutPrefix(p, "/")
+	if !ok || strings.HasSuffix(p, "/") {
+		return false
+	}
+	for rest != "" {
+		var segment string
+		segment, rest, _ = strings.Cut(rest, "/")
+		if segment == "" || segment == "." || segment == ".." {
+			return false
+		}
+	}
+	return true
 }

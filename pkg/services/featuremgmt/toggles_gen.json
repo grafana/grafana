@@ -103,6 +103,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.gmaOnlyListView",
+        "resourceVersion": "1792485533119",
+        "creationTimestamp": "2026-10-20T08:38:53Z"
+      },
+      "spec": {
+        "description": "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.hybridSearch",
         "resourceVersion": "1790261991235",
         "creationTimestamp": "2026-10-06T15:41:07Z"
@@ -794,15 +808,18 @@
     {
       "metadata": {
         "name": "alertingTriage",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "resourceVersion": "1792148124753",
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-16 10:55:24.753973 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the alerting triage feature",
-        "stage": "experimental",
+        "description": "Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.",
+        "stage": "deprecated",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1000,6 +1017,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistant.dashboardPlanBuildingScreen",
+        "resourceVersion": "1792049243204",
+        "creationTimestamp": "2026-10-15T07:27:23Z"
+      },
+      "spec": {
+        "description": "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -1499,12 +1530,15 @@
     {
       "metadata": {
         "name": "dashboard.notebooks",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-09T13:38:44Z"
+        "resourceVersion": "1792173756887",
+        "creationTimestamp": "2026-07-09T13:38:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-16 18:02:36.887843 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
@@ -1640,7 +1674,8 @@
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T11:47:50Z"
+        "creationTimestamp": "2026-03-11T11:47:50Z",
+        "deletionTimestamp": "2026-10-15T14:41:56Z"
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
@@ -2182,7 +2217,8 @@
       "metadata": {
         "name": "enableAppChromeExtensions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-06-30T04:32:08Z"
+        "creationTimestamp": "2025-06-30T04:32:08Z",
+        "deletionTimestamp": "2026-10-19T14:29:55Z"
       },
       "spec": {
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
@@ -3151,16 +3187,19 @@
     {
       "metadata": {
         "name": "grafana.recordedQueriesDisableCreate",
-        "resourceVersion": "1792177003058",
-        "creationTimestamp": "2026-10-16T18:56:43Z"
+        "resourceVersion": "1792440007514",
+        "creationTimestamp": "2026-10-16T18:56:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 20:00:07.51491703 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables creating new recorded queries while preserving access to existing queries",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3800,15 +3839,18 @@
     {
       "metadata": {
         "name": "kubernetesAuthzTeamLBACRuleApi",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-20T19:52:16Z"
+        "resourceVersion": "1792441744548",
+        "creationTimestamp": "2026-01-20T19:52:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 20:29:04.54888 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Registers AuthZ TeamLBACRule /apis endpoint",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4740,26 +4782,34 @@
     {
       "metadata": {
         "name": "preferLibraryPanelTitle",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-06-17T11:21:21Z"
+        "resourceVersion": "1792486861194",
+        "creationTimestamp": "2025-06-17T11:21:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:01:01.194942 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Prefer library panel title over viz panel title.",
         "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-05-27T12:28:06Z"
+        "resourceVersion": "1792489412857",
+        "creationTimestamp": "2024-05-27T12:28:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:43:32.857637 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
