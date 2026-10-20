@@ -1,15 +1,21 @@
-import { type PropsWithChildren, type ReactElement } from 'react';
+import { useMemo, type PropsWithChildren, type ReactElement } from 'react';
 
 import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
-import { dashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
+import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
+import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
-const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
+// This existing flag is only generated for the legacy frontend API.
+// eslint-disable-next-line @grafana/no-config-feature-toggles
+const restrictedApisEnabled = config.featureToggles.restrictedPluginApis;
+
+const restrictedGrafanaApis: RestrictedGrafanaApisContextType = restrictedApisEnabled
   ? {
       alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
-      dashboardMutationAPI: dashboardMutationApi,
+      // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
+      extensionSidebar: extensionSidebarApi,
     }
   : {};
 
@@ -19,10 +25,17 @@ export function RestrictedGrafanaApisProvider({
   children,
   pluginId,
 }: PropsWithChildren<{ pluginId: string }>): ReactElement {
+  const apis = useMemo(
+    () => ({
+      ...restrictedGrafanaApis,
+      ...(restrictedApisEnabled ? { dashboardMutationAPI: createDashboardMutationApi(pluginId) } : {}),
+    }),
+    [pluginId]
+  );
   return (
     <RestrictedGrafanaApisContextProvider
       pluginId={pluginId}
-      apis={restrictedGrafanaApis}
+      apis={apis}
       apiAllowList={config.bootData.settings.pluginRestrictedAPIsAllowList}
       apiBlockList={config.bootData.settings.pluginRestrictedAPIsBlockList}
     >

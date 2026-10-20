@@ -24,6 +24,17 @@ const (
 	TriggerInitial ProcessTrigger = "initial"
 )
 
+// ReconcileOutcome is the value of the "outcome" label on the reconcile total
+// counter: whether a reconcile returned an error to its work queue.
+type ReconcileOutcome string
+
+const (
+	// OutcomeSuccess: the reconcile completed without returning an error.
+	OutcomeSuccess ReconcileOutcome = "success"
+	// OutcomeError: the reconcile returned an error (and is typically retried).
+	OutcomeError ReconcileOutcome = "error"
+)
+
 // ProcessedMetrics is the consumer-side instrumentation for a unified-storage
 // informer feed. A consumer classifies each delivery at enqueue (ClassifyAdd /
 // ClassifyUpdate) and, when it commits to genuinely processing a key (not a
@@ -35,6 +46,10 @@ const (
 // It emits, discriminated by a "source" label (live/relist/initial):
 //   - grafana_provisioning_events_processed_total{resource, source}
 //   - grafana_provisioning_event_delivery_latency_seconds{resource, source}
+//
+// and, once per reconcile execution, discriminated by an "outcome" label
+// (success/error):
+//   - grafana_provisioning_reconcile_total{resource, outcome}
 //
 // The resource name is a constructor parameter, so one family serves every
 // consumer, distinguished by the resource label.
@@ -49,6 +64,7 @@ type ProcessedMetrics struct {
 	natsBacked      bool
 	processed       *prometheus.CounterVec
 	deliveryLatency *prometheus.HistogramVec
+	reconcile       *prometheus.CounterVec
 }
 
 // NewProcessedMetrics builds the metrics on reg for the given resource label
@@ -61,6 +77,16 @@ type ProcessedMetrics struct {
 // as a duplicate rather than passing unnoticed.
 func NewProcessedMetrics(reg prometheus.Registerer, resource string, natsBacked bool) *ProcessedMetrics {
 	constLabels := prometheus.Labels{"resource": resource}
+	reconcile := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name:        "grafana_provisioning_reconcile_total",
+		Help:        "Reconcile executions per operator, by resource and outcome (success = returned no error; error = returned an error and is typically retried). Counts every execution, including retries, so it is the denominator for reconcile error rate.",
+		ConstLabels: constLabels,
+	}, []string{"outcome"})
+	// Pre-create both outcome series at zero so an error-rate query selecting
+	// outcome="error" returns 0 (not no-data) before the first failure occurs.
+	reconcile.WithLabelValues(string(OutcomeSuccess))
+	reconcile.WithLabelValues(string(OutcomeError))
+
 	return &ProcessedMetrics{
 		natsBacked: natsBacked,
 		processed: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
@@ -77,6 +103,7 @@ func NewProcessedMetrics(reg prometheus.Registerer, resource string, natsBacked 
 			NativeHistogramMinResetDuration: time.Hour,
 			ConstLabels:                     constLabels,
 		}, []string{"source"}),
+		reconcile: reconcile,
 	}
 }
 
@@ -119,6 +146,21 @@ func (m *ProcessedMetrics) RecordProcessed(trigger ProcessTrigger) {
 	case TriggerLive, TriggerRelist, TriggerInitial:
 		m.processed.WithLabelValues(string(trigger)).Inc()
 	}
+}
+
+// RecordReconcile counts one reconcile execution, attributing its outcome to
+// whether it returned an error to the work queue. It is nil-safe. Callers pass
+// the error the reconcile returned; retries record a fresh execution each, so
+// the counter is the denominator for the reconcile error rate.
+func (m *ProcessedMetrics) RecordReconcile(err error) {
+	if m == nil {
+		return
+	}
+	outcome := OutcomeSuccess
+	if err != nil {
+		outcome = OutcomeError
+	}
+	m.reconcile.WithLabelValues(string(outcome)).Inc()
 }
 
 // ObserveDeliveryLatency records, under the given source, the delay from an

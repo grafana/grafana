@@ -11,16 +11,17 @@ import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 function shouldResetColumnOrder(previous: string[], current: string[]): boolean {
+  // Ignore additions and removals; only a changed relative order of shared columns invalidates saved indices.
   const previousNames = new Set(previous);
   const currentNames = new Set(current);
   const sharedBefore = previous.filter((name) => currentNames.has(name));
   const sharedAfter = current.filter((name) => previousNames.has(name));
 
   if (sharedBefore.length === 0) {
+    // With no overlap, any non-empty catalog means the saved order belongs to a different schema.
     return previous.length !== 0 || current.length !== 0;
   }
 
-  // Insertions and removals do not change the order of columns shared by both snapshots.
   return sharedBefore.some((name, index) => name !== sharedAfter[index]);
 }
 
@@ -43,6 +44,7 @@ export function useColumnTransformations(
       sourceFrame && sourceSeries && sourceIndex >= 0 ? prepareColumnContext(sourceSeries, sourceIndex) : undefined,
     [sourceFrame, sourceSeries, sourceIndex]
   );
+  // Keep the last non-empty source catalog per frame; ad-hoc output changes are not the comparison baseline.
   const previousCatalogs = useRef(new Map<string, string[]>());
   useEffect(() => {
     if (!context || context.catalog.length === 0) {

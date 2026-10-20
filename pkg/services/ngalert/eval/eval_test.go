@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -1723,3 +1724,41 @@ func TestSanitizeHeaderValue(t *testing.T) {
 		})
 	}
 }
+
+func TestFindConditionError(t *testing.T) {
+	t.Run("follows the dependency chain to the root error", func(t *testing.T) {
+		rootErr := errors.New("root")
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Error: rootErr},
+			"B": {Error: expr.MakeDependencyError("B", "A")},
+		}}
+		require.Equal(t, rootErr, FindConditionError(resp, "B"))
+	})
+
+	t.Run("returns the condition error when the payload has no depRefId", func(t *testing.T) {
+		depErr := expr.DependencyError.Build(errutil.TemplateData{})
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"B": {Error: depErr}}}
+		require.NotPanics(t, func() {
+			require.ErrorIs(t, FindConditionError(resp, "B"), expr.DependencyError)
+		})
+	})
+
+	t.Run("returns the condition error when the dependency is not in the responses", func(t *testing.T) {
+		depErr := expr.MakeDependencyError("B", "A")
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"B": {Error: depErr}}}
+		require.Equal(t, depErr, FindConditionError(resp, "B"))
+	})
+
+	t.Run("returns the condition error when it cannot be unwrapped to an errutil.Error", func(t *testing.T) {
+		depErr := fakeDependencyError{}
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"B": {Error: depErr}}}
+		require.Equal(t, depErr, FindConditionError(resp, "B"))
+	})
+}
+
+// fakeDependencyError matches expr.DependencyError via errors.Is without being an errutil.Error.
+type fakeDependencyError struct{}
+
+func (fakeDependencyError) Error() string { return "fake dependency error" }
+
+func (fakeDependencyError) Is(target error) bool { return target == expr.DependencyError }

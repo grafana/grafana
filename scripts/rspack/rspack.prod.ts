@@ -16,6 +16,11 @@ export default (env: Env = {}) => {
 
     output: {
       crossOriginLoading: 'anonymous',
+      // Lazy chunks load through <script> tags rather than import(), which can't carry an
+      // integrity attribute and would leave them unchecked when SRI checks are enabled. Kept out
+      // of the dev config because HMR there fetches its ES module update manifest as JSON.
+      chunkFormat: 'array-push',
+      chunkLoading: 'jsonp',
     },
 
     optimization: {

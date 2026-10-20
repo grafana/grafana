@@ -98,6 +98,33 @@ func TestSeededWatchesEnabled(t *testing.T) {
 	}
 }
 
+func TestGlobalSearchIndexStartupBuild(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default off"},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("global_search_index_startup_build").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_GLOBAL_SEARCH_INDEX_STARTUP_BUILD", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.GlobalSearchIndexStartupBuild)
+		})
+	}
+}
+
 func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
 	cfg := NewCfg()
 	cfg.setUnifiedStorageConfig()
@@ -691,6 +718,30 @@ func TestStorageServicesEnabled(t *testing.T) {
 			cfg.Target = tc.target
 
 			assert.Equal(t, tc.want, cfg.StorageServicesEnabled())
+		})
+	}
+}
+
+func TestQOSMaxConcurrentPerTenant(t *testing.T) {
+	for _, tc := range []struct {
+		name, iniValue, envValue string
+		want                     int
+	}{
+		{name: "default disabled"},
+		{name: "explicit disabled", iniValue: "0"},
+		{name: "enabled", iniValue: "4", want: 4},
+		{name: "environment override", envValue: "4", want: 4},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.envValue != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_QOS_MAX_CONCURRENT_PER_TENANT", tc.envValue)
+			}
+			cfg := NewCfg()
+			if tc.iniValue != "" {
+				cfg.Raw.Section("unified_storage").Key("qos_max_concurrent_per_tenant").SetValue(tc.iniValue)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.QOSMaxConcurrentPerTenant)
 		})
 	}
 }

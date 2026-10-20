@@ -1,15 +1,14 @@
 import { type Page } from '@playwright/test';
 
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import { flows } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    dashboardUnifiedDrilldownControls: true,
   },
 });
 

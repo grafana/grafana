@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -1128,7 +1131,7 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "folder delete count failed for folder contents: count response did not include stats",
 	}, {
 		name: "stats error - search error",
 		folder: &folders.Folder{
@@ -1373,6 +1376,24 @@ func TestValidateDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateDeleteCountFailureIsSanitized500(t *testing.T) {
+	ctx, _, requestSpan := newFolderTrace(t)
+	original := errors.New("pq: permission denied for table alert_rule")
+	err := validateOnDelete(ctx, &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}, &mockSearchClient{
+		statsErr: &federated.CountError{Resources: []string{"alertrules"}, Err: original},
+	}, nil, false)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, int32(500), apiStatus.Status().Code)
+	require.Equal(t, "Folder cannot be deleted: could not count alert rules", apiStatus.Status().Message)
+
+	recorded, ok := requestSpan.(sdktrace.ReadOnlySpan)
+	require.True(t, ok)
+	requireFolderSpanError(t, recorded)
+	require.Contains(t, recorded.Status().Description, original.Error())
 }
 
 func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {

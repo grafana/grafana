@@ -80,14 +80,14 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			return count, errors.Join(append(errs, err)...)
 		}
 		if err := ctx.Err(); err != nil {
-			return count, err
+			return count, errors.Join(append(errs, err)...)
 		}
 		if processed > 0 && processed%g.batchSize == 0 && g.batchWait > 0 {
 			timer := time.NewTimer(g.batchWait)
 			select {
 			case <-ctx.Done():
 				timer.Stop()
-				return count, ctx.Err()
+				return count, errors.Join(append(errs, ctx.Err())...)
 			case <-timer.C:
 			}
 		}
