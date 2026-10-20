@@ -21,11 +21,11 @@ import (
 // source reports its event deliveries on the informer delivery metrics,
 // registered on reg (nil disables them).
 //
-// hasCapacity backpressures the NATS-backed re-list: given the count of jobs the
-// current pass has already fetched, it reports whether to fetch another page (see
+// hasCapacity backpressures the NATS-backed re-list: given the jobs the current
+// pass has already gathered, it reports whether to fetch another page (see
 // NewJobInformer). Pass the driver's HasCapacity; a nil predicate always reads
 // every page.
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer, hasCapacity func(fetchedThisPass int) bool) DeltaSource {
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer, hasCapacity func(gathered []runtime.Object) bool) DeltaSource {
 	metrics := newInformerMetrics(reg)
 	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {
@@ -52,15 +52,16 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 // pagination.
 //
 // hasCapacity backpressures the re-list: it is checked between pages with the
-// count of jobs the pass has already fetched, and once it reports false the
-// re-list stops following continue tokens and returns what it has as a partial
-// list (ErrPartialList). Jobs beyond that point cannot be processed until a worker
+// jobs the pass has gathered so far, and once it reports false the re-list stops
+// following continue tokens and returns what it has as a partial list
+// (ErrPartialList). Jobs beyond that point cannot be processed until a worker
 // frees, so fetching them would only grow the queue and memory; the next resync
 // resumes from where this one stopped (see resumableLister), so every page is
 // eventually read while no single pass pulls in more than the workers can absorb.
-// The first page is always read, so the workers stay fed. A nil hasCapacity reads
+// The first page of a fresh sweep is always read, so the workers stay fed; a
+// resumed sweep re-checks capacity before continuing. A nil hasCapacity reads
 // every page.
-func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, onRequest func(), hasCapacity func(fetchedThisPass int) bool) *usinformer.Informer {
+func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, onRequest func(), hasCapacity func(gathered []runtime.Object) bool) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}

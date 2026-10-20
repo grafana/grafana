@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -155,18 +156,34 @@ func NewConcurrentJobDriver(
 }
 
 // HasCapacity reports whether the jobs re-list should fetch another page, given
-// fetchedThisPass — the jobs it has already gathered in the current pass. It
-// returns false once what is already queued plus what this pass has fetched
-// reaches numDrivers, so a re-list stops pulling in work the workers cannot yet
-// absorb. Counting fetchedThisPass is what makes the check bite within a single
-// pass: the re-list does not feed the queue until it finishes, so queue length
-// alone cannot see the backlog the pass is building (and would let a re-list that
-// began with an empty queue — including the initial list — pull every page). A
-// page holds up to 500 jobs, far more than numDrivers, so a multi-page backlog
-// settles at one page per resync; the informer rotates the continue token across
-// re-lists so later pages are still reached.
-func (c *ConcurrentJobDriver) HasCapacity(fetchedThisPass int) bool {
-	return c.queue.Len()+fetchedThisPass < c.numDrivers
+// gathered — the objects it has already read in the current pass. It returns
+// false once what is already queued plus the enqueue-eligible jobs this pass has
+// gathered reaches numDrivers, so a re-list stops pulling in work the workers
+// cannot yet absorb.
+//
+// Only enqueue-eligible (unclaimed) jobs count: EventHandler skips jobs that
+// already carry a claim, so counting them would let a page of claimed jobs stall
+// pagination while runnable jobs wait on later pages and workers sit idle. All
+// objects are still returned to the informer for snapshot reconciliation — only
+// the paging budget filters them.
+//
+// Counting the pass's own gathered jobs (not just queue length) is what makes the
+// check bite within a single pass: the re-list does not feed the queue until it
+// finishes, so queue length alone cannot see the backlog the pass is building
+// (and would let a re-list that began with an empty queue — including the initial
+// list — pull every page). A page holds up to 500 jobs, far more than numDrivers,
+// so a multi-page backlog settles at one page per resync; the informer rotates the
+// continue token across re-lists so later pages are still reached.
+func (c *ConcurrentJobDriver) HasCapacity(gathered []runtime.Object) bool {
+	eligible := 0
+	for _, obj := range gathered {
+		// A full LIST page carries labels, so a claim is visible here; the minimal
+		// NATS live objects that lack them never flow through this paging path.
+		if job, ok := obj.(*provisioning.Job); ok && job.Labels[LabelJobClaim] == "" {
+			eligible++
+		}
+	}
+	return c.queue.Len()+eligible < c.numDrivers
 }
 
 // EventHandler returns informer event handlers that feed the work queue.

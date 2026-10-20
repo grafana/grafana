@@ -145,7 +145,7 @@ func TestListPagesBackpressure(t *testing.T) {
 	t.Run("stops after the first page when there is no capacity", func(t *testing.T) {
 		var calls []string
 		// keepPaging is checked between pages; false stops the chain after page 1.
-		out, listRV, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "", func(int) bool { return false })
+		out, listRV, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "", func([]runtime.Object) bool { return false })
 		require.NoError(t, err)
 		require.Equal(t, "page2", next, "stopping early reports where to resume")
 		require.Equal(t, int64(200), listRV, "the first page still dates the snapshot")
@@ -153,23 +153,24 @@ func TestListPagesBackpressure(t *testing.T) {
 		require.Equal(t, []string{"a", "b"}, jobNames(t, out))
 	})
 
-	t.Run("keepPaging sees the running fetch count", func(t *testing.T) {
-		var calls, seen = []string{}, []int{}
+	t.Run("keepPaging sees the objects gathered so far", func(t *testing.T) {
+		var calls []string
+		var seen [][]string
 		// Stop once the pass has gathered at least four objects.
-		out, _, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "", func(fetched int) bool {
-			seen = append(seen, fetched)
-			return fetched < 4
+		out, _, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "", func(objs []runtime.Object) bool {
+			seen = append(seen, jobNames(t, objs))
+			return len(objs) < 4
 		})
 		require.NoError(t, err)
 		require.Equal(t, "page3", next)
-		require.Equal(t, []int{2, 4}, seen, "the predicate receives the cumulative count between pages")
+		require.Equal(t, [][]string{{"a", "b"}, {"a", "b", "c", "d"}}, seen, "the predicate receives the cumulative objects between pages")
 		require.Equal(t, []string{"", "page2"}, calls)
 		require.Equal(t, []string{"a", "b", "c", "d"}, jobNames(t, out))
 	})
 
 	t.Run("reads every page when capacity never runs out", func(t *testing.T) {
 		var calls []string
-		out, _, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "", func(int) bool { return true })
+		out, _, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "", func([]runtime.Object) bool { return true })
 		require.NoError(t, err)
 		require.Equal(t, "", next, "reaching the end reports no resume token")
 		require.Equal(t, []string{"", "page2", "page3"}, calls)
@@ -178,7 +179,7 @@ func TestListPagesBackpressure(t *testing.T) {
 
 	t.Run("resumes from a given continue token", func(t *testing.T) {
 		var calls []string
-		out, _, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "page2", func(int) bool { return true })
+		out, _, next, err := listPages(context.Background(), recordingPageFunc(pages, &calls), "page2", func([]runtime.Object) bool { return true })
 		require.NoError(t, err)
 		require.Equal(t, "", next)
 		require.Equal(t, []string{"page2", "page3"}, calls, "starts at the given continue token")
@@ -193,7 +194,7 @@ func TestListPagesBackpressure(t *testing.T) {
 		}
 		// keepPaging returns false, but with no continue token there is no next page
 		// to gate — the set fits in one page, so it is read to the end.
-		out, _, next, err := listPages(context.Background(), page, "", func(int) bool { return false })
+		out, _, next, err := listPages(context.Background(), page, "", func([]runtime.Object) bool { return false })
 		require.NoError(t, err)
 		require.Equal(t, "", next)
 		require.Equal(t, []string{""}, calls)
@@ -201,44 +202,104 @@ func TestListPagesBackpressure(t *testing.T) {
 	})
 }
 
+// capacityForOnePage models the steady state under a multi-page backlog where one
+// worker-set frees per resync: it reports capacity while a pass has gathered
+// nothing (so the resumed-pass gate lets the pass start) but stops the pass after
+// its first page.
+func capacityForOnePage(objs []runtime.Object) bool { return len(objs) == 0 }
+
 // Under sustained backpressure the lister must advance through the pages across
 // successive re-lists instead of re-reading page 1 forever — otherwise jobs on
-// later pages whose live events were missed are never re-discovered.
+// later pages whose live events were missed are never re-discovered. One worker-set
+// frees per resync here (capacityForOnePage), so each pass reads exactly one page.
 func TestResumableListerRotatesUnderBackpressure(t *testing.T) {
 	pages := fivePages()
-	// Backpressure stops every pass after its first page (keepPaging checked with a
-	// non-zero fetch count).
-	stop := func(int) bool { return false }
 	r := &resumableLister{}
 
-	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, nil), stop)
+	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
 	require.False(t, complete)
 	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "pass 1 reads page 1")
 
-	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), stop)
+	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
 	require.False(t, complete)
 	require.Equal(t, []string{"c", "d"}, jobNames(t, out), "pass 2 advances past the pages already covered")
 
-	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), stop)
+	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
-	require.False(t, complete, "a resumed sweep that reaches the end is still partial — it never saw the earlier pages")
+	require.False(t, complete, "a resumed sweep that reaches the end is still partial — it never saw the earlier pages in one snapshot")
 	require.Equal(t, []string{"e"}, jobNames(t, out), "pass 3 reads the last page")
-
-	out, _, _, err = r.list(context.Background(), recordingPageFunc(pages, nil), stop)
-	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "after the end it wraps to a fresh sweep from page 1")
 }
 
-// Only a sweep that starts at page 1 and reaches the end is complete — the one
-// case the informer may delete-diff.
+// A resumed pass must re-check capacity before pulling its next window: while the
+// queue stays saturated, continuing would append another page of keys per resync
+// and eventually load the whole backlog. The pass is a no-op that preserves its
+// resume point until capacity frees.
+func TestResumableListerGatesResumedPassWhenSaturated(t *testing.T) {
+	pages := fivePages()
+	r := &resumableLister{}
+
+	// The fresh sweep bootstraps page 1 regardless of capacity.
+	out, _, _, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b"}, jobNames(t, out))
+
+	// Now saturated: no capacity even to start. The resumed pass fetches nothing.
+	var calls []string
+	saturated := func([]runtime.Object) bool { return false }
+	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, &calls), saturated)
+	require.NoError(t, err)
+	require.False(t, complete)
+	require.Empty(t, out, "a saturated resumed pass gathers nothing")
+	require.Empty(t, calls, "and issues no LIST request")
+
+	// When capacity frees it resumes past the pages already covered, not from page 1.
+	out, _, _, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	require.NoError(t, err)
+	require.Equal(t, []string{"c", "d"}, jobNames(t, out))
+}
+
+// Only a sweep that starts at page 1 and reaches the end in one snapshot is
+// complete — the one case the informer may delete-diff.
 func TestResumableListerCompleteOnFullSweep(t *testing.T) {
 	r := &resumableLister{}
-	out, _, complete, err := r.list(context.Background(), recordingPageFunc(fivePages(), nil), func(int) bool { return true })
+	out, _, complete, err := r.list(context.Background(), recordingPageFunc(fivePages(), nil), func([]runtime.Object) bool { return true })
 	require.NoError(t, err)
 	require.True(t, complete, "a sweep from page 1 to the end is complete")
 	require.Equal(t, []string{"a", "b", "c", "d", "e"}, jobNames(t, out))
+}
+
+// Once partial passes have rotated through every page, the next fresh sweep must
+// run a complete pruning sweep — reading the whole list in one snapshot regardless
+// of capacity — so the informer can delete-diff and drop jobs whose queue-grouped
+// delete this replica missed. Without it the Merge-only snapshot grows unbounded.
+func TestResumableListerPrunesAfterFullRotation(t *testing.T) {
+	pages := fivePages()
+	r := &resumableLister{}
+
+	// Rotate through all pages via one-page partial passes.
+	for _, want := range [][]string{{"a", "b"}, {"c", "d"}, {"e"}} {
+		out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+		require.NoError(t, err)
+		require.False(t, complete)
+		require.Equal(t, want, jobNames(t, out))
+	}
+
+	// The rotation covered every page, so the next sweep prunes: it ignores the
+	// one-page capacity limit and reads the whole list, and is reported complete.
+	var calls []string
+	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, &calls), capacityForOnePage)
+	require.NoError(t, err)
+	require.True(t, complete, "the post-rotation sweep is complete so the informer delete-diffs")
+	require.Equal(t, []string{"a", "b", "c", "d", "e"}, jobNames(t, out))
+	require.Equal(t, []string{"", "page2", "page3"}, calls, "it read every page despite the capacity limit")
+
+	// After pruning it returns to gated bootstrapping from page 1.
+	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	require.NoError(t, err)
+	require.False(t, complete)
+	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "the prune is one-shot; gating resumes")
 }
 
 // A resume token whose snapshot was compacted between re-lists must not fail the
@@ -255,15 +316,15 @@ func TestResumableListerRestartsOnExpiredResumeToken(t *testing.T) {
 		}
 		return recordingPageFunc(pages, nil)(context.Background(), opts)
 	}
-	stop := func(int) bool { return false }
 	r := &resumableLister{}
 
-	_, _, _, err := r.list(context.Background(), page, stop)
+	_, _, complete, err := r.list(context.Background(), page, capacityForOnePage)
 	require.NoError(t, err) // pass 1 reads page 1, resumes at page2
+	require.False(t, complete)
 
 	// The snapshot page2 pointed at is compacted before the next pass.
 	expirePage2 = true
-	out, _, complete, err := r.list(context.Background(), page, stop)
+	out, _, complete, err := r.list(context.Background(), page, capacityForOnePage)
 	require.NoError(t, err, "an expired resume token must not fail the re-list")
 	require.False(t, complete)
 	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "it restarts the sweep from page 1")

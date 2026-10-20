@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -45,27 +47,48 @@ func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 	require.ErrorContains(t, err, "numDrivers")
 }
 
-// HasCapacity weighs what is already queued plus what the current re-list pass has
-// fetched against numDrivers: it is the backpressure signal the jobs informer uses
-// to stop paginating once the workers have enough waiting. Counting the pass's own
-// fetches is what makes it bite before the queue is fed, including on a re-list
-// that starts with an empty queue.
+// jobObjs builds n job list objects; claimed ones carry a claim label so they are
+// the jobs EventHandler skips.
+func jobObjs(claimed bool, n int) []runtime.Object {
+	objs := make([]runtime.Object, n)
+	for i := range objs {
+		meta := metav1.ObjectMeta{Namespace: "ns", Name: fmt.Sprintf("job-%d", i)}
+		if claimed {
+			meta.Labels = map[string]string{LabelJobClaim: "1000000000000"}
+		}
+		objs[i] = &provisioning.Job{ObjectMeta: meta}
+	}
+	return objs
+}
+
+// HasCapacity weighs what is already queued plus the enqueue-eligible jobs the
+// current re-list pass has gathered against numDrivers: it is the backpressure
+// signal the jobs informer uses to stop paginating once the workers have enough
+// waiting. Counting the pass's own gathered jobs is what makes it bite before the
+// queue is fed, including on a re-list that starts with an empty queue; counting
+// only unclaimed jobs keeps a page of already-claimed work from stalling it.
 func TestConcurrentJobDriver_HasCapacity(t *testing.T) {
 	driver := newTestConcurrentDriver(t, 2, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-	assert.True(t, driver.HasCapacity(0), "an empty queue that has fetched nothing has capacity")
-	assert.True(t, driver.HasCapacity(1), "one fetched job with two drivers still has capacity")
-	assert.False(t, driver.HasCapacity(2), "a pass that has fetched numDrivers jobs has no capacity")
+	assert.True(t, driver.HasCapacity(nil), "an empty queue that has gathered nothing has capacity")
+	assert.True(t, driver.HasCapacity(jobObjs(false, 1)), "one gathered job with two drivers still has capacity")
+	assert.False(t, driver.HasCapacity(jobObjs(false, 2)), "a pass that has gathered numDrivers jobs has no capacity")
 
-	// The pass's own fetches count even while the queue is empty, so a full first
-	// page (far larger than numDrivers) always stops pagination — the queue is not
-	// fed until the re-list finishes.
-	assert.False(t, driver.HasCapacity(500), "a full first page exceeds capacity even with an empty queue")
+	// The pass's own gathered jobs count even while the queue is empty, so a full
+	// first page (far larger than numDrivers) always stops pagination — the queue is
+	// not fed until the re-list finishes.
+	assert.False(t, driver.HasCapacity(jobObjs(false, 500)), "a full first page exceeds capacity even with an empty queue")
+
+	// Claimed jobs are skipped by EventHandler, so they must not consume the paging
+	// budget: a page full of claimed jobs cannot stall pagination of runnable work.
+	assert.True(t, driver.HasCapacity(jobObjs(true, 500)), "a page of claimed jobs leaves full capacity")
+	assert.True(t, driver.HasCapacity(append(jobObjs(true, 500), jobObjs(false, 1)...)), "only the one unclaimed job counts")
+	assert.False(t, driver.HasCapacity(append(jobObjs(true, 500), jobObjs(false, 2)...)), "two unclaimed jobs reach numDrivers")
 
 	// Keys already waiting count too.
 	driver.queue.Add("ns/a")
 	driver.queue.Add("ns/b")
-	assert.False(t, driver.HasCapacity(0), "once numDrivers keys are queued there is no capacity")
+	assert.False(t, driver.HasCapacity(nil), "once numDrivers keys are queued there is no capacity")
 }
 
 // gaugeValueByName reads the single-sample gauge `name` from the gatherer.
