@@ -11,7 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
+	"uuid"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -334,7 +335,7 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 	}
 
 	// Every version gets its own guid, like the sql store
-	value.GUID = uuid.NewString()
+	value.GUID = uuid.NewV4().String()
 
 	if createdBy != "" {
 		value.CreatedBy = createdBy
@@ -459,7 +460,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 		leaseTTL = 5 * time.Minute
 	)
 
-	leaseToken := uuid.NewString()
+	leaseToken := uuid.NewV4().String()
 
 	now := s.clock.Now().UTC().Unix()
 
