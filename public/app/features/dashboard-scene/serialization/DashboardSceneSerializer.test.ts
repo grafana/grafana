@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { type AdHocFiltersVariable, type MultiValueVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
@@ -12,6 +11,7 @@ import {
   type PanelSpec,
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -187,11 +187,11 @@ describe('DashboardSceneSerializer', () => {
 
       describe('Experimental variables', () => {
         beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
+          setTestFlags({ groupByVariable: true });
         });
 
         afterAll(() => {
-          config.featureToggles.groupByVariable = false;
+          setTestFlags({});
         });
 
         it('Can detect adhoc filter static options change', () => {
@@ -579,11 +579,11 @@ describe('DashboardSceneSerializer', () => {
 
       describe('Experimental variables', () => {
         beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
+          setTestFlags({ groupByVariable: true });
         });
 
         afterAll(() => {
-          config.featureToggles.groupByVariable = false;
+          setTestFlags({});
         });
 
         it('Can detect adhoc filter static options change', () => {

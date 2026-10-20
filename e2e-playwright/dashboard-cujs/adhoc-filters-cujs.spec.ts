@@ -21,8 +21,12 @@ const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
+  },
+  openFeature: {
+    flags: {
+      groupByVariable: true,
+    },
   },
 });
 

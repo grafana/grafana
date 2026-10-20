@@ -11,7 +11,7 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { config, setRunRequest } from '@grafana/runtime';
+import { setRunRequest } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -25,6 +25,7 @@ import {
   TextBoxVariable,
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
@@ -834,11 +835,11 @@ describe('sceneVariablesSetToVariables', () => {
 
   describe('when the groupByVariable feature toggle is enabled', () => {
     beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
+      setTestFlags({ groupByVariable: true });
     });
 
     afterAll(() => {
-      config.featureToggles.groupByVariable = false;
+      setTestFlags({});
     });
 
     it('should handle GroupByVariable', () => {
@@ -1688,11 +1689,11 @@ describe('sceneVariablesSetToVariables', () => {
 
     describe('when the groupByVariable feature toggle is enabled', () => {
       beforeAll(() => {
-        config.featureToggles.groupByVariable = true;
+        setTestFlags({ groupByVariable: true });
       });
 
       afterAll(() => {
-        config.featureToggles.groupByVariable = false;
+        setTestFlags({});
       });
 
       it('should handle GroupByVariable', () => {

@@ -356,7 +356,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
     // Groupby variable
-  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
+  } else if (getFeatureFlagClient().getBooleanValue(FlagKeys.GroupByVariable, false) && variable.type === 'groupby') {
     return new GroupByVariable({
       ...commonProperties,
       datasource: variable.datasource,

@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
   type MultiValueVariable,
@@ -211,7 +211,10 @@ export function sceneVariablesSetToVariables(
         options: [{ ...current, selected: true }],
         query: variable.state.value,
       });
-    } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+    } else if (
+      sceneUtils.isGroupByVariable(variable) &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GroupByVariable, false)
+    ) {
       // @ts-expect-error
       const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
         ? {
@@ -537,7 +540,10 @@ export function sceneVariablesSetToSchemaV2Variables(
       variables.push(textBoxVariable);
 
       // Groupby variable
-    } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+    } else if (
+      sceneUtils.isGroupByVariable(variable) &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GroupByVariable, false)
+    ) {
       options = variableValueOptionsToVariableOptions(variable.state);
 
       // @ts-expect-error

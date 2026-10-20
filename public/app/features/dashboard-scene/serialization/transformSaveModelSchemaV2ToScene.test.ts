@@ -92,11 +92,11 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('transformSaveModelSchemaV2ToScene', () => {
   beforeAll(() => {
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   afterAll(() => {
-    config.featureToggles.groupByVariable = false;
+    setTestFlags({});
   });
 
   it('should initialize the DashboardScene with the model state', () => {
@@ -642,11 +642,11 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
   describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
     beforeEach(() => {
-      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+      setTestFlags({ groupByVariable: true, perPanelNonApplicableDrilldowns: true });
     });
 
     afterEach(() => {
-      setTestFlags({});
+      setTestFlags({ groupByVariable: true });
     });
 
     // The standalone GroupByVariable in defaultDashboard is migrated away on load, so only the adhoc variable is checked

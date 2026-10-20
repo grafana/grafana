@@ -1,5 +1,5 @@
 import { type DataSourceApi } from '@grafana/data';
-import { config, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   ConstantVariable,
@@ -15,6 +15,7 @@ import {
   SceneFlexItem,
 } from '@grafana/scenes';
 import { type DataQuery, type DataSourceJsonData, VariableHide, type VariableType } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 
 import { toControlSourceRef } from '../../utils/predefinedVariables';
@@ -161,11 +162,11 @@ describe('isSceneVariableInstance', () => {
 describe('getVariableTypeSelectOptions', () => {
   describe('when groupByVariable is enabled', () => {
     beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
+      setTestFlags({ groupByVariable: true });
     });
 
     afterAll(() => {
-      config.featureToggles.groupByVariable = false;
+      setTestFlags({});
     });
 
     it('should contain all editable variable types except adhoc', () => {

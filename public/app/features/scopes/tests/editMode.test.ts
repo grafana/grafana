@@ -2,6 +2,7 @@ import { act, cleanup } from '@testing-library/react';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -31,7 +32,7 @@ describe('Scope selector in edit mode', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   beforeEach(async () => {
@@ -87,7 +88,7 @@ describe('setReadOnly', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   beforeEach(async () => {
@@ -130,7 +131,7 @@ describe('setRedirectEnabled', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   beforeEach(async () => {

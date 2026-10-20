@@ -10,7 +10,6 @@ import {
   type TextBoxVariableModel,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -589,11 +588,11 @@ describe('when creating variables objects', () => {
 
   describe('when groupByVariable feature toggle is enabled', () => {
     beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
+      setTestFlags({ groupByVariable: true });
     });
 
     afterAll(() => {
-      config.featureToggles.groupByVariable = false;
+      setTestFlags({});
     });
 
     it('should migrate groupby variable', () => {

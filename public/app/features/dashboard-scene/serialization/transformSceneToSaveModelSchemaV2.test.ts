@@ -6,7 +6,6 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -45,6 +44,7 @@ import {
   defaultDataQueryKind,
   type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -178,15 +178,13 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('transformSceneToSaveModelSchemaV2', () => {
   let dashboardScene: DashboardScene;
-  let prevFeatureToggleValue: boolean;
 
   beforeAll(() => {
-    prevFeatureToggleValue = !!config.featureToggles.groupByVariable;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   afterAll(() => {
-    config.featureToggles.groupByVariable = prevFeatureToggleValue;
+    setTestFlags({});
   });
 
   beforeEach(() => {

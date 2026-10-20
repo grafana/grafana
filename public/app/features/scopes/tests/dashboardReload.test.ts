@@ -1,5 +1,6 @@
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -27,7 +28,7 @@ describe('Dashboard reload', () => {
   });
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   it.each([

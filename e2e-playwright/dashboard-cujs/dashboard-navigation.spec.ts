@@ -20,8 +20,12 @@ import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReload
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
+  },
+  openFeature: {
+    flags: {
+      groupByVariable: true,
+    },
   },
 });
 

@@ -1,6 +1,6 @@
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_SCOPES } from '@grafana/test-utils/unstable';
+import { MOCK_SCOPES, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
@@ -50,7 +50,7 @@ describe('Selector', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   beforeEach(async () => {

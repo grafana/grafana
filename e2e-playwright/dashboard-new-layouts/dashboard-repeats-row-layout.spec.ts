@@ -19,7 +19,11 @@ const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${ro
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
-    groupByVariable: true,
+  },
+  openFeature: {
+    flags: {
+      groupByVariable: true,
+    },
   },
 });
 

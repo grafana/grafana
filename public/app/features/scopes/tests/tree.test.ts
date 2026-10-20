@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { type ScopesService } from '../ScopesService';
@@ -68,7 +69,7 @@ describe('Tree', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+    setTestFlags({ groupByVariable: true });
   });
 
   beforeEach(async () => {

@@ -512,7 +512,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
-  } else if (config.featureToggles.groupByVariable && variable.kind === defaultGroupByVariableKind().kind) {
+  } else if (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GroupByVariable, false) &&
+    variable.kind === defaultGroupByVariableKind().kind
+  ) {
     const ds = getDataSourceForQuery(
       {
         type: variable.group,
