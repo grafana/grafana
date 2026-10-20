@@ -11,7 +11,7 @@ import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncid
 import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
-import { AssistantInput } from './AssistantInput';
+import { AssistantInputSlot } from './AssistantInputSlot';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { HeaderActions } from './HeaderActions';
 import { HomeGrid } from './HomeGrid';
@@ -32,9 +32,6 @@ export function RedesignedHomePage() {
   // no-org users can't act on any of it, so skip the sections and their placement probes.
   const showSolutions = contextSrv.isSignedIn && contextSrv.user.orgRole !== OrgRole.None;
 
-  const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.HomepageAssistant,
-  });
   const { components: extraComponents } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageExtra,
   });
@@ -64,7 +61,7 @@ export function RedesignedHomePage() {
       }
     >
       <Stack direction="column" gap={2}>
-        <AssistantInput components={assistantComponents} loading={isLoadingAssistant} />
+        <AssistantInputSlot />
 
         <HomeGrid columns={2} gap={2}>
           {/* Skip the HomepageTabs extension point for the redesign UI */}

@@ -14,7 +14,7 @@ interface Props {
 }
 
 // The legacy layout reveals as one. Opt-in sections so the skeleton never reserves a block the real page won't render.
-export function HomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra }: Props) {
+export function LegacyHomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra }: Props) {
   return (
     <div data-testid="home-page-skeleton">
       <Stack direction="column" gap={2}>

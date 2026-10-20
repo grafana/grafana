@@ -17,8 +17,8 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomeGrid } from './HomeGrid';
 import { HomePageFrame } from './HomePageFrame';
-import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
+import { LegacyHomePageSkeleton } from './LegacyHomePageSkeleton';
 import { homepageViewed } from './analytics/main';
 
 /**
@@ -91,7 +91,7 @@ export function LegacyHomePage() {
   const isLoadingExtensions =
     isLoadingAssistant || isLoadingExtra || isLoadingTabs || incidentsData.enabled === undefined;
   const skeleton = (
-    <HomePageSkeleton
+    <LegacyHomePageSkeleton
       showAlertsCard={alertsData.enabled}
       showIRMNewsCard={incidentsData.enabled === undefined || incidentsData.enabled || config.newsFeedEnabled}
       showExtra={extraContent !== null}

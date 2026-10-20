@@ -151,22 +151,22 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   // org, so switching orgs on one instance can cost that late mount once.
   const [knownEmpty, setKnownEmpty] = useStoredBoolean(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false);
   const state = selected.value;
-  const isEmpty = state ? state.recommendations.length === 0 : undefined;
   useEffect(() => {
-    if (isEmpty !== undefined) {
-      setKnownEmpty(isEmpty);
+    if (state) {
+      setKnownEmpty(state.recommendations.length === 0);
     }
-  }, [isEmpty, setKnownEmpty]);
-  if (selectionEnabled && !state) {
-    return knownEmpty ? null : <RecommendationsSkeleton />;
-  }
-
-  // All-or-nothing: the region never renders one column alone. An empty right column —
-  // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
-  // or every card failing closed — hides the whole region. The collapsed-gated render
-  // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
-  if (selectionEnabled && isEmpty) {
-    return null;
+  }, [state, setKnownEmpty]);
+  if (selectionEnabled) {
+    if (!state) {
+      return knownEmpty ? null : <RecommendationsSkeleton />;
+    }
+    // All-or-nothing: the region never renders one column alone. An empty right column —
+    // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
+    // or every card failing closed — hides the whole region. The collapsed-gated render
+    // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
+    if (state.recommendations.length === 0) {
+      return null;
+    }
   }
 
   return (
