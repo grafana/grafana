@@ -2752,6 +2752,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alerting.gmaOnlyListView",
+			Description:  "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
+		{
 			Name:        "alerting.notificationsAPIV1Beta1",
 			Description: "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
 			Stage:       FeatureStageExperimental,
