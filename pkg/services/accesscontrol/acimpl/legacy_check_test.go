@@ -28,8 +28,14 @@ func TestLegacyCheck_AccessControlEvaluate(t *testing.T) {
 
 			var folders = []store.Folder{}
 			ac := acimpl.ProvideAccessControlTest()
-			service := rbac.NewTestService(tc.user.GetIdentifier(), permissions, folders).
-				WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+			service := rbac.NewTestService(
+				tc.user.GetIdentifier(),
+				permissions,
+				folders,
+			).WithLegacyScopeResolvers(
+				acimpl.ProvideScopeResolverRegistry(ac),
+				types.OrgNamespaceFormatter,
+			)
 			if tc.scopeResolver != nil {
 				ac.RegisterScopeAttributeResolver(tc.resolverPrefix, tc.scopeResolver)
 			}
