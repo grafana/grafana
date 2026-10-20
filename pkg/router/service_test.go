@@ -148,25 +148,20 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}
 
-	enabled, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
-	require.NoError(t, err)
-	require.False(t, enabled.IsDisabled())
-
 	// Without the toggle the router still runs, to keep /apis/discovery current,
 	// but leaves every other request to the embedded API server.
-	disabled, err := provideTestService(cfg, featuremgmt.WithFeatures(), loader)
+	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(), loader)
 	require.NoError(t, err)
-	require.False(t, disabled.IsDisabled())
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 	recorder := httptest.NewRecorder()
-	disabled.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), next)
+	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), next)
 	require.Equal(t, http.StatusNoContent, recorder.Code)
 
 	recorder = httptest.NewRecorder()
-	disabled.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, manifestDiscoveryList, nil), next)
+	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, manifestDiscoveryList, nil), next)
 	require.Equal(t, http.StatusOK, recorder.Code)
 	require.Contains(t, recorder.Body.String(), `"kind":"AppManifestList"`)
 }

@@ -137,13 +137,6 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(context.Background())
 }
 
-// IsDisabled is always false: inside Grafana the reconcile loop keeps the
-// /apis/discovery tree current even when middleware routing is off, and the
-// router module needs it to route.
-func (s *Service) IsDisabled() bool {
-	return false
-}
-
 func (s *Service) starting(ctx context.Context) error {
 	if err := s.router.Run(ctx); err != nil {
 		return fmt.Errorf("starting router: %w", err)
