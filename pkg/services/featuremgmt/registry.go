@@ -1913,15 +1913,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "enableAppChromeExtensions",
-			Description:  "Set this to true to enable all app chrome extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
-		},
-		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
 			Stage:        FeatureStageGeneralAvailability,
