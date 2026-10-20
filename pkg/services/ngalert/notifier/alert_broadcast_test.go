@@ -150,6 +150,13 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		mockAM.On("Ready").Return(true)
 		entered := make(chan struct{})
 		release := make(chan struct{})
+		defer func() {
+			select {
+			case <-release:
+			default:
+				close(release)
+			}
+		}()
 		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(mock.Arguments) { close(entered); <-release }).Return(nil)
 
 		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: map[int64]Alertmanager{1: mockAM}}
