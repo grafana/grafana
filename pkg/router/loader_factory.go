@@ -46,7 +46,14 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 			return nil, err
 		}
 		if len(namespacedGroups) > 0 {
-			return newNamespacedLoader(&PluginLoader{deps: deps}, namespacedGroups), nil
+			// As for the local plugins, roles are declared only in middleware
+			// mode. Polls start after startup registers the fixed roles, and any
+			// declared before are recorded for it.
+			var roles fixedRoleReplacer
+			if replacer, ok := deps.ACService.(fixedRoleReplacer); ok && middleware {
+				roles = replacer
+			}
+			return newNamespacedLoader(&PluginLoader{deps: deps}, namespacedGroups, roles), nil
 		}
 		return &PluginLoader{deps: deps}, nil
 	}

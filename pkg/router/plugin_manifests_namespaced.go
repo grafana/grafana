@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // namespacedKeyPrefix prefixes the keys of the namespaced groups' backends.
@@ -64,14 +65,27 @@ type namespacedManifestsTarget struct {
 	owners func(context.Context) []Backend
 	// serviceContext adds the identity the router polls as.
 	serviceContext func(context.Context) context.Context
+
+	// roles, when set, declares the roles of every namespaced group the
+	// source serves (see declareRoles). rolesKeys is the key set they were
+	// last declared for; nil until they are.
+	roles     fixedRoleReplacer
+	rolesKeys map[string]struct{}
 }
 
-func newNamespacedManifestsTarget(ownerGroup string, owners func(context.Context) []Backend) *namespacedManifestsTarget {
+// fixedRoleReplacer replaces the whole set of fixed roles an owner declares
+// (acimpl.FixedRoleReplacer).
+type fixedRoleReplacer interface {
+	ReplaceFixedRoles(ctx context.Context, owner string, registrations ...ac.RoleRegistration) error
+}
+
+func newNamespacedManifestsTarget(ownerGroup string, owners func(context.Context) []Backend, roles fixedRoleReplacer) *namespacedManifestsTarget {
 	t := &namespacedManifestsTarget{
 		ownerGroup:     ownerGroup,
 		source:         namespacedSource(ownerGroup),
 		owners:         owners,
 		serviceContext: routerServiceContext,
+		roles:          roles,
 	}
 	t.initPoller()
 	return t
@@ -115,6 +129,7 @@ func (t *namespacedManifestsTarget) poll(ctx context.Context, dirty chan<- struc
 
 	backends := make([]Backend, 0, len(manifests))
 	keys := make(map[string]struct{}, len(manifests))
+	served := make([]*app.ManifestData, 0, len(manifests))
 	skipped := 0
 	for _, manifest := range manifests {
 		backend, err := t.newBackend(owner, ownerKey, manifest)
@@ -128,8 +143,30 @@ func (t *namespacedManifestsTarget) poll(ctx context.Context, dirty chan<- struc
 		}
 		backends = append(backends, backend)
 		keys[backend.Key()] = struct{}{}
+		served = append(served, manifest)
 	}
+	t.declareRoles(ctx, owner.pluginID, served, keys)
 	t.publish(backends, keys, skipped, dirty)
+}
+
+// declareRoles makes the roles of the served manifests the whole set of roles
+// the source declares, each group's as manifestRoleRegistrations converts
+// them, so the roles of a group that is gone are removed. It runs only after a
+// successful poll, the first and each one whose key set changed, and again
+// after one that failed to declare them.
+func (t *namespacedManifestsTarget) declareRoles(ctx context.Context, pluginID string, manifests []*app.ManifestData, keys map[string]struct{}) {
+	if t.roles == nil || (t.rolesKeys != nil && sameKeySet(t.rolesKeys, keys)) {
+		return
+	}
+	var registrations []ac.RoleRegistration
+	for _, manifest := range manifests {
+		registrations = append(registrations, manifestRoleRegistrations(manifest.Group, pluginID, manifest)...)
+	}
+	if err := t.roles.ReplaceFixedRoles(ctx, t.source, registrations...); err != nil {
+		logging.FromContext(ctx).Warn("router: declaring the roles of namespaced groups failed", "group", t.ownerGroup, "pluginId", pluginID, "err", err)
+		return
+	}
+	t.rolesKeys = keys
 }
 
 // findOwner returns the plugin backend serving the owner group, and its key.
@@ -322,8 +359,9 @@ func parseNamespacedGroup(group, owner string) (name, namespace string, err erro
 // include group: the one group ends in, after a dot. Only the owner's
 // namespaced source may serve such a group. Any other source refuses it, so
 // that no plugin can claim, or shadow, a namespace's group, nor have its kinds
-// reached by the owner's service permissions, which unified storage extends to
-// any group of that form (namespacedgroups.Owner).
+// reached by the owner's service permissions, which unified storage and the
+// plugin route authorizer extend to any group of that form
+// (namespacedgroups.CheckServicePermissions).
 func namespacedOwnerOf(group string, owners []string) (string, bool) {
 	for _, owner := range owners {
 		if strings.HasSuffix(group, "."+owner) {
@@ -470,7 +508,9 @@ type namespacedLoader struct {
 
 var _ RoutesLoader = (*namespacedLoader)(nil)
 
-func newNamespacedLoader(inner RoutesLoader, ownerGroups []string) *namespacedLoader {
+// newNamespacedLoader returns the loader. roles, when set, declares the roles
+// of the namespaced groups' kinds.
+func newNamespacedLoader(inner RoutesLoader, ownerGroups []string, roles fixedRoleReplacer) *namespacedLoader {
 	l := &namespacedLoader{inner: inner, owners: ownerGroups, dirty: make(chan struct{}, 1)}
 	owners := func(context.Context) []Backend {
 		if owners := l.ownerBackends.Load(); owners != nil {
@@ -479,7 +519,7 @@ func newNamespacedLoader(inner RoutesLoader, ownerGroups []string) *namespacedLo
 		return nil
 	}
 	for _, group := range ownerGroups {
-		l.targets = append(l.targets, newNamespacedManifestsTarget(group, owners))
+		l.targets = append(l.targets, newNamespacedManifestsTarget(group, owners, roles))
 	}
 	return l
 }

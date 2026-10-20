@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,7 @@ import (
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 const testOwnerGroup = "gas.ext.grafana.app"
@@ -223,7 +225,7 @@ func TestNamespacedManifestsTargetPoll(t *testing.T) {
 	owner := newTestOwner(t, client)
 	ownerKey := "managed:grafana-gas-app:abc"
 	owners := []Backend{&pluginDeploymentBackend{Backend: owner, key: ownerKey, source: sourcePluginsURL}}
-	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return owners })
+	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return owners }, nil)
 
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -269,7 +271,7 @@ func TestNamespacedManifestsTargetSignalsOnlyOnKeySetChange(t *testing.T) {
 	ownerKey := "managed:grafana-gas-app:abc"
 	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend {
 		return []Backend{&pluginDeploymentBackend{Backend: owner, key: ownerKey}}
-	})
+	}, nil)
 	dirty := make(chan struct{}, 1)
 	drain := func() bool {
 		select {
@@ -307,7 +309,7 @@ func TestNamespacedManifestsTargetWithoutOwner(t *testing.T) {
 	}}
 	owner := newTestOwner(t, client)
 	var owners []Backend
-	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return owners })
+	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return owners }, nil)
 	dirty := make(chan struct{}, 1)
 
 	target.poll(t.Context(), dirty)
@@ -333,7 +335,7 @@ func TestNamespacedManifestsTargetFailedPollKeepsLastKnownGood(t *testing.T) {
 		"": {Manifests: []*app.ManifestData{namespacedTestManifest("myapp.stacks-1.gas.ext.grafana.app")}},
 	}}
 	owner := newTestOwner(t, client)
-	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return []Backend{owner} })
+	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return []Backend{owner} }, nil)
 	dirty := make(chan struct{}, 1)
 
 	target.poll(t.Context(), dirty)
@@ -345,6 +347,79 @@ func TestNamespacedManifestsTargetFailedPollKeepsLastKnownGood(t *testing.T) {
 	require.Len(t, target.Backends(), 1)
 	require.Empty(t, dirty)
 	require.Equal(t, uint64(1), target.status.status("").Failures)
+}
+
+// fakeRoleReplacer records each ReplaceFixedRoles call.
+type fakeRoleReplacer struct {
+	err   error
+	calls []fakeRoleReplace
+}
+
+type fakeRoleReplace struct {
+	owner string
+	roles []string
+}
+
+func (f *fakeRoleReplacer) ReplaceFixedRoles(_ context.Context, owner string, regs ...ac.RoleRegistration) error {
+	call := fakeRoleReplace{owner: owner, roles: []string{}}
+	for _, r := range regs {
+		call.roles = append(call.roles, r.Role.Name)
+	}
+	f.calls = append(f.calls, call)
+	return f.err
+}
+
+// namespacedTestManifestWithKinds returns a manifest serving the kinds.
+func namespacedTestManifestWithKinds(group string, kinds ...string) *app.ManifestData {
+	m := namespacedTestManifest(group)
+	for _, kind := range kinds {
+		m.Versions[0].Kinds = append(m.Versions[0].Kinds, app.ManifestVersionKind{Kind: kind, Plural: kind + "s", Scope: "Namespaced"})
+	}
+	return m
+}
+
+func TestNamespacedManifestsTargetDeclaresRoles(t *testing.T) {
+	const a, b = "a.stacks-1.gas.ext.grafana.app", "b.stacks-2.gas.ext.grafana.app"
+	page := func(manifests ...*app.ManifestData) map[string]namespacedManifestsPage {
+		return map[string]namespacedManifestsPage{"": {Manifests: manifests}}
+	}
+	client := &fakeManifestsClient{pages: page(namespacedTestManifestWithKinds(a, "Book"), namespacedTestManifestWithKinds(b, "Film"))}
+	owner := newTestOwner(t, client)
+	var owners []Backend
+	roles := &fakeRoleReplacer{}
+	target := newNamespacedManifestsTarget(testOwnerGroup, func(context.Context) []Backend { return owners }, roles)
+	dirty := make(chan struct{}, 1)
+	poll := func() []fakeRoleReplace {
+		roles.calls = nil
+		target.poll(t.Context(), dirty)
+		return roles.calls
+	}
+	source := "namespaced:" + testOwnerGroup
+
+	require.Empty(t, poll(), "no roles while the owner isn't loaded")
+
+	owners = []Backend{owner}
+	require.Equal(t, []fakeRoleReplace{{owner: source, roles: []string{
+		"fixed:" + a + ":reader", "fixed:" + a + ":writer", "fixed:" + b + ":reader", "fixed:" + b + ":writer",
+	}}}, poll(), "the first poll declares every group's roles")
+
+	require.Empty(t, poll(), "an unchanged poll declares nothing")
+
+	client.setPages(page(namespacedTestManifestWithKinds(a, "Book", "Author")))
+	require.Equal(t, []fakeRoleReplace{{owner: source, roles: []string{
+		"fixed:" + a + ":reader", "fixed:" + a + ":writer",
+	}}}, poll(), "a changed key set declares the whole set again")
+
+	client.status = http.StatusInternalServerError
+	require.Empty(t, poll(), "a failed poll declares nothing")
+	client.status = 0
+
+	roles.err = errors.New("boom")
+	client.setPages(page())
+	require.Equal(t, []fakeRoleReplace{{owner: source, roles: []string{}}}, poll(), "no groups left: no roles")
+	roles.err = nil
+	require.Equal(t, []fakeRoleReplace{{owner: source, roles: []string{}}}, poll(), "a failed declaration is retried")
+	require.Empty(t, poll())
 }
 
 func TestParseNamespacedGroups(t *testing.T) {
@@ -430,7 +505,7 @@ func TestCloudLoaderNamespacedPriority(t *testing.T) {
 	plugins := []Backend{priorityBackend("plugin.stacks-1.gas.ext.grafana.app", "plugin")}
 	loader.pluginsTarget.snapshot.Store(&plugins)
 
-	target := newNamespacedManifestsTarget(testOwnerGroup, nil)
+	target := newNamespacedManifestsTarget(testOwnerGroup, nil, nil)
 	namespacedBackend := func(group string) Backend {
 		return &fakeNamespacedBackend{fakeBackend: *priorityBackend(group, "namespaced").(*fakeBackend), namespace: "stacks-1"}
 	}
@@ -483,7 +558,7 @@ func TestNamespacedLoader(t *testing.T) {
 		backends: []Backend{owner, priorityBackend("local.stacks-1.gas.ext.grafana.app", "local")},
 		notify:   make(chan struct{}),
 	}
-	loader := newNamespacedLoader(inner, []string{testOwnerGroup})
+	loader := newNamespacedLoader(inner, []string{testOwnerGroup}, nil)
 	target := loader.targets[0]
 	dirty := make(chan struct{}, 1)
 

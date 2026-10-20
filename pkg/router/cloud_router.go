@@ -264,8 +264,10 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 		return backends
 	}
+	// The router declares no roles for the namespaced groups in Cloud, where
+	// pluginmanifests reconciles them from the _manifests route.
 	for _, group := range namespacedGroups {
-		loader.namespacedTargets = append(loader.namespacedTargets, newNamespacedManifestsTarget(group, owners))
+		loader.namespacedTargets = append(loader.namespacedTargets, newNamespacedManifestsTarget(group, owners, nil))
 	}
 	return loader, nil
 }
