@@ -92,12 +92,15 @@ type Metrics interface {
 // nothing in the delivery or reconcile path depends on it. Announce carries a
 // committed write's version (ADDED/MODIFIED); Forget drops the key on a DELETED,
 // whose object is already gone from storage, so a reader cannot mistake the
-// correct NotFound that follows for a read that lagged an announcement.
+// correct NotFound that follows for a read that lagged an announcement. Both
+// carry the notification's version, because arrival order does not follow it:
+// notifications for one key can come from different storage replicas, so a
+// delete can land after the re-create that superseded it.
 //
 // Implementations must not block: observations are made on the delivery path.
 type Announcements interface {
 	Announce(namespace, name string, rv int64)
-	Forget(namespace, name string)
+	Forget(namespace, name string, rv int64)
 }
 
 // defaultResync is the fallback re-list cadence when a caller passes a
@@ -478,7 +481,7 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// returns is the truth, not a lagging read.
 		if n.announcements != nil {
 			if evt.Type == resourcepb.WatchNotification_DELETED {
-				n.announcements.Forget(evt.Namespace, evt.Name)
+				n.announcements.Forget(evt.Namespace, evt.Name, evt.ResourceVersion)
 			} else {
 				n.announcements.Announce(evt.Namespace, evt.Name, evt.ResourceVersion)
 			}

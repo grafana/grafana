@@ -81,12 +81,20 @@ func (a *announcements) Announce(namespace, name string, rv int64) {
 }
 
 // Forget drops the key: the object is gone, so no read is expected to reach a
-// version for it.
-func (a *announcements) Forget(namespace, name string) {
+// version for it. A delete older than the outstanding announcement is kept out:
+// notifications for one key can come from different storage replicas, so a
+// delete can arrive after the re-create that superseded it, and erasing the
+// newer version would stop counting the reads it was there to judge. An
+// undatable delete (rv <= 0) drops the key, which can only under-count.
+func (a *announcements) Forget(namespace, name string, rv int64) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.sweepLocked()
-	delete(a.seen, announcementKey(namespace, name))
+	key := announcementKey(namespace, name)
+	if e, ok := a.seen[key]; ok && rv > 0 && e.rv > resource.ToSnowflakeRV(rv) {
+		return
+	}
+	delete(a.seen, key)
 }
 
 // Announced returns the newest version announced for the key, or 0 when none is

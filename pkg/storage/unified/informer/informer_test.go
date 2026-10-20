@@ -942,7 +942,13 @@ func TestInformer_MetricsObserveLiveSubscription(t *testing.T) {
 type recordedAnnouncements struct {
 	mu        sync.Mutex
 	announced map[string]int64
-	forgotten []string
+	forgotten []forgottenKey
+}
+
+// forgottenKey is one Forget call, with the version the delete carried.
+type forgottenKey struct {
+	key string
+	rv  int64
 }
 
 func newRecordedAnnouncements() *recordedAnnouncements {
@@ -955,11 +961,11 @@ func (r *recordedAnnouncements) Announce(namespace, name string, rv int64) {
 	r.announced[namespace+"/"+name] = rv
 }
 
-func (r *recordedAnnouncements) Forget(namespace, name string) {
+func (r *recordedAnnouncements) Forget(namespace, name string, rv int64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	delete(r.announced, namespace+"/"+name)
-	r.forgotten = append(r.forgotten, namespace+"/"+name)
+	r.forgotten = append(r.forgotten, forgottenKey{key: namespace + "/" + name, rv: rv})
 }
 
 func (r *recordedAnnouncements) version(namespace, name string) int64 {
@@ -968,10 +974,10 @@ func (r *recordedAnnouncements) version(namespace, name string) int64 {
 	return r.announced[namespace+"/"+name]
 }
 
-func (r *recordedAnnouncements) forgottenKeys() []string {
+func (r *recordedAnnouncements) forgottenKeys() []forgottenKey {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return append([]string(nil), r.forgotten...)
+	return append([]forgottenKey(nil), r.forgotten...)
 }
 
 var _ Announcements = (*recordedAnnouncements)(nil)
@@ -1001,7 +1007,9 @@ func TestInformer_AnnouncesLiveNotifications(t *testing.T) {
 		assert.Equal(t, int64(11), ann.version(testNamespace, "added"))
 		assert.Equal(t, int64(12), ann.version(testNamespace, "changed"))
 		assert.Zero(t, ann.version(testNamespace, "gone"))
-		assert.Equal(t, []string{testNamespace + "/gone"}, ann.forgottenKeys())
+		// The delete's own version goes with it: arrival order does not follow
+		// version order, so the observer has to be able to date the delete.
+		assert.Equal(t, []forgottenKey{{key: testNamespace + "/gone", rv: 13}}, ann.forgottenKeys())
 	})
 }
 

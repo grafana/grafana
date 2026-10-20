@@ -59,10 +59,37 @@ func TestAnnouncements(t *testing.T) {
 
 	// The delete leaves no version behind, so the NotFound a later read returns
 	// cannot be read as a read that lagged an announcement.
-	t.Run("a delete forgets the key", func(t *testing.T) {
+	t.Run("a delete at or above the announcement forgets the key", func(t *testing.T) {
+		for _, name := range []string{"same", "newer"} {
+			announced := rvAgo(time.Second)
+			deleted := announced
+			if name == "newer" {
+				deleted = rvAgo(0)
+			}
+			a := newAnnouncements()
+			a.Announce(testNamespace, name, announced)
+			a.Forget(testNamespace, name, deleted)
+			assert.Zerof(t, a.Announced(testNamespace, name), "delete %s than the announcement", name)
+		}
+	})
+
+	// Notifications for one key can come from different storage replicas, so
+	// arrival order does not follow version order. A delete that lands after the
+	// re-create superseding it must not erase the newer announcement, or the
+	// reads it was there to judge stop being counted at all.
+	t.Run("an out-of-order delete does not erase a newer announcement", func(t *testing.T) {
+		deleted, recreated := rvAgo(time.Second), rvAgo(0)
+		a := newAnnouncements()
+		a.Announce(testNamespace, "r", recreated)
+		a.Forget(testNamespace, "r", deleted)
+		assert.Equal(t, recreated, a.Announced(testNamespace, "r"))
+	})
+
+	// Nothing to compare against, so drop the key: that can only under-count.
+	t.Run("an undatable delete forgets the key", func(t *testing.T) {
 		a := newAnnouncements()
 		a.Announce(testNamespace, "r", rvAgo(0))
-		a.Forget(testNamespace, "r")
+		a.Forget(testNamespace, "r", 0)
 		assert.Zero(t, a.Announced(testNamespace, "r"))
 	})
 
