@@ -164,8 +164,7 @@ func TestManifestWatcher_PrefersDiscovery(t *testing.T) {
 	appmanifests := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher(bothSources(discovery, appmanifests), 0, nil, nil)
-	w.metrics = newManifestWatcherMetrics(prometheus.NewPedanticRegistry())
+	w := newManifestWatcher(bothSources(discovery, appmanifests), 0, nil, nil, prometheus.NewPedanticRegistry())
 	w.runPollCycle(t.Context())
 
 	got := w.Manifests()
@@ -189,8 +188,7 @@ func TestManifestWatcher_FallsBackFromDiscovery(t *testing.T) {
 			appmanifests := fakeManifestClient(
 				testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 			)
-			w := newManifestWatcher(bothSources(fakeDiscoveryClient(list), appmanifests), 0, nil, nil)
-			w.metrics = newManifestWatcherMetrics(prometheus.NewPedanticRegistry())
+			w := newManifestWatcher(bothSources(fakeDiscoveryClient(list), appmanifests), 0, nil, nil, prometheus.NewPedanticRegistry())
 			w.runPollCycle(t.Context())
 
 			got := w.Manifests()
@@ -215,8 +213,7 @@ func TestManifestWatcher_AllSourcesFailKeepsPreviousSet(t *testing.T) {
 	appmanifests.PrependReactor("list", "appmanifests", func(k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("apiserver down")
 	})
-	w := newManifestWatcher(bothSources(discovery, appmanifests), 0, nil, nil)
-	w.metrics = newManifestWatcherMetrics(prometheus.NewPedanticRegistry())
+	w := newManifestWatcher(bothSources(discovery, appmanifests), 0, nil, nil, prometheus.NewPedanticRegistry())
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
 
@@ -250,7 +247,7 @@ func TestManifestWatcher_SwitchingSourcesDoesNotRepublish(t *testing.T) {
 		withOperator(testAppManifestObj("b-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title")),
 	)
 	var calls int
-	w := newManifestWatcher(bothSources(discovery, appmanifests), 0, func([]*app.ManifestData) { calls++ }, nil)
+	w := newManifestWatcher(bothSources(discovery, appmanifests), 0, func([]*app.ManifestData) { calls++ }, nil, nil)
 
 	w.runPollCycle(t.Context())
 	require.Equal(t, 1, calls)
@@ -265,13 +262,80 @@ func TestManifestWatcher_SwitchingSourcesDoesNotRepublish(t *testing.T) {
 	require.Equal(t, 1, calls)
 }
 
+func TestManifestWatcher_SwitchingSourcesRequiresCompleteConversion(t *testing.T) {
+	discoveryItems := discoveryList(
+		testAppManifestObj("dashboard.grafana.app", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
+		testAppManifestObj("folder.grafana.app", "folders", "folder.grafana.app", "Folder", "title"),
+	)
+	// Names can overlap across sources without referring to the same group.
+	legacyItems := discoveryList(
+		testAppManifestObj("folder.grafana.app", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
+		testAppManifestObj("dashboard.grafana.app", "folders", "folder.grafana.app", "Folder", "title"),
+	)
+	discoveryErr := errors.New("discovery not deployed")
+	discovery := fakeDiscoveryClient(func() (*unstructured.UnstructuredList, error) {
+		return discoveryItems, discoveryErr
+	})
+	var legacyErr error
+	legacy := fakeManifestClient()
+	legacy.PrependReactor("list", "appmanifests", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, legacyItems, legacyErr
+	})
+	reg := prometheus.NewPedanticRegistry()
+	var reloads int
+	w := newManifestWatcher(bothSources(discovery, legacy), 0, func([]*app.ManifestData) { reloads++ }, nil, reg)
+	w.runPollCycle(t.Context())
+	expected := w.Manifests()
+	require.Len(t, expected, 2)
+	require.Equal(t, 1, reloads)
+
+	discoveryErr = nil
+	dashboardSpec := discoveryItems.Items[0].Object["spec"]
+	delete(discoveryItems.Items[0].Object, "spec")
+	w.runPollCycle(t.Context())
+	require.Equal(t, expected, w.Manifests(), "an incomplete new source must fall back")
+	require.Equal(t, 1, reloads)
+	require.Equal(t, float64(2), testutil.ToFloat64(w.metrics.sourcePolls.WithLabelValues(manifestSourceDiscovery, "error")))
+	require.Equal(t, float64(2), testutil.ToFloat64(w.metrics.sourcePolls.WithLabelValues(manifestSourceAppManifests, "success")))
+
+	legacyErr = errors.New("apiserver unavailable")
+	w.runPollCycle(t.Context())
+	require.Equal(t, expected, w.Manifests(), "keep the snapshot when fallback also fails")
+	require.Equal(t, 1, reloads)
+
+	discoveryItems.Items[0].Object["spec"] = dashboardSpec
+	w.runPollCycle(t.Context())
+	require.Equal(t, expected, w.Manifests())
+	require.Equal(t, 1, reloads, "switching to equivalent discovery data must not reload")
+
+	delete(discoveryItems.Items[0].Object, "spec")
+	w.runPollCycle(t.Context())
+	require.Equal(t, expected, w.Manifests(), "same-source recovery still works after a switch without a reload")
+	require.Equal(t, 1, reloads)
+
+	discoveryErr = errors.New("router unavailable")
+	legacyErr = nil
+	legacySpec := legacyItems.Items[0].Object["spec"]
+	delete(legacyItems.Items[0].Object, "spec")
+	w.runPollCycle(t.Context())
+	require.Equal(t, expected, w.Manifests(), "switching back must also require a complete conversion")
+	require.Equal(t, 1, reloads)
+
+	legacyItems.Items[0].Object["spec"] = legacySpec
+	w.runPollCycle(t.Context())
+	require.Equal(t, expected, w.Manifests())
+	require.Equal(t, 1, reloads)
+	_, err := reg.Gather()
+	require.NoError(t, err)
+}
+
 func TestManifestWatcher_PollConvertsManifests(t *testing.T) {
 	client := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 		testAppManifestObj("m-folders", "folders", "folder.grafana.app", "Folder", "title"),
 	)
 
-	w := newManifestWatcher(appManifestSources(client), 0, nil, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, nil, nil, nil)
 	w.runPollCycle(t.Context())
 
 	got := w.Manifests()
@@ -295,7 +359,7 @@ func TestManifestWatcher_OnChangeFiresOnlyWhenChanged(t *testing.T) {
 	w := newManifestWatcher(appManifestSources(client), 0, func(m []*app.ManifestData) {
 		calls++
 		last = m
-	}, nil)
+	}, nil, nil)
 
 	// First poll establishes the set and notifies.
 	w.runPollCycle(t.Context())
@@ -311,7 +375,7 @@ func TestManifestWatcher_ListErrorKeepsPreviousSet(t *testing.T) {
 	client := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher(appManifestSources(client), 0, nil, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, nil, nil, nil)
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
 
@@ -327,7 +391,7 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 	client := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher(appManifestSources(client), 0, nil, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, nil, nil, nil)
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
 
@@ -343,8 +407,7 @@ func TestManifestWatcher_RecordsMetrics(t *testing.T) {
 	client := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher(appManifestSources(client), 0, nil, nil)
-	w.metrics = newManifestWatcherMetrics(prometheus.NewPedanticRegistry())
+	w := newManifestWatcher(appManifestSources(client), 0, nil, nil, prometheus.NewPedanticRegistry())
 
 	// First poll: one successful poll, one reload, one manifest, a fresh timestamp.
 	w.runPollCycle(t.Context())
@@ -372,7 +435,7 @@ func TestManifestWatcher_PicksUpChangesOnNextPoll(t *testing.T) {
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
 	var calls int
-	w := newManifestWatcher(appManifestSources(client), 0, func([]*app.ManifestData) { calls++ }, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, func([]*app.ManifestData) { calls++ }, nil, nil)
 
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
@@ -391,7 +454,7 @@ func TestManifestWatcher_KeepsPreviousManifestOnParseFailure(t *testing.T) {
 	client := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher(appManifestSources(client), 0, nil, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, nil, nil, nil)
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
 
@@ -417,7 +480,7 @@ func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
 		testAppManifestObj("A", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
 	var calls int
-	w := newManifestWatcher(appManifestSources(client), 0, func([]*app.ManifestData) { calls++ }, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, func([]*app.ManifestData) { calls++ }, nil, nil)
 	w.runPollCycle(t.Context())
 	require.Equal(t, 1, calls)
 
@@ -454,7 +517,7 @@ func TestManifestWatcher_SkipsManifestThatFailsToConvert(t *testing.T) {
 		bad,
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher(appManifestSources(client), 0, nil, nil)
+	w := newManifestWatcher(appManifestSources(client), 0, nil, nil, nil)
 	w.runPollCycle(t.Context())
 
 	got := w.Manifests()
@@ -574,7 +637,7 @@ func TestManifestWatcher_HungSourceLeavesFallbackItsTime(t *testing.T) {
 	appmanifests := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
-	w := newManifestWatcher([]manifestSource{hung, appManifestSources(appmanifests)[0]}, 0, nil, nil)
+	w := newManifestWatcher([]manifestSource{hung, appManifestSources(appmanifests)[0]}, 0, nil, nil, nil)
 	w.sourceTimeout = 50 * time.Millisecond
 
 	w.runPollCycle(t.Context())
@@ -590,7 +653,7 @@ func TestManifestWatcher_RetriesWithoutSpinningWhileEmpty(t *testing.T) {
 		return nil, nil
 	}}
 	interval := 20 * time.Millisecond
-	w := newManifestWatcher([]manifestSource{empty}, interval, nil, nil)
+	w := newManifestWatcher([]manifestSource{empty}, interval, nil, nil, nil)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 30*interval)
 	defer cancel()

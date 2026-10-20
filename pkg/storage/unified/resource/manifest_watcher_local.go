@@ -19,5 +19,5 @@ const localManifestPollInterval = time.Minute
 // on its first reconcile, which runs after storage is built, so the initial poll
 // usually finds nothing; the watcher retries quickly until it lists a set.
 func NewLocalManifestWatcher(discovery ManifestDiscovery, reg prometheus.Registerer, onChange func([]*app.ManifestData), logger log.Logger) *ManifestWatcher {
-	return newManifestWatcherService([]manifestSource{discoveryManifestSource(discovery)}, localManifestPollInterval, onChange, logger, reg)
+	return newManifestWatcher([]manifestSource{discoveryManifestSource(discovery)}, localManifestPollInterval, onChange, logger, reg)
 }

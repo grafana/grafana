@@ -53,7 +53,6 @@ var ManifestDiscoveryGVR = schema.GroupVersionResource{
 	Resource: "manifests",
 }
 
-// Metric label values naming each manifest source.
 const (
 	manifestSourceDiscovery    = "discovery"
 	manifestSourceAppManifests = "appmanifests"
@@ -209,11 +208,12 @@ type ManifestWatcher struct {
 	onChange      func([]*app.ManifestData)
 	metrics       *manifestWatcherMetrics
 
-	// byName is the current snapshot, keyed by apiserver object name. The name key
-	// lets a poll keep a known manifest when the same object later fails to
-	// convert. Manifests() derives the ordered slice from it.
+	// Names are only comparable within a source. Track the source even when a
+	// switch leaves the content hash unchanged, so conversion failures can
+	// recover the correct previous manifest.
 	mu       sync.RWMutex
 	byName   map[string]*app.ManifestData
+	source   string
 	lastHash string
 }
 
@@ -302,9 +302,8 @@ func discoveryAuthWrapper(exchanger authnlib.TokenExchanger, audience string) tr
 	return clientauth.NewStaticTokenExchangeTransportWrapper(exchanger, audience, clientauth.WildcardNamespace)
 }
 
-// NewManifestWatcher creates a ManifestWatcher as a dskit service. The initial
-// poll runs in the starting state, so anything that waits for Running observes a
-// populated snapshot. onChange may be nil.
+// NewManifestWatcher polls once before entering Running, then retries failed or
+// empty polls in the background. onChange may be nil.
 func NewManifestWatcher(cfg ManifestWatcherConfig, reg prometheus.Registerer, onChange func([]*app.ManifestData)) (*ManifestWatcher, error) {
 	tc, err := newManifestTokenExchanger(cfg)
 	if err != nil {
@@ -340,32 +339,23 @@ func NewManifestWatcher(cfg ManifestWatcherConfig, reg prometheus.Registerer, on
 		interval = defaultPollInterval
 	}
 
-	return newManifestWatcherService(sources, interval, onChange, cfg.Log, reg), nil
+	return newManifestWatcher(sources, interval, onChange, cfg.Log, reg), nil
 }
 
-// newManifestWatcherService builds a watcher that runs as a dskit service, with
-// its metrics registered on reg.
-func newManifestWatcherService(sources []manifestSource, pollInterval time.Duration, onChange func([]*app.ManifestData), logger log.Logger, reg prometheus.Registerer) *ManifestWatcher {
-	w := newManifestWatcher(sources, pollInterval, onChange, logger)
-	w.metrics = newManifestWatcherMetrics(reg)
-	w.Service = services.NewBasicService(w.starting, w.running, nil)
-	return w
-}
-
-// newManifestWatcher builds the watcher without a service, so tests can drive
-// poll cycles directly.
-func newManifestWatcher(sources []manifestSource, pollInterval time.Duration, onChange func([]*app.ManifestData), logger log.Logger) *ManifestWatcher {
+func newManifestWatcher(sources []manifestSource, pollInterval time.Duration, onChange func([]*app.ManifestData), logger log.Logger, reg prometheus.Registerer) *ManifestWatcher {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
-	return &ManifestWatcher{
+	w := &ManifestWatcher{
 		log:           logger,
 		sources:       sources,
 		pollInterval:  pollInterval,
 		sourceTimeout: manifestPollTimeout,
 		onChange:      onChange,
-		metrics:       newManifestWatcherMetrics(nil),
+		metrics:       newManifestWatcherMetrics(reg),
 	}
+	w.Service = services.NewBasicService(w.starting, w.running, nil)
+	return w
 }
 
 // Manifests returns the current snapshot as an ordered slice.
@@ -375,9 +365,7 @@ func (w *ManifestWatcher) Manifests() []*app.ManifestData {
 	return sortedManifests(w.byName)
 }
 
-// starting runs the initial poll so callers that wait for Running see a
-// populated snapshot. It never fails on an unreachable apiserver; the running
-// loop retries.
+// An unavailable source must not prevent storage from starting.
 func (w *ManifestWatcher) starting(ctx context.Context) error {
 	w.runPollCycle(ctx)
 	return nil
@@ -414,9 +402,10 @@ func (w *ManifestWatcher) hasSnapshot() bool {
 func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 	w.mu.RLock()
 	prev := w.byName
+	previousSource := w.source
 	w.mu.RUnlock()
 
-	result, err := w.listFirst(ctx, prev)
+	result, source, err := w.listFirst(ctx, prev, previousSource)
 	if err != nil {
 		w.metrics.polls.WithLabelValues("error").Inc()
 		w.log.Error("manifest watcher poll cycle: list failed, keeping previous set", "error", err)
@@ -443,6 +432,7 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 	// content hash so a pure rename doesn't trigger a needless reindex.
 	w.mu.Lock()
 	w.byName = result
+	w.source = source
 	changed := err != nil || hash != w.lastHash
 	if changed {
 		w.lastHash = hash
@@ -465,12 +455,12 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 // A later source is only asked when an earlier one fails or is empty, so while
 // the discovery endpoint is rolling out the apiserver covers stacks without it.
 // It returns an error only when every source failed.
-func (w *ManifestWatcher) listFirst(ctx context.Context, prev map[string]*app.ManifestData) (map[string]*app.ManifestData, error) {
+func (w *ManifestWatcher) listFirst(ctx context.Context, prev map[string]*app.ManifestData, previousSource string) (map[string]*app.ManifestData, string, error) {
 	var errs []error
 	listed := false
 	for _, src := range w.sources {
 		srcCtx, cancel := context.WithTimeout(ctx, w.sourceTimeout)
-		result, err := w.list(srcCtx, src, prev)
+		result, err := w.list(srcCtx, src, prev, previousSource)
 		cancel()
 		switch {
 		case err != nil:
@@ -484,20 +474,19 @@ func (w *ManifestWatcher) listFirst(ctx context.Context, prev map[string]*app.Ma
 		default:
 			w.metrics.sourcePolls.WithLabelValues(src.name, "success").Inc()
 			w.log.Debug("manifest watcher: listed manifests", "source", src.name, "manifests", len(result))
-			return result, nil
+			return result, src.name, nil
 		}
 	}
 	if listed {
-		return nil, nil
+		return nil, "", nil
 	}
-	return nil, errors.Join(errs...)
+	return nil, "", errors.Join(errs...)
 }
 
-// list pages through all AppManifests of one source, keyed by object name. When
-// an object fails to convert, its previously known version (from prev) is kept
-// so a transient parse failure can't drop its search fields; a genuinely unknown
-// object is skipped.
-func (w *ManifestWatcher) list(ctx context.Context, src manifestSource, prev map[string]*app.ManifestData) (map[string]*app.ManifestData, error) {
+// A failed conversion can reuse the previous manifest only within the same
+// source. Switching sources requires a fully converted list because object
+// names may differ or refer to different groups.
+func (w *ManifestWatcher) list(ctx context.Context, src manifestSource, prev map[string]*app.ManifestData, previousSource string) (map[string]*app.ManifestData, error) {
 	listed, err := src.list(ctx)
 	if err != nil {
 		return nil, err
@@ -505,6 +494,11 @@ func (w *ManifestWatcher) list(ctx context.Context, src manifestSource, prev map
 	result := make(map[string]*app.ManifestData, len(listed))
 	for _, item := range listed {
 		if item.err != nil {
+			// Object names are source-specific. An incomplete conversion from a
+			// new source must not replace the snapshot or reuse unrelated names.
+			if previousSource != "" && previousSource != src.name {
+				return nil, fmt.Errorf("converting manifest %q while switching sources: %w", item.name, item.err)
+			}
 			if p, ok := prev[item.name]; ok {
 				w.log.Warn("manifest watcher: keeping previous manifest, this poll failed to convert it",
 					"name", item.name, "error", item.err)

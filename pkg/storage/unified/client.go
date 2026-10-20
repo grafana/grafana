@@ -251,27 +251,8 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		if cfg.ManifestApiServerAddress != "" || cfg.ManifestDiscoveryAddress != "" {
-			cfg.Logger.Warn("manifest_api_server_address and manifest_discovery_url are ignored by in-process storage; search reads the router's discovery manifests in-process")
-		}
-		// The provisioned files are only the starting set: the router fills
-		// /apis/discovery after storage is built, and its manifests replace them
-		// once it lists any.
-		if cfg.EnableEmbeddedAPIExtensions {
-			manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
-			if err != nil {
-				cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
-			}
-			if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
-				cfg.Logger.Error("failed to load embedded search fields", "error", err)
-			}
-		}
-		if manifestDiscovery != nil && (searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil) {
-			watcherLog := log.New("search-manifest-watcher")
-			watcher := resource.NewLocalManifestWatcher(manifestDiscovery, reg, searchOptions.ManifestReloader(watcherLog), watcherLog)
-			if err := watcher.StartAsync(ctx); err != nil {
-				return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
-			}
+		if err := configureInProcessManifests(ctx, cfg, searchOptions, manifestDiscovery, reg); err != nil {
+			return nil, err
 		}
 
 		if backendService, ok := backend.(services.Service); ok {
@@ -351,6 +332,32 @@ func newClient(opts options.StorageOptions,
 
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func configureInProcessManifests(ctx context.Context, cfg *setting.Cfg, searchOptions resource.SearchOptions, discovery resource.ManifestDiscovery, reg prometheus.Registerer) error {
+	if cfg.ManifestApiServerAddress != "" || cfg.ManifestDiscoveryAddress != "" {
+		cfg.Logger.Warn("manifest_api_server_address and manifest_discovery_url are ignored by in-process storage; search reads the router's discovery manifests in-process")
+	}
+	// The provisioned files are only the starting set: the router fills
+	// /apis/discovery after storage is built, and its manifests replace them
+	// once it lists any.
+	if cfg.EnableEmbeddedAPIExtensions {
+		manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
+		if err != nil {
+			cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
+		}
+		if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
+			cfg.Logger.Error("failed to load embedded search fields", "error", err)
+		}
+	}
+	if discovery != nil && (searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil) {
+		watcherLog := log.New("search-manifest-watcher")
+		watcher := resource.NewLocalManifestWatcher(discovery, reg, searchOptions.ManifestReloader(watcherLog), watcherLog)
+		if err := watcher.StartAsync(ctx); err != nil {
+			return fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
+	}
+	return nil
 }
 
 func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
