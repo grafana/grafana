@@ -383,10 +383,6 @@ const (
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
 
-	// FlagPreserveDashboardStateWhenNavigating
-	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
-	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
-
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
@@ -645,10 +641,6 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
-
-	// FlagPreferLibraryPanelTitle
-	// Prefer library panel title over viz panel title.
-	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
@@ -913,6 +905,10 @@ const (
 	// FlagAlertingRulesAPIV2
 	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
 	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
+
+	// FlagAlertingGmaOnlyListView
+	// Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list
+	FlagAlertingGmaOnlyListView = "alerting.gmaOnlyListView"
 
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform

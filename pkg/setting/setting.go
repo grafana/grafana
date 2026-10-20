@@ -906,6 +906,8 @@ type Cfg struct {
 	TenantDeleterInterval         time.Duration
 
 	ManifestApiServerAddress        string
+	ManifestDiscoveryAddress        string
+	ManifestDiscoveryAudience       string
 	ManifestWatcherAllowInsecureTLS bool
 	ManifestWatcherCAFile           string
 	ManifestWatcherPollInterval     time.Duration
