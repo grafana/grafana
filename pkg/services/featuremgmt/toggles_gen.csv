@@ -77,7 +77,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-06,dashboards.publicDashboardBadgeFromApi,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-08,dashboards.libraryPanelHorizontalRepeatFullWidth,experimental,@grafana/dashboards-squad,false,false,true
 2026-08-05,disableScriptedDashboards,deprecated,@grafana/dashboards-squad,false,false,true
-2026-07-09,dashboard.notebooks,experimental,@grafana/sharing-squad,false,false,false
+2026-07-09,dashboard.notebooks,preview,@grafana/sharing-squad,false,false,false
 2026-09-23,grafana.dashboardPreviewMode,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
@@ -110,7 +110,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-03-25,oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
-2026-03-11,dashboardUnifiedDrilldownControls,GA,@grafana/dashboards-squad,false,false,true
 2026-07-21,grafana.filterablePanels,GA,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
@@ -318,6 +317,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-27,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-04-20,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false
 2026-04-23,alerting.rulesAPIV2,experimental,@grafana/alerting-squad,false,false,false
+2026-10-20,alerting.gmaOnlyListView,experimental,@grafana/alerting-squad,false,false,false
 2026-05-12,alerting.notificationsAPIV1Beta1,experimental,@grafana/alerting-squad,false,false,true
 2026-04-27,assistant.frontend.tools.dashboardTemplates,experimental,@grafana/sharing-squad,false,false,true
 2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
