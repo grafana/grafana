@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/plugins
 
-go 1.27.2
+go 1.27.3
 
 replace github.com/grafana/grafana => ../..
 
@@ -13,6 +13,8 @@ replace github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/feature
 replace github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 
 replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
+
+replace github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
 
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
@@ -265,7 +267,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.2 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -273,7 +274,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.37.1 // indirect
 	k8s.io/component-base v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kms v0.37.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
 	k8s.io/streaming v0.37.1 // indirect
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect

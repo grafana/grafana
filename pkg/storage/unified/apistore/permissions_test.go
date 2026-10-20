@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	authtypes "github.com/grafana/authlib/types"
 
@@ -28,6 +29,7 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		creator, err := afterCreatePermissionCreator(context.Background(), nil, "invalid", nil, mockSetter)
 		require.Error(t, err)
 		require.Nil(t, creator)
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 		require.Contains(t, err.Error(), "invalid permissions value")
 	})
 

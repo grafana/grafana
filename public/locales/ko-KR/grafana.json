@@ -1695,8 +1695,12 @@
       },
       "preview": {
         "error": "콘텐츠 로딩 실패: {{error}}",
+        "hide-secrets": "",
         "loading": "콘텐츠 로딩 중...",
         "notifications-title": "알림 구성 미리 보기",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "경고 규칙 미리 보기"
       },
       "recording-rules": "기록 규칙",
@@ -2722,7 +2726,8 @@
     "recording-rules": {
       "description-target-data-source": "기록 규칙을 저장할 Prometheus 데이터 소스",
       "label-target-data-source": "대상 데이터 소스",
-      "target-data-source-required": "대상 데이터 소스를 선택하세요."
+      "target-data-source-required": "대상 데이터 소스를 선택하세요.",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "기록 규칙에 대한 네임스페이스 및 그룹을 선택하세요.",
@@ -5990,6 +5995,24 @@
       "tooltip-next": "다음",
       "tooltip-previous": "이전"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Assistant 스키마 편집"
@@ -6107,6 +6130,9 @@
           "no-template-variables-found": "템플릿 변수를 찾을 수 없습니다."
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "취소",
@@ -7547,6 +7573,26 @@
       "body-restore-version": "정말 대시보드를 {{version}} 버전으로 복원하시겠어요? 저장하지 않은 변경 사항은 모두 손실됩니다.",
       "confirmText-restore-version": "네, {{version}} 버전으로 복구해 주세요",
       "title-restore-version": "버전 복구"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_other": "",
+      "allowed-panels_other": "",
+      "banner-title_other": "",
+      "resources_other": "",
+      "resources-at-least_other": "",
+      "sources_other": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "저장",
@@ -10019,6 +10065,7 @@
             "name-humidity": "습도(%H)",
             "name-locale": "로케일 형식",
             "name-number": "숫자",
+            "name-ordinal": "",
             "name-percent-1": "백분율(0.0~1.0)",
             "name-percent-100": "백분율(0~100)",
             "name-pixels": "픽셀",
@@ -10144,7 +10191,8 @@
           },
           "name": "부피"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13126,6 +13174,7 @@
       "created-by-me": "내가 작성함",
       "error-conflict": "추가하는 동안 이 노트북이 변경되었습니다. 패널을 최신 버전에 추가하려면 다시 시도하세요.",
       "error-generic": "패널을 노트북에 추가하지 못함",
+      "error-open-conflict": "",
       "list-error": "노트북 로딩 실패",
       "list-error-body": "노트북 로딩 중 오류 발생. 다시 시도하거나 대신 새 노트북을 생성하세요.",
       "list-no-matches": "이 필터와 일치하는 노트북이 없습니다.",
@@ -13134,6 +13183,8 @@
       "list-truncated": "모든 노트북이 표시되는 것은 아닙니다. 검색 범위를 좁혀 다른 항목을 찾습니다.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "제목으로 검색",
       "sort-alphabetical": "알파벳순(A–Z)",
       "sort-label": "노트북 정렬",
@@ -13141,13 +13192,15 @@
       "sort-updated": "최근에 업데이트됨",
       "submit": "노트북에 추가",
       "success": "{{title}}에 패널 추가됨",
+      "success-cells": "",
       "success-link": "노트북 보기",
       "tag-placeholder": "태그로 필터링",
       "target-description": "패널을 추가할 위치를 선택합니다.",
       "target-existing": "기존 노트북",
       "target-label": "대상 노트북",
       "target-new": "새 노트북",
-      "title": "노트북에 패널 추가"
+      "title": "노트북에 패널 추가",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16490,6 +16543,7 @@
     "name-page-size": "페이지 크기",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "필드 툴팁",
     "name-tooltip-placement": "툴팁 배치",

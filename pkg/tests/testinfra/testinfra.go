@@ -280,33 +280,7 @@ func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
 func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
-	// Search upwards in directory tree for project root
-	var rootDir string
-	found := false
-	for range 20 {
-		rootDir = filepath.Join(rootDir, "..")
-
-		dir, err := filepath.Abs(rootDir)
-		require.NoError(t, err)
-
-		// When running within an enterprise test, we need to move to the grafana directory
-		if strings.HasSuffix(dir, "grafana-enterprise") {
-			rootDir = filepath.Join(rootDir, "..", "grafana")
-			dir, err = filepath.Abs(rootDir)
-			require.NoError(t, err)
-		}
-
-		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
-		require.NoError(t, err)
-
-		if exists {
-			rootDir = dir
-			found = true
-			break
-		}
-	}
-
-	require.True(t, found, "Couldn't detect project root directory")
+	rootDir := testutil.GrafanaRootDir(t)
 
 	cfgDir := filepath.Join(tmpDir, "conf")
 	err := os.MkdirAll(cfgDir, 0o750)
@@ -416,10 +390,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
 	require.NoError(t, err)
-	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
-	require.NoError(t, err)
 
-	if opts.OpenFeatureAPIEnabled {
+	if opts.OpenFeatureStaticProvider {
 		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
@@ -1257,7 +1229,7 @@ type GrafanaOpts struct {
 	NATSClientPort                      int
 	NATSClusterPort                     int
 	SecretsManagerEnableDBMigrations    bool
-	OpenFeatureAPIEnabled               bool
+	OpenFeatureStaticProvider           bool
 	DisableAuthZClientCache             bool
 	ZanzanaReconciliationInterval       time.Duration
 	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode

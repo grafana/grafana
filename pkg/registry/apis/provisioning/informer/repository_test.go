@@ -2,7 +2,6 @@ package informer
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -39,88 +37,19 @@ func terminating(r *provisioningapis.Repository) *provisioningapis.Repository {
 	return r
 }
 
-// fakeStore is a minimal usinformer.Store for asserting the client getter's
-// write-through behaviour.
-type fakeStore struct {
-	objs    map[string]runtime.Object
-	deleted []string
-}
-
-// newSeededSnapshot fills a snapshot through Replace so the tallies reflect it;
-// seeding the wrapped store directly would leave them empty.
-func newSeededSnapshot(objs ...*provisioningapis.Repository) *RepositorySnapshot {
-	snapshot := NewRepositorySnapshot(newFakeStore())
+// seededStore fills a real store the way the re-list does, with identities.
+func seededStore(objs ...*provisioningapis.Repository) usinformer.Store {
+	store := usinformer.NewStore()
 	projected := make([]runtime.Object, 0, len(objs))
 	for _, obj := range objs {
-		projected = append(projected, projectRepository(obj))
+		projected = append(projected, obj)
 	}
-	snapshot.Replace(projected, 1)
-	return snapshot
+	store.Replace(projectObjects(projected), 1)
+	return store
 }
 
-// newFakeStore seeds a snapshot with projections, which is what it holds.
-func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
-	s := &fakeStore{objs: map[string]runtime.Object{}}
-	for _, o := range objs {
-		s.objs[repositoryKey(o.Namespace, o.Name)] = projectRepository(o)
-	}
-	return s
-}
-
-func (s *fakeStore) List(_ context.Context) []runtime.Object {
-	out := make([]runtime.Object, 0, len(s.objs))
-	for _, o := range s.objs {
-		out = append(out, o)
-	}
-	return out
-}
-
-func (s *fakeStore) Update(_ context.Context, obj runtime.Object) bool {
-	namespace, name, _, ok := repositoryState(obj)
-	if !ok {
-		return false
-	}
-	s.objs[repositoryKey(namespace, name)] = obj
-	return true
-}
-
-func (s *fakeStore) Replace(objs []runtime.Object, _ int64) (added, updated, removed []runtime.Object) {
-	next := make(map[string]runtime.Object, len(objs))
-	for _, obj := range objs {
-		namespace, name, _, ok := repositoryState(obj)
-		if !ok {
-			continue
-		}
-		next[repositoryKey(namespace, name)] = obj
-	}
-	for key, obj := range next {
-		if _, had := s.objs[key]; had {
-			updated = append(updated, obj)
-		} else {
-			added = append(added, obj)
-		}
-	}
-	for key, obj := range s.objs {
-		if _, still := next[key]; !still {
-			removed = append(removed, obj)
-		}
-	}
-	s.objs = next
-	return added, updated, removed
-}
-
-func (s *fakeStore) DeleteAt(ctx context.Context, namespace, name string, _ int64) {
-	s.Delete(ctx, namespace, name)
-}
-
-func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
-	key := namespace + "/" + name
-	delete(s.objs, key)
-	s.deleted = append(s.deleted, key)
-}
-
-// A live repository notification is delivered as the concrete *Repository the
-// controller's handler expects, built from the notification's identity.
+// A live repository notification is delivered as an identity, the same shape the
+// re-list stores.
 func TestNewRepositoryInformer_DeliversTheProjection(t *testing.T) {
 	sub := newFakeSubscriber()
 	rec := &typeRecorder{}
@@ -142,17 +71,17 @@ func TestNewRepositoryInformer_DeliversTheProjection(t *testing.T) {
 	})
 
 	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
-	got, ok := rec.last().(*repositoryProjection)
+	got, ok := rec.last().(*metav1.PartialObjectMetadata)
 	require.True(t, ok, "expected a projection, got %T", rec.last())
 	assert.Equal(t, "repo-a", got.Name)
 	assert.Equal(t, testNamespace, got.Namespace)
 }
 
-// The cached getter reads the informer's lister for both Get and List.
+// The cached getter reads the informer's lister for both Get and the count.
 func TestNewCachedRepositoryGetter(t *testing.T) {
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	require.NoError(t, indexer.Add(repo(testNamespace, "a")))
-	require.NoError(t, indexer.Add(repo(testNamespace, "b")))
+	require.NoError(t, indexer.Add(terminating(repo(testNamespace, "going"))))
 	require.NoError(t, indexer.Add(repo("other", "c")))
 	getter := NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
 
@@ -160,87 +89,70 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "a", got.Name)
 
-	count, err := getter.CountActiveRepositories(context.Background(), testNamespace)
+	count, err := getter.CountRepositories(context.Background(), testNamespace)
 	require.NoError(t, err)
-	assert.Equal(t, 2, count, "the count must be scoped to the namespace")
+	assert.Equal(t, 2, count, "scoped to the namespace, and a repository awaiting its finalizers still counts")
+
+	confirmed, err := getter.ConfirmRepositoryCount(context.Background(), testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, count, confirmed, "the apiserver watch reaches every replica, so the lister already is the confirmation")
 }
 
-// A repository awaiting its finalizers is still stored, and must not be counted.
-func TestCachedRepositoryGetter_CountExcludesTerminating(t *testing.T) {
-	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-	require.NoError(t, indexer.Add(repo(testNamespace, "active")))
-	require.NoError(t, indexer.Add(terminating(repo(testNamespace, "going"))))
-	getter := NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
-
-	count, err := getter.CountActiveRepositories(context.Background(), testNamespace)
-	require.NoError(t, err)
-	assert.Equal(t, 1, count)
-}
-
-// A successful reconcile Get returns the fresh object and writes it back into the
-// store, so a later List (the quota count) reflects it without waiting for a
-// re-list.
-func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
-	client := fake.NewClientset(repo("ns", "fresh"))
-	store := newFakeStore()
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), NewRepositorySnapshot(store))
-
-	got, err := g.Get(context.Background(), "ns", "fresh")
-	require.NoError(t, err)
-	assert.Equal(t, "fresh", got.Name)
-
-	count, err := g.CountActiveRepositories(context.Background(), "ns")
-	require.NoError(t, err)
-	assert.Equal(t, 1, count, "the fresh Get must be reflected in the store")
-}
-
-// The write-through is projected like the re-list.
-func TestClientRepositoryGetter_GetWritesThroughProjected(t *testing.T) {
+// The client getter reads the reconcile's object fresh from the API.
+func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
-	full.Spec.Title = "a title nobody reading the snapshot needs"
-	full.Finalizers = []string{"provisioning.grafana.app/cleanup"}
-	client := fake.NewClientset(full)
-	store := newFakeStore()
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), NewRepositorySnapshot(store))
+	full.Spec.Title = "a title"
+	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), usinformer.NewStore())
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
-	assert.Equal(t, "a title nobody reading the snapshot needs", got.Spec.Title, "the reconcile still gets the whole object")
+	assert.Equal(t, "a title", got.Spec.Title, "the reconcile gets the whole object")
 
-	// A projection has nowhere to put a body.
-	stored, ok := store.objs["ns/fresh"].(*repositoryProjection)
-	require.True(t, ok, "expected a projection, got %T", store.objs["ns/fresh"])
-	assert.Empty(t, stored.Finalizers, "nothing beyond the identity is carried")
-	assert.Equal(t, "7", stored.ResourceVersion, "the Store diffs on this")
-	assert.Equal(t, "ns", stored.Namespace)
-	assert.Equal(t, "fresh", stored.Name)
+	_, err = g.Get(context.Background(), "ns", "missing")
+	assert.True(t, apierrors.IsNotFound(err))
 }
 
-// A reconcile Get for a vanished object returns NotFound and removes it from the
-// store, so the count drops it without waiting for a re-list.
-func TestClientRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
-	client := fake.NewClientset()
-	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), NewRepositorySnapshot(store))
+// A reconcile Get writes the identity it read into the store and evicts on
+// NotFound, so the count reflects the repository under reconciliation even when
+// this replica never stored it.
+func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
+	store := usinformer.NewStore()
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store)
 
-	_, err := g.Get(context.Background(), "ns", "stale")
+	_, err := g.Get(context.Background(), "ns", "fresh")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "an identity, not the whole object")
+
+	store.Update(context.Background(), identity("ns", "gone", "3"))
+	_, err = g.Get(context.Background(), "ns", "gone")
 	require.True(t, apierrors.IsNotFound(err))
-	assert.Equal(t, []string{"ns/stale"}, store.deleted)
-
-	count, err := g.CountActiveRepositories(context.Background(), "ns")
-	require.NoError(t, err)
-	assert.Zero(t, count, "the vanished object must be removed from the store")
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
 }
 
-// The count reads only the requested namespace out of the cluster-wide snapshot,
-// and skips repositories awaiting their finalizers.
-func TestClientRepositoryGetter_CountFiltersNamespaceAndTerminating(t *testing.T) {
-	snapshot := newSeededSnapshot(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), snapshot)
+// The confirmed count reads the API, not the store.
+func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
+	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
 
-	count, err := g.CountActiveRepositories(context.Background(), "ns-a")
+	cached, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
-	assert.Equal(t, 2, count)
+	assert.Zero(t, cached, "the store has seen none of them")
+
+	confirmed, err := g.ConfirmRepositoryCount(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Equal(t, 2, confirmed, "scoped to the namespace")
+}
+
+// The count reads only the requested namespace out of the cluster-wide store, and
+// it agrees with the cached getter: a repository awaiting its finalizers counts,
+// which is what lets the store hold identities alone.
+func TestClientRepositoryGetter_CountFiltersNamespace(t *testing.T) {
+	store := seededStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+
+	count, err := g.CountRepositories(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Equal(t, 3, count)
 }
 
 // The delta source's getter is client-backed under NATS (reads fresh from the
@@ -262,170 +174,4 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 		_, err := getter.Get(context.Background(), testNamespace, "r")
 		assert.True(t, apierrors.IsNotFound(err))
 	})
-}
-
-// A repository whose resource version has not moved is carried forward, keeping
-// the deletionTimestamp the projection cannot carry; the API copy here has none,
-// so a full list would resurrect it into the quota count.
-func TestRepositoryList_CarriesUnchangedForward(t *testing.T) {
-	store := newFakeStore(terminating(repoAt("ns", "going", "10")))
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{{Namespace: "ns", Name: "going", ResourceVersion: "10"}}}
-	client := fake.NewClientset(repoAt("ns", "going", "10"))
-
-	recorder, reg := newTestRecorder(repoGVR)
-	objs, listRV, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, store, recorder)(t.Context())
-	require.NoError(t, err)
-
-	assert.Equal(t, int64(100), listRV)
-	require.Len(t, objs, 1)
-	got, ok := objs[0].(*repositoryProjection)
-	require.True(t, ok, "expected a projection, got %T", objs[0])
-	assert.NotNil(t, got.DeletionTimestamp, "the stored deletionTimestamp must survive the re-list")
-	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "keys"))
-	assert.Zero(t, driftCount(t, reg, repoGVR))
-}
-
-// A repository gone from the keys list is a hard delete: the keys-only result
-// simply omits it and the Store's diff reports the removal.
-func TestRepositoryList_AbsentKeyIsNotDrift(t *testing.T) {
-	store := newFakeStore(repoAt("ns", "kept", "10"), repoAt("ns", "gone", "10"))
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{{Namespace: "ns", Name: "kept", ResourceVersion: "10"}}}
-	client := fake.NewClientset()
-
-	recorder, reg := newTestRecorder(repoGVR)
-	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, store, recorder)(t.Context())
-	require.NoError(t, err)
-
-	assert.Equal(t, []string{"kept"}, repoNames(t, objs))
-	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "keys"))
-	assert.Zero(t, driftCount(t, reg, repoGVR))
-}
-
-// A key whose resource version moved, or that the snapshot never held, needs the
-// object itself: that is how a soft delete reaches the snapshot, since live
-// MODIFIED events are not written through. The tick takes one full list and the
-// drift is counted.
-func TestRepositoryList_DriftListsFullObjects(t *testing.T) {
-	for name, keyList := range map[string][]keysapi.Key{
-		"changed key": {
-			{Namespace: "ns", Name: "going", ResourceVersion: "11"},
-			{Namespace: "ns", Name: "steady", ResourceVersion: "10"},
-		},
-		"new key": {
-			{Namespace: "ns", Name: "going", ResourceVersion: "10"},
-			{Namespace: "ns", Name: "steady", ResourceVersion: "10"},
-			{Namespace: "ns", Name: "fresh", ResourceVersion: "12"},
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			store := newFakeStore(repoAt("ns", "going", "10"), repoAt("ns", "steady", "10"))
-			keys := &stubKeysLister{listRV: 100, keys: keyList}
-			client := fake.NewClientset(terminating(repoAt("ns", "going", "11")), repoAt("ns", "steady", "10"), repoAt("ns", "fresh", "12"))
-
-			recorder, reg := newTestRecorder(repoGVR)
-			objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, store, recorder)(t.Context())
-			require.NoError(t, err)
-
-			byName := map[string]*repositoryProjection{}
-			for _, obj := range objs {
-				r, ok := obj.(*repositoryProjection)
-				require.True(t, ok, "expected a projection, got %T", obj)
-				byName[r.Name] = r
-			}
-			assert.NotNil(t, byName["going"].DeletionTimestamp, "the full list must pick up the soft delete")
-			assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
-			assert.Zero(t, projectionCount(t, reg, repoGVR, "keys"))
-			assert.Equal(t, float64(1), driftCount(t, reg, repoGVR))
-		})
-	}
-}
-
-// Every drifted key is counted, not just whether any drifted: the counter is how
-// to tell a snapshot that is slightly behind from one that is not tracking.
-func TestRepositoryList_CountsEveryDriftedKey(t *testing.T) {
-	store := newFakeStore(repoAt("ns", "a", "10"), repoAt("ns", "b", "10"), repoAt("ns", "c", "10"))
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{
-		{Namespace: "ns", Name: "a", ResourceVersion: "11"},
-		{Namespace: "ns", Name: "b", ResourceVersion: "11"},
-		{Namespace: "ns", Name: "c", ResourceVersion: "10"},
-		{Namespace: "ns", Name: "d", ResourceVersion: "12"},
-	}}
-	client := fake.NewClientset()
-
-	recorder, reg := newTestRecorder(repoGVR)
-	_, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, store, recorder)(t.Context())
-	require.NoError(t, err)
-
-	assert.Equal(t, float64(3), driftCount(t, reg, repoGVR))
-}
-
-// Nothing to carry forward: the full list is the only answer.
-func TestRepositoryList_EmptyStoreListsFullObjects(t *testing.T) {
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{{Namespace: "ns", Name: "a", ResourceVersion: "10"}}}
-	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
-
-	recorder, reg := newTestRecorder(repoGVR)
-	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, newFakeStore(), recorder)(t.Context())
-	require.NoError(t, err)
-
-	assert.Zero(t, keys.called, "the keys list is not worth asking for with nothing to compare against")
-	assert.Equal(t, []string{"from-full-list"}, repoNames(t, objs))
-	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
-	assert.Zero(t, driftCount(t, reg, repoGVR), "an empty snapshot is startup, not drift")
-}
-
-// Storage older than keys_only degrades to the full list rather than stop
-// reconciling.
-func TestRepositoryList_FallsBackWhenKeysOnlyUnsupported(t *testing.T) {
-	keys := &stubKeysLister{err: keysapi.ErrUnsupported}
-	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
-
-	recorder, reg := newTestRecorder(repoGVR)
-	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, newFakeStore(repoAt("ns", "seed", "10")), recorder)(t.Context())
-	require.NoError(t, err, "an unsupported projection is not a reason to fail the tick")
-
-	assert.Equal(t, 1, keys.called, "the keys path is tried first")
-	assert.Equal(t, []string{"from-full-list"}, repoNames(t, objs))
-	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
-}
-
-// Any other keys failure surfaces rather than hiding behind a costlier list.
-func TestRepositoryList_SurfacesOtherKeysErrors(t *testing.T) {
-	boom := errors.New("storage unavailable")
-	keys := &stubKeysLister{err: boom}
-	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
-
-	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, newFakeStore(repoAt("ns", "seed", "10")), RelistRecorder{})(t.Context())
-	require.ErrorIs(t, err, boom)
-	assert.Nil(t, objs, "a failed tick must not deliver a partial set, which the Store would read as deletions")
-}
-
-// With the setting off (a nil lister) the snapshot holds the same shape as a
-// keys-only one.
-func TestRepositoryList_NilListerListsFullObjectsTrimmed(t *testing.T) {
-	full := repoAt("ns", "a", "10")
-	full.Spec.Title = "a title nobody reading the snapshot needs"
-	client := fake.NewClientset(full)
-
-	recorder, reg := newTestRecorder(repoGVR)
-	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", nil, newFakeStore(), recorder)(t.Context())
-	require.NoError(t, err)
-
-	require.Len(t, objs, 1)
-	got, ok := objs[0].(*repositoryProjection)
-	require.True(t, ok, "the full list must be projected too, got %T", objs[0])
-	assert.Equal(t, "10", got.ResourceVersion)
-	assert.Equal(t, "a", got.Name)
-	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
-}
-
-func repoNames(t *testing.T, objs []runtime.Object) []string {
-	t.Helper()
-	out := make([]string, 0, len(objs))
-	for _, o := range objs {
-		r, ok := o.(*repositoryProjection)
-		require.True(t, ok, "expected a projection, got %T", o)
-		out = append(out, r.Name)
-	}
-	return out
 }

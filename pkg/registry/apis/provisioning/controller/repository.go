@@ -210,10 +210,10 @@ func NewRepositoryController(
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
 		},
 	}
 }
@@ -224,9 +224,9 @@ func repoKeyFunc(obj any) (string, error) {
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
 
-// objectResourceVersion returns the resource version of a delivered object, or ""
-// for a delete tombstone.
-func objectResourceVersion(obj any) string {
+// resourceVersion returns the resource version of a delivered object, or "" for
+// a delete tombstone.
+func resourceVersion(obj any) string {
 	acc, err := meta.Accessor(obj)
 	if err != nil {
 		return ""
@@ -1049,13 +1049,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	if err != nil {
 		return repoType, err
 	}
+	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
+	if err == nil && isCurrentlyBlocked && !isQuotaExceeded([]v1.Condition{quotaCondition}) {
+		// The cached count can miss repositories another replica saw, so confirm
+		// before unblocking. Blocking on an overcount is harmless.
+		quotaCondition, err = rc.quotaChecker.ConfirmRepositoryQuotaConditions(quotaCtx, namespace, newQuota)
+	}
 	quotaSpan.End()
 	if err != nil {
 		return repoType, fmt.Errorf("check repository quota: %w", err)
 	}
-	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
 
 	// Blocked repos MUST process to check if they can unblock
