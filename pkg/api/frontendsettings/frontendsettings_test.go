@@ -88,6 +88,41 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
 	})
 
+	t.Run("sends the prometheus target data source only when alert states are written to it", func(t *testing.T) {
+		for _, tc := range []struct {
+			backend string
+			want    string
+		}{
+			{backend: "prometheus", want: "prom-uid"},
+			{backend: "loki", want: ""},
+		} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.StateHistory.Enabled = true
+			cfg.UnifiedAlerting.StateHistory.Backend = tc.backend
+			cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = "prom-uid"
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			require.NotNil(t, settings.UnifiedAlerting.StateHistory)
+			assert.Equal(t, tc.want, settings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID, tc.backend)
+		}
+	})
+
+	t.Run("reports whether unified alerting notification history is enabled", func(t *testing.T) {
+		for _, enabled := range []bool{true, false} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.NotificationHistory.Enabled = enabled
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			assert.Equal(t, enabled, settings.UnifiedAlerting.NotificationHistoryEnabled)
+		}
+	})
+
 	t.Run("populates plugins CDN base URL when the CDN is enabled", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		license := &licensing.OSSLicensingService{Cfg: cfg}

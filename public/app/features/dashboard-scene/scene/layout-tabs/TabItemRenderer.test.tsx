@@ -1,6 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
@@ -20,6 +21,8 @@ jest.mock('@grafana/runtime', () => ({
     reload: jest.fn(),
   })),
 }));
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 async function renderTab({
   title = 'Overview',

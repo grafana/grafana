@@ -136,7 +136,7 @@ func TestServeRootDocsWithETag(t *testing.T) {
 	}
 }
 
-func TestGroupFromPath(t *testing.T) {
+func TestRequestGroup(t *testing.T) {
 	cases := []struct {
 		path      string
 		wantGroup string
@@ -144,22 +144,29 @@ func TestGroupFromPath(t *testing.T) {
 		{"/apis/dashboard.grafana.app", "dashboard.grafana.app"},
 		{"/apis/dashboard.grafana.app/v1alpha1/dashboards", "dashboard.grafana.app"},
 		{"/apis/dashboard.grafana.app/", "dashboard.grafana.app"},
+		// an OpenAPI document is served by its group's backend
+		{"/openapi/v3/apis/dashboard.grafana.app/v1alpha1", "dashboard.grafana.app"},
 		// no single group to attribute the bare /apis root to
 		{"/apis", ""},
 		{"/apis/", ""},
+		// the router's own discovery tree
+		{"/apis/discovery/v1alpha2", ""},
 		// not under /apis at all
 		{"/openapi/v3", ""},
 		{"/healthz", ""},
 		{"", ""},
 		// prefix collision, not a real /apis boundary
 		{"/apisfoo", ""},
-		// arbitrary, client-controlled -- GroupFromPath doesn't validate
+		// arbitrary, client-controlled -- requestGroup doesn't validate
 		// against known backends, callers must check KnownGroup themselves
 		{"/apis/whatever-a-client-sends", "whatever-a-client-sends"},
+		// not a valid group name, so not a group any backend could serve
+		{"/apis/Not_A.Group/v1", ""},
 	}
 	for _, tc := range cases {
-		if got := GroupFromPath(tc.path); got != tc.wantGroup {
-			t.Errorf("GroupFromPath(%q) = %q, want %q", tc.path, got, tc.wantGroup)
+		req := httptest.NewRequest(http.MethodGet, "http://router"+tc.path, nil)
+		if got := requestGroupOf(req); got != tc.wantGroup {
+			t.Errorf("requestGroup(%q) = %q, want %q", tc.path, got, tc.wantGroup)
 		}
 	}
 }
@@ -341,13 +348,16 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 		{"/apis/known/v1/namespaces/stacks-123/missing", false, http.StatusNotFound},
 		{"/apis/known/unsupported-version/widgets", false, http.StatusNotFound},
 		{"/openapi/v3/apis/known/v1", false, http.StatusNotFound},
-		{"/apis", false, http.StatusOK},
-		{"/apis/", false, http.StatusOK},
-		{"/openapi/v3", false, http.StatusOK},
-		{"/openapi/v3/", false, http.StatusOK},
+		// Root discovery reads the groups the router does not serve from the fallback.
+		{"/apis", true, http.StatusOK},
+		{"/apis/", true, http.StatusOK},
+		{"/openapi/v3", true, http.StatusOK},
+		{"/openapi/v3/", true, http.StatusOK},
 		{"/openapi/v3/apis/unknown", false, http.StatusNotFound},
 		{"/openapi/v3/apis/unknown/v1/extra", false, http.StatusNotFound},
 		{"/apis//v1/namespaces/stacks-123/widgets", false, http.StatusBadRequest},
+		// Not a valid group name, so no backend or fallback could serve it.
+		{"/apis/Not_A.Group/v1/namespaces/stacks-123/widgets", false, http.StatusNotFound},
 		{"/apisfoo/unknown", false, http.StatusNotFound},
 		{"/healthz", false, http.StatusNotFound},
 	} {

@@ -3,13 +3,41 @@ import { memo, useContext, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { ConfirmModal, ModalsContext } from '@grafana/ui';
+import { ConfirmModal, type ConfirmModalProps, ModalsContext } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
+
+import { NotebookAnalytics } from '../analytics/main';
+import {
+  NOTEBOOK_LEAVE_PROMPT_REASON,
+  NOTEBOOK_LEAVE_PROMPT_RESOLUTION,
+  type NotebookLeavePromptResolution,
+} from '../analytics/types';
 
 import { type NotebookScene } from './NotebookScene';
 
 interface NotebookPromptProps {
   scene: NotebookScene;
+}
+
+interface LeavePromptModalProps extends ConfirmModalProps {
+  /** Called when the user closes the prompt without leaving: Stay, the close button, or Escape. */
+  onStay: () => void;
+}
+
+/**
+ * ModalsContext hands every modal its own `onDismiss`, replacing the one the caller gave, so the
+ * answer to a close has to be read here, where that replacement is the prop to call through.
+ */
+function LeavePromptModal({ onStay, onDismiss, ...props }: LeavePromptModalProps) {
+  return (
+    <ConfirmModal
+      {...props}
+      onDismiss={() => {
+        onStay();
+        onDismiss();
+      }}
+    />
+  );
 }
 
 export function needsConfirmBeforeLeaving(scene: NotebookScene): boolean {
@@ -57,8 +85,11 @@ export const NotebookPrompt = memo(({ scene }: NotebookPromptProps) => {
     }
 
     const isConflict = Boolean(scene.autosave.state.isConflict);
+    const reason = isConflict ? NOTEBOOK_LEAVE_PROMPT_REASON.CONFLICT : NOTEBOOK_LEAVE_PROMPT_REASON.SAVING;
+    const report = (resolution: NotebookLeavePromptResolution) =>
+      NotebookAnalytics.leavePromptResolved(scene.state.uid ?? '', reason, resolution);
 
-    showModal(ConfirmModal, {
+    showModal(LeavePromptModal, {
       isOpen: true,
       title: isConflict
         ? t('notebook.leave-prompt.conflict-title', 'Someone else has updated this notebook')
@@ -76,11 +107,13 @@ export const NotebookPrompt = memo(({ scene }: NotebookPromptProps) => {
       confirmVariant: 'destructive',
       dismissText: t('notebook.leave-prompt.stay', 'Stay'),
       onConfirm: () => {
+        report(NOTEBOOK_LEAVE_PROMPT_RESOLUTION.LEAVE);
         confirmedPathRef.current = location.pathname;
         hideModal();
         moveToBlockedLocationAfterReactStateUpdate(location);
       },
       onDismiss: hideModal,
+      onStay: () => report(NOTEBOOK_LEAVE_PROMPT_RESOLUTION.STAY),
     });
 
     return false;

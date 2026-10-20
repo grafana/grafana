@@ -1,7 +1,7 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, TestVariable } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -21,6 +21,8 @@ import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({
   DataSourcePicker: () => null,
 }));
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 function annotationLayer(name: string) {
   // Disabled so the layer does not query a data source on activation
@@ -108,6 +110,8 @@ describe.each(['row', 'tab'] as const)('section annotations in a repeated %s', (
     const result = setup(kind);
     release = result.releaseSidebar;
     await waitFor(() => expect(result.getClone()).toBeDefined());
+    // Edit mode loads the sidebar renderer asynchronously. Let that settle before assertions.
+    await act(async () => {});
     return { ...result, getClone: () => result.getClone()! };
   }
 
@@ -116,6 +120,8 @@ describe.each(['row', 'tab'] as const)('section annotations in a repeated %s', (
     const sourceSet = section.state.$data as DashboardDataLayerSet;
 
     act(() => annotationEditActions.addAnnotation({ source: sourceSet, addedObject: annotationLayer('incidents') }));
+    // Adding a layer mounts the panel filter picker, which loads plugin metas asynchronously.
+    await act(async () => {});
 
     expect(namesOf(section)).toEqual(['deploys', 'incidents']);
     expect(namesOf(getClone())).toEqual(['deploys', 'incidents']);

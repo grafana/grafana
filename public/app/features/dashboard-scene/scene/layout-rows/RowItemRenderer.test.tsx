@@ -2,6 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
@@ -22,6 +23,8 @@ jest.mock('@grafana/runtime', () => ({
     reload: jest.fn(),
   })),
 }));
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 function renderRow({
   collapse = false,
@@ -121,6 +124,7 @@ describe('RowItemRenderer', () => {
   it('hides the copy link button while previewing a dashboard plan (planning)', () => {
     renderRow({
       planning: {
+        phase: 'preview',
         planId: 'plan-1',
         planTitle: 'Dashboard plan',
         onBuild: () => {},

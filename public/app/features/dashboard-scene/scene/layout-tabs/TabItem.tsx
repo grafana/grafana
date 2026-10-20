@@ -2,7 +2,7 @@ import type React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, logWarning } from '@grafana/runtime';
+import { logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   type SceneObjectState,
@@ -118,12 +118,7 @@ export class TabItem
     const sectionAnnotations = this.state.$data instanceof DashboardDataLayerSet ? [this.state.$data] : [];
 
     if (isEditing && this.state.$variables) {
-      return [
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
-        this.state.$variables,
-        ...sectionAnnotations,
-        ...layoutChildren,
-      ];
+      return [this.getFiltersSet(), this.state.$variables, ...sectionAnnotations, ...layoutChildren];
     }
 
     if (isEditing && sectionAnnotations.length > 0) {

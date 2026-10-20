@@ -8,6 +8,7 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookAnalytics } from '../../analytics/main';
 import { type NotebookEditHistory } from '../NotebookEditHistory';
 import { NotebookScene } from '../NotebookScene';
 
@@ -197,13 +198,28 @@ describe('NotebookLayoutManager', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders the document header with title, time range and tags', async () => {
+  it('renders the document header with title and tags', async () => {
     renderNotebook();
 
     expect(screen.getByRole('heading', { name: 'My notebook' })).toBeInTheDocument();
-    expect(screen.getByText(/now-6h/)).toBeInTheDocument();
     expect(screen.getByText('incident')).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
+  });
+
+  // The time picker above the document already shows it.
+  it('leaves the time range out of the header on screen', async () => {
+    renderNotebook();
+
+    expect(screen.queryByText('Time')).not.toBeInTheDocument();
+  });
+
+  it('shows the time range in the header when asked to', async () => {
+    const manager = buildManager([]);
+    manager.setState({ showTimeRange: true });
+    renderManager(manager);
+
+    expect(screen.getByText('Time')).toBeInTheDocument();
+    expect(screen.queryByText(/now-6h/)).not.toBeInTheDocument();
   });
 
   it('renders a narrative markdown cell and shows a collapsed cell by name only', async () => {
@@ -525,6 +541,117 @@ describe('NotebookLayoutManager', () => {
 
       // Plus the trailing-invariant cell appended after 'b'.
       expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
+    });
+  });
+
+  describe('reporting the blocks people insert', () => {
+    function buildReporting(names: string[]) {
+      const manager = buildManager(buildNarrativeCells(names), true);
+      attachScene(manager).setState({ uid: 'nb-1' });
+      return manager;
+    }
+
+    beforeEach(() => {
+      jest.spyOn(NotebookAnalytics, 'blockInserted').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('reports a block picked from the add button above a cell', async () => {
+      const { user } = renderManager(buildReporting(['a', 'b']));
+
+      await user.click(screen.getAllByRole('button', { name: 'Click to add above' })[0]);
+      await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
+
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledWith('nb-1', 'heading', 'plus_menu');
+    });
+
+    it('reports a block picked from the footer', async () => {
+      const { user } = renderManager(buildReporting(['a']));
+
+      await user.click(screen.getByRole('button', { name: 'Code' }));
+
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledWith('nb-1', 'code', 'footer');
+    });
+
+    it('reports a block picked from the "/" menu', async () => {
+      const { user } = renderManager(buildReporting(['a']));
+
+      const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
+      await user.type(editors[editors.length - 1], '/');
+      await user.click(screen.getByRole('menuitem', { name: 'Code' }));
+
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledWith('nb-1', 'code', 'slash_menu');
+    });
+
+    // Picking Paragraph in an empty paragraph changes nothing, and it is still a block somebody asked for.
+    it('reports a pick from the "/" menu that left the cell as it was', async () => {
+      const { user } = renderManager(buildReporting(['a']));
+
+      const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
+      await user.type(editors[editors.length - 1], '/');
+      await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
+
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledWith('nb-1', 'paragraph', 'slash_menu');
+    });
+
+    it('describes a duplicated cell by the block it comes to', () => {
+      const manager = buildReporting(['a']);
+      manager.setState({
+        cells: [
+          ...manager.state.cells,
+          new NotebookCellItem({
+            elementName: 'title',
+            source: 'user',
+            content: { kind: 'Markdown', spec: { text: '## Checkout' } },
+          }),
+          new NotebookCellItem({
+            elementName: 'snippet',
+            source: 'user',
+            content: { kind: 'Code', spec: { language: 'sql', code: 'select 1' } },
+          }),
+          panelCell('chart').cell,
+        ],
+      });
+      const [paragraph, heading, code, panel] = manager.state.cells;
+
+      manager.duplicateCell(paragraph, 'duplicate');
+      manager.duplicateCell(heading, 'duplicate');
+      manager.duplicateCell(code, 'duplicate');
+      manager.duplicateCell(panel, 'duplicate');
+
+      expect(jest.mocked(NotebookAnalytics.blockInserted).mock.calls).toEqual([
+        ['nb-1', 'paragraph', 'duplicate'],
+        ['nb-1', 'heading', 'duplicate'],
+        ['nb-1', 'code', 'duplicate'],
+        ['nb-1', 'visualization', 'duplicate'],
+      ]);
+    });
+
+    // Programmatic callers, such as the mutation API, and the empty block the editor keeps at the bottom
+    // are not somebody choosing a block.
+    it('reports nothing for an insert that no control asked for', () => {
+      const manager = buildReporting(['a']);
+
+      manager.addCell('code', 1);
+      manager.appendSystemCell(manager.state.cells.length);
+      manager.insertCellAfter(manager.state.cells[0]);
+      manager.duplicateCell(manager.state.cells[0]);
+
+      expect(NotebookAnalytics.blockInserted).not.toHaveBeenCalled();
+    });
+
+    it('reports nothing for a manager with no notebook above it', () => {
+      const manager = buildManager(buildNarrativeCells(['a']), true);
+
+      manager.addCell('code', 1, 'footer');
+
+      expect(NotebookAnalytics.blockInserted).not.toHaveBeenCalled();
     });
   });
 

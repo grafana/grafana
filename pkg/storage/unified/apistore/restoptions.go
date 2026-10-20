@@ -17,7 +17,7 @@ import (
 
 	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 )
 
 var (
@@ -119,7 +119,7 @@ func (g *resourceOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ 
 }
 
 type RESTOptionsGetter struct {
-	client         resource.ResourceClient
+	client         resourceclient.ResourceClient
 	secrets        secret.InlineSecureValueSupport
 	original       storagebackend.Config
 	configProvider RestConfigProvider
@@ -144,7 +144,7 @@ func (r *RESTOptionsGetter) VersionPolicy() *versionpolicy.VersionPolicyRegistry
 }
 
 func NewRESTOptionsGetterForClient(
-	client resource.ResourceClient,
+	client resourceclient.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
 	configProvider RestConfigProvider,

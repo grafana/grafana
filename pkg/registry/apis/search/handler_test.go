@@ -291,6 +291,22 @@ func TestGlobalHandler_ReadsTheNamespaceWideIndex(t *testing.T) {
 	assert.Equal(t, resource.GlobalSearchResource, client.got.Options.Key.Resource)
 }
 
+// The caller is told the results are incomplete, rather than seeing a type that
+// has nothing in it.
+func TestGlobalHandler_ReportsSkippedTypes(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.SkippedTypes = []string{"folder.grafana.app/folders"}
+	h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var got searchv0.GlobalSearchResults
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	assert.Equal(t, searchv0.KindGlobalSearchResults, got.Kind)
+	assert.Equal(t, []string{"folder.grafana.app/folders"}, got.Metadata.SkippedTypes)
+}
+
 func TestGlobalHandler_FiltersByResourceType(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
@@ -302,6 +318,19 @@ func TestGlobalHandler_FiltersByResourceType(t *testing.T) {
 	require.Len(t, client.got.Options.Fields, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_GROUP_RESOURCE, client.got.Options.Fields[0].Key)
 	assert.Equal(t, []string{"folder.grafana.app/folders"}, client.got.Options.Fields[0].Values)
+}
+
+func TestGlobalHandler_SearchesAFolderAndEverythingBelowIt(t *testing.T) {
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(
+		`{"filter": {"field": "`+resource.SEARCH_FIELD_FOLDER_TREE+`", "operator": "In", "values": ["team-a"]}}`))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	require.Len(t, client.got.Options.Fields, 1)
+	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+	assert.Equal(t, []string{"team-a"}, client.got.Options.Fields[0].Values)
 }
 
 // Sorting by time is offered on this index and nowhere else, so a request that
@@ -374,4 +403,54 @@ func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 	// A type the route was not told about keeps its group and resource, which
 	// already identify it, and reports no kind rather than another type's.
 	assert.Equal(t, searchv0.ResourceRef{Group: "other.grafana.app", Resource: "others", Kind: "", Name: "other-a"}, out.Items[2].Resource)
+}
+
+// The search server names the kinds it takes from manifests read at runtime,
+// which this process may not know, and its names win over this process's.
+func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
+	row := func(group, resourceName, name string) *resourcepb.ResourceTableRow {
+		return &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{Namespace: "default", Group: group, Resource: resourceName, Name: name},
+			Cells: [][]byte{[]byte(name)},
+		}
+	}
+	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				row("dashboard.grafana.app", "dashboards", "dash-a"),
+				row("x.ext.grafana.app", "pages", "page-a"),
+			},
+		},
+		TotalHits:      3,
+		TotalHitsExact: true,
+		Kinds: map[string]string{
+			"x.ext.grafana.app/pages":    "Page",
+			"folder.grafana.app/folders": "Directory",
+		},
+	}}
+	client.resp.Results.Rows = append(client.resp.Results.Rows, row("folder.grafana.app", "folders", "folder-a"))
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	kinds := func() []string {
+		t.Helper()
+		w := doGlobalRequest(t, h, globalQuery(""))
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var out searchv0.GlobalSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+		got := make([]string, 0, len(out.Items))
+		for _, item := range out.Items {
+			got = append(got, item.Resource.Kind)
+		}
+		return got
+	}
+	assert.Equal(t, []string{"Dashboard", "Page", "Directory"}, kinds(),
+		"a kind the server does not name comes from this process; one it names wins")
+
+	// An older server names none; the next response uses this process's kinds,
+	// untouched by the previous one.
+	client.resp.Kinds = nil
+	assert.Equal(t, []string{"Dashboard", "", "Folder"}, kinds())
 }

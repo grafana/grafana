@@ -54,6 +54,7 @@ func newIAMAuthorizer(
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer["display"] = legacyAuthorizer
+	resourceAuthorizer["whoami"] = newWhoamiAuthorizer()
 
 	// Temporary security fix: Block Watch on ResourcePermissions until proper filtering is implemented
 	blockWatchAuthorizer := authorizer.AuthorizerFunc(func(
@@ -84,6 +85,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = newSSOSettingAuthorizer(accessClient)
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
+	resourceAuthorizer["teamlbacusage"] = teamLbacApiInstaller.GetTeamLBACUsageAuthorizer()
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
 	resourceAuthorizer["searchExternalGroupMappings"] = serviceIdentityAuthorizer
 
@@ -118,6 +120,24 @@ func newTeamLBACRuleAuthorizer(base authorizer.Authorizer) authorizer.Authorizer
 		}
 		if !servicePermission.Allowed {
 			return authorizer.DecisionDeny, "calling service lacks TeamLBACRule read permission", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
+func newWhoamiAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		// Kubernetes treats GET on a resource path without a name as a list request.
+		// For whoami/permissions, it parses permissions as the resource name.
+		readWhoami := attr.GetName() == "" && (attr.GetVerb() == utils.VerbList || attr.GetVerb() == utils.VerbGet)
+		readPermissions := attr.GetName() == "permissions" && attr.GetVerb() == utils.VerbGet
+		if !attr.IsResourceRequest() || attr.GetResource() != "whoami" ||
+			attr.GetSubresource() != "" || attr.GetNamespace() != "" ||
+			(!readWhoami && !readPermissions) {
+			return authorizer.DecisionDeny, "only reading the current identity is supported", nil
+		}
+		if _, ok := authlib.AuthInfoFrom(ctx); !ok {
+			return authorizer.DecisionDeny, "cannot read current user without an identity", nil
 		}
 		return authorizer.DecisionAllow, "", nil
 	})

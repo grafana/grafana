@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -209,29 +210,28 @@ func NewRepositoryController(
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
 		},
 	}
 }
 
+// repoKeyFunc keys a delivered object of any type: the NATS informer delivers a
+// projection of a Repository, not the whole object.
 func repoKeyFunc(obj any) (string, error) {
-	repo, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return "", fmt.Errorf("expected a Repository but got %T", obj)
-	}
-	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
+	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
 
-// objectResourceVersion returns the resource version of a delivered Repository,
-// or "" for a minimal NATS live event or a delete tombstone.
-func objectResourceVersion(obj any) string {
-	if repo, ok := obj.(*provisioning.Repository); ok {
-		return repo.ResourceVersion
+// resourceVersion returns the resource version of a delivered object, or "" for
+// a delete tombstone.
+func resourceVersion(obj any) string {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return ""
 	}
-	return ""
+	return acc.GetResourceVersion()
 }
 
 // Run starts the RepositoryController.
@@ -388,6 +388,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	repoType, err := rc.processFn(key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	rc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.
@@ -594,6 +597,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	}
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
+	checkAge := time.Since(time.UnixMilli(max(obj.Status.Sync.Finished, obj.Status.Sync.LastChecked)))
 	// In case the sync interval is lower than the minimum sync interval set by the system
 	// we should default to the latter
 	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
@@ -628,7 +632,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	pendingForTooLong := syncAge >= syncInterval/2 && obj.Status.Sync.State == provisioning.JobStatePending
 	isRunning := obj.Status.Sync.State == provisioning.JobStateWorking
 
-	return obj.Spec.Sync.Enabled && syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
+	return obj.Spec.Sync.Enabled && checkAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 }
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
@@ -816,7 +820,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) []map[string]interface{} {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus, shouldResync bool) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
@@ -835,15 +839,29 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"path":  "/status/sync/started",
 			"value": int64(0),
 		})
-	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
-		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
-		// specific errors?
 		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/message",
-			"value": []string{},
+			"op":    "add",
+			"path":  "/status/sync/lastChecked",
+			"value": time.Now().UnixMilli(),
 		})
-	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
+	case healthStatus.Healthy:
+		if hasUnhealthyMessage {
+			// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
+			// specific errors?
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/message",
+				"value": []string{},
+			})
+		}
+		if shouldResync {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "add",
+				"path":  "/status/sync/lastChecked",
+				"value": time.Now().UnixMilli(),
+			})
+		}
+	case !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/sync/state",
@@ -855,7 +873,6 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"value": []string{unhealthyMessage},
 		})
 	}
-
 	return patchOperations
 }
 
@@ -1035,13 +1052,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	if err != nil {
 		return repoType, err
 	}
+	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
+	if err == nil && isCurrentlyBlocked && !isQuotaExceeded([]v1.Condition{quotaCondition}) {
+		// The cached count can miss repositories another replica saw, so confirm
+		// before unblocking. Blocking on an overcount is harmless.
+		quotaCondition, err = rc.quotaChecker.ConfirmRepositoryQuotaConditions(quotaCtx, namespace, newQuota)
+	}
 	quotaSpan.End()
 	if err != nil {
 		return repoType, fmt.Errorf("check repository quota: %w", err)
 	}
-	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
 
 	// Blocked repos MUST process to check if they can unblock
@@ -1400,7 +1422,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
-	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
+	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus, shouldResync)...)
 	// Persist a timestamp-only quota refresh with other status changes so it does not
 	// create its own informer update and reconciliation loop.
 	if !hasQuotaChanged && obj.Status.Quota != newQuota && len(patchOperations) > 0 {

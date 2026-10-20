@@ -1,3 +1,5 @@
+import { type NavModelItem } from '@grafana/data';
+
 // The order (and therefore sort weight) of every nav section, mirroring the
 // WeightX iota constants in pkg/services/navtree/models.go. It MUST stay in
 // lockstep with the Go order: the client- and server-built trees are merged
@@ -7,7 +9,7 @@
 //
 // It is kept separate from NavID (rather than deriving order from it) because
 // it also positions weight-only anchors that have no NavID (assistant, sigil,
-// aiAndMl, cmab, application, asserts, dataConnections, plugin, ...) and groups
+// workflows, aiAndMl, cmab, application, asserts, dataConnections, plugin, ...) and groups
 // several NavIDs under one weight (savedItems ← starred/bookmarks, config ←
 // cfg, dataConnections ← connections).
 const NAV_ORDER = [
@@ -15,13 +17,14 @@ const NAV_ORDER = [
   'bookmarks',
   'savedItems',
   'dashboards',
+  'notebooks',
   'explore',
   'drilldown',
-  'notebooks',
   'assistant',
   'sigil',
   'alerting',
   'alertsAndIncidents',
+  'workflows',
   'aiAndMl',
   'adaptiveTelemetry',
   'cmab',
@@ -87,6 +90,18 @@ export const NavID = {
   help: 'help',
   profile: 'profile',
 } as const;
+
+// The "More apps" section only exists to group plugin nav items, so it is
+// created on demand by the first app that needs it. The url is app-sub-url
+// relative; children are filled at creation time.
+export const MORE_APPS_SHELL: NavModelItem = {
+  text: 'More apps',
+  icon: 'layer-group',
+  subTitle: 'App plugins that extend the Grafana experience',
+  id: NavID.apps,
+  sortWeight: NavWeight.apps,
+  url: '/apps',
+};
 
 /** The set of known nav ids (the literal values of NavID). */
 export type NavId = (typeof NavID)[keyof typeof NavID];
