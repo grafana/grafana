@@ -96,7 +96,7 @@ Technically, there is no limit to how many variables you can chain together, but
 The following Grafana Play dashboards contain basic chained variables, only two layers deep. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
 
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
-- [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m)
+- [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)
 
 While the examples are data source-specific, the concepts can be applied broadly.
 
@@ -164,7 +164,7 @@ apps.fakesite.web_server_01.cpu.*
 
 #### InfluxDB example explained
 
-In this example, you have several data centers. Each data center has a different subset of hosts. It's based on the [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m) dashboard.
+In this example, you have several data centers. Each data center has a different subset of hosts. It's based on the [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard) dashboard.
 
 In this example, when the user changes the value of the `datacenter` variable, it changes the drop-down options returned by the `host` variable. The `host` variable uses the **Multi-value** option and **Include all option**, allowing users to select some or all options presented at any time. The `datacenter` does not use either option, so you can only select one data center at a time.
 

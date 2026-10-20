@@ -69,6 +69,7 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Schema: &versionSchemaDashboardv0alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -232,6 +233,7 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Schema: &versionSchemaDashboardv1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -381,6 +383,7 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Schema: &versionSchemaDashboardv1beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -530,6 +533,7 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Schema: &versionSchemaDashboardv2,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -679,6 +683,7 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Schema: &versionSchemaDashboardv2alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -828,6 +833,7 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Schema: &versionSchemaDashboardv2beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{

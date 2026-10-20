@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -17,7 +18,9 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/Sol
 import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { PlanBuildingOverlay } from './PlanBuildingOverlay';
 import { PlanningControls } from './new-toolbar/PlanningControls';
+import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -32,6 +35,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
     planning,
+    uid,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -108,6 +112,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
+    // The body is empty until the builder's first write, so the loading screen takes its place.
+    if (planning?.phase === 'building') {
+      return <PlanBuildingOverlay />;
+    }
+
     if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
@@ -130,7 +139,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
+      return isDashboardNewLayoutsEnabled() && planning.phase === 'preview' ? (
+        <PlanningControls dashboard={model} planning={planning} />
+      ) : null;
     }
 
     return controls && <controls.Component model={controls} />;
@@ -141,11 +152,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
+        {!editPanel && <SandboxConsentBanner dashboardUid={uid} />}
         {!editPanel && (
           <DashboardSidebarSplitter
             dashboard={model}
-            isEditing={isEditing}
-            isPlanning={Boolean(planning)}
+            isEditing={isFullDashboardEditing(model.state)}
+            // Only the preview gets the planning canvas; the building screen sits on a plain one.
+            isPlanning={planning?.phase === 'preview'}
             controls={renderControls()}
             body={renderBody()}
           />

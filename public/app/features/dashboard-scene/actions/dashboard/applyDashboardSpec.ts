@@ -45,8 +45,13 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
   const { loadingView: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
+    // Template identity is not part of the dashboard spec or its access DTO.
+    meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
-  const { loadingView: previousLoading, ...previousState } = scene.state;
+  // A plan's building screen is still up during the build's first write; undoing that write must
+  // not restore it, since nothing would be left to end it. Leaving `planning` out of the merge
+  // keeps whatever is current.
+  const { loadingView: previousLoading, planning: previousPlanning, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach
@@ -80,10 +85,15 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
         fromSpec: getPreviousSpecUrl,
         toSpec: () => nextSpecUrl,
       });
-      scene.setState({ ...newState, editPanel: undefined, isDirty: true });
+      scene.setState({
+        ...newState,
+        mode: scene.state.mode,
+        editPanel: undefined,
+        isDirty: true,
+      });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
+      scene.applyDashboardMode();
 
       scene.state.sidebar.refreshAfterRebuild();
 
@@ -100,7 +110,8 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
       // A previously pending editor has no state key to overwrite the editor from the rebuilt tree.
-      scene.setState({ ...previousState, editPanel: previousState.editPanel });
+      scene.setState({ ...previousState, editPanel: previousState.editPanel, mode: scene.state.mode });
+      scene.applyDashboardMode();
       scene.state.sidebar.refreshAfterRebuild();
       // The restored tree is the one the apply replaced, so its spec state can be read from it now.
       const urlUpdates = urlUpdatesForSwap(scene, {
