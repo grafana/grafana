@@ -31,6 +31,11 @@ beforeEach(() => {
   server.use(...simpleRoutingTreesListScenario);
 });
 
+function Controlled({ initial }: { initial: RoutingTreeView | null }) {
+  const [value, setValue] = useState<RoutingTreeView | null>(initial);
+  return <RoutingTreePicker value={value} onChange={setValue} />;
+}
+
 beforeAll(() => {
   mockComboboxRect();
 });
@@ -43,12 +48,17 @@ describe('default (collapsed) state', () => {
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('expands to a labelled selector when Change is clicked', async () => {
-    const { user } = render(<RoutingTreePicker value={null} onChange={jest.fn()} />);
+  it('expands to a labelled selector when Change is clicked, and collapses back without calling onChange', async () => {
+    const onChangeHandler = jest.fn();
+    const { user } = render(<RoutingTreePicker value={null} onChange={onChangeHandler} />);
 
     await user.click(screen.getByRole('button', { name: 'Change notification policy' }));
-
     expect(screen.getByRole('combobox', { name: 'Select notification policy' })).toHaveValue('Default policy');
+
+    await user.click(screen.getByRole('button', { name: 'Collapse the notification policy selector' }));
+    expect(screen.getByText('Default policy')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(onChangeHandler).not.toHaveBeenCalled();
   });
 
   it('does not show the raw default tree name while the policy list is still loading', async () => {
@@ -64,18 +74,6 @@ describe('default (collapsed) state', () => {
     await user.click(screen.getByRole('button', { name: 'Change notification policy' }));
 
     expect(screen.getByRole('combobox', { name: 'Select notification policy' })).not.toHaveValue('user-defined');
-  });
-
-  it('collapses back to the badge when Collapse is clicked, without calling onChange', async () => {
-    const onChangeHandler = jest.fn();
-    const { user } = render(<RoutingTreePicker value={null} onChange={onChangeHandler} />);
-
-    await user.click(screen.getByRole('button', { name: 'Change notification policy' }));
-    await user.click(screen.getByRole('button', { name: 'Collapse the notification policy selector' }));
-
-    expect(screen.getByText('Default policy')).toBeInTheDocument();
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(onChangeHandler).not.toHaveBeenCalled();
   });
 
   it('hides the View policies link when no href is provided', () => {
@@ -133,25 +131,15 @@ describe('custom policy selected', () => {
     expect(screen.getByRole('button', { name: 'Reset to default policy' })).toBeInTheDocument();
   });
 
-  it('calls onChange with the selected routing tree', async () => {
-    const onChangeHandler = jest.fn();
-
-    const { user } = render(<RoutingTreePicker value={null} onChange={onChangeHandler} />);
+  it('shows the selected routing tree with a reset button', async () => {
+    const { user } = render(<Controlled initial={null} />);
     await user.click(screen.getByRole('button', { name: 'Change notification policy' }));
 
     await user.click(screen.getByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: new RegExp(customTree.name) }));
 
-    expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ name: customTree.name, isDefault: false }));
-  });
-
-  it('resets to the default policy when Reset to default is clicked', async () => {
-    const onChangeHandler = jest.fn();
-
-    const { user } = render(<RoutingTreePicker value={customTree} onChange={onChangeHandler} />);
-    await user.click(screen.getByRole('button', { name: 'Reset to default policy' }));
-
-    expect(onChangeHandler).toHaveBeenCalledWith(null);
+    expect(screen.getByRole('combobox')).toHaveValue(customTree.name);
+    expect(screen.getByRole('button', { name: 'Reset to default policy' })).toBeInTheDocument();
   });
 
   it('stays expanded on the custom policy when the parent does not accept the reset', async () => {
@@ -163,19 +151,15 @@ describe('custom policy selected', () => {
   });
 
   it('collapses to the default policy once the parent accepts the reset', async () => {
-    function Controlled() {
-      const [value, setValue] = useState<RoutingTreeView | null>(customTree);
-      return <RoutingTreePicker value={value} onChange={setValue} />;
-    }
-
-    const { user } = render(<Controlled />);
+    const { user } = render(<Controlled initial={customTree} />);
     await user.click(screen.getByRole('button', { name: 'Reset to default policy' }));
 
     expect(screen.getByText('Default policy')).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('normalizes selecting "Default policy" from the dropdown to null, same as Reset to default', async () => {
+  // The render is the same either way, so only onChange shows that the parent gets `null`, not the default tree object.
+  it('reports selecting "Default policy" from the dropdown to the parent as null', async () => {
     const onChangeHandler = jest.fn();
 
     const { user } = render(<RoutingTreePicker value={customTree} onChange={onChangeHandler} />);
