@@ -248,6 +248,7 @@ type mockStorageBackend struct {
 	UnimplementedStorageBackend
 	resourceStats       []ResourceStats
 	statsErr            error
+	beforeStats         func(context.Context, NamespacedResource, int, int) error
 	lastImportTimes     []ResourceLastImportTime
 	statsCalls          atomic.Int32
 	listStoredCalls     atomic.Int32
@@ -260,6 +261,11 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 	m.statsCalls.Add(1)
 	var result []ResourceStats
 	for _, stat := range m.resourceStats {
+		if (nsr.Namespace != "" && stat.Namespace != nsr.Namespace) ||
+			(nsr.Group != "" && stat.Group != nsr.Group) ||
+			(nsr.Resource != "" && stat.Resource != nsr.Resource) {
+			continue
+		}
 		// Apply the minCount filter like the real implementation does
 		if stat.Count > int64(minCount) {
 			result = append(result, stat)
@@ -297,6 +303,11 @@ func (m *mockStorageBackend) ListStoredResources(_ context.Context, filter Names
 
 func (m *mockStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
 	m.lastCountLimit.Store(int64(countLimit))
+	if m.beforeStats != nil {
+		if err := m.beforeStats(ctx, nsr, minCount, countLimit); err != nil {
+			return nil, err
+		}
+	}
 	return m.GetResourceStats(ctx, nsr, minCount)
 }
 
@@ -363,7 +374,8 @@ func featuresForTestIndex(keepsDeletedDocuments bool) []IndexFeature {
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
 	// What the previous run left recorded as open, returned by LoadOpenIndexStats.
-	openIndexStats []ResourceStats
+	openIndexStats    []ResourceStats
+	openIndexStatsErr error
 
 	// Recorded on every index this backend builds, standing in for the decision the
 	// real backend makes from its options at creation.
@@ -393,7 +405,7 @@ type buildIndexCall struct {
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
-	return m.openIndexStats, nil
+	return m.openIndexStats, m.openIndexStatsErr
 }
 
 // TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
@@ -420,9 +432,41 @@ func TestStartupIndexStatsCountLimit(t *testing.T) {
 			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 			require.NoError(t, err)
 
-			_, err = server.startupIndexStats(t.Context())
+			_, _, err = server.startupIndexStats(t.Context())
 			require.NoError(t, err)
 			require.Equal(t, tc.wantLimit, storage.lastCountLimit.Load())
+		})
+	}
+}
+
+func TestStartupIndexStatsUsesSavedIndexesWithoutDiscovery(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		globalEnabled bool
+		startupBuild  bool
+		wantDiscovery bool
+		wantScans     int32
+	}{
+		{name: "global disabled"},
+		{name: "global disabled with foreground setting", startupBuild: true},
+		{name: "background global discovery", globalEnabled: true, wantDiscovery: true},
+		{name: "foreground global discovery", globalEnabled: true, startupBuild: true, wantScans: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			openStats := []ResourceStats{{NamespacedResource: dashboardType("known"), Count: 1}}
+			storage := &mockStorageBackend{statsErr: errors.New("discovery unavailable")}
+			server, err := newSearchServer(SearchOptions{
+				Backend:                 &mockSearchBackend{openIndexStats: openStats},
+				Resources:               &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"dashboard.grafana.app": "dashboards"}},
+				GlobalIndexEnabled:      tc.globalEnabled,
+				GlobalIndexStartupBuild: tc.startupBuild,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+			stats, discover, err := server.startupIndexStats(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, openStats, stats)
+			require.Equal(t, tc.wantDiscovery, discover)
+			require.Equal(t, tc.wantScans, storage.statsCalls.Load())
 		})
 	}
 }
@@ -844,7 +888,261 @@ func TestBackgroundGlobalBuildsStartAfterBlockingIndexes(t *testing.T) {
 		{key: GlobalSearchKey("large"), size: 11},
 		{key: GlobalSearchKey("previously-open"), size: 1},
 	}, calls)
-	require.Equal(t, int32(1), server.storage.(*mockStorageBackend).statsCalls.Load(), "searches must not read resource stats")
+	require.Equal(t, int32(len(server.globalCoverage.Types())), server.storage.(*mockStorageBackend).statsCalls.Load(), "only covered types should be scanned, without request-time stats reads")
+}
+
+func TestWarmStartupDoesNotWaitForGlobalDiscovery(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	discoveryStarted := make(chan struct{})
+	releaseDiscovery := make(chan struct{})
+	releaseBuilds := make(chan struct{})
+	globalStarted := make(chan struct{}, 3)
+	filters := make(chan NamespacedResource, 10)
+	var firstScan sync.Once
+	backend := &initialBuildTestBackend{beforeBuild: func(ctx context.Context, key NamespacedResource, _ BuildIndexOptions) error {
+		if !key.IsGlobal() || key.Namespace == "small" {
+			return nil
+		}
+		globalStarted <- struct{}{}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-releaseBuilds:
+			return nil
+		}
+	}}
+	backend.openIndexStats = []ResourceStats{
+		{NamespacedResource: dashboardType("large"), Count: 6},
+		{NamespacedResource: GlobalSearchKey("large"), Count: 3},
+		{NamespacedResource: GlobalSearchKey("large"), Count: 3},
+		{NamespacedResource: GlobalSearchKey("previously-open"), Count: 2},
+	}
+	backend.snapshotThreshold = 50
+	alreadyOpen := &MockResourceIndex{}
+	backend.cache = map[NamespacedResource]ResourceIndex{GlobalSearchKey("already-open"): alreadyOpen}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{
+		{NamespacedResource: dashboardType("large"), Count: 6},
+		{NamespacedResource: folderType("large"), Count: 5},
+		{NamespacedResource: dashboardType("new"), Count: 6},
+		{NamespacedResource: folderType("new"), Count: 5},
+		{NamespacedResource: dashboardType("small"), Count: 5},
+		{NamespacedResource: folderType("small"), Count: 5},
+		{NamespacedResource: dashboardType("unowned"), Count: 6},
+		{NamespacedResource: folderType("unowned"), Count: 5},
+		{NamespacedResource: NamespacedResource{Namespace: "unrelated", Group: "example.app", Resource: "other"}, Count: 100},
+	}, 2)
+	server.initMinSize = 10
+	server.globalIndexStartupBuild = false
+	server.ownsIndexFn = func(key NamespacedResource) (bool, error) { return key.Namespace != "unowned", nil }
+	storage := server.storage.(*mockStorageBackend)
+	storage.beforeStats = func(ctx context.Context, filter NamespacedResource, minCount, countLimit int) error {
+		filters <- filter
+		firstScan.Do(func() { close(discoveryStarted) })
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-releaseDiscovery:
+		}
+		if filter.Group == "" || filter.Resource == "" || minCount != 0 || countLimit != 51 {
+			return fmt.Errorf("unexpected discovery request: %v, minCount=%d, countLimit=%d", filter, minCount, countLimit)
+		}
+		return nil
+	}
+	done := make(chan error, 1)
+	go func() { done <- server.init(ctx) }()
+	select {
+	case <-discoveryStarted:
+	case <-ctx.Done():
+		t.Fatal("background discovery did not start")
+	}
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-ctx.Done():
+		t.Fatal("readiness waited for storage discovery")
+	}
+	require.NotNil(t, backend.GetIndex(dashboardType("large")), "restore saved per-resource indexes before discovery")
+	idx, err := server.getOrCreateIndex(ctx, nil, GlobalSearchKey("already-open"), "test")
+	require.NoError(t, err)
+	require.Same(t, alreadyOpen, idx)
+	for _, namespace := range []string{"large", "new", "small"} {
+		_, err := server.getOrCreateIndex(ctx, nil, GlobalSearchKey(namespace), "test")
+		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), AsErrorResult(err),
+			"requests must not start competing builds before discovery finishes")
+	}
+	close(releaseDiscovery)
+	select {
+	case <-globalStarted:
+	case <-ctx.Done():
+		t.Fatal("discovered global indexes did not start building")
+	}
+	for _, namespace := range []string{"large", "new", "previously-open"} {
+		_, err := server.getOrCreateIndex(ctx, nil, GlobalSearchKey(namespace), "test")
+		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), AsErrorResult(err))
+	}
+	_, err = server.getOrCreateIndex(ctx, nil, GlobalSearchKey("small"), "test")
+	require.NoError(t, err, "small global indexes build on demand after discovery")
+	close(releaseBuilds)
+	require.Eventually(t, func() bool {
+		server.backgroundGlobalBuildsMu.RLock()
+		defer server.backgroundGlobalBuildsMu.RUnlock()
+		return !server.backgroundGlobalDiscovery && len(server.backgroundGlobalBuilds) == 0
+	}, 5*time.Second, time.Millisecond)
+	backend.mu.Lock()
+	calls := slices.Clone(backend.buildIndexCalls)
+	backend.mu.Unlock()
+	require.ElementsMatch(t, []buildIndexCall{
+		{key: dashboardType("large"), size: 6},
+		{key: GlobalSearchKey("large"), size: 11},
+		{key: GlobalSearchKey("new"), size: 11},
+		{key: GlobalSearchKey("previously-open"), size: 2},
+		{key: GlobalSearchKey("small"), size: unknownBuildSize},
+	}, calls)
+	for _, gr := range server.globalCoverage.Types() {
+		select {
+		case filter := <-filters:
+			require.Equal(t, NamespacedResource{Group: gr.Group, Resource: gr.Resource}, filter)
+		case <-ctx.Done():
+			t.Fatal("missing covered-type discovery request")
+		}
+	}
+	require.Empty(t, filters, "do not scan unrelated resource types or repeat scans for searches")
+	require.Equal(t, int32(len(server.globalCoverage.Types())), storage.statsCalls.Load())
+}
+
+func TestWarmStartupRestoresSavedGlobalsWhenDiscoveryFails(t *testing.T) {
+	for _, failAt := range []int32{1, 2} {
+		t.Run(fmt.Sprint(failAt), func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			backend := &initialBuildTestBackend{beforeBuild: func(context.Context, NamespacedResource, BuildIndexOptions) error { return nil }}
+			backend.openIndexStats = []ResourceStats{{NamespacedResource: GlobalSearchKey("known"), Count: 3}}
+			server := newInitialBuildTestServer(t, backend, []ResourceStats{
+				{NamespacedResource: dashboardType("known"), Count: 6},
+				{NamespacedResource: folderType("known"), Count: 5},
+				{NamespacedResource: dashboardType("new"), Count: 6},
+				{NamespacedResource: folderType("new"), Count: 5},
+			}, 1)
+			server.globalIndexStartupBuild = false
+			server.initMinSize = 10
+			var attempts atomic.Int32
+			server.storage.(*mockStorageBackend).beforeStats = func(context.Context, NamespacedResource, int, int) error {
+				if attempts.Add(1) == failAt {
+					return errors.New("storage stats unavailable")
+				}
+				return nil
+			}
+			require.NoError(t, server.init(ctx))
+			require.Eventually(t, func() bool {
+				server.backgroundGlobalBuildsMu.RLock()
+				defer server.backgroundGlobalBuildsMu.RUnlock()
+				return !server.backgroundGlobalDiscovery && len(server.backgroundGlobalBuilds) == 0
+			}, 5*time.Second, time.Millisecond)
+			require.NotNil(t, backend.GetIndex(GlobalSearchKey("known")))
+			require.Nil(t, backend.GetIndex(GlobalSearchKey("new")))
+			_, err := server.getOrCreateIndex(ctx, nil, GlobalSearchKey("new"), "test")
+			require.NoError(t, err, "failed discovery must not leave unknown namespaces returning 503 forever")
+			require.Equal(t, failAt, attempts.Load(), "do not repeatedly scan storage after a discovery failure")
+			backend.mu.Lock()
+			calls := slices.Clone(backend.buildIndexCalls)
+			backend.mu.Unlock()
+			require.ElementsMatch(t, []buildIndexCall{
+				{key: GlobalSearchKey("known"), size: 3},
+				{key: GlobalSearchKey("new"), size: unknownBuildSize},
+			}, calls, "partial discovery must not replace saved counts with incomplete totals")
+		})
+	}
+}
+
+func TestWarmStartupStopsBackgroundDiscoveryBeforeClosingBackend(t *testing.T) {
+	started := make(chan struct{})
+	var closedTooEarly atomic.Bool
+	backend := &initialBuildTestBackend{beforeBuild: func(context.Context, NamespacedResource, BuildIndexOptions) error { return nil }}
+	backend.openIndexStats = []ResourceStats{{NamespacedResource: dashboardType("known"), Count: 1}}
+	server := newInitialBuildTestServer(t, backend, nil, 1)
+	server.globalIndexStartupBuild = false
+	server.storage.(*mockStorageBackend).beforeStats = func(ctx context.Context, _ NamespacedResource, _, _ int) error {
+		close(started)
+		<-ctx.Done()
+		closedTooEarly.Store(backend.stopCalls.Load() != 0)
+		return ctx.Err()
+	}
+	require.NoError(t, server.init(t.Context()))
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background discovery did not start")
+	}
+	stopped := make(chan error, 1)
+	go func() { stopped <- server.Stop(t.Context()) }()
+	select {
+	case err := <-stopped:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("shutdown did not cancel background discovery")
+	}
+	require.False(t, closedTooEarly.Load())
+	require.Equal(t, int32(1), backend.stopCalls.Load())
+	require.Equal(t, []buildIndexCall{{key: dashboardType("known"), size: 1}}, backend.buildIndexCalls)
+}
+
+func TestStartupStillWaitsForDiscoveryWithoutSavedStatsOrInForegroundMode(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		openStats    []ResourceStats
+		loadErr      error
+		startupBuild bool
+	}{
+		{name: "no saved indexes"},
+		{name: "invalid saved indexes", openStats: []ResourceStats{{NamespacedResource: dashboardType("known"), Count: 1}}, loadErr: errors.New("invalid saved index list")},
+		{name: "foreground mode", openStats: []ResourceStats{{NamespacedResource: dashboardType("known"), Count: 1}}, startupBuild: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			started := make(chan struct{})
+			backend := &initialBuildTestBackend{beforeBuild: func(context.Context, NamespacedResource, BuildIndexOptions) error { return nil }}
+			backend.openIndexStats = tc.openStats
+			backend.openIndexStatsErr = tc.loadErr
+			server := newInitialBuildTestServer(t, backend, nil, 1)
+			server.globalIndexStartupBuild = tc.startupBuild
+			server.storage.(*mockStorageBackend).beforeStats = func(ctx context.Context, filter NamespacedResource, _, _ int) error {
+				close(started)
+				<-ctx.Done()
+				return ctx.Err()
+			}
+			done := make(chan error, 1)
+			go func() { done <- server.init(ctx) }()
+			select {
+			case <-started:
+			case <-ctx.Done():
+				t.Fatal("startup discovery did not start")
+			}
+			select {
+			case err := <-done:
+				t.Fatalf("startup finished before required discovery: %v", err)
+			default:
+			}
+			cancel()
+			require.ErrorIs(t, <-done, context.Canceled)
+		})
+	}
+}
+
+func TestWarmStartupDiscoversGlobalsWithoutOwnedSavedIndexes(t *testing.T) {
+	backend := &initialBuildTestBackend{beforeBuild: func(context.Context, NamespacedResource, BuildIndexOptions) error { return nil }}
+	backend.openIndexStats = []ResourceStats{{NamespacedResource: dashboardType("unowned"), Count: 1}}
+	server := newInitialBuildTestServer(t, backend, []ResourceStats{
+		{NamespacedResource: dashboardType("owned"), Count: 6},
+		{NamespacedResource: folderType("owned"), Count: 5},
+	}, 1)
+	server.globalIndexStartupBuild = false
+	server.initMinSize = 10
+	server.ownsIndexFn = func(key NamespacedResource) (bool, error) { return key.Namespace == "owned", nil }
+	require.NoError(t, server.init(t.Context()))
+	require.Eventually(t, func() bool { return backend.GetIndex(GlobalSearchKey("owned")) != nil }, 5*time.Second, time.Millisecond)
+	require.Nil(t, backend.GetIndex(dashboardType("unowned")))
 }
 
 func TestBackgroundGlobalBuildsRetryWithoutOccupyingWorker(t *testing.T) {

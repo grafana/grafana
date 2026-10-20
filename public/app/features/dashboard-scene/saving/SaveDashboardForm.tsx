@@ -110,8 +110,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           {errorInfo.message}
           <Box paddingTop={2}>
             <Stack alignItems="center">
-              {cancelButton}
               {saveButton(true)}
+              {cancelButton}
             </Stack>
           </Box>
         </Alert>
@@ -132,8 +132,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           </p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
-              {cancelButton}
               {saveButton(true)}
+              {cancelButton}
             </Stack>
           </Box>
         </Alert>
@@ -147,8 +147,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       <>
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
-          {cancelButton}
           {saveButton(false)}
+          {cancelButton}
           {!hasChanges && (
             <div>
               <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.no-changes-to-save">

@@ -56,7 +56,7 @@ export const FlagKeys = {
   AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
   /** Use the new k8s API for fetching integration type schemas */
   AlertingSyncNotifiersApiMigration: "alertingSyncNotifiersApiMigration",
-  /** Enables the alerting triage feature */
+  /** Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it. */
   AlertingTriage: "alertingTriage",
   /** Enables the UI to use certain backend-side filters */
   AlertingUIUseBackendFilters: "alertingUIUseBackendFilters",
@@ -64,6 +64,8 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
+  AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -138,8 +140,6 @@ export const FlagKeys = {
   DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
   DisableScriptedDashboards: "disableScriptedDashboards",
-  /** Set this to true to enable all app chrome extensions registered by plugins. */
-  EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -624,14 +624,14 @@ export const useFlagAlertingSyncNotifiersApiMigration = (options?: ReactFlagEval
 };
 
 /**
- * Enables the alerting triage feature
+ * Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
  *
  * **Details:**
  * - flag key: `alertingTriage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingTriage", false, options).value;
+  return useFlag("alertingTriage", true, options).value;
 };
 
 /**
@@ -665,6 +665,17 @@ export const useFlagAlertingUIUseFullyCompatBackendFilters = (options?: ReactFla
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanBuildingScreen`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanBuildingScreen", false, options).value;
 };
 
 /**
@@ -1072,17 +1083,6 @@ export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagDisableScriptedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("disableScriptedDashboards", true, options).value;
-};
-
-/**
- * Set this to true to enable all app chrome extensions registered by plugins.
- *
- * **Details:**
- * - flag key: `enableAppChromeExtensions`
- * - default value: `false`
- */
-export const useFlagEnableAppChromeExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("enableAppChromeExtensions", false, options).value;
 };
 
 /**
@@ -1552,10 +1552,10 @@ export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluati
  *
  * **Details:**
  * - flag key: `grafana.recordedQueriesDisableCreate`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.recordedQueriesDisableCreate", false, options).value;
+  return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
 };
 
 /**

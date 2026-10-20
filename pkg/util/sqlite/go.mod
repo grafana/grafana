@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/util/sqlite
 
-go 1.27.2
+go 1.27.3
 
 require modernc.org/sqlite v1.58.0
 
