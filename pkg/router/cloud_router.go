@@ -16,6 +16,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 
@@ -81,6 +82,29 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		}
 	}
 	return pluginsTarget, coreTarget, nil
+}
+
+// parseNamespacedGroups reads namespaced_groups: the plugin groups whose
+// plugins also serve <name>.<namespace>.<group> for each namespace.
+func parseNamespacedGroups(section *setting.DynamicSection) ([]string, error) {
+	var groups []string
+	for _, group := range splitGroupPatterns(section.Key("namespaced_groups").MustString("")) {
+		if group == "" || slices.Contains(groups, group) {
+			continue
+		}
+		if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			return nil, fmt.Errorf("%s: namespaced_groups: %q is not a plugin group (*%s)", cloudRouterSection, group, pluginManifestGroupSuffix)
+		}
+		groups = append(groups, group)
+	}
+	// Each owner's own group must not be one of another owner's namespaced
+	// groups, which every other source refuses.
+	for _, group := range groups {
+		if owner, ok := namespacedOwnerOf(group, groups); ok {
+			return nil, fmt.Errorf("%s: namespaced_groups: %q is in the namespaced groups of %q", cloudRouterSection, group, owner)
+		}
+	}
+	return groups, nil
 }
 
 // newPluginManifestsClient builds the client that polls a plugin manifests
@@ -213,7 +237,37 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	loader, err := newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	if err != nil {
+		return nil, err
+	}
+
+	namespacedGroups, err := parseNamespacedGroups(section)
+	if err != nil {
+		return nil, err
+	}
+	if len(namespacedGroups) > 0 && pluginsTarget == nil && coreTarget == nil {
+		return nil, fmt.Errorf("%s: namespaced_groups needs plugins_url or core_url to serve their owners", cloudRouterSection)
+	}
+	for _, target := range []*pluginManifestsTarget{pluginsTarget, coreTarget} {
+		if target != nil {
+			target.namespacedOwners = namespacedGroups
+		}
+	}
+	// Managed plugins override core APIs, so they are searched first.
+	owners := func(context.Context) []Backend {
+		var backends []Backend
+		for _, target := range []*pluginManifestsTarget{pluginsTarget, coreTarget} {
+			if target != nil {
+				backends = append(backends, target.Backends()...)
+			}
+		}
+		return backends
+	}
+	for _, group := range namespacedGroups {
+		loader.namespacedTargets = append(loader.namespacedTargets, newNamespacedManifestsTarget(group, owners))
+	}
+	return loader, nil
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -234,6 +288,11 @@ type cloudLoader struct {
 	// coreTarget serves core APIs in the plugin manifests format: nil unless
 	// core_url is configured.
 	coreTarget *pluginManifestsTarget
+
+	// namespacedTargets serve the namespaced groups of the owner groups in
+	// namespaced_groups, whose owners are served by pluginsTarget or
+	// coreTarget.
+	namespacedTargets []*namespacedManifestsTarget
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
@@ -277,6 +336,12 @@ func (l *cloudLoader) running(ctx context.Context) error {
 			})
 		}
 	}
+	for _, target := range l.namespacedTargets {
+		g.Go(func() error {
+			target.run(gctx, l.dirty)
+			return nil
+		})
+	}
 	if l.singleTenantFallback != nil {
 		g.Go(func() error {
 			l.singleTenantFallback.run(gctx, l.dirty)
@@ -316,6 +381,14 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
 		}
 		for _, b := range backends {
+			put(b)
+		}
+	}
+
+	// Namespaced groups override only ST, so a namespace's group never
+	// shadows a group another source serves.
+	for _, target := range l.namespacedTargets {
+		for _, b := range target.Backends() {
 			put(b)
 		}
 	}
@@ -402,6 +475,9 @@ func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	}
 	if l.pluginsTarget != nil {
 		statuses = append(statuses, l.pluginsTarget.status.status(sourcePluginsURL))
+	}
+	for _, target := range l.namespacedTargets {
+		statuses = append(statuses, target.status.status(target.source))
 	}
 	return statuses
 }

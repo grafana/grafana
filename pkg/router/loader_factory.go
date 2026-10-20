@@ -41,6 +41,13 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 				return nil, err
 			}
 		}
+		namespacedGroups, err := parseNamespacedGroups(cfg.SectionWithEnvOverrides(cloudRouterSection))
+		if err != nil {
+			return nil, err
+		}
+		if len(namespacedGroups) > 0 {
+			return newNamespacedLoader(&PluginLoader{deps: deps}, namespacedGroups), nil
+		}
 		return &PluginLoader{deps: deps}, nil
 	}
 

@@ -41,6 +41,11 @@ type pluginManifestsTarget struct {
 	grpcConfig pluginGRPCConfig
 	deps       PluginDependencies
 
+	// namespacedOwners are the owner groups of namespaced_groups. Their
+	// namespaced groups are served only by their own source, so this one
+	// refuses them (namespacedOwnerOf). Set before the poll loop starts.
+	namespacedOwners []string
+
 	backendPoller
 
 	// requestDuration records every gRPC call to a plugin deployment, by
@@ -122,6 +127,11 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	for _, entry := range deployment.Plugins {
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
+				continue
+			}
+			if owner, ok := namespacedOwnerOf(manifest.Group, t.namespacedOwners); ok {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry in the namespaced groups of another source", "pluginId", entry.Definition.JSONData.ID, "group", manifest.Group, "owner", owner)
+				skipped++
 				continue
 			}
 

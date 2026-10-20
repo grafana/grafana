@@ -7,15 +7,19 @@ import (
 
 // Route sources, as reported by Backend.Source.
 const (
-	sourceSingleTenant  = "single-tenant"
-	sourcePluginsURL    = "plugins_url"
-	sourceCoreURL       = "core_url"
-	sourceLocalPlugin   = "local-plugin"
-	sourceDummy         = "dummy"
-	aggregateSourceName = "aggregate:"
+	sourceSingleTenant   = "single-tenant"
+	sourcePluginsURL     = "plugins_url"
+	sourceCoreURL        = "core_url"
+	sourceLocalPlugin    = "local-plugin"
+	sourceDummy          = "dummy"
+	aggregateSourceName  = "aggregate:"
+	namespacedSourceName = "namespaced:"
 )
 
 func aggregateSource(target string) string { return aggregateSourceName + target }
+
+// namespacedSource names the source of an owner group's namespaced groups.
+func namespacedSource(ownerGroup string) string { return namespacedSourceName + ownerGroup }
 
 // sourceStatus is how a route source's loads or polls are going.
 type sourceStatus struct {

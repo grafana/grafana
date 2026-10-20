@@ -69,6 +69,13 @@ type CallerScopedDiscovery interface {
 	CallerScopedDiscovery()
 }
 
+// NamespacedBackend is an optional Backend interface for a backend whose group
+// belongs to one namespace. Only callers in that namespace may use it, and
+// only within it.
+type NamespacedBackend interface {
+	Namespace() string
+}
+
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory

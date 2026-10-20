@@ -563,3 +563,23 @@ func TestFetchPluginManifestsPrefersPluralEntry(t *testing.T) {
 	require.Len(t, backends, 1)
 	require.Equal(t, "v1alpha1", backends[0].Group().Versions[0].Version)
 }
+
+// A plugin group in an owner's namespaced groups is served only by the
+// owner's namespaced source.
+func TestPluginManifestsTarget_RefusesNamespacedGroupsOfAnOwner(t *testing.T) {
+	fixture := strings.Replace(pluginManifestsFixture, `"appsdktest.ext.grafana.app"`, `"squat.stacks-1.gas.ext.grafana.app"`, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(fixture))
+	}))
+	defer srv.Close()
+
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1, "served without namespaced_groups")
+
+	target.namespacedOwners = []string{"gas.ext.grafana.app"}
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Empty(t, target.Backends())
+	require.Equal(t, 1, target.status.status("").Skipped)
+}
