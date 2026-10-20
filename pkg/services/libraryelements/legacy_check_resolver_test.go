@@ -61,7 +61,7 @@ func TestIntegrationLegacyCheckReusesLibraryPanelResolver(t *testing.T) {
 			folderVisible: false,
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
-				Error:   "could not resolve library.panels:uid:panel: " + folder.ErrAccessDenied.Error(),
+				Error:   "could not evaluate legacy expression: could not resolve library.panels:uid:panel: " + folder.ErrAccessDenied.Error(),
 			},
 		},
 	} {

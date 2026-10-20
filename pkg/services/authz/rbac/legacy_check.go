@@ -24,15 +24,17 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+
 	if err := s.validateLegacyScopeNamespace(ns); err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+
 	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
-	ctx = request.WithNamespace(ctx, ns.Value)
 
+	ctx = request.WithNamespace(ctx, ns.Value)
 	evaluator, actions, err := convertLegacyExpression(req.GetExpression())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
@@ -54,12 +56,20 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// permissions before allowing the request or skipping resolution.
 	checkUnrelatedPermissions := evaluator.Evaluate(nil) ||
 		(!req.GetSkipScopeResolution() && s.legacyScopeResolvers.HasResolvers())
+
 	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
-		ctx, ns, idType, userUID, actions, checkUnrelatedPermissions, req.GetSkipCache(),
+		ctx,
+		ns,
+		idType,
+		userUID,
+		actions,
+		checkUnrelatedPermissions,
+		req.GetSkipCache(),
 	)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+
 	if !hasAnyPermissions {
 		return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
 	}
@@ -80,7 +90,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{
 			Allowed: false,
-			Error:   fmt.Errorf("could not evaluate legacy expression: %w", err).Error(),
+			Error:   err.Error(),
 		}, nil
 	}
 
@@ -99,11 +109,18 @@ func (s *Service) getLegacyIdentityScopes(
 	skipCache bool,
 ) ([]string, bool, error) {
 	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
-		ctx, ns, idType, userUID, []string{action}, checkUnrelatedPermissions, skipCache,
+		ctx,
+		ns,
+		idType,
+		userUID,
+		[]string{action},
+		checkUnrelatedPermissions,
+		skipCache,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("could not get legacy identity permissions: %w", err)
 	}
+
 	return permissions[action], hasAnyPermissions, nil
 }
 
@@ -126,12 +143,12 @@ func (s *Service) getLegacyIdentityPermissions(
 	case types.TypeUser, types.TypeServiceAccount:
 		identifiers, err := s.getUserIdentifiers(ctx, ns, userUID, skipCache)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("could not get user identifiers: %w", err)
 		}
 
 		query, err = s.getLegacyUserPermissionQuery(ctx, ns, identifiers, skipCache)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("could not get legacy user permission query: %w", err)
 		}
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
@@ -139,7 +156,7 @@ func (s *Service) getLegacyIdentityPermissions(
 		for _, action := range actions {
 			scopes, err := s.getRendererPermissions(ctx, action)
 			if err != nil {
-				return nil, false, err
+				return nil, false, fmt.Errorf("could not get renderer permissions: %w", err)
 			}
 			if scopes["*"] {
 				permissions[action] = []string{"*"}
@@ -161,7 +178,7 @@ func (s *Service) getLegacyIdentityPermissions(
 
 		grants, err := s.permissionStore.GetUserPermissions(ctx, ns, actionQuery)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("could not get user permissions: %w", err)
 		}
 		// Modern Kubernetes checks normalize scopes. Legacy evaluators need
 		// the original strings, including empty scopes on action-only grants.
@@ -182,7 +199,7 @@ func (s *Service) getLegacyIdentityPermissions(
 	// the same identity/role/team restrictions without an action filter.
 	hasAnyPermissions, err := s.permissionStore.HasUserPermissions(ctx, ns, query)
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("could not check user permissions: %w", err)
 	}
 
 	return permissions, hasAnyPermissions, nil
@@ -196,12 +213,12 @@ func (s *Service) getLegacyUserPermissionQuery(
 ) (store.PermissionsQuery, error) {
 	basicRole, err := s.getUserBasicRoleWithCache(ctx, ns, userIdentifiers, skipCache)
 	if err != nil {
-		return store.PermissionsQuery{}, err
+		return store.PermissionsQuery{}, fmt.Errorf("could not get user basic role: %w", err)
 	}
 
 	teamIDs, err := s.getUserTeamsWithCache(ctx, ns, userIdentifiers, skipCache)
 	if err != nil {
-		return store.PermissionsQuery{}, err
+		return store.PermissionsQuery{}, fmt.Errorf("could not get user teams: %w", err)
 	}
 
 	return store.PermissionsQuery{

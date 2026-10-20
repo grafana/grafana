@@ -13,13 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-type legacyScopeRequest struct {
-	namespace    types.NamespaceInfo
-	identityType types.IdentityType
-	userUID      string
-	skipCache    bool
-}
-
 // WithLegacyScopeResolvers returns a new service instance that shares existing
 // dependencies and live resolver registrations with embedded Access Control.
 // Captured Grafana services belong to this process, so callbacks may only serve
@@ -33,6 +26,13 @@ func (s *Service) WithLegacyScopeResolvers(
 	service.legacyScopeNamespace = namespace
 
 	return &service
+}
+
+type legacyScopeRequest struct {
+	namespace    types.NamespaceInfo
+	identityType types.IdentityType
+	userUID      string
+	skipCache    bool
 }
 
 // Evaluate the original expression first. If it denies access, resolve its
@@ -139,19 +139,19 @@ func (s *Service) legacyResolverRequester(
 		UserUID:   req.userUID,
 		OrgID:     req.namespace.OrgID,
 		Namespace: req.namespace.Value,
-		CacheKey:  req.namespace.Value + ":" + types.NewTypeID(req.identityType, req.userUID),
+		CacheKey:  fmt.Sprintf("%s:%s", req.namespace.Value, types.NewTypeID(req.identityType, req.userUID)),
 	}
 
 	switch req.identityType {
 	case types.TypeUser, types.TypeServiceAccount:
 		identifiers, err := s.getUserIdentifiers(ctx, req.namespace, req.userUID, req.skipCache)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not get user identifiers: %w", err)
 		}
 
 		role, err := s.getUserBasicRoleWithCache(ctx, req.namespace, identifiers, req.skipCache)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not get user basic role: %w", err)
 		}
 
 		requester.UserID = identifiers.ID
@@ -173,17 +173,18 @@ func (s *Service) legacyResolverRequester(
 	// Library-panel resolution can perform folder visibility checks as the
 	// subject. Load that action explicitly instead of fetching a full snapshot.
 	if _, ok := grants[folder.ActionFoldersRead]; !ok {
+		checkUnrelatedPermissions := false
 		scopes, _, err := s.getLegacyIdentityScopes(
 			ctx,
 			req.namespace,
 			req.identityType,
 			req.userUID,
 			folder.ActionFoldersRead,
-			false,
+			checkUnrelatedPermissions,
 			req.skipCache,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not get legacy identity scopes: %w", err)
 		}
 
 		if len(scopes) > 0 {
@@ -191,7 +192,9 @@ func (s *Service) legacyResolverRequester(
 		}
 	}
 
-	requester.Permissions = map[int64]map[string][]string{req.namespace.OrgID: grants}
+	requester.Permissions = map[int64]map[string][]string{
+		req.namespace.OrgID: grants,
+	}
 
 	return requester, nil
 }

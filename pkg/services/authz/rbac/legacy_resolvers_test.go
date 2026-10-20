@@ -299,7 +299,7 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			)
 			require.Equal(t, allowed, gotAllowed)
 			if referenceErr != nil {
-				require.EqualError(t, gotErr, referenceErr.Error())
+				require.EqualError(t, gotErr, "could not evaluate legacy expression: "+referenceErr.Error())
 			} else {
 				require.NoError(t, gotErr)
 			}
@@ -315,7 +315,7 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			require.NoError(t, err)
 			want := &authzextv1.LegacyCheckResponse{Allowed: allowed}
 			if referenceErr != nil {
-				want.Error = referenceErr.Error()
+				want.Error = "could not evaluate legacy expression: " + referenceErr.Error()
 			}
 			require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
 			require.Equal(t, tc.calls, calls)
@@ -345,7 +345,7 @@ func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
 	require.NoError(t, err)
 	want := &authzextv1.LegacyCheckResponse{
 		Allowed: false,
-		Error:   "could not resolve dashboards:uid:one: resource lookup failed",
+		Error:   "could not evaluate legacy expression: could not resolve dashboards:uid:one: resource lookup failed",
 	}
 	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
 	require.Equal(t, []store.PermissionsQuery{
@@ -455,7 +455,7 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 			skip:  false,
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
-				Error:   "could not resolve dashboards:uid:missing: missing dashboard",
+				Error:   "could not evaluate legacy expression: could not resolve dashboards:uid:missing: missing dashboard",
 			},
 		},
 	} {
