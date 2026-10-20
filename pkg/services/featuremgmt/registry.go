@@ -3189,6 +3189,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.configFromQueryDynamicName",
+			Description: "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
