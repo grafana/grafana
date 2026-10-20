@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -473,7 +474,7 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
-			ctx := context.Background()
+			ctx := request.WithNamespace(context.Background(), "default")
 			if tt.serviceAccount {
 				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
 			}
@@ -484,7 +485,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage, maxDepth)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -498,40 +499,46 @@ func TestValidateCreate(t *testing.T) {
 	}
 }
 
-func TestValidateCreateDetachedParent(t *testing.T) {
-	for _, dryRun := range []bool{false, true} {
-		for _, ancestorMissing := range []bool{false, true} {
-			t.Run(fmt.Sprintf("dryRun=%t/ancestorMissing=%t", dryRun, ancestorMissing), func(t *testing.T) {
+func TestValidateCreateDetachedAncestors(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		brokenAt string
+		getErr   error
+	}{
+		{name: "immediate parent missing", brokenAt: "C", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "C")},
+		{name: "immediate parent unreadable", brokenAt: "C", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "C", errors.New("forbidden"))},
+		{name: "grandparent missing", brokenAt: "B", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "B")},
+		{name: "great-grandparent missing", brokenAt: "A", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "A")},
+		{name: "full chain readable"},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
 				storage := grafanarest.NewMockStorage(t)
-				parentName := "missing"
-				if ancestorMissing {
-					parentName = "parent"
-					storage.On("Get", mock.Anything, parentName, &metav1.GetOptions{}).Return(&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        parentName,
-							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
-						},
+				parents := map[string]string{"C": "B", "B": "A", "A": folder.GeneralFolderUID}
+				for _, name := range []string{"C", "B", "A"} {
+					if name == tc.brokenAt {
+						storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(nil, tc.getErr).Once()
+						break
+					}
+					storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{Name: name, Annotations: map[string]string{utils.AnnoKeyFolder: parents[name]}},
+						Spec:       folders.FolderSpec{Title: name},
 					}, nil).Once()
 				}
-				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
-					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
 
 				obj := &folders.Folder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "orphan",
-						Annotations: map[string]string{utils.AnnoKeyFolder: parentName},
-					},
-					Spec: folders.FolderSpec{Title: "orphan"},
+					ObjectMeta: metav1.ObjectMeta{Name: "new", Annotations: map[string]string{utils.AnnoKeyFolder: "C"}},
+					Spec:       folders.FolderSpec{Title: "new"},
 				}
-				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
-				if dryRun {
+				ctx := request.WithNamespace(context.Background(), "default")
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage, 5), 5, dryRun)
+				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return
 				}
-				require.Error(t, err)
 				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 				require.Equal(t, int32(http.StatusBadRequest), responsewriters.ErrorToAPIStatus(err).Code)
-				require.ErrorContains(t, err, "missing")
+				require.ErrorContains(t, err, "C")
 			})
 		}
 	}
