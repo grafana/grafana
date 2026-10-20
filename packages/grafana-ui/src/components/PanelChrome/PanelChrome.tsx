@@ -20,6 +20,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
 import { usePanelChromeHeaderControls } from './PanelChromeHeaderControlsContext';
+import { usePanelContext } from './PanelContext';
 import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
@@ -187,6 +188,12 @@ export function PanelChrome({
   const pointerDistance = usePointerDistance();
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
   const headerControls = usePanelChromeHeaderControls();
+  const { isSeriesLimitShown } = usePanelContext();
+
+  if (isSeriesLimitShown?.()) {
+    hoverHeader = false;
+  }
+
   const hasExternalControls = Boolean(headerControls?.external);
   const isInHoverSlot = hasExternalControls && hoverHeader;
 
