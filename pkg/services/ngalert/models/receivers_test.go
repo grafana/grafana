@@ -316,6 +316,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 	baseReceiver := ReceiverGen(ReceiverMuts.WithName("test receiver"), ReceiverMuts.WithIntegrations(
 		IntegrationGen(im.WithName("test receiver"), im.WithValidConfig("slack"))(),
 	))()
+	baseReceiver.UID = "stable receiver UID" // Fingerprint includes UID, so pin it for a stable hash below.
 	baseReceiver.Integrations[0].UID = "stable UID"
 	baseReceiver.Integrations[0].DisableResolveMessage = true
 	baseReceiver.Integrations[0].SecureSettings = map[string]string{"test2": "test2", "test3": "test223", "test1": "rest22"}
@@ -335,7 +336,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 	completelyDifferentReceiver.Provenance = ProvenanceAPI
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "c0c82936be34b183" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "bece9dcee7216f0e" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, baseReceiver.Fingerprint())
 	})
 	t.Run("stable across clones", func(t *testing.T) {

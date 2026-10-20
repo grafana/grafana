@@ -109,6 +109,7 @@
     ],
     "receivers": [
       {
+        "uid": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
         "name": "grafana-default-email",
         "grafana_managed_receiver_configs": [
           {
@@ -123,9 +124,11 @@
         ]
       },
       {
+        "uid": "Z3JhZmFuYS1kZWZhdWx0LWVtYWlsX21pbWlyLTEyMzQ1",
         "name": "grafana-default-email_mimir-12345"
       },
       {
+        "uid": "cmVjdg",
         "name": "recv",
         "grafana_managed_receiver_configs": [
           {
@@ -150,6 +153,7 @@
         ]
       },
       {
+        "uid": "cmVjdjI",
         "name": "recv2",
         "grafana_managed_receiver_configs": [
           {
@@ -176,6 +180,7 @@
         ]
       },
       {
+        "uid": "dGVzdC13ZWJob29r",
         "name": "test-webhook",
         "grafana_managed_receiver_configs": [
           {

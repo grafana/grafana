@@ -41,7 +41,7 @@ func TestAddAutogenConfig(t *testing.T) {
 		if len(receivers) > 0 {
 			cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, len(receivers))
 			for _, receiver := range receivers {
-				r := v1.NewReceiver(receiver, nil, models.ProvenanceNone)
+				r := v1.NewReceiver(v1.ReceiverUID(receiver), receiver, nil, models.ProvenanceNone)
 				cfg.Receivers[r.UID] = r
 			}
 		}

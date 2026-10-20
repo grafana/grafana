@@ -30,5 +30,5 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 
 func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
 	// TODO: Remove this extra indirection when PostableGrafanaReceiversToIntegrations is no longer needed by receiver service.
-	return legacy_storage.PostableApiReceiverToReceiver(v1.NewReceiver(postable.Name, notifier.PostableGrafanaReceiversFromAPI(postable.GrafanaManagedReceivers), provenance), origin)
+	return legacy_storage.PostableApiReceiverToReceiver(v1.NewReceiver(v1.ReceiverUID(postable.Name), postable.Name, notifier.PostableGrafanaReceiversFromAPI(postable.GrafanaManagedReceivers), provenance), origin)
 }

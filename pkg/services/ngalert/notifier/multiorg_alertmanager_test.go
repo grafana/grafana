@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -253,7 +254,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
 
 	// Now let's save a new config for org 2.
-	newConfig := `{"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@example.com\u003e"}}]}]}}`
+	newConfig := `{"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"uid":"some-uid","name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@example.com\u003e"}}]}]}}`
 	postable, err := Load([]byte(newConfig))
 	require.NoError(t, err)
 
@@ -277,10 +278,56 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Verify that the org has the old default config.
+	// Verify that the org has the old default config. Activating a historical config re-runs the
+	// same load/save round-trip as any other save, so the receiver gains its persisted uid here too.
+	expectedActivatedDefaultConfig := `
+{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email",
+			"group_by": [
+				"grafana_folder",
+				"alertname"
+			]
+		},
+		"receivers": [
+			{
+				"uid": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
+				"name": "grafana-default-email",
+				"grafana_managed_receiver_configs": [
+					{
+						"uid": "",
+						"name": "email receiver",
+						"type": "email",
+						"disableResolveMessage": false,
+						"settings": {
+							"addresses": "<example@example.com>"
+						}
+					}
+				]
+			}
+		]
+	}
+}`
 	cfgs, err = mam.getLatestConfigs(ctx)
 	require.NoError(t, err)
-	require.JSONEq(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
+	require.JSONEq(t, expectedActivatedDefaultConfig, cfgs[2].AlertmanagerConfiguration)
+}
+
+func TestExtractReceivers(t *testing.T) {
+	t.Run("honors a persisted uid", func(t *testing.T) {
+		raw := `{"alertmanager_config":{"receivers":[{"uid":"my-custom-uid","name":"receiver1"}]}}`
+		receivers, err := extractReceivers(raw)
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{"receiver1": "my-custom-uid"}, receivers)
+	})
+
+	t.Run("falls back to a name-derived uid when none is persisted", func(t *testing.T) {
+		raw := `{"alertmanager_config":{"receivers":[{"name":"receiver1"}]}}`
+		receivers, err := extractReceivers(raw)
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{"receiver1": string(v1.ReceiverUID("receiver1"))}, receivers)
+	})
 }
 
 func TestMultiOrgAlertmanager_Silences(t *testing.T) {
