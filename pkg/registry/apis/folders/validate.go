@@ -153,7 +153,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// note: `parents` will include itself as the last item
 	parents, err := getter(ctx, f)
 	if err != nil {
-		return fmt.Errorf("unable to create folder inside parent: %w", err)
+		return err
 	}
 
 	// Git Sync previews use dry-run creates with parents that may only exist

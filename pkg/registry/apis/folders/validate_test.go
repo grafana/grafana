@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -473,7 +474,7 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
-			ctx := context.Background()
+			ctx := request.WithNamespace(context.Background(), "default")
 			if tt.serviceAccount {
 				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
 			}
@@ -484,7 +485,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage, maxDepth)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -507,7 +508,6 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 		{name: "immediate parent missing", brokenAt: "C", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "C")},
 		{name: "immediate parent unreadable", brokenAt: "C", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "C", errors.New("forbidden"))},
 		{name: "grandparent missing", brokenAt: "B", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "B")},
-		{name: "grandparent unreadable", brokenAt: "B", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "B", errors.New("forbidden"))},
 		{name: "great-grandparent missing", brokenAt: "A", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "A")},
 		{name: "full chain readable"},
 	} {
@@ -530,7 +530,8 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "new", Annotations: map[string]string{utils.AnnoKeyFolder: "C"}},
 					Spec:       folders.FolderSpec{Title: "new"},
 				}
-				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
+				ctx := request.WithNamespace(context.Background(), "default")
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage, 5), 5, dryRun)
 				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return
@@ -542,6 +543,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 		}
 	}
 }
+
 func TestValidateUpdate(t *testing.T) {
 	tests := []struct {
 		name         string

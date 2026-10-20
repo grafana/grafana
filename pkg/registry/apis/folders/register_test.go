@@ -10,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -155,7 +156,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				tt.setupFn(us)
 			}
 
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			err := b.Validate(request.WithNamespace(context.Background(), "stacks-123"), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -214,7 +215,7 @@ func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
 					},
 					Spec: folders.FolderSpec{Title: "child"},
 				}
-				err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				err := b.Validate(request.WithNamespace(context.Background(), "default"), admission.NewAttributesRecord(
 					obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
 					folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
 					nil, dryRun, &user.SignedInUser{},
