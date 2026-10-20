@@ -238,6 +238,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Off by default: this builds a global index per namespace, holding the
 	// dashboards and folders already covered by their own indexes.
 	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
+	cfg.GlobalSearchIndexStartupBuild = section.Key("global_search_index_startup_build").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -259,6 +260,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// search manifest watcher
 	cfg.ManifestApiServerAddress = section.Key("manifest_api_server_address").String()
+	cfg.ManifestDiscoveryAddress = section.Key("manifest_discovery_url").String()
+	cfg.ManifestDiscoveryAudience = section.Key("manifest_discovery_audience").String()
 	cfg.ManifestWatcherAllowInsecureTLS = section.Key("manifest_watcher_allow_insecure_tls").MustBool(false)
 	cfg.ManifestWatcherCAFile = section.Key("manifest_watcher_ca_file").String()
 	cfg.ManifestWatcherPollInterval = section.Key("manifest_watcher_poll_interval").MustDuration(1 * time.Hour)

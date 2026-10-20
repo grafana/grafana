@@ -893,7 +893,6 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 
 			mockStore := grafanarest.NewMockStorage(t)
 			mockStore.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*mine.DeepCopy(), *theirs.DeepCopy()}}, nil)
-			mockStore.On("Get", mock.Anything, "mine", mock.Anything).Return(mine.DeepCopy(), nil)
 
 			scheme := runtime.NewScheme()
 			require.NoError(t, dashv0.AddToScheme(scheme))
