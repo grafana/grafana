@@ -30,6 +30,7 @@ import { transformNotebookToScene } from '../serialization/transformNotebookToSc
 import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
 
 import { changedCellTimeRange } from './NotebookAutosave';
+import { needsConfirmBeforeLeaving } from './NotebookPrompt';
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -1564,6 +1565,144 @@ describe('NotebookAutosave', () => {
 
       expect(savedVizConfigs()[0]?.group).toBe('table');
 
+      stopPanel();
+    });
+
+    it('saves an explicit visualization choice with the same plugin', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Bars',
+        pluginId: panel.state.pluginId,
+        hash: 'bars',
+        options: { ...panel.state.options, fillOpacity: 42 },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(savedVizConfigs().at(-1)?.spec.options).toMatchObject({ fillOpacity: 42 });
+      stopPanel();
+    });
+
+    it.each([undefined, 'nb-1'])('does not persist visualization edits in a draft with uid %s', async (uid) => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      scene.setState({ uid, isDraft: true });
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      await cell.onVisualizationChange({ name: 'Table', pluginId: 'table', hash: 'table' });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+
+      scene.editHistory.undo();
+      await scene.state.body.whenVizChangesSettled();
+      scene.editHistory.redo();
+      await scene.state.body.whenVizChangesSettled();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('leaves edit mode without waiting for visualization undo and saves its eventual result', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+
+      let finishUndo!: () => void;
+      const undoBlocked = new Promise<void>((resolve) => {
+        finishUndo = resolve;
+      });
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'timeseries') {
+          await undoBlocked;
+        }
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        options: { showHeader: true },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(savedVizConfigs().at(-1)?.group).toBe('table');
+
+      scene.editHistory.undo();
+      scene.onTitleChange('Saved while the visualization loads');
+      scene.onExitEditMode();
+      expect(scene.state.isEditing).toBe(false);
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].title).toBe('Saved while the visualization loads');
+
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(panel.state.pluginId).toBe('table');
+      expect(scene.state.isEditing).toBe(false);
+
+      finishUndo();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(scene.state.isEditing).toBe(false);
+      expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
+      stopPanel();
+    });
+
+    it('flushes other edits immediately on teardown without waiting for visualization undo', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+
+      let finishUndo!: () => void;
+      const undoBlocked = new Promise<void>((resolve) => {
+        finishUndo = resolve;
+      });
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'timeseries') {
+          await undoBlocked;
+        }
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        options: { showHeader: true },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(savedVizConfigs().at(-1)?.group).toBe('table');
+
+      scene.editHistory.undo();
+      scene.onTitleChange('Changed before leaving');
+      expect(needsConfirmBeforeLeaving(scene)).toBe(true);
+      const markEdited = jest.spyOn(scene.autosave, 'markVisualizationEdited');
+      deactivate();
+      deactivate = undefined;
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].title).toBe('Changed before leaving');
+      const savesBeforeUndoSettles = jest.mocked(updateNotebook).mock.calls.length;
+      await jest.advanceTimersByTimeAsync(0);
+      finishUndo();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(panel.state.pluginId).toBe('timeseries');
+      expect(markEdited).toHaveBeenCalledWith('panel1', true);
+      expect(updateNotebook).toHaveBeenCalledTimes(savesBeforeUndoSettles + 1);
+      expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
       stopPanel();
     });
 
