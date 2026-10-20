@@ -8,6 +8,7 @@ package searchroutes
 
 import (
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -220,6 +221,7 @@ func BuildGlobalHybridSearch(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 	auth authorizer.Authorizer,
+	defaultResourcePairs []string,
 ) []builder.GroupVersionRoutes {
 	if index == nil {
 		return nil
@@ -230,9 +232,14 @@ func BuildGlobalHybridSearch(
 	}
 	manifests = append(manifests, builder.ManifestsFromBuilders(builders)...)
 	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers))
+	defaultResources := make([]searchv0.HybridSearchResource, 0, len(defaultResourcePairs))
+	for _, pair := range defaultResourcePairs {
+		group, resourceName, _ := strings.Cut(pair, "/")
+		defaultResources = append(defaultResources, searchv0.HybridSearchResource{Group: group, Resource: resourceName})
+	}
 	handler := searchapi.NewHybridHandler(index, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
-	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth, defaultResources)}})
 }
 
 // globalHybridSearchTargets selects a registered version for API authorization
