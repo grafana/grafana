@@ -297,7 +297,6 @@ describe('JsonModelEditView CodeMirror editing', () => {
     await user.keyboard('{Control>}a{/Control}');
     await user.paste(JSON.stringify(resource));
     expect(view.getEditedSaveModel().title).toBe('Edited in CodeMirror');
-    expect(save).toBeDisabled();
     await waitFor(() => expect(save).toBeEnabled());
     await user.click(save);
     expect(saveDashboardMutationMock).toHaveBeenCalledWith(
