@@ -347,6 +347,16 @@ func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 	})
 
 	t.Run("status is only writable through its subresource", func(t *testing.T) {
+		serviceClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			ServiceAccountToken: helper.Org1.AdminServiceAccountToken,
+			Namespace:           "default",
+			GVR: schema.GroupVersionResource{
+				Group:    testAppGroup,
+				Version:  "v1",
+				Resource: "things",
+			},
+		}).Resource
+
 		current, err := client.Get(ctx, "thing-1", metav1.GetOptions{})
 		require.NoError(t, err)
 
@@ -357,15 +367,39 @@ func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 		require.NoError(t, err)
 		require.NotContains(t, updated.Object, "status", "a write to the main resource cannot set status")
 
-		// A write to the subresource may only change status: the spec it carries
-		// is whatever the caller read, not an edit it is entitled to make.
+		// A user may not write the status subresource through any write verb,
+		// not even an admin; status belongs to the services that reconcile it.
+		withStatus = updated.DeepCopy()
+		withStatus.Object["status"] = map[string]any{"state": "from-user"}
+		_, err = client.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
+		require.Truef(t, apierrors.IsForbidden(err), "update: got %v", err)
+		_, err = client.Patch(ctx, "thing-1", types.MergePatchType,
+			[]byte(`{"status":{"state":"from-user"}}`), metav1.PatchOptions{}, "status")
+		require.Truef(t, apierrors.IsForbidden(err), "merge patch: got %v", err)
+		_, err = client.Patch(ctx, "thing-1", types.JSONPatchType,
+			[]byte(`[{"op":"add","path":"/status","value":{"state":"from-user"}}]`), metav1.PatchOptions{}, "status")
+		require.Truef(t, apierrors.IsForbidden(err), "json patch: got %v", err)
+		applyStatus := newThing("thing-1", nil)
+		delete(applyStatus.Object, "spec")
+		applyStatus.Object["status"] = map[string]any{"state": "from-user"}
+		_, err = client.Apply(ctx, "thing-1", applyStatus,
+			metav1.ApplyOptions{Force: true, FieldManager: "pluginmanifest-test"}, "status")
+		require.Truef(t, apierrors.IsForbidden(err), "apply: got %v", err)
+
+		unchanged, err := client.Get(ctx, "thing-1", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotContains(t, unchanged.Object, "status", "a rejected status write leaves no status behind")
+		require.Equal(t, updated.GetResourceVersion(), unchanged.GetResourceVersion())
+
+		// A service account may write the subresource, but only the status: the
+		// spec it carries is whatever the caller read, not an edit it is entitled to make.
 		spec := updated.Object["spec"]
 		generation := updated.GetGeneration()
 
 		withStatus = updated.DeepCopy()
 		withStatus.Object["status"] = map[string]any{"state": "running"}
 		withStatus.Object["spec"] = map[string]any{"foo": "written-through-status"}
-		updated, err = client.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
+		updated, err = serviceClient.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, map[string]any{"state": "running"}, updated.Object["status"])
 		require.Equal(t, spec, updated.Object["spec"], "a status write cannot reach the spec")
@@ -598,6 +632,57 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	// preserves APIStatus errors and their Kubernetes Status body.
 	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 	require.Contains(t, string(raw), "does not implement ClientV3")
+}
+
+// A route's declared access check on a subresource is granted only by a role
+// that names it as Kind/<route>. Viewer holds the kind; only Admin holds
+// Thing/reload.
+func TestIntegrationPluginManifestRouteSubresourceRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelperFull(t, rest.Mode5, "app-sdk-manifest-route-roles.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+	ctx := context.Background()
+
+	things := func(user apis.User) dynamic.ResourceInterface {
+		return helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: "default",
+			GVR: schema.GroupVersionResource{
+				Group:    testAppGroup,
+				Version:  "v1",
+				Resource: "things",
+			},
+		}).Resource
+	}
+
+	// The writer role is bound to Editor, so Editor can create the parent object.
+	_, err := things(helper.Org1.Editor).Create(ctx, newThing("thing-route-roles", map[string]any{"foo": "bar"}), metav1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = things(helper.Org1.Editor).Delete(ctx, "thing-route-roles", metav1.DeleteOptions{})
+	})
+
+	// A request that passes its route's access check reaches the plugin, which
+	// has no v3 backend and answers 503.
+	getRoute := func(user apis.User, route string) error {
+		_, err := things(user).Get(ctx, "thing-route-roles", metav1.GetOptions{}, route)
+		return err
+	}
+
+	t.Run("a check on the parent resource is granted by the kind", func(t *testing.T) {
+		err := getRoute(helper.Org1.Viewer, "peek")
+		require.Truef(t, apierrors.IsServiceUnavailable(err), "got %s: %v", apierrors.ReasonForError(err), err)
+	})
+
+	t.Run("a check on a subresource is refused without a role that grants it", func(t *testing.T) {
+		err := getRoute(helper.Org1.Viewer, "reload")
+		require.Truef(t, apierrors.IsForbidden(err), "got %s: %v", apierrors.ReasonForError(err), err)
+	})
+
+	t.Run("a check on a subresource is granted by Kind/<route>", func(t *testing.T) {
+		err := getRoute(helper.Org1.Admin, "reload")
+		require.Truef(t, apierrors.IsServiceUnavailable(err), "got %s: %v", apierrors.ReasonForError(err), err)
+	})
 }
 
 func TestIntegrationPluginManifestDiscovery(t *testing.T) {

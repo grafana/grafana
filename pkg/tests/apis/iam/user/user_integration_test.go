@@ -739,14 +739,14 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// shadowed by the users/{name} resource route.
 	const selfPath = "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/~"
 
-	assertSelf := func(t *testing.T, caller apis.User) {
+	assertSelf := func(t *testing.T, caller apis.User, path string) {
 		t.Helper()
 
-		res := &iam.Display{}
+		res := &iam.CurrentUserInfo{}
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   caller,
 			Method: "GET",
-			Path:   selfPath,
+			Path:   path,
 		}, res)
 		require.Equal(t, 200, rsp.Response.StatusCode)
 
@@ -760,6 +760,7 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NotEmpty(t, res.AvatarURL)
 		require.Contains(t, res.AvatarURL, "/avatar/")
 		require.Equal(t, wantID, res.InternalID)
+		require.Equal(t, "default", res.Namespace)
 		require.NotEmpty(t, res.Role)
 		require.Equal(t, string(caller.Identity.GetOrgRole()), res.Role)
 		require.Equal(t, login.PasswordAuthModule, res.AuthenticatedBy)
@@ -768,11 +769,19 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 	}
 
 	t.Run("self endpoint returns the calling user's display info", func(t *testing.T) {
-		assertSelf(t, helper.Org1.Admin)
+		assertSelf(t, helper.Org1.Admin, selfPath)
 	})
 
 	t.Run("self endpoint works for a non-admin reading their own info", func(t *testing.T) {
-		assertSelf(t, helper.Org1.Viewer)
+		assertSelf(t, helper.Org1.Viewer, selfPath)
+	})
+
+	t.Run("whoami returns the calling user's display info", func(t *testing.T) {
+		assertSelf(t, helper.Org1.Admin, "/apis/iam.grafana.app/v0alpha1/whoami")
+	})
+
+	t.Run("whoami works for a non-admin reading their own info", func(t *testing.T) {
+		assertSelf(t, helper.Org1.Viewer, "/apis/iam.grafana.app/v0alpha1/whoami")
 	})
 }
 

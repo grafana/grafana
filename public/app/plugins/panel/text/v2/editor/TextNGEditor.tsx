@@ -11,10 +11,13 @@ import config from 'app/core/config';
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
+import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
+import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
+import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
@@ -49,6 +52,9 @@ export interface TextNGEditorProps {
   onViewChange: (view: ViewMode) => void;
   /** Mirrors the panel's transparent background option. */
   transparent?: boolean;
+  /** Whether the panel has a title set. */
+  hasTitle?: boolean;
+  consent?: TextSandboxProps['consent'];
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -85,6 +91,8 @@ export function TextNGEditor({
   view,
   onViewChange,
   transparent,
+  hasTitle,
+  consent,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -147,7 +155,11 @@ export function TextNGEditor({
   const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
-  const { content: interpolatedContent, error: previewError } = useMemo(
+  const {
+    content: interpolatedContent,
+    error: previewError,
+    truncated,
+  } = useMemo(
     () =>
       catchTemplateError(() =>
         showPreview
@@ -155,7 +167,7 @@ export function TextNGEditor({
               { content: previewSource, mode, series, renderMode, rowWindow, format },
               replaceVariables
             )
-          : ''
+          : { content: '', truncated: false }
       ),
     [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
   );
@@ -233,6 +245,7 @@ export function TextNGEditor({
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
   const footerPagination = showPreview ? pagination : null;
+  const truncationNotice = truncated ? <TextNGTruncationNotice /> : null;
 
   const renderOutput = (testId: string) => {
     if (previewError) {
@@ -252,6 +265,7 @@ export function TextNGEditor({
       <TextNGHtmlView
         html={previewHtml}
         hasData={Boolean(series?.length)}
+        consent={consent}
         className={cx('markdown-html', styles.fullHeight)}
         testId={testId}
       />
@@ -260,25 +274,28 @@ export function TextNGEditor({
 
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">
-      <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
-        <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
-        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
-        <Dropdown placement="bottom-end" overlay={renderModeMenu}>
-          <Button
-            className={styles.modePicker}
-            fill="text"
-            size="sm"
-            variant="secondary"
-            aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
-          >
-            <Stack direction="row" alignItems="center" gap={0.5}>
-              <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
-              {modeValue}
-              <Icon name="angle-down" />
-            </Stack>
-          </Button>
-        </Dropdown>
-      </Stack>
+      <div className={cx(!hasTitle && styles.toolbarRowGuard)}>
+        <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
+          <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
+          {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
+          <Dropdown placement="bottom-end" overlay={renderModeMenu}>
+            <Button
+              className={styles.modePicker}
+              fill="text"
+              size="sm"
+              variant="secondary"
+              aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
+            >
+              <Stack direction="row" alignItems="center" gap={0.5}>
+                <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
+                {modeValue}
+                <Icon name="angle-down" />
+              </Stack>
+            </Button>
+          </Dropdown>
+          <TextNGFeedbackButton />
+        </Stack>
+      </div>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
@@ -321,13 +338,14 @@ export function TextNGEditor({
         )}
       </div>
 
-      {(isCode || frameSelector || footerPagination) && (
+      {(isCode || frameSelector || footerPagination || truncationNotice) && (
         <TextNGEditorFooter
           showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
           frameSelector={frameSelector}
           pagination={footerPagination}
+          notice={truncationNotice}
         />
       )}
     </div>
@@ -336,6 +354,10 @@ export function TextNGEditor({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   ...getEditorLayoutStyles(theme),
+  // Clears PanelChrome's floating drag/menu widget, shown here when the panel has no title.
+  toolbarRowGuard: css({
+    paddingRight: theme.spacing(12),
+  }),
   modePicker: css({
     marginLeft: 'auto',
   }),

@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -194,8 +193,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 
 	if cfg.QOSEnabled {
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
-			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       reg,
+			MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+			MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+			Registerer:             reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
@@ -424,13 +424,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	// its initial poll completes before the index is built.
 	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []*appsdk.ManifestData) {
-				if err := searchOptions.ReloadManifests(resource.AppManifests(), live); err != nil {
-					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
-					return
-				}
-				s.log.Info("manifest reload applied", "live_manifests", len(live))
-			})
+			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, searchOptions.ManifestReloader(s.log))
 			if err != nil {
 				return err
 			}
