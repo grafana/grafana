@@ -152,7 +152,7 @@ Keep the following in mind when you use `$__theme`:
 - **Units are part of the value:** Most sizes include their unit, like `12px`. A few return only a number, like `${__theme.typography.fontSize}`, which returns `14`. Add the unit yourself: `${__theme.typography.fontSize}px`.
 - **Use `typography.size` for pixel font sizes:** Font sizes of text styles, like `${__theme.typography.h3.fontSize}`, are in `rem`. For pixel values, use `${__theme.typography.size.xs}`, `sm`, `md`, or `lg`.
 - **Use hues for visualization colors:** `${__theme.visualization.palette.<INDEX>}` returns a color name, like `semi-dark-yellow`, which isn't a valid CSS color. Use `${__theme.visualization.hues.<HUE>.shades.<SHADE>.color}` for the color value.
-- **Spacing isn't available:** The theme calculates spacing values, so this variable can't return them. To build your own, use `${__theme.spacing.gridSize}`, which returns `8`.
+- **Spacing isn't available:** Use `${__theme.spacing.gridSize}`, which always returns `8`, and multiply it. For example, `calc(${__theme.spacing.gridSize}px * 2)` returns `16px`.
 
 ## `$timeFilter` or `$__timeFilter`
 
