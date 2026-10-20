@@ -551,8 +551,9 @@ type searchServer struct {
 	// logged as left out of global search for being unchecked.
 	uncheckedGlobalTypesLogged sync.Map
 
-	backgroundGlobalBuildsMu sync.RWMutex
-	backgroundGlobalBuilds   map[NamespacedResource]bool
+	backgroundGlobalBuildsMu  sync.RWMutex
+	backgroundGlobalBuilds    map[NamespacedResource]bool
+	backgroundGlobalDiscovery bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -949,43 +950,66 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
-	// Read once, so the types checked are the types searched even if the coverage
-	// changes meanwhile.
-	sources := s.indexSources(nsr)
-	excluded, err := s.checkSearchServicePermissions(ctx, req, sources)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
-	}
 	if nsr.IsGlobal() {
-		// Named rather than the excluded ones left out, so the index also hides a
-		// type it still holds documents of after the coverage dropped it.
-		searched := make([]string, 0, len(sources))
-		for _, src := range sources {
-			if gr := src.Group + "/" + src.Resource; !slices.Contains(excluded, gr) {
-				searched = append(searched, gr)
-			}
-		}
-		// A filter on no values matches everything.
-		if len(searched) == 0 {
-			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(errors.New("the global search covers no types"))}, nil
-		}
-		// Cloned so the caller's request is not changed underneath it.
-		req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
-		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
-			Key:      SEARCH_FIELD_GROUP_RESOURCE,
-			Operator: string(selection.In),
-			Values:   searched,
-		})
+		return s.searchGlobal(ctx, span, stats, req, nsr, prepare)
 	}
+	if _, _, err := s.checkSearchServicePermissions(ctx, req, []NamespacedResource{nsr}); err != nil {
+		return permissionErrorResponse(span, err), nil
+	}
+	return s.searchIndex(ctx, stats, req, nsr, prepare)
+}
+
+// searchGlobal searches the namespace-wide index, which holds several resource
+// types: the covered types the caller may search, reporting the ones it left
+// out and the kind of each.
+func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	// Unavailable rather than failed: the API that serves this search is enabled
 	// separately, and may be on before this server builds the index.
-	if nsr.IsGlobal() && !s.globalIndexEnabled {
+	if !s.globalIndexEnabled {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
 		}, nil
 	}
+	// Read once, so the types checked are the types searched, and the kinds
+	// reported are theirs, even if the coverage changes meanwhile.
+	types, kinds := s.globalCoverage.Snapshot()
+	searched, skipped, err := s.checkSearchServicePermissions(ctx, req, globalSources(nsr.Namespace, types))
+	if err != nil {
+		return permissionErrorResponse(span, err), nil
+	}
+	// A filter on no types would match every type.
+	if len(searched) == 0 {
+		return permissionErrorResponse(span, errors.New("the global search covers no types")), nil
+	}
+	// Named rather than the skipped ones left out, so the index also hides a
+	// type it still holds documents of after the coverage dropped it. Cloned so
+	// the caller's request is not changed underneath it.
+	req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
+	req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+		Key:      SEARCH_FIELD_GROUP_RESOURCE,
+		Operator: string(selection.In),
+		Values:   searched,
+	})
+
+	rsp, err := s.searchIndex(ctx, stats, req, nsr, prepare)
+	if rsp != nil {
+		rsp.SkippedTypes = skipped
+		rsp.Kinds = make(map[string]string, len(kinds))
+		for gr, kind := range kinds {
+			rsp.Kinds[gr.Group+"/"+gr.Resource] = kind
+		}
+	}
+	return rsp, err
+}
+
+func permissionErrorResponse(span trace.Span, err error) *resourcepb.ResourceSearchResponse {
+	span.SetStatus(otelcodes.Error, err.Error())
+	span.RecordError(err)
+	return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}
+}
+
+// searchIndex searches the index for nsr, with the indexes req federates.
+func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -993,12 +1017,10 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		}, nil
 	}
 
-	// Get the federated indexes
 	federate := make([]ResourceIndex, len(req.Federated))
 	for i, f := range req.Federated {
-		nsr.Group = f.Group
-		nsr.Resource = f.Resource
-		federate[i], err = s.getOrCreateIndex(ctx, stats, nsr, "federatedSearch")
+		key := NamespacedResource{Namespace: nsr.Namespace, Group: f.Group, Resource: f.Resource}
+		federate[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
@@ -1009,11 +1031,7 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	if prepare != nil {
 		prepare(idx)
 	}
-	rsp, err := idx.Search(ctx, s.access, req, federate, stats)
-	if rsp != nil && len(excluded) > 0 {
-		rsp.SkippedTypes = excluded
-	}
-	return rsp, err
+	return idx.Search(ctx, s.access, req, federate, stats)
 }
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with
@@ -1567,55 +1585,79 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	}, nil
 }
 
-func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, error) {
+func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, bool, error) {
 	openStats, err := s.search.LoadOpenIndexStats(time.Now(), openIndexStatsMaxAge)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("failed to load open index stats, falling back to resource stats", "error", err)
 		openStats = nil
 	} else if len(openStats) > 0 {
 		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(openStats))
-		if !s.globalIndexEnabled {
-			return openStats, nil
+		if !s.globalIndexEnabled || !s.globalIndexStartupBuild {
+			// Saved indexes let readiness skip storage discovery.
+			return openStats, s.globalIndexEnabled, nil
 		}
 	}
 
-	// Counts only decide whether to prebuild or use snapshots, so neither
-	// decision needs an exact count above the higher threshold.
-	limit := max(s.initMinSize, int(s.search.SnapshotCountThreshold())) + 1
 	minCount := s.initMinSize
 	if s.globalIndexEnabled {
 		// Individually small types can together make a large global index.
 		minCount = 0
 	}
-	start := time.Now()
-	stats, err := s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, minCount, limit)
-	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
+	stats, err := s.startupResourceStats(ctx, NamespacedResource{}, minCount)
 	if err != nil {
 		if len(openStats) > 0 {
 			s.log.FromContext(ctx).Warn("failed to load resource stats, falling back to open index stats", "error", err)
-			return openStats, nil
+			return openStats, false, nil
 		}
-		return nil, err
+		return nil, false, err
 	}
 	globals := s.globalIndexStats(stats)
 	if len(openStats) > 0 {
-		// Restore recently open indexes regardless of size, but discover global
-		// indexes from storage: the local list may omit one of their types.
-		present := make(map[NamespacedResource]int, len(openStats))
-		for i, info := range openStats {
-			present[info.NamespacedResource] = i
-		}
-		for _, info := range globals {
-			if i, ok := present[info.NamespacedResource]; ok {
-				openStats[i].Count = info.Count
-			} else if info.Count > int64(s.initMinSize) {
-				openStats = append(openStats, info)
-			}
-		}
-		return openStats, nil
+		return s.mergeGlobalIndexStats(openStats, globals), false, nil
 	}
 	stats = append(stats, globals...)
-	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return info.Count <= int64(s.initMinSize) }), nil
+	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return info.Count <= int64(s.initMinSize) }), false, nil
+}
+
+func (s *searchServer) startupResourceStats(ctx context.Context, filter NamespacedResource, minCount int) ([]ResourceStats, error) {
+	// Counts only decide whether to prebuild or use snapshots, so neither
+	// decision needs an exact count above the higher threshold.
+	limit := max(s.initMinSize, int(s.search.SnapshotCountThreshold())) + 1
+	start := time.Now()
+	stats, err := s.storage.GetResourceStatsWithLimit(ctx, filter, minCount, limit)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit, "group", filter.Group, "resource", filter.Resource)
+	return stats, err
+}
+
+func (s *searchServer) mergeGlobalIndexStats(openStats, globals []ResourceStats) []ResourceStats {
+	// Restore recently open indexes regardless of size, but discover global
+	// indexes from storage: the local list may omit one of their types.
+	present := make(map[NamespacedResource]int, len(openStats))
+	for i, info := range openStats {
+		present[info.NamespacedResource] = i
+	}
+	for _, info := range globals {
+		if i, ok := present[info.NamespacedResource]; ok {
+			openStats[i].Count = info.Count
+		} else if info.Count > int64(s.initMinSize) {
+			openStats = append(openStats, info)
+		}
+	}
+	return openStats
+}
+
+func (s *searchServer) discoverBackgroundGlobalIndexes(ctx context.Context, known []ResourceStats) []ResourceStats {
+	var stats []ResourceStats
+	for _, gr := range s.globalCoverage.Types() {
+		// Saved per-resource indexes need no discovery, so count only types global indexes cover.
+		byType, err := s.startupResourceStats(ctx, NamespacedResource{Group: gr.Group, Resource: gr.Resource}, 0)
+		if err != nil {
+			s.log.Warn("failed to discover global search indexes, using saved index stats", "error", err)
+			return known
+		}
+		stats = append(stats, byType...)
+	}
+	return s.mergeGlobalIndexStats(known, s.globalIndexStats(stats))
 }
 
 // globalIndexStats returns the namespace-wide index to build for every namespace
@@ -1675,7 +1717,7 @@ func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats
 }
 
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
-	stats, err := s.startupIndexStats(ctx)
+	stats, discoverGlobals, err := s.startupIndexStats(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -1686,6 +1728,54 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 	builds := make([]ResourceStats, 0, len(stats))
 	var backgroundBuilds []ResourceStats
+	for _, info := range s.ownedIndexStats(stats) {
+		if info.IsGlobal() && !s.globalIndexStartupBuild {
+			backgroundBuilds = append(backgroundBuilds, info)
+		} else {
+			builds = append(builds, info)
+		}
+	}
+	if len(builds)+len(backgroundBuilds) == 0 && !discoverGlobals {
+		return 0, nil
+	}
+	// SQL reads the whole import-time table, so share one lookup across builds and retries.
+	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
+	if err != nil {
+		s.log.Warn("Failed to load startup import times", "error", err)
+	}
+	s.backgroundGlobalBuildsMu.Lock()
+	s.backgroundGlobalDiscovery = discoverGlobals
+	s.backgroundGlobalBuilds = make(map[NamespacedResource]bool, len(backgroundBuilds))
+	for _, info := range backgroundBuilds {
+		s.backgroundGlobalBuilds[info.NamespacedResource] = true
+	}
+	s.backgroundGlobalBuildsMu.Unlock()
+
+	built, err := s.buildInitialIndexes(ctx, builds, importTimes, false)
+	if err != nil {
+		return built, err
+	}
+	if len(backgroundBuilds) > 0 || discoverGlobals {
+		s.bgTaskWg.Go(func() {
+			// Discovery and global builds must not delay restoration of saved per-resource indexes.
+			if discoverGlobals {
+				backgroundBuilds = s.ownedIndexStats(s.discoverBackgroundGlobalIndexes(ctx, backgroundBuilds))
+				s.backgroundGlobalBuildsMu.Lock()
+				clear(s.backgroundGlobalBuilds)
+				for _, info := range backgroundBuilds {
+					s.backgroundGlobalBuilds[info.NamespacedResource] = true
+				}
+				s.backgroundGlobalDiscovery = false
+				s.backgroundGlobalBuildsMu.Unlock()
+			}
+			_, _ = s.buildInitialIndexes(ctx, backgroundBuilds, importTimes, true)
+		})
+	}
+	return built, nil
+}
+
+func (s *searchServer) ownedIndexStats(stats []ResourceStats) []ResourceStats {
+	owned := make([]ResourceStats, 0, len(stats))
 	seen := make(map[NamespacedResource]bool, len(stats))
 	for _, info := range stats {
 		if seen[info.NamespacedResource] {
@@ -1698,38 +1788,9 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 			continue
 		}
 		seen[info.NamespacedResource] = true
-		if info.IsGlobal() && !s.globalIndexStartupBuild {
-			backgroundBuilds = append(backgroundBuilds, info)
-		} else {
-			builds = append(builds, info)
-		}
+		owned = append(owned, info)
 	}
-	if len(builds)+len(backgroundBuilds) == 0 {
-		return 0, nil
-	}
-	// SQL reads the whole import-time table, so share one lookup across builds and retries.
-	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
-	if err != nil {
-		s.log.Warn("Failed to load startup import times", "error", err)
-	}
-	s.backgroundGlobalBuildsMu.Lock()
-	s.backgroundGlobalBuilds = make(map[NamespacedResource]bool, len(backgroundBuilds))
-	for _, info := range backgroundBuilds {
-		s.backgroundGlobalBuilds[info.NamespacedResource] = true
-	}
-	s.backgroundGlobalBuildsMu.Unlock()
-
-	built, err := s.buildInitialIndexes(ctx, builds, importTimes, false)
-	if err != nil {
-		return built, err
-	}
-	if len(backgroundBuilds) > 0 {
-		s.bgTaskWg.Go(func() {
-			// Global builds must not occupy workers until readiness-blocking work has finished.
-			_, _ = s.buildInitialIndexes(ctx, backgroundBuilds, importTimes, true)
-		})
-	}
-	return built, nil
+	return owned
 }
 
 func (s *searchServer) buildInitialIndexes(ctx context.Context, builds []ResourceStats, importTimes map[NamespacedResource]time.Time, background bool) (int, error) {
@@ -2362,7 +2423,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	idx := s.search.GetIndex(key)
 	if idx == nil {
 		s.backgroundGlobalBuildsMu.RLock()
-		pending := s.backgroundGlobalBuilds[key]
+		pending := s.backgroundGlobalBuilds[key] || (key.IsGlobal() && s.backgroundGlobalDiscovery)
 		s.backgroundGlobalBuildsMu.RUnlock()
 		if pending {
 			return nil, StatusError(NewServiceUnavailableError("the global search index for this namespace is still being built"))

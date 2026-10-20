@@ -264,6 +264,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 		expectedError         string
 		description           string
 		folderMetadataEnabled bool
+		resourceTimeout       time.Duration
 	}{
 		{
 			name:        "too many errors",
@@ -926,8 +927,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:        "operation timeout after 15 seconds",
-			description: "Should record timeout error when operation takes longer than 15 seconds",
+			name:            "operation timeout after 15 seconds",
+			description:     "Should record timeout error when operation takes longer than 15 seconds",
+			resourceTimeout: 15 * time.Second,
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionCreated,
@@ -939,16 +941,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "dashboards/slow.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "current-ref").
-					Run(func(args mock.Arguments) {
-						ctx := args.Get(0).(context.Context)
-						select {
-						case <-ctx.Done():
-							return
-						case <-time.After(20 * time.Second):
-							return
-						}
-					}).
-					Return("", schema.GroupVersionKind{}, 0, context.DeadlineExceeded)
+					Return(func(ctx context.Context, _, _ string, _ ...resources.WriteResourceOption) (string, schema.GroupVersionKind, int, error) {
+						<-ctx.Done()
+						return "", schema.GroupVersionKind{}, 0, ctx.Err()
+					})
 
 				// applyChange records the error from WriteResourceFromFile
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -982,7 +978,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				})
 
 				progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-				err := FullSync(t.Context(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
+				err := FullSync(t.Context(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, tt.resourceTimeout)
 				if tt.expectedError != "" {
 					require.EqualError(t, err, tt.expectedError, tt.description)
 				} else {
