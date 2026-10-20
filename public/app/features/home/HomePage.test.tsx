@@ -412,7 +412,7 @@ describe('HomePage', () => {
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     const slot = screen.getByTestId('home-page-assistant-slot');
     expect(slot).toBeEmptyDOMElement();
-    expect(slot).toHaveStyle({ minHeight: '50px' });
+    expect(slot).toHaveStyle({ minHeight: '52px' });
 
     await act(async () => {
       resolveInput({ default: () => <div>Assistant input</div> });

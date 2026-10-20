@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { store } from '@grafana/data';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
@@ -115,7 +116,10 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
     synthetics: forSolution('synthetics'),
   };
 
-  return { selection, recommendations, recommendationsBySolution };
+  // An unknown signal or an unreliable plugin list is transient (the probe TTL re-resolves it), so an empty
+  // verdict built on either says nothing about the stack.
+  const conclusive = selection.baseRow !== 'unknown' && listReady;
+  return { selection, recommendations, recommendationsBySolution, conclusive };
 }
 
 function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
@@ -145,17 +149,18 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
 
   // The region renders once the selection settles; recommendations only decide the right column.
   // Collapsed (gated-off) renders immediately as just the header row. While the selection runs, the region
-  // holds its space unless the last verdict in this browser was empty: for a stack with nothing left to
-  // recommend that verdict rarely changes, and reserving space only to collapse it moves the whole page.
+  // holds its space unless the last conclusive verdict in this browser was empty: for a stack with nothing left
+  // to recommend that verdict rarely changes, and reserving space only to collapse it moves the whole page.
   // A verdict that does flip to non-empty mounts the region late, once. The verdict is per browser, not per
-  // org, so switching orgs on one instance can cost that late mount once.
-  const [knownEmpty, setKnownEmpty] = useStoredBoolean(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false);
+  // org, so switching orgs on one instance can cost that late mount once. Read once per mount: the store
+  // notifies on other tabs' writes, and a verdict landing there must not swap this visit's reservation mid-load.
+  const [knownEmpty] = useState(() => store.getBool(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false));
   const state = selected.value;
   useEffect(() => {
-    if (state) {
-      setKnownEmpty(state.recommendations.length === 0);
+    if (state?.conclusive) {
+      store.set(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, state.recommendations.length === 0);
     }
-  }, [state, setKnownEmpty]);
+  }, [state]);
   if (selectionEnabled) {
     if (!state) {
       return knownEmpty ? null : <RecommendationsSkeleton />;

@@ -8,8 +8,8 @@ import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { HomeSection } from './HomeSection';
 
-/** The Assistant's prompt input as the plugin renders it today; off by a few px at worst, not by the whole card. */
-const ASSISTANT_INPUT_HEIGHT = 50;
+/** The Assistant's prompt input as the plugin builds it: a 48px input inside a 2px border. Off by a few px at worst. */
+const ASSISTANT_INPUT_HEIGHT = 52;
 
 /**
  * Holds the Assistant's prompt input slot on the redesigned homepage at the input's height from first paint until
