@@ -41,10 +41,16 @@ type RepositoryGetter interface {
 //
 // A non-nil keys makes the NATS re-list keys-only; nil keeps the full-object
 // list.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics) (DeltaSource, RepositoryGetter) {
+//
+// freshness instruments how the getter's reads compare to the notifications
+// that triggered them (see freshness.go); nil disables the observation. It
+// applies to the NATS path only — the apiserver path reads a cache the watch
+// keeps current, so there is no cross-replica read visibility to measure.
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
-		recorder := metrics.Recorder(provisioningapis.RepositoryResourceInfo.GroupVersionResource())
+		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
+		recorder := metrics.Recorder(gvr)
 		source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, recorder)
 		// The informer is the repository controller's only feed, and everything
 		// that creates provisioning work lives in its reconcile: scheduled syncs,
@@ -55,7 +61,10 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		// reconciled under round-robin delivery. In degraded mode only the
 		// live-event latency is lost until the subscription opens.
 		source.AllowDegradedStart()
-		return source, NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
+		announced := newAnnouncements()
+		source.SetAnnouncements(announced)
+		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
+		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(gvr.Resource))
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
