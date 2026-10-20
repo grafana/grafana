@@ -47,10 +47,12 @@ const (
 	defaultEventRetentionPeriod       = 1 * time.Hour
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
-	eventStoreRetentionMargin         = 2 * time.Minute
 	defaultResourceVersionMaxWait     = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
+	eventStoreRetentionMargin         = 2 * time.Minute
+	// Assumed upper bound between a write getting its RV and committing it.
+	maxWriteCommitDelay = 2 * time.Minute
 )
 
 // IsResourceNameMixedCase reports whether a successful read returned a
@@ -2324,7 +2326,11 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	latestEvent, err := k.eventStore.LastEventKey(ctx)
 	if errors.Is(err, ErrNotFound) {
-		if !useDataStore {
+		// A write committed since the caller's last successful call would still
+		// have its event, so an empty event store means nothing changed since.
+		calledRecently := lastCalledWithSinceRv != nil &&
+			time.Since(*lastCalledWithSinceRv) < k.maxEventStoreAge()-maxWriteCommitDelay
+		if !useDataStore || calledRecently {
 			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
 		}
 		// Pruning may have removed every event since effectiveRv. Without a

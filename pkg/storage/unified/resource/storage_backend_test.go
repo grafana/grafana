@@ -3104,6 +3104,29 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 		require.Empty(t, listNames(t, backend, SubtractDurationFromSnowflake(rv, 10*time.Minute)))
 	})
 
+	t.Run("skips the data store after a recent call with the same sinceRV found the event store empty", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = 30 * time.Minute
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
+		require.NoError(t, err)
+		oldRV := SubtractDurationFromSnowflake(rv, 40*time.Minute)
+
+		listSince := func(calledAt time.Time) []string {
+			_, seq := backend.ListModifiedSince(t.Context(), ns, oldRV, &calledAt)
+			var names []string
+			for mr, err := range seq {
+				require.NoError(t, err)
+				names = append(names, mr.Key.Name)
+			}
+			return names
+		}
+		require.Empty(t, listSince(time.Now().Add(-time.Minute)))
+		// Events committed since a call this old may already be pruned.
+		require.Equal(t, []string{"pruned"}, listSince(time.Now().Add(-27*time.Minute)))
+	})
+
 	t.Run("rescans the data store when the event store scan outlives the retention period", func(t *testing.T) {
 		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 			opts.EventRetentionPeriod = eventStoreRetentionMargin + 2*time.Second
