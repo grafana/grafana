@@ -2,13 +2,16 @@ package folders
 
 import (
 	"context"
+	"net/http"
 	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldererrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -17,6 +20,28 @@ import (
 )
 
 type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error)
+
+// Lookup statuses may contain backend diagnostics even when they are already
+// Kubernetes errors. Retain only classification and retry hints at this boundary.
+func createParentLookupStatusError(err error) apierrors.StatusError {
+	mapped := foldererrors.ToFolderStatusError(err)
+	code := int(mapped.ErrStatus.Code)
+	if code < 400 || code > 599 {
+		code = http.StatusInternalServerError
+	}
+	retryAfter := 0
+	if details := mapped.ErrStatus.Details; details != nil && details.RetryAfterSeconds > 0 {
+		retryAfter = int(details.RetryAfterSeconds)
+	}
+	public := apierrors.NewGenericServerResponse(code, "", schema.GroupResource{}, "", "", retryAfter, false)
+	if code == 499 {
+		public.ErrStatus.Message = "Request canceled"
+		public.ErrStatus.Reason = "ClientClosedRequest"
+	} else if apierrors.IsAlreadyExists(&mapped) {
+		public.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
+	}
+	return *public
+}
 
 func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 	return newParentsGetterWithPolicy(getter, false)
@@ -84,8 +109,13 @@ func newParentsGetterWithPolicy(getter rest.Getter, forCreate bool) parentsGette
 			obj, e2 := getter.Get(lookupCtx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
 				_ = tracing.Error(span, e2)
-				if forCreate && !apierrors.IsNotFound(e2) && (len(info.Items) != 1 || !apierrors.IsForbidden(e2)) {
-					return nil, folderLegacy.ErrInternal.Errorf("unable to read folder ancestry: %w", e2)
+				if forCreate {
+					// Classify both transport and embedded statuses before applying the
+					// missing/immediate-unreadable parent exception, including dry runs.
+					public := createParentLookupStatusError(e2)
+					if !apierrors.IsNotFound(&public) && (len(info.Items) != 1 || !apierrors.IsForbidden(&public)) {
+						return nil, &public
+					}
 				}
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
