@@ -178,6 +178,26 @@ func TestFreshnessRecorder_Observe(t *testing.T) {
 		assert.InDelta(t, 5.0, sum, 1.0)
 	})
 
+	// Snowflake versions carry a millisecond timestamp plus sequence bits, so two
+	// writes in the same millisecond are ordered but equally dated. The histogram
+	// has to keep that observation, or it stays empty while behind climbs.
+	t.Run("a sub-millisecond lag is still observed", func(t *testing.T) {
+		rec, reg := newFreshnessRecorder(t, res)
+		micros := time.Now().UnixMicro()
+		micros -= micros % 1000
+		observed, announced := resource.ToSnowflakeRV(micros+100), resource.ToSnowflakeRV(micros+900)
+		require.Less(t, observed, announced, "the versions must be ordered")
+		require.Equal(t, resource.ResourceVersionTime(announced), resource.ResourceVersionTime(observed),
+			"the versions must share a millisecond")
+
+		rec.observe(ctx, testNamespace, "r", announced, repoAt(testNamespace, "r", rvString(observed)), nil)
+
+		assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeBehind))
+		count, sum := lagObservations(t, reg, res)
+		assert.Equal(t, uint64(1), count, "every behind read must produce a lag observation")
+		assert.Zero(t, sum)
+	})
+
 	// The execution Rafael Paulovic reproduced against real storage: an object
 	// announced, then legitimately deleted, whose correct NotFound must not be
 	// dressed up as a lagging read. The announcement is already forgotten by the

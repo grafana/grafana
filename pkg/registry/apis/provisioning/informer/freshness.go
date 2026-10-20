@@ -256,10 +256,14 @@ func (r FreshnessRecorder) observe(ctx context.Context, namespace, name string, 
 			return
 		}
 		r.behind.Inc()
+		// Observed for every behind read, zero included: both versions are in
+		// snowflake space and rv < announced, so the lag cannot be negative, and
+		// two versions issued in the same millisecond differ only in the
+		// sequence bits — a lag that rounds to zero. That is the mildest
+		// disagreement there is, and dropping it would leave the histogram empty
+		// while the counter climbed.
 		lag := resource.ResourceVersionTime(announced).Sub(resource.ResourceVersionTime(rv)).Seconds()
-		if lag > 0 {
-			r.lag.Observe(lag)
-		}
+		r.lag.Observe(lag)
 		// Logged as well as counted: the counter says the premise was
 		// contradicted, this says which object, when, and by how far — the part
 		// that can be checked against the storage logs for the same write.
