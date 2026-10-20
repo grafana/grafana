@@ -49,6 +49,7 @@ import (
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m,
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
+		goleak.IgnoreTopFunction("github.com/patrickmn/go-cache.(*janitor).Run"),                   // KV storage cache stops via GC finalizer, not an explicit close.
 		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"),          // These don't stop when index is closed.
 		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"), // Search-server expirable LRU cleanup goroutine.
 		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),                        // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
@@ -1864,6 +1865,50 @@ func TestBuildIndexExpiration(t *testing.T) {
 	}
 }
 
+func TestUnownedIndexIdleTimeout(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		inMemory bool
+		cacheTTL time.Duration
+		timeout  time.Duration
+	}{
+		{name: "memory", inMemory: true, cacheTTL: 4 * time.Hour, timeout: 10 * time.Minute},
+		{name: "file", cacheTTL: 4 * time.Hour, timeout: 10 * time.Minute},
+		{name: "shorter cache TTL", cacheTTL: 5 * time.Minute, timeout: 5 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(tc.cacheTTL), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
+				return false, nil
+			}))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			docs := defaultFileThreshold
+			if tc.inMemory {
+				docs = 1
+			}
+			idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			now := time.Now().Truncate(time.Millisecond)
+			require.NotNil(t, backend.getCachedIndex(key, now))
+			accessedAt := now.Add(tc.timeout / 2)
+			backend.runEvictExpiredOrUnownedIndexes(accessedAt)
+			require.NotNil(t, backend.getCachedIndex(key, accessedAt))
+
+			backend.runEvictExpiredOrUnownedIndexes(now.Add(tc.timeout + time.Millisecond))
+			require.NotNil(t, backend.peekCachedIndex(key), "recent access must delay eviction")
+			deadline := accessedAt.Add(tc.timeout)
+			backend.runEvictExpiredOrUnownedIndexes(deadline)
+			require.NotNil(t, backend.peekCachedIndex(key))
+
+			backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
+			require.Nil(t, backend.peekCachedIndex(key))
+			_, err = idx.DocCount(t.Context(), "", nil)
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+			checkOpenIndexes(t, reg, 0, 0)
+		})
+	}
+}
+
 func TestCloseAllIndexes(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -3345,7 +3390,7 @@ func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
 		s := &batchAuthzSearcher{
 			namespace: "stacks-1",
 			group:     "dashboard.grafana.app",
-			resources: map[string]string{"dashboards": utils.VerbGet},
+			resources: map[string]string{"dashboard.grafana.app/dashboards": utils.VerbGet},
 			log:       fake,
 		}
 		s.candidates.Store(candidates)
@@ -3362,7 +3407,7 @@ func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
 		require.Equal(t, []any{
 			"namespace", "stacks-1",
 			"group", "dashboard.grafana.app",
-			"resources", "dashboards",
+			"resources", "dashboard.grafana.app/dashboards",
 			"candidates", int64(3),
 			"authorized", int64(0),
 		}, fake.WarnLogs.Ctx)

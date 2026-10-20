@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -127,10 +128,10 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 }
 
 // requestGroup returns the group a request is for: the group of an
-// /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
-// document, which is served by the same backend. The /apis/discovery tree has
-// no group.
-func requestGroup(path string) string {
+// /apis/<group>/... path, as apiGroup reads it, or of an
+// /openapi/v3/apis/<group>/<version> document, which is served by the same
+// backend. The /apis/discovery tree has no group.
+func requestGroup(path, group string) string {
 	if isDiscoveryPath(path) {
 		return ""
 	}
@@ -140,15 +141,26 @@ func requestGroup(path string) string {
 		}
 		return group
 	}
-	return GroupFromPath(path)
+	return group
 }
 
-// instrument serves req through gr.HandleFunc with request metrics, then logs
-// the outcome. next is forwarded to HandleFunc unchanged.
-func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
-	group := requestGroup(req.URL.Path)
+// namesGroup reports whether path has a non-empty segment after /apis/,
+// outside the discovery tree, even when that segment is not a valid group or
+// the path is not canonical. Its metrics then count under unknownGroupLabel,
+// not the root's empty group.
+func namesGroup(path string) bool {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	segment, _, _ := strings.Cut(rest, "/")
+	return ok && segment != "" && !isDiscoveryPath(path)
+}
+
+// instrument serves req through gr.handle with request metrics, then logs
+// the outcome. next and apiGroup, the request's apiGroup, are forwarded to
+// handle unchanged.
+func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler, apiGroup string) {
+	group := requestGroup(req.URL.Path, apiGroup)
 	metricGroup := group
-	if group != "" && !gr.KnownGroup(group) {
+	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
 		metricGroup = unknownGroupLabel
 	}
 	verb := metricVerb(requestVerb(req))
@@ -161,10 +173,18 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		}
 		return outcome.route
 	}
+	// The router rejects a non-canonical path before routing, so it is no
+	// group's request, even when its first segment names a served group.
+	resultGroup := func() string {
+		if outcome.route == routeInvalid && metricGroup != "" {
+			return unknownGroupLabel
+		}
+		return metricGroup
+	}
 	finish := func(duration time.Duration) {
-		m.requests.WithLabelValues(metricGroup, verb, route(), strconv.Itoa(rec.status)).Inc()
+		m.requests.WithLabelValues(resultGroup(), verb, route(), strconv.Itoa(rec.status)).Inc()
 		if outcome.failure != "" {
-			m.backendFailures.WithLabelValues(metricGroup, outcome.pluginID, outcome.failure).Inc()
+			m.backendFailures.WithLabelValues(resultGroup(), outcome.pluginID, outcome.failure).Inc()
 		}
 		logRequest(req, group, rec.status, duration)
 	}
@@ -173,15 +193,15 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		m.longRunning.WithLabelValues(metricGroup).Inc()
 		defer m.longRunning.WithLabelValues(metricGroup).Dec()
 		defer func() { finish(time.Since(start)) }()
-		gr.HandleFunc(rec.writer(), req, next)
+		gr.handle(rec.writer(), req, next, apiGroup)
 		return
 	}
 
 	m.inFlight.Inc()
 	defer m.inFlight.Dec()
-	gr.HandleFunc(rec.writer(), req, next)
+	gr.handle(rec.writer(), req, next, apiGroup)
 	duration := time.Since(start)
-	m.duration.WithLabelValues(metricGroup, verb, route()).Observe(duration.Seconds())
+	m.duration.WithLabelValues(resultGroup(), verb, route()).Observe(duration.Seconds())
 	finish(duration)
 }
 

@@ -45,9 +45,10 @@ import (
 )
 
 const (
-	indexStorageMemory = "memory"
-	indexStorageFile   = "file"
-	boltTimeout        = "1s"
+	indexStorageMemory      = "memory"
+	indexStorageFile        = "file"
+	boltTimeout             = "1s"
+	unownedIndexIdleTimeout = 10 * time.Minute
 
 	// How often an index persists the RV of updates that changed no documents.
 	rvPersistInterval = 5 * time.Minute
@@ -474,6 +475,7 @@ func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Cont
 
 func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
+	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
 
 	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
 	expired := map[resource.NamespacedResource]*bleveIndex{}
@@ -482,7 +484,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 
 	b.cacheMx.Lock()
 	for key, idx := range b.cache {
-		// Check if index has expired.
+		// Memory indexes do not merge segments, so active indexes must also expire.
 		if !idx.expiration.IsZero() && now.After(idx.expiration) {
 			delete(b.cache, key)
 			expired[key] = idx
@@ -494,7 +496,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 			owned, err := b.ownsIndexFn(key)
 			if err != nil {
 				ownCheckErrors[key] = err
-			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > cacheTTLMillis {
+			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis {
 				delete(b.cache, key)
 				unowned[key] = idx
 			}
@@ -4744,7 +4746,7 @@ type permissionScopedQuery struct {
 	access    authlib.AccessClient
 	namespace string
 	group     string
-	resources map[string]string // resource -> verb mapping
+	resources map[string]string // {group}/{resource} -> verb, see authzResources
 	trash     *resource.TrashAuthorizer
 	log       log.Logger
 }
@@ -4753,7 +4755,7 @@ type permissionScopedQueryConfig struct {
 	access    authlib.AccessClient
 	namespace string
 	group     string
-	resources map[string]string // resource -> verb mapping
+	resources map[string]string // {group}/{resource} -> verb, see authzResources
 	// Set for a trash search, nil for a live one.
 	trash *resource.TrashAuthorizer
 }
@@ -4977,7 +4979,7 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 	}
 
 	// Check if we have a verb for this resource type
-	verb, ok := s.resources[resourceType]
+	verb, ok := authzVerb(s.resources, group, resourceType)
 	if !ok {
 		s.log.Debug("No verb found for resource", "resource", resourceType)
 		return docInfo{}, false
