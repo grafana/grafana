@@ -80,7 +80,8 @@ type Options struct {
 	// gated on Enabled(), so a disabled bus starts nothing.
 	Subscriber  nats.Subscriber
 	WatchExpiry resource.WatchExpiry
-	// ManifestDiscovery loads the manifests the router
+	// ManifestDiscovery loads the manifests the router publishes under
+	// /apis/discovery, which in-process storage reads for search.
 	ManifestDiscovery resource.ManifestDiscovery
 }
 
