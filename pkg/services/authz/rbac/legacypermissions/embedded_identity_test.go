@@ -130,3 +130,7 @@ func TestIntegrationEmbeddedLegacyRequesterAssertions(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "requester namespace does not match tenant scope")
 }
+
+func (r *observingMigratedResolver) SearchUsersPermissions(context.Context, identity.Requester, int64, ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	return nil, nil
+}
