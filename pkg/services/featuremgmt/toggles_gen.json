@@ -103,6 +103,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.gmaOnlyListView",
+        "resourceVersion": "1792485533119",
+        "creationTimestamp": "2026-10-20T08:38:53Z"
+      },
+      "spec": {
+        "description": "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.hybridSearch",
         "resourceVersion": "1790261991235",
         "creationTimestamp": "2026-10-06T15:41:07Z"
@@ -1516,12 +1530,15 @@
     {
       "metadata": {
         "name": "dashboard.notebooks",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-09T13:38:44Z"
+        "resourceVersion": "1792173756887",
+        "creationTimestamp": "2026-07-09T13:38:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-16 18:02:36.887843 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
@@ -1657,7 +1674,8 @@
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T11:47:50Z"
+        "creationTimestamp": "2026-03-11T11:47:50Z",
+        "deletionTimestamp": "2026-10-15T14:41:56Z"
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
@@ -4778,26 +4796,34 @@
     {
       "metadata": {
         "name": "preferLibraryPanelTitle",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-06-17T11:21:21Z"
+        "resourceVersion": "1792486861194",
+        "creationTimestamp": "2025-06-17T11:21:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:01:01.194942 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Prefer library panel title over viz panel title.",
         "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-05-27T12:28:06Z"
+        "resourceVersion": "1792489412857",
+        "creationTimestamp": "2024-05-27T12:28:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:43:32.857637 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
