@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -203,7 +202,7 @@ func TestExampleBased(t *testing.T) {
 				require.Empty(t, cleaned)
 
 				// Activate v2 and read it
-				err = sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name, sv2.Status.Version)
+				err = sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name, sv2.Status.Version, sv1.Status.Version)
 				require.NoError(t, err)
 
 				read, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
@@ -237,11 +236,12 @@ func (k *fakeKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig,
 
 func TestProperty(t *testing.T) {
 	for _, tc := range []struct {
-		name string
-		opts []func(*testutils.SetupConfig)
+		name                   string
+		opts                   []func(*testutils.SetupConfig)
+		kvBehavior bool
 	}{
 		{name: "sql", opts: nil},
-		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}},
+		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}, kvBehavior: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tt := t
@@ -249,6 +249,7 @@ func TestProperty(t *testing.T) {
 			rapid.Check(t, func(t *rapid.T) {
 				sut := testutils.Setup(tt, tc.opts...)
 				model := testutils.NewModelGsm(nil)
+				model.RejectCreateOverActive = tc.kvBehavior
 
 				t.Repeat(map[string]func(*rapid.T){
 					"create": func(t *rapid.T) {
@@ -307,21 +308,27 @@ func TestProperty(t *testing.T) {
 					"cleanup": func(t *rapid.T) {
 						// Taken from secureValueMetadataStorage.acquireLeases
 						minAge := 10 * time.Minute
-						leaseTTL := 5 * time.Minute
 						maxBatchSize := sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxBatchSize
-						modelDeleted, modelErr := model.CleanupInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
+						eligible := model.EligibleInactiveSecureValues(sut.Clock.Now(), minAge)
 						deleted, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
-						require.ErrorIs(t, err, modelErr)
+						require.NoError(t, err)
 
-						require.Equal(t, len(modelDeleted), len(deleted), "model and impl deleted a different number of secure values")
-						seen := make(map[types.UID]bool, 0)
-						for _, v := range modelDeleted {
-							seen[v.UID] = true
-						}
+						require.Equal(t, min(len(eligible), int(maxBatchSize)), len(deleted), "model and impl deleted a different number of secure values")
 
+						// When more secure values are eligible than fit in a batch, the backends may pick different ones
+						// because they order them differently. Delete the model secure values matching the ones the impl deleted
+						// so the model and the impl stay in sync.
+						// The model and the impl generate uids and versions independently, so match namespaces and names.
+						modelDeleted := make([]*testutils.ModelSecureValue, 0, len(deleted))
 						for _, v := range deleted {
-							require.Truef(t, seen[v.UID], "impl deleted a secure value that the model did not: uid=%+v", v.UID)
+							i := slices.IndexFunc(eligible, func(m *testutils.ModelSecureValue) bool {
+								return m.Namespace == v.Namespace && m.Name == v.Name
+							})
+							require.NotEqualf(t, -1, i, "impl deleted a secure value that is not eligible in the model: %s/%s", v.Namespace, v.Name)
+							modelDeleted = append(modelDeleted, eligible[i])
+							eligible = slices.Delete(eligible, i, i+1)
 						}
+						model.DeleteSecureValues(modelDeleted)
 					},
 					"advanceTime": func(t *rapid.T) {
 						duration := time.Duration(rapid.IntRange(1, 60).Draw(t, "minutes")) * time.Minute

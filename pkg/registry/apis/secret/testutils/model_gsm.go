@@ -38,6 +38,8 @@ type ModelGsm struct {
 	SecureValues        []*ModelSecureValue
 	Keepers             []*ModelKeeper
 	modelSecretsManager *ModelAWSSecretsManager
+	// The kv backend rejects creating a secure value that has an active version, the sql backend replaces the active version
+	RejectCreateOverActive bool
 }
 
 func NewModelGsm(modelSecretsManager *ModelAWSSecretsManager) *ModelGsm {
@@ -82,6 +84,10 @@ func (m *ModelGsm) ReadActiveVersion(namespace, name string) *ModelSecureValue {
 }
 
 func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+	return m.createNewVersion(now, sv, m.RejectCreateOverActive)
+}
+
+func (m *ModelGsm) createNewVersion(now time.Time, sv *secretv1beta1.SecureValue, rejectIfActive bool) (*secretv1beta1.SecureValue, error) {
 	if len(sv.OwnerReferences) > 1 {
 		return nil, contracts.ErrTooManyOwnerReferences
 	}
@@ -96,8 +102,9 @@ func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secret
 
 	// Preserve the original creation time if this secure value already exists
 	created := now
-	if sv := m.ReadActiveVersion(sv.Namespace, sv.Name); sv != nil {
-		created = sv.created
+	activeSv := m.ReadActiveVersion(sv.Namespace, sv.Name)
+	if activeSv != nil {
+		created = activeSv.created
 	}
 
 	modelSv := &ModelSecureValue{SecureValue: sv, active: false, created: created, updated: now}
@@ -105,6 +112,12 @@ func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secret
 	modelSv.Status.ExternalID = fmt.Sprintf("%d", modelSv.Status.Version)
 	modelSv.Status.Keeper = keeper.name
 	m.SecureValues = append(m.SecureValues, modelSv)
+
+	// The new version is stored before the activation fails, so it's left inactive for the gc worker to clean up
+	if rejectIfActive && activeSv != nil {
+		return nil, contracts.ErrSecureValueAlreadyExists
+	}
+
 	m.SetVersionToActive(modelSv.Namespace, modelSv.Name, modelSv.Status.Version)
 	return modelSv.SecureValue, nil
 }
@@ -196,7 +209,8 @@ func (m *ModelGsm) Update(ctx context.Context, now time.Time, newSecureValue *se
 		newSecureValue.Spec.Value = sv.Spec.Value
 	}
 
-	createdSv, err := m.Create(now, newSecureValue)
+	// Updates always replace the active version
+	createdSv, err := m.createNewVersion(now, newSecureValue, false)
 
 	return createdSv, true, err
 }
@@ -308,18 +322,22 @@ func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL tim
 	return out, nil
 }
 
-func (m *ModelGsm) CleanupInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
-	leased, err := m.LeaseInactiveSecureValues(now, minAge, leaseTTL, maxBatchSize)
-	if err != nil {
-		return nil, err
+// EligibleInactiveSecureValues returns every inactive secure value that can be leased, in no particular order.
+func (m *ModelGsm) EligibleInactiveSecureValues(now time.Time, minAge time.Duration) []*ModelSecureValue {
+	out := make([]*ModelSecureValue, 0)
+	for _, sv := range m.SecureValues {
+		if !sv.active &&
+			now.Sub(sv.updated) > minAge &&
+			now.Sub(sv.leaseCreated) > sv.leaseDuration {
+			out = append(out, sv)
+		}
 	}
+	return out
+}
 
+func (m *ModelGsm) DeleteSecureValues(svs []*ModelSecureValue) {
 	// PERF: The slices are always small
-	m.SecureValues = slices.DeleteFunc(m.SecureValues, func(v1 *ModelSecureValue) bool {
-		return slices.ContainsFunc(leased, func(v2 *ModelSecureValue) bool {
-			return v2.UID == v1.UID
-		})
+	m.SecureValues = slices.DeleteFunc(m.SecureValues, func(v *ModelSecureValue) bool {
+		return slices.Contains(svs, v)
 	})
-
-	return leased, nil
 }

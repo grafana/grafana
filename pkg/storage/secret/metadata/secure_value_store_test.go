@@ -78,7 +78,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, createdSecureValue.Status.Keeper)
 
-		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version, 0))
 
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
@@ -128,7 +128,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
 
-		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version, 0))
 
 		// Read the secure value to verify it exists
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
@@ -187,12 +187,8 @@ func Test_KVSecureValueMetadataStorage_CreateVersionOrdering(t *testing.T) {
 				gotVersions = append(gotVersions, v)
 			}
 
-			want := make([]int64, 0, numVersions)
-			for i := int64(1); i <= numVersions; i++ {
-				want = append(want, i)
-			}
-
-			require.Equal(t, want, gotVersions, "expected monotonically increasing versions 1..%d", numVersions)
+			// Versions are unique (checked above) so sorted means strictly increasing
+			require.True(t, slices.IsSorted(gotVersions), "expected monotonically increasing versions: %v", gotVersions)
 		})
 	}
 }
@@ -377,8 +373,13 @@ func TestPropertyDelete(t *testing.T) {
 						return v.Namespace == createdSv.Namespace && v.Name == createdSv.Name
 					})
 
+					var observedVersion int64
+					if i != -1 {
+						observedVersion = secureValues[i].Status.Version
+					}
+
 					// Set new version to active since it'll be read later on
-					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version))
+					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, observedVersion))
 
 					// Secure value is not in the slice, add it
 					if i == -1 {

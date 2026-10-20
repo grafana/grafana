@@ -77,14 +77,18 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
-	require.NoError(t, err)
-
 	clock := NewFakeClock()
 
-	var secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	var (
+		keeperMetadataStorage      contracts.KeeperMetadataStorage
+		secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	)
 	switch setupCfg.StorageType {
 	case contracts.StorageBackendSQL:
+		k, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
+		require.NoError(t, err)
+		keeperMetadataStorage = k
+
 		s, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
 		require.NoError(t, err)
 		secureValueMetadataStorage = s
@@ -97,6 +101,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 			_ = db.Close()
 		})
 		kvStore := resource.NewBadgerKV(db)
+		keeperMetadataStorage = metadata.NewKVKeeperMetadataStorage(kvStore, snowflake.New(), tracer, nil)
 		secureValueMetadataStorage = metadata.NewKVSecureValueMetadataStorage(kvStore, snowflake.New(), clock, tracer, nil)
 	default:
 		panic(fmt.Sprintf("unhandled storage type: %+v", setupCfg))

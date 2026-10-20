@@ -47,7 +47,6 @@ type StorageMetrics struct {
 	KVSecureValueMetadataGetDuration             *prometheus.HistogramVec
 	KVSecureValueMetadataListDuration            *prometheus.HistogramVec
 	KVSecureValueSetExternalIDDuration           *prometheus.HistogramVec
-	KVSecureValueSetStatusDuration               *prometheus.HistogramVec
 	KVSecureValueDeleteDuration                  *prometheus.HistogramVec
 	KVSecureValueIncGCAttemptCount               *prometheus.HistogramVec
 	KVSecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
@@ -250,16 +249,6 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
-		KVSecureValueSetStatusDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       namespace,
-			Subsystem:                       subsystem,
-			Name:                            "kv_secure_value_set_status_duration_seconds",
-			Help:                            "Duration of secure value set status operations",
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1,
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{successLabel}),
 		KVSecureValueDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       namespace,
 			Subsystem:                       subsystem,
@@ -339,6 +328,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueSetStatusDuration,
 				m.SecureValueDeleteDuration,
 				m.SecureValueSetInactiveAllFromGroupDuration,
+				m.SecureValueLeaseInactiveDuration,
 				m.SecureValueIncGCAttemptCount,
 
 				// Using KV store
@@ -346,9 +336,9 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.KVSecureValueMetadataGetDuration,
 				m.KVSecureValueMetadataListDuration,
 				m.KVSecureValueSetExternalIDDuration,
-				m.KVSecureValueSetStatusDuration,
 				m.KVSecureValueDeleteDuration,
 				m.KVSecureValueSetInactiveAllFromGroupDuration,
+				m.KVSecureValueLeaseInactiveDuration,
 				m.KVSecureValueIncGCAttemptCount,
 
 				m.DecryptDuration,

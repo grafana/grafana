@@ -396,7 +396,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return secureValues, nil
 }
 
-func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
+func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64, observedVersion int64) error {
+	// Unused. It's here only to satisfy contracts.SecureValueMetadataStorage
+	_ = observedVersion
+
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetVersionToActive", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),

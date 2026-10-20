@@ -23,6 +23,7 @@ type DecryptSecureValue struct {
 var (
 	ErrSecureValueNotFound            = errors.New("secure value not found")
 	ErrSecureValueAlreadyExists       = errors.New("secure value already exists")
+	ErrSecureValueConflict            = errors.New("secure value was modified concurrently")
 	ErrReferenceWithSystemKeeper      = errors.New("tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers")
 	ErrSecureValueMissingSecretAndRef = errors.New("secure value spec doesn't have neither a secret or reference")
 	ErrTooManyOwnerReferences         = errors.New("secure values can have at most one owner reference")
@@ -44,7 +45,7 @@ type SecureValueMetadataStorage interface {
 	Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
 	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
-	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64, observedVersion int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
 	Delete(ctx context.Context, input []SecureValueIdentifier) error
