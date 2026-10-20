@@ -124,7 +124,6 @@
     "testdata-test-variable-output": (import '../dev-dashboards/feature-templating/testdata-test-variable-output.json'),
     "testdata-variables-textbox": (import '../dev-dashboards/feature-templating/testdata-variables-textbox.json'),
     "testdata-variables-that-update-on-time-c": (import '../dev-dashboards/feature-templating/testdata-variables-that-update-on-time-change.json'),
-    "text-before-after": (import '../dev-dashboards/panel-text/text-before-after.json'),
     "text-options": (import '../dev-dashboards/panel-text/text-options.json'),
     "text-panel": (import '../dev-dashboards/panel-text/text-panel.json'),
     "text-panel-examples": (import '../dev-dashboards/panel-text/text-panel-examples.json'),
