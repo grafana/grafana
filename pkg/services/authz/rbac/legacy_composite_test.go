@@ -413,6 +413,7 @@ func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
 		TeamIDs:       []int64{10},
 		Role:          "Viewer",
 		IsServerAdmin: false,
+		Limit:         1,
 	}, permissions.queries[1])
 }
 

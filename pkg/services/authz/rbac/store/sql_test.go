@@ -77,6 +77,15 @@ func TestIdentityQueries(t *testing.T) {
 			},
 			sqlUserPerms: {
 				{
+					Name: "permission_presence",
+					Data: getPermissions(&PermissionsQuery{
+						UserID: 1,
+						OrgID:  1,
+						Role:   "Viewer",
+						Limit:  1,
+					}, false),
+				},
+				{
 					Name: "viewer_user",
 					Data: getPermissions(&PermissionsQuery{
 						UserID: 1,
@@ -190,6 +199,19 @@ func TestIntegrationSQLPermissionStoreIndexOption(t *testing.T) {
 			all, err := permissionStore.GetUserPermissions(ctx, types.NamespaceInfo{OrgID: 1}, PermissionsQuery{Role: "Viewer"})
 			require.NoError(t, err)
 			require.ElementsMatch(t, []string{"folders:uid:one", "folders:uid:two", "folders:uid:three", "dashboards:uid:four"}, permissionScopes(all))
+
+			present, err := permissionStore.GetUserPermissions(ctx, types.NamespaceInfo{OrgID: 1}, PermissionsQuery{
+				Role:  "Viewer",
+				Limit: 1,
+			})
+			require.NoError(t, err)
+			require.Len(t, present, 1)
+			absent, err := permissionStore.GetUserPermissions(ctx, types.NamespaceInfo{OrgID: 2}, PermissionsQuery{
+				Role:  "Viewer",
+				Limit: 1,
+			})
+			require.NoError(t, err)
+			require.Empty(t, absent)
 
 			actionSet, err := permissionStore.GetUserPermissions(ctx, types.NamespaceInfo{OrgID: 1}, PermissionsQuery{
 				Role: "Viewer", Action: "folders:create", ActionSets: []string{"folders:edit"},

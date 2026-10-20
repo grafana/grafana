@@ -17,11 +17,13 @@ import (
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
 	// TODO: Complete in subsequent PRs:
-	//   - Scope resolution: inheritance, MutateScopes after denial, errors and WithoutResolvers.
-	//   - Resolver caching: tenant isolation, bypass and invalidation.
+	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//   - Permissions: NoOrgID globals, contextual team grants and SharedWithMe.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
+	if err := s.validateLegacyScopeNamespace(ns); err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
@@ -41,9 +43,12 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// Our queries only load permissions for the actions in this request. An empty
 	// result may mean the identity has permissions for other actions.
 	// An empty ALL returns true even with no permissions. Evaluate(nil) checks
-	// whether this expression can do that. If it can, and our queries return
-	// nothing, we must check for other permissions before allowing the request.
-	checkUnrelatedPermissions := evaluator.Evaluate(nil)
+	// whether this expression can do that. Resolvers also run only when the
+	// identity has some grant, including grants for other actions. If either
+	// applies and our queries return nothing, check for other permissions before
+	// allowing the request or skipping resolution.
+	checkUnrelatedPermissions := evaluator.Evaluate(nil) ||
+		(!req.GetSkipScopeResolution() && s.legacyScopeResolvers.HasResolvers())
 	permissions, hasPermissions, err := s.getLegacyIdentityPermissions(
 		ctx, ns, idType, userUID, actions, checkUnrelatedPermissions, req.GetSkipCache(),
 	)
@@ -54,9 +59,44 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
 	}
 
-	allowed := evaluator.Evaluate(permissions)
+	allowed, err := s.evaluateLegacyWithResolvers(
+		ctx,
+		evaluator,
+		permissions,
+		hasPermissions,
+		req.GetSkipScopeResolution(),
+		legacyScopeRequest{
+			namespace:    ns,
+			identityType: idType,
+			userUID:      userUID,
+			skipCache:    req.GetSkipCache(),
+		},
+	)
+	if err != nil {
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
+}
+
+// getLegacyIdentityScopes loads one action for resolver callbacks that perform
+// further checks as the subject. Composite checks use getLegacyIdentityPermissions.
+func (s *Service) getLegacyIdentityScopes(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	idType types.IdentityType,
+	userUID string,
+	action string,
+	checkUnrelatedPermissions bool,
+	skipCache bool,
+) ([]string, bool, error) {
+	permissions, hasPermissions, err := s.getLegacyIdentityPermissions(
+		ctx, ns, idType, userUID, []string{action}, checkUnrelatedPermissions, skipCache,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	return permissions[action], hasPermissions, nil
 }
 
 func (s *Service) getLegacyIdentityPermissions(
@@ -65,7 +105,7 @@ func (s *Service) getLegacyIdentityPermissions(
 	idType types.IdentityType,
 	userUID string,
 	actions []string,
-	checkUnrelatedPermissions,
+	checkUnrelatedPermissions bool,
 	skipCache bool,
 ) (map[string][]string, bool, error) {
 	permissions := make(map[string][]string, len(actions))
@@ -125,8 +165,12 @@ func (s *Service) getLegacyIdentityPermissions(
 		return permissions, false, nil
 	}
 
-	// Keep the identity/role/team query but omit action filtering. The current
-	// store interface returns the snapshot; only its presence is needed here.
+	// AccessControl skips resolvers only when the entire permission set is empty.
+	// A filtered action query cannot establish that, so check for one grant using
+	// the same identity/role/team restrictions, without loading a full snapshot.
+	query.Action = ""
+	query.ActionSets = nil
+	query.Limit = 1
 	grants, err := s.permissionStore.GetUserPermissions(ctx, ns, query)
 	if err != nil {
 		return nil, false, err

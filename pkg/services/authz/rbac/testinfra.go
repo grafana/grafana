@@ -122,6 +122,9 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 	for _, p := range f.userPermissions {
 		if query.Action == "" || p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
 			permissions = append(permissions, p)
+			if query.Limit > 0 && len(permissions) == query.Limit {
+				break
+			}
 		}
 	}
 	return permissions, nil
