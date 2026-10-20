@@ -701,7 +701,7 @@
   },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/core/TableModel.ts": {
