@@ -332,7 +332,11 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer, nil)
+	r, err := grafanarouter.ProvideGrafanaRouter(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer, r)
 	if err != nil {
 		return nil, err
 	}

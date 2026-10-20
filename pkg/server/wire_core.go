@@ -478,11 +478,11 @@ var wireBasicSet = wire.NewSet(
 	resource.ProvideIndexMetrics,
 	resource.ProvideVectorMetrics,
 	resource.ProvideEventualClient,
-	resource.ProvideEventualManifestDiscovery,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
+	router.ProvideGrafanaRouter,
 	router.ProvideService,
 	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,

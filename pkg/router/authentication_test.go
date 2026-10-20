@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -115,7 +114,7 @@ func TestProvideStandaloneServiceRequiresTokenVerificationConfig(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Target = []string{"router"}
 		cfg.ExtJWTAuth.JWKSUrl = jwks
-		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry(), nil)
+		svc, err := provideTestService(cfg, featuremgmt.WithFeatures(), stubLoader{})
 		require.Error(t, err)
 		require.Nil(t, svc)
 	}

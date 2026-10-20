@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -34,7 +33,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), nil)
+	svc, err := provideTestService(cfg, features, dummyRoutesLoader{})
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
 
@@ -72,7 +71,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	_, err := ProvideService(cfg, features, nil, prometheus.NewRegistry(), nil)
+	_, err := provideTestService(cfg, features, nil)
 	require.ErrorContains(t, err, "routes loader is required")
 }
 
@@ -84,7 +83,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	features := featuremgmt.WithFeatures()
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), nil)
+	svc, err := provideTestService(cfg, features, dummyRoutesLoader{})
 	require.NoError(t, err)
 	err = svc.RegisterTargetRoutes(httpRouter, nil)
 	require.NoError(t, err)
@@ -112,7 +111,7 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 	})
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry(), nil)
+	svc, err := provideTestService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
@@ -149,13 +148,13 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}
 
-	enabled, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
+	enabled, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
 	require.NoError(t, err)
 	require.False(t, enabled.IsDisabled())
 
 	// Without the toggle the router still runs, to keep /apis/discovery current,
 	// but leaves every other request to the embedded API server.
-	disabled, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
+	disabled, err := provideTestService(cfg, featuremgmt.WithFeatures(), loader)
 	require.NoError(t, err)
 	require.False(t, disabled.IsDisabled())
 
@@ -172,14 +171,28 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	require.Contains(t, recorder.Body.String(), `"kind":"AppManifestList"`)
 }
 
-// In-process storage reads the router's manifests through the discovery it is
-// given, which must be the router itself.
-func TestProvideServiceSetsManifestDiscovery(t *testing.T) {
-	discovery := resource.ProvideEventualManifestDiscovery()
-	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(), dummyRoutesLoader{}, prometheus.NewRegistry(), discovery)
-	require.NoError(t, err)
-	svc.router.publishManifestDocs(t.Context(), testManifestBackends())
+// provideTestService builds the service the way wire does: the router first,
+// then the service around it.
+func provideTestService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader) (*Service, error) {
+	r, err := ProvideGrafanaRouter(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return ProvideService(cfg, features, loader, prometheus.NewRegistry(), r)
+}
 
+// Wire hands the same router to storage, as a ManifestDiscovery, and to the
+// service, so storage reads what the running service publishes.
+func TestProvideServiceUsesTheProvidedRouter(t *testing.T) {
+	r, err := ProvideGrafanaRouter(setting.NewCfg())
+	require.NoError(t, err)
+	var discovery ManifestDiscovery = r
+
+	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(), dummyRoutesLoader{}, prometheus.NewRegistry(), r)
+	require.NoError(t, err)
+	require.Same(t, r, svc.router)
+
+	svc.router.publishManifestDocs(t.Context(), testManifestBackends())
 	list, err := discovery.ListManifests(t.Context())
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
@@ -203,7 +216,7 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 			})
 		}
-		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
+		svc, err := provideTestService(cfg, featuremgmt.WithFeatures(), loader)
 		require.NoError(t, err)
 		httpRouter := mux.NewRouter()
 		httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
@@ -230,7 +243,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 		require.Equal(t, "https://discovery.example.com/apis", req.URL.String())
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"fallback.example.com","versions":[],"preferredVersion":{"groupVersion":"","version":""}}]}`))}, nil
 	})
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
+	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(), loader)
 	require.NoError(t, err)
 	httpRouter := mux.NewRouter()
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
@@ -245,7 +258,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := &cloudLoader{singleTenantFallback: newTestSingleTenantFallback(t)}
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
+	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
 	recorder := httptest.NewRecorder()

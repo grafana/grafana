@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const readinessPollInterval = time.Second
@@ -39,31 +38,35 @@ type Service struct {
 	middleware bool
 }
 
-// ProvideService creates the router service. RegisterTargetRoutes enables it
-// for the router module. Inside Grafana it always runs, so the /apis/discovery
-// tree is served and in-process storage can read its manifests through
-// discovery (nil in the router module); the middleware feature toggle controls
-// whether it routes any other request.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer, discovery *resource.EventualManifestDiscovery) (*Service, error) {
-	if loader == nil {
-		return nil, fmt.Errorf("routes loader is required")
-	}
-	standalone := slices.Contains(cfg.Target, "router")
+// ProvideGrafanaRouter creates the router without its routes loader, which
+// ProvideService attaches. The loader depends on storage, and in-process
+// storage reads the router's published manifests (as a ManifestDiscovery), so
+// building the router first keeps the dependency graph acyclic.
+func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 	var auth authn.TokenAuthenticator
-	if standalone {
+	if slices.Contains(cfg.Target, "router") {
 		var err error
 		auth, err = authn.NewGrafanaTokenAuthenticator(cfg)
 		if err != nil {
 			return nil, err
 		}
 	}
+	return NewGrafanaRouter(nil, auth), nil
+}
 
-	s := newService(loader, auth, reg)
-	s.standalone = standalone
-	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
-	if discovery != nil && !standalone {
-		discovery.Set(s.router)
+// ProvideService creates the router service around router, attaching loader.
+// RegisterTargetRoutes enables it for the router module. Inside Grafana it
+// always runs, so the /apis/discovery tree stays current; the middleware
+// feature toggle controls whether it routes any other request.
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer, router *GrafanaRouter) (*Service, error) {
+	if loader == nil {
+		return nil, fmt.Errorf("routes loader is required")
 	}
+	router.loader = loader
+
+	s := newServiceFor(router, reg)
+	s.standalone = slices.Contains(cfg.Target, "router")
+	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	return s, nil
 }
 
@@ -95,8 +98,12 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 }
 
 func newService(loader RoutesLoader, tokens authn.TokenAuthenticator, reg prometheus.Registerer) *Service {
+	return newServiceFor(NewGrafanaRouter(loader, tokens), reg)
+}
+
+func newServiceFor(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 	s := &Service{
-		router:  NewGrafanaRouter(loader, tokens),
+		router:  router,
 		metrics: newRouterMetrics(reg),
 	}
 	s.router.onBreakerChange = s.metrics.breakerChanged
