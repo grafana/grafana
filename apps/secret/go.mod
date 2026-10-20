@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/secret
 
-go 1.27.1
+go 1.27.3
 
 require (
 	github.com/grafana/grafana-app-sdk v0.60.8

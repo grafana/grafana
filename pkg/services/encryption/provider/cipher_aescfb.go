@@ -39,7 +39,7 @@ func (c aesCfbCipher) Encrypt(_ context.Context, payload []byte, secret string) 
 	}
 
 	//nolint:staticcheck
-	stream := cipher.NewCFBEncrypter(block, iv)
+	stream := cipher.NewCFBEncrypter(block, iv) //nolint:gosec
 	stream.XORKeyStream(ciphertext[encryption.SaltLength+aes.BlockSize:], payload)
 
 	return ciphertext, nil
