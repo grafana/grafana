@@ -85,8 +85,6 @@ func New(cfg app.Config) (app.App, error) {
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						if req.Object != nil {
-							// Every Check gets its own check instance: Init keeps per-run state
-							// (e.g. the tenant's plugins) in it, and Checks are processed concurrently.
 							check, err := getCheck(req.Object, checkRegistry)
 							if err != nil {
 								return err

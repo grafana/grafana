@@ -25,7 +25,6 @@ type CheckService interface {
 	// Checks returns new instances of all the registered checks.
 	Checks() []checks.Check
 	// Check returns a new instance of the check with the given ID, or false if there is none.
-	// Every run of a check needs its own instance: Init keeps per-run state in it.
 	Check(id string) (checks.Check, bool)
 }
 
