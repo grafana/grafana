@@ -194,7 +194,6 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 	status.Reason = statusReasonForCode(int(status.Code))
 	if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
 		grafanaStatus := grafanaErr.Status()
-		status.Message = grafanaStatus.Message
 		if grafanaStatus.Reason != "" && grafanaStatus.Code == status.Code {
 			status.Reason = grafanaStatus.Reason
 		}

@@ -386,7 +386,11 @@ func TestCreateValidationPreservesPublicIdentityThroughStorage(t *testing.T) {
 			require.Error(t, err)
 			public := responsewriters.ErrorToAPIStatus(err)
 			require.Equal(t, int32(400), public.Code)
-			require.Equal(t, "Maximum nested folder depth reached", public.Message)
+			if wrapped {
+				require.Equal(t, "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 1", public.Message)
+			} else {
+				require.Equal(t, "Maximum nested folder depth reached", public.Message)
+			}
 			require.NotNil(t, public.Details)
 			require.Equal(t, "folder.maximum-depth-reached", string(public.Details.UID))
 		})

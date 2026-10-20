@@ -258,6 +258,25 @@ func TestToFolderErrorResponse(t *testing.T) {
 
 // TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
 // the Unwrap chain.
+func TestToFolderStatusErrorPreservesValidationMessages(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		err     error
+		message string
+	}{
+		{"empty title", folder.ErrAPITitleEmpty, "folder title cannot be empty"},
+		{"invalid uid", folder.ErrAPIInvalidUID, "invalid uid for folder provided"},
+		{"self parent", folder.ErrAPIFolderCannotBeParentOfItself, "folder cannot be parent of itself"},
+		{"maximum depth", folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", 4), "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mapped := apierrors.ToFolderStatusError(tc.err)
+			require.Equal(t, int32(http.StatusBadRequest), mapped.ErrStatus.Code)
+			require.Equal(t, tc.message, mapped.ErrStatus.Message)
+		})
+	}
+}
+
 func TestToFolderStatusErrorPreservesKubernetesStatus(t *testing.T) {
 	original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
 		TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
