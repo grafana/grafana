@@ -8113,7 +8113,22 @@
       "advanced-description-cron": "Cron syntax",
       "advanced-description-rest": " to define a recurrence schedule and duration",
       "advanced-description-use": "Use ",
-      "advanced-label": "Advanced"
+      "advanced-label": "Advanced",
+      "change-timezone": "Change timezone",
+      "dashboard-timezone": "Dashboard timezone",
+      "day-friday": "Friday",
+      "day-monday": "Monday",
+      "day-saturday": "Saturday",
+      "day-sunday": "Sunday",
+      "day-thursday": "Thursday",
+      "day-tuesday": "Tuesday",
+      "day-wednesday": "Wednesday",
+      "label-cron-expression": "Cron expression",
+      "label-duration": "Duration",
+      "label-from": "From",
+      "label-timezone": "Timezone",
+      "label-to": "To",
+      "placeholder-everyday": "Everyday"
     },
     "variables": {
       "title": "Variables"
@@ -10312,6 +10327,35 @@
     }
   },
   "grafana-datasource": {
+    "annotation-query-editor": {
+      "annotation-types": {
+        "description": {
+          "dashboard": "Query for events created on this dashboard and show them in the panels where they where created",
+          "tags": "This will fetch any annotation events that match the tags filter"
+        },
+        "label": {
+          "dashboard": "Dashboard",
+          "tags": "Tags"
+        }
+      },
+      "description-match-any": "Enabling this returns annotations that match any of the tags specified below",
+      "description-tags": "Specify a list of tags to match. To specify a key and value tag use `key:value` syntax.",
+      "label-filter-by": "Filter by",
+      "label-match-any": "Match any",
+      "label-max-limit": "Max limit",
+      "label-query-type": "Query type",
+      "label-tags": "Tags",
+      "query-types": {
+        "description": {
+          "annotations": "Show annotations or alerts managed by grafana",
+          "time-regions": "Configure a repeating time region"
+        },
+        "label": {
+          "annotations": "Annotations & Alerts",
+          "time-regions": "Time regions"
+        }
+      }
+    },
     "query-editor": {
       "channel-connected": "Connected to {{channel}}",
       "create-label-channel": "Connect to: {{input}}",

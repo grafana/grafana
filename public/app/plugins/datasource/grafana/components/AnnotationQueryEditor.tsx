@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
@@ -13,35 +14,41 @@ import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery, 
 
 import { TimeRegionEditor } from './TimeRegionEditor';
 
-const matchTooltipContent = 'Enabling this returns annotations that match any of the tags specified below';
-
-const tagsTooltipContent = (
-  <div>Specify a list of tags to match. To specify a key and value tag use `key:value` syntax.</div>
-);
-
-const annotationTypes: Array<SelectableValue<GrafanaAnnotationType>> = [
+const getAnnotationTypes = (): Array<SelectableValue<GrafanaAnnotationType>> => [
   {
-    label: 'Dashboard',
+    label: t('grafana-datasource.annotation-query-editor.annotation-types.label.dashboard', 'Dashboard'),
     value: GrafanaAnnotationType.Dashboard,
-    description: 'Query for events created on this dashboard and show them in the panels where they where created',
+    description: t(
+      'grafana-datasource.annotation-query-editor.annotation-types.description.dashboard',
+      'Query for events created on this dashboard and show them in the panels where they where created'
+    ),
   },
   {
-    label: 'Tags',
+    label: t('grafana-datasource.annotation-query-editor.annotation-types.label.tags', 'Tags'),
     value: GrafanaAnnotationType.Tags,
-    description: 'This will fetch any annotation events that match the tags filter',
+    description: t(
+      'grafana-datasource.annotation-query-editor.annotation-types.description.tags',
+      'This will fetch any annotation events that match the tags filter'
+    ),
   },
 ];
 
-const queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
+const getQueryTypes = (): Array<SelectableValue<GrafanaQueryType>> => [
   {
-    label: 'Annotations & Alerts',
+    label: t('grafana-datasource.annotation-query-editor.query-types.label.annotations', 'Annotations & Alerts'),
     value: GrafanaQueryType.Annotations,
-    description: 'Show annotations or alerts managed by grafana',
+    description: t(
+      'grafana-datasource.annotation-query-editor.query-types.description.annotations',
+      'Show annotations or alerts managed by grafana'
+    ),
   },
   {
-    label: 'Time regions',
+    label: t('grafana-datasource.annotation-query-editor.query-types.label.time-regions', 'Time regions'),
     value: GrafanaQueryType.TimeRegions,
-    description: 'Configure a repeating time region',
+    description: t(
+      'grafana-datasource.annotation-query-editor.query-types.description.time-regions',
+      'Configure a repeating time region'
+    ),
   },
 ];
 
@@ -109,25 +116,25 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
 
   return (
     <FieldSet className={styles.container}>
-      <Field label="Query type">
+      <Field label={t('grafana-datasource.annotation-query-editor.label-query-type', 'Query type')}>
         <Select
           inputId="grafana-annotations__query-type"
-          options={queryTypes}
+          options={getQueryTypes()}
           value={grafanaQueryType}
           onChange={onQueryTypeChange}
         />
       </Field>
       {grafanaQueryType === GrafanaQueryType.Annotations && (
         <>
-          <Field label="Filter by">
+          <Field label={t('grafana-datasource.annotation-query-editor.label-filter-by', 'Filter by')}>
             <Select
               inputId="grafana-annotations__filter-by"
-              options={annotationTypes}
+              options={getAnnotationTypes()}
               value={type}
               onChange={onFilterByChange}
             />
           </Field>
-          <Field label="Max limit">
+          <Field label={t('grafana-datasource.annotation-query-editor.label-max-limit', 'Max limit')}>
             <Select
               inputId="grafana-annotations__limit"
               width={16}
@@ -138,10 +145,25 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           </Field>
           {type === GrafanaAnnotationType.Tags && (
             <>
-              <Field label="Match any" description={matchTooltipContent}>
+              <Field
+                label={t('grafana-datasource.annotation-query-editor.label-match-any', 'Match any')}
+                description={t(
+                  'grafana-datasource.annotation-query-editor.description-match-any',
+                  'Enabling this returns annotations that match any of the tags specified below'
+                )}
+              >
                 <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
               </Field>
-              <Field label="Tags" description={tagsTooltipContent}>
+              <Field
+                label={t('grafana-datasource.annotation-query-editor.label-tags', 'Tags')}
+                description={
+                  <div>
+                    <Trans i18nKey="grafana-datasource.annotation-query-editor.description-tags">
+                      Specify a list of tags to match. To specify a key and value tag use `key:value` syntax.
+                    </Trans>
+                  </div>
+                }
+              >
                 <TagFilter
                   allowCustomValue
                   inputId="grafana-annotations__tags"
