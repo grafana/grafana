@@ -65,6 +65,11 @@ describe('config from data', () => {
     expect(results[0].fields[0].config.max).toEqual(1);
     expect(results[0].fields[1].config.max).toEqual(10);
   });
+
+  it("Gracefully handles 1 frame inputs", () => {
+    const results = extractConfigFromQueryDynamic(options, [config], config, options.mappings);
+    expect(results).toHaveLength(1)
+  })
 });
 
 describe('transformer operator pipeline', () => {
