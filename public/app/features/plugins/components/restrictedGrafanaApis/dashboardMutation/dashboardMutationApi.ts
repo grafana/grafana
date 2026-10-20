@@ -15,12 +15,13 @@
 import type { DashboardMutationAPI } from '@grafana/data';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { provideMutationClientFactory } from 'app/features/dashboard-scene/mutation-api/clientBridge';
+import { renderPlanPreviewPayloadSchema } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
 import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
-import { DashboardPlanPreview } from './DashboardPlanPreview';
+import { DashboardPlanPreview, isPlanBuildingScreenEnabled } from './DashboardPlanPreview';
 import { allMutationCommands } from './commandRegistry';
 
 /**
@@ -101,6 +102,11 @@ export function createDashboardMutationApi(pluginId?: string): DashboardMutation
     },
     getPayloadSchema: (commandId: string) => {
       const normalized = commandId.toUpperCase();
+      // Without the building screen RENDER_PLAN is advertised as an older core's, with no `phase`, so a
+      // caller checking for the screen sees none and never asks for it.
+      if (normalized === 'RENDER_PLAN' && !isPlanBuildingScreenEnabled()) {
+        return renderPlanPreviewPayloadSchema;
+      }
       // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
       // command can run.
       const cmd = allMutationCommands().find((c) => c.name === normalized);

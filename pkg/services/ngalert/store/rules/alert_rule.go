@@ -193,6 +193,7 @@ func latestVersionOfRulesByUID(sess *db.Session, logger log.Logger, orgID int64,
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = rows.Close() }()
 	result := make([]alertRuleVersion, 0, len(ruleUIDs))
 	for rows.Next() {
 		rule := new(alertRuleVersion)
@@ -324,6 +325,7 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		var previousVersion *alertRuleVersion
 		for rows.Next() {
@@ -345,6 +347,9 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 			}
 			previousVersion = rule
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.IterationErr(); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -395,6 +400,7 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(alertRuleVersion)
@@ -410,6 +416,9 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 				continue
 			}
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.IterationErr(); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -938,7 +947,9 @@ func (st RuleStore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.L
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesByGroup", "error", err)
+			}
 		}()
 
 		opts := alertRuleConvertOptions{}
@@ -1200,7 +1211,9 @@ func (st RuleStore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesPaginated", "error", err)
+			}
 		}()
 
 		// Deserialize each rule separately in case any of them contain invalid JSON.

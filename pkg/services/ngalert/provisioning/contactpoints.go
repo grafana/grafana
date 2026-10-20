@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -560,7 +561,10 @@ func (ecp *ContactPointService) checkProtectedFields(
 
 	// Check if user has permission to update protected fields first, before doing
 	// expensive conversion and diff calculations.
-	canUpdateProtected, _ := ecp.authz.HasUpdateProtected(ctx, user, receiver)
+	canUpdateProtected, err := ecp.authz.HasUpdateProtected(ctx, user, receiver)
+	if err != nil && !errors.Is(err, ngalertac.ErrAuthorizationBase) {
+		return fmt.Errorf("failed to check protected fields permission: %w", err)
+	}
 	if canUpdateProtected {
 		return nil
 	}
