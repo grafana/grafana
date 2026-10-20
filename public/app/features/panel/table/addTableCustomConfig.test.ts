@@ -1,5 +1,5 @@
 import { FieldConfigEditorBuilder, standardEditorsRegistry } from '@grafana/data';
-import { type TableFieldOptions } from '@grafana/schema';
+import { defaultTableFieldOptions, type TableFieldOptions } from '@grafana/schema';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { addTableCustomConfig } from './addTableCustomConfig';
@@ -26,12 +26,17 @@ describe('addTableCustomConfig', () => {
 
     expect(item).toBeDefined();
     expect(item!.showIf).toBeUndefined();
+    expect(item!.showIfOverride).toBeUndefined();
   });
 
-  it('passes the caller’s gate through to the column filter switch', () => {
-    const showIf = jest.fn(() => false);
-    const item = filterableItem({ filters: true, filtersShowIf: showIf });
+  it('uses the filter predicate for defaults and new override properties', () => {
+    const filters = jest.fn(() => false);
+    const item = filterableItem({ filters });
 
-    expect(item!.showIf).toBe(showIf);
+    expect(item!.showIf?.(defaultTableFieldOptions, undefined)).toBe(false);
+    expect(item!.showIfOverride?.({ data: [] })).toBe(false);
+    filters.mockReturnValue(true);
+    expect(item!.showIf?.(defaultTableFieldOptions, undefined)).toBe(true);
+    expect(item!.showIfOverride?.({ data: [] })).toBe(true);
   });
 });
