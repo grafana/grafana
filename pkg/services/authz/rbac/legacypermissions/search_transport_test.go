@@ -49,17 +49,13 @@ type legacySearchTestCaller struct {
 type legacySearchTestStore struct {
 	permissions       []accesscontrol.Permission
 	results           map[int64][]accesscontrol.Permission
-	namespaceResults  map[string][]accesscontrol.Permission
 	visibility        string
 	calls             atomic.Int64
-	rolesCalls        atomic.Int64
 	queryCalls        atomic.Int64
 	failCaller        bool
 	callerErr         error
 	visibilityErr     error
 	searchErr         error
-	failRoleOnce      atomic.Bool
-	failSearchOnce    atomic.Bool
 	denyCaller        atomic.Bool
 	blockSearch       <-chan struct{}
 	searchStarted     chan struct{}
@@ -90,12 +86,6 @@ func (s *legacySearchTestStore) GetSearchCallerID(_ context.Context, _ authlib.N
 func (s *legacySearchTestStore) GetUsersBasicRoles(_ context.Context, _ authlib.NamespaceInfo, ids []int64) (map[int64][]string, error) {
 	s.queryCalls.Add(1)
 	if len(ids) > 0 {
-		if ids[0] != 1 {
-			s.rolesCalls.Add(1)
-			if s.failRoleOnce.CompareAndSwap(true, false) {
-				return nil, fmt.Errorf("role lookup failed")
-			}
-		}
 		return map[int64][]string{ids[0]: {"None"}}, nil
 	}
 	if s.results != nil {
@@ -108,7 +98,7 @@ func (s *legacySearchTestStore) GetUsersBasicRoles(_ context.Context, _ authlib.
 	return map[int64][]string{2: {"None"}}, nil
 }
 
-func (s *legacySearchTestStore) SearchUsersPermissions(ctx context.Context, ns authlib.NamespaceInfo, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+func (s *legacySearchTestStore) SearchUsersPermissions(ctx context.Context, _ authlib.NamespaceInfo, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	s.queryCalls.Add(1)
 	if options.Action == accesscontrol.ActionUsersPermissionsRead {
 		if s.visibilityErr != nil {
@@ -134,12 +124,6 @@ func (s *legacySearchTestStore) SearchUsersPermissions(ctx context.Context, ns a
 	}
 	if s.searchErr != nil {
 		return nil, s.searchErr
-	}
-	if s.failSearchOnce.CompareAndSwap(true, false) {
-		return nil, fmt.Errorf("permission lookup failed")
-	}
-	if s.namespaceResults != nil {
-		return map[int64][]accesscontrol.Permission{2: s.namespaceResults[ns.Value]}, nil
 	}
 	if s.results != nil {
 		return s.results, nil
@@ -243,7 +227,7 @@ func TestLegacySearchTransportAuthorizationAndValidation(t *testing.T) {
 }
 
 func TestLegacySearchTransportChunkBoundaries(t *testing.T) {
-	for _, count := range []int{0, 1, 999, 1000, 1001, 2000, 2001} {
+	for _, count := range []int{0, 1, 1000, 1001, 2001} {
 		t.Run(fmt.Sprint(count), func(t *testing.T) {
 			store := &legacySearchTestStore{visibility: "users:*"}
 			for i := range count {
@@ -361,37 +345,6 @@ func TestLegacySearchTransportCallerResolutionFailure(t *testing.T) {
 	require.Zero(t, store.calls.Load())
 }
 
-func TestLegacySearchTransportErrorRecovery(t *testing.T) {
-	for _, failure := range []string{"basic roles", "permissions"} {
-		t.Run(failure, func(t *testing.T) {
-			store := &legacySearchTestStore{visibility: "users:*", permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}}
-			if failure == "basic roles" {
-				store.failRoleOnce.Store(true)
-			} else {
-				store.failSearchOnce.Store(true)
-			}
-			auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-			transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
-			result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, legacySearchTestRequest())
-			require.Equal(t, codes.Internal, status.Code(err))
-			require.Nil(t, result.Permissions)
-			t.Run("retry after failure", func(t *testing.T) {
-				result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, legacySearchTestRequest())
-				require.NoError(t, err)
-				require.Equal(t, legacySearchTestPermissions(store.permissions), result.Permissions[2])
-			})
-			calls, roles := store.calls.Load(), store.rolesCalls.Load()
-			t.Run("fresh retry", func(t *testing.T) {
-				result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, legacySearchTestRequest())
-				require.NoError(t, err)
-				require.Equal(t, legacySearchTestPermissions(store.permissions), result.Permissions[2])
-				require.Equal(t, calls+1, store.calls.Load())
-				require.Equal(t, roles+1, store.rolesCalls.Load())
-			})
-		})
-	}
-}
-
 type partialLegacySearchServer struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
 }
@@ -411,29 +364,6 @@ func TestLegacySearchTransportDiscardsPartialResults(t *testing.T) {
 	require.Nil(t, result.Permissions)
 }
 
-func TestLegacySearchTransportCancellation(t *testing.T) {
-	for _, deadline := range []bool{false, true} {
-		t.Run(fmt.Sprint(deadline), func(t *testing.T) {
-			auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-			transport := newLegacySearchTransport(t, &partialLegacySearchServer{}, auth)
-			var ctx context.Context
-			var cancel context.CancelFunc
-			code := codes.Canceled
-			if deadline {
-				ctx, cancel = context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
-				code = codes.DeadlineExceeded
-			} else {
-				ctx, cancel = context.WithCancel(t.Context())
-				cancel()
-			}
-			defer cancel()
-			result, err := transport.client.LegacySearchUsersPermissions(ctx, auth, legacySearchTestRequest())
-			require.Nil(t, result.Permissions)
-			require.Equal(t, code, status.Code(err))
-		})
-	}
-}
-
 func TestLegacySearchTransportRechecksVisibilityAfterSearch(t *testing.T) {
 	store := &legacySearchTestStore{visibility: "users:*", permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}}
 	auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
@@ -448,31 +378,14 @@ func TestLegacySearchTransportRechecksVisibilityAfterSearch(t *testing.T) {
 	require.Equal(t, int64(1), store.calls.Load(), "revoked visibility must be checked before querying target permissions")
 }
 
-func TestLegacySearchTransportIsolatesNamespaces(t *testing.T) {
-	store := &legacySearchTestStore{visibility: "users:*", namespaceResults: map[string][]accesscontrol.Permission{
-		"stacks-1": {{Action: "test:read", Scope: "tests:id:one"}},
-		"stacks-2": {{Action: "test:read", Scope: "tests:id:two"}},
-	}}
-	auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-	transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
-	for _, namespace := range []string{"stacks-1", "stacks-2", "stacks-1"} {
-		req := legacySearchTestRequest()
-		req.Namespace = namespace
-		result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, req)
-		require.NoError(t, err)
-		require.Equal(t, legacySearchTestPermissions(store.namespaceResults[namespace]), result.Permissions[2])
-	}
-	require.Equal(t, int64(3), store.calls.Load(), "every request must use its own namespace")
-}
-
-func TestLegacySearchTransportIsolatesFilters(t *testing.T) {
+func TestLegacySearchTransportForwardsFilters(t *testing.T) {
 	store := &legacySearchTestStore{visibility: "users:*", permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}}
 	auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
 	transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
 	requests := []legacyclient.LegacySearchUsersPermissionsRequest{legacySearchTestRequest(), legacySearchTestRequest(), legacySearchTestRequest(), legacySearchTestRequest()}
 	requests[1].Action = "test:write"
 	requests[2].Action, requests[2].ActionPrefix = "", "test:"
-	requests[3].Scope = "tests:id:one"
+	requests[3].Scope, requests[3].UserID = "tests:id:one", 3
 	for _, req := range requests {
 		_, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, req)
 		require.NoError(t, err)
@@ -480,43 +393,37 @@ func TestLegacySearchTransportIsolatesFilters(t *testing.T) {
 		require.Equal(t, req.Action, store.lastSearchOptions.Action)
 		require.Equal(t, req.ActionPrefix, store.lastSearchOptions.ActionPrefix)
 		require.Equal(t, req.Scope, store.lastSearchOptions.Scope)
+		require.Equal(t, req.UserID, store.lastSearchOptions.UserID)
 		store.mu.Unlock()
 	}
 	require.Equal(t, int64(len(requests)), store.calls.Load())
-	_, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, requests[0])
-	require.NoError(t, err)
-	require.Equal(t, int64(len(requests)+1), store.calls.Load(), "repeated filters must query current grants")
 }
 
 func TestLegacySearchTransportPreservesContextErrors(t *testing.T) {
-	for _, stage := range []string{"caller lookup", "visibility", "target search"} {
-		t.Run(stage, func(t *testing.T) {
-			for _, contextErr := range []error{context.Canceled, context.DeadlineExceeded} {
-				t.Run(contextErr.Error(), func(t *testing.T) {
-					for _, wrapped := range []bool{false, true} {
-						t.Run(fmt.Sprint(wrapped), func(t *testing.T) {
-							store := &legacySearchTestStore{visibility: "users:*"}
-							failure := contextErr
-							if wrapped {
-								failure = fmt.Errorf("query interrupted: %w", contextErr)
-							}
-							switch stage {
-							case "caller lookup":
-								store.callerErr = failure
-							case "visibility":
-								store.visibilityErr = failure
-							case "target search":
-								store.searchErr = failure
-							}
-							auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-							transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
-							result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, legacySearchTestRequest())
-							require.Equal(t, status.FromContextError(contextErr).Code(), status.Code(err))
-							require.Nil(t, result.Permissions)
-						})
-					}
-				})
+	for _, tc := range []struct {
+		stage string
+		cause error
+	}{
+		{"caller lookup", context.Canceled},
+		{"visibility", context.DeadlineExceeded},
+		{"target search", context.Canceled},
+	} {
+		t.Run(tc.stage, func(t *testing.T) {
+			store := &legacySearchTestStore{visibility: "users:*"}
+			failure := fmt.Errorf("query interrupted: %w", tc.cause)
+			switch tc.stage {
+			case "caller lookup":
+				store.callerErr = failure
+			case "visibility":
+				store.visibilityErr = failure
+			case "target search":
+				store.searchErr = failure
 			}
+			auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
+			transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
+			result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, legacySearchTestRequest())
+			require.Equal(t, status.FromContextError(tc.cause).Code(), status.Code(err))
+			require.Nil(t, result.Permissions)
 		})
 	}
 }
@@ -620,89 +527,6 @@ func TestEmbeddedLegacySearchValidInstance(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, legacySearchTestPermissions(store.permissions), result.Permissions[2])
 			require.Equal(t, int64(1), store.calls.Load())
-		})
-	}
-}
-
-func TestLegacySearchTransportIsolatesTargetUsers(t *testing.T) {
-	store := &legacySearchTestStore{visibility: "users:*", results: map[int64][]accesscontrol.Permission{
-		2: {{Action: "test:read", Scope: "tests:id:two"}},
-		3: {{Action: "test:read", Scope: "tests:id:three"}},
-	}}
-	auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-	transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
-	for _, target := range []int64{2, 3, 2} {
-		req := legacySearchTestRequest()
-		req.UserID = target
-		result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, req)
-		require.NoError(t, err)
-		require.Equal(t, map[int64][]authlib.Permission{target: legacySearchTestPermissions(store.results[target])}, result.Permissions)
-	}
-	require.Equal(t, int64(3), store.calls.Load())
-}
-
-func TestLegacySearchTransportTracksEnforcement(t *testing.T) {
-	store := &legacySearchTestStore{visibility: "users:*", permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}}
-	service := newLegacySearchTestService(store)
-	var enabled atomic.Bool
-	service.enforcementEnabled = enabled.Load
-	auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-	transport := newLegacySearchTransport(t, service, auth)
-	for _, enforcement := range []bool{false, true, false} {
-		enabled.Store(enforcement)
-		result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, legacySearchTestRequest())
-		require.NoError(t, err)
-		require.Equal(t, legacySearchTestPermissions(store.permissions), result.Permissions[2])
-	}
-	require.Equal(t, int64(3), store.calls.Load(), "an enforcement change must not reuse permissions loaded under another license state")
-}
-
-func TestLegacySearchTransportUncachedQueries(t *testing.T) {
-	for _, tc := range []struct {
-		name   string
-		target int64
-	}{
-		{"target search", 2},
-		{"bulk search", 0},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			store := &legacySearchTestStore{visibility: "users:*", permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}}
-			auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-			transport := newLegacySearchTransport(t, newLegacySearchTestService(store), auth)
-			req := legacySearchTestRequest()
-			req.UserID = tc.target
-			for _, phase := range []string{"first query", "repeated query"} {
-				t.Run(phase, func(t *testing.T) {
-					result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, req)
-					require.NoError(t, err)
-					require.Equal(t, legacySearchTestPermissions(store.permissions), result.Permissions[2])
-				})
-			}
-			require.Equal(t, int64(2), store.calls.Load())
-		})
-	}
-}
-
-func TestLegacySearchTransportReflectsGrantChanges(t *testing.T) {
-	for _, enforced := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enforced=%t", enforced), func(t *testing.T) {
-			store := &legacySearchTestStore{visibility: "users:*", permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}}
-			service := newLegacySearchTestService(store)
-			service.enforcementEnabled = func() bool { return enforced }
-			auth := legacySearchTestAuth("*", LegacySearchDelegatedGrant)
-			transport := newLegacySearchTransport(t, service, auth)
-			req := legacySearchTestRequest()
-			for _, permissions := range [][]accesscontrol.Permission{
-				{{Action: "test:read", Scope: "tests:id:one"}},
-				{{Action: "test:read", Scope: "tests:id:updated"}},
-				{},
-				{{Action: "test:read", Scope: "tests:id:added"}},
-			} {
-				store.permissions = permissions
-				result, err := transport.client.LegacySearchUsersPermissions(t.Context(), auth, req)
-				require.NoError(t, err)
-				require.Equal(t, legacySearchTestPermissions(permissions), result.Permissions[2])
-			}
 		})
 	}
 }

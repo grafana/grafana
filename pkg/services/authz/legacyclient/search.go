@@ -26,8 +26,7 @@ type SearchService interface {
 }
 
 type LegacySearchUsersPermissionsRequest struct {
-	Namespace string
-	// Caller contains trusted requester assertions, distinct from the authenticated service.
+	Namespace    string
 	Caller       LegacyPermissionIdentity
 	UserID       int64
 	Action       string
