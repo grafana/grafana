@@ -20,6 +20,8 @@ export const FlagKeys = {
   AlertRuleRestore: "alertRuleRestore",
   /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
   AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
+  /** Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list */
+  AlertingGmaOnlyListView: "alerting.gmaOnlyListView",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
@@ -427,6 +429,17 @@ export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
+
+/**
+ * Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list
+ *
+ * **Details:**
+ * - flag key: `alerting.gmaOnlyListView`
+ * - default value: `false`
+ */
+export const useFlagAlertingGmaOnlyListView = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.gmaOnlyListView", false, options).value;
 };
 
 /**
