@@ -368,24 +368,8 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if renamed {
-			if newReceiverCreated {
-				// Copy receiver permissions
-				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, string(oldReceiver.UID), string(newReceiver.UID))
-				if err != nil {
-					return err
-				}
-				if permissionsUpdated > 0 {
-					ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiver.Name, "newName", newReceiver.Name, "count", permissionsUpdated)
-				}
-			}
-
-			if fullRemoval {
-				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiver.Name, newReceiver.Name, provenance); err != nil {
-					return err
-				}
-				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, string(oldReceiver.UID)); err != nil {
-					return err
-				}
+			if err := ecp.applyReceiverRename(ctx, orgID, revision, oldReceiver, newReceiver, fullRemoval, newReceiverCreated, provenance); err != nil {
+				return err
 			}
 		}
 		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
@@ -597,6 +581,27 @@ func (ecp *ContactPointService) checkProtectedFields(
 		})
 	}
 	return nil
+}
+
+// applyReceiverRename moves receiver permissions and dependent resources to the renamed receiver.
+// It must run inside the update transaction.
+func (ecp *ContactPointService) applyReceiverRename(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldReceiver, newReceiver *v1.PostableApiReceiver, fullRemoval, newReceiverCreated bool, provenance models.Provenance) error {
+	if newReceiverCreated {
+		permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, string(oldReceiver.UID), string(newReceiver.UID))
+		if err != nil {
+			return err
+		}
+		if permissionsUpdated > 0 {
+			ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiver.Name, "newName", newReceiver.Name, "count", permissionsUpdated)
+		}
+	}
+	if !fullRemoval {
+		return nil
+	}
+	if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiver.Name, newReceiver.Name, provenance); err != nil {
+		return err
+	}
+	return ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, string(oldReceiver.UID))
 }
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
