@@ -661,7 +661,7 @@ describe('<SignalExplorer />', () => {
       await user.click(within(screen.getByTestId('signal-card-B')).getByRole('button', { name: 'Add up to query' }));
 
       expect(onAddToQuery).toHaveBeenCalledTimes(1);
-      expect(onAddToQuery).toHaveBeenCalledWith('B', 'up');
+      expect(onAddToQuery).toHaveBeenCalledWith('B', 'up', 'name');
     });
 
     it('offers the button only on cards whose query is in Code mode', async () => {

@@ -773,16 +773,16 @@ describe('<MetricsList />', () => {
     });
 
     it.each([
-      ['metric name', 'Add up to query', 'up'],
-      ['label key', 'Add label job to query', 'job'],
-      ['label value', 'Add value web-1 to query', 'web-1'],
-    ])('adds the %s to the card’s query', async (_, buttonName, text) => {
+      ['metric name', 'Add up to query', 'up', 'name'],
+      ['label key', 'Add label job to query', 'job', 'name'],
+      ['label value', 'Add value web-1 to query', 'web-1', 'value'],
+    ])('adds the %s to the card’s query', async (_, buttonName, text, kind) => {
       await openJob({ refId: 'B', editorMode: 'code' });
 
       await userEvent.click(screen.getByRole('button', { name: buttonName }));
 
       expect(onAddToQuery).toHaveBeenCalledTimes(1);
-      expect(onAddToQuery).toHaveBeenCalledWith('B', text);
+      expect(onAddToQuery).toHaveBeenCalledWith('B', text, kind);
     });
 
     it('offers nothing to add in Builder mode', async () => {

@@ -10,6 +10,7 @@ import { type DataQuery } from '@grafana/schema';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
 import { SignalExplorer } from '../SignalExplorer/SignalExplorer';
+import { type ExprTextKind } from '../utils/prometheus';
 
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { QUERIES_PANEL_ID } from './ContentOutlineItem';
@@ -84,7 +85,7 @@ export function ContentOutline({
    * `signalExplorerVisible` already widens this panel on the assumption it can render.
    */
   timeRange: TimeRange;
-  onAddToQuery?: (refId: string, text: string) => void;
+  onAddToQuery?: (refId: string, text: string, kind: ExprTextKind) => void;
 }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)

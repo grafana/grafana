@@ -51,28 +51,75 @@ export function getPrometheusDefaultEditor(jsonData: object | undefined): string
   return jsonData ? readString(jsonData, 'defaultEditor') : undefined;
 }
 
+/** Metric and label names go in as typed; a label value is quoted after a matcher and escaped for its string. */
+export type ExprTextKind = 'name' | 'value';
+
 // The text often completes something the user has opened, like `sum(` or `metric{`, so it follows without a space.
 const NO_SEPARATOR_AFTER = /[\s{([,=~]$/;
+// `[^=!<>]=` keeps comparisons like `>=` and `==` out.
+const MATCHER_END = /(?:[^=!<>]=|!=|[=!]~)\s*$/;
+const REGEX_MATCHER_END = /[=!]~\s*$/;
+const REGEX_SPECIAL = /[\\.+*?()|[\]{}^$]/g;
+
+interface OpenString {
+  quote: string;
+  start: number;
+}
+
+function findOpenString(expr: string): OpenString | undefined {
+  let open: OpenString | undefined;
+  for (let i = 0; i < expr.length; i++) {
+    const char = expr[i];
+    if (open) {
+      // Backtick strings are raw, so a backslash escapes nothing in them.
+      if (char === '\\' && open.quote !== '`') {
+        i++;
+      } else if (char === open.quote) {
+        open = undefined;
+      }
+    } else if (char === '#') {
+      const newline = expr.indexOf('\n', i);
+      i = newline === -1 ? expr.length : newline;
+    } else if (char === '"' || char === "'" || char === '`') {
+      open = { quote: char, start: i };
+    }
+  }
+  return open;
+}
+
+function escapeForString(text: string, quote: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replaceAll(quote, `\\${quote}`);
+}
 
 /** Appends `text` to the end of a PromQL expression, the only place the sidebar can reach. */
-export function appendToExpr(expr: string | undefined, text: string): string {
+export function appendToExpr(expr: string | undefined, text: string, kind: ExprTextKind): string {
   if (!expr) {
     return text;
   }
 
-  // A trailing quote only opens a string when it is odd-numbered; otherwise it closes one, like `job="api"`.
-  const quote = expr.at(-1);
-  const opensString = (quote === '"' || quote === "'" || quote === '`') && expr.split(quote).length % 2 === 0;
+  const open = findOpenString(expr);
+  const beforeValue = open ? expr.slice(0, open.start) : expr;
+  const value = kind === 'value' && REGEX_MATCHER_END.test(beforeValue) ? text.replace(REGEX_SPECIAL, '\\$&') : text;
 
-  return NO_SEPARATOR_AFTER.test(expr) || opensString ? `${expr}${text}` : `${expr} ${text}`;
+  if (open?.quote === '`') {
+    // A raw string has no way to escape a backtick.
+    return value.includes('`') ? expr : `${expr}${value}`;
+  }
+  if (open) {
+    return `${expr}${escapeForString(value, open.quote)}`;
+  }
+  if (kind === 'value' && MATCHER_END.test(expr)) {
+    return `${expr}"${escapeForString(value, '"')}"`;
+  }
+  return NO_SEPARATOR_AFTER.test(expr) ? `${expr}${value}` : `${expr} ${value}`;
 }
 
 /** Appends `text` to the expression of the query with `refId`, leaving every other query as it was. */
-export function appendToQueryExpr(queries: DataQuery[], refId: string, text: string): DataQuery[] {
+export function appendToQueryExpr(queries: DataQuery[], refId: string, text: string, kind: ExprTextKind): DataQuery[] {
   return queries.map((query) => {
     if (query.refId !== refId) {
       return query;
     }
-    return { ...query, expr: appendToExpr(readString(query, 'expr'), text) };
+    return { ...query, expr: appendToExpr(readString(query, 'expr'), text, kind) };
   });
 }

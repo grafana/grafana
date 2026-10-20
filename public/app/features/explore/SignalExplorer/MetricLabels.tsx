@@ -4,6 +4,8 @@ import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana
 import { t } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
 
+import { type ExprTextKind } from '../utils/prometheus';
+
 import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
 import { LabelValues } from './LabelValues';
 import { blockId } from './blockId';
@@ -18,7 +20,7 @@ interface Props {
   expandedLabel: string | null;
   onToggleLabel: (labelKey: string) => void;
   /** Left out where the card's query has nowhere to put a label or value. */
-  onAddToQuery?: (text: string) => void;
+  onAddToQuery?: (text: string, kind: ExprTextKind) => void;
 }
 
 /**
@@ -74,6 +76,7 @@ export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onTo
                   {onAddToQuery && (
                     <AddToQueryButton
                       text={labelKey}
+                      kind="name"
                       ariaLabel={t('explore.metrics-list.add-label-to-query', 'Add label {{label}} to query', {
                         label: labelKey,
                       })}

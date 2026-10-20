@@ -71,7 +71,7 @@ import {
 } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { appendToQueryExpr, isPrometheusType } from './utils/prometheus';
+import { appendToQueryExpr, type ExprTextKind, isPrometheusType } from './utils/prometheus';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -168,9 +168,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
     this.props.setQueries(this.props.exploreId, [query]);
   };
 
-  onAddToQuery = (refId: string, text: string) => {
+  onAddToQuery = (refId: string, text: string, kind: ExprTextKind) => {
     const { changeQueries, exploreId, queries } = this.props;
-    changeQueries({ exploreId, queries: appendToQueryExpr(queries, refId, text) });
+    changeQueries({ exploreId, queries: appendToQueryExpr(queries, refId, text, kind) });
   };
 
   onCellFilterAdded = (filter: AdHocFilterItem) => {

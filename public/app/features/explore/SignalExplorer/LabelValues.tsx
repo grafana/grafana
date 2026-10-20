@@ -5,6 +5,8 @@ import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana
 import { t } from '@grafana/i18n';
 import { Button, IconButton, Input, Text, useStyles2 } from '@grafana/ui';
 
+import { type ExprTextKind } from '../utils/prometheus';
+
 import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
 import { dsKey, rangeKey } from './data/metricResourceClient';
 import { useLabelValues } from './data/useLabelValues';
@@ -22,7 +24,7 @@ interface Props {
   metric: string;
   labelKey: string;
   /** Left out where the card's query has nowhere to put a value. */
-  onAddToQuery?: (text: string) => void;
+  onAddToQuery?: (text: string, kind: ExprTextKind) => void;
 }
 
 /**
@@ -99,6 +101,7 @@ export function LabelValues({ id, dsRef, timeRange, metric, labelKey, onAddToQue
               {onAddToQuery && (
                 <AddToQueryButton
                   text={value}
+                  kind="value"
                   ariaLabel={t('explore.metrics-list.add-value-to-query', 'Add value {{value}} to query', { value })}
                   onAdd={onAddToQuery}
                 />

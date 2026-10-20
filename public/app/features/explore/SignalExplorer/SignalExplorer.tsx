@@ -11,7 +11,12 @@ import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { QUERIES_PANEL_ID } from '../ContentOutline/ContentOutlineItem';
 import { scrollOutlineItemIntoView } from '../ContentOutline/scrollIntoView';
-import { getPrometheusEditorMode, isPrometheusType, type PrometheusEditorMode } from '../utils/prometheus';
+import {
+  type ExprTextKind,
+  getPrometheusEditorMode,
+  isPrometheusType,
+  type PrometheusEditorMode,
+} from '../utils/prometheus';
 
 import { MetricDetailPanel } from './MetricDetailPanel';
 import { MetricsList } from './MetricsList';
@@ -51,7 +56,7 @@ interface Props {
   /** Owned by ContentOutline, which holds the collapse state for the whole sidebar. */
   toggleButton: ReactNode;
   /** Appends text to the expression of the query with `refId`. Without it, rows offer no way to add to a query. */
-  onAddToQuery?: (refId: string, text: string) => void;
+  onAddToQuery?: (refId: string, text: string, kind: ExprTextKind) => void;
 }
 
 /**
@@ -216,7 +221,10 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
   // Through a ref, so `MetricsList`'s `memo()` holds even if the caller hands over a new callback per render.
   const onAddToQueryRef = useRef(onAddToQuery);
   onAddToQueryRef.current = onAddToQuery;
-  const addToQuery = useCallback((refId: string, text: string) => onAddToQueryRef.current?.(refId, text), []);
+  const addToQuery = useCallback(
+    (refId: string, text: string, kind: ExprTextKind) => onAddToQueryRef.current?.(refId, text, kind),
+    []
+  );
 
   const jumpToQuery = (refId: string) => {
     // Query rows register themselves as children of the Queries outline item, so

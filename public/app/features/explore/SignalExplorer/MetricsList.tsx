@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { Button, FilterInput, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 
-import { getPrometheusDefaultEditor, type PrometheusEditorMode } from '../utils/prometheus';
+import { type ExprTextKind, getPrometheusDefaultEditor, type PrometheusEditorMode } from '../utils/prometheus';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
@@ -54,7 +54,7 @@ interface Props {
    * Appends a row's text to the card's query. Rows only offer it in Code mode, since the builder has
    * no free text to append to. Must be stable, like `onSelectMetric`.
    */
-  onAddToQuery?: (refId: string, text: string) => void;
+  onAddToQuery?: (refId: string, text: string, kind: ExprTextKind) => void;
 }
 
 /**
@@ -136,7 +136,10 @@ export const MetricsList = memo(function MetricsList({
     undefined
   );
   const codeMode = (editorMode ?? defaultEditor) === 'code';
-  const addToQuery = useCallback((text: string) => onAddToQuery?.(refId, text), [onAddToQuery, refId]);
+  const addToQuery = useCallback(
+    (text: string, kind: ExprTextKind) => onAddToQuery?.(refId, text, kind),
+    [onAddToQuery, refId]
+  );
   const rowAddToQuery = onAddToQuery && codeMode ? addToQuery : undefined;
 
   // The last term reported. `loading` is a dependency below and rises again on every refetch — a
