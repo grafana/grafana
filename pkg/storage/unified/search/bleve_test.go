@@ -2547,6 +2547,86 @@ func TestIndexUpdate(t *testing.T) {
 	require.Equal(t, int64(5), searchTitle(t, idx, "gen_2", 10, ns).TotalHits)
 }
 
+func TestIndexUpdateRVPersistInterval(t *testing.T) {
+	tests := []struct {
+		name          string
+		interval      time.Duration
+		docs          int
+		wantPersisted bool
+	}{
+		{name: "no interval persists every update", interval: 0, docs: 0, wantPersisted: true},
+		{name: "no changes inside interval stay in memory", interval: time.Hour, docs: 0, wantPersisted: false},
+		{name: "changes inside interval persist", interval: time.Hour, docs: 3, wantPersisted: true},
+		{name: "no changes after interval persist", interval: time.Nanosecond, docs: 0, wantPersisted: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "index")
+			index, err := bleve.New(dir, bleve.NewIndexMapping())
+			require.NoError(t, err)
+
+			idx := &bleveIndex{
+				index:             index,
+				logger:            log.NewNopLogger(),
+				rvPersistInterval: tc.interval,
+				updaterFn: func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+					return 20, tc.docs, nil
+				},
+			}
+			idx.updaterCond = sync.NewCond(&idx.updaterMu)
+			require.NoError(t, idx.updateResourceVersion(10))
+
+			rv, err := idx.UpdateIndex(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, int64(20), rv)
+			require.Equal(t, int64(20), idx.resourceVersion.Load())
+
+			persisted, err := getRV(index)
+			require.NoError(t, err)
+			if tc.wantPersisted {
+				require.Equal(t, int64(20), persisted)
+			} else {
+				require.Equal(t, int64(10), persisted)
+			}
+
+			// Close leaves the RV as persisted; a reopen replays from there.
+			require.NoError(t, idx.stopUpdaterAndCloseIndex())
+			reopened, err := bleve.Open(dir)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, reopened.Close()) }()
+			reopenedRV, err := getRV(reopened)
+			require.NoError(t, err)
+			require.Equal(t, persisted, reopenedRV)
+		})
+	}
+}
+
+func TestReopenedIndexDoesNotPersistItsFirstUnchangedUpdate(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	root := t.TempDir()
+	updater := func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+		return 200, 0, nil
+	}
+	build := func() (*bleveBackend, *bleveIndex) {
+		backend, err := NewBleveBackend(BleveOptions{Root: root, FileThreshold: 1, Logger: log.NewNopLogger()}, nil)
+		require.NoError(t, err)
+		idx, err := backend.BuildIndex(t.Context(), key, 3, "test", indexTestDocs(key, 3, 100), updater, false, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		return backend, idx.(*bleveIndex)
+	}
+	first, _ := build()
+	first.Stop()
+
+	// A restart reopens many indexes at once; their first updates should not each write a checkpoint.
+	second, reopened := build()
+	t.Cleanup(second.Stop)
+	_, err := reopened.UpdateIndex(t.Context())
+	require.NoError(t, err)
+	persisted, err := getRV(reopened.index)
+	require.NoError(t, err)
+	require.Equal(t, int64(100), persisted)
+}
+
 func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -3295,7 +3375,7 @@ func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
 		s := &batchAuthzSearcher{
 			namespace: "stacks-1",
 			group:     "dashboard.grafana.app",
-			resources: map[string]string{"dashboards": utils.VerbGet},
+			resources: map[string]string{"dashboard.grafana.app/dashboards": utils.VerbGet},
 			log:       fake,
 		}
 		s.candidates.Store(candidates)
@@ -3312,7 +3392,7 @@ func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
 		require.Equal(t, []any{
 			"namespace", "stacks-1",
 			"group", "dashboard.grafana.app",
-			"resources", "dashboards",
+			"resources", "dashboard.grafana.app/dashboards",
 			"candidates", int64(3),
 			"authorized", int64(0),
 		}, fake.WarnLogs.Ctx)

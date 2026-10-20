@@ -2,7 +2,7 @@ import { type ActionImpl } from 'kbar';
 import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
 import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -42,8 +42,8 @@ jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: () => mockQueryLibraryContext,
 }));
 
-function renderStaticActions() {
-  const store = configureStore({ navBarTree: [] });
+function renderStaticActions(navBarTree: NavModelItem[] = []) {
+  const store = configureStore({ navBarTree });
   const Wrapper = getWrapper({ store, renderWithRouter: true });
   const wrapper = ({ children }: { children: ReactNode }) => <Wrapper>{children}</Wrapper>;
   return renderHook(() => useStaticActions(), { wrapper });
@@ -162,40 +162,30 @@ describe('useStaticActions - open saved queries action', () => {
 });
 
 describe('useStaticActions - new notebook action', () => {
-  const originalPermissions = contextSrv.user.permissions;
+  const notebooksNavItem: NavModelItem = {
+    id: 'notebooks',
+    text: 'Notebooks',
+    url: '/notebooks',
+    children: [{ id: 'notebooks/new', text: 'New notebook', url: '/notebooks/new?edit=true', isCreateAction: true }],
+  };
 
-  afterEach(() => {
-    contextSrv.user.permissions = originalPermissions;
-  });
-
-  afterAll(() => {
-    setTestFlags({});
-  });
-
-  it('includes the new notebook action when enabled and permitted', () => {
-    setTestFlags({ 'dashboard.notebooks': true });
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
-
-    const { result } = renderStaticActions();
-    const action = result.current.find((action) => action.id === 'new-notebook');
+  it('uses the backend create action with command palette attribution', () => {
+    const { result } = renderStaticActions([notebooksNavItem]);
+    const action = result.current.find((action) => action.id === 'navModel.notebooks/new');
     expect(action).toEqual(
       expect.objectContaining({
         name: 'New notebook',
         url: expect.stringContaining('/notebooks/new?edit=true&notebookSource=command_palette'),
+        section: 'Actions',
       })
     );
     expect(action?.perform).toBeUndefined();
+    expect(result.current.filter((action) => action.name === 'New notebook')).toHaveLength(1);
   });
 
-  it('hides the action when notebooks are disabled', () => {
-    setTestFlags({ 'dashboard.notebooks': false });
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
-    expect(renderStaticActions().result.current.some((action) => action.id === 'new-notebook')).toBe(false);
-  });
-
-  it('hides the action when creation is not permitted', () => {
-    setTestFlags({ 'dashboard.notebooks': true });
-    contextSrv.user.permissions = {};
-    expect(renderStaticActions().result.current.some((action) => action.id === 'new-notebook')).toBe(false);
+  it('does not add a create action when the backend only provides the notebooks page', () => {
+    const { result } = renderStaticActions([{ ...notebooksNavItem, children: [] }]);
+    expect(result.current).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'navModel.notebooks' })]));
+    expect(result.current.some((action) => action.name === 'New notebook')).toBe(false);
   });
 });

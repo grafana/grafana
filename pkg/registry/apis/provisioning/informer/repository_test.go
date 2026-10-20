@@ -161,14 +161,14 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil)
+		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil, nil)
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
 
 	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil)
+		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
 		_, err := getter.Get(context.Background(), testNamespace, "r")

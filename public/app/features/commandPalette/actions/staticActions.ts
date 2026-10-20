@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagDashboardNotebooks, useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -20,7 +20,6 @@ import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/Da
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
-import { canCreateNotebooks } from 'app/features/notebook/permissions';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
@@ -56,7 +55,8 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       continue;
     }
 
-    let urlOrCallback: CommandPaletteAction['url'] = url;
+    let urlOrCallback: CommandPaletteAction['url'] =
+      navItem.id === 'notebooks/new' ? notebookNewEditHref(NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE) : url;
     if (
       url &&
       (navItem.id === 'connections-add-new-connection' ||
@@ -165,7 +165,6 @@ export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
-  const notebooksEnabled = useFlagDashboardNotebooks();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
 
@@ -220,17 +219,6 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
 
-    if (notebooksEnabled && canCreateNotebooks()) {
-      navBarActions.push({
-        id: 'new-notebook',
-        name: t('command-palette.action.new-notebook', 'New notebook'),
-        section: t('command-palette.section.actions', 'Actions'),
-        sectionId: SECTION_ACTIONS,
-        priority: ACTIONS_PRIORITY,
-        url: notebookNewEditHref(NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE),
-      });
-    }
-
     const canReadQueries = hasSavedQueryReadPermissions();
 
     if (queryLibraryEnabled && canReadQueries) {
@@ -249,7 +237,6 @@ export function useStaticActions(): CommandPaletteAction[] {
     isAnalyticsFrameworkEnabled,
     isCustomDashboardTemplatesEnabled,
     isTemplateDashboardsAvailable,
-    notebooksEnabled,
     navBarTree,
     queryLibraryEnabled,
     openDrawer,

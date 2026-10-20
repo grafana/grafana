@@ -581,6 +581,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
+   * The Retry button's own entry, so the press is counted and an overwrite, which also calls `retry`,
+   * is not: that one is already reported as the answer to the conflict prompt.
+   */
+  public retryFromButton(): void {
+    NotebookAnalytics.autosaveRetried(this.scene.state.uid ?? '', this.failedAttempts);
+    this.retry();
+  }
+
+  /**
    * Forces a conflicting save through, as the user chose after being told someone else saved first.
    *
    * Skips the resourceVersion precondition for this one write rather than resend the same stale value,

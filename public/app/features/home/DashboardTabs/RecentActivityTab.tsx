@@ -55,7 +55,7 @@ function EmptyStateCta() {
 }
 
 export function RecentActivityTab({ recent, foldersByUid, onStarChange, density }: Props) {
-  const { items, counts, total, loading, error, retry } = recent;
+  const { items, counts, total, filter, loading, error, retry } = recent;
   const styles = useStyles2(getStyles, density === 'compact');
   const navTree = useSelector((state) => state.navBarTree);
 
@@ -73,8 +73,9 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
       explore_count: counts.explore,
       alerting_count: counts.alerting,
       app_count: counts.app,
+      filter,
     });
-  }, [loading, error, counts, total]);
+  }, [loading, error, counts, total, filter]);
 
   if (loading) {
     return <PageLoader text={t('home.recent-activity-tab.loading', 'Loading your recent activity...')} />;
@@ -124,6 +125,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
                   placement: 'list',
                   page_kind: item.kind,
                   position,
+                  filter,
                 })
               }
               trailing={

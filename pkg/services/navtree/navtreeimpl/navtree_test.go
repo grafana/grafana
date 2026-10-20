@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -198,6 +199,55 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 
 		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(false)))
 	})
+
+	for _, testCase := range []struct {
+		name        string
+		permissions []ac.Permission
+		wantSection bool
+		wantCreate  bool
+	}{
+		{
+			name:        "reader has no create action",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksRead}},
+			wantSection: true,
+		},
+		{
+			name:        "creator has a create action",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksRead}, {Action: notebooks.ActionNotebooksCreate}},
+			wantSection: true,
+			wantCreate:  true,
+		},
+		{
+			name:        "create permission alone does not expose the section",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksCreate}},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
+			cfg := setting.NewCfg()
+			cfg.AppSubURL = "/grafana"
+			service := &ServiceImpl{
+				cfg:           cfg,
+				accessControl: accesscontrolmock.New().WithPermissions(testCase.permissions),
+				features:      featuremgmt.WithFeatures(),
+			}
+			link := service.buildNotebooksNavLink(newReqCtx(true))
+			if !testCase.wantSection {
+				require.Nil(t, link)
+				return
+			}
+			require.NotNil(t, link)
+			require.Equal(t, "/grafana/notebooks", link.Url)
+			if !testCase.wantCreate {
+				require.Empty(t, link.Children)
+				return
+			}
+			require.Equal(t, []*navtree.NavLink{{
+				Text: "New notebook", Id: "notebooks/new", Icon: "plus",
+				Url: "/grafana/notebooks/new?edit=true", HideFromTabs: true, IsCreateAction: true,
+			}}, link.Children)
+		})
+	}
 }
 
 func TestBuildAlertNavLinks(t *testing.T) {
@@ -319,6 +369,85 @@ func TestBuildAlertNavLinks_RecentlyDeleted(t *testing.T) {
 			link := findChildLink(service.buildAlertNavLinks(reqCtx), "alerts/recently-deleted")
 
 			require.Equal(t, tc.expectedVisible, link != nil, "unexpected visibility of the recently deleted nav link")
+		})
+	}
+}
+
+func TestBuildAlertNavLinks_AlertActivity(t *testing.T) {
+	prometheusStateHistory := setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom-uid"}
+	permissions := []ac.Permission{
+		{Action: ac.ActionAlertingRuleRead, Scope: "*"},
+		{Action: ac.ActionAlertingInstanceRead, Scope: "*"},
+	}
+
+	testCases := []struct {
+		name               string
+		stateHistory       setting.UnifiedAlertingStateHistorySettings
+		features           []any
+		expectedActivityID string
+		expectedGroups     bool
+	}{
+		{
+			name:               "shown when state history writes to prometheus",
+			stateHistory:       prometheusStateHistory,
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "alert-alerts",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when state history does not write to prometheus",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom-uid"},
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when the feature flag is turned off",
+			stateHistory:       prometheusStateHistory,
+			features:           nil,
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+		{
+			name:               "navigation V2 moves alert groups into a tab of alert activity",
+			stateHistory:       prometheusStateHistory,
+			features:           []any{featuremgmt.FlagAlertingTriage, featuremgmt.FlagAlertingNavigationV2},
+			expectedActivityID: "alert-activity",
+			expectedGroups:     false,
+		},
+		{
+			name:               "navigation V2 keeps alert groups when alert activity is unavailable",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations"},
+			features:           []any{featuremgmt.FlagAlertingTriage, featuremgmt.FlagAlertingNavigationV2},
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.StateHistory = tc.stateHistory
+
+			service := ServiceImpl{
+				cfg:           cfg,
+				accessControl: accesscontrolmock.New().WithPermissions(permissions),
+				features:      featuremgmt.WithFeatures(tc.features...),
+			}
+
+			httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+				IsSignedIn:   true,
+				Context:      &web.Context{Req: httpReq},
+			}
+
+			alertNav := service.buildAlertNavLinks(reqCtx)
+
+			for _, id := range []string{"alert-alerts", "alert-activity"} {
+				require.Equal(t, id == tc.expectedActivityID, findChildLink(alertNav, id) != nil, "unexpected visibility of the %q nav link", id)
+			}
+			require.Equal(t, tc.expectedGroups, findChildLink(alertNav, "groups") != nil, "unexpected visibility of the alert groups nav link")
 		})
 	}
 }

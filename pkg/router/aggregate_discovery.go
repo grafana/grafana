@@ -33,11 +33,13 @@ type discoveredGroup struct {
 // discovery group is left out.
 func discoverGroupResources(ctx context.Context, client *http.Client, baseURL string) ([]discoveredGroup, error) {
 	// A trailing slash would produce "//apis", which servers route differently.
+	// #nosec G704 -- baseURL is operator-controlled configuration: an aggregate target's url or st_discovery_url.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
 	}
 	req.Header.Set("Accept", aggregatedDiscoveryJSON+", application/json")
+	// #nosec G704 -- req targets the operator-configured base URL above.
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("router: discovery request to %s failed: %w", baseURL, err)

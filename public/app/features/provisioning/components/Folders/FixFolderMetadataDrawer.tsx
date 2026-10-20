@@ -163,13 +163,13 @@ function FixFolderMetadataForm({
           />
 
           <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
-            </Button>
             <Button type="submit" disabled={createJobState.isLoading || isJobActive}>
               {createJobState.isLoading
                 ? t('provisioning.fix-folder-metadata-drawer.submitting', 'Fixing...')
                 : t('provisioning.fix-folder-metadata-drawer.submit', 'Fix folder IDs')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>

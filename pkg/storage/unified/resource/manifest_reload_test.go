@@ -64,10 +64,9 @@ func TestManifestWatcher_ReloadsSearchOptionsBeforeRunning(t *testing.T) {
 	}
 	reloads := make(chan initialReload, 1)
 	var watcher *ManifestWatcher
-	watcher = newManifestWatcher(fakeManifestClient(live), time.Hour, func(manifests []*app.ManifestData) {
+	watcher = newManifestWatcher(appManifestSources(fakeManifestClient(live)), time.Hour, func(manifests []*app.ManifestData) {
 		reloads <- initialReload{state: watcher.State(), err: opts.ReloadManifests(builtin, manifests)}
-	}, nil)
-	watcher.Service = services.NewBasicService(watcher.starting, watcher.running, nil)
+	}, nil, nil)
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
 		defer cancel()
@@ -106,10 +105,10 @@ func TestManifestWatcher_KeepsPreviousConfigWhenSDKRejectsEmbedding(t *testing.T
 			opts := manifestReloadOptions(t, nil)
 			var reloadErr error
 			var reloads int
-			watcher := newManifestWatcher(client, 0, func(manifests []*app.ManifestData) {
+			watcher := newManifestWatcher(appManifestSources(client), 0, func(manifests []*app.ManifestData) {
 				reloads++
 				reloadErr = opts.ReloadManifests(nil, manifests)
-			}, nil)
+			}, nil, nil)
 			watcher.runPollCycle(t.Context())
 			require.Equal(t, 1, reloads)
 			require.NoError(t, reloadErr)
@@ -198,10 +197,10 @@ func TestManifestWatcher_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
 	opts := manifestReloadOptions(t, nil)
 	var reloadErr error
 	var reloads int
-	watcher := newManifestWatcher(client, 0, func(manifests []*app.ManifestData) {
+	watcher := newManifestWatcher(appManifestSources(client), 0, func(manifests []*app.ManifestData) {
 		reloads++
 		reloadErr = opts.ReloadManifests(nil, manifests)
-	}, nil)
+	}, nil, nil)
 	watcher.runPollCycle(t.Context())
 	require.NoError(t, reloadErr)
 	gvr := schema.GroupVersionResource{Group: "widgets.test", Version: "v1", Resource: "widgets"}

@@ -73,6 +73,13 @@ const alertingNavItem: NavModelItem = {
   children: [{ text: 'New alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
 };
 
+const notebooksNavItem: NavModelItem = {
+  text: 'Notebooks',
+  id: 'notebooks',
+  url: '/notebooks',
+  children: [{ text: 'New notebook', id: 'notebooks/new', url: '/notebooks/new?edit=true', isCreateAction: true }],
+};
+
 const setup = (navBarTree?: NavModelItem[]) => {
   const tree: NavModelItem[] = navBarTree ?? [
     dashboardsNavItem,
@@ -91,7 +98,6 @@ const setup = (navBarTree?: NavModelItem[]) => {
 
 describe('QuickAdd', () => {
   const originalDashboardTemplates = config.featureToggles.dashboardTemplates;
-  const originalPermissions = contextSrv.user.permissions;
 
   beforeAll(() => {
     jest.spyOn(window, 'matchMedia').mockImplementation(
@@ -111,12 +117,11 @@ describe('QuickAdd', () => {
     config.featureToggles.dashboardTemplates = false;
     mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
-    setTestFlags({ 'grafana.customDashboardTemplates': false, 'dashboard.notebooks': false });
+    setTestFlags({ 'grafana.customDashboardTemplates': false });
   });
 
   afterEach(() => {
     config.featureToggles.dashboardTemplates = originalDashboardTemplates;
-    contextSrv.user.permissions = originalPermissions;
   });
 
   it('renders a `New` button', () => {
@@ -178,10 +183,8 @@ describe('QuickAdd', () => {
     expect(within(ungroupedGroup!).getByRole('menuitem', { name: 'New import' })).toBeInTheDocument();
   });
 
-  it('shows New notebook in a Notebooks group when creation is allowed', async () => {
-    setTestFlags({ 'dashboard.notebooks': true });
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
-    setup([]);
+  it('shows the backend notebook create action with Quick Add attribution', async () => {
+    setup([notebooksNavItem]);
 
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
     const notebookGroup = screen.getByRole('group', { name: 'Notebooks' });
@@ -189,12 +192,11 @@ describe('QuickAdd', () => {
       'href',
       expect.stringContaining('/notebooks/new?edit=true&notebookSource=quick_add')
     );
+    expect(screen.getAllByRole('menuitem', { name: 'New notebook' })).toHaveLength(1);
   });
 
-  it('places the Notebooks group after Dashboards', async () => {
-    setTestFlags({ 'dashboard.notebooks': true });
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
-    setup();
+  it('keeps the notebook create action in backend navigation order', async () => {
+    setup([dashboardsNavItem, notebooksNavItem, alertingNavItem]);
 
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
     const groups = screen.getAllByRole('group');
@@ -202,18 +204,10 @@ describe('QuickAdd', () => {
     expect(groups[groups.indexOf(dashboardGroup) + 1]).toBe(screen.getByRole('group', { name: 'Notebooks' }));
   });
 
-  it('hides New notebook when the feature is disabled', async () => {
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
-    setup();
+  it('does not add a notebook action when the backend omits it', async () => {
+    setup([dashboardsNavItem, { ...notebooksNavItem, children: [] }]);
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
-    expect(screen.queryByRole('group', { name: 'Notebooks' })).not.toBeInTheDocument();
-  });
-
-  it('hides New notebook without create permission', async () => {
-    setTestFlags({ 'dashboard.notebooks': true });
-    contextSrv.user.permissions = {};
-    setup();
-    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Notebooks' })).not.toBeInTheDocument();
   });
 

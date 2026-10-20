@@ -2118,8 +2118,8 @@
       "add-matcher": "Add matcher",
       "aria-label-operator": "operator",
       "aria-label-remove-matcher": "Remove matcher",
-      "label-alert-rule": "Alert rule",
       "label-label": "Label",
+      "label-matching-labels": "Matching labels",
       "label-operator": "Operator",
       "label-refine-affected-alerts": "Refine affected alerts",
       "label-value": "Value",
@@ -3472,7 +3472,11 @@
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "silences-editor": {
+      "alert-rule-unavailable": "Alert rule unavailable",
       "comment-placeholder-details-about-the-silence": "Details about the silence",
+      "description-alert-rule-scope": "This silence applies only to alerts from this alert rule.",
+      "description-alert-rule-unavailable": "This silence applies only to alerts from the alert rule with UID {{ruleUid}}. The rule may have been deleted, or you may not have permission to view it.",
+      "label-alert-rule": "Alert rule",
       "label-comment": "Comment",
       "label-created-by": "Created By",
       "label-duration": "Duration",
@@ -5163,7 +5167,6 @@
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
-      "new-notebook": "New notebook",
       "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
     },
@@ -6152,6 +6155,17 @@
     },
     "panel-editor": {
       "ad-hoc-transformations-disabled": "Ad hoc transformations are disabled in edit mode"
+    },
+    "plan-building-overlay": {
+      "quip-corners": "Polishing the panel corners…",
+      "quip-green": "Picking a nice shade of green…",
+      "quip-gridlines": "Lining up the gridlines…",
+      "quip-legend": "Teaching the legend to behave…",
+      "quip-metrics": "Asking the metrics nicely…",
+      "quip-pie-charts": "Arguing about pie charts…",
+      "quip-points": "Rounding up the data points…",
+      "quip-series": "Untangling the time series…",
+      "title": "Preparing to build your dashboard"
     },
     "plan-placeholder-badge": {
       "text": "Sample data",
@@ -12152,7 +12166,8 @@
         "loading-message": "Loading trace..."
       },
       "trace-section": "Trace",
-      "unpin-line": "Unpin log"
+      "unpin-line": "Unpin log",
+      "view-in-traces-drilldown": "View in Traces Drilldown"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
@@ -12894,6 +12909,9 @@
     "new-folder": {
       "title": "New folder"
     },
+    "new-notebook": {
+      "title": "New notebook"
+    },
     "notebooks": {
       "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
@@ -13110,7 +13128,6 @@
       "starred-dashboard-icon": "Dashboard",
       "starred-folder-icon": "Folder"
     },
-    "notebooks": "Notebooks",
     "org-switcher": {
       "aria-label": "Change organization"
     },
@@ -13119,7 +13136,6 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-notebook-button": "New notebook",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
