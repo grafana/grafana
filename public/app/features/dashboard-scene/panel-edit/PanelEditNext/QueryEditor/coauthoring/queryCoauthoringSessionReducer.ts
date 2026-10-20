@@ -1,4 +1,3 @@
-import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 import { type QueryCoauthoringRequestError, type QueryCoauthoringRequestOutcome } from './queryCoauthoringRequest';
 import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession';
@@ -24,7 +23,6 @@ type PromptSnapshot = Extract<SessionSnapshot, { kind: 'prompt' }>;
 
 interface SessionData {
   prompt: PromptSnapshot;
-  feedback?: QueryCoauthoringFeedbackState;
   submittedIntents: string[];
   iterationNudgeDismissed: boolean;
   requestId: number;
@@ -40,7 +38,6 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'invocation-cleared' }
   | { type: 'request-invalidated' }
   | { type: 'intent-changed'; intent: string }
-  | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
   | {
       type: 'invocation-updated';
       context?: QueryEditorCoauthoringContextV1;
@@ -155,8 +152,6 @@ export function queryCoauthoringSessionReducer(
         updateSession(current, (view) => (view.kind === 'prompt' ? prompt : view))
       );
     }
-    case 'feedback-changed':
-      return { ...state, data: { ...state.data, feedback: event.feedback } };
     case 'invocation-updated': {
       const prompt = {
         ...state.data.prompt,

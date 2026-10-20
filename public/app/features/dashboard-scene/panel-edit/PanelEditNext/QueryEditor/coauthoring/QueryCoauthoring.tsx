@@ -6,7 +6,6 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
-import { QueryCoauthoringFeedback } from './QueryCoauthoringFeedback';
 import {
   QueryCoauthoringClarificationAction,
   QueryCoauthoringFallback,
@@ -72,11 +71,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       }
       event.preventDefault();
       event.stopPropagation();
-      if (session.feedback) {
-        session.closeFeedback();
-      } else {
-        session.dismiss();
-      }
+      session.dismiss();
     },
     [session]
   );
@@ -264,7 +259,6 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           onAccept={state.accept}
         />
       )}
-      {session.feedback && <QueryCoauthoringFeedback feedback={session.feedback} onClose={session.closeFeedback} />}
     </div>,
     portalTarget
   );

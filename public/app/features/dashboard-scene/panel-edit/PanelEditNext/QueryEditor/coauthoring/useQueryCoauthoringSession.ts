@@ -4,12 +4,12 @@ import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@g
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 
-import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringProposalResultV1,
 } from './internalCoauthoringContract';
+import { publishQueryCoauthoringFeedback, type QueryCoauthoringFeedbackState } from './queryCoauthoringFeedback';
 import {
   buildAssistantHandoffContext,
   buildAssistantHandoffInstructions,
@@ -159,7 +159,7 @@ export function useQueryCoauthoringSession({
     send({ type: 'intent-changed', intent });
   };
   const setFeedback = (feedback: QueryCoauthoringFeedbackState): void => {
-    send({ type: 'feedback-changed', feedback });
+    publishQueryCoauthoringFeedback(feedback);
   };
 
   useEffect(() => {
@@ -203,9 +203,6 @@ export function useQueryCoauthoringSession({
     promptUserGestureRef.current = false;
   }, [cancel, clearInvocation, reset, revertQueryPreview, send]);
 
-  const closeFeedback = useCallback((): void => {
-    send({ type: 'feedback-changed' });
-  }, [send]);
   const dismiss = useCallback(() => {
     clear();
     adapter.dismiss();
@@ -419,5 +416,5 @@ export function useQueryCoauthoringSession({
       };
   }
 
-  return { closeFeedback, dismiss: dismissPopover, feedback: session.data.feedback, state };
+  return { dismiss: dismissPopover, state };
 }

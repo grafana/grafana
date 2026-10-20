@@ -6,11 +6,11 @@ import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Icon, IconButton, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
-import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
   type QueryEditorCoauthoringChangeV1,
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
+import { type QueryCoauthoringFeedbackState } from './queryCoauthoringFeedback';
 import { workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {
