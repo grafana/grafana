@@ -48,11 +48,16 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // tell a live write that outran the snapshot from an object the snapshot dropped;
 // 0 disables that reconciliation. See Store.Replace.
 //
-// A ListFunc may return its objects together with ErrPartialList to signal that
-// the set is a deliberately truncated view — e.g. the jobs list stopped
-// paginating under worker backpressure — rather than the complete resource. The
-// informer upserts a partial list (adds/updates only) instead of diffing it for
-// deletes; see relist. Any other non-nil error means the list failed.
+// A ListFunc may return its objects together with ErrPartialList or ErrPruneList
+// to qualify the set:
+//   - ErrPartialList — a deliberately truncated view (e.g. the jobs list stopped
+//     paginating under worker backpressure). The informer upserts it (adds/updates
+//     only) and never diffs for removals.
+//   - ErrPruneList — a complete, consistent snapshot delivered only to reconcile
+//     removals. The informer diffs it for deletes but does not re-dispatch the
+//     survivors, because a prior sequence of partial lists already delivered them.
+//
+// See relist. Any other non-nil error means the list failed.
 type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, err error)
 
 // ErrPartialList is returned by a ListFunc alongside a valid object slice to mark
@@ -61,6 +66,16 @@ type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, er
 // a failure. On a partial list the informer upserts what it got (Merge) and never
 // diffs for removals, because the objects it did not fetch are unread, not gone.
 var ErrPartialList = errors.New("nats informer: partial list")
+
+// ErrPruneList is returned by a ListFunc alongside a complete, consistent snapshot
+// that exists only to prune: the informer runs the delete diff (Store.Replace) so
+// the snapshot drops keys no longer present, but dispatches the removals only and
+// suppresses the adds/updates of survivors. It is used when a sequence of partial
+// lists has already rotated through and delivered every object, so re-dispatching
+// the full surviving set would re-enqueue the whole backlog in one pass — the very
+// spike the partial lists exist to avoid. Like ErrPartialList it is a signal, not a
+// failure.
+var ErrPruneList = errors.New("nats informer: prune list")
 
 // Verb values passed to the Metrics event observations.
 const (
@@ -515,12 +530,12 @@ func (n *Informer) onNotification() nats.MessageHandler {
 // isInInitialList=true) and there is nothing to delete.
 func (n *Informer) relist(ctx context.Context, initial bool) error {
 	objs, listRV, err := n.list(ctx)
-	// ErrPartialList is a signal, not a failure: it rides with a valid but
-	// deliberately truncated set (see ErrPartialList). Any other error means the
-	// list failed and objs must be ignored — return so the snapshot is untouched
-	// and the next tick retries.
+	// ErrPartialList and ErrPruneList are signals, not failures: each rides with a
+	// valid set (see their docs). Any other error means the list failed and objs
+	// must be ignored — return so the snapshot is untouched and the next tick retries.
 	partial := errors.Is(err, ErrPartialList)
-	if err != nil && !partial {
+	prune := errors.Is(err, ErrPruneList)
+	if err != nil && !partial && !prune {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
 		return err
 	}
@@ -542,7 +557,14 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// are the keys to dispatch as adds/updates/deletes, with objects a live write
 	// already delivered here filtered out.
 	added, updated, removed := n.store.Replace(objs, listRV)
-	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
+	if prune {
+		// A prune re-list reconciles the snapshot (Replace already dropped the absent
+		// keys) but must not re-dispatch survivors: the partial lists that preceded it
+		// already delivered every object, so offering the whole surviving set again
+		// would re-enqueue the entire backlog in one pass. Only the removals matter.
+		added, updated = nil, nil
+	}
+	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial, "prune", prune,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
 	n.dispatchRelist(added, updated, removed, initial)
 	return nil

@@ -76,16 +76,23 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 	// saturated does not re-read page 1 forever (see resumableLister).
 	lister := &resumableLister{}
 	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-		objs, listRV, complete, err := lister.list(ctx, page, hasCapacity)
+		objs, listRV, kind, err := lister.list(ctx, page, hasCapacity)
 		if err != nil {
 			return nil, 0, err
 		}
-		if !complete {
+		switch kind {
+		case sweepPartial:
 			// Signal the truncation so the informer upserts what we read instead of
 			// diffing it for deletes; the objects we skipped are unread, not gone.
 			return objs, listRV, usinformer.ErrPartialList
+		case sweepPrune:
+			// A full snapshot read only to drop stale keys: the rotation that preceded
+			// it already delivered these jobs, so the informer prunes without
+			// re-enqueuing the surviving backlog.
+			return objs, listRV, usinformer.ErrPruneList
+		default:
+			return objs, listRV, nil
 		}
-		return objs, listRV, nil
 	}
 	return usinformer.NewInformer(subscriber, provisioningapis.JobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }

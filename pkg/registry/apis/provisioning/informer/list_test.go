@@ -216,19 +216,19 @@ func TestResumableListerRotatesUnderBackpressure(t *testing.T) {
 	pages := fivePages()
 	r := &resumableLister{}
 
-	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	out, _, kind, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
-	require.False(t, complete)
+	require.Equal(t, sweepPartial, kind)
 	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "pass 1 reads page 1")
 
-	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	out, _, kind, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
-	require.False(t, complete)
+	require.Equal(t, sweepPartial, kind)
 	require.Equal(t, []string{"c", "d"}, jobNames(t, out), "pass 2 advances past the pages already covered")
 
-	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	out, _, kind, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
-	require.False(t, complete, "a resumed sweep that reaches the end is still partial — it never saw the earlier pages in one snapshot")
+	require.Equal(t, sweepPartial, kind, "a resumed sweep that reaches the end is still partial — it never saw the earlier pages in one snapshot")
 	require.Equal(t, []string{"e"}, jobNames(t, out), "pass 3 reads the last page")
 }
 
@@ -248,9 +248,9 @@ func TestResumableListerGatesResumedPassWhenSaturated(t *testing.T) {
 	// Now saturated: no capacity even to start. The resumed pass fetches nothing.
 	var calls []string
 	saturated := func([]runtime.Object) bool { return false }
-	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, &calls), saturated)
+	out, _, kind, err := r.list(context.Background(), recordingPageFunc(pages, &calls), saturated)
 	require.NoError(t, err)
-	require.False(t, complete)
+	require.Equal(t, sweepPartial, kind)
 	require.Empty(t, out, "a saturated resumed pass gathers nothing")
 	require.Empty(t, calls, "and issues no LIST request")
 
@@ -264,41 +264,43 @@ func TestResumableListerGatesResumedPassWhenSaturated(t *testing.T) {
 // complete — the one case the informer may delete-diff.
 func TestResumableListerCompleteOnFullSweep(t *testing.T) {
 	r := &resumableLister{}
-	out, _, complete, err := r.list(context.Background(), recordingPageFunc(fivePages(), nil), func([]runtime.Object) bool { return true })
+	out, _, kind, err := r.list(context.Background(), recordingPageFunc(fivePages(), nil), func([]runtime.Object) bool { return true })
 	require.NoError(t, err)
-	require.True(t, complete, "a sweep from page 1 to the end is complete")
+	require.Equal(t, sweepComplete, kind, "a sweep from page 1 to the end is complete")
 	require.Equal(t, []string{"a", "b", "c", "d", "e"}, jobNames(t, out))
 }
 
 // Once partial passes have rotated through every page, the next fresh sweep must
-// run a complete pruning sweep — reading the whole list in one snapshot regardless
-// of capacity — so the informer can delete-diff and drop jobs whose queue-grouped
-// delete this replica missed. Without it the Merge-only snapshot grows unbounded.
+// run a pruning sweep — reading the whole list in one snapshot regardless of
+// capacity — so the informer can delete-diff and drop jobs whose queue-grouped
+// delete this replica missed. It is reported as sweepPrune (not sweepComplete) so
+// the informer prunes without re-dispatching the survivors. Without it the
+// Merge-only snapshot grows unbounded.
 func TestResumableListerPrunesAfterFullRotation(t *testing.T) {
 	pages := fivePages()
 	r := &resumableLister{}
 
 	// Rotate through all pages via one-page partial passes.
 	for _, want := range [][]string{{"a", "b"}, {"c", "d"}, {"e"}} {
-		out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+		out, _, kind, err := r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 		require.NoError(t, err)
-		require.False(t, complete)
+		require.Equal(t, sweepPartial, kind)
 		require.Equal(t, want, jobNames(t, out))
 	}
 
 	// The rotation covered every page, so the next sweep prunes: it ignores the
-	// one-page capacity limit and reads the whole list, and is reported complete.
+	// one-page capacity limit and reads the whole list, reported as sweepPrune.
 	var calls []string
-	out, _, complete, err := r.list(context.Background(), recordingPageFunc(pages, &calls), capacityForOnePage)
+	out, _, kind, err := r.list(context.Background(), recordingPageFunc(pages, &calls), capacityForOnePage)
 	require.NoError(t, err)
-	require.True(t, complete, "the post-rotation sweep is complete so the informer delete-diffs")
+	require.Equal(t, sweepPrune, kind, "the post-rotation sweep prunes: delete-diff without re-dispatching survivors")
 	require.Equal(t, []string{"a", "b", "c", "d", "e"}, jobNames(t, out))
 	require.Equal(t, []string{"", "page2", "page3"}, calls, "it read every page despite the capacity limit")
 
 	// After pruning it returns to gated bootstrapping from page 1.
-	out, _, complete, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
+	out, _, kind, err = r.list(context.Background(), recordingPageFunc(pages, nil), capacityForOnePage)
 	require.NoError(t, err)
-	require.False(t, complete)
+	require.Equal(t, sweepPartial, kind)
 	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "the prune is one-shot; gating resumes")
 }
 
@@ -318,15 +320,15 @@ func TestResumableListerRestartsOnExpiredResumeToken(t *testing.T) {
 	}
 	r := &resumableLister{}
 
-	_, _, complete, err := r.list(context.Background(), page, capacityForOnePage)
+	_, _, kind, err := r.list(context.Background(), page, capacityForOnePage)
 	require.NoError(t, err) // pass 1 reads page 1, resumes at page2
-	require.False(t, complete)
+	require.Equal(t, sweepPartial, kind)
 
 	// The snapshot page2 pointed at is compacted before the next pass.
 	expirePage2 = true
-	out, _, complete, err := r.list(context.Background(), page, capacityForOnePage)
+	out, _, kind, err := r.list(context.Background(), page, capacityForOnePage)
 	require.NoError(t, err, "an expired resume token must not fail the re-list")
-	require.False(t, complete)
+	require.Equal(t, sweepPartial, kind)
 	require.Equal(t, []string{"a", "b"}, jobNames(t, out), "it restarts the sweep from page 1")
 }
 

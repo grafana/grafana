@@ -169,32 +169,56 @@ type resumableLister struct {
 	pruneNext bool
 }
 
+// sweepKind qualifies the objects a resumableLister pass returns, so the informer
+// knows how to reconcile them.
+type sweepKind int
+
+const (
+	// sweepPartial is a deliberately truncated view: upsert only, never delete-diff.
+	sweepPartial sweepKind = iota
+	// sweepComplete is a consistent full snapshot read from page 1 to the end:
+	// delete-diff and dispatch adds/updates/removals.
+	sweepComplete
+	// sweepPrune is a consistent full snapshot read only to reconcile removals,
+	// because a prior rotation of partial passes already delivered every object:
+	// delete-diff but dispatch removals only, never re-dispatching survivors.
+	sweepPrune
+)
+
 // list reads the next window of pages via listPages, resuming from where the
-// previous partial call stopped. complete is true only for a sweep that started
-// at page 1 and reached the end in one continue-token chain — the only case whose
-// objects form a consistent full snapshot the informer may delete-diff. An expired
-// resume token (the snapshot it pointed into was compacted between resyncs) is not
-// fatal: the sweep restarts from page 1 rather than failing the whole re-list.
+// previous partial call stopped, and reports the kind of sweep it produced.
+// sweepComplete and sweepPrune arise only from a sweep that started at page 1 and
+// reached the end in one continue-token chain — the only case whose objects form a
+// consistent full snapshot the informer may delete-diff. An expired resume token
+// (the snapshot it pointed into was compacted between resyncs) is not fatal: the
+// sweep restarts from page 1 rather than failing the whole re-list.
 //
 // A resumed pass re-checks capacity before pulling its next window: a fresh sweep
 // always reads page 1 to keep the workers fed, but continuing a prior partial pass
 // while the queue is still saturated would append another page of keys per resync
 // and, over time, load the entire backlog despite no worker slot opening. When
 // that happens the pass is a no-op that preserves its resume point for later.
-func (r *resumableLister) list(ctx context.Context, page pageFunc, keepPaging func(objs []runtime.Object) bool) (objs []runtime.Object, listRV int64, complete bool, err error) {
+//
+// A pruning sweep (scheduled once a rotation of partial passes has covered every
+// page) reads the whole list regardless of capacity so removals can be computed,
+// but reports sweepPrune so the informer does not re-dispatch the survivors — the
+// rotation already delivered them, and re-offering the full set would re-enqueue
+// the backlog in one pass.
+func (r *resumableLister) list(ctx context.Context, page pageFunc, keepPaging func(objs []runtime.Object) bool) (objs []runtime.Object, listRV int64, kind sweepKind, err error) {
 	startedFresh := r.cont == ""
 
 	// Gate a resumed pass on capacity before fetching anything (keepPaging with no
 	// objects is the "is there room at all" question). A fresh sweep is exempt: its
 	// first page is the bootstrap that keeps the workers fed.
 	if !startedFresh && keepPaging != nil && !keepPaging(nil) {
-		return nil, 0, false, nil
+		return nil, 0, sweepPartial, nil
 	}
 
 	// A pruning sweep reads every page regardless of capacity so the result is a
 	// complete snapshot the informer can delete-diff.
+	pruning := startedFresh && r.pruneNext
 	gate := keepPaging
-	if startedFresh && r.pruneNext {
+	if pruning {
 		gate = nil
 	}
 
@@ -202,30 +226,36 @@ func (r *resumableLister) list(ctx context.Context, page pageFunc, keepPaging fu
 	if err != nil && !startedFresh && isExpiredToken(err) {
 		r.cont = ""
 		startedFresh = true
+		pruning = r.pruneNext
 		gate = keepPaging
-		if r.pruneNext {
+		if pruning {
 			gate = nil
 		}
 		objs, listRV, next, err = listPages(ctx, page, "", gate)
 	}
 	if err != nil {
-		return nil, 0, false, err
+		return nil, 0, sweepPartial, err
 	}
 	r.cont = next
 
 	switch {
 	case startedFresh && next == "":
 		// A full, consistent snapshot: safe to delete-diff, and it discharges any
-		// pending prune.
+		// pending prune. A prune sweep diffs for removals but suppresses survivor
+		// re-dispatch; a plain complete sweep (the list fit within capacity)
+		// dispatches everything.
 		r.pruneNext = false
-		return objs, listRV, true, nil
+		if pruning {
+			return objs, listRV, sweepPrune, nil
+		}
+		return objs, listRV, sweepComplete, nil
 	case !startedFresh && next == "":
 		// Finished rotating through every page via partial passes; schedule the next
 		// fresh sweep to run a complete prune. This resumed sweep is itself still
 		// partial — its pages came from different snapshots, so it cannot be diffed.
 		r.pruneNext = true
 	}
-	return objs, listRV, false, nil
+	return objs, listRV, sweepPartial, nil
 }
 
 // isExpiredToken reports whether err is the server rejecting a continue token

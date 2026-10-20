@@ -1039,3 +1039,48 @@ func TestInformer_CompleteListAfterPartialResumesDeletes(t *testing.T) {
 		assert.ElementsMatch(t, []string{"a"}, storeNames(store.List(ctx)))
 	})
 }
+
+// A ListFunc that returns ErrPruneList delivers a complete, consistent snapshot
+// used only to reconcile removals: the informer runs the delete diff so the
+// snapshot drops absent keys, but must NOT re-dispatch the survivors. A prune list
+// follows a rotation of partial lists that already delivered every object, so
+// re-offering the whole surviving set would re-enqueue the entire backlog in one
+// pass — the spike the partial lists exist to avoid.
+func TestInformer_PruneListRemovesWithoutRedispatchingSurvivors(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		ctx := context.Background()
+
+		// phase 0: complete list of a,b. phase 1: prune list dropping b (genuinely
+		// gone) while a survives.
+		var phase atomic.Int64
+		list := func(context.Context) ([]runtime.Object, int64, error) {
+			if phase.Load() == 0 {
+				return []runtime.Object{obj("a"), obj("b")}, 0, nil
+			}
+			return []runtime.Object{obj("a")}, 0, ErrPruneList
+		}
+		store := NewStore()
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, store, newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+
+		synctest.Wait()
+		require.True(t, n.HasSynced())
+		require.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+
+		// The prune list drops b from the snapshot and emits its delete, but the
+		// surviving a is not re-offered as an add or update.
+		phase.Store(1)
+		n.signalReconnect()
+		synctest.Wait()
+		assert.Equal(t, []string{"b"}, handler.deletedNames(), "a prune list delete-diffs: the absent key is removed")
+		assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames(), "no new adds: the survivor is not re-dispatched")
+		assert.Empty(t, handler.updatedNames(), "a prune list must not re-offer survivors as updates")
+		assert.ElementsMatch(t, []string{"a"}, storeNames(store.List(ctx)), "the snapshot is pruned")
+	})
+}
