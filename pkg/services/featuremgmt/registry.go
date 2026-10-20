@@ -289,6 +289,15 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:            "provisioning.sharedLiveWatch",
+			Description:     "Serve the provisioning live watch from one shared stream per resource instead of one per user",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,

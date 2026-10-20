@@ -21,9 +21,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 )
@@ -43,9 +45,19 @@ const (
 	defaultMaxZeroChecks = 3
 )
 
-// watchKey identifies one upstream watch. The channel is part of the key, so
-// every subscriber gets its own watch and the apiserver authorizes the stream
-// for the subscribing user.
+// probeTimeout bounds the subscribe-time authorization request. Subscribing is
+// interactive, so a stuck apiserver must fail the subscription rather than hold
+// the websocket handler.
+const probeTimeout = 10 * time.Second
+
+// watchKey identifies one upstream watch.
+//
+// channel is set only when the watch belongs to a single subscriber, which is
+// what makes the apiserver authorize the stream for that user. A shared watch
+// leaves it empty, so every subscriber of the same resource in the same
+// namespace resolves to one key. Mixing both shapes in the map is harmless: a
+// watcher created in one mode simply never matches a lookup made in the other
+// and ages out when its subscribers leave.
 type watchKey struct {
 	namespace string
 	gvr       schema.GroupVersionResource
@@ -119,7 +131,25 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 			fmt.Errorf("watching provisioned resources is only allowed for provisioning (for now)")
 	}
 
-	key := watchKey{namespace: u.GetNamespace(), gvr: gvr, name: name, channel: e.Channel}
+	namespace := u.GetNamespace()
+	uclient, err := b.newClient(ctx)
+	if err != nil {
+		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
+	}
+	client := uclient.Resource(gvr).Namespace(namespace)
+
+	key := watchKey{namespace: namespace, gvr: gvr, name: name}
+	shared := b.sharedWatch(ctx)
+	if shared {
+		// One stream cannot carry per-user authorization, so authorize the user
+		// here instead - on every subscribe, including one that only attaches to
+		// an existing watcher.
+		if err := authorizeSubscriber(ctx, u, client); err != nil {
+			return model.SubscribeReply{}, watchErrorStatus(err), err
+		}
+	} else {
+		key.channel = e.Channel
+	}
 
 	b.watchingMu.Lock()
 	defer b.watchingMu.Unlock()
@@ -132,23 +162,19 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 		}, backend.SubscribeStreamStatusOK, nil
 	}
 
-	uclient, err := b.newClient(ctx)
-	if err != nil {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
-	}
-
 	// The watch outlives this subscribe request, so it cannot borrow its context.
-	// The requester is what the loopback transport hands the apiserver, which is
-	// what authorizes the stream.
-	watchCtx, cancel := context.WithCancel(identity.WithRequester(context.Background(), u))
-	client := uclient.Resource(gvr).Namespace(key.namespace)
+	watchCtx, cancel := context.WithCancel(watchIdentity(u, shared))
 
 	opts := v1.ListOptions{}
 	if len(name) > 1 {
 		opts.FieldSelector = "metadata.name=" + name
 	}
 
-	// Support resourceVersion from subscription data.
+	// Support resourceVersion from subscription data. Only the subscriber that
+	// opens the watch gets its resourceVersion honoured; one that attaches later
+	// starts from wherever the stream is, and relies on the client's own
+	// resourceVersion guard and polling fallback to notice what it missed. The
+	// same gap already applies to a second tab of the same user.
 	if len(e.Data) > 0 {
 		var subData struct {
 			ResourceVersion string `json:"resourceVersion,omitempty"`
@@ -167,7 +193,7 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	current := &watcher{
 		runner:      b,
 		key:         key,
-		ns:          key.namespace,
+		ns:          namespace,
 		publisher:   b.publisher,
 		subscribers: b.subscribers,
 		watch:       stream,
@@ -193,6 +219,48 @@ func (b *WatchRunner) remove(key watchKey, w *watcher) {
 	if b.watching[key] == w {
 		delete(b.watching, key)
 	}
+}
+
+// sharedWatch reports whether one watch should serve every subscriber of a
+// resource rather than one watch per subscriber.
+func (b *WatchRunner) sharedWatch(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningSharedLiveWatch, false, openfeature.TransactionContext(ctx))
+}
+
+// watchIdentity returns the context identity the upstream watch runs under. A
+// per-subscriber watch carries the subscriber, which is what the loopback
+// transport hands the apiserver and what authorizes the stream. A shared watch
+// cannot, so it runs as the service - still pinned to the one namespace, so a
+// stream can never span tenants - and authorizeSubscriber is what keeps users
+// out of a resource they cannot read.
+func watchIdentity(u identity.Requester, shared bool) context.Context {
+	if shared {
+		return identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), u.GetNamespace())
+	}
+	return identity.WithRequester(context.Background(), u)
+}
+
+// authorizeSubscriber asks the apiserver whether this user may read the
+// resource, standing in for the per-user watch a shared watcher replaces. A
+// Limit=1 list is the cheapest request that runs the whole authorizer chain,
+// and list is equivalent to watch for this group: the provisioning authorizer
+// resolves get, list and watch to the same read permission. No field selector,
+// because the check is for the collection.
+//
+// Authorizing the collection once is only equivalent to the apiserver's
+// per-event filtering while authorization is uniform across a namespace, which
+// holds for provisioning on two counts: none of its permissions carry a scope,
+// and it is outside the unified storage RBAC allowlist, so the per-event
+// checker resolves to allow-all. Revisit if either changes - a scope on a
+// watched resource, or provisioning reaching the enforced path (its allowlist
+// entry, or [unified_storage] authz_exemption_enabled without an exemption for
+// it).
+func authorizeSubscriber(ctx context.Context, u identity.Requester, client dynamic.ResourceInterface) error {
+	ctx, cancel := context.WithTimeout(identity.WithRequester(ctx, u), probeTimeout)
+	defer cancel()
+
+	_, err := client.List(ctx, v1.ListOptions{Limit: 1})
+	return err
 }
 
 // watchErrorStatus keeps an authorization failure recognizable to the frontend.
@@ -337,7 +405,12 @@ func (w *watcher) stop() {
 }
 
 func (b *watcher) run(ctx context.Context) {
-	logger := logging.FromContext(ctx).With("channel", b.key.channel, "resource", b.key.gvr.Resource)
+	logger := logging.FromContext(ctx).With(
+		"namespace", b.key.namespace,
+		"resource", b.key.gvr.Resource,
+		"name", b.key.name,
+		"channel", b.key.channel, // empty for a shared watch
+	)
 	defer b.stop()
 
 	ticker := time.NewTicker(b.runner.checkInterval)

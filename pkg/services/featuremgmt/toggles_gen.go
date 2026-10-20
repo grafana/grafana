@@ -103,6 +103,10 @@ const (
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
 
+	// FlagProvisioningSharedLiveWatch
+	// Serve the provisioning live watch from one shared stream per resource instead of one per user
+	FlagProvisioningSharedLiveWatch = "provisioning.sharedLiveWatch"
+
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
