@@ -51,6 +51,11 @@ type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
 }
 
+// RuleGroupCounter counts distinct rule group names for usage reporting.
+type RuleGroupCounter interface {
+	CountRuleGroups(ctx context.Context, orgID int64) (int64, error)
+}
+
 // RuleReader reads rules and rule groups.
 type RuleReader interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
@@ -138,6 +143,7 @@ type Store interface {
 	RuleByIDReader
 	RuleGroupReader
 	RuleCounter
+	RuleGroupCounter
 	RuleWriter
 	RuleAdminWriter
 	RuleVersionReader
