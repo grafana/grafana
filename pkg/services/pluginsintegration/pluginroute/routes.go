@@ -113,6 +113,14 @@ func parseManifestRoutes(version app.ManifestVersion, skip func(manifestroutes.P
 
 func ignoreSkipped(manifestroutes.Problem) {}
 
+// metricRoutesResource is the resource label of the manifest's custom routes
+// for a handler with Options.MetricGroup.
+const metricRoutesResource = "routes"
+
+// MetricGroup implements builder.APIGroupMetricGroupProvider, so the built-in
+// routes are recorded under Options.MetricGroup too. Their paths are fixed.
+func (b *manifestBuilder) MetricGroup() string { return b.opts.MetricGroup }
+
 // routeMux serves the manifest's custom routes and hands every other request
 // to next. It wraps the apiserver's handler, inside the filter chain, so a
 // request reaching a route has already been authenticated and authorized.
@@ -137,7 +145,11 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 		// mux, so registering them again cannot fail.
 		root := "/apis/" + gv.String() + "/"
 		for _, route := range b.versionRoutes(gv, warn) {
-			handler := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, b.routeHandler(gv, route))
+			metricGroup, resource := gv.Group, route.Path
+			if b.opts.MetricGroup != "" {
+				metricGroup, resource = b.opts.MetricGroup, metricRoutesResource
+			}
+			handler := metrics.InstrumentHandler(metricGroup, gv.Version, resource, b.routeHandler(gv, route))
 			for method := range manifestroutes.Operations(&route.Operations) {
 				mux.Handle(method+" "+root+route.Pattern, handler)
 				mounted++

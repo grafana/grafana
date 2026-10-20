@@ -87,6 +87,14 @@ type APIGroupRouteProvider interface {
 	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
+// APIGroupMetricGroupProvider is an optional APIGroupBuilder interface for a
+// builder whose group names are not a bounded set, such as the router's
+// namespaced groups. Its custom routes are recorded under MetricGroup instead
+// of the group, unless it is empty.
+type APIGroupMetricGroupProvider interface {
+	MetricGroup() string
+}
+
 // APIGroupResourceProvider lets a builder advertise the resources it serves to
 // hosts that discover per-kind routes from manifests.
 type APIGroupResourceProvider interface {

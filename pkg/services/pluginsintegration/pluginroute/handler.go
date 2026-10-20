@@ -73,6 +73,15 @@ type Options struct {
 	Features         featuremgmt.FeatureToggles
 	BuildVersion     string
 	MetricsRegister  prometheus.Registerer
+	// MetricGroup, when set, replaces the group in the metrics the handler
+	// records itself, for a group whose name is not from a bounded set, such
+	// as one of the router's namespaced groups. The manifest's custom routes
+	// are then recorded under the resource metricRoutesResource, since their
+	// paths are not bounded either, and the watch establishment histogram,
+	// which is labelled by group, is not registered with MetricsRegister. The
+	// generic API server's own request and watch metrics are registered
+	// globally, and still use the group.
+	MetricGroup string
 
 	// Legacy settings use the same migration policy as the embedded API server.
 	DualWrite      dualwrite.Service
@@ -137,7 +146,7 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
 	}
 	reg := opts.MetricsRegister
-	if reg == nil {
+	if reg == nil || opts.MetricGroup != "" {
 		reg = prometheus.NewRegistry()
 	}
 	if !hasKinds(manifest) {
@@ -233,6 +242,8 @@ var (
 	_ builder.APIGroupVersionsProvider = (*manifestBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*manifestBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*manifestBuilder)(nil)
+
+	_ builder.APIGroupMetricGroupProvider = (*manifestBuilder)(nil)
 )
 
 // ValidateManifest reports whether a manifest can be served for a plugin. It

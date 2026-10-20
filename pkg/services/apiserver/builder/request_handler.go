@@ -84,7 +84,7 @@ func AugmentWebServicesWithCustomRoutes(
 				continue
 			}
 
-			if err := addRoutesToWebService(container, existingWebServices, metrics, gv, routes); err != nil {
+			if err := addRoutesToWebService(container, existingWebServices, metrics, metricGroup(b, gv), gv, routes); err != nil {
 				return err
 			}
 		}
@@ -94,12 +94,23 @@ func AugmentWebServicesWithCustomRoutes(
 		if e.Routes == nil || !customRoutesEnabled(apiResourceConfig, e.GroupVersion) {
 			continue
 		}
-		if err := addRoutesToWebService(container, existingWebServices, metrics, e.GroupVersion, e.Routes); err != nil {
+		if err := addRoutesToWebService(container, existingWebServices, metrics, e.GroupVersion.Group, e.GroupVersion, e.Routes); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// metricGroup is the group label of b's custom route metrics; see
+// APIGroupMetricGroupProvider.
+func metricGroup(b APIGroupBuilder, gv schema.GroupVersion) string {
+	if p, ok := b.(APIGroupMetricGroupProvider); ok {
+		if group := p.MetricGroup(); group != "" {
+			return group
+		}
+	}
+	return gv.Group
 }
 
 func customRoutesEnabled(apiResourceConfig *serverstorage.ResourceConfig, gv schema.GroupVersion) bool {
@@ -117,6 +128,7 @@ func addRoutesToWebService(
 	container *restful.Container,
 	existingWebServices map[string]*restful.WebService,
 	metrics *CustomRouteMetrics,
+	metricGroup string,
 	gv schema.GroupVersion,
 	routes *APIRoutes,
 ) error {
@@ -130,12 +142,12 @@ func addRoutesToWebService(
 	}
 
 	for _, route := range routes.Root {
-		if err := addInstrumentedRoute(ws, metrics, gv, route, false); err != nil {
+		if err := addInstrumentedRoute(ws, metrics, metricGroup, gv, route, false); err != nil {
 			return fmt.Errorf("failed to add root route %s: %w", route.Path, err)
 		}
 	}
 	for _, route := range routes.Namespace {
-		if err := addInstrumentedRoute(ws, metrics, gv, route, true); err != nil {
+		if err := addInstrumentedRoute(ws, metrics, metricGroup, gv, route, true); err != nil {
 			return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
 		}
 	}
@@ -145,11 +157,12 @@ func addRoutesToWebService(
 func addInstrumentedRoute(
 	ws *restful.WebService,
 	metrics *CustomRouteMetrics,
+	metricGroup string,
 	gv schema.GroupVersion,
 	route APIRouteHandler,
 	isNamespaced bool,
 ) error {
-	instrumented := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, route.Handler)
+	instrumented := metrics.InstrumentHandler(metricGroup, gv.Version, route.Path, route.Handler)
 	return addRouteFromSpec(ws, route.Path, route.Spec, convertHandlerToRouteFunction(instrumented), isNamespaced)
 }
 

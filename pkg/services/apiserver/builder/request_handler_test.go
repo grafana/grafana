@@ -198,3 +198,17 @@ func TestAugmentWebServices_DoesNotRejectUndeclaredAccept(t *testing.T) {
 		})
 	}
 }
+
+type metricGroupBuilder struct {
+	routeProviderBuilder
+	metricGroup string
+}
+
+func (b *metricGroupBuilder) MetricGroup() string { return b.metricGroup }
+
+func TestMetricGroup(t *testing.T) {
+	plain := &routeProviderBuilder{gv: testGV}
+	assert.Equal(t, testGV.Group, metricGroup(plain, testGV))
+	assert.Equal(t, testGV.Group, metricGroup(&metricGroupBuilder{routeProviderBuilder: *plain}, testGV), "an empty metric group keeps the group")
+	assert.Equal(t, "owner.grafana.app", metricGroup(&metricGroupBuilder{routeProviderBuilder: *plain, metricGroup: "owner.grafana.app"}, testGV))
+}

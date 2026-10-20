@@ -20,6 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	apimetrics "k8s.io/apiserver/pkg/endpoints/metrics"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -967,4 +969,36 @@ func TestGetAPIRoutesWithInvalidSearchDeclarations(t *testing.T) {
 
 	require.Nil(t, b.GetAPIRoutes(gv), "no search, trash or hybrid routes")
 	require.Contains(t, mountedRoutes(b, gv), "namespaces/{namespace}/foobar")
+}
+
+// A handler with a metric group records its routes under that group and one
+// resource, so groups and routes created at runtime keep the labels bounded.
+func TestRouteMuxMetricGroup(t *testing.T) {
+	apimetrics.Register()
+	manifest := testManifest(t)
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app", clientV3: &fakeRouteClient{},
+		opts: Options{MetricGroup: "owner-metrics.ext.grafana.app"}}
+	require.Equal(t, "owner-metrics.ext.grafana.app", b.MetricGroup())
+
+	handler := b.routeMux(http.NotFoundHandler(), prometheus.NewRegistry())
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/example.ext.grafana.app/v1alpha1/foobar", nil))
+
+	families, err := legacyregistry.DefaultGatherer.Gather()
+	require.NoError(t, err)
+	var resources []string
+	for _, family := range families {
+		if family.GetName() != "apiserver_request_total" {
+			continue
+		}
+		for _, m := range family.GetMetric() {
+			labels := map[string]string{}
+			for _, l := range m.GetLabel() {
+				labels[l.GetName()] = l.GetValue()
+			}
+			if labels["group"] == "owner-metrics.ext.grafana.app" {
+				resources = append(resources, labels["resource"])
+			}
+		}
+	}
+	require.Equal(t, []string{metricRoutesResource}, resources)
 }
