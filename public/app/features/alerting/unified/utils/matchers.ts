@@ -234,12 +234,7 @@ export const matcherPartsFormatter = {
   },
 } as const;
 
-export const matcherFormatter = {
-  default: (matcher: ObjectMatcher): string => matcherPartsFormatter.default(matcher).join(' '),
-  unquote: (matcher: ObjectMatcher): string => matcherPartsFormatter.unquote(matcher).join(' '),
-} as const;
-
-export type MatcherFormatter = keyof typeof matcherFormatter;
+export type MatcherFormatter = keyof typeof matcherPartsFormatter;
 
 export function isPromQLStyleMatcher(input: string): boolean {
   return input.startsWith('{') && input.endsWith('}');
