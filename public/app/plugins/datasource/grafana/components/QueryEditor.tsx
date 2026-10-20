@@ -1,4 +1,3 @@
-import pluralize from 'pluralize';
 import { memo, useCallback, useEffect, useState, type KeyboardEvent, type FocusEvent } from 'react';
 
 import {
@@ -8,6 +7,7 @@ import {
   type DataQueryRequest,
   type Field,
 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { InlineField, Select, Alert, Input, InlineFieldRow, Stack, InlineLabel } from '@grafana/ui';
 import { getManagedChannelInfo } from 'app/features/live/info';
@@ -21,21 +21,30 @@ interface Props extends QueryEditorProps<GrafanaDatasource, GrafanaQuery> {}
 
 const labelWidth = 12;
 
-const queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
+const getQueryTypes = (): Array<SelectableValue<GrafanaQueryType>> => [
   {
-    label: 'Random Walk',
+    label: t('grafana-datasource.query-editor.query-types.label.random-walk', 'Random Walk'),
     value: GrafanaQueryType.RandomWalk,
-    description: 'Random signal within the selected time range',
+    description: t(
+      'grafana-datasource.query-editor.query-types.description.random-walk',
+      'Random signal within the selected time range'
+    ),
   },
   {
-    label: 'Live Measurements',
+    label: t('grafana-datasource.query-editor.query-types.label.live-measurements', 'Live Measurements'),
     value: GrafanaQueryType.LiveMeasurements,
-    description: 'Stream real-time measurements from Grafana',
+    description: t(
+      'grafana-datasource.query-editor.query-types.description.live-measurements',
+      'Stream real-time measurements from Grafana'
+    ),
   },
   {
-    label: 'List public files',
+    label: t('grafana-datasource.query-editor.query-types.label.list-public-files', 'List public files'),
     value: GrafanaQueryType.List,
-    description: 'Show directory listings for public resources',
+    description: t(
+      'grafana-datasource.query-editor.query-types.description.list-public-files',
+      'Show directory listings for public resources'
+    ),
   },
 ];
 
@@ -178,7 +187,7 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
       currentChannel = {
         value: channel,
         label: channel,
-        description: `Connected to ${channel}`,
+        description: t('grafana-datasource.query-editor.channel-connected', 'Connected to {{channel}}', { channel }),
       };
       channels = [currentChannel, ...channels];
     }
@@ -191,8 +200,11 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
         if (!distinctFields.has(f)) {
           fields.push({
             value: f,
-            label: `${f} (not loaded)`,
-            description: `Configured, but not found in the query results`,
+            label: t('grafana-datasource.query-editor.field-not-loaded-label', '{{field}} (not loaded)', { field: f }),
+            description: t(
+              'grafana-datasource.query-editor.field-not-loaded-description',
+              'Configured, but not found in the query results'
+            ),
           });
           distinctFields.add(f);
         }
@@ -206,40 +218,52 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
 
     return (
       <>
-        <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
+        <InlineField
+          label={t('grafana-datasource.query-editor.label-channel', 'Channel')}
+          grow={true}
+          labelWidth={labelWidth}
+        >
           <Select
             options={channels}
             value={currentChannel || ''}
             onChange={onChannelChange}
             allowCustomValue={true}
             backspaceRemovesValue={true}
-            placeholder="Select measurements channel"
+            placeholder={t('grafana-datasource.query-editor.placeholder-channel', 'Select measurements channel')}
             isClearable={true}
-            noOptionsMessage="Enter channel name"
-            formatCreateLabel={(input: string) => `Connect to: ${input}`}
+            noOptionsMessage={t('grafana-datasource.query-editor.no-options-channel', 'Enter channel name')}
+            formatCreateLabel={(input: string) =>
+              t('grafana-datasource.query-editor.create-label-channel', 'Connect to: {{input}}', { input })
+            }
           />
         </InlineField>
 
         {channel && (
           <Stack direction="row" gap={0}>
-            <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
+            <InlineField
+              label={t('grafana-datasource.query-editor.label-fields', 'Fields')}
+              grow={true}
+              labelWidth={labelWidth}
+            >
               <Select
                 options={fields}
                 value={filter?.fields || []}
                 onChange={onFieldNamesChange}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
-                placeholder="All fields"
+                placeholder={t('grafana-datasource.query-editor.placeholder-fields', 'All fields')}
                 isClearable={true}
-                noOptionsMessage="Unable to list all fields"
-                formatCreateLabel={(input: string) => `Field: ${input}`}
+                noOptionsMessage={t('grafana-datasource.query-editor.no-options-fields', 'Unable to list all fields')}
+                formatCreateLabel={(input: string) =>
+                  t('grafana-datasource.query-editor.create-label-field', 'Field: {{input}}', { input })
+                }
                 isSearchable={true}
                 isMulti={true}
               />
             </InlineField>
-            <InlineField label="Buffer">
+            <InlineField label={t('grafana-datasource.query-editor.label-buffer', 'Buffer')}>
               <Input
-                placeholder="Auto"
+                placeholder={t('grafana-datasource.query-editor.placeholder-buffer', 'Auto')}
                 width={12}
                 defaultValue={formattedTime}
                 onKeyDown={handleEnterKey}
@@ -250,9 +274,14 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
           </Stack>
         )}
 
-        <Alert title="Grafana Live - Measurements" severity="info">
-          This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
-          interfaces and structures to change as this becomes more production ready.
+        <Alert
+          title={t('grafana-datasource.query-editor.live-measurements-alert-title', 'Grafana Live - Measurements')}
+          severity="info"
+        >
+          <Trans i18nKey="grafana-datasource.query-editor.live-measurements-alert-body">
+            This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
+            interfaces and structures to change as this becomes more production ready.
+          </Trans>
         </Alert>
       </>
     );
@@ -275,16 +304,22 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
 
     return (
       <InlineFieldRow>
-        <InlineField label="Path" grow={true} labelWidth={labelWidth}>
+        <InlineField
+          label={t('grafana-datasource.query-editor.label-path', 'Path')}
+          grow={true}
+          labelWidth={labelWidth}
+        >
           <Select
             options={displayFolders}
             value={currentFolder || ''}
             onChange={onFolderChanged}
             allowCustomValue={true}
             backspaceRemovesValue={true}
-            placeholder="Select folder"
+            placeholder={t('grafana-datasource.query-editor.placeholder-path', 'Select folder')}
             isClearable={true}
-            formatCreateLabel={(input: string) => `Folder: ${input}`}
+            formatCreateLabel={(input: string) =>
+              t('grafana-datasource.query-editor.create-label-folder', 'Folder: {{input}}', { input })
+            }
           />
         </InlineField>
       </InlineFieldRow>
@@ -295,8 +330,18 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
     return (
       <>
         <InlineFieldRow>
-          <InlineField label="Snapshot" grow={true} labelWidth={labelWidth}>
-            <InlineLabel>{pluralize('frame', query.snapshot?.length ?? 0, true)}</InlineLabel>
+          <InlineField
+            label={t('grafana-datasource.query-editor.label-snapshot', 'Snapshot')}
+            grow={true}
+            labelWidth={labelWidth}
+          >
+            <InlineLabel>
+              {t('grafana-datasource.query-editor.snapshot-frames', '', {
+                count: query.snapshot?.length ?? 0,
+                defaultValue_one: '{{count}} frame',
+                defaultValue_other: '{{count}} frames',
+              })}
+            </InlineLabel>
           </InlineField>
         </InlineFieldRow>
       </>
@@ -308,12 +353,13 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
   };
 
   // Only show "snapshot" when it already exists
+  const queryTypes = getQueryTypes();
   let queryTypeOptions = queryTypes;
   if (queryType === GrafanaQueryType.Snapshot) {
     queryTypeOptions = [
       ...queryTypes,
       {
-        label: 'Snapshot',
+        label: t('grafana-datasource.query-editor.query-types.label.snapshot', 'Snapshot'),
         value: queryType,
       },
     ];
@@ -322,7 +368,11 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
+        <InlineField
+          label={t('grafana-datasource.query-editor.label-query-type', 'Query type')}
+          grow={true}
+          labelWidth={labelWidth}
+        >
           <Select
             options={queryTypeOptions}
             value={queryTypeOptions.find((v) => v.value === queryType) || queryTypeOptions[0]}
