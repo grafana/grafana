@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -20,6 +21,15 @@ import (
 )
 
 var retryAnnotationPollingInterval = 1 * time.Second
+
+// newCheckMap returns new instances of the registered checks, by ID.
+func newCheckMap(checkRegistry checkregistry.CheckService) map[string]checks.Check {
+	checkMap := map[string]checks.Check{}
+	for _, c := range checkRegistry.Checks() {
+		checkMap[c.ID()] = c
+	}
+	return checkMap
+}
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
 	labels := obj.GetLabels()

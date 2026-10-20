@@ -36,6 +36,24 @@ func TestGetCheck(t *testing.T) {
 	assert.NotNil(t, check)
 }
 
+// Checks are processed concurrently and Init keeps per-run state in the check, so every
+// Check must get its own instance.
+func TestNewCheckMap(t *testing.T) {
+	registry := &mockCheckRegistry{}
+
+	first := newCheckMap(registry)
+	second := newCheckMap(registry)
+	require.Contains(t, first, "mock")
+	require.Contains(t, second, "mock")
+	assert.NotSame(t, first["mock"], second["mock"])
+}
+
+type mockCheckRegistry struct{}
+
+func (m *mockCheckRegistry) Checks() []checks.Check {
+	return []checks.Check{&mockCheck{}}
+}
+
 func TestGetCheck_MissingLabel(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	checkMap := map[string]checks.Check{}
