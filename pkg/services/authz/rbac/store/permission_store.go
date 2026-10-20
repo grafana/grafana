@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -12,6 +13,7 @@ import (
 
 type PermissionStore interface {
 	GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
+	HasUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) (bool, error)
 }
 
 type PermissionsQuery struct {
@@ -40,7 +42,10 @@ type SQLPermissionsStore struct {
 	forcePermissionRoleActionIndex bool
 }
 
-var sqlUserPerms = mustTemplate("permission_query.sql")
+var (
+	sqlUserPerms    = mustTemplate("permission_query.sql")
+	sqlUserHasPerms = mustTemplate("permission_exists_query.sql")
+)
 
 type getPermissionsQuery struct {
 	sqltemplate.SQLTemplate
@@ -114,6 +119,40 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 	return perms, nil
 }
 
+func (s *SQLPermissionsStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query PermissionsQuery,
+) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.HasUserPermissions")
+	defer span.End()
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error getting SQL database: %w", err)
+	}
+
+	query.OrgID = ns.OrgID
+	req := newGetPermissions(sql, &query, s.forcePermissionRoleActionIndex)
+	q, err := sqltemplate.Execute(sqlUserHasPerms, req)
+	if err != nil {
+		return false, fmt.Errorf("error executing query: %w", err)
+	}
+
+	res, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return false, fmt.Errorf("error checking user permissions: %w", err)
+	}
+	defer func() { _ = res.Close() }()
+
+	exists := res.Next()
+	if err := res.Err(); err != nil {
+		return false, fmt.Errorf("error checking user permissions: %w", err)
+	}
+
+	return exists, nil
+}
+
 var _ PermissionStore = (*StaticPermissionStore)(nil)
 
 func NewStaticPermissionStore(ac accesscontrol.Service) *StaticPermissionStore {
@@ -125,20 +164,8 @@ type StaticPermissionStore struct {
 }
 
 func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
-	roles := []string{query.Role}
-	if query.IsServerAdmin {
-		roles = append(roles, "Grafana Admin")
-	}
-
-	static := s.ac.GetStaticRoles(ctx)
-
 	var permissions []accesscontrol.Permission
-	for _, name := range roles {
-		r, ok := static[name]
-		if !ok {
-			continue
-		}
-
+	for _, r := range s.getStaticRoles(ctx, query) {
 		for _, p := range r.Permissions {
 			if query.Action == "" || p.Action == query.Action {
 				permissions = append(permissions, p)
@@ -147,6 +174,21 @@ func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns types
 	}
 
 	return permissions, nil
+}
+
+func (s *StaticPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query PermissionsQuery,
+) (bool, error) {
+	for _, role := range s.getStaticRoles(ctx, query) {
+		for _, permission := range role.Permissions {
+			if query.Action == "" || permission.Action == query.Action {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 var _ PermissionStore = (*UnionPermissionStore)(nil)
@@ -169,4 +211,40 @@ func (u *UnionPermissionStore) GetUserPermissions(ctx context.Context, ns types.
 		permissions = append(permissions, result...)
 	}
 	return permissions, nil
+}
+
+func (u *UnionPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query PermissionsQuery,
+) (bool, error) {
+	var hasPermissions bool
+	for _, s := range u.stores {
+		exists, err := s.HasUserPermissions(ctx, ns, query)
+		if err != nil {
+			return false, err
+		}
+		// Check every source so a grant does not hide another source's error.
+		hasPermissions = hasPermissions || exists
+	}
+	return hasPermissions, nil
+}
+
+func (s *StaticPermissionStore) getStaticRoles(
+	ctx context.Context,
+	query PermissionsQuery,
+) []*accesscontrol.RoleDTO {
+	names := []string{query.Role}
+	if query.IsServerAdmin {
+		names = append(names, "Grafana Admin")
+	}
+
+	static := s.ac.GetStaticRoles(ctx)
+	var roles []*accesscontrol.RoleDTO
+	for _, name := range names {
+		if role, ok := static[name]; ok {
+			roles = append(roles, role)
+		}
+	}
+	return roles
 }
