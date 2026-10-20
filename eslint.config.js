@@ -125,6 +125,7 @@ module.exports = [
       '**/dist/',
       'coverage/',
       'data/',
+      'demo-manifest-app',
       'deployment_tools_config.json',
       'devenv',
       'e2e-playwright/test-plugins',

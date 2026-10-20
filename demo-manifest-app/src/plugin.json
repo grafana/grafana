@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "Demo manifest app",
+  "id": "demo-manifest-app",
+  "backend": true,
+  "executable": "gpx_manifest",
+  "info": {
+    "keywords": ["app"],
+    "description": "Proof of concept for the router's namespaced API groups: declares kinds whose manifests it lists on _manifests.",
+    "author": {
+      "name": "Demo"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Kinds",
+      "path": "/a/%PLUGIN_ID%/kinds",
+      "addToNav": true,
+      "defaultNav": true
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=13.2.0",
+    "plugins": []
+  },
+  "autoEnabled": true
+}
