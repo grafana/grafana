@@ -212,6 +212,8 @@ export default defineConfig<PluginOptions>({
       name: 'plugin-catalog',
       testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests'),
       testIgnore: /useMTPlugins/,
+      // Separate files install/uninstall the same plugins, so they must not run concurrently.
+      workers: 1,
       timeout: 60_000,
     }),
     withAuth({
