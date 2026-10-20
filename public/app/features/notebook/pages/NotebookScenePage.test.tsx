@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { NotebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import { NOTEBOOK_NEW_URL } from '../urls';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 import { NotebookScenePage } from './NotebookScenePage';
@@ -97,7 +98,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
 
       // The scene rendered, so this is the document rather than the loading or not-found branch.
       expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -114,7 +115,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, {
-        historyOptions: { initialEntries: ['/notebooks/new?edit=true&from=now-3h&to=now'] },
+        historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&from=now-3h&to=now`] },
       });
       await screen.findByRole('radio', { name: 'Edit' });
 
@@ -138,7 +139,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, {
-        historyOptions: { initialEntries: ['/notebooks', '/notebooks/new?edit=true'], initialIndex: 1 },
+        historyOptions: { initialEntries: ['/notebooks', `${NOTEBOOK_NEW_URL}?edit=true`], initialIndex: 1 },
       });
       await screen.findByRole('radio', { name: 'Edit' });
 
@@ -158,7 +159,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
       await screen.findByRole('radio', { name: 'Edit' });
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
@@ -170,7 +171,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, {
-        historyOptions: { initialEntries: ['/notebooks/new?edit=true&notebookSource=command_palette'] },
+        historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&notebookSource=command_palette`] },
       });
       await screen.findByRole('radio', { name: 'Edit' });
 
@@ -201,7 +202,7 @@ describe('NotebookScenePage', () => {
 
       render(
         <Routes>
-          <Route path="/notebooks/new" element={<NotebookScenePage />} />
+          <Route path={NOTEBOOK_NEW_URL} element={<NotebookScenePage />} />
           <Route path="/notebooks/:uid" element={<NotebookScenePage />} />
         </Routes>,
         { historyOptions: { initialEntries: [`/notebooks/nb-existing${mode === 'edit' ? '?edit=true' : ''}`] } }
@@ -210,10 +211,10 @@ describe('NotebookScenePage', () => {
       expect(stateManager.state.scene).toBe(existingScene);
 
       await act(async () => {
-        locationService.push('/notebooks/new?edit=true&notebookSource=command_palette');
+        locationService.push(`${NOTEBOOK_NEW_URL}?edit=true&notebookSource=command_palette`);
       });
 
-      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/new'));
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe(NOTEBOOK_NEW_URL));
       expect(stateManager.state.scene?.state.uid).toBeUndefined();
       expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
       expect(NotebookAnalytics.newStarted).toHaveBeenCalledWith('command_palette');
@@ -224,7 +225,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: false });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
       await screen.findByText('Page not found');
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).not.toHaveBeenCalled();
@@ -234,7 +235,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new?edit=true'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true`] } });
 
       expect(await screen.findByRole('radio', { name: 'Edit' })).toBeChecked();
     });
