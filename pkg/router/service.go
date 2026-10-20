@@ -37,9 +37,9 @@ type Service struct {
 	standalone bool
 	middleware bool
 
-	// loaderLifecycle is the routes loader's own background lifecycle, run by
-	// this service inside Grafana. The router module composes it with the
-	// service itself instead (see initRouterModule).
+	// loaderLifecycle is the routes loader's own background lifecycle (such as
+	// cloudLoader's poll loops), which this service starts, stops and watches.
+	// Both are nil for a loader without one; a nil watcher's channel never fires.
 	loaderLifecycle services.Service
 	loaderFailures  *services.FailureWatcher
 }
@@ -70,10 +70,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	}
 	router.loader = loader
 
-	s := newServiceFor(router, reg)
+	s := newService(router, reg)
 	s.standalone = slices.Contains(cfg.Target, "router")
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
-	if lifecycle, ok := loader.(services.Service); ok && !s.standalone {
+	if lifecycle, ok := loader.(services.Service); ok {
 		s.loaderLifecycle = lifecycle
 		s.loaderFailures = services.NewFailureWatcher()
 		s.loaderFailures.WatchService(lifecycle)
@@ -108,11 +108,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	return nil
 }
 
-func newService(loader RoutesLoader, tokens authn.TokenAuthenticator, reg prometheus.Registerer) *Service {
-	return newServiceFor(NewGrafanaRouter(loader, tokens), reg)
-}
-
-func newServiceFor(router *GrafanaRouter, reg prometheus.Registerer) *Service {
+func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 	s := &Service{
 		router:  router,
 		metrics: newRouterMetrics(reg),

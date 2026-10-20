@@ -284,9 +284,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   and the `Service`. The loader is `ProvideCloudRoutesLoader` when `[cloud_router]` configures a
   source or any `[router.aggregate.<name>]` target is set, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
   migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
-  the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
-  implements `services.Service` (such as `cloudLoader`, which runs poll loops) is run
-  alongside it with `newCompositeService`, so both start and stop together.
+  the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`.
+- **Loader lifecycle:** a loader that also implements `services.Service` (such as `cloudLoader`,
+  which runs poll loops) is started, stopped and watched by the `Service`, in every mode, so both
+  start and stop together and a failed loader fails the router.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
@@ -294,8 +295,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
   `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
   in-process storage as a `resource.ManifestDiscovery`. `ProvideService` then attaches the loader.
-  The loader depends on storage, so this order keeps the graph acyclic. Nothing else starts a
-  loader's own lifecycle here, so the `Service` starts and stops it, and fails if it fails.
+  The loader depends on storage, so this order keeps the graph acyclic.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
   port.
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so

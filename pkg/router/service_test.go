@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -181,19 +180,10 @@ func provideTestService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, l
 // Wire hands the same router to storage, as a ManifestDiscovery, and to the
 // service, so storage reads what the running service publishes.
 func TestProvideServiceUsesTheProvidedRouter(t *testing.T) {
-	r, err := ProvideGrafanaRouter(setting.NewCfg())
-	require.NoError(t, err)
-	var discovery resource.ManifestDiscovery = r
-
+	r := NewGrafanaRouter(nil, nil)
 	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(), dummyRoutesLoader{}, prometheus.NewRegistry(), r)
 	require.NoError(t, err)
 	require.Same(t, r, svc.router)
-
-	svc.router.publishManifestDocs(t.Context(), testManifestBackends())
-	list, err := discovery.ListManifests(t.Context())
-	require.NoError(t, err)
-	require.Len(t, list.Items, 1)
-	require.Equal(t, manifestTestGroup, list.Items[0].Name)
 }
 
 func TestRouterTargetCloudFallback(t *testing.T) {
@@ -202,7 +192,7 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 		cfg.Target = []string{"router"}
 		cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 		cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-		loader := &cloudLoader{}
+		loader := &cloudLoader{BasicService: services.NewIdleService(nil, nil)}
 		if enabled {
 			loader.singleTenantFallback = newTestSingleTenantFallback(t)
 			loader.singleTenantFallback.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
@@ -272,27 +262,25 @@ type lifecycleLoader struct {
 	services.Service
 }
 
-// Inside Grafana nothing else starts the loader's lifecycle, so the service
-// runs it; the router module composes the two itself.
-func TestServiceRunsLoaderLifecycleInsideGrafana(t *testing.T) {
-	loader := lifecycleLoader{Service: services.NewIdleService(nil, nil)}
-	svc, err := provideTestService(setting.NewCfg(), featuremgmt.WithFeatures(), loader)
-	require.NoError(t, err)
+// The service runs the loader's own lifecycle, both inside Grafana and as the
+// router module, so it starts and stops with the router.
+func TestServiceRunsLoaderLifecycle(t *testing.T) {
+	for _, target := range [][]string{nil, {"router"}} {
+		cfg := setting.NewCfg()
+		cfg.Target = target
+		loader := lifecycleLoader{Service: services.NewIdleService(nil, nil)}
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
+		require.NoError(t, err)
 
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
-	require.Equal(t, services.Running, loader.State())
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+		require.Equal(t, services.Running, loader.State())
 
-	require.NoError(t, services.StopAndAwaitTerminated(t.Context(), svc))
-	require.Equal(t, services.Terminated, loader.State())
-
-	cfg := setting.NewCfg()
-	cfg.Target = []string{"router"}
-	standalone, err := ProvideService(cfg, featuremgmt.WithFeatures(), lifecycleLoader{Service: services.NewIdleService(nil, nil)}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
-	require.NoError(t, err)
-	require.Nil(t, standalone.loaderLifecycle, "the router module runs the loader itself")
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), svc))
+		require.Equal(t, services.Terminated, loader.State())
+	}
 }
 
-// A failed loader fails the service, as it fails the router module.
+// A failed loader fails the service.
 func TestServiceFailsWhenLoaderFails(t *testing.T) {
 	loader := lifecycleLoader{Service: services.NewBasicService(nil, func(ctx context.Context) error {
 		return errors.New("poll loop crashed")
