@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resourceclient
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
