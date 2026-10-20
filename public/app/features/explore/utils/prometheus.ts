@@ -53,18 +53,51 @@ export function getPrometheusDefaultEditor(jsonData: object | undefined): string
 
 // The text often completes something the user has opened, like `sum(` or `metric{`, so it follows without a space.
 const NO_SEPARATOR_AFTER = /[\s{([,=~]$/;
+// Nor does it need one before what continues it, like the `[5m]` in `rate(up[5m])` or the `="api"` in `{job="api"}`.
+const NO_SEPARATOR_BEFORE = /^[\s()}\],[{=!~]/;
 
-/** Appends `text` to the end of a PromQL expression, the only place the sidebar can reach. */
-export function appendToExpr(expr: string | undefined, text: string): string {
-  if (!expr) {
-    return text;
+function isInsideString(before: string): boolean {
+  let open: string | undefined;
+  for (let i = 0; i < before.length; i++) {
+    const char = before[i];
+    if (open) {
+      // Backticks are raw strings in PromQL, so only the other quotes escape.
+      if (char === '\\' && open !== '`') {
+        i++;
+      } else if (char === open) {
+        open = undefined;
+      }
+    } else if (char === '"' || char === "'" || char === '`') {
+      open = char;
+    }
   }
+  return open !== undefined;
+}
 
-  // A trailing quote only opens a string when it is odd-numbered; otherwise it closes one, like `job="api"`.
-  const quote = expr.at(-1);
-  const opensString = (quote === '"' || quote === "'" || quote === '`') && expr.split(quote).length % 2 === 0;
+/**
+ * Puts `text` in place of `value` between `from` and `to`, with the spaces it needs to read as its own token.
+ * `text` in the result is what replaced the selection, spaces included.
+ */
+export function insertAtSelection(
+  value: string,
+  from: number,
+  to: number,
+  text: string
+): { value: string; text: string } {
+  const before = value.slice(0, from);
+  const after = value.slice(to);
+  const insideString = isInsideString(before);
+  const leading = before && !insideString && !NO_SEPARATOR_AFTER.test(before) ? ' ' : '';
+  const trailing = after && !insideString && !NO_SEPARATOR_BEFORE.test(after) ? ' ' : '';
+  const padded = `${leading}${text}${trailing}`;
 
-  return NO_SEPARATOR_AFTER.test(expr) || opensString ? `${expr}${text}` : `${expr} ${text}`;
+  return { value: `${before}${padded}${after}`, text: padded };
+}
+
+/** Appends `text` to the end of a PromQL expression, which is where it goes when the editor's cursor is unknown. */
+export function appendToExpr(expr: string | undefined, text: string): string {
+  const value = expr ?? '';
+  return insertAtSelection(value, value.length, value.length, text).value;
 }
 
 /** Appends `text` to the expression of the query with `refId`, leaving every other query as it was. */
