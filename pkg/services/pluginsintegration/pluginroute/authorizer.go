@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	authzlib "github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/authz/namespacedgroups"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 )
 
@@ -161,13 +161,15 @@ func (b *manifestBuilder) authorizeKind(requester identity.Requester, attr autho
 // authorizeTokenPermissions checks the verb storage would check, so list and
 // watch need get, patch needs update and deletecollection needs delete. A
 // subresource needs the permission on its parent, since service permissions
-// cannot name a subresource.
+// cannot name a subresource. A namespaced group of the request's namespace is
+// also granted by a permission for its owner's whole group, as unified storage
+// grants it (namespacedgroups.CheckServicePermissions).
 func authorizeTokenPermissions(requester authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	verb, ok := rbac.ActionVerb(attr.GetVerb())
 	if !ok {
 		return authorizer.DecisionDeny, fmt.Sprintf("verb %q cannot be granted to an access policy", attr.GetVerb()), nil
 	}
-	if authzlib.CheckServicePermissions(requester, attr.GetAPIGroup(), attr.GetResource(), verb).Allowed {
+	if res, _ := namespacedgroups.CheckServicePermissions(requester, attr.GetNamespace(), attr.GetAPIGroup(), attr.GetResource(), verb); res.Allowed {
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, fmt.Sprintf("access policy does not grant %s/%s:%s", attr.GetAPIGroup(), attr.GetResource(), verb), nil

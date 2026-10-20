@@ -169,6 +169,40 @@ func TestGetAuthorizerServiceTokenPermissions(t *testing.T) {
 	require.Equal(t, authorizer.DecisionDeny, authorize(user, "test.ext.grafana.app"), "users still need app access")
 }
 
+// No token can name a namespaced group, <name>.<namespace>.<owner>, so a
+// permission for its owner's whole group grants it, in its own namespace only,
+// as unified storage does.
+func TestGetAuthorizerServiceTokenNamespacedGroups(t *testing.T) {
+	const group = "myapp.stacks-1.test.ext.grafana.app"
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  kindPolicies(testManifest(t)),
+		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
+	}
+	service := func(permissions ...string) context.Context {
+		return identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type: claims.TypeAccessPolicy, UserUID: "example-app", OrgID: 1, Namespace: "*",
+			AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: permissions}},
+		})
+	}
+	authorize := func(ctx context.Context, namespace string) authorizer.Decision {
+		decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+			APIGroup: group, Resource: "testkinds", Namespace: namespace, Verb: "create", ResourceRequest: true,
+		})
+		require.NoError(t, err)
+		return decision
+	}
+
+	require.Equal(t, authorizer.DecisionAllow, authorize(service("test.ext.grafana.app:*"), "stacks-1"))
+	require.Equal(t, authorizer.DecisionAllow, authorize(service("*.ext.grafana.app:*"), "stacks-1"))
+	require.Equal(t, authorizer.DecisionAllow, authorize(service(group+":create"), "stacks-1"))
+	require.Equal(t, authorizer.DecisionDeny, authorize(service("test.ext.grafana.app:*"), "stacks-2"),
+		"another namespace's group keeps its own permissions")
+	require.Equal(t, authorizer.DecisionDeny, authorize(service("test.ext.grafana.app/testkinds:*"), "stacks-1"),
+		"the owner's resources aren't the namespaced group's")
+	require.Equal(t, authorizer.DecisionDeny, authorize(service("test.ext.grafana.app:get"), "stacks-1"))
+}
+
 func TestGetAuthorizerRequiresIdentity(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",

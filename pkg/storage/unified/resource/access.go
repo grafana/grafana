@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authz/namespacedgroups"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -85,29 +86,32 @@ var ErrServiceCannotDelegate = errors.New("this service's token has no delegated
 // ErrServicePermissionMissing distinguishes a service denial from a user denial.
 var ErrServicePermissionMissing = errors.New("this service's token has no permission for the resource")
 
-func checkServiceTokenPermissions(id claims.AuthInfo, group, resource, verb string) error {
-	res := authz.CheckServicePermissions(id, group, resource, verb)
+// checkServiceTokenPermissions checks the permissions of the caller's token
+// for a request in namespace. viaOwner reports that a namespaced group was
+// granted through its owner (see namespacedgroups.CheckServicePermissions).
+func checkServiceTokenPermissions(id claims.AuthInfo, namespace, group, resource, verb string) (viaOwner bool, err error) {
+	res, viaOwner := namespacedgroups.CheckServicePermissions(id, namespace, group, resource, verb)
 	if res.Allowed {
-		return nil
+		return viaOwner, nil
 	}
 
 	// Tokenless callers need the underlying client's local authorization rules.
 	// A verified token with empty permissions must not receive this exemption.
 	if id.GetAccessToken() == "" && len(id.GetTokenPermissions()) == 0 && len(id.GetTokenDelegatedPermissions()) == 0 {
-		return nil
+		return false, nil
 	}
 
 	missing := ErrServiceCannotDelegate
 	if res.ServiceCall {
 		missing = ErrServicePermissionMissing
 	}
-	return fmt.Errorf("%w: %s/%s:%s", missing, group, resource, verb)
+	return false, fmt.Errorf("%w: %s/%s:%s", missing, group, resource, verb)
 }
 
-func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
-	err := checkServiceTokenPermissions(id, group, resource, verb)
+func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.AuthInfo, namespace, group, resource, verb string) (viaOwner bool, err error) {
+	viaOwner, err = checkServiceTokenPermissions(id, namespace, group, resource, verb)
 	if err == nil {
-		return nil
+		return viaOwner, nil
 	}
 	if errors.Is(err, ErrServicePermissionMissing) {
 		c.metrics.errorsTotal.WithLabelValues(group, resource, verb).Inc()
@@ -123,7 +127,7 @@ func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.Au
 		"subject", id.GetSubject(),
 		"required_permission", fmt.Sprintf("%s/%s:%s", group, resource, verb),
 	)
-	return err
+	return false, err
 }
 
 // Check before scanning so an empty index cannot hide a missing service grant.
@@ -154,20 +158,20 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 		if !req.IsDeleted && req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == "folder.grafana.app" && name == "folders" {
 			group, name, resourceVerb = "dashboard.grafana.app", "dashboards", utils.VerbCreate
 		}
-		if err := s.checkSearchServicePermission(ctx, id, group, name, resourceVerb); err != nil {
+		if err := s.checkSearchServicePermission(ctx, id, key.Namespace, group, name, resourceVerb); err != nil {
 			return err
 		}
 	}
 	for _, resource := range req.Federated {
-		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, utils.VerbGet); err != nil {
+		if err := s.checkSearchServicePermission(ctx, id, key.Namespace, resource.Group, resource.Resource, utils.VerbGet); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *searchServer) checkSearchServicePermission(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
-	err := checkServiceTokenPermissions(id, group, resource, verb)
+func (s *searchServer) checkSearchServicePermission(ctx context.Context, id claims.AuthInfo, namespace, group, resource, verb string) error {
+	_, err := checkServiceTokenPermissions(id, namespace, group, resource, verb)
 	if err == nil {
 		return nil
 	}
@@ -318,10 +322,14 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
-	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+	viaOwner, err := c.serviceCanDelegate(ctx, id, req.Namespace, req.Group, req.Resource, req.Verb)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
 		return claims.CheckResponse{Allowed: false}, err
+	}
+	if viaOwner {
+		id = withNamespacedGroupGrants(id, servicePermission(req.Group, req.Resource, req.Verb))
 	}
 
 	resp, err := c.client.Check(ctx, id, req, folder)
@@ -360,10 +368,14 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
-	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+	viaOwner, err := c.serviceCanDelegate(ctx, id, req.Namespace, req.Group, req.Resource, req.Verb)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
 		return nil, claims.NoopZookie{}, err
+	}
+	if viaOwner {
+		id = withNamespacedGroupGrants(id, servicePermission(req.Group, req.Resource, req.Verb))
 	}
 
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
@@ -433,17 +445,25 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 
 	// Once per group, resource and verb: a page of hits repeats the same combination.
 	seen := make(map[string]struct{}, len(itemsToCheck))
+	var ownerGrants []string
 	for _, item := range itemsToCheck {
-		key := item.Group + "/" + item.Resource + ":" + item.Verb
+		key := servicePermission(item.Group, item.Resource, item.Verb)
 		if _, dup := seen[key]; dup {
 			continue
 		}
 		seen[key] = struct{}{}
-		if err := c.serviceCanDelegate(ctx, id, item.Group, item.Resource, item.Verb); err != nil {
+		viaOwner, err := c.serviceCanDelegate(ctx, id, req.Namespace, item.Group, item.Resource, item.Verb)
+		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			span.RecordError(err)
 			return claims.BatchCheckResponse{}, err
 		}
+		if viaOwner {
+			ownerGrants = append(ownerGrants, key)
+		}
+	}
+	if len(ownerGrants) > 0 {
+		id = withNamespacedGroupGrants(id, ownerGrants...)
 	}
 
 	// Forward to the underlying client

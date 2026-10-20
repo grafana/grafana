@@ -321,7 +321,9 @@ func parseNamespacedGroup(group, owner string) (name, namespace string, err erro
 // namespacedOwnerOf returns the owner, of owners, whose namespaced groups
 // include group: the one group ends in, after a dot. Only the owner's
 // namespaced source may serve such a group. Any other source refuses it, so
-// that no plugin can claim, or shadow, a namespace's group.
+// that no plugin can claim, or shadow, a namespace's group, nor have its kinds
+// reached by the owner's service permissions, which unified storage extends to
+// any group of that form (namespacedgroups.Owner).
 func namespacedOwnerOf(group string, owners []string) (string, bool) {
 	for _, owner := range owners {
 		if strings.HasSuffix(group, "."+owner) {

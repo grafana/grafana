@@ -99,7 +99,7 @@ func TestServiceCanDelegate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			c := newLimitedClient(t)
 
-			err := c.serviceCanDelegate(context.Background(), tc.id, "dashboard.grafana.app", "dashboards", utils.VerbGet)
+			_, err := c.serviceCanDelegate(context.Background(), tc.id, "stacks-1", "dashboard.grafana.app", "dashboards", utils.VerbGet)
 
 			if tc.wantErr {
 				require.ErrorIs(t, err, ErrServiceCannotDelegate)
