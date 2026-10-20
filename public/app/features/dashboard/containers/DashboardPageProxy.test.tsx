@@ -4,6 +4,7 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
+import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPageProxy';
@@ -28,7 +29,7 @@ jest.mock('@grafana/runtime', () => ({
           creationTimestamp: '2024-01-01T00:00:00Z',
           annotations: {},
         },
-        spec: jest.requireActual('@grafana/schema/apis/dashboard.grafana.app/v2').defaultSpec(),
+        spec: defaultSpec(),
         access: {},
       }),
     };

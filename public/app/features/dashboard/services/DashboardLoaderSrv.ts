@@ -257,9 +257,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    // Chain the impression side effect onto the returned promise. A detached
-    // `.then()` rejects on its own when the load fails, which surfaces as an
-    // unhandled rejection before the caller can render the error state.
+    // Return the chained promise: a detached `.then()` would reject unhandled when the load fails.
     return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
       impressionSrv.addDashboardImpression(result.metadata.name);
       return result;
