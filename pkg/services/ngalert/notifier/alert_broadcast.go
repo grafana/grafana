@@ -67,27 +67,29 @@ func (s *alertBroadcast) Merge(b []byte) error {
 	// Merge is invoked from the cluster's receive path. Never call PutAlerts here:
 	// it can block on Alertmanager backpressure and stall the gossip event loop.
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	select {
 	case s.queue <- payload:
+		if s.running {
+			s.mu.Unlock()
+			return nil
+		}
+		s.running = true
+		s.mu.Unlock()
+		go s.processQueue()
+		return nil
 	default:
 		// Alert broadcasts are best-effort state replication. Dropping here is
 		// preferable to blocking the cluster receive path; the next evaluation
 		// will broadcast the current alert state again.
-		if dropped, ok := s.shouldLogQueueDrop(time.Now()); ok {
-			s.logger.Warn("Dropping broadcast alerts because local processing queue is full", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts), "droppedSinceLastWarning", dropped)
+		dropped, shouldLog := s.shouldLogQueueDrop(time.Now())
+		s.mu.Unlock()
+		if shouldLog {
+			// Logging can block on I/O. Keep it off the gossip receive path; the
+			// rate limit bounds how often a warning can be scheduled.
+			go s.logger.Warn("Dropping broadcast alerts because local processing queue is full", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts), "droppedSinceLastWarning", dropped)
 		}
 		return nil
 	}
-
-	if s.running {
-		return nil
-	}
-
-	s.running = true
-	go s.processQueue()
-	return nil
 }
 
 
