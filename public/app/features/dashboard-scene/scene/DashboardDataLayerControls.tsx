@@ -56,14 +56,17 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   // Controls in a repeated row/tab render clone layers; edit the source so every repeat picks up the change
   const sourceLayer = useMemo(() => getRepeatSourceObject(layer), [layer]);
 
-  const onClickEditLayer = useCallback(() => {
+  const selectSourceLayer = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(sourceLayer, DashboardScene);
     dashboard.state.sidebar.selectObject(sourceLayer);
   }, [sourceLayer]);
 
   const onClickEditLayerQuery = useCallback(() => {
+    // Autocomplete scopes from the sidebar selection. Section controls stop pointer events,
+    // so opening the editor would otherwise only offer dashboard variables.
+    selectSourceLayer();
     setIsQueryEditorOpen(true);
-  }, []);
+  }, [selectSourceLayer]);
 
   const onClickDuplicateLayer = useCallback(() => {
     if (sourceLayer instanceof DashboardAnnotationsDataLayer) {
@@ -86,13 +89,13 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
     () => (
       <AnnotationEditActions
         layer={sourceLayer}
-        onClickEdit={onClickEditLayer}
+        onClickEdit={selectSourceLayer}
         onClickEditQuery={onClickEditLayerQuery}
         onClickDuplicate={onClickDuplicateLayer}
         onClickDelete={onClickDeleteLayer}
       />
     ),
-    [sourceLayer, onClickEditLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
+    [sourceLayer, selectSourceLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
   );
 
   return (
@@ -104,7 +107,11 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
       )}
       <EditActionsPopover content={editActions}>
         <div className={styles.container}>
-          <DataLayerControl layer={layer} inMenu={inMenu} />
+          <DataLayerControl
+            layer={layer}
+            enabledLayer={sourceLayer instanceof DashboardAnnotationsDataLayer ? sourceLayer : undefined}
+            inMenu={inMenu}
+          />
         </div>
       </EditActionsPopover>
     </>

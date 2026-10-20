@@ -85,6 +85,56 @@ export function getRepeatSourceObject<T extends SceneObject>(obj: T): T {
   return obj;
 }
 
+/**
+ * Visit every repeat-clone mirror of a source object. Clone subtrees mirror the source by state
+ * property and array index, including when the source sits inside another repeated section.
+ */
+export function forEachRepeatMirror(source: SceneObject, visit: (mirror: SceneObject) => void): void {
+  const seen = new Set<SceneObject>();
+  const path: Array<{ prop: string; index?: number }> = [];
+  let current: SceneObject = source;
+
+  while (current.parent) {
+    const parent: SceneObject = current.parent;
+    const step = findStateLocation(parent, current);
+    if (!step) {
+      return;
+    }
+
+    path.unshift(step);
+
+    for (const cloneRoot of repeatCloneRoots(parent)) {
+      const mirrored = followStatePath(cloneRoot, path);
+      if (!(mirrored instanceof SceneObjectBase) || mirrored === source || seen.has(mirrored)) {
+        continue;
+      }
+      seen.add(mirrored);
+      visit(mirrored);
+    }
+
+    current = parent;
+  }
+}
+
+function repeatCloneRoots(obj: SceneObject): SceneObject[] {
+  return [...readSceneObjectList(obj.state, 'repeatedRows'), ...readSceneObjectList(obj.state, 'repeatedTabs')];
+}
+
+function readSceneObjectList(state: object, key: string): SceneObject[] {
+  if (!(key in state)) {
+    return [];
+  }
+
+  return asSceneObjects(Reflect.get(state, key));
+}
+
+function asSceneObjects(value: unknown): SceneObject[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((item): item is SceneObject => item instanceof SceneObjectBase);
+}
+
 function isSameType<T extends SceneObject>(obj: T, candidate: unknown): candidate is T {
   return candidate instanceof obj.constructor;
 }
