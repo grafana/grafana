@@ -13401,7 +13401,9 @@
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
-      "undo-action": "Undo: {{action}}"
+      "undo-action": "Undo: {{action}}",
+      "visualization-replay-error": "Could not restore visualization. Try selecting the visualization again.",
+      "visualization-rollback-error": "Could not restore visualization. Check the panel before saving."
     },
     "incidents": {
       "attach-title": "Attach to incident",
