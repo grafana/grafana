@@ -110,7 +110,9 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
  * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
- * DashboardScene's own `'assistant'` edit source.
+ * DashboardScene's own `'assistant'` edit source. `PAGE_RESTORE` is the browser bringing back a page
+ * it kept in the back/forward cache after `pagehide` had ended the session: the notebook is still in
+ * edit mode, so a new session starts, and its end pairs with it.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
@@ -118,6 +120,7 @@ export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   NEW: 'new',
   ASSISTANT: 'assistant',
   ADD_TO_NOTEBOOK: 'add_to_notebook',
+  PAGE_RESTORE: 'page_restore',
 } as const;
 
 export type NotebookEditSessionSource =
@@ -135,7 +138,8 @@ export interface NotebookEditSessionStartedProperties extends EventProperty {
  * losing `?edit=true` while the notebook stays open. `NAVIGATION` is the notebook page itself
  * being torn down inside the app while a session was still open, such as navigating away or going
  * back. `PAGE_HIDE` is the browser page going away with the session still open, such as closing the
- * tab or reloading: nothing inside the app tears down then, so it is reported from `pagehide`.
+ * tab or reloading: nothing inside the app tears down then, so it is reported from `pagehide`. A page
+ * the browser keeps for Back comes back in edit mode and starts a new session, `page_restore`.
  */
 export const NOTEBOOK_EDIT_SESSION_END_REASON = {
   TOGGLE: 'toggle',
