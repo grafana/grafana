@@ -564,25 +564,30 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
+	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:            cfg,
-		Features:       featureToggles,
-		DB:             sqlStore,
-		Tracer:         tracingService,
-		Reg:            registerer,
-		Authzc:         accessClient,
-		Docs:           documentBuilderSupplier,
-		SecureValues:   v4,
-		VectorBackend:  vectorBackend,
-		Embedder:       embedder,
-		Reranker:       reranker,
-		DashboardStats: ossDashboardStats,
-		KV:             kv,
-		EDB:            dbProvider,
-		ExperimentalKV: experimentalKVOptions,
-		Publisher:      publisherService,
-		Subscriber:     subscriberService,
-		WatchExpiry:    watchExpiry,
+		Cfg:               cfg,
+		Features:          featureToggles,
+		DB:                sqlStore,
+		Tracer:            tracingService,
+		Reg:               registerer,
+		Authzc:            accessClient,
+		Docs:              documentBuilderSupplier,
+		SecureValues:      v4,
+		VectorBackend:     vectorBackend,
+		Embedder:          embedder,
+		Reranker:          reranker,
+		DashboardStats:    ossDashboardStats,
+		KV:                kv,
+		EDB:               dbProvider,
+		ExperimentalKV:    experimentalKVOptions,
+		Publisher:         publisherService,
+		Subscriber:        subscriberService,
+		WatchExpiry:       watchExpiry,
+		ManifestDiscovery: grafanaRouter,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -918,7 +923,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer)
+	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer, grafanaRouter)
 	if err != nil {
 		return nil, err
 	}
@@ -1359,25 +1364,30 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
+	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:            cfg,
-		Features:       featureToggles,
-		DB:             sqlStore,
-		Tracer:         tracingService,
-		Reg:            registerer,
-		Authzc:         accessClient,
-		Docs:           documentBuilderSupplier,
-		SecureValues:   v4,
-		VectorBackend:  vectorBackend,
-		Embedder:       embedder,
-		Reranker:       reranker,
-		DashboardStats: ossDashboardStats,
-		KV:             kv,
-		EDB:            dbProvider,
-		ExperimentalKV: experimentalKVOptions,
-		Publisher:      publisherService,
-		Subscriber:     subscriberService,
-		WatchExpiry:    watchExpiry,
+		Cfg:               cfg,
+		Features:          featureToggles,
+		DB:                sqlStore,
+		Tracer:            tracingService,
+		Reg:               registerer,
+		Authzc:            accessClient,
+		Docs:              documentBuilderSupplier,
+		SecureValues:      v4,
+		VectorBackend:     vectorBackend,
+		Embedder:          embedder,
+		Reranker:          reranker,
+		DashboardStats:    ossDashboardStats,
+		KV:                kv,
+		EDB:               dbProvider,
+		ExperimentalKV:    experimentalKVOptions,
+		Publisher:         publisherService,
+		Subscriber:        subscriberService,
+		WatchExpiry:       watchExpiry,
+		ManifestDiscovery: grafanaRouter,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1715,7 +1725,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer)
+	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer, grafanaRouter)
 	if err != nil {
 		return nil, err
 	}

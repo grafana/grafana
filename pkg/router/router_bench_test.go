@@ -70,7 +70,7 @@ func BenchmarkServiceMiddleware(b *testing.B) {
 	for i := range groups {
 		groups[i] = fmt.Sprintf("app-%d.grafana.app", i)
 	}
-	svc := newService(dummyRoutesLoader{groups: groups}, nil, prometheus.NewRegistry())
+	svc := newService(NewGrafanaRouter(dummyRoutesLoader{groups: groups}, nil), prometheus.NewRegistry())
 	svc.middleware = true
 	if err := svc.router.reconcile(b.Context()); err != nil {
 		b.Fatal(err)
