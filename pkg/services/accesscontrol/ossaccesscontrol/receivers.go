@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -57,7 +55,7 @@ func ProvideReceiverPermissionsService(
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
-	actionSetService resourcepermissions.ActionSetService, events bus.Bus,
+	actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
@@ -86,9 +84,7 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	r := &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}
-	events.AddEventListener(r.onReceiverPermissionsRefresh)
-	return r, nil
+	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(nil)
@@ -145,7 +141,7 @@ func copyPermissionUser(orgID int64) identity.Requester {
 // CopyPermissions copies the resource permissions from one receiver uid to a new uid. This is a temporary
 // method to be used during receiver renaming that is necessitated by receiver uids being generated from the receiver
 // name.
-func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
+func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, oldUID, newUID string) (int, error) {
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	oldResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)
 	newResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(newUID)
@@ -159,52 +155,21 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 		return 0, err
 	}
 
-	// Clear permission cache for the user who updated the receiver, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly updated object
-	if user != nil && user.IsIdentityType(claims.TypeUser) {
-		// A more comprehensive means of clearing the user's permissions cache than ClearUserPermissionCache.
-		// It also clears the cache for basic roles and teams, which is required for the user to not have temporarily
-		// broken UI permissions when their source of elevated permissions comes from a cached team or basic role
-		// permission.
-		event := &receiverPermissionsRefreshRequested{ctx: withoutSQLSessionContext{ctx}, user: user}
-		// Remote AuthZ can read the copied permissions only after the outermost transaction commits.
-		if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
-			sess.PublishAfterCommit(event)
-		} else {
-			r.refreshUserPermissions(event.ctx, event.user)
-		}
-	}
-
 	return countCustomPermissions(setPermissionCommands), nil
 }
 
-// The bus supplies the outer transaction's context. Keep the originating context for request-specific feature evaluation.
-type receiverPermissionsRefreshRequested struct {
-	ctx  context.Context
-	user identity.Requester
-}
+// RefreshPermissions refreshes the caller's permissions after the receiver update commits.
+func (r ReceiverPermissionsService) RefreshPermissions(ctx context.Context, user identity.Requester) {
+	if user == nil || !user.IsIdentityType(claims.TypeUser) {
+		return
+	}
 
-func (r ReceiverPermissionsService) onReceiverPermissionsRefresh(_ context.Context, event *receiverPermissionsRefreshRequested) error {
-	r.refreshUserPermissions(event.ctx, event.user)
-	return nil
-}
-
-func (r ReceiverPermissionsService) refreshUserPermissions(ctx context.Context, user identity.Requester) {
+	// Reload also refreshes basic-role and team caches, which ClearUserPermissionCache does not clear.
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if _, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true}); err != nil {
 		r.log.Debug("Failed to clear user permissions cache", "error", err)
 	}
-}
-
-// The originating context must not expose the SQL session after commit.
-type withoutSQLSessionContext struct{ context.Context }
-
-func (ctx withoutSQLSessionContext) Value(key any) any {
-	if _, ok := key.(sqlstore.ContextSessionKey); ok {
-		return nil
-	}
-	return ctx.Context.Value(key)
 }
 
 func (r ReceiverPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {

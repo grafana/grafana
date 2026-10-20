@@ -21,7 +21,10 @@ func NewFakeReceiverPermissionsService() *FakeReceiverPermissionsService {
 func (f FakeReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string) {
 }
 
-func (f FakeReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
+func (f FakeReceiverPermissionsService) RefreshPermissions(ctx context.Context, user identity.Requester) {
+}
+
+func (f FakeReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, oldUID, newUID string) (int, error) {
 	return 0, nil
 }
 

@@ -705,7 +705,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	dashboardProvisioningService := service7.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
-	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, inProcBus)
+	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
@@ -1497,7 +1497,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	dashboardProvisioningService := service7.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
-	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, inProcBus)
+	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

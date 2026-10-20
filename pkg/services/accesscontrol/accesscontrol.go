@@ -158,7 +158,10 @@ type ServiceAccountPermissionsService interface {
 type ReceiverPermissionsService interface {
 	PermissionsService
 	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
-	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
+	CopyPermissions(ctx context.Context, orgID int64, oldUID, newUID string) (int, error)
+	// RefreshPermissions must run outside a SQL transaction, after the permission changes commit.
+	// Refresh failures do not fail the committed update.
+	RefreshPermissions(ctx context.Context, user identity.Requester)
 }
 
 type RoutePermissionsService interface {

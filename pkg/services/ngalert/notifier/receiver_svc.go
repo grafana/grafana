@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -462,6 +463,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
 	))
 	defer span.End()
+	// This method must own the transaction so the permission refresh runs after commit.
+	if ctx.Value(sqlstore.ContextSessionKey{}) != nil {
+		return nil, errors.New("receiver updates cannot run inside an existing SQL transaction")
+	}
 	// check origin of the provided receiver
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "update")
@@ -575,7 +580,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 				return err
 			}
 			// Update receiver permissions
-			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, existing.UID, result.UID)
+			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, existing.UID, result.UID)
 			if err != nil {
 				return err
 			}
@@ -599,6 +604,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if existing.Name != r.Name {
+		rs.resourcePermissions.RefreshPermissions(ctx, user)
 	}
 
 	logger.Info("Updated receiver", "new_version", result.Version)
