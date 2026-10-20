@@ -48,6 +48,17 @@
         }
       },
       {
+        "name": "non_multi_scalar_value_array_text",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": false,
+        "current": {
+          "value": "I",
+          "text": ["I"],
+          "selected": true
+        }
+      },
+      {
         "name": "no_multi_property",
         "type": "query",
         "datasource": "prometheus",

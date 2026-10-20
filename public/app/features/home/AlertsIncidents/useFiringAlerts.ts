@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { escapeRegExp } from 'lodash';
+import { uniq } from 'lodash';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
@@ -15,6 +15,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
+import { type FilterScope, type FilterSelection, resolveFilterScope } from './filterSelection';
 import { severityLevelRank } from './severity';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
@@ -22,11 +23,50 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
-function buildTeamMatchers(teamNames: string[]) {
-  if (teamNames.length === 0) {
+// Any run of separator characters between or around the name's letter/digit runs.
+// Alertmanager compiles matchers with Go's RE2, which supports \p{...} classes;
+// don't reuse this pattern in a JS RegExp without the `u` flag.
+const SEPARATORS = '[^\\p{L}\\p{N}]*';
+
+/**
+ * Regex pattern matching any labeling convention of a team name: only the
+ * letter/digit runs must appear, with arbitrary separators (or none) between
+ * and around them. "Team (US)" matches "Team (US)", "team-us" or "TeamUS" —
+ * but not "team-us-2", since Alertmanager anchors regex matchers.
+ * Null for names without any letters or digits.
+ */
+function toTolerantPattern(teamName: string): string | null {
+  // Runs of letters/digits contain no regex metacharacters, so no escaping is needed.
+  const runs = teamName.match(/[\p{L}\p{N}]+/gu);
+  return runs && SEPARATORS + runs.join(SEPARATORS) + SEPARATORS;
+}
+
+function buildTolerantTeamMatchers(teamNames: string[]) {
+  const patterns = uniq(teamNames.map(toTolerantPattern).filter((p): p is string => p !== null));
+  if (patterns.length === 0) {
     return [];
   }
-  return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+  // (?i) (a Go RE2 inline flag): the label's casing is as unpredictable as its separators.
+  return [{ name: 'team', value: `(?i)${patterns.join('|')}`, isRegex: true, isEqual: true }];
+}
+
+/**
+ * Which matchers to send for the current dropdown selection:
+ * an explicit "All" pick means no filter at all, a picked label wins next,
+ * and with no selection we fall back to the user's own teams when they have any.
+ */
+function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
+  switch (scope.kind) {
+    case 'all':
+      return [];
+    case 'label':
+      // Picks are labels set on real rules, so they're matched exactly.
+      return [{ name: scope.label.key, value: scope.label.value, isRegex: false, isEqual: true }];
+    case 'default':
+      // The `team` alert label is free-form — typically some slugged or re-cased variant
+      // of the Grafana team name — so the own-teams default matches tolerantly.
+      return buildTolerantTeamMatchers(userTeamNames);
+  }
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
@@ -37,29 +77,34 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 /**
  * All data fetching and derived state for the homepage Firing alerts view,
  * shared between the old-layout card and the redesigned tabs.
+ *
+ * When `selectedFilter` names a label (from the filter dropdown) it overrides the default
+ * filter of the user's own teams.
  */
-export function useFiringAlerts() {
+export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   // The hook gates its own fetching so it's safe to call unconditionally,
   // e.g. from the tabs component when only incidents are available.
   const enabled = canViewFiringAlerts();
 
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
+  const shouldLoadTeams = enabled && contextSrv.isSignedIn;
+
   const { value: teams, loading: teamsLoading } = useAsync(
-    () => (enabled ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
-    [enabled]
+    () => (shouldLoadTeams ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
+    [shouldLoadTeams]
   );
 
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  // Filter to the user's teams when they have any. No memo needed:
-  // RTK Query serializes query args, so referential identity doesn't matter.
-  const matchers = hasTeams ? buildTeamMatchers(teamNames) : [];
+  const filterScope = resolveFilterScope(selectedFilter);
+  // No memo needed: RTK Query serializes query args, so referential identity doesn't matter.
+  const matchers = resolveMatchers(filterScope, teamNames);
 
   const {
     data: alerts,
-    isLoading: alertsLoading,
+    isFetching: alertsLoading,
     error,
     refetch,
   } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
@@ -113,6 +158,10 @@ export function useFiringAlerts() {
     highCount,
     hasAlerts,
     hasTeams,
+    teamsLoading: enabled && teamsLoading,
+    // Echoed back so the card can scope its empty message to the picked label.
+    filterScope,
+    enabled,
     loading,
     error,
     refetch,

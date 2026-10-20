@@ -3,6 +3,7 @@ package plugininstaller
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
@@ -191,10 +192,8 @@ func TestService_Run(t *testing.T) {
 				store,
 				&pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
-						for _, plugin := range tt.pluginsToFail {
-							if plugin == pluginID {
-								return errors.New("Failed to install plugin")
-							}
+						if slices.Contains(tt.pluginsToFail, pluginID) {
+							return errors.New("Failed to install plugin")
 						}
 						if !tt.shouldInstall {
 							t.Fatal("Should not install plugin")
@@ -255,13 +254,7 @@ func TestService_Run(t *testing.T) {
 				expectedInstalledFromURL := 0
 				allPluginsToInstall := append(tt.pluginsToInstallSync, tt.pluginsToInstall...)
 				for _, plugin := range allPluginsToInstall {
-					expectedFailed := false
-					for _, pluginFail := range tt.pluginsToFail {
-						if plugin.ID == pluginFail {
-							expectedFailed = true
-							break
-						}
-					}
+					expectedFailed := slices.Contains(tt.pluginsToFail, plugin.ID)
 					if expectedFailed {
 						continue
 					}

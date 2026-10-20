@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2, type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import {
   Alert,
@@ -28,6 +28,8 @@ import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { InstanceSilenceForm } from '../../components/silences/InstanceSilenceForm';
+import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsToMatchersParam } from '../../utils/matchers';
@@ -37,12 +39,12 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
-import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
+import { getAlertInstanceEndsAtIso, getAlertInstanceStartsAtIso } from './startInvestigationFromAlert';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 import { formatTimelineDate, noop } from './timelineUtils';
 
@@ -111,8 +113,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
     matchers: labelsToMatchersParam(instanceLabels),
-    from: timeRange.from.unix(),
-    to: timeRange.to.unix(),
+    timeRange: { from: timeRange.from, to: timeRange.to },
   });
 
   // Convert state history to LogRecords and filter by instance labels
@@ -125,8 +126,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
 
-  const showInstanceTimeline =
-    config.featureToggles.alertingNotificationHistoryTriage && config.featureToggles.kubernetesAlertingHistorian;
+  const showInstanceTimeline = isNotificationHistoryEnabled();
 
   const showDrawerTimeRangeBanner = useMemo(() => {
     if (!rule?.grafana_alert) {
@@ -219,9 +219,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       instanceLabels,
       commonLabels,
       alertState: instanceState,
+      alertStartsAt: getAlertInstanceStartsAtIso(historyRecords),
+      alertEndsAt: getAlertInstanceEndsAtIso(historyRecords),
       onOpenSilence: handleOpenSilence,
     }),
-    [instanceLabels, commonLabels, instanceState, handleOpenSilence]
+    [instanceLabels, commonLabels, instanceState, historyRecords, handleOpenSilence]
   );
 
   const getDrawerTitle = () => <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;

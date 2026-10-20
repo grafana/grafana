@@ -1,4 +1,4 @@
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { textUtil } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';

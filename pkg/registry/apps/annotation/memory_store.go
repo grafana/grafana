@@ -126,23 +126,15 @@ func sortByEndTime(items []annotationV0.Annotation) {
 func matchTags(annoTags []string, filterTags []string, matchAny bool) bool {
 	if matchAny {
 		for _, filterTag := range filterTags {
-			for _, annoTag := range annoTags {
-				if annoTag == filterTag {
-					return true
-				}
+			if slices.Contains(annoTags, filterTag) {
+				return true
 			}
 		}
 		return false
 	}
 
 	for _, filterTag := range filterTags {
-		found := false
-		for _, annoTag := range annoTags {
-			if annoTag == filterTag {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(annoTags, filterTag)
 		if !found {
 			return false
 		}
@@ -153,23 +145,15 @@ func matchTags(annoTags []string, filterTags []string, matchAny bool) bool {
 func matchScopes(annoScopes []string, filterScopes []string, matchAny bool) bool {
 	if matchAny {
 		for _, filterScope := range filterScopes {
-			for _, annoScope := range annoScopes {
-				if annoScope == filterScope {
-					return true
-				}
+			if slices.Contains(annoScopes, filterScope) {
+				return true
 			}
 		}
 		return false
 	}
 
 	for _, filterScope := range filterScopes {
-		found := false
-		for _, annoScope := range annoScopes {
-			if annoScope == filterScope {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(annoScopes, filterScope)
 		if !found {
 			return false
 		}
@@ -251,7 +235,16 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {
-			if opts.Prefix == "" || strings.HasPrefix(tag, opts.Prefix) {
+			switch {
+			case opts.Prefix != "":
+				if strings.HasPrefix(tag, opts.Prefix) {
+					tagCounts[tag]++
+				}
+			case opts.Contains != "":
+				if strings.Contains(strings.ToLower(tag), strings.ToLower(opts.Contains)) {
+					tagCounts[tag]++
+				}
+			default:
 				tagCounts[tag]++
 			}
 		}
@@ -261,6 +254,9 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 	for name, count := range tagCounts {
 		tags = append(tags, Tag{Name: name, Count: count})
 	}
+	slices.SortFunc(tags, func(a, b Tag) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 
 	if opts.Limit > 0 && len(tags) > opts.Limit {
 		tags = tags[:opts.Limit]

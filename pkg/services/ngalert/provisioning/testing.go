@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -75,7 +75,7 @@ func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockPr
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	m.GetManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceToManagerProperties(p), nil)
-	m.GetManagerPropertiesByUIDs(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+	m.GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	return m
 }
 
@@ -113,7 +113,7 @@ type fakeRuleAccessControlService struct {
 	Calls                          []call
 	AuthorizeAccessToRuleGroupFunc func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolderFunc    func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
-	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
 	HasAccessInFolderFunc          func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
@@ -147,7 +147,7 @@ func (s *fakeRuleAccessControlService) AuthorizeRuleRead(ctx context.Context, us
 	return nil
 }
 
-func (s *fakeRuleAccessControlService) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+func (s *fakeRuleAccessControlService) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 	s.RecordCall("AuthorizeRuleGroupWrite", ctx, user, change)
 	if s.AuthorizeRuleChangesFunc != nil {
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)

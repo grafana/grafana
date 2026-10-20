@@ -13,27 +13,11 @@ labels:
 title: Group alert notifications
 menuTitle: Grouping
 weight: 114
-refs:
-  alert-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
-  notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
-  silences:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
 ---
 
 # Group alert notifications
 
-Grouping in Grafana Alerting allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming. In some cases, it can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
+Grouping in Grafana Alerting allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming. In some cases, it can negatively impact a first-responder's ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
 
 {{< admonition type="tip" >}}
 For a practical example of grouping, refer to our [Getting Started with Grouping tutorial](https://grafana.com/tutorials/alerting-get-started-pt3/).
@@ -43,7 +27,7 @@ For a practical example of grouping, refer to our [Getting Started with Grouping
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
 
-In the [notification policy](ref:notification-policies), you can configure how to group multiple alerts into a single notification:
+In the [notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/), you can configure how to group multiple alerts into a single notification:
 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
 - [Timing options](#timing-options) determine when and how often to send the notification.
@@ -81,7 +65,7 @@ In the notification policy, you can also configure how often notifications are s
 
 These timers reduce the number of notifications sent. By delaying the delivery of notifications, incoming alerts can be grouped into just one notification instead of many.
 
-{{< figure src="/media/docs/alerting/alerting-timing-options-flowchart-v2.png" max-width="750px" alt="A basic sequence diagram of the the notification policy timers" caption="A basic sequence diagram of the notification policy timers" >}}
+{{< figure src="/media/docs/alerting/alerting-timing-options-flowchart-v2.png" max-width="750px" alt="A basic sequence diagram of the notification policy timers" caption="A basic sequence diagram of the notification policy timers" >}}
 
 <!--
 flowchart LR

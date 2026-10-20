@@ -264,6 +264,10 @@ export function getAnnotationsFromData(
             if (f.split && typeof v === 'string') {
               v = v.split(',');
             }
+            // a legacy id of 0 marks a read-only annotation (e.g. loki-sourced alerts); "0" would be truthy and enable edit/delete
+            if (f.key === 'id' && v !== 0) {
+              v = String(v);
+            }
             anno[f.key] = v;
           }
         }

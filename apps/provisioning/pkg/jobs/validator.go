@@ -416,12 +416,6 @@ func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioni
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
-			if email != "" {
-				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set by the provisioning service", AnnoAuthorEmail))
-			}
-			return nil
-		}
 		if requester, err := identity.GetRequester(ctx); err == nil && requester.IsIdentityType(types.TypeUser) {
 			if name == "" && email == "" && id == "" && origin == "" {
 				return nil
@@ -440,11 +434,17 @@ func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioni
 			}
 			return nil
 		}
+		if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
+			if email != "" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set by the provisioning service", AnnoAuthorEmail))
+			}
+			return nil
+		}
 		if name != "" || email != "" || id != "" {
 			return apierrors.NewBadRequest("job author annotations may only be set by a user or the provisioning service")
 		}
-		if origin != "" && origin != "Unknown" {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must be Unknown when no user or provisioning service is involved", AnnoAuthorOrigin))
+		if origin != "" {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set when no user or provisioning service is involved", AnnoAuthorOrigin))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)

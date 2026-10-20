@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
@@ -181,8 +180,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	if err != nil {
 		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
-				Message: "error reading settings",
-				Reason:  err.Error(),
+				Message: fmt.Sprintf("error reading settings: %s", err.Error()),
 				Code:    http.StatusPreconditionFailed,
 			},
 		})
@@ -580,16 +578,13 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 
 	// Use the object's timestamp as the base, but never go below the last
 	// emitted RV so that every value is unique regardless of iterator order.
-	base := ts
-	if base < x.lastRV {
-		base = x.lastRV
-	}
+	base := max(ts, x.lastRV)
 
 	// Increment, keeping the sub-millisecond portion (low 22 bits) under 1000
 	// so that the snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake)
 	// is lossless.
 	// TODO: remove when backwards compatibility is no longer needed
-	shift := snowflake.NodeBits + snowflake.StepBits
+	shift := resourceVersionTimestampShift
 	subMs := base & ((1 << shift) - 1)
 	if subMs >= 999 {
 		base = ((base >> shift) + 1) << shift

@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { config } from '../config';
 import { type BackendSrvRequest, type FetchError, type FetchResponse, type BackendSrv } from '../services';
 
-import { usePluginUserStorage, useUserStorage, _clearStorageCache } from './userStorage';
+import { usePluginUserStorage, useUserStorage, _clearStorageCache, UserStorage } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -24,6 +24,7 @@ jest.mock('@grafana/data', () => {
   const storeMocks = {
     get: jest.fn(),
     set: jest.fn(),
+    delete: jest.fn(),
   };
   return {
     ...jest.requireActual('@grafana/data'),
@@ -48,6 +49,7 @@ describe('userStorage', () => {
     const store = getStoreMocks();
     store.get.mockReset();
     store.set.mockReset();
+    store.delete.mockReset();
     _clearStorageCache();
   });
 
@@ -59,14 +61,14 @@ describe('userStorage', () => {
   describe('UserStorageAPI.getItem', () => {
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.getItem('key');
       expect(getStoreMocks().get).toHaveBeenCalledWith('plugin-id:abc:key');
     });
 
     it('use localStorage if the user storage is not found', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.getItem('key');
       expect(getStoreMocks().get).toHaveBeenCalledWith('plugin-id:abc:key');
     });
@@ -75,7 +77,7 @@ describe('userStorage', () => {
       request.mockReturnValue(
         Promise.resolve({ status: 200, data: { spec: { data: { key: 'value' } } } } as FetchResponse)
       );
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       const value = await storage.getItem('key');
       expect(value).toBe('value');
     });
@@ -84,7 +86,7 @@ describe('userStorage', () => {
   describe('setItem', () => {
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'value');
       expect(getStoreMocks().set).toHaveBeenCalledWith('plugin-id:abc:key', 'value');
     });
@@ -92,7 +94,7 @@ describe('userStorage', () => {
     it('creates a new user storage if it does not exist', async () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'value');
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -121,7 +123,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       // Create fails with forbidden
       request.mockReturnValueOnce(Promise.reject({ status: 403 } as FetchError));
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'value');
       expect(getStoreMocks().set).toHaveBeenCalledWith('plugin-id:abc:key', 'value');
     });
@@ -133,7 +135,7 @@ describe('userStorage', () => {
           data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
         } as FetchResponse)
       );
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'new-value');
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -161,7 +163,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
 
       // First, trigger init which will cache null (404)
       await storage.getItem('some-key');
@@ -202,7 +204,7 @@ describe('userStorage', () => {
       );
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
 
       // First, trigger init which will cache the data
       await storage.getItem('key');
@@ -233,13 +235,371 @@ describe('userStorage', () => {
     });
   });
 
+  describe('deleteItem', () => {
+    it('use localStorage if the user is not logged in', async () => {
+      config.bootData.user.isSignedIn = false;
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('use localStorage if the user storage is not found', async () => {
+      request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('deletes an item from the user storage', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value', other: 'data' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'GET',
+          showErrorAlert: false,
+        })
+      );
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'PATCH',
+          data: {
+            spec: {
+              data: { key: null },
+            },
+          },
+        })
+      );
+    });
+
+    it('falls back to localStorage if the delete operation fails', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.reject({ status: 403 } as FetchError));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('updates cache after deleting an item', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key: 'value', other: 'data' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      await storage1.deleteItem('key');
+
+      // Second instance should see updated cache without network request
+      request.mockReset();
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
+      const value = await storage2.getItem('key');
+
+      // Should not make a GET request because cache has the updated data
+      expect(request).not.toHaveBeenCalled();
+      expect(value).toBeNull();
+    });
+
+    it('verifies other keys remain after deletion', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'value1', key2: 'value2' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key1');
+
+      // Get the deleted key
+      request.mockReset();
+      const deletedValue = await storage.getItem('key1');
+      expect(deletedValue).toBeNull();
+
+      // Get another key
+      const otherValue = await storage.getItem('key2');
+      expect(otherValue).toBe('value2');
+    });
+  });
+
+  describe('allItems', () => {
+    it('uses localStorage if the user is not logged in', async () => {
+      config.bootData.user.isSignedIn = false;
+      getStoreMocks().all = jest.fn().mockReturnValue({ key: 'value' });
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      const result = await storage.allItems();
+      expect(getStoreMocks().all).toHaveBeenCalledWith('plugin-id:abc:');
+      expect(result).toEqual({ key: 'value' });
+    });
+
+    it('returns all items from user storage', async () => {
+      request.mockReturnValue(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'value1', key2: 'value2' } } },
+        } as FetchResponse)
+      );
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      const result = await storage.allItems();
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    it('returns empty object when user storage is not found', async () => {
+      request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
+      getStoreMocks().all = jest.fn().mockReturnValue({});
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      const result = await storage.allItems();
+      expect(result).toEqual({});
+    });
+
+    it('returns a copy of the cached data without additional network requests', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'value1', key2: 'value2' } } },
+        } as FetchResponse)
+      );
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      // Prime the cache
+      await storage.getItem('key1');
+      request.mockReset();
+      // allItems should use the cache
+      const result = await storage.allItems();
+      expect(request).not.toHaveBeenCalled();
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    it('returns data reflecting updates from setItem', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'old' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.setItem('key1', 'new');
+      request.mockReset();
+      const result = await storage.allItems();
+      expect(request).not.toHaveBeenCalled();
+      expect(result).toEqual({ key1: 'new' });
+    });
+  });
+
+  describe('updateItem', () => {
+    const url = '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/svc:abc';
+    const fetched = (resourceVersion: string, data: Record<string, string>) =>
+      Promise.resolve({ status: 200, data: { metadata: { resourceVersion }, spec: { data } } } as FetchResponse);
+    const ok = () => Promise.resolve({ status: 200 } as FetchResponse);
+    const fail = (status: number) => () => Promise.reject({ status } as FetchError);
+
+    it('patches with the fetched resourceVersion and caches the result', async () => {
+      request.mockImplementation((options) => (options.method === 'GET' ? fetched('7', { key: 'a' }) : ok()));
+      const storage = new UserStorage('svc');
+
+      await storage.updateItem('key', (current) => current + 'b');
+
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          url,
+          method: 'PATCH',
+          data: { metadata: { resourceVersion: '7' }, spec: { data: { key: 'ab' } } },
+        })
+      );
+      request.mockClear();
+      expect(await storage.getItem('key')).toBe('ab');
+      expect(request).not.toHaveBeenCalled();
+    });
+
+    it('re-reads and re-runs update after a version conflict', async () => {
+      const update = jest.fn((current: string | null) => `${current}!`);
+      request
+        .mockReturnValueOnce(fetched('7', { key: 'a' }))
+        .mockImplementationOnce(fail(409))
+        .mockReturnValueOnce(fetched('8', { key: 'z' }))
+        .mockReturnValueOnce(ok());
+
+      await new UserStorage('svc').updateItem('key', update);
+
+      expect(update).toHaveBeenCalledTimes(2);
+      expect(update).toHaveBeenNthCalledWith(2, 'z');
+      expect(request).toHaveBeenCalledTimes(4);
+      expect(request).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          method: 'PATCH',
+          data: { metadata: { resourceVersion: '8' }, spec: { data: { key: 'z!' } } },
+        })
+      );
+    });
+
+    it('gives up after three conflicts', async () => {
+      request.mockImplementation((options) => (options.method === 'GET' ? fetched('7', { key: 'a' }) : fail(409)()));
+
+      await expect(new UserStorage('svc').updateItem('key', () => 'b')).rejects.toThrow(
+        'User storage: conflicting writes'
+      );
+      expect(request).toHaveBeenCalledTimes(6);
+    });
+
+    it('creates the resource when none exists', async () => {
+      request.mockImplementationOnce(fail(404)).mockReturnValueOnce(ok());
+      const update = jest.fn(() => 'first');
+
+      await new UserStorage('svc').updateItem('key', update);
+
+      expect(update).toHaveBeenCalledWith(null);
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/',
+          method: 'POST',
+          data: {
+            metadata: { name: 'svc:abc', labels: { user: 'abc', service: 'svc' } },
+            spec: { data: { key: 'first' } },
+          },
+        })
+      );
+    });
+
+    it('patches the resource another client created first', async () => {
+      request
+        .mockImplementationOnce(fail(404))
+        .mockImplementationOnce(fail(409))
+        .mockReturnValueOnce(fetched('3', {}))
+        .mockReturnValueOnce(ok());
+
+      await new UserStorage('svc').updateItem('key', () => 'v');
+
+      expect(request).toHaveBeenCalledTimes(4);
+      expect(request).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          url,
+          method: 'PATCH',
+          data: { metadata: { resourceVersion: '3' }, spec: { data: { key: 'v' } } },
+        })
+      );
+    });
+
+    it('writes nothing when update returns undefined and refreshes the cache', async () => {
+      request.mockReturnValueOnce(fetched('7', { key: 'stored' }));
+      const storage = new UserStorage('svc');
+
+      await storage.updateItem('key', () => undefined);
+
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(await storage.getItem('key')).toBe('stored');
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects on a failed write without falling back to localStorage', async () => {
+      request.mockReturnValueOnce(fetched('7', { key: 'a' })).mockImplementationOnce(fail(500));
+
+      await expect(new UserStorage('svc').updateItem('key', () => 'b')).rejects.toEqual({ status: 500 });
+      expect(getStoreMocks().set).not.toHaveBeenCalled();
+    });
+
+    it('refreshes the cache from the fetched resource even when the write fails', async () => {
+      const storage = new UserStorage('svc');
+      request.mockReturnValueOnce(fetched('6', { key: 'old' }));
+      expect(await storage.getItem('key')).toBe('old');
+      request.mockReturnValueOnce(fetched('7', { key: 'fresh' })).mockImplementationOnce(fail(500));
+
+      await expect(storage.updateItem('key', () => 'next')).rejects.toEqual({ status: 500 });
+
+      expect(await storage.getItem('key')).toBe('fresh');
+      expect(request).toHaveBeenCalledTimes(3);
+    });
+
+    it('uses localStorage in one step when the user is not signed in', async () => {
+      config.bootData.user.isSignedIn = false;
+      getStoreMocks().get.mockReturnValue('old');
+      const update = jest.fn(() => 'new');
+
+      await new UserStorage('svc').updateItem('key', update);
+
+      expect(getStoreMocks().get).toHaveBeenCalledWith('svc:abc:key');
+      expect(update).toHaveBeenCalledWith('old');
+      expect(getStoreMocks().set).toHaveBeenCalledWith('svc:abc:key', 'new');
+      expect(request).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('operation queue', () => {
+    it('runs queued operations one after another', async () => {
+      const deferred = <T,>() => {
+        let resolve!: (value: T) => void;
+        const promise = new Promise<T>((r) => (resolve = r));
+        return { promise, resolve };
+      };
+      const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+      const firstGet = deferred<FetchResponse>();
+      const patchB = deferred<FetchResponse>();
+      const updateC = jest.fn(() => 'c');
+      let patches = 0;
+      request.mockImplementation((options) => {
+        if (options.method === 'GET') {
+          return request.mock.calls.length === 1
+            ? firstGet.promise
+            : Promise.resolve({
+                status: 200,
+                data: { metadata: { resourceVersion: '1' }, spec: { data: {} } },
+              } as FetchResponse);
+        }
+        patches++;
+        return patches === 1 ? patchB.promise : Promise.resolve({ status: 200 } as FetchResponse);
+      });
+      const storage = new UserStorage('svc');
+
+      const a = storage.getItem('key');
+      const b = storage.updateItem('key', () => 'b');
+      const c = storage.updateItem('key', updateC);
+      await flush();
+      // A holds the lock on its pending GET; B and C are queued.
+      expect(request).toHaveBeenCalledTimes(1);
+
+      firstGet.resolve({
+        status: 200,
+        data: { metadata: { resourceVersion: '0' }, spec: { data: {} } },
+      } as FetchResponse);
+      await flush();
+      // B fetched and is waiting on its PATCH; C has not started.
+      expect(request).toHaveBeenCalledTimes(3);
+      expect(updateC).not.toHaveBeenCalled();
+
+      patchB.resolve({ status: 200 } as FetchResponse);
+      await Promise.all([a, b, c]);
+      expect(updateC).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(5);
+    });
+  });
+
   describe('Cache behavior', () => {
     it('multiple instances share the same network request', async () => {
       request.mockReturnValue(
         Promise.resolve({ status: 200, data: { spec: { data: { key: 'value' } } } } as FetchResponse)
       );
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Both should call getItem concurrently
       const [value1, value2] = await Promise.all([storage1.getItem('key'), storage2.getItem('key')]);
@@ -252,8 +612,8 @@ describe('userStorage', () => {
 
     it('caches 404 responses to avoid multiple requests', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Both should call getItem concurrently
       await Promise.all([storage1.getItem('key'), storage2.getItem('key')]);
@@ -267,12 +627,12 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
       await storage1.setItem('key1', 'value1');
 
       // Second instance should use cached data without network request
       request.mockReset();
-      const storage2 = usePluginUserStorage();
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
       const value = await storage2.getItem('key1');
 
       // Should not make a GET request because cache has the data
@@ -291,12 +651,12 @@ describe('userStorage', () => {
       // PATCH updates the storage
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
       await storage1.setItem('key1', 'new-value1');
 
       // Second instance should get updated value from cache
       request.mockReset();
-      const storage2 = usePluginUserStorage();
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
       const value = await storage2.getItem('key1');
 
       // Should not make a GET request because cache has the updated data
@@ -304,7 +664,7 @@ describe('userStorage', () => {
       expect(value).toBe('new-value1');
     });
 
-    it('concurrent initialization requests share the same promise', async () => {
+    it('concurrent first reads make one request', async () => {
       let resolvePromise: (value: FetchResponse | FetchError) => void;
       const promise = new Promise<FetchResponse | FetchError>((resolve) => {
         resolvePromise = resolve;
@@ -312,8 +672,8 @@ describe('userStorage', () => {
 
       request.mockReturnValue(promise);
 
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Start both getItem calls concurrently
       const promise1 = storage1.getItem('key');
@@ -348,8 +708,8 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Call setItem concurrently on different keys
       await Promise.all([storage1.setItem('key1', 'value1'), storage2.setItem('key2', 'value2')]);
@@ -377,8 +737,8 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Call setItem concurrently on the same key
       await Promise.all([storage1.setItem('key1', 'value1'), storage2.setItem('key1', 'value2')]);
@@ -407,5 +767,47 @@ describe('useUserStorage', () => {
     const first = result.current;
     rerender({ service: 'service-b' });
     expect(result.current).not.toBe(first);
+  });
+});
+
+describe('usePluginUserStorage', () => {
+  it('returns the same instance across re-renders', () => {
+    const { result, rerender } = renderHook(() => usePluginUserStorage());
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
+  it('returns a new instance when the plugin id changes', () => {
+    const { usePluginContext } = require('@grafana/data');
+    const originalImpl = usePluginContext.getMockImplementation();
+
+    try {
+      const { result, rerender } = renderHook(() => usePluginUserStorage());
+      const first = result.current;
+
+      usePluginContext.mockReturnValue({ meta: { id: 'other-plugin' } });
+      rerender();
+      expect(result.current).not.toBe(first);
+    } finally {
+      usePluginContext.mockImplementation(originalImpl);
+    }
+  });
+
+  it('should throw error when used outside plugin context', () => {
+    const { usePluginContext } = require('@grafana/data');
+    const originalImpl = usePluginContext.getMockImplementation();
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      usePluginContext.mockReturnValue(null);
+
+      expect(() => {
+        renderHook(() => usePluginUserStorage());
+      }).toThrow('No PluginContext found. The usePluginUserStorage() hook can only be used from a plugin.');
+    } finally {
+      usePluginContext.mockImplementation(originalImpl);
+      consoleSpy.mockRestore();
+    }
   });
 });

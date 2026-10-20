@@ -14,19 +14,16 @@
 
 jest.mock('../../utils/date');
 
-// Controls the measured container width so the two-column layout decision is
-// deterministic in tests (real measurement needs layout jsdom doesn't do).
-let mockMeasuredWidth = 0;
-jest.mock('react-use/lib/useMeasure', () => ({
-  __esModule: true,
-  default: () => [jest.fn(), { width: mockMeasuredWidth }],
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+  // Resolve synchronously so SpanDetailLinkButtons doesn't trigger un-acted state updates.
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
-// SpanDetailLinkButtons resolves data source settings via an async hook; return a
-// synchronous value so rendering doesn't trigger an un-acted state update in tests.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+jest.mock('./pluginPromo/attributePluginPromos', () => ({
+  ...jest.requireActual('./pluginPromo/attributePluginPromos'),
+  useAttributePluginPromoGetter: jest.fn(() => () => undefined),
 }));
 
 import { act, render, screen } from '@testing-library/react';
@@ -49,7 +46,8 @@ import SpanDetail, { getAbsoluteTime, type SpanDetailProps } from './index';
 describe('<SpanDetail>', () => {
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 }))!.spans[0];
-  const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
+  // Span/resource attributes default open; only open the sections that start collapsed.
+  const detailState = new DetailState().toggleLogs().toggleReferences();
   const traceStartTime = 5;
   const topOfExploreViewRef = jest.fn();
   const request = {
@@ -176,7 +174,6 @@ describe('<SpanDetail>', () => {
   ];
 
   beforeEach(() => {
-    mockMeasuredWidth = 0;
     jest.mocked(formatDuration).mockReset();
     props.tagsToggle.mockReset();
     props.processToggle.mockReset();
@@ -203,23 +200,15 @@ describe('<SpanDetail>', () => {
     expect(() => render(<SpanDetail {...(props as unknown as SpanDetailProps)} />)).not.toThrow();
   });
 
-  describe('attribute card layout', () => {
-    it('uses two columns when the container is wider than 1000px', () => {
-      mockMeasuredWidth = 1200;
-      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(2);
-    });
-
-    it('uses a single column when the container is 1000px or narrower', () => {
-      mockMeasuredWidth = 800;
-      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(1);
-    });
+  it('renders attribute cards', () => {
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
-  it('shows the operation name', () => {
+  it('shows the operation name without an error icon when the span failed', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
   });
 
   it('lists the service name, duration, start time and kind', () => {
@@ -260,6 +249,36 @@ describe('<SpanDetail>', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
+  });
+
+  it('keeps Resource attributes visible with an empty-state message when process.tags is empty', () => {
+    const spanWithoutResourceAttributes = {
+      ...span,
+      process: {
+        ...span.process,
+        tags: [],
+      },
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutResourceAttributes} />);
+
+    expect(screen.getByText('Resource attributes')).toBeInTheDocument();
+    expect(screen.getAllByText('No attributes').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('switch', { name: /Span attributes/ })).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Resource attributes/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps Span attributes visible with an empty-state message when tags are empty', () => {
+    const spanWithoutSpanAttributes = {
+      ...span,
+      tags: [],
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutSpanAttributes} />);
+
+    expect(screen.getByText('Span attributes')).toBeInTheDocument();
+    expect(screen.getByText('No attributes')).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Span attributes/ })).not.toBeInTheDocument();
   });
 
   it('renders the logs', async () => {
@@ -379,8 +398,12 @@ describe('<SpanDetail>', () => {
         { key: 'aggregation.span_count', value: '3' },
       ],
     };
-    // All accordions collapsed so each renders its abbreviated key preview.
-    const summaryTagsProps = { ...props, span: summarySpanWithTags, detailState: new DetailState() };
+    // Collapse span/resource attributes (open by default) so each accordion renders its abbreviated key preview.
+    const summaryTagsProps = {
+      ...props,
+      span: summarySpanWithTags,
+      detailState: new DetailState().toggleTags().toggleProcess(),
+    };
 
     beforeEach(() => {
       jest.mocked(formatDuration).mockImplementation((duration: number) => `${duration}us`);
@@ -408,6 +431,42 @@ describe('<SpanDetail>', () => {
     it('does not render a Summary attributes accordion for non-summary spans', () => {
       render(<SpanDetail {...({ ...props, detailState: new DetailState() } as unknown as SpanDetailProps)} />);
       expect(screen.queryByRole('switch', { name: /Summary attributes/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('exception details', () => {
+    const exceptionSpan = {
+      ...span,
+      tags: [...span.tags, { key: 'http.status_code', value: 503 }],
+      logs: [
+        {
+          timestamp: 10,
+          name: 'exception',
+          fields: [
+            { key: 'exception.type', value: 'java.lang.NullPointerException' },
+            { key: 'exception.message', value: 'Cannot invoke User.getId()' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      ],
+    };
+
+    it('renders the exception box above span attributes', () => {
+      render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
+
+      const exceptionBox = screen.getByRole('alert');
+      expect(exceptionBox).toHaveAccessibleName('Exception');
+      expect(exceptionBox).toHaveTextContent('Type:');
+      expect(exceptionBox).toHaveTextContent('java.lang.NullPointerException');
+      expect(exceptionBox).toHaveTextContent('Cannot invoke User.getId()');
+      expect(exceptionBox).not.toHaveTextContent('at UserService.getUserId');
+      expect(screen.getByRole('button', { name: 'Stacktrace' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('does not show the exception box when the span has no exception', () => {
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
   });
 

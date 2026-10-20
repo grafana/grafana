@@ -26,6 +26,21 @@ func TestSubscriber(t *testing.T) {
 		require.ErrorIs(t, err, ErrDisabled)
 	})
 
+	t.Run("subscribe succeeds even when the connection was never established", func(t *testing.T) {
+		cfg := setting.NATSSettings{
+			Enabled:    true,
+			Mode:       setting.NATSModeExternal,
+			ClientURLs: []string{"nats://127.0.0.1:1"},
+		}
+		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil))
+		t.Cleanup(s.close)
+		require.NoError(t, s.starting(context.Background()))
+
+		sub, err := s.Subscribe(context.Background(), "grafana.test.a", func(string, []byte) {})
+		require.NoError(t, err)
+		require.NotNil(t, sub)
+	})
+
 	t.Run("delivers a published message to the handler", func(t *testing.T) {
 		srv := startTestServer(t)
 		pub := newTestPublisher(t, srv)
@@ -105,6 +120,7 @@ func TestSubscriber(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: true}
 		sub := newSubscriber(log.NewNopLogger(), m, newTestConfig(srv, cfg))
 		t.Cleanup(sub.close)
+		require.NoError(t, sub.starting(context.Background()))
 		pub := newTestPublisher(t, srv)
 
 		received := make(chan struct{}, 1)
@@ -132,22 +148,15 @@ func TestSubscriber(t *testing.T) {
 
 	t.Run("counts slow-consumer async errors", func(t *testing.T) {
 		m := newSubscriberMetrics()
-		cfg := setting.NATSSettings{Enabled: true}
-		sub := newSubscriber(log.NewNopLogger(), m, newConfig(cfg, nil))
 
-		// Drive the connection's async error hook directly: slow-consumer errors are
-		// counted, unrelated async errors are ignored.
-		sub.onAsyncError(natsclient.ErrSlowConsumer)
-		sub.onAsyncError(context.Canceled)
+		m.recordAsyncError(&natsclient.Subscription{Subject: "us.watch.v1.provisioning.grafana.app.stacks-1.jobs"}, natsclient.ErrSlowConsumer)
 
-		require.Equal(t, float64(1), testutil.ToFloat64(m.slowConsumers))
+		require.Equal(t, float64(1), testutil.ToFloat64(m.asyncErrors.WithLabelValues("provisioning.grafana.app", "jobs", reasonSlowConsumer)))
 	})
 
 	t.Run("subscribe honours a cancelled context", func(t *testing.T) {
 		sub := newTestSubscriber(t, startTestServer(t))
 
-		// Warm the connection so get() succeeds and the cancellation is observed by
-		// the explicit ctx.Err() check rather than during connect.
 		_, err := sub.Subscribe(context.Background(), "grafana.test.a", func(string, []byte) {})
 		require.NoError(t, err)
 
@@ -202,4 +211,37 @@ func TestSubscriber(t *testing.T) {
 		require.EqualValues(t, 1, a.Load(), "unsubscribed subscription must not fire again")
 		require.EqualValues(t, 2, b.Load(), "other subscription must keep firing")
 	})
+}
+
+// Err is consulted during connection lookup, before creating the subscription.
+type reconnectOnLookupContext struct {
+	context.Context
+	reconnect func()
+}
+
+func (c reconnectOnLookupContext) Err() error {
+	c.reconnect()
+	return c.Context.Err()
+}
+
+func TestSubscriberReconnectDuringSubscribe(t *testing.T) {
+	sub := newTestSubscriber(t, startTestServer(t))
+	var calls atomic.Int64
+	ctx := reconnectOnLookupContext{Context: context.Background(), reconnect: sub.fireReconnect}
+	subscription, err := sub.Subscribe(ctx, "grafana.test.race", func(string, []byte) {}, WithOnReconnect(func() { calls.Add(1) }))
+	require.NoError(t, err)
+	require.EqualValues(t, 1, calls.Load(), "callback must be registered before subscription setup")
+	require.NoError(t, subscription.Unsubscribe())
+	sub.fireReconnect()
+	require.EqualValues(t, 1, calls.Load())
+}
+
+func TestSubscriberFailedSubscribeRemovesReconnectCallback(t *testing.T) {
+	sub := newTestSubscriber(t, startTestServer(t))
+	_, err := sub.Subscribe(context.Background(), "", func(string, []byte) {}, WithOnReconnect(func() { t.Error("failed subscription retained callback") }))
+	require.Error(t, err)
+	sub.fireReconnect()
+	sub.mu.Lock()
+	defer sub.mu.Unlock()
+	require.Empty(t, sub.reconnectCbs)
 }

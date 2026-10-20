@@ -5,6 +5,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
@@ -20,7 +21,7 @@ import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folde
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
+import { getSourcePath, isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -31,7 +32,7 @@ import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDe
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
-import { getFolderPermissions } from './permissions';
+import { canEditItemType, getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
 
@@ -45,14 +46,17 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  // At root, the starred param turns the page into the "Starred" view — give it the Starred nav identity
+  // so the mega menu highlights Starred instead of Dashboards. Inside a folder it's just a filter.
+  const isStarredView = !folderUID && search.has('starred');
   const {
     isReadOnlyRepo,
     status: repoViewStatus,
     orphanedRepoName,
     repository,
+    folder: folderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
-  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
@@ -89,22 +93,17 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
   }, [isSearching, searchState.result, stateManager]);
 
-  // Emit exposure event for A/A test once when page loads
-  const hasEmittedExposureEvent = useRef(false);
+  // Report once per page load when the recently viewed section is shown
+  const hasReportedListViewed = useRef(false);
 
   useEffect(() => {
-    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
+    if (!isRecentlyViewedEnabled || hasReportedListViewed.current) {
       return;
     }
 
-    hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
-
-    reportInteraction('dashboards_browse_list_viewed', {
-      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
-      has_recently_viewed_component: isExperimentTreatment,
-    });
-  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
+    hasReportedListViewed.current = true;
+    reportInteraction('dashboards_browse_list_viewed');
+  }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
@@ -159,14 +158,19 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo folder={folder} enableRepositoryLink />
+        <FolderRepo
+          folder={folder}
+          enableRepositoryLink
+          sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
+          canEdit={canEditItemType('folder', permissions)}
+        />
       </Stack>
     );
   };
 
   return (
     <Page
-      navId="dashboards/browse"
+      navId={isStarredView ? 'starred' : 'dashboards/browse'}
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
@@ -184,6 +188,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
+            data-testid={selectors.pages.BrowseDashboards.searchInput}
             placeholder={getSearchPlaceholder(searchState.includePanels)}
             value={searchState.query}
             escapeRegex={false}

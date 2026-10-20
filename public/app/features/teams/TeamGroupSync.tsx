@@ -8,12 +8,10 @@ import {
   useRemoveTeamGroupApiQueryMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy';
 import { Trans, t } from '@grafana/i18n';
-import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { Input, Tooltip, Icon, Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { UpgradeBox, UpgradeContent, type UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
-import { highlightTrial } from 'app/features/admin/utils';
 
 interface Props {
   isReadOnly: boolean;
@@ -80,28 +78,13 @@ const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
 
   return (
     <div>
-      {highlightTrial() && (
-        <UpgradeBox
-          featureId={'team-sync'}
-          eventVariant={'trial'}
-          featureName={'team sync'}
-          text={t(
-            'teams.team-group-sync.team-sync-upgrade',
-            'Add a group to enable team sync for free during your trial of Grafana Pro'
-          )}
-        />
-      )}
       <div className="page-action-bar">
-        {(!highlightTrial() || groups.length > 0) && (
-          <>
-            <h3 className="page-sub-heading">
-              <Trans i18nKey="teams.team-group-sync.external-group-sync">External group sync</Trans>
-            </h3>
-            <Tooltip placement="auto" content={headerTooltip}>
-              <Icon className={cx(styles.icon, 'page-sub-heading-icon')} name="question-circle" />
-            </Tooltip>
-          </>
-        )}
+        <h3 className="page-sub-heading">
+          <Trans i18nKey="teams.team-group-sync.external-group-sync">External group sync</Trans>
+        </h3>
+        <Tooltip placement="auto" content={headerTooltip}>
+          <Icon className={cx(styles.icon, 'page-sub-heading-icon')} name="question-circle" />
+        </Tooltip>
         <div className="page-action-bar__spacer" />
         {groups.length > 0 && (
           <Button onClick={onToggleAdding} icon="plus" disabled={isReadOnly}>
@@ -138,25 +121,19 @@ const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
         </div>
       </SlideDown>
 
-      {groups.length === 0 &&
-        !isAddBoxVisible &&
-        (highlightTrial() ? (
-          <TeamSyncUpgradeContent
-            action={{ onClick: onToggleAdding, text: t('teams.team-group-sync.text.add-group', 'Add group') }}
-          />
-        ) : (
-          <EmptyListCTA
-            onClick={onToggleAdding}
-            buttonIcon="users-alt"
-            title={t('teams.team-group-sync.title-there-external-groups', 'There are no external groups to sync with')}
-            buttonTitle="Add group"
-            proTip={headerTooltip}
-            proTipLinkTitle="Learn more"
-            proTipLink="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/"
-            proTipTarget="_blank"
-            buttonDisabled={isReadOnly}
-          />
-        ))}
+      {groups.length === 0 && !isAddBoxVisible && (
+        <EmptyListCTA
+          onClick={onToggleAdding}
+          buttonIcon="users-alt"
+          title={t('teams.team-group-sync.title-there-external-groups', 'There are no external groups to sync with')}
+          buttonTitle="Add group"
+          proTip={headerTooltip}
+          proTipLinkTitle="Learn more"
+          proTipLink="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/"
+          proTipTarget="_blank"
+          buttonDisabled={isReadOnly}
+        />
+      )}
 
       {groups.length > 0 && (
         <div className="admin-list-table">
@@ -177,25 +154,6 @@ const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
   );
 };
 
-export const TeamSyncUpgradeContent = ({ action }: { action?: UpgradeContentProps['action'] }) => {
-  const theme = useTheme2();
-  return (
-    <UpgradeContent
-      action={action}
-      listItems={[
-        'Stop managing user access in two places - assign users to groups in SAML, LDAP or Oauth, and manage access at a Team level in Grafana',
-        "Update users' permissions immediately when you add or remove them from an LDAP group, with no need for them to sign out and back in",
-      ]}
-      image={`team-sync-${theme.isLight ? 'light' : 'dark'}.png`}
-      featureName={'team sync'}
-      featureUrl={'https://grafana.com/docs/grafana/latest/enterprise/team-sync'}
-      description={t(
-        'teams.team-sync-upgrade-content.description',
-        "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
-      )}
-    />
-  );
-};
 export default TeamGroupSync;
 
 const getStyles = () => ({

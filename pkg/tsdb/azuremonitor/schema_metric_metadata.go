@@ -357,7 +357,7 @@ func (p *metricsSchema) metricsColumnsEnriched(ctx context.Context, dsInfo types
 			Name:        colName,
 			Type:        schemas.ColumnTypeString,
 			Operators:   eqOps,
-			Description: fmt.Sprintf("Dimension filter: %s (%s).", loc, dimName),
+			Description: fmt.Sprintf("Dimension filter: %s (%s).", loc, dimName), //nolint:staticcheck // Retain descriptions for older schema consumers.
 		})
 	}
 	return cols

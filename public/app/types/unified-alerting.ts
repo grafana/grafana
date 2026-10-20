@@ -2,7 +2,7 @@
 
 import { type AlertState, type DataSourceInstanceSettings } from '@grafana/data';
 import { type PromOptions } from '@grafana/prometheus';
-import { type LokiOptions } from 'app/plugins/datasource/loki/types';
+import { type LokiOptions } from 'app/features/loki-helpers/types';
 
 import {
   type Annotations,
@@ -72,12 +72,12 @@ export interface RecordingRule extends RuleBase {
 
 export type Rule = AlertingRule | RecordingRule;
 
-export interface GrafanaAlertingRule extends AlertingRule {
+interface GrafanaAlertingRule extends AlertingRule {
   uid: string;
   folderUid: string;
 }
 
-export interface GrafanaRecordingRule extends RecordingRule {
+interface GrafanaRecordingRule extends RecordingRule {
   uid: string;
   folderUid: string;
 }

@@ -98,25 +98,102 @@ To save dashboard changes:
 1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository.
 1. Follow your usual Git workflow to save and merge the PR to your repository.
 
+## Preview banner
+
+This section applies to Git repository connections (GitHub, GitHub Enterprise, GitLab, Bitbucket, and plain Git). It doesn't apply to local file provisioning, which has no branches or pull requests.
+
+Whenever you're viewing a provisioned dashboard loaded from a branch other than your repository's configured branch, Grafana shows a **preview banner** at the top of the page. You'll see it right after you create, edit, delete, or move a dashboard from the Grafana UI, as well as when you open a dashboard from a pull request notification.
+
+The banner's title reflects what changed:
+
+- **A new resource has been created in a branch in your Git provider.**
+- **A resource has been updated in a branch in your Git provider.**
+- **A resource has been deleted in a branch in your Git provider.**
+- **A resource has been moved in a branch in your Git provider.**
+
+In every case, the rest of your organization keeps seeing the version on the configured branch until the branch is merged — what you're looking at is a private preview of your own change. The banner also shows the branch your change was pushed to and the branch it targets.
+
+From the banner you can:
+
+- Select **Open a pull request** (or **View pull request**, if one already exists) to open the pull request for this change, in a new tab.
+- Select **View saved version**, when editing a dashboard that already exists in Grafana, to jump back to the version currently saved on the configured branch, so you can compare it against your draft.
+
+If the branch behind the preview no longer exists in the repository, for example, the pull request was already merged or closed and its source branch deleted, selecting **Open a pull request** can't take you to a live pull request. Grafana instead shows **This branch no longer exists** and offers two ways forward:
+
+- **Save to a new branch**: Reopens the save form with your draft intact, so you can commit it to a new branch and open a new pull request.
+- **View the current version**: Navigates to the dashboard as currently saved in Grafana, if it exists.
+
+{{< admonition type="note" >}}
+
+How much of the banner is interactive depends on your repository type:
+
+- **GitHub, GitHub Enterprise, GitLab, and Bitbucket** (enhanced integrations): the source and target branch names link directly to that branch in your Git provider, and the pull request action opens (or creates) a real pull request.
+- **Plain Git** connections: branch names are shown, but since plain Git has no pull-request concept or per-branch view, the pull request action opens the repository itself instead.
+
+Provisioned folders show a related banner, **This resource is behind the branch**, when the folder itself is out of sync with its configured branch. Select **Open in repository** to view the latest changes.
+
+{{< /admonition >}}
+
 ## Remove dashboards
 
-You can remove a provisioned dashboard by deleting the dashboard from the repository. The Grafana UI updates when the changes from the Git repository sync.
+You can remove a provisioned dashboard either from the Grafana UI or from the repository:
 
-To restore a deleted dashboard, raise a PR directly in your Git repository. Restoring resources from the UI isn't possible at the moment.
+- **From the Grafana UI**: Open the dashboard, go to its settings, and select **Delete**. On the **Provisioned dashboard** panel, choose the branch, comment, and other options the same way you would when [editing a dashboard](#edit-dashboards), then select **Delete**. On the prompt, select **Open a pull request** and follow your usual Git workflow to review and merge the change.
+- **From the repository**: Delete the dashboard's file directly in Git. The Grafana UI updates when the changes from the Git repository sync.
+
+To restore a deleted dashboard, revert the deletion (or re-add the file) directly in your Git repository and raise a PR as usual. Restoring resources from the UI isn't possible at the moment.
 
 ## Document folders with a README
 
 You can document the contents or any other relevant piece of information of your provisioned folder in a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
 
+Common uses include:
+
+- **Runbooks**: Document how to respond to an alert or investigate an incident, with links to the dashboards teammates need.
+- **Architectural diagrams**: Show how the system a folder monitors fits together, using [Mermaid](#render-mermaid-diagrams) diagrams that render inline.
+- **Onboarding guidelines**: Explain what each dashboard is for and how a new team member should navigate the folder.
+
 - When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
-- If the folder has no `README.md`, or if the folder is empty, you'll be prompted to action with a **Add README** button.
-- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+- If the folder has no `README.md`, or if the folder is empty, you're prompted to action with an **Add README** button.
+- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow. When you have several documents, the edit pencil targets the document that's currently open.
 
 {{< admonition type="note" >}}
 
 It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
 
 {{< /admonition >}}
+
+### Browse multiple documents with tabs
+
+A folder can hold more than one Markdown document. When it does, Grafana shows a tab for each document above the rendered content, similar to how a Git provider presents documentation files.
+
+- Grafana lists any `.md` and `.markdown` files stored alongside the folder's resources.
+- The `README`, `CONTRIBUTING.md`, and `SECURITY.md` files appear first, in that order, when they're present. All other documents follow in alphabetical order.
+- The README renders by default. Select a tab to load that document.
+- When there are more tabs than fit the width of the page, the extra tabs collapse into a **More** menu.
+
+Use this to keep related documentation next to the dashboards it describes, such as a runbook, an onboarding guide, or contribution and ownership details in separate documents.
+
+### Navigate to resources from Markdown links
+
+Markdown links are context-aware. A link that points to a provisioned resource file, such as a dashboard JSON file or a folder, opens the matching page inside Grafana when you select it. This lets you move between documentation and dashboards the same way you move between provisioned resources.
+
+When a link doesn't match a provisioned resource, Grafana opens the file in the host repository, so the same README still works when viewed on GitHub or GitLab.
+
+### Render Mermaid diagrams
+
+Grafana renders [Mermaid](https://mermaid.js.org/) diagrams defined in your Markdown documents. Use them to embed architectural diagrams, incident runbook flows, or data pipeline overviews next to the dashboards that monitor them. Use a fenced code block with the `mermaid` language to include a diagram:
+
+````markdown
+```mermaid
+flowchart LR
+  A[Ingest] --> B[Store]
+  B --> C[Query]
+  C --> D[Dashboard]
+```
+````
+
+Grafana replaces the code block with the rendered diagram and matches it to your light or dark theme.
 
 ## Best practices
 
@@ -126,6 +203,6 @@ Follow these recommendations when working with provisioned dashboards:
 - **Provide clear commit messages**: Describe your changes to help with tracking and collaboration.
 - **Regularly sync your repository**: Keep Grafana up to date with the latest changes.
 - **Review the Events tab**: Monitor sync status to ensure changes are applied correctly.
-- **Add a folder README**: Document each folder's contents with a `README.md` so your teammates can find the right dashboard quickly.
+- **Add a folder README**: Document each folder's contents with a `README.md` so your teammates can find the right dashboard quickly. Use additional documents for runbooks, architectural diagrams, or onboarding guidelines that belong next to the dashboards.
 
 Refer to [Work with provisioned repositories](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync) for general guidance about using Git Sync.

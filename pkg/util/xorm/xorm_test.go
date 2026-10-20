@@ -3,10 +3,33 @@ package xorm
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	_ "github.com/grafana/grafana/pkg/util/sqlite"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"github.com/stretchr/testify/require"
 )
+
+func TestStr2TimeParsesLegacySQLiteTimestamp(t *testing.T) {
+	eng, err := NewEngine("sqlite3", ":memory:")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, eng.Close()) })
+
+	session := eng.NewSession()
+	t.Cleanup(session.Close)
+
+	want := time.Date(2026, time.July, 26, 8, 17, 47, 112233638, time.UTC)
+	for _, timestamp := range []string{
+		"2026-07-26 11:47:47.112233638 +0330 +0330 m=+84630.747193824",
+		"2026-07-26 11:47:47.112233638 +0330 +0330",
+	} {
+		t.Run(timestamp, func(t *testing.T) {
+			got, err := session.str2Time(&core.Column{SQLType: core.SQLType{Name: core.DateTime}}, timestamp)
+			require.NoError(t, err)
+			require.True(t, got.Equal(want), "got %s, want %s", got, want)
+		})
+	}
+}
 
 func TestBasicOperationsWithSqlite(t *testing.T) {
 	eng, err := NewEngine("sqlite3", ":memory:")

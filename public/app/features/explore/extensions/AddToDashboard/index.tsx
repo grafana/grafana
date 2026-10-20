@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { onInteraction, reportInteraction } from '@grafana/runtime';
 import { Modal, ToolbarButton } from '@grafana/ui';
@@ -49,6 +50,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
         onClick={() => setIsOpen(true)}
         aria-label={addToDashboardLabel}
         disabled={!explorePaneHasQueries}
+        data-testid={selectors.pages.Explore.toolbar.addToDashboardButton}
       >
         {addToDashboardLabel}
       </ToolbarButton>

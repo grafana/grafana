@@ -117,10 +117,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
     }),
     withAuth({
-      name: 'cloudwatch',
-      testDir: path.join(pluginDirRoot, '/cloudwatch'),
-    }),
-    withAuth({
       name: 'azuremonitor',
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
@@ -157,8 +153,12 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboards-suite'),
     }),
     withAuth({
-      name: 'loki',
-      testDir: path.join(testDirRoot, '/loki'),
+      name: 'notebooks',
+      testDir: path.join(testDirRoot, '/notebooks-suite'),
+    }),
+    withAuth({
+      name: 'diagnostics',
+      testDir: path.join(testDirRoot, '/diagnostics-suite'),
     }),
     withAuth({
       name: 'cloud-plugins',

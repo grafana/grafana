@@ -43,8 +43,16 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
+  getDataSourceInstance: jest.fn(async () => ({
+    ...defaultDatasource,
+    variables: {
+      getType: () => VariableSupportType.Custom,
+      query: jest.fn(),
+      editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+    },
+    getGroupByKeys: mockGetGroupByKeys,
+  })),
 }));
-
 describe('GroupByVariableEditor', () => {
   beforeAll(() => {
     mockBoundingClientRect({

@@ -1,6 +1,18 @@
-import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
-import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import * as z from 'zod';
 
+import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
+import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
+import { payloads, renderPlanPreviewPayloadSchema } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
+import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
+import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
+
+import { allMutationCommands } from './commandRegistry';
 import { dashboardMutationApi, setDashboardMutationClientForTests } from './dashboardMutationApi';
 
 function createMockClient(): MutationClient {
@@ -18,6 +30,7 @@ function createMockClient(): MutationClient {
 describe('dashboardMutationApi', () => {
   afterEach(() => {
     setDashboardMutationClientForTests(null);
+    setTestFlags({});
   });
 
   describe('execute', () => {
@@ -25,6 +38,34 @@ describe('dashboardMutationApi', () => {
       await expect(dashboardMutationApi.execute({ type: 'LIST_VARIABLES', payload: {} })).rejects.toThrow(
         'Dashboard Mutation API is not available'
       );
+    });
+
+    it('opens and renders a preview from outside a dashboard, then returns on dismissal', async () => {
+      locationService.replace('/explore?orgId=1');
+      expect(dashboardMutationApi.getAvailableCommands()).toContain('RENDER_PLAN');
+      const rendering = dashboardMutationApi.execute({
+        type: 'RENDER_PLAN',
+        payload: { planId: 'navigation-plan', title: 'Service health', sections: [] },
+      });
+      expect(locationService.getLocation().pathname).toBe('/dashboard/new');
+
+      const scene = new DashboardScene({ title: 'New dashboard', meta: { canEdit: true } });
+      const deactivate = scene.activate();
+      try {
+        expect((await rendering).success).toBe(true);
+        expect(scene.state.planning).toMatchObject({ planId: 'navigation-plan', planTitle: 'Service health' });
+        expect(scene.state.isEditing).toBeFalsy();
+
+        const ended = await dashboardMutationApi.execute({
+          type: 'END_PLANNING',
+          payload: { planId: 'navigation-plan', restoreUserLocation: true },
+        });
+        expect(ended.success).toBe(true);
+        expect(scene.state.planning).toBeUndefined();
+        expect(locationService.getLocation()).toMatchObject({ pathname: '/explore', search: '?orgId=1' });
+      } finally {
+        deactivate();
+      }
     });
 
     it('delegates to the registered client', async () => {
@@ -49,7 +90,7 @@ describe('dashboardMutationApi', () => {
 
   describe('getPayloadSchema', () => {
     it('returns schema for registered commands', () => {
-      for (const cmd of ALL_COMMANDS) {
+      for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBeDefined();
         expect(typeof schema!.safeParse).toBe('function');
@@ -60,8 +101,36 @@ describe('dashboardMutationApi', () => {
       expect(dashboardMutationApi.getPayloadSchema('UNKNOWN_COMMAND')).toBeNull();
     });
 
+    it('answers for a notebook command only when notebooks are enabled', () => {
+      // A schema for a command that cannot run anywhere on this instance is a tool an agent builds and
+      // never uses.
+      expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeNull();
+
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeDefined();
+    });
+
+    it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
+      const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
+
+      const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
+      expect(withoutFlag).toBe(renderPlanPreviewPayloadSchema);
+      const parsed = withoutFlag!.safeParse(building);
+      expect(parsed.success).toBe(true);
+      expect(parsed.data).not.toHaveProperty('phase');
+      // Callers may inspect the schema itself rather than parse with it.
+      expect(z.toJSONSchema(renderPlanPreviewPayloadSchema, { io: 'input' }).properties).not.toHaveProperty('phase');
+
+      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
+      expect(withFlag).toBe(payloads.renderPlan);
+      expect(withFlag!.safeParse(building).data).toHaveProperty('phase', 'building');
+      expect(z.toJSONSchema(payloads.renderPlan, { io: 'input' }).properties).toHaveProperty('phase');
+    });
+
     it('is case-insensitive', () => {
-      for (const cmd of ALL_COMMANDS) {
+      for (const cmd of allMutationCommands()) {
         const lower = dashboardMutationApi.getPayloadSchema(cmd.name.toLowerCase());
         const upper = dashboardMutationApi.getPayloadSchema(cmd.name.toUpperCase());
         expect(lower).toBe(upper);
@@ -70,10 +139,110 @@ describe('dashboardMutationApi', () => {
     });
 
     it('returns the same schema as the command registry', () => {
-      for (const cmd of ALL_COMMANDS) {
+      // With the building screen on; RENDER_PLAN advertises less while it is off (tested below).
+      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);
       }
+    });
+
+    it('answers for every command a real client exposes', () => {
+      // This union and what each client registers can drift, because a client may add a command at its
+      // own seam rather than through a resource registry, as DashboardMutationClient does with
+      // CREATE_NOTEBOOK_SPEC. So check against the clients, not against the union being verified.
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      const exposed = [
+        ...new DashboardMutationClient(
+          new DashboardScene({
+            title: 'Dash',
+            uid: 'dash-1',
+            meta: { canEdit: true },
+            body: DefaultGridLayoutManager.fromVizPanels([]),
+          })
+        ).getAvailableCommands(),
+        // The command list is fixed at construction, so a notebook does not have to be built to ask a
+        // notebook client what it offers.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the client only stores the scene; nothing here touches it
+        ...new NotebookMutationClient({} as NotebookScene).getAvailableCommands(),
+      ];
+
+      expect(exposed).toContain('CREATE_NOTEBOOK_SPEC');
+      for (const name of exposed) {
+        expect(dashboardMutationApi.getPayloadSchema(name)).not.toBeNull();
+      }
+    });
+  });
+
+  // A notebook can be rendered outside the notebooks route -- the assistant puts one in a canvas tab
+  // over whatever else is open -- so two documents are mounted at once and the API has to survive
+  // either of them going away.
+  //
+  // Driven through the real bridge rather than the test setter: importing the api module is what
+  // registers the factory, so these exercise the same registration path a mounting scene takes.
+  describe('more than one mounted document', () => {
+    function mountDashboard() {
+      return createMutationClient(
+        new DashboardScene({
+          title: 'Dash',
+          uid: 'dash-1',
+          meta: { canEdit: true },
+          body: DefaultGridLayoutManager.fromVizPanels([]),
+        }),
+        'dashboard'
+      );
+    }
+
+    function mountNotebook() {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the client only stores the scene; nothing here touches it
+      return createMutationClient({} as NotebookScene, 'notebook');
+    }
+
+    it('serves the most recently mounted document', () => {
+      const unmountDashboard = mountDashboard();
+      const unmountNotebook = mountNotebook();
+
+      expect(dashboardMutationApi.getAvailableCommands()).toContain('APPLY_NOTEBOOK_SPEC');
+
+      unmountNotebook();
+      unmountDashboard();
+    });
+
+    it('hands back to the document still mounted when the newer one unmounts', () => {
+      const unmountDashboard = mountDashboard();
+      const dashboardCommands = dashboardMutationApi.getAvailableCommands();
+      const unmountNotebook = mountNotebook();
+
+      unmountNotebook();
+
+      // Previously the teardown cleared the slot outright, leaving the dashboard's client dead and
+      // every later execute rejecting with "no dashboard is currently loaded".
+      expect(dashboardMutationApi.getAvailableCommands()).toEqual(dashboardCommands);
+
+      unmountDashboard();
+    });
+
+    it('keeps the newer document serving when the older one unmounts first', () => {
+      const unmountDashboard = mountDashboard();
+      const unmountNotebook = mountNotebook();
+      const notebookCommands = dashboardMutationApi.getAvailableCommands();
+
+      unmountDashboard();
+
+      expect(dashboardMutationApi.getAvailableCommands()).toEqual(notebookCommands);
+
+      unmountNotebook();
+    });
+
+    it('has nothing to serve once every document has unmounted', () => {
+      const unmountDashboard = mountDashboard();
+      const unmountNotebook = mountNotebook();
+
+      unmountNotebook();
+      unmountDashboard();
+
+      expect(dashboardMutationApi.getAvailableCommands()).toEqual(['RENDER_PLAN']);
     });
   });
 

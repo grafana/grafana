@@ -21,14 +21,15 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -57,10 +58,13 @@ func RegisterAppInstaller(
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 	restConfigProvider apiserver.RestConfigProvider,
-	tracer trace.Tracer,
 	reg prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig), tracer, reg)
+	config := newConfigFromSettings(cfg)
+	metrics := ProvideMetrics(reg)
+	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, metrics, config.FolderCacheEnabled, config.FolderCacheTTL)
+	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, metrics, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -77,13 +81,13 @@ func NewAppInstaller(
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
 	tracer trace.Tracer,
+	metrics *Metrics,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
 	if folderResolver == nil {
 		return nil, fmt.Errorf("annotation service requires folder resolver")
 	}
 	logger := log.New("annotation.app")
-	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
 		logger:  logger,
 		tracer:  tracer,
@@ -120,13 +124,14 @@ func NewAppInstaller(
 
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:          instrumentedStore,
+		tracer:         installer.tracer,
 		accessClient:   accessClient,
 		folderResolver: folderResolver,
 		installer:      installer,
 		snowflakeNode:  sfNode,
 		maxScopeCount:  cfg.MaxScopeCount,
 		retentionTTL:   cfg.RetentionTTL,
-		tracer:         installer.tracer,
+		maxAge:         cfg.MaxAge,
 		metrics:        installer.metrics,
 		logger:         logger,
 	}
@@ -136,10 +141,10 @@ func NewAppInstaller(
 		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
 		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
 	}
-	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, accessClient, installer.tracer, installer.metrics, logger))
+	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, installer.tracer, accessClient, installer.metrics, logger))
 
 	// Create the search handler
-	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger))
+	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, installer.tracer, accessClient, folderResolver, installer.metrics, logger))
 
 	// Create the graphite handler
 	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger))

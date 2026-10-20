@@ -18,6 +18,7 @@ import {
 } from '@grafana/data';
 
 import { defaultStyleConfig } from '../../style/types';
+import { ensureInstanceOf } from '../test-utils';
 
 import { routeLayer } from './routeLayer';
 
@@ -61,14 +62,11 @@ describe('routeLayer', () => {
       eventBus,
       createTheme()
     );
-    const group = handler.init();
-    if (!(group instanceof LayerGroup)) {
-      throw new Error('expected route layer to be a layer group');
-    }
-    const [route, crosshair, lines] = group.getLayers().getArray();
-    if (!(route instanceof VectorImage) || !(crosshair instanceof VectorImage) || !(lines instanceof VectorImage)) {
-      throw new Error('expected vector image sublayers');
-    }
+    const group = ensureInstanceOf(handler.init(), LayerGroup);
+    const [route, crosshair, lines] = group
+      .getLayers()
+      .getArray()
+      .map((sublayer) => ensureInstanceOf<VectorImage>(sublayer, VectorImage));
     return {
       eventBus,
       handler,

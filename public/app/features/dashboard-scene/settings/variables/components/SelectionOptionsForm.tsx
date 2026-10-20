@@ -45,9 +45,9 @@ export function SelectionOptionsForm({
       />
       <VariableCheckboxField
         value={includeAll}
-        name={t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All value')}
+        name={t('dashboard.sidebar.variable.selection-options.include-all', 'Include All value')}
         description={t(
-          'dashboard.edit-pane.variable.selection-options.include-all-description',
+          'dashboard.sidebar.variable.selection-options.include-all-description',
           'Enables a single option that represent all values'
         )}
         onChange={onIncludeAllChange}
@@ -57,9 +57,9 @@ export function SelectionOptionsForm({
         <VariableTextField
           defaultValue={allValue ?? ''}
           onBlur={onAllValueChange}
-          name={t('dashboard.edit-pane.variable.selection-options.custom-all-value', 'Custom all value')}
+          name={t('dashboard.sidebar.variable.selection-options.custom-all-value', 'Custom all value')}
           description={t(
-            'dashboard.edit-pane.variable.selection-options.custom-all-value-description',
+            'dashboard.sidebar.variable.selection-options.custom-all-value-description',
             'A wildcard regex or other value to represent All'
           )}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
@@ -69,9 +69,9 @@ export function SelectionOptionsForm({
         onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
           <VariableCheckboxField
             value={allowCustomValue ?? true}
-            name={t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values')}
+            name={t('dashboard.sidebar.variable.selection-options.allow-custom-values', 'Allow custom values')}
             description={t(
-              'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
+              'dashboard.sidebar.variable.selection-options.allow-custom-values-description',
               'Enables users to enter values'
             )}
             onChange={onAllowCustomValueChange}

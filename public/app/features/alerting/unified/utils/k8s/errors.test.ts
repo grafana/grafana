@@ -3,6 +3,7 @@ import {
   type ApiMachineryErrorResponse,
   ERROR_ROUTES_MATCHER_CONFLICT,
   ERROR_TIME_INTERVAL_IN_USE,
+  ERROR_TIME_INTERVAL_NAME_EXISTS,
   getErrorMessageFromApiMachineryErrorResponse,
 } from './errors';
 
@@ -25,6 +26,17 @@ function buildApiMachineryError(
 }
 
 describe('getErrorMessageFromCode', () => {
+  it(`should handle ${ERROR_TIME_INTERVAL_NAME_EXISTS}`, () => {
+    const error = buildApiMachineryError({
+      message: 'Time interval with this name already exists. Use a different name or update existing one.',
+      details: { uid: ERROR_TIME_INTERVAL_NAME_EXISTS },
+    });
+
+    expect(getErrorMessageFromApiMachineryErrorResponse(error)).toBe(
+      'Time interval with this name already exists. Use a different name or update existing one.'
+    );
+  });
+
   it(`should handle ${ERROR_ROUTES_MATCHER_CONFLICT}`, () => {
     const error: ApiMachineryErrorResponse = {
       status: 400,

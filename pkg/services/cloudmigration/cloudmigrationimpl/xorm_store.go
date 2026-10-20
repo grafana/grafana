@@ -465,7 +465,7 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 }
 
 func (ss *sqlStore) createSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
-	for i := 0; i < len(resources); i++ {
+	for i := range resources {
 		resources[i].UID = util.GenerateShortUID()
 		// ensure snapshot_uids are consistent so that we can use in conjunction with refID for lookup later
 		resources[i].SnapshotUID = snapshotUid

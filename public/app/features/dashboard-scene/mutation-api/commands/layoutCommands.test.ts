@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -11,26 +11,25 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-// Mock the edit-pane actions so that perform() is called synchronously
+// Mock the sidebar actions so that perform() is called synchronously
 // instead of publishing an event (which requires a DashboardScene subscriber).
-jest.mock('../../edit-pane/shared', () => {
-  const actual = jest.requireActual('../../edit-pane/shared');
-  return {
-    ...actual,
-    dashboardEditActions: {
-      ...actual.dashboardEditActions,
-      edit(props: { perform: () => void }) {
-        props.perform();
-      },
-      addElement(props: { perform: () => void }) {
-        props.perform();
-      },
-      removeElement(props: { perform: () => void }) {
-        props.perform();
-      },
-    },
-  };
-});
+jest.mock('../../actions/utils/edit', () => ({
+  edit(props: { perform: () => void }) {
+    props.perform();
+  },
+}));
+
+jest.mock('../../actions/element/addElement', () => ({
+  addElement(props: { perform: () => void }) {
+    props.perform();
+  },
+}));
+
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement(props: { perform: () => void }) {
+    props.perform();
+  },
+}));
 
 let currentTestScene: unknown;
 
@@ -86,10 +85,11 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     state,
     serializer: mockSerializer(),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -123,10 +123,11 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
     state,
     serializer: mockSerializer(),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -164,10 +165,11 @@ function buildRowsSceneWithPanels(): DashboardScene {
     state,
     serializer: mockSerializer({ 'elem-a': 1, 'elem-b': 2 }),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -195,6 +197,7 @@ function buildSceneWithLayoutParent(
   };
 
   const mockLayoutParent = {
+    getRoot: () => scene,
     switchLayout: jest.fn((newLayout: unknown) => {
       state.body = newLayout;
     }),
@@ -207,10 +210,11 @@ function buildSceneWithLayoutParent(
     state,
     serializer,
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -224,17 +228,6 @@ function buildSceneWithLayoutParent(
 }
 
 describe('Layout mutation commands', () => {
-  let originalToggle: boolean | undefined;
-
-  beforeEach(() => {
-    originalToggle = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
-  });
-
-  afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalToggle;
-  });
-
   describe('ADD_ROW', () => {
     it('adds a row to a RowsLayout', async () => {
       const scene = buildRowsScene(['Existing']);
@@ -745,17 +738,6 @@ describe('Layout mutation commands', () => {
       const data = result.data as { layout: any; elements: Record<string, unknown> };
       expect(data.elements).toEqual({});
     });
-
-    it('is rejected when feature toggle is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
-      const scene = buildRowsScene(['Row']);
-      const executor = new DashboardMutationClient(scene);
-
-      const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('dashboardNewLayouts');
-    });
   });
 
   describe('MOVE_PANEL', () => {
@@ -799,10 +781,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer({ 'panel-1': 1, 'panel-2': 2, 'panel-3': 3 }),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -961,10 +944,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer({ 'elem-a': 1 }),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1007,10 +991,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer({ 'elem-a': 1 }),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1051,10 +1036,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1099,10 +1085,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1143,10 +1130,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1357,10 +1345,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1382,14 +1371,11 @@ describe('Layout mutation commands', () => {
   });
 
   describe('nesting validation', () => {
-    it('rejects adding tabs inside tabs', async () => {
-      const innerTabs = new TabsLayoutManager({
-        tabs: [new TabItem({ title: 'Inner Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+    it('rejects adding tabs directly inside tabs', async () => {
+      const tabsBody = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Outer Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
-      const outerTabs = new TabsLayoutManager({
-        tabs: [new TabItem({ title: 'Outer Tab', layout: innerTabs })],
-      });
-      const scene = buildSceneWithLayoutParent(outerTabs);
+      const scene = buildSceneWithLayoutParent(tabsBody);
       const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
@@ -1401,15 +1387,12 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('same-type nesting');
+      expect(result.error).toContain('directly inside tabs');
     });
 
-    it('rejects adding rows inside rows', async () => {
-      const innerRows = new RowsLayoutManager({
-        rows: [new RowItem({ title: 'Inner Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
-      });
+    it('allows adding rows inside rows', async () => {
       const outerRows = new RowsLayoutManager({
-        rows: [new RowItem({ title: 'Outer Row', layout: innerRows })],
+        rows: [new RowItem({ title: 'Outer Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
       const scene = buildSceneWithLayoutParent(outerRows);
       const executor = new DashboardMutationClient(scene);
@@ -1417,16 +1400,46 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({
         type: 'ADD_ROW',
         payload: {
-          row: { kind: 'RowsLayoutRow', spec: { title: 'Bad Row' } },
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Nested Row' } },
           parentPath: '/rows/0',
         },
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('same-type nesting');
+      expect(result.success).toBe(true);
+      const innerLayout = outerRows.state.rows[0].state.layout;
+      expect(innerLayout).toBeInstanceOf(RowsLayoutManager);
+      const innerRows = innerLayout as RowsLayoutManager;
+      expect(innerRows.state.rows).toHaveLength(1);
+      expect(innerRows.state.rows[0].state.title).toBe('Nested Row');
     });
 
-    it('rejects adding tabs at root when rows already contain tabs', async () => {
+    it('allows adding tabs nested deeper under tabs via rows (tabs > rows > tabs)', async () => {
+      const innerRows = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const tabsBody = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Outer Tab', layout: innerRows })],
+      });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Deep Tab' } },
+          parentPath: '/tabs/0/rows/0',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const rowLayout = innerRows.state.rows[0].state.layout;
+      expect(rowLayout).toBeInstanceOf(TabsLayoutManager);
+      const deepTabs = rowLayout as TabsLayoutManager;
+      expect(deepTabs.state.tabs).toHaveLength(1);
+      expect(deepTabs.state.tabs[0].state.title).toBe('Deep Tab');
+    });
+
+    it('allows adding tabs at root when rows already contain tabs', async () => {
       const rowWithTabs = new RowItem({
         title: 'Row With Tabs',
         layout: new TabsLayoutManager({
@@ -1445,11 +1458,16 @@ describe('Layout mutation commands', () => {
         },
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('nested groups');
+      expect(result.success).toBe(true);
+      const body = scene.state.body;
+      expect(body).toBeInstanceOf(TabsLayoutManager);
+      const rootTabs = body as TabsLayoutManager;
+      expect(rootTabs.state.tabs).toHaveLength(1);
+      expect(rootTabs.state.tabs[0].state.title).toBe('Root Tab');
+      expect(rootTabs.state.tabs[0].state.layout).toBe(rowsBody);
     });
 
-    it('rejects adding rows at root when tabs already contain rows', async () => {
+    it('allows adding rows at root when tabs already contain rows', async () => {
       const tabWithRows = new TabItem({
         title: 'Tab With Rows',
         layout: new RowsLayoutManager({
@@ -1468,8 +1486,89 @@ describe('Layout mutation commands', () => {
         },
       });
 
+      expect(result.success).toBe(true);
+      const body = scene.state.body;
+      expect(body).toBeInstanceOf(RowsLayoutManager);
+      const rootRows = body as RowsLayoutManager;
+      expect(rootRows.state.rows).toHaveLength(1);
+      expect(rootRows.state.rows[0].state.title).toBe('Root Row');
+      expect(rootRows.state.rows[0].state.layout).toBe(tabsBody);
+    });
+
+    it('rejects adding a group deeper than the maximum nesting depth', async () => {
+      // rows > tabs > rows > tabs = 4 group layers already
+      const deepTabs = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Deep Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const body = new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            title: 'L1 Row',
+            layout: new TabsLayoutManager({
+              tabs: [
+                new TabItem({
+                  title: 'L2 Tab',
+                  layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'L3 Row', layout: deepTabs })] }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Too Deep Row' } },
+          parentPath: '/rows/0/tabs/0/rows/0/tabs/0',
+        },
+      });
+
       expect(result.success).toBe(false);
-      expect(result.error).toContain('nested groups');
+      expect(result.error).toContain('maximum nesting depth');
+    });
+
+    it('rejects adding a group at root when wrapping would exceed the maximum nesting depth', async () => {
+      // Body already contains 4 group layers; wrapping it in a new group would create 5
+      const body = new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            title: 'L1 Row',
+            layout: new TabsLayoutManager({
+              tabs: [
+                new TabItem({
+                  title: 'L2 Tab',
+                  layout: new RowsLayoutManager({
+                    rows: [
+                      new RowItem({
+                        title: 'L3 Row',
+                        layout: new TabsLayoutManager({
+                          tabs: [new TabItem({ title: 'L4 Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+                        }),
+                      }),
+                    ],
+                  }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Root Tab' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('maximum nesting depth');
     });
 
     it('allows adding rows inside tabs (valid 2 layers)', async () => {
@@ -1770,7 +1869,50 @@ describe('Layout mutation commands', () => {
       expect(result.error).toContain('same-category');
     });
 
-    it('rejects conversion that would create same-type nesting via path', async () => {
+    it('rejects conversion to tabs directly inside tabs', async () => {
+      const innerRows = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Inner Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const tabsBody = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Outer Tab', layout: innerRows })],
+      });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/tabs/0', layoutType: 'TabsLayout' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('directly inside tabs');
+    });
+
+    it('rejects conversion to tabs when a child already contains tabs', async () => {
+      const rowsBody = new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            title: 'Row A',
+            layout: new TabsLayoutManager({
+              tabs: [new TabItem({ title: 'Tab Inside Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+            }),
+          }),
+          new RowItem({ title: 'Row B', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+        ],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'TabsLayout' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('directly inside tabs');
+    });
+
+    it('allows conversion that creates rows inside rows', async () => {
       const innerTabs = new TabsLayoutManager({
         tabs: [new TabItem({ title: 'Inner Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
@@ -1785,11 +1927,11 @@ describe('Layout mutation commands', () => {
         payload: { path: '/rows/0', layoutType: 'RowsLayout' },
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('same-type nesting');
+      expect(result.success).toBe(true);
+      expect(outerRows.state.rows[0].state.layout).toBeInstanceOf(RowsLayoutManager);
     });
 
-    it('rejects conversion that would create same-type nesting via children', async () => {
+    it('allows conversion of tabs containing rows to rows', async () => {
       const tabsBody = new TabsLayoutManager({
         tabs: [
           new TabItem({
@@ -1809,8 +1951,8 @@ describe('Layout mutation commands', () => {
         payload: { path: '/', layoutType: 'RowsLayout' },
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('same-type nesting');
+      expect(result.success).toBe(true);
+      expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
     });
   });
 
@@ -1831,10 +1973,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1874,10 +2017,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1920,10 +2064,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1963,10 +2108,11 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -2007,10 +2153,11 @@ describe('Layout mutation commands', () => {
         state: tabsState,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           tabsState.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(tabsState, partial);
@@ -2257,8 +2404,19 @@ describe('Layout mutation commands', () => {
   });
 
   describe('feature toggle gate', () => {
+    testWithFlags({ dashboardNewLayouts: false });
+
+    it('rejects GET_LAYOUT when dashboardNewLayouts is disabled', async () => {
+      const scene = buildRowsScene(['Row']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('dashboardNewLayouts');
+    });
+
     it('rejects layout commands when dashboardNewLayouts is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
       const scene = buildRowsScene(['A']);
       const executor = new DashboardMutationClient(scene);
 

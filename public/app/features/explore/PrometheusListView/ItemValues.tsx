@@ -3,13 +3,13 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { rawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, type RawListValue } from './RawListItem';
+import { getRawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, type RawListValue } from './RawListItem';
 import { RawPrometheusListItemEmptyValue } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number) => ({
   rowWrapper: css({
     position: 'relative',
-    minWidth: rawListItemColumnWidth,
+    minWidth: getRawListItemColumnWidth(totalNumberOfValues),
     paddingRight: '5px',
   }),
   rowValue: css({
@@ -37,7 +37,7 @@ const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number) => ({
   }),
   rowValuesWrap: css({
     paddingLeft: rawListPaddingToHoldSpaceForCopyIcon,
-    width: `calc(${totalNumberOfValues} * ${rawListItemColumnWidth})`,
+    width: `calc(${totalNumberOfValues} * ${getRawListItemColumnWidth(totalNumberOfValues)})`,
     display: 'flex',
   }),
 });

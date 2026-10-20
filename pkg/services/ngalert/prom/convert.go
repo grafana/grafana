@@ -1,11 +1,13 @@
 package prom
 
 import (
+	// #nosec G505 SHA-1 is required for compatibility with existing UUIDv5 rule IDs.
+	"crypto/sha1"
 	"fmt"
 	"maps"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -202,9 +204,24 @@ func getUID(orgID int64, namespaceUID string, group string, position int, promRu
 
 	// Generate stable UUID based on the orgID, namespace, group and position.
 	uidData := fmt.Sprintf("%d|%s|%s|%d", orgID, namespaceUID, group, position)
-	u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
+	u := ruleUUID(uidData)
 
 	return u.String(), nil
+}
+
+// ruleUUID preserves the UUIDv5 OID namespace IDs used by existing imported rules.
+func ruleUUID(data string) uuid.UUID {
+	namespace := uuid.MustParse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
+	// SHA-1 preserves existing UUIDv5 rule IDs; this hash is not used for cryptographic security.
+	// #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1
+	hash := sha1.New()
+	hash.Write(namespace[:])
+	hash.Write([]byte(data))
+	var id uuid.UUID
+	copy(id[:], hash.Sum(nil))
+	id[6] = (id[6] & 0x0f) | 0x50
+	id[8] = (id[8] & 0x3f) | 0x80
+	return id
 }
 
 func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup, rule PrometheusRule) (models.AlertRule, error) {

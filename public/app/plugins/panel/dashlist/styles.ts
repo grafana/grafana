@@ -1,23 +1,17 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => {
-  const gradient = `linear-gradient(
-    90deg,
-    ${colorManipulator.alpha(theme.colors.primary.text, 0.1)} 0%,
-    ${colorManipulator.alpha(theme.colors.secondary.main, 0.1)} 100%
-  )`;
-
   return {
     dashlistCardContainer: css({
       display: 'block',
       height: '100%',
-      paddingTop: theme.spacing(1.25),
-      paddingBottom: theme.spacing(1.25),
+      paddingLeft: theme.spacing(2),
 
       '&:has(a:hover)': {
-        backgroundImage: gradient,
+        background: theme.colors.emphasize(theme.components.card.background, 0.03),
+        cursor: 'pointer',
         color: theme.colors.text.primary,
       },
     }),
@@ -43,7 +37,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(0.25),
     }),
     dashlistCardLink: css({
-      paddingTop: theme.spacing(0.5),
       whiteSpace: 'normal',
       overflowWrap: 'break-word',
       wordBreak: 'break-word',

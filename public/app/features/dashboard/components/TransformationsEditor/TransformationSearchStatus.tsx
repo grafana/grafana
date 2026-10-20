@@ -1,39 +1,22 @@
-import { useState } from 'react';
-import { useDebounce } from 'react-use';
-
 import { t } from '@grafana/i18n';
+import { SearchStatus } from '@grafana/ui/internal';
 
 interface TransformationSearchStatusProps {
   count: number;
 }
 
 /**
- * Visually hidden live region announcing the number of transformation search results,
- * so screen readers give feedback as the user searches (WCAG 4.1.3 Status Messages).
+ * Announces the number of transformation search results to screen readers.
  */
 export function TransformationSearchStatus({ count }: TransformationSearchStatusProps) {
-  const [announcement, setAnnouncement] = useState('');
+  const message =
+    count === 0
+      ? t('dashboard.transformation-search-status.no-results', 'No transformations found')
+      : t('dashboard.transformation-search-status.results-found', '', {
+          count,
+          defaultValue_one: '{{count}} transformation found',
+          defaultValue_other: '{{count}} transformations found',
+        });
 
-  // Debounced so screen readers don't announce a new count on every keystroke
-  useDebounce(
-    () => {
-      setAnnouncement(
-        count === 0
-          ? t('dashboard.transformation-search-status.no-results', 'No transformations found')
-          : t('dashboard.transformation-search-status.results-found', '', {
-              count,
-              defaultValue_one: '{{count}} transformation found',
-              defaultValue_other: '{{count}} transformations found',
-            })
-      );
-    },
-    500,
-    [count]
-  );
-
-  return (
-    <div role="status" aria-live="polite" className="sr-only">
-      {announcement}
-    </div>
-  );
+  return <SearchStatus message={message} />;
 }

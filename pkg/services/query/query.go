@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"runtime"
 	"slices"
@@ -115,15 +116,23 @@ func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, sk
 		return nil, err
 	}
 
+	queryCount := 0
+	for _, queries := range parsedReq.parsedQueries {
+		queryCount += len(queries)
+	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression || fromAlert {
+		s.log.Info("queryData", "handler", "handleExpressions", "fromAlert", fromAlert, "queryCount", queryCount)
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
 	if len(parsedReq.parsedQueries) == 1 {
+		s.log.Info("queryData", "handler", "handleQuerySingleDatasource", "fromAlert", fromAlert, "queryCount", queryCount)
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+	s.log.Info("queryData", "handler", "executeConcurrentQueries", "fromAlert", fromAlert, "queryCount", queryCount)
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 
@@ -167,7 +176,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	// Query each datasource concurrently
 	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
-		for i := 0; i < len(queries); i++ {
+		for i := range queries {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
@@ -198,9 +207,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	resp := backend.NewQueryDataResponse()
 	reqCtx := contexthandler.FromContext(ctx)
 	for result := range rchan {
-		for refId, dataResponse := range result.responses {
-			resp.Responses[refId] = dataResponse
-		}
+		maps.Copy(resp.Responses, result.responses)
 		if reqCtx != nil {
 			for k, v := range result.header {
 				for _, val := range v {
@@ -457,8 +464,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			"from", timeRange.GetFromAsMsEpoch(),
 			"to", timeRange.GetToAsMsEpoch(),
 			"interval", pq.query.Interval.Milliseconds(),
-			"max_data_points", pq.query.MaxDataPoints,
-			"query", string(modelJSON))
+			"max_data_points", pq.query.MaxDataPoints)
 	}
 
 	return req, req.validateRequest(ctx)

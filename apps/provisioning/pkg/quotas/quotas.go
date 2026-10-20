@@ -121,23 +121,37 @@ type QuotaGetter interface {
 // FixedQuotaGetter returns fixed quota values from static configuration.
 type FixedQuotaGetter struct {
 	quotaStatus atomic.Value // stores provisioning.QuotaStatus
+	forcedError atomic.Value // stores fixedQuotaGetterError for test-only failure injection
+}
+
+type fixedQuotaGetterError struct {
+	err error
 }
 
 // NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
 func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
 	f := &FixedQuotaGetter{}
 	f.quotaStatus.Store(quotaStatus)
+	f.forcedError.Store(fixedQuotaGetterError{})
 	return f
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
 func (f *FixedQuotaGetter) GetQuotaStatus(_ context.Context, _ string) (provisioning.QuotaStatus, error) {
+	if state := f.forcedError.Load().(fixedQuotaGetterError); state.err != nil {
+		return provisioning.QuotaStatus{}, state.err
+	}
 	return f.quotaStatus.Load().(provisioning.QuotaStatus), nil
 }
 
 // SetQuotaStatus updates the quota status, allowing runtime changes (primarily for testing).
 func (f *FixedQuotaGetter) SetQuotaStatus(status provisioning.QuotaStatus) {
 	f.quotaStatus.Store(status)
+}
+
+// SetError makes GetQuotaStatus return err. This method exists only to support tests.
+func (f *FixedQuotaGetter) SetError(err error) {
+	f.forcedError.Store(fixedQuotaGetterError{err: err})
 }
 
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)

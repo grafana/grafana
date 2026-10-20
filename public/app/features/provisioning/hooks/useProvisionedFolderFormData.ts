@@ -9,12 +9,13 @@ import {
   getDefaultWorkflow,
 } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
-  folderUid?: string;
+  /** Resolved by the caller, so each form states its own lookup policy at the call site */
+  view: RepositoryViewData;
   title?: string;
   branchPrefix?: string;
 }
@@ -34,13 +35,11 @@ export interface ProvisionedFolderFormDataResult {
  * Hook for managing provisioned folder form data (create/rename/delete).
  */
 export function useProvisionedFolderFormData({
-  folderUid,
+  view,
   title,
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
-    folderName: folderUid,
-  });
+  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = view;
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 

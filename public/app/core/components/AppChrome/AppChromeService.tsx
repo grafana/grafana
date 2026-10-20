@@ -3,8 +3,11 @@ import { BehaviorSubject } from 'rxjs';
 import { AppEvents, type NavModel, type NavModelItem, PageLayoutType, store, type UrlQueryValue } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, HistoryWrapper, locationService, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import { rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -32,6 +35,22 @@ export interface AppChromeState {
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 
+/**
+ * Nav held before a page sets its own: at startup and between a route change and the new page's first
+ * update. Its empty `main.text` is what `getPageTitle` keys on, so it never reads as a page title.
+ */
+function placeholderSectionNav(): NavModel {
+  return { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
+}
+
+/** The title the current page gave the chrome: its `pageNav` text, else its section's; `undefined` while the placeholder is held. */
+export function getPageTitle({ pageNav, sectionNav }: AppChromeState): string | undefined {
+  if (pageNav?.text) {
+    return pageNav.text;
+  }
+  return sectionNav.main.text ? sectionNav.node.text : undefined;
+}
+
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
@@ -41,13 +60,14 @@ export class AppChromeService {
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
       store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
   );
+  private fullscreenWorkspaceUnlisten?: () => void;
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
-    sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
+    sectionNav: placeholderSectionNav(),
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
@@ -64,6 +84,17 @@ export class AppChromeService {
   }
 
   public update(update: Partial<AppChromeState>) {
+    if (
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveLoginTabTitle, false) &&
+      update.sectionNav &&
+      contextSrv.user.isSignedIn
+    ) {
+      const pathname = locationService.getLocation().pathname;
+      if (pathname !== '/login') {
+        rememberLoginSectionTitle(update.sectionNav.node, pathname);
+      }
+    }
+
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
@@ -73,7 +104,7 @@ export class AppChromeService {
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
       newState.pageNav = undefined;
-      newState.sectionNav = { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
+      newState.sectionNav = placeholderSectionNav();
       newState.chromeless = this.currentRoute?.chromeless;
       newState.layout = PageLayoutType.Standard;
       this.routeChangeHandled = true;
@@ -171,15 +202,51 @@ export class AppChromeService {
     });
   };
 
-  public setFullscreenWorkspace = (fullscreenWorkspace: boolean) => {
+  public setFullscreenWorkspace = ({
+    fullscreenWorkspace,
+    pushHistoryEntry = true,
+  }: {
+    fullscreenWorkspace: boolean;
+    pushHistoryEntry?: boolean;
+  }) => {
+    if (Boolean(this.state.getValue().fullscreenWorkspace) === fullscreenWorkspace) {
+      return;
+    }
     this.update({ fullscreenWorkspace });
+    this.syncFullscreenWorkspaceHistory(fullscreenWorkspace, pushHistoryEntry);
     reportInteraction('grafana_fullscreen_workspace', {
       action: fullscreenWorkspace ? 'enter' : 'exit',
     });
   };
 
+  // The fullscreen workspace occupies a single browser-history entry
+  private syncFullscreenWorkspaceHistory(active: boolean, pushHistoryEntry: boolean) {
+    if (!(locationService instanceof HistoryWrapper)) {
+      return;
+    }
+    this.fullscreenWorkspaceUnlisten?.();
+    this.fullscreenWorkspaceUnlisten = undefined;
+
+    if (!active) {
+      locationService.setSingleHistoryEntryMode(false);
+      return;
+    }
+    if (pushHistoryEntry) {
+      // Push before enabling the mode, or the entry Back needs to pop would itself be
+      // collapsed into the current one.
+      locationService.push(locationService.getLocation());
+    }
+    locationService.setSingleHistoryEntryMode(true);
+    // Only listen while active, so navigation costs nothing extra the rest of the session.
+    this.fullscreenWorkspaceUnlisten = locationService.listen((_location, action) => {
+      if (action === 'POP') {
+        this.setFullscreenWorkspace({ fullscreenWorkspace: false });
+      }
+    });
+  }
+
   public toggleFullscreenWorkspace = () => {
-    this.setFullscreenWorkspace(!this.state.getValue().fullscreenWorkspace);
+    this.setFullscreenWorkspace({ fullscreenWorkspace: !this.state.getValue().fullscreenWorkspace });
   };
 
   public exitKioskMode() {

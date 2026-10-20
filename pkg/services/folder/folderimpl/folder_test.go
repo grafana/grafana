@@ -3,13 +3,19 @@ package folderimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,6 +37,38 @@ func TestMain(m *testing.M) {
 
 var orgID = int64(1)
 var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+
+func TestToFolderErrorStorageClassification(t *testing.T) {
+	for _, reason := range []string{string(metav1.StatusReasonForbidden), "", "CustomDenied"} {
+		t.Run("forbidden/"+reason, func(t *testing.T) {
+			result := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: reason}
+			st, err := status.New(codes.PermissionDenied, "denied").WithDetails(result)
+			require.NoError(t, err)
+			for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
+				require.Same(t, folder.ErrAccessDenied, toFolderError(input))
+			}
+		})
+	}
+	t.Run("known non-forbidden reason", func(t *testing.T) {
+		result := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonInvalid)}
+		st, err := status.New(codes.PermissionDenied, "denied").WithDetails(result)
+		require.NoError(t, err)
+		for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
+			require.Same(t, input, toFolderError(input))
+		}
+	})
+	t.Run("namespace mismatch", func(t *testing.T) {
+		require.Same(t, folder.ErrAccessDenied, toFolderError(claims.ErrNamespaceMismatch))
+	})
+	t.Run("wrapped namespace mismatch", func(t *testing.T) {
+		err := fmt.Errorf("search: %w", claims.ErrNamespaceMismatch)
+		require.Same(t, folder.ErrAccessDenied, toFolderError(err))
+	})
+	t.Run("ordinary error unchanged", func(t *testing.T) {
+		err := errors.New("connection refused")
+		require.Same(t, err, toFolderError(err))
+	})
+}
 
 func TestSupportBundle(t *testing.T) {
 	f := func(uid, parent string) *folder.Folder { return &folder.Folder{UID: uid, ParentUID: parent} }
@@ -136,6 +174,26 @@ func TestSplitFullpath(t *testing.T) {
 			input:    "folder\\/with\\/slashes/subfolder\\/with\\/slashes",
 			expected: []string{"folder/with/slashes", "subfolder/with/slashes"},
 		},
+		{
+			name:     "escaped backslash",
+			input:    "folder\\\\with/backslash",
+			expected: []string{"folder\\with", "backslash"},
+		},
+		{
+			name:     "unescaped backslash in title is preserved",
+			input:    "team\\ops",
+			expected: []string{"team\\ops"},
+		},
+		{
+			name:     "trailing backslash is preserved",
+			input:    "team\\",
+			expected: []string{"team\\"},
+		},
+		{
+			name:     "unescaped backslash preserved across a separator",
+			input:    "team\\ops/child",
+			expected: []string{"team\\ops", "child"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -169,6 +227,7 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 
 	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
 	searchReq := &resourcepb.ResourceSearchRequest{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "default",
@@ -211,4 +270,47 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "resolved-uid", uid)
 	fakeK8s.AssertExpectations(t)
+}
+
+func TestFullpathRoundTrip(t *testing.T) {
+	tests := []struct {
+		name   string
+		titles []string
+	}{
+		{
+			name:   "plain titles",
+			titles: []string{"parent", "child"},
+		},
+		{
+			name:   "titles containing slashes",
+			titles: []string{"a/b", "c/d"},
+		},
+		{
+			name:   "title with backslash in middle",
+			titles: []string{"foo\\bar", "xyz"},
+		},
+		{
+			name:   "title ending in double backslash",
+			titles: []string{"team\\\\", "alerts"},
+		},
+		{
+			name:   "title ending in backslash",
+			titles: []string{"team\\", "alerts"},
+		},
+		{
+			name:   "single dangling backslash",
+			titles: []string{"\\"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parents := make([]*folder.Folder, len(tt.titles))
+			for i, title := range tt.titles {
+				parents[i] = &folder.Folder{Title: title, UID: fmt.Sprintf("uid-%d", i)}
+			}
+			fullpath, _ := computeFullPath(parents)
+			require.Equal(t, tt.titles, SplitFullpath(fullpath))
+		})
+	}
 }

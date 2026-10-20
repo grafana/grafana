@@ -25,6 +25,7 @@ import {
   getLinksSupplier,
   setDynamicConfigValue,
   setFieldConfigDefaults,
+  validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 
@@ -146,6 +147,26 @@ describe('Global MinMax', () => {
 
       expect(min).toBe(1);
       expect(max).toBe(5);
+    });
+  });
+
+  describe('when a number field holds strings or booleans', () => {
+    it.each([
+      { desc: 'a numeric string', values: [5, '200', 10], min: 5, max: 200 },
+      { desc: 'an empty string', values: [5, '', 10], min: 5, max: 10 },
+      { desc: 'only numeric strings', values: ['5', '10'], min: 5, max: 10 },
+      { desc: 'a boolean', values: [5, true, 10], min: 5, max: 10 },
+    ])('should use number values for $desc', ({ values, min, max }) => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: values.map((_, i) => i) },
+          { name: 'Value', type: FieldType.number, values },
+        ],
+      });
+      const range = findNumericFieldMinMax([frame]);
+
+      expect(range.min).toBe(min);
+      expect(range.max).toBe(max);
     });
   });
 
@@ -350,6 +371,58 @@ describe('applyFieldOverrides', () => {
       expect(withOverrides[0].fields[1].values[0].fields[1].config.max).toBe(30);
     });
 
+    it('will not write the panel config onto the frames it was given', () => {
+      // The "Time series to table" transformation builds its sparkline frames out of the source
+      // query's own field objects, so the nested frame's config is the same object the query
+      // runner still holds. Applying this panel's config must not reach back into it.
+      const sourceFrame = createDataFrame({
+        name: 'source',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1752170223000, 1752170224000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+      const nested: DataFrame = {
+        name: 'nested',
+        length: 2,
+        fields: sourceFrame.fields.map((field) => ({ ...field })),
+      };
+
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          { name: 'message', type: FieldType.string, values: ['foo'] },
+          { name: 'frame', type: FieldType.frame, values: [nested] },
+        ],
+      });
+
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: { unit: 'percent' },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'frame' },
+              properties: [{ id: 'displayName', value: 'Trend' }],
+            },
+          ],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      });
+
+      // the config still reaches the fields inside the frame
+      expect(withOverrides[0].fields[1].values[0].fields[1].config).toMatchObject({
+        unit: 'percent',
+        displayName: 'Trend',
+      });
+      // ...without touching the frames handed in
+      expect(nested.fields[1].config).toEqual({});
+      expect(sourceFrame.fields[1].config).toEqual({});
+    });
+
     it('will not crash when some of the nested frames are undefined', () => {
       const f0 = createDataFrame({
         name: 'A',
@@ -445,6 +518,56 @@ describe('applyFieldOverrides', () => {
 
     // The override applied
     expect(config.decimals).toEqual(1);
+  });
+
+  it('resolves threshold valueExpr steps from defaults into a sorted numeric config', () => {
+    const variables: Record<string, unknown> = { warn: '25', multi: ['1', '2'] };
+    // mimics the function-format convention of sceneGraph.interpolate/templateSrv.replace:
+    // the custom format function receives the raw variable value (an array when multi-value)
+    const replaceVariables: InterpolateFunction = (value, _scopedVars, format) => {
+      return value.replace(/\$(\w+)/g, (match, name) => {
+        if (!(name in variables)) {
+          return match;
+        }
+        if (typeof format === 'function') {
+          return format(variables[name]);
+        }
+        return String(variables[name]);
+      });
+    };
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 80, color: 'red' },
+              { value: 50, valueExpr: '$warn', color: 'orange' },
+              { value: 90, valueExpr: '$multi', color: 'blue' },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      replaceVariables,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    // resolved ($warn -> 25), fallen back ($multi has 2 values selected -> 90),
+    // sorted ascending with the base step first, and no valueExpr left anywhere
+    expect(data.fields[1].config.thresholds).toEqual({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 25, color: 'orange' },
+        { value: 80, color: 'red' },
+        { value: 90, color: 'blue' },
+      ],
+    });
   });
 
   it('should skip overrides with unknown matcher ids', () => {
@@ -708,6 +831,49 @@ describe('applyFieldOverrides', () => {
     expect(data.fields[1].config.displayName).toBe('Kittens improved');
     expect(getFieldDisplayName(data.fields[1], data)).toBe('Kittens improved');
   });
+
+  it('converts a string max set by the data source to a number', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.number, values: [42], config: { max: '100' } as unknown as FieldConfig },
+      ],
+    });
+
+    const field = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (str: string) => str,
+      theme: createTheme(),
+    })[0].fields[0];
+
+    expect(field.config.max).toBe(100);
+    expect(field.state!.range!.max).toBe(100);
+  });
+});
+
+describe('validateFieldConfig', () => {
+  it.each([
+    { desc: 'a numeric string', value: '100', expected: 100 },
+    { desc: 'an empty string', value: '', expected: undefined },
+    { desc: 'a whitespace-only string', value: '   ', expected: undefined },
+    { desc: 'a non-numeric string', value: 'abc', expected: undefined },
+    { desc: 'a number', value: 5, expected: 5 },
+    { desc: 'null', value: null, expected: null },
+  ])('turns min/max given as $desc into $expected', ({ value, expected }) => {
+    const config = { min: value, max: value } as unknown as FieldConfig;
+
+    validateFieldConfig(config);
+
+    expect({ min: config.min, max: config.max }).toEqual({ min: expected, max: expected });
+  });
+
+  it('converts string min/max before checking that min is below max', () => {
+    const config = { min: '50', max: '100' } as unknown as FieldConfig;
+
+    validateFieldConfig(config);
+
+    expect(config).toEqual({ min: 50, max: 100 });
+  });
 });
 
 describe('setFieldConfigDefaults', () => {
@@ -923,6 +1089,41 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(config, defaultConfig, context);
 
     expect(config.thresholds).toMatchSnapshot();
+  });
+
+  it('normalizes a datasource base threshold serialized as null', () => {
+    const defaultConfig: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'blue' }],
+      },
+    };
+
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: null as unknown as number, color: 'red' },
+          { value: 9, color: 'green' },
+          { value: 15, color: 'red' },
+        ],
+      },
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    setFieldConfigDefaults(config, defaultConfig, context);
+
+    expect(config.thresholds?.steps).toEqual([
+      { value: -Infinity, color: 'red' },
+      { value: 9, color: 'green' },
+      { value: 15, color: 'red' },
+    ]);
   });
 });
 

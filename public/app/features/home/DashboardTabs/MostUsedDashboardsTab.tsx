@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { EmptyState, Stack, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
+import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
 
 interface Props {
@@ -18,7 +21,8 @@ interface Props {
 }
 
 export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid, density }: Props) {
-  const styles = useStyles2(getStyles);
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const styles = useStyles2(getStyles, redesignEnabled);
 
   if (loading) {
     return <PageLoader text={t('home.most-used-dashboards-tab.loading', 'Loading most used dashboards...')} />;
@@ -35,18 +39,16 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
 
   if (dashboards.length === 0) {
     return (
-      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
-        <EmptyState
-          hideImage
-          variant="completed"
-          message={t('home.most-used-dashboards-tab.empty', 'Most used dashboards will appear here.')}
-        >
-          <Trans i18nKey="home.most-used-dashboards-tab.empty-description">
-            Once your organization has dashboards and usage data has been collected, dashboards with the most views over
-            the last 30 days will be displayed here.
-          </Trans>
-        </EmptyState>
-      </Stack>
+      <DashboardTabEmptyState
+        message={t('home.most-used-dashboards-tab.empty', 'Most used dashboards will appear here.')}
+        variant="completed"
+        density={density}
+      >
+        <Trans i18nKey="home.most-used-dashboards-tab.empty-description">
+          Once your organization has dashboards and usage data has been collected, dashboards with the most views over
+          the last 30 days will be displayed here.
+        </Trans>
+      </DashboardTabEmptyState>
     );
   }
 
@@ -69,10 +71,10 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
   list: css({
     listStyle: 'none',
-    padding: 0,
+    padding: theme.spacing(0, redesign ? 0 : 0.5),
     margin: 0,
   }),
 });

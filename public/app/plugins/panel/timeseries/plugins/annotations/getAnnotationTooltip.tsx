@@ -15,15 +15,18 @@ export function getAnnotationTooltip(
   timeZone: string,
   canEditAnnotations: (dsUID: string) => boolean,
   canDeleteAnnotations: (dsUID: string) => boolean,
-  onAnnotationDelete?: (id: number) => void
+  onAnnotationDelete?: (id: string) => void
 ) {
   const annoId = annoVals.id?.[annoIdx];
   const dashboardUID = annoVals.dashboardUID?.[annoIdx] ?? undefined;
   const timeEnd = annoVals.timeEnd?.[annoIdx];
   const isRegion = annoVals.isRegion?.[annoIdx] && timeEnd != null;
 
-  // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
-  const canUpdateAnno = dashboardUID !== undefined && annoId != null && annoId > 0;
+  // Grafana can be configured to load alert rules from Loki; those annotations cannot be
+  // edited or deleted, and a falsy id (0 from the legacy API, or absent) is the best
+  // signal. k8s annotations carry non-numeric string ids; so falsy - not `> 0`
+  // This matches the `if (!annotation.id)` guard in the annotation API client.
+  const canUpdateAnno = dashboardUID !== undefined && Boolean(annoId);
   const canEdit = canUpdateAnno && canEditAnnotations(dashboardUID);
   const canDelete = canUpdateAnno && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
 
@@ -46,7 +49,7 @@ export function getAnnotationTooltip(
 
   return {
     title,
-    onDelete: annoId != null && onAnnotationDelete ? () => onAnnotationDelete(annoId) : undefined,
+    onDelete: annoId && onAnnotationDelete ? () => onAnnotationDelete(String(annoId)) : undefined,
     canEdit,
     canDelete,
     time,

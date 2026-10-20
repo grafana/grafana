@@ -1,7 +1,8 @@
 import { clamp } from 'lodash';
-import z from 'zod';
+import * as z from 'zod';
 
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -11,7 +12,7 @@ import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, isValidRecordingRulesTarget } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -37,26 +38,6 @@ const KEEP_FIRING_FOR_DEFAULT = '0s';
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
-
-function getValidDefaultTargetDatasourceUid(): string | undefined {
-  const configuredDefaultUid = config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID;
-
-  if (!configuredDefaultUid) {
-    return undefined;
-  }
-
-  try {
-    const datasource = getDataSourceSrv().getInstanceSettings(configuredDefaultUid);
-    if (datasource && isValidRecordingRulesTarget(datasource)) {
-      return configuredDefaultUid;
-    }
-  } catch (error) {
-    // If datasource doesn't exist or can't be retrieved,
-    // just return undefined
-  }
-
-  return undefined;
-}
 
 export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
@@ -100,7 +81,6 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(ruleType),
-    targetDatasourceUid: getValidDefaultTargetDatasourceUid(),
 
     // cortex / loki
     namespace: '',
@@ -113,7 +93,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
 export const getDefautManualRouting = () => {
   // check in local storage
   // if it's not set, we'll default to true
-  const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
+  const manualRouting = store.get(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
 };
 
@@ -123,8 +103,8 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
   }
 
   //then, check in local storage if the user has saved last rule with sections simplified
-  const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
-  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
+  const queryEditorSettings = store.get(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = store.get(MANUAL_ROUTING_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
     simplifiedNotificationEditor: notificationStepSettings !== 'false',

@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/definition/compat"
 	"github.com/prometheus/alertmanager/config"
 )
@@ -17,7 +16,7 @@ import (
 // silently dropped (e.g. the *_file / *_ref fields removed in grafana/alerting#573).
 // It diffs orig against a round-trip of def, so it stays correct as upstream adds
 // fields.
-func findUnsupportedReceiverFields(orig config.Receiver, def definition.Receiver) (fields []string, err error) {
+func findUnsupportedReceiverFields(orig config.Receiver, def compat.Receiver) (fields []string, err error) {
 	roundTripped := compat.DefinitionReceiverToUpstreamReceiver(def)
 
 	var reporter yamlPathReporter

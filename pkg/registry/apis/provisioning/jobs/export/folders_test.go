@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -144,8 +145,8 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil))
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, time.Time{}, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, time.Time{}, nil))
 
 					return true
 				})).Return(nil)
@@ -207,8 +208,8 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, errors.New("didn't work")))
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, time.Time{}, errors.New("didn't work")))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, time.Time{}, nil))
 
 					return true
 				})).Return(nil)
@@ -252,7 +253,7 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.Error(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil), "too many errors encountered")
+					require.Error(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, time.Time{}, nil), "too many errors encountered")
 					return true
 				})).Return(fmt.Errorf("too many errors encountered"))
 			},
@@ -320,8 +321,8 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, nil))
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, time.Time{}, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, time.Time{}, nil))
 
 					return true
 				})).Return(nil)

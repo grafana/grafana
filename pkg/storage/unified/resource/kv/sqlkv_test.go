@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"testing"
@@ -27,6 +28,13 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 	require.True(t, ok)
 
 	return sqlKV, db, mock
+}
+
+func TestSQLKVSaveRejectsUnknownSection(t *testing.T) {
+	store, _, _ := setupSQLKVMock(t, "sqlite")
+	w, err := store.Save(t.Context(), "unknown", "key")
+	require.EqualError(t, err, "invalid section: unknown")
+	require.Nil(t, w)
 }
 
 func buildDataImportRows(count int) []DataImportRow {
@@ -249,6 +257,35 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 	err := sqlKV.InsertDataImportBatch(context.Background(), rows)
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSQLKV_BatchDelete_RejectsOversizedBatch(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+	keys := make([]string, maxBatchDeleteKeys)
+	for i := range keys {
+		keys[i] = fmt.Sprintf("k-%04d", i)
+	}
+
+	// A batch at or above the max is rejected before any DELETE runs.
+	require.Error(t, sqlKV.BatchDelete(context.Background(), DataSection, keys))
+
+	// One below the max runs as a single DELETE with that many key_path args.
+	allowed := keys[:maxBatchDeleteKeys-1]
+	mock.ExpectExec(`(?i)delete from .*resource_history.* where .*key_path.* in \(`).
+		WithArgs(anyArgs(len(allowed))...).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, sqlKV.BatchDelete(context.Background(), DataSection, allowed))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// anyArgs returns n matchers, so WithArgs asserts exactly n arguments in the statement.
+func anyArgs(n int) []driver.Value {
+	args := make([]driver.Value, n)
+	for i := range args {
+		args[i] = sqlmock.AnyArg()
+	}
+	return args
 }
 
 func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {

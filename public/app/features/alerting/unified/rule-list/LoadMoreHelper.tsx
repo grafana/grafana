@@ -7,6 +7,9 @@ type Props = {
 
 function LoadMoreHelper({ handleLoad }: Props) {
   const intersectionRef = useRef<HTMLDivElement>(null);
+  // TODO remove when react-use is fixed
+  // see https://github.com/streamich/react-use/issues/2612
+  // @ts-expect-error
   const intersection = useIntersection(intersectionRef, {
     root: null,
     threshold: 1,

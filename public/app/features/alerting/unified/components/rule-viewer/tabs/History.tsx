@@ -1,9 +1,8 @@
 import { Suspense, lazy } from 'react';
 
-import { config } from '@grafana/runtime';
 import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { StateHistoryImplementation } from '../../../hooks/useStateHistoryModal';
+import { StateHistoryImplementation, useStateHistoryImplementation } from '../../../utils/config';
 
 const AnnotationsStateHistory = lazy(() => import('../../../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../../../components/rules/state-history/LokiStateHistory'));
@@ -13,18 +12,12 @@ interface HistoryProps {
 }
 
 const History = ({ rule }: HistoryProps) => {
-  // can be "loki", "multiple" or "annotations"
-  const stateHistoryBackend = config.unifiedAlerting.stateHistory?.backend;
-  // can be "loki" or "annotations"
-  const stateHistoryPrimary = config.unifiedAlerting.stateHistory?.primary;
+  const implementation = useStateHistoryImplementation();
 
-  // if "loki" is either the backend or the primary, show the new state history implementation
-  const usingNewAlertStateHistory = [stateHistoryBackend, stateHistoryPrimary].some(
-    (implementation) => implementation === StateHistoryImplementation.Loki
-  );
-  const implementation = usingNewAlertStateHistory
-    ? StateHistoryImplementation.Loki
-    : StateHistoryImplementation.Annotations;
+  // no backend can answer history queries, so there is nothing to show
+  if (implementation === StateHistoryImplementation.Unavailable) {
+    return null;
+  }
 
   const ruleUID = rule.grafana_alert.uid;
 

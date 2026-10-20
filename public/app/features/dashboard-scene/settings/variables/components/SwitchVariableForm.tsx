@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Combobox, Input, type ComboboxOption, Stack } from '@grafana/ui';
+import { Field, Combobox, Input, type ComboboxOption, Stack, FieldSet } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 import { VariableLegend } from './VariableLegend';
 
@@ -28,6 +29,7 @@ export function SwitchVariableForm({
   onDisabledValueChange,
   inline,
 }: SwitchVariableFormProps) {
+  const readOnly = useOptionsPaneReadOnly();
   const currentValuePairType = getCurrentValuePairType(enabledValue, disabledValue);
   const [isCustomValuePairType, setIsCustomValuePairType] = useState(currentValuePairType === 'custom');
   const [enabledValueInvalid, setEnabledValueInvalid] = useState<boolean>(false);
@@ -90,9 +92,10 @@ export function SwitchVariableForm({
   };
 
   const fieldWidth = inline ? undefined : 30;
+  const Wrapper = inline ? Fragment : FieldSet;
 
   return (
-    <>
+    <Wrapper>
       {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.switch-variable-form.switch-options">Switch options</Trans>
@@ -102,6 +105,7 @@ export function SwitchVariableForm({
       <Stack gap={2} direction="column">
         <Field
           noMargin
+          disabled={readOnly ? true : undefined}
           label={t('dashboard-scene.switch-variable-form.value-pair-type', 'Value pair type')}
           description={t(
             'dashboard-scene.switch-variable-form.value-pair-type-description',
@@ -122,6 +126,7 @@ export function SwitchVariableForm({
           <Stack gap={2} direction="column">
             <Field
               noMargin
+              disabled={readOnly ? true : undefined}
               label={t('dashboard-scene.switch-variable-form.enabled-value', 'Enabled value')}
               description={t(
                 'dashboard-scene.switch-variable-form.enabled-value-description',
@@ -146,6 +151,7 @@ export function SwitchVariableForm({
 
             <Field
               noMargin
+              disabled={readOnly ? true : undefined}
               label={t('dashboard-scene.switch-variable-form.disabled-value', 'Disabled value')}
               description={t(
                 'dashboard-scene.switch-variable-form.disabled-value-description',
@@ -168,7 +174,7 @@ export function SwitchVariableForm({
           </Stack>
         )}
       </Stack>
-    </>
+    </Wrapper>
   );
 }
 

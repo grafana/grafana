@@ -27,8 +27,22 @@ ifneq ($(OS),Windows_NT)
 	endif
 endif
 
+# -x excludes vendored Prometheus/Alertmanager packages from annotation scanning. They're only
+# reachable transitively (via github.com/grafana/alerting/notify, and via config/matchers types
+# embedded in our own definitions) as implementation baggage, not because Grafana exposes their
+# routes or models - but api/v2/restapi (and its operations subpackages) carries its own
+# swagger:meta/route/response annotations for endpoints Grafana doesn't expose, and scanning it
+# leaks them into this spec. We deliberately do NOT exclude api/v2/models: Grafana embeds/aliases
+# several of its types (GettableAlert, ClusterStatus, PostableSilence, ...) without re-declaring
+# their own swagger:model annotation, so that package must stay scanned for those to resolve.
+# go's RE2 has no negative-lookahead, so "everything under prometheus/ except api/v2/models" has
+# to be listed as separate patterns rather than one blanket exclude.
+EXCLUDE_PROMETHEUS = -x 'prometheus/alertmanager/api/v2/(restapi|client)' \
+	-x 'prometheus/alertmanager/(cluster|dispatch|notify|silence|nflog|inhibit|flushlog|store|provider|template|asset|matchers|featurecontrol|timeinterval|tracing|types|config|pkg/labels|api/metrics)' \
+	-x 'prometheus/(prometheus|common|client_golang|client_model|procfs|exporter-toolkit)'
+
 spec.json spec-stable.json: $(GO_PKG_FILES)
-	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) -o spec.json && SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m --include-tag=stable -o spec-stable.json
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) $(EXCLUDE_PROMETHEUS) -o spec.json && SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m --include-tag=stable $(EXCLUDE_PROMETHEUS) -o spec-stable.json
 
 # Prometheus URL type collides with the net/url.URL type, so we need to fix the spec if the descriptions are not correct
 # to make the spec generation consistent.

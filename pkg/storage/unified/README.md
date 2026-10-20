@@ -7,6 +7,21 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Remote blob streaming
+
+The additive `BlobStoreStreaming` service in `proto/blob.proto` supports remote
+uploads and downloads against the existing `resource_blob` SQL table, including
+SQL-backed KV. The unary `BlobStore` service remains unchanged. Streaming uses
+64 KiB chunks, a 64 MiB total-blob limit, two active transfers per tenant per
+server, and a two-minute deadline. Interrupted uploads roll back. CDK and
+file-backed KV do not support streaming yet; snapshot clients still use unary
+calls until a separately deployed client change switches them over.
+
+Uploaded chunks are committed to `resource_blob_upload_chunk` as they arrive. On
+completion the database concatenates them into the `resource_blob` row in one
+statement, so the full value is written once and never has to fit in a client
+packet (such as MySQL's `max_allowed_packet`).
+
 ## Storage Overview
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
@@ -1393,7 +1408,8 @@ curl -s -u admin:admin -X POST \
 ```
 
 The `nats sub` window then shows a message on subject
-`playlist.grafana.app.default.playlists` (format: `{group}.{namespace}.{resource}`).
+`us.watch.v1.playlist.grafana.app.default.playlists` (format:
+`us.watch.v1.{group}.{namespace}.{resource}`).
 The payload is a protobuf `WatchNotification` (binary), so it renders as raw
 bytes — a message appearing on that subject with a non-empty body confirms the
 publish path.
@@ -1431,7 +1447,7 @@ Payloads are protobuf `WatchNotification` (see
 `UNKNOWN=0, ADDED=1, MODIFIED=2, DELETED=3`. A quick raw capture + hexdump:
 
 ```bash
-nats sub "playlist.grafana.app.>" --raw --count 1 > /tmp/n.bin & \
+nats sub "us.watch.v1.playlist.grafana.app.>" --raw --count 1 > /tmp/n.bin & \
   curl -s -u admin:admin -X POST \
   http://localhost:3000/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists \
   -H 'Content-Type: application/json' \

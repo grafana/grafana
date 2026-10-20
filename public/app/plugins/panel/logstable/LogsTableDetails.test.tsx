@@ -7,7 +7,7 @@ import { defaultTableOptions } from '@grafana/schema';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
-import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
+import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
 import { getDefaultLogDetailsWidth, LogsTableDetails } from './LogsTableDetails';
@@ -15,7 +15,9 @@ import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
 jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  useFlag: jest.fn().mockReturnValue({ value: false }),
 }));
 
 jest.mock('../../../features/logs/components/fieldSelector/FieldSelector');

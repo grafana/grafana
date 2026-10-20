@@ -331,6 +331,8 @@ func (DashboardTransformationKind) OpenAPIModelName() string {
 type DashboardDataTransformerConfig struct {
 	// Unique identifier of transformer
 	Id string `json:"id"`
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results
@@ -759,7 +761,9 @@ func (DashboardThresholdsMode) OpenAPIModelName() string {
 type DashboardThreshold struct {
 	// Value null means -Infinity
 	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	ValueExpr *string `json:"valueExpr,omitempty"`
+	Color     string  `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
@@ -2761,6 +2765,8 @@ func (DashboardCustomVariableSpecValuesFormat) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpecValuesFormat"
 }
 
+// Supported dashboard elements
+// |* more element types in the future
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`

@@ -199,6 +199,7 @@ export const TimeRangeContent = (props: Props) => {
             onClick={(event) => event.stopPropagation()}
             onKeyDown={submitOnEnter}
             addonAfter={icon}
+            autoComplete="off"
             data-testid={selectors.components.TimePicker.fromField}
           />
         </Field>
@@ -227,6 +228,7 @@ export const TimeRangeContent = (props: Props) => {
             onClick={(event) => event.stopPropagation()}
             onKeyDown={submitOnEnter}
             addonAfter={icon}
+            autoComplete="off"
             data-testid={selectors.components.TimePicker.toField}
           />
         </Field>

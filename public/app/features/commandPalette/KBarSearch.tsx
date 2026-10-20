@@ -3,6 +3,7 @@ import { useKBar, VisualState } from 'kbar';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 const KBAR_LISTBOX = 'kbar-listbox';
@@ -47,6 +48,7 @@ export function KBarSearch(
       /* eslint-disable-next-line jsx-a11y/no-autofocus */
       autoFocus
       autoComplete="off"
+      data-testid={selectors.components.CommandPalette.searchInput}
       role="combobox"
       spellCheck="false"
       aria-expanded={showing}

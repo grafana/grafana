@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useId } from 'react';
 
 import { type TypeaheadInput, type TypeaheadOutput } from '../../types/completion';

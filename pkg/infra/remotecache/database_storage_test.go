@@ -15,7 +15,7 @@ import (
 func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
@@ -65,7 +65,7 @@ func TestIntegrationSecondSet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var err error
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	db := &databaseCache{
 		SQLStore: sqlstore,

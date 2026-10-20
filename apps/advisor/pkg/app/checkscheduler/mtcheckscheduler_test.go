@@ -143,6 +143,72 @@ func TestDiscoverNamespaces_Pagination(t *testing.T) {
 	assert.Equal(t, int32(2), listCalls.Load())
 }
 
+func TestDiscoverNamespaces_LatestCreationAcrossPages(t *testing.T) {
+	older := metav1.NewTime(time.Now().Add(-15 * 24 * time.Hour))
+	newer := metav1.NewTime(time.Now().Add(-8 * 24 * time.Hour))
+	check := func(ns, name string, created metav1.Time) advisorv0alpha1.Check {
+		return advisorv0alpha1.Check{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name, CreationTimestamp: created}}
+	}
+	// stacks-1 spans both pages, with its newest Check on the first page and an
+	// older one on the second: folding page by page must keep the newest.
+	pages := []*advisorv0alpha1.CheckList{
+		{
+			ListMeta: metav1.ListMeta{Continue: "page-2"},
+			Items:    []advisorv0alpha1.Check{check("stacks-1", "a", newer)},
+		},
+		{
+			ListMeta: metav1.ListMeta{Continue: "page-3"},
+			Items:    []advisorv0alpha1.Check{check("stacks-1", "b", older), check("stacks-2", "c", older)},
+		},
+		{
+			Items: []advisorv0alpha1.Check{check("stacks-2", "d", newer)},
+		},
+	}
+	var listCalls atomic.Int32
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			n := listCalls.Add(1)
+			return pages[n-1], nil
+		},
+	}
+	r := &Runner{
+		checksMetadata: metadataGetterFromClient(mockClient),
+		log:            &logging.NoOpLogger{},
+	}
+	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"stacks-1", "stacks-2"}, ns)
+	assert.Equal(t, newer.Time, last["stacks-1"])
+	assert.Equal(t, newer.Time, last["stacks-2"])
+	assert.Equal(t, int32(3), listCalls.Load())
+}
+
+func TestDiscoverNamespaces_PageErrorFailsDiscovery(t *testing.T) {
+	old := metav1.NewTime(time.Now().Add(-15 * 24 * time.Hour))
+	var listCalls atomic.Int32
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			if listCalls.Add(1) == 1 {
+				return &advisorv0alpha1.CheckList{
+					ListMeta: metav1.ListMeta{Continue: "page-2"},
+					Items: []advisorv0alpha1.Check{
+						{ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-1", Name: "a", CreationTimestamp: old}},
+					},
+				}, nil
+			}
+			return nil, errors.New("page 2 failed")
+		},
+	}
+	r := &Runner{
+		checksMetadata: metadataGetterFromClient(mockClient),
+		log:            &logging.NoOpLogger{},
+	}
+	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
+	assert.Error(t, err)
+	assert.Nil(t, ns)
+	assert.Nil(t, last)
+}
+
 func TestDiscoverNamespaces_IgnoresNonStacksNamespaces(t *testing.T) {
 	old := metav1.NewTime(time.Now().Add(-15 * 24 * time.Hour))
 	mockClient := &MockClient{
@@ -304,7 +370,7 @@ func TestRunTickParallelMT_TicksAllStaleNamespaces(t *testing.T) {
 
 	namespaces := make([]string, 0, namespaceCount)
 	lastCreated := make(map[string]time.Time, namespaceCount)
-	for i := 0; i < namespaceCount; i++ {
+	for i := range namespaceCount {
 		ns := fmt.Sprintf("stacks-%d", i)
 		namespaces = append(namespaces, ns)
 		lastCreated[ns] = stale

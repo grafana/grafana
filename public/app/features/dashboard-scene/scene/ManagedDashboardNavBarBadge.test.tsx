@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -31,7 +32,15 @@ function buildDashboard(kind?: ManagerKind, id?: string): DashboardScene {
 }
 
 describe('ManagedDashboardNavBarBadge', () => {
+  let originalProvisioning: boolean;
+
+  beforeEach(() => {
+    originalProvisioning = config.provisioningEnabled;
+    config.provisioningEnabled = true;
+  });
+
   afterEach(() => {
+    config.provisioningEnabled = originalProvisioning;
     jest.restoreAllMocks();
   });
 

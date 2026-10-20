@@ -110,8 +110,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(AlertEnrichment{}.OpenAPIModelName()),
+										Ref: ref(AlertEnrichment{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -159,9 +158,8 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -174,8 +172,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Matcher{}.OpenAPIModelName()),
+										Ref: ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -188,8 +185,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Matcher{}.OpenAPIModelName()),
+										Ref: ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -207,9 +203,8 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -222,8 +217,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Step{}.OpenAPIModelName()),
+										Ref: ref(Step{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -271,8 +265,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AssignEnricher(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Assignment{}.OpenAPIModelName()),
+										Ref: ref(Assignment{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -340,8 +333,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Condition(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Matcher{}.OpenAPIModelName()),
+										Ref: ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -354,8 +346,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Condition(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Matcher{}.OpenAPIModelName()),
+										Ref: ref(Matcher{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -395,8 +386,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Step{}.OpenAPIModelName()),
+										Ref: ref(Step{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -409,8 +399,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Conditional(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Step{}.OpenAPIModelName()),
+										Ref: ref(Step{}.OpenAPIModelName()),
 									},
 								},
 							},

@@ -100,8 +100,8 @@ func (statement *Statement) Init() {
 }
 
 var (
-	ptrPkType = reflect.TypeOf(&core.PK{})
-	pkType    = reflect.TypeOf(core.PK{})
+	ptrPkType = reflect.TypeFor[*core.PK]()
+	pkType    = reflect.TypeFor[core.PK]()
 )
 
 // NoAutoCondition if you do not want convert bean's field as query condition, then use this function
@@ -318,7 +318,7 @@ func (statement *Statement) buildUpdates(bean any,
 		var val any
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+			if structConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 				data, err := structConvert.ToDB()
 				if err != nil {
 					engine.logger.Error(err)
@@ -333,7 +333,7 @@ func (statement *Statement) buildUpdates(bean any,
 			}
 		}
 
-		if structConvert, ok := fieldValue.Interface().(core.Conversion); ok {
+		if structConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue); ok {
 			data, err := structConvert.ToDB()
 			if err != nil {
 				engine.logger.Error(err)
@@ -406,7 +406,7 @@ func (statement *Statement) buildUpdates(bean any,
 					continue
 				}
 				val = engine.formatColTime(col, t)
-			} else if nulType, ok := fieldValue.Interface().(driver.Valuer); ok {
+			} else if nulType, ok := reflect.TypeAssert[driver.Valuer](fieldValue); ok {
 				val, _ = nulType.Value()
 			} else {
 				if !col.SQLType.IsJson() {
@@ -548,7 +548,7 @@ func (statement *Statement) ID(id any) *Statement {
 
 	switch idType.Kind() {
 	case reflect.String:
-		statement.idParam = &core.PK{idValue.Convert(reflect.TypeOf("")).Interface()}
+		statement.idParam = &core.PK{idValue.Convert(reflect.TypeFor[string]()).Interface()}
 		return statement
 	}
 

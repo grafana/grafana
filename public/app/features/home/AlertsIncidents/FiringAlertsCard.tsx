@@ -6,12 +6,14 @@ import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/f
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { SummaryCard, SummaryCardPrefix } from './SummaryCard';
+import { type FilterScope, formatFilterLabel } from './filterSelection';
 import { severityLevelColor } from './severity';
-import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
+import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -42,25 +44,29 @@ function severityLabel(level?: SeverityLevel): string {
   }
 }
 
-export function FiringAlertsCard() {
-  if (!canViewFiringAlerts()) {
-    return null;
-  }
-
-  return <FiringAlertsCardInner />;
-}
-
 /**
- * Inner component avoids calling hooks conditionally —
- * the permission gate is in the parent wrapper.
+ * Empty-state copy scoped to the active filter. A picked label overrides the
+ * "your teams" default filter, so the copy names the picked label instead
+ * of claiming it's the user's own teams.
  */
-function FiringAlertsCardInner() {
-  const data = useFiringAlerts();
-  return <FiringAlertsCardView data={data} />;
+function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
+  switch (filterScope.kind) {
+    case 'all':
+      return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+    case 'label':
+      return t('home.firing-alerts-card.empty-selected-label', 'No firing alerts with {{label}}.', {
+        label: formatFilterLabel(filterScope.label),
+        interpolation: { escapeValue: false },
+      });
+    case 'default':
+      return hasTeams
+        ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
+        : t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+  }
 }
 
 /** Render-only card body; data comes from useFiringAlerts so callers control where the hook runs. */
-export function FiringAlertsCardView({
+export function FiringAlertsCard({
   data,
   hideFooterActions = false,
 }: {
@@ -75,6 +81,7 @@ export function FiringAlertsCardView({
     visibleAlerts,
     hasAlerts,
     hasTeams,
+    filterScope,
     loading,
     error,
     refetch,
@@ -120,11 +127,6 @@ export function FiringAlertsCardView({
             }
           : undefined
       }
-      emptyMessage={
-        hasTeams
-          ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-          : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
-      }
       items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {
@@ -152,12 +154,13 @@ export function FiringAlertsCardView({
                 </SummaryCardPrefix>
               )
             }
-            trailing={<SummaryCardAge date={startedAt} />}
+            trailing={<TimeAgoCell date={startedAt} />}
             href={detailHref}
             onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
           />
         );
       }}
+      emptyMessage={emptyMessage(filterScope, hasTeams)}
       emptyAction={
         canCreate ? (
           <LinkButton

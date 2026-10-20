@@ -2,6 +2,7 @@ package appplugin
 
 import (
 	"fmt"
+	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
@@ -11,7 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/openapi"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
 func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
@@ -19,9 +20,17 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 }
 
 func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// This is called once per group version, but the target version is not
+	// passed in -- recover it from the spec's Info.Title stamp.
+	version := b.specVersion(oas)
+
 	var schema *pluginschema.PluginSchema
 	if b.schemas != nil {
-		schema = b.schemas[b.GetGroupVersion().Version]
+		schema = b.schemas[version]
+		if schema.IsZero() {
+			// The settings kind uses the same schema in every version.
+			schema = b.schemas[apppluginV0.VERSION]
+		}
 	}
 
 	// The plugin description
@@ -40,7 +49,11 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	oas.Info.AddExtension("x-grafana-plugin", info)
 
 	// The root api URL
-	root := "/apis/" + b.groupVersion.String() + "/"
+	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
+
+	if !b.includeSettings() {
+		return oas, nil
+	}
 
 	// Hide the resource+proxy routes -- explicit ones will be added if defined below
 	for _, v := range []string{"resources", "proxy"} {
@@ -63,7 +76,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if !ok {
 		return nil, fmt.Errorf("missing settings type")
 	}
-	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
+	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
 
 	// Always transform results
@@ -74,13 +87,27 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		schema.SettingsSchema = defaultSchema().SettingsSchema
 	}
 
-	return openapi.AugmentOpenAPI(oas, openapi.PluginOptions{
+	return definition.AugmentOpenAPI(oas, definition.SettingsResource{
 		Schema:   schema,
 		Resource: ps,
 		SpecName: "SettingsSpec",
 		Path:     root + "namespaces/{namespace}/app",
 		IsApp:    true,
 	})
+}
+
+func (b *AppPluginAPIBuilder) includeSettings() bool {
+	return b.client != nil && b.contextProvider != nil
+}
+
+// specVersion reads the group version from the title set by the API builder.
+func (b *AppPluginAPIBuilder) specVersion(oas *spec3.OpenAPI) string {
+	if oas.Info != nil {
+		if version, ok := strings.CutPrefix(oas.Info.Title, b.group+"/"); ok && version != "" {
+			return version
+		}
+	}
+	return apppluginV0.VERSION
 }
 
 func defaultSchema() *pluginschema.PluginSchema {

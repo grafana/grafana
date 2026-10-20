@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -16,7 +15,7 @@ interface SummaryCardProps<T> {
   title: string;
   // Header count badge: red when count > 0. When countLimit is set and count >= countLimit the badge
   // reads `${countLimit}+` (server-capped data); otherwise the exact count.
-  count: number;
+  count?: number;
   countLimit?: number;
   // Right-aligned header content (e.g. a severity breakdown). Hidden while loading.
   headerExtra?: ReactNode;
@@ -35,7 +34,7 @@ interface SummaryCardProps<T> {
 
 export function SummaryCard<T>({
   title,
-  count,
+  count = 0,
   countLimit,
   headerExtra,
   loading,
@@ -68,14 +67,14 @@ export function SummaryCard<T>({
         )}
 
         {loading && (
-          <Stack direction="column">
+          <Stack direction="column" data-testid="summary-card-skeleton">
             {Array.from({ length: 3 }, (_, i) => (
               <Skeleton key={i} height={20} />
             ))}
           </Stack>
         )}
 
-        {error && (
+        {!loading && error && (
           <Alert
             severity="warning"
             title={error.title}
@@ -89,7 +88,8 @@ export function SummaryCard<T>({
 
         {!loading && !error && items.length === 0 && (
           <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
-            {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
+            <Text color="secondary">{emptyMessage}</Text>
+            {emptyAction}
           </Stack>
         )}
 
@@ -129,18 +129,6 @@ export function SummaryCardPrefix({ children }: { children: ReactNode }) {
   return <span className={styles.prefix}>{children}</span>;
 }
 
-/** Right-aligned relative-time cell shared by both cards. */
-export function SummaryCardAge({ date }: { date: Date | number }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <span className={styles.age}>
-      <Text color="secondary" variant="bodySmall">
-        {formatDistanceToNowStrict(date, { addSuffix: true })}
-      </Text>
-    </span>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
@@ -159,13 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   rowPadding: css({
     gap: theme.spacing(1),
     padding: theme.spacing(0.5, 0),
-  }),
-  age: css({
-    marginLeft: 'auto',
-    flexShrink: 0,
-    minWidth: theme.spacing(10),
-    display: 'inline-flex',
-    justifyContent: 'flex-end',
   }),
   prefix: css({
     display: 'inline-flex',

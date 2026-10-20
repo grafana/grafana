@@ -12,6 +12,14 @@ import { getSnapshots, SnapshotListTable } from './SnapshotListTable';
 jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
 
+const mockFeatureFlagClientGetBooleanValue = jest.fn().mockReturnValue(false);
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(() => ({
+    getBooleanValue: mockFeatureFlagClientGetBooleanValue,
+  })),
+}));
+
 // Use the real backendSrv so RTK Query's base query issues real HTTP requests that
 // msw intercepts — this exercises the integration with RTK Query rather than mocking
 // its internal base-query behavior.
@@ -86,7 +94,7 @@ describe('getSnapshots', () => {
     // registers the dashboard client and wires it as the global store.
     configureStore();
     config.appUrl = 'http://snapshots.grafana.com/';
-    config.featureToggles.kubernetesSnapshots = false;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(false);
   });
 
   test('returns paginated shape with decorated urls (legacy)', async () => {
@@ -117,7 +125,7 @@ describe('getSnapshots', () => {
   });
 
   test('propagates the k8s continue token', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(true);
     const continueTokens = mockK8sList(k8sFirstPage, k8sSecondPage);
 
     const result = await getSnapshots();
@@ -128,7 +136,7 @@ describe('getSnapshots', () => {
   });
 
   test('forwards the continue option to the k8s api', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(true);
     const continueTokens = mockK8sList(k8sFirstPage, k8sSecondPage);
 
     await getSnapshots({ continue: 'tok-page-2' });
@@ -140,7 +148,7 @@ describe('getSnapshots', () => {
 describe('SnapshotListTable', () => {
   beforeEach(() => {
     config.appUrl = 'http://snapshots.grafana.com/';
-    config.featureToggles.kubernetesSnapshots = false;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(false);
     mockContextSrv.hasPermission.mockReturnValue(true);
     mockContextSrv.hasPermissionInMetadata.mockReturnValue(true);
   });
@@ -155,7 +163,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders Load More when k8s returns a continue token and appends the next page on click', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(true);
     const continueTokens = mockK8sList(k8sFirstPage, k8sSecondPage);
 
     const { user } = render(<SnapshotListTable />);
@@ -178,7 +186,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('keeps Load More reachable when deleting the only loaded row leaves a continue token', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(true);
     const singleItemFirstPage = {
       items: [
         {
@@ -210,7 +218,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders the empty state only after the first fetch resolves', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(true);
     mockK8sList({ items: [], metadata: { resourceVersion: '1' } });
 
     render(<SnapshotListTable />);
@@ -222,7 +230,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('shows a Retry button when the initial fetch fails and recovers on click', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    mockFeatureFlagClientGetBooleanValue.mockReturnValue(true);
     let attempts = 0;
     server.use(
       http.get(K8S_LIST_URL, () => {

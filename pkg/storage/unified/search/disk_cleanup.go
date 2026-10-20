@@ -92,7 +92,7 @@ func (b *bleveBackend) runDiskCleanup(ctx context.Context) {
 	root, err := os.OpenRoot(b.opts.Root)
 	if err != nil {
 		span.RecordError(err)
-		b.recordDiskCleanupRun(diskCleanupOutcomeError)
+		b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(diskCleanupOutcomeError).Inc()
 		b.log.Warn("Disk index cleanup failed: opening root", "root", b.opts.Root, "err", err)
 		return
 	}
@@ -103,7 +103,7 @@ func (b *bleveBackend) runDiskCleanup(ctx context.Context) {
 	if err != nil {
 		stats.errors++
 		span.RecordError(err)
-		b.recordDiskCleanupRun(diskCleanupOutcomeError)
+		b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(diskCleanupOutcomeError).Inc()
 		b.log.Warn("Disk index cleanup failed: reading root", "root", b.opts.Root, "err", err)
 		return
 	}
@@ -126,7 +126,7 @@ func (b *bleveBackend) runDiskCleanup(ctx context.Context) {
 	if stats.errors > 0 {
 		outcome = diskCleanupOutcomeError
 	}
-	b.recordDiskCleanupRun(outcome)
+	b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(outcome).Inc()
 	span.SetAttributes(
 		attribute.String("outcome", outcome),
 		attribute.Int("dirs_scanned", stats.scanned),
@@ -217,13 +217,13 @@ func (b *bleveBackend) tryRemoveCandidate(root *os.Root, rel, kind string, grace
 	}
 	if err := root.RemoveAll(rel); err != nil {
 		b.log.Warn("Disk index cleanup: removing dir", "kind", kind, "dir", abs, "err", err)
-		b.recordDiskCleanupDirsDeleted(kind, diskCleanupOutcomeError)
+		b.indexMetrics.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, diskCleanupOutcomeError).Inc()
 		stats.deleteFailures++
 		stats.errors++
 		return
 	}
 	b.log.Info("Disk index cleanup: removed dir", "kind", kind, "dir", abs)
-	b.recordDiskCleanupDirsDeleted(kind, diskCleanupOutcomeSuccess)
+	b.indexMetrics.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, diskCleanupOutcomeSuccess).Inc()
 	switch kind {
 	case diskCleanupKindIndex:
 		stats.deletedIndex++
@@ -483,18 +483,4 @@ func (b *bleveBackend) tryRemoveIfEmpty(root *os.Root, rel string, stats *diskCl
 // (which keys on absolute paths) rely on that precondition.
 func joinRoot(root *os.Root, rel string) string {
 	return filepath.Join(root.Name(), filepath.FromSlash(rel))
-}
-
-func (b *bleveBackend) recordDiskCleanupRun(outcome string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexDiskCleanupRuns.WithLabelValues(outcome).Inc()
-}
-
-func (b *bleveBackend) recordDiskCleanupDirsDeleted(kind, outcome string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, outcome).Inc()
 }

@@ -1,4 +1,4 @@
-import { type StoryFn } from '@storybook/react-webpack5';
+import { type StoryFn } from '@storybook/react';
 import { action } from 'storybook/actions';
 
 import { type ComponentSize } from '../../types/size';

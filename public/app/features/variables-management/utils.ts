@@ -1,12 +1,60 @@
 import { config } from '@grafana/runtime';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Variable, type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { type EditableVariableType } from 'app/features/dashboard-scene/settings/variables/utils';
 
 /** Folder UIDs that appear in NestedFolderPicker but are not valid variable scopes. */
 export function getVariableFolderPickerExcludeUIDs(): string[] | undefined {
   return config.sharedWithMeFolderUID ? [config.sharedWithMeFolderUID] : undefined;
+}
+
+/**
+ * Root/global variable mutations are Admin-only in the default RBAC model
+ * (`fixed:variables:writer` is seeded on Admin). Boot-data permissions are
+ * unscoped, so `variables:create` is also true for folder editors — it cannot
+ * distinguish folders:* / folders:uid:general from a single-folder grant.
+ * `/api/access-control/user/permissions` would, but that dump is not safe in
+ * multi-tenant (and has no generally-available app-platform replacement yet).
+ */
+export function canManageGlobalVariables(): boolean {
+  return contextSrv.hasRole('Admin');
+}
+
+/**
+ * Rename or re-scope changes the derived metadata.name, so Save is create-then-delete
+ * (see recreateVariable). In-place spec-only edits are a PATCH.
+ */
+export function isRecreateVariableSave(
+  source: Variable | undefined,
+  logicalName: string,
+  folderUid: string | undefined
+): boolean {
+  if (!source) {
+    return false;
+  }
+  return logicalName !== getVariableSpecName(source) || folderUid !== (getVariableFolderUid(source) ?? '');
+}
+
+/**
+ * Whether the user may mutate a variable in the given scope.
+ * - `undefined` — no folder selected yet (creating without root rights)
+ * - `''` — org-global / root; requires {@link canManageGlobalVariables}
+ * - otherwise — folder UID; requires that folder's CanEdit
+ */
+export function canManageVariableScope(
+  folderUid: string | undefined,
+  folderCanEdit: boolean | undefined,
+  allowGlobal: boolean
+): boolean {
+  if (folderUid === undefined) {
+    return false;
+  }
+  if (folderUid === '') {
+    return allowGlobal;
+  }
+  return Boolean(folderCanEdit);
 }
 
 const KIND_TO_EDITABLE_TYPE: Record<VariableKind['kind'], EditableVariableType> = {
