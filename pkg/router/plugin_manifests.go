@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"slices"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,11 +41,7 @@ type pluginManifestsTarget struct {
 	grpcConfig pluginGRPCConfig
 	deps       PluginDependencies
 
-	cooldown *cooldown
-	status   pollStatus
-
-	snapshot atomic.Pointer[[]Backend]
-	lastKeys atomic.Pointer[map[string]struct{}]
+	backendPoller
 
 	// requestDuration records every gRPC call to a plugin deployment, by
 	// plugin, method and status code.
@@ -92,40 +87,17 @@ func newPluginManifestsTarget(
 		client:          client,
 		patterns:        patterns,
 		grpcConfig:      grpcConfig,
-		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
 		requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, source),
 	}
-	empty := []Backend{}
-	t.snapshot.Store(&empty)
-	emptyKeys := map[string]struct{}{}
-	t.lastKeys.Store(&emptyKeys)
+	t.initPoller()
 	return t, nil
 }
 
-// Backends returns the current polled-and-filtered backend snapshot. Safe
-// to call from any goroutine.
-func (t *pluginManifestsTarget) Backends() []Backend {
-	return *t.snapshot.Load()
-}
-
-// run polls until ctx is done, paced entirely by t.cooldown -- identical
-// shape to aggregateTarget.run; see that method's doc for why there is
-// deliberately only one timing source.
+// run polls until ctx is done; see backendPoller.pollLoop.
 func (t *pluginManifestsTarget) run(ctx context.Context, dirty chan<- struct{}) {
 	defer t.closeConnections()
-	timer := time.NewTimer(0) // fire immediately; don't wait an interval for the first attempt
-	defer timer.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			t.poll(ctx, dirty)
-			timer.Reset(t.cooldown.Until(time.Now()))
-		}
-	}
+	t.pollLoop(ctx, func(ctx context.Context) { t.poll(ctx, dirty) })
 }
 
 // poll performs one fetch-and-decode attempt and records its outcome on the
@@ -191,17 +163,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		}
 	}
 
-	t.snapshot.Store(&backends)
-	t.status.recordSkipped(skipped)
-
-	lastKeys := *t.lastKeys.Load()
-	if !sameKeySet(lastKeys, keys) {
-		t.lastKeys.Store(&keys)
-		select {
-		case dirty <- struct{}{}:
-		default: // already pending; coalesce
-		}
-	}
+	t.publish(backends, keys, skipped, dirty)
 }
 
 func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Client, appclientv3.Client, error) {
