@@ -218,16 +218,18 @@ func (u *UnionPermissionStore) HasUserPermissions(
 	ns types.NamespaceInfo,
 	query PermissionsQuery,
 ) (bool, error) {
-	var hasPermissions bool
 	for _, s := range u.stores {
 		exists, err := s.HasUserPermissions(ctx, ns, query)
 		if err != nil {
 			return false, err
 		}
-		// Check every source so a grant does not hide another source's error.
-		hasPermissions = hasPermissions || exists
+
+		if exists {
+			return true, nil
+		}
 	}
-	return hasPermissions, nil
+
+	return false, nil
 }
 
 func (s *StaticPermissionStore) getStaticRoles(

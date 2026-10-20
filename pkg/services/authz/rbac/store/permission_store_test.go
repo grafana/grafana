@@ -122,10 +122,12 @@ func TestUnionPermissionStoreHasUserPermissions(t *testing.T) {
 		results   []permissionPresenceResult
 		want      bool
 		wantError error
+		wantCalls int
 	}{
 		{
-			name: "no stores",
-			want: false,
+			name:      "no stores",
+			want:      false,
+			wantCalls: 0,
 		},
 		{
 			name: "no source has permissions",
@@ -133,7 +135,8 @@ func TestUnionPermissionStoreHasUserPermissions(t *testing.T) {
 				{exists: false},
 				{exists: false},
 			},
-			want: false,
+			want:      false,
+			wantCalls: 2,
 		},
 		{
 			name: "first source has permissions",
@@ -141,7 +144,8 @@ func TestUnionPermissionStoreHasUserPermissions(t *testing.T) {
 				{exists: true},
 				{exists: false},
 			},
-			want: true,
+			want:      true,
+			wantCalls: 1,
 		},
 		{
 			name: "later source has permissions",
@@ -149,16 +153,17 @@ func TestUnionPermissionStoreHasUserPermissions(t *testing.T) {
 				{exists: false},
 				{exists: true},
 			},
-			want: true,
+			want:      true,
+			wantCalls: 2,
 		},
 		{
-			name: "grant does not hide a later error",
+			name: "grant skips a later failing source",
 			results: []permissionPresenceResult{
 				{exists: true},
 				{exists: false, err: storeError},
 			},
-			want:      false,
-			wantError: storeError,
+			want:      true,
+			wantCalls: 1,
 		},
 		{
 			name: "error without grants",
@@ -167,6 +172,26 @@ func TestUnionPermissionStoreHasUserPermissions(t *testing.T) {
 			},
 			want:      false,
 			wantError: storeError,
+			wantCalls: 1,
+		},
+		{
+			name: "error stops before a later grant",
+			results: []permissionPresenceResult{
+				{exists: false, err: storeError},
+				{exists: true},
+			},
+			want:      false,
+			wantError: storeError,
+			wantCalls: 1,
+		},
+		{
+			name: "error takes precedence over a grant from the same source",
+			results: []permissionPresenceResult{
+				{exists: true, err: storeError},
+			},
+			want:      false,
+			wantError: storeError,
+			wantCalls: 1,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -186,9 +211,13 @@ func TestUnionPermissionStoreHasUserPermissions(t *testing.T) {
 
 			require.ErrorIs(t, err, tc.wantError)
 			require.Equal(t, tc.want, got)
-			for _, source := range stores {
+			for i, source := range stores {
 				recorded := source.(*permissionPresenceStore)
-				require.Equal(t, []permissionPresenceRequest{{namespace: ns, query: query}}, recorded.requests)
+				var wantRequests []permissionPresenceRequest
+				if i < tc.wantCalls {
+					wantRequests = []permissionPresenceRequest{{namespace: ns, query: query}}
+				}
+				require.Equal(t, wantRequests, recorded.requests, "source %d", i)
 			}
 		})
 	}
