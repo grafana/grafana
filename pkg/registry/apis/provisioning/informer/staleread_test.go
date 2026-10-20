@@ -253,3 +253,45 @@ func TestNewRepositoryDeltaSource_RereadsBehindTheAnnouncedVersion(t *testing.T)
 	require.NoError(t, err)
 	assert.Equal(t, rvString(announced), got.ResourceVersion)
 }
+
+// The execution review reproduced against real storage: the object is deleted
+// and that delete commits, but the DELETED is round-robined to another
+// queue-group member, so this replica still has the announcement outstanding
+// when it processes the queued key. The 404 its read returns is the truth — it
+// must reach the controller as a NotFound, unread again and unconverted.
+func TestNewRepositoryDeltaSource_UndeliveredDeleteKeepsTheNotFound(t *testing.T) {
+	const res = "repositories"
+	var reads atomic.Int32
+	client := fake.NewClientset()
+	client.PrependReactor("get", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
+		reads.Add(1)
+		return true, nil, apierrors.NewNotFound(schema.GroupResource{Resource: res}, "r")
+	})
+
+	reg := prometheus.NewRegistry()
+	sub := newFakeSubscriber()
+	source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+	enforcing, ok := getter.(staleReadRepositoryGetter)
+	require.True(t, ok)
+	enforcing.policy.backoff = 0
+	getter = enforcing
+
+	stop := make(chan struct{})
+	t.Cleanup(func() { close(stop) })
+	go source.Run(stop)
+	subject := resourcewatch.Subject(repoGVR, "")
+	require.Eventually(t, func() bool { return sub.subscribed(subject) }, 5*time.Second, 10*time.Millisecond)
+
+	// The create is announced here; the delete that follows it is not.
+	sub.publish(t, subject, &resourcepb.WatchNotification{
+		Type: resourcepb.WatchNotification_ADDED, Namespace: testNamespace, Name: "r", ResourceVersion: rvAgo(0),
+	})
+
+	_, err := getter.Get(context.Background(), testNamespace, "r")
+	assert.True(t, apierrors.IsNotFound(err), "the delete committed; the latest read correctly 404s")
+	assert.False(t, errors.Is(err, ErrStaleRead), "an outstanding announcement must not make a correct 404 stale")
+	assert.EqualValues(t, 1, reads.Load(), "a NotFound must not be re-read")
+	assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeNotFound), "counted as ambiguous, not behind")
+	assert.Zero(t, freshnessCount(t, reg, res, outcomeBehind))
+	assert.Zero(t, staleReadsExhausted(t, reg, res))
+}

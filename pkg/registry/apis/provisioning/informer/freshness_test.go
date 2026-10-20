@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -481,6 +482,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 
 	_, err := getter.Get(context.Background(), testNamespace, "r")
 	assert.True(t, apierrors.IsNotFound(err), "the object is gone; the read must still 404")
+	assert.False(t, errors.Is(err, ErrStaleRead), "and it must not be re-read into a stale-read error")
 	for _, outcome := range []string{outcomeCurrent, outcomeBehind, outcomeNotFound} {
 		assert.Zerof(t, freshnessCount(t, reg, res, outcome), "outcome %q", outcome)
 	}
