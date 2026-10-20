@@ -164,10 +164,10 @@ The panel can then load images, stylesheets, fonts, audio, video, and iframes fr
 
 Before you allow a source, consider the following risks:
 
-- **Data in URLs:** Panel content can put dashboard variables and query results into URLs. The website receives that data with each request.
-- **Viewer information:** The website can find out that you viewed the dashboard, when you viewed it, your IP address, and your browser. Grafana doesn't send the dashboard URL as a referrer.
-- **Content changes:** The website can change what it serves after you allow it. An approval doesn't lock the content that you reviewed.
-- **Embedded pages:** An iframe from the website can run its own scripts and show any content in the panel, such as a form that asks for your password. It still can't read your Grafana session or the dashboard.
+- **Data in URLs**: Panel content can put dashboard variables and query results into URLs. The website receives that data with each request.
+- **Viewer information**: The website can find out that you viewed the dashboard, when you viewed it, your IP address, and your browser. Grafana doesn't send the dashboard URL as a referrer.
+- **Content changes**: The website can change what it serves after you allow it. An approval doesn't lock the content that you reviewed.
+- **Embedded pages**: An iframe from the website can run its own scripts and show any content in the panel, such as a form that asks for your password. It still can't read your Grafana session or the dashboard.
 
 Only allow websites that you trust with the data on the dashboard.
 
