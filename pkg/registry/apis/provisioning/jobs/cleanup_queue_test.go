@@ -159,21 +159,44 @@ func TestCleanupQueue_RetriesDeleteWhenConflictIsNotAClaim(t *testing.T) {
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
 
+	// The re-fetch after the conflict reports the job still unclaimed but at a
+	// new ResourceVersion, so the retry must delete against freshRV rather than
+	// the stale version carried over from the List.
+	const freshRV = "999"
+	fakeClient.PrependReactor("get", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
+		return true, &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "repo-a-pending",
+				Namespace:       "stacks-123",
+				ResourceVersion: freshRV,
+				Labels:          map[string]string{LabelRepository: "repo-a"},
+			},
+			Spec: provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionPull},
+		}, nil
+	})
+
 	// Fail the first delete with a conflict (RV moved on), then let the retry
-	// through to the tracker. The re-fetch returns the still-unclaimed job.
-	var deleteCalls int
+	// through to the tracker. Record the precondition each delete used so we can
+	// assert the retry picked up the re-fetched ResourceVersion.
+	var preconditions []string
 	fakeClient.PrependReactor("delete", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
-		deleteCalls++
-		if deleteCalls == 1 {
+		var rv string
+		if pc := action.(clienttesting.DeleteAction).GetDeleteOptions().Preconditions; pc != nil && pc.ResourceVersion != nil {
+			rv = *pc.ResourceVersion
+		}
+		preconditions = append(preconditions, rv)
+		if len(preconditions) == 1 {
 			return true, nil, newConflictError()
 		}
-		return false, nil, nil
+		return false, nil, nil // let the tracker perform the delete
 	})
 
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
 	require.NoError(t, err)
 	assert.Equal(t, 1, deleted)
-	assert.Equal(t, 2, deleteCalls, "expected a retry after the conflict")
+	require.Len(t, preconditions, 2, "expected a retry after the conflict")
+	assert.NotEqual(t, freshRV, preconditions[0], "first delete should use the ResourceVersion from the List")
+	assert.Equal(t, freshRV, preconditions[1], "retry must delete against the ResourceVersion from the re-fetch")
 
 	remaining, err := fakeClient.ProvisioningV0alpha1().Jobs("stacks-123").List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
@@ -194,7 +217,9 @@ func TestCleanupQueue_SkipsJobClaimedAfterList(t *testing.T) {
 
 	// The delete always conflicts, and the re-fetch reports the job as claimed,
 	// simulating a worker that grabbed it after our List.
+	var deleteCalls int
 	fakeClient.PrependReactor("delete", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
+		deleteCalls++
 		return true, nil, newConflictError()
 	})
 	fakeClient.PrependReactor("get", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
@@ -215,6 +240,10 @@ func TestCleanupQueue_SkipsJobClaimedAfterList(t *testing.T) {
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
 	require.NoError(t, err)
 	assert.Equal(t, 0, deleted)
+	// Seeing the claim on the re-fetch must stop the loop immediately; it must
+	// not fall through and exhaust the retry budget (which would also leave the
+	// job behind, masking a removed claim check).
+	assert.Equal(t, 1, deleteCalls, "a claimed job must be skipped after the first conflict, not retried")
 
 	remaining, err := fakeClient.ProvisioningV0alpha1().Jobs("stacks-123").List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)

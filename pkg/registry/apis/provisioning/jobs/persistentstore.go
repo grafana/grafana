@@ -716,11 +716,11 @@ func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, logger logging
 			return false, getErr
 		}
 		if _, claimed := current.Labels[LabelJobClaim]; claimed {
-			logger.Debug("skipping job claimed during queue clean-up", "job", name)
+			logger.Info("skipping job claimed during queue clean-up", "job", name)
 			return false, nil
 		}
 		if !isCleanupCandidate(current, repository) {
-			logger.Debug("skipping recreated job that is no longer a cleanup candidate",
+			logger.Info("skipping recreated job that is no longer a cleanup candidate",
 				"job", name, "job_repository", current.Spec.Repository, "job_action", current.Spec.Action)
 			return false, nil
 		}
