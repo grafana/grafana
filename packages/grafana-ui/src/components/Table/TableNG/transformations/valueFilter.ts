@@ -13,8 +13,8 @@ export function createValuePredicate(
       ...selection,
       values,
       mode: 'display',
-      displayConfig: selection?.displayConfig ?? field.config,
-      timeZone: selection?.timeZone ?? timeZone,
+      displayConfig: field.config,
+      timeZone,
     } satisfies ValueSetOptions,
   };
 }

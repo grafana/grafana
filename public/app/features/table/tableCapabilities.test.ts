@@ -26,12 +26,12 @@ describe('withAdHocTransformCapabilities', () => {
     expect(b.config.custom?.filterable).toBe(true);
   });
 
-  it('disables filtering when runtime row transformations are unavailable', () => {
-    const [a, b] = withAdHocTransformCapabilities(frame(), true, false).fields;
+  it('allows filtering when column management is unavailable', () => {
+    const [a, b] = withAdHocTransformCapabilities(frame(), false).fields;
 
-    expect(a.config.custom?.filterable).toBe(false);
-    expect(b.config.custom?.filterable).toBe(false);
-    expect(a.config.custom?.hideable).toBe(true);
+    expect(a.config.custom?.filterable).toBe(true);
+    expect(b.config.custom?.filterable).toBe(true);
+    expect(a.config.custom?.hideable).toBe(false);
   });
 
   it('leaves the rest of the field config alone', () => {

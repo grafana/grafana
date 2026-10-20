@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import {
   applyFieldOverrides,
   CoreApp,
+  DataTransformerID,
   type DataFrame,
   type GrafanaTheme2,
   getFrameDisplayName,
@@ -77,17 +78,31 @@ export function TablePanel(props: Props) {
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
+  const filterTargetIndex = sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex;
+  const existingRowFilter =
+    sourceSeries &&
+    panelContext.adHocTransformations
+      ?.get(TABLE_TRANSFORMATIONS_OWNER)
+      .find(
+        (config) =>
+          !config.disabled &&
+          config.id === DataTransformerID.filterByValue &&
+          config.options.target?.frameIndex === filterTargetIndex &&
+          config.options.target?.refId === outputMain?.refId
+      );
+  // A duplicate refId cannot identify a new source, but an existing filter has an exact source index.
+  const filterSourceFrameIndex =
+    sourceFrameIndex < 0 &&
+    existingRowFilter &&
+    sourceSeries?.length === frames.length &&
+    sourceSeries[currentIndex]?.refId === outputMain?.refId
+      ? currentIndex
+      : sourceFrameIndex;
   const sourceFrames = sourceSeries ?? frames;
-  const sourceFrame = sourceFrames[sourceFrameIndex];
+  const sourceFrame = sourceFrames[filterSourceFrameIndex];
   const sourceFrameKey = useMemo(
-    () =>
-      JSON.stringify([
-        sourceFrame?.refId,
-        sourceFrameIndex,
-        sourceFrame?.name,
-        sourceFrame?.fields.map((field) => [field.name, field.type, field.labels]),
-      ]),
-    [sourceFrame, sourceFrameIndex]
+    () => existingRowFilter?.options.target?.frameKey ?? JSON.stringify([sourceFrame?.refId, filterSourceFrameIndex]),
+    [existingRowFilter, sourceFrame?.refId, filterSourceFrameIndex]
   );
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const sourceFramesWithOverrides = useMemo(
@@ -105,9 +120,9 @@ export function TablePanel(props: Props) {
         : undefined,
     [sourceSeries, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
   );
-  const displayFrames = sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
+  const displayFrames = filterSourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
   useCacheFieldDisplayNames(displayFrames);
-  const rawMain = displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain;
+  const rawMain = displayFrames[filterSourceFrameIndex >= 0 ? filterSourceFrameIndex : currentIndex] ?? outputMain;
   const configuredSourceSeries = useMemo(
     () =>
       sourceSeries &&
@@ -132,9 +147,9 @@ export function TablePanel(props: Props) {
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
-        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns), adHocTransformationsEnabled)
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
         : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns, adHocTransformationsEnabled]
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
@@ -162,14 +177,15 @@ export function TablePanel(props: Props) {
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       rowTransformationsEnabled={adHocTransformationsEnabled}
+      localFilterScope={JSON.stringify([currentIndex, outputMain?.refId])}
       onFilterError={notifyTableFilterError}
       rowTransformations={
-        adHocTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
+        adHocTransformationsEnabled && panelContext.adHocTransformations && filterSourceFrameIndex >= 0
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
               frameKey: sourceFrameKey,
-              frameIndex: sourceFrameIndex,
+              frameIndex: filterSourceFrameIndex,
             }
           : undefined
       }

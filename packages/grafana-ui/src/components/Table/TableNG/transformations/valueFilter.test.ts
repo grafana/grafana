@@ -54,24 +54,29 @@ it('composes local column and nested filter actions, and clears only the selecte
   ]);
 });
 
-it('preserves the saved display configuration when editing selected values', () => {
+it('uses the current display configuration when editing selected values', () => {
   const field = toDataFrame({ fields: [{ name: 'value', values: [1], config: { unit: 'bytes', decimals: 2 } }] })
     .fields[0];
   const initial = createValuePredicate(field, ['1']);
   expect(initial.options.displayConfig).toBe(field.config);
-  const edited = createValuePredicate(field, ['2'], {
-    values: ['1'],
-    mode: 'display',
-    displayConfig: { unit: 'short', decimals: 0 },
-    timeZone: 'UTC',
-  });
+  const edited = createValuePredicate(
+    field,
+    ['2'],
+    {
+      values: ['1'],
+      mode: 'display',
+      displayConfig: { unit: 'short', decimals: 0 },
+      timeZone: 'UTC',
+    },
+    'Pacific/Auckland'
+  );
   expect(edited).toEqual({
     id: 'inSet',
     options: {
       values: ['2'],
       mode: 'display',
-      displayConfig: { unit: 'short', decimals: 0 },
-      timeZone: 'UTC',
+      displayConfig: field.config,
+      timeZone: 'Pacific/Auckland',
     },
   });
 });

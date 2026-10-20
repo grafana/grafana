@@ -58,11 +58,16 @@ function panel(
   frameIndex = 0,
   outputSeries = sourceSeries,
   setTransformations: PanelRuntimeTransformations['set'] = () => {},
-  app = CoreApp.Dashboard
+  app = CoreApp.Dashboard,
+  savedFilterable = false,
+  activeTransformations: readonly DataTransformerConfig[] = transformations
 ) {
   const fieldConfig = {
     defaults: {
-      custom: { cellOptions: { type: TableCellDisplayMode.DataLinks } },
+      custom: {
+        cellOptions: { type: TableCellDisplayMode.DataLinks },
+        ...(savedFilterable ? { filterable: true } : {}),
+      },
       links: [{ title: 'Inspect', url: '/fallback' }],
     },
     overrides: [],
@@ -94,7 +99,7 @@ function panel(
             eventsScope: 'table',
             eventBus: new EventBusSrv(),
             adHocTransformations: {
-              get: () => transformations,
+              get: () => activeTransformations,
               set: setTransformations,
               getSourceSeries: () => sourceSeries,
               subscribe: () => () => {},
@@ -108,21 +113,104 @@ function panel(
   );
 }
 
-it('keeps row filtering unavailable in panel edit until saved-stack editing is supported', async () => {
+it('filters rows locally in panel edit without changing saved transformations', async () => {
   const sourceSeries = [makeFrame()];
-  render(
+  const set = jest.fn();
+  render(panel(sourceSeries, ({ linkModel }) => linkModel, 0, sourceSeries, set, CoreApp.PanelEditor));
+
+  await userEvent.click(screen.getByLabelText('Column options for metric'));
+  await userEvent.click(await screen.findByText('Filter values'));
+  await userEvent.click(screen.getByRole('checkbox', { name: '10' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect(screen.getAllByRole('link', { name: 'Inspect' })).toHaveLength(1);
+  expect(set).not.toHaveBeenCalled();
+});
+
+it('keeps local filters when a frame gains a column with the new-features flag off', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: false });
+  const original = makeFrame('CSV');
+  original.fields[0].config.custom = { filterable: true };
+  const renderPanel = (series: DataFrame[]) =>
     panel(
-      sourceSeries,
+      series,
       ({ linkModel }) => linkModel,
       0,
-      sourceSeries,
+      series,
       () => {},
-      CoreApp.PanelEditor
+      CoreApp.Dashboard,
+      true
+    );
+  const { rerender } = render(renderPanel([original]));
+
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for metric' }));
+  await userEvent.click(await screen.findByText('Filter values'));
+  await userEvent.click(screen.getByRole('checkbox', { name: '10' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  expect(screen.getAllByRole('link', { name: 'Inspect' })).toHaveLength(1);
+
+  const changed = toDataFrame({
+    name: 'Raw',
+    refId: 'A',
+    fields: [
+      { name: 'metric', type: FieldType.number, values: [10, 20], config: { custom: { filterable: true } } },
+      { name: 'region', type: FieldType.string, values: ['eu', 'us'] },
+    ],
+  });
+  rerender(renderPanel([changed]));
+
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for metric' }));
+  expect(await screen.findByText('Update filter')).toBeInTheDocument();
+});
+
+it('keeps an applied filter visible and clearable when a query gains a second frame with the same refId', async () => {
+  const first = toDataFrame({
+    name: 'First',
+    refId: 'A',
+    fields: [{ name: 'host', type: FieldType.string, values: ['web-1', 'web-2'] }],
+  });
+  const second = toDataFrame({
+    name: 'Second',
+    refId: 'A',
+    fields: [{ name: 'host', type: FieldType.string, values: ['db-1', 'db-2'] }],
+  });
+  const set = jest.fn();
+  const { rerender } = render(panel([first], ({ linkModel }) => linkModel, 0, [first], set));
+
+  await userEvent.click(screen.getByLabelText('Column options for host'));
+  await userEvent.click(await screen.findByText('Filter values'));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'web-1' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  const active = set.mock.lastCall?.[1] as readonly DataTransformerConfig[];
+  expect(active).toHaveLength(1);
+
+  const filteredFirst = toDataFrame({
+    name: 'First',
+    refId: 'A',
+    fields: [{ name: 'host', type: FieldType.string, values: ['web-1'] }],
+  });
+  rerender(
+    panel(
+      [first, second],
+      ({ linkModel }) => linkModel,
+      0,
+      [filteredFirst, second],
+      set,
+      CoreApp.Dashboard,
+      false,
+      active
     )
   );
 
-  expect(screen.queryByLabelText('Column options for metric')).not.toBeInTheDocument();
-  expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+  await userEvent.click(screen.getByRole('button', { name: /Edit filter on .*host/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Clear filter' }));
+  expect(set).toHaveBeenLastCalledWith('grafana:table-view', []);
+
+  rerender(panel([first, second], ({ linkModel }) => linkModel, 0, [first, second], set));
+  expect(screen.getAllByRole('row')).toHaveLength(3);
+  expect(screen.queryByRole('button', { name: /Edit filter on .*host/ })).not.toBeInTheDocument();
 });
 
 it('rebuilds row links with the current data-link processor', async () => {
@@ -243,7 +331,7 @@ it('writes row filters with the matched source index and scope', async () => {
         target: {
           refId: 'B',
           frameIndex: 1,
-          frameKey: '["B",1,"B",[["label","string",null]]]',
+          frameKey: '["B",1]',
           parentIndex: undefined,
           parentKey: undefined,
         },

@@ -101,6 +101,8 @@ interface BaseTableProps {
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
+  /** Stable identity for local filters when the host changes a frame's shape or display settings. */
+  localFilterScope?: string;
   /** Called once when table value-filter evaluation fails. The host may show a notification. */
   onFilterError?: (error: Error) => void;
   ariaLabel?: string;

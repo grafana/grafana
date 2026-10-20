@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type Field, type RangeValueMatcherOptions, type SelectableValue } from '@grafana/data';
+import {
+  type Field,
+  formattedValueToString,
+  getDisplayProcessor,
+  type RangeValueMatcherOptions,
+  type SelectableValue,
+} from '@grafana/data';
 import { type ValueSetOptions } from '@grafana/data/internal';
 
+import { useTheme2 } from '../../../../themes/ThemeContext';
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
 import { createValuePredicate, unsupportedFilterReason } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
+import { getDisplayName } from '../utils';
 
 import { type FilterPopupProps } from './FilterPopup';
 import { operatorSelectableValues } from './utils';
@@ -48,6 +56,7 @@ export function useFilterPopupState({
   crossFilterRows,
   crossFilterTailRows,
 }: UseFilterPopupStateOptions): UseFilterPopupState {
+  const theme = useTheme2();
   const view = useTableFilters();
   const selected = useMemo(
     () => (field ? (view?.getFilters(field, parentIndex) ?? []) : []),
@@ -66,10 +75,6 @@ export function useFilterPopupState({
   const filterKey = useMemo(() => (field ? tableFilterKey(field, parentIndex) : name), [field, parentIndex, name]);
 
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
-  const filterValue = useMemo(
-    () => (isPopoverVisible ? selection?.values.map((value) => ({ value, label: String(value) })) : undefined),
-    [isPopoverVisible, selection]
-  );
   const [searchFilter, setSearchFilter] = useState('');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
     operatorSelectableValues()[FilterOperator.CONTAINS]
@@ -87,7 +92,41 @@ export function useFilterPopupState({
   // - Active filter: rows available before that filter was applied (keeps its own options visible).
   // - New filter: rows surviving all active filters (the tail).
   // - No active filters at all: fall back to raw rows.
-  const rowsForPopup = isPopoverVisible ? (crossFilterRows[filterKey]?.() ?? crossFilterTailRows) : [];
+  const rowsForPopup = useMemo(
+    () => (isPopoverVisible ? (crossFilterRows[filterKey]?.() ?? crossFilterTailRows) : []),
+    [isPopoverVisible, crossFilterRows, crossFilterTailRows, filterKey]
+  );
+  const filterValue = useMemo(() => {
+    if (!isPopoverVisible || !selection) {
+      return undefined;
+    }
+    if (
+      !field ||
+      !selection.displayConfig ||
+      (selection.displayConfig === field.config && selection.timeZone === timeZone)
+    ) {
+      return selection.values.map((value) => ({ value, label: String(value) }));
+    }
+    const selected = new Set(selection.values.map(String));
+    const previousDisplay = getDisplayProcessor({
+      field: { ...field, config: selection.displayConfig },
+      theme,
+      timeZone: selection.timeZone,
+    });
+    const currentDisplay = field.display ?? getDisplayProcessor({ field, theme, timeZone });
+    const currentValues = new Set<string>();
+    const fieldName = getDisplayName(field);
+    for (const row of rowsForPopup) {
+      if (row.__depth !== 0) {
+        continue;
+      }
+      const raw = row[fieldName];
+      if (selected.has(formattedValueToString(previousDisplay(raw)))) {
+        currentValues.add(formattedValueToString(currentDisplay(raw)));
+      }
+    }
+    return Array.from(currentValues, (value) => ({ value, label: value }));
+  }, [isPopoverVisible, selection, field, timeZone, theme, rowsForPopup]);
 
   return {
     isPopoverVisible,

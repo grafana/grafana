@@ -19,7 +19,7 @@ export function useRowTransformations(props: TableNGProps) {
   const { api, owner = '' } = props.rowTransformations ?? {};
   const source = props.data;
   const frameIndex = props.rowTransformations?.frameIndex ?? 0;
-  const configuredFrameKey = props.rowTransformations?.frameKey;
+  const configuredFrameKey = props.rowTransformations?.frameKey ?? props.localFilterScope;
   const frameKey = useMemo(
     () =>
       configuredFrameKey ??
