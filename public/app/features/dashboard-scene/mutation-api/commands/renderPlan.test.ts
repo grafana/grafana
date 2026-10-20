@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -353,16 +355,6 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
-    beforeEach(() => {
-      // With the flag on, editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
-      // The deferred case is covered separately below.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
     // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
     // future change that re-enables dragging some other way still fails this.
@@ -378,7 +370,7 @@ describe('RENDER_PLAN', () => {
       await client.execute({ type: 'RENDER_PLAN', payload: plan });
 
       const grid = getGrid(scene);
-      expect(grid.isDraggable()).toBe(false);
+      await waitFor(() => expect(grid.isDraggable()).toBe(false));
       expect(grid.getDragHooks()).toEqual({});
       expect(grid.state.isResizable).toBe(false);
     });
@@ -390,28 +382,9 @@ describe('RENDER_PLAN', () => {
       await client.execute({ type: 'RENDER_PLAN', payload: plan });
 
       const grid = getGrid(scene);
-      expect(grid.isDraggable()).toBe(false);
+      await waitFor(() => expect(grid.isDraggable()).toBe(false));
       expect(grid.getDragHooks()).toEqual({});
       expect(grid.state.isResizable).toBe(false);
-    });
-
-    it('lands even when dashboardNewLayouts defers the correction behind a 10ms timeout', async () => {
-      // With dashboardNewLayouts on, the correction lands inside a setTimeout(..., 10), not
-      // synchronously -- assert it after that delay, not the same tick.
-      setTestFlags({ dashboardNewLayouts: true });
-      try {
-        const { scene, client } = setup();
-
-        await client.execute({ type: 'RENDER_PLAN', payload: plan });
-        await new Promise((resolve) => setTimeout(resolve, 20));
-
-        const grid = getGrid(scene);
-        expect(grid.isDraggable()).toBe(false);
-        expect(grid.getDragHooks()).toEqual({});
-        expect(grid.state.isResizable).toBe(false);
-      } finally {
-        setTestFlags({});
-      }
     });
   });
 
