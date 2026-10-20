@@ -19,7 +19,6 @@ import { orderCardsForSolution, type RecommendedCardId, selectRecommendations } 
 import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
-/** Whether the last selection in this browser found nothing to recommend; decides if the region reserves its space. */
 const HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.empty';
 
 interface RecommendationsProps {
@@ -148,7 +147,8 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   // Collapsed (gated-off) renders immediately as just the header row. While the selection runs, the region
   // holds its space unless the last verdict in this browser was empty: for a stack with nothing left to
   // recommend that verdict rarely changes, and reserving space only to collapse it moves the whole page.
-  // A verdict that does flip to non-empty mounts the region late, once.
+  // A verdict that does flip to non-empty mounts the region late, once. The verdict is per browser, not per
+  // org, so switching orgs on one instance can cost that late mount once.
   const [knownEmpty, setKnownEmpty] = useStoredBoolean(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false);
   const state = selected.value;
   const isEmpty = state ? state.recommendations.length === 0 : undefined;

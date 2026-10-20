@@ -261,8 +261,8 @@ function RecommendedCardSkeleton() {
 
 /**
  * Stands in for the whole region while the plugin list and data probes resolve: the heading row at the height
- * of its Hide button, and the same two column skeletons the view itself shows while its facts settle, inside
- * the same card shell. The region therefore keeps one height from skeleton to content.
+ * of its small Hide button (theme.components.height.sm), and the same two column skeletons the view itself shows
+ * while its facts settle, inside the same card shell. The region therefore keeps one height from skeleton to content.
  */
 export function RecommendationsSkeleton() {
   const styles = useStyles2(getStyles);
@@ -270,7 +270,7 @@ export function RecommendationsSkeleton() {
     <div data-testid="recommendations-skeleton">
       <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
         <Skeleton width={280} height={24} />
-        <Skeleton width={60} height={32} />
+        <Skeleton width={60} height={24} />
       </Stack>
 
       <div className={styles.cards}>

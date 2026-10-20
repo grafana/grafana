@@ -1,0 +1,97 @@
+import { Suspense, useEffect, useRef } from 'react';
+
+import { OrgRole, PluginExtensionPoints } from '@grafana/data';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { useStoredString } from 'app/core/hooks/useStored';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
+import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
+import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { useIncidents } from './AlertsIncidents/useIncidents';
+import { AssistantInput } from './AssistantInput';
+import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { HeaderActions } from './HeaderActions';
+import { HomeGrid } from './HomeGrid';
+import { HomePageFrame } from './HomePageFrame';
+import { Overview } from './Overview/Overview';
+import { Recommendations } from './Recommendations/Recommendations';
+import { homepageViewed } from './analytics/main';
+import { useHomepageSolutions } from './useHomepageSolutions';
+
+/**
+ * Every section owns its loading state, so the page shell paints at once and nothing waits for the plugin
+ * extensions: the Assistant slot holds its height until its component lands, and the setup-guide sections
+ * come last, so arriving late moves nothing above them.
+ */
+export function RedesignedHomePage() {
+  const solutions = useHomepageSolutions();
+  // Recommendations and the stack overview are onboarding for org members; anonymous or
+  // no-org users can't act on any of it, so skip the sections and their placement probes.
+  const showSolutions = contextSrv.isSignedIn && contextSrv.user.orgRole !== OrgRole.None;
+
+  const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepageAssistant,
+  });
+  const { components: extraComponents } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepageExtra,
+  });
+
+  // Persisted filter scopes, one per view; each also drives that view's header pill.
+  const [alertsFilter, setAlertsFilter] = useStoredString(ALERTS_FILTER_STORAGE_KEY, '');
+  const [incidentsFilter, setIncidentsFilter] = useStoredString(INCIDENTS_FILTER_STORAGE_KEY, '');
+  const alertsData = useFiringAlerts(alertsFilter);
+  const incidentsData = useIncidents(incidentsFilter);
+  const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
+
+  // The impression counts the rendered shell; the ref keeps it once per mount under StrictMode's replayed
+  // effects. HomeRoute only mounts the homepage when the unified homepage actually renders (redirect /
+  // home-dashboard branches never reach here).
+  const hasTrackedView = useRef(false);
+  useEffect(() => {
+    if (!hasTrackedView.current) {
+      hasTrackedView.current = true;
+      homepageViewed();
+    }
+  }, []);
+
+  return (
+    <HomePageFrame
+      actions={
+        <HeaderActions alertsData={alertsData} incidentsData={incidentsData} alertIncidentRef={alertIncidentRef} />
+      }
+    >
+      <Stack direction="column" gap={2}>
+        <AssistantInput components={assistantComponents} loading={isLoadingAssistant} />
+
+        <HomeGrid columns={2} gap={2}>
+          {/* Skip the HomepageTabs extension point for the redesign UI */}
+          <DashboardTabs extensionComponents={[]} />
+          <AlertIncidentTabs
+            alertsData={alertsData}
+            incidentsData={incidentsData}
+            alertsFilter={alertsFilter}
+            onAlertsFilterChange={setAlertsFilter}
+            incidentsFilter={incidentsFilter}
+            onIncidentsFilterChange={setIncidentsFilter}
+            switchRef={alertIncidentRef}
+          />
+        </HomeGrid>
+
+        {showSolutions && (
+          <>
+            <Recommendations solutions={solutions} />
+            <Overview solutions={solutions.solutions} />
+          </>
+        )}
+
+        {/* SetupGuide injects assorted sections for Cloud users. */}
+        <Suspense fallback={null}>
+          {renderLimitedComponents({ props: {}, components: extraComponents, pluginId: SETUPGUIDE_PLUGIN_ID })}
+        </Suspense>
+      </Stack>
+    </HomePageFrame>
+  );
+}
