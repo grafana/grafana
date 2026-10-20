@@ -187,7 +187,7 @@ describe('TimeSeriesPanel', () => {
     const context = {
       eventsScope: 'test',
       eventBus: new EventBusSrv(),
-      experimentalOpenExemplar: { getRequest, onHandled: jest.fn() },
+      openExemplar: { getRequest, onHandled: jest.fn() },
     };
     const { rerender } = render(
       <PanelContextProvider value={context}>
@@ -251,7 +251,7 @@ describe('TimeSeriesPanel', () => {
     const context = {
       eventsScope: 'test',
       eventBus: new EventBusSrv(),
-      experimentalOpenExemplar: {
+      openExemplar: {
         getRequest: () => (pending ? { requestId: 'late-annotations', frameIndex: 0, rowIndex: 0 } : undefined),
         onHandled,
       },
