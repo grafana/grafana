@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type PermissionStore interface {
@@ -26,7 +26,7 @@ type PermissionsQuery struct {
 	IsServerAdmin bool
 }
 
-func NewSQLPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer, forcePermissionRoleActionIndex bool) *SQLPermissionsStore {
+func NewSQLPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer trace.Tracer, forcePermissionRoleActionIndex bool) *SQLPermissionsStore {
 	return &SQLPermissionsStore{
 		sql:                            sql,
 		tracer:                         tracer,
@@ -38,7 +38,7 @@ var _ PermissionStore = (*SQLPermissionsStore)(nil)
 
 type SQLPermissionsStore struct {
 	sql                            legacysql.LegacyDatabaseProvider
-	tracer                         tracing.Tracer
+	tracer                         trace.Tracer
 	forcePermissionRoleActionIndex bool
 }
 

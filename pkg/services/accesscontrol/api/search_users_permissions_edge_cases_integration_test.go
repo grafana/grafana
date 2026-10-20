@@ -17,7 +17,16 @@ import (
 )
 
 func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_TargetAuthorization(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 	role := f.createRole(t, f.orgID, "managed:target", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
 	f.assignUser(t, f.orgID, usr.ID, role)
@@ -28,7 +37,9 @@ func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
 				want := searchPermissionsResponse{usr.ID: {"test:read": {"tests:id:one"}}}
 				f.assertSearch(t, f.caller(f.orgID, "users:*"), query, want)
 				scoped := f.caller(f.orgID, fmt.Sprintf("users:id:%d", usr.ID))
-				scoped.UserID = 1001
+				if !useGRPC {
+					scoped.UserID = 1001
+				}
 				f.assertSearch(t, scoped, query, want)
 				for _, permissions := range []map[int64]map[string][]string{
 					{}, {f.orgID: {"test:read": {"*"}}},
@@ -43,7 +54,16 @@ func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	want := searchPermissionsResponse{}
 	for _, uid := range []string{"alice", "bob"} {
 		usr := f.createUser(t, user.CreateUserCommand{UID: uid, OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -64,7 +84,16 @@ func TestIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *test
 }
 
 func TestIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_UnfilteredActionSets(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 	f.actions.StoreActionSet("dashboards:edit", []string{"dashboards:read", "dashboards:write"})
 	role := f.createRole(t, f.orgID, "managed:sets", []accesscontrol.Permission{
@@ -91,7 +120,16 @@ func TestIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_ActionPrefixCharacters(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role:   accesscontrol.RoleDTO{Name: "fixed:test:prefix", Permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:static"}}},
@@ -132,6 +170,15 @@ func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) 
 }
 
 func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T, useGRPC bool) {
 	const (
 		grantChange                = "grant"
 		revokeChange               = "revoke"
@@ -143,7 +190,7 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 
 	for _, change := range []string{grantChange, revokeChange, teamMembershipChange, removeTeamMembershipChange, basicRoleChange, downgradeBasicRoleChange} {
 		t.Run(change, func(t *testing.T) {
-			f := newSearchPermissionsFixture(t)
+			f := newSearchPermissionsFixture(t, useGRPC)
 			usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 			role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
 
@@ -173,7 +220,11 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 			calls := f.store.searches.Load()
 			require.Positive(t, calls)
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
-			require.Equal(t, calls, f.store.searches.Load(), "warm request must avoid a store search")
+			if useGRPC {
+				require.Greater(t, f.store.searches.Load(), calls, "repeated RPC searches must query current grants")
+			} else {
+				require.Equal(t, calls, f.store.searches.Load(), "warm legacy request must avoid a store search")
+			}
 
 			switch change {
 			case grantChange:
@@ -201,6 +252,12 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 				}))
 			default:
 				t.Fatalf("unsupported change case: %s", change)
+			}
+
+			if useGRPC {
+				f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: after})
+				require.Greater(t, f.store.searches.Load(), calls, "mutations must be visible without cache flushing or expiry")
+				return
 			}
 
 			// Raw store changes bypass mutation hooks; expiry must still refresh cached results.

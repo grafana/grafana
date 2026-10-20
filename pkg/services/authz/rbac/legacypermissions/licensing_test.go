@@ -42,7 +42,7 @@ func TestIntegrationOSSLoaderAndLegacyRPCMergeZanzanaWithoutLicense(t *testing.T
 			require.False(t, license.FeatureEnabled("accesscontrol.enforcement"))
 			loader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(),
 				resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg,
-				featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), license, &dashboardGrantClient{}, nil)
+				featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), license, &dashboardGrantClient{}, nil, nil)
 			legacyClient := legacypermissions.ProvideClient(loader, cfg)
 			requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
 			want := []ac.Permission{
