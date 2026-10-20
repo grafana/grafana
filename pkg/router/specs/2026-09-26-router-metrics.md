@@ -12,7 +12,9 @@ scrapes (`routerCollector`, also in `metrics.go`).
 Every label has a bounded set of values, so no request can create new series:
 
 - `group` is always a group the router serves. Any other value becomes `unknown`, so arbitrary
-  client paths can't create series.
+  client paths can't create series. A namespaced group (`namespaced_groups`) is labelled with its
+  owner group instead, since namespaced groups come and go at runtime (`backendMetricGroup`). Logs
+  and traces keep the full group.
 - `plugin_id` is the ID of a plugin the router serves, or empty for backends that aren't plugins.
 - `verb` is one of a fixed set (`metricVerbs` in `metrics.go`); anything else becomes `other`. See
   [Requests](#requests).
@@ -73,7 +75,7 @@ retried with backoff.
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others. An open breaker stays `open` past its timeout until a request makes the trial: scrapes never move it |
+| `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others. Namespaced groups count under their owner group, so the owner's value is the number of its groups (itself included) in each state. An open breaker stays `open` past its timeout until a request makes the trial: scrapes never move it |
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
@@ -161,7 +163,7 @@ sum by (plugin_id) (
 | Skipped backends | `sum by (source) (grafana_router_skipped_backends) > 0` |
 | Stale polled sources | `time() - grafana_router_source_last_success_timestamp_seconds` |
 | Poll failure rate | `sum by (source) (rate(grafana_router_source_polls_total{result="failure"}[5m]))` |
-| Open breakers | `grafana_router_breaker_state{state!="closed"} == 1` |
+| Open breakers | `grafana_router_breaker_state{state!="closed"} > 0` |
 | Breaker flapping | `sum by (group) (increase(grafana_router_breaker_transitions_total{state="open"}[1h]))` |
 | Backend failures by reason | `sum by (group, reason) (rate(grafana_router_backend_failures_total[5m]))` |
 | Request rate by group | `sum by (group) (rate(grafana_router_http_requests_total{route="backend"}[5m]))` |

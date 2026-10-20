@@ -145,6 +145,10 @@ func policyFor(pluginID string, grafanaAudiences []string, manifest *app.Manifes
 	// such as a core one, must request it as an access kind.
 	if name, ok := strings.CutSuffix(manifest.Group, pluginGroupSuffix); ok && name != "" {
 		add(&policy.Permissions, manifest.Group+":*")
+		// TODO: a plugin that serves namespaced groups (<name>.<namespace>.<group>)
+		// also needs them, but authlib's wildcard groups only match a single
+		// label, so no permission can name them yet. See
+		// pkg/router/specs/2026-10-16-namespaced-groups-identity.md.
 	}
 	if manifest.ExtraPermissions != nil {
 		for _, kind := range manifest.ExtraPermissions.AccessKinds {

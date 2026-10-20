@@ -65,6 +65,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
   misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
   it, never one whose data or permissions matter (dashboards, folders, IAM).
+- **Manifest roles add to the default roles** (`manifestRoleRegistrations`). Every served kind
+  that no declared role names itself gets a default reader (viewers) and writer (editors), so a
+  role for a custom route (`Kind/<route>`) adds to the defaults instead of replacing them. A kind a
+  declared role names, even in an entry that grants nothing, is left to the manifest's roles, and
+  a declared role called `reader` or `writer` replaces that default. Cloud (pluginmanifests)
+  registers only the declared roles, never defaults.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
@@ -111,7 +117,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Loader selection | `loader_factory.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
-| Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
+| Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go`, `backend_poller.go` |
+| Namespaced groups (`namespaced_groups`) | `plugin_manifests_namespaced.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
 | Single-tenant (ST) fallback, and its per-stack discovery cache | `st_fallback.go`, `st_discovery_cache.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
@@ -131,6 +138,10 @@ earlier ones:
 
 1. **ST fallback discovery** (`st_discovery_url`). Groups found on a single-tenant instance are
    routed to the right stack by the namespace in the path.
+1. **Namespaced groups** (`namespaced_groups`), whose owners come from `plugins_url` or `core_url`.
+   They override only ST, so a namespace's group never shadows another source's group. Every
+   other plugin source refuses (skips and counts) a group ending in `.<owner group>`, so no plugin
+   can claim or shadow one (`namespacedOwnerOf`).
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
 3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
@@ -139,7 +150,61 @@ earlier ones:
    authenticate `X-Access-Token`.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
+`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `namespaced:<pluginId>:<hash>`, `p:<hash>`
+or `st:<hash>`.
+
+**Namespaced groups.** `namespaced_groups` lists plugin groups whose plugins also serve one group
+per namespace: `<name>.<namespace>.<owner group>`, the namespace being the label before the owner
+group. The source polls the owner plugin's cluster-scoped `_manifests` route over v3 `CallRoute`
+(GET, `limit` and `continue` query parameters), as the router's own service identity, and follows
+`continue` until it is empty. It calls the owner's preferred version if that declares the route,
+and otherwise the first served version that does (`namespacedManifestsVersion`). The response is
+`{"manifests": [<app manifest>...], "continue": "<token>"}`. Each manifest becomes a plugin
+backend of the owner plugin, with its clients, keyed by the manifest and the owner's key, and
+marked with `NamespacedBackend`. Manifests with a malformed group or that fail validation are
+skipped and counted. Nothing is served while the owner isn't loaded. It works with the cloud
+loader (owners from `plugins_url`/`core_url`) and the local plugin loader (`namespacedLoader`,
+which drops the local plugins' groups under an owner). No owner may be under another owner. See
+`specs/2026-10-16-router-namespaced-groups.md`.
+
+- **Visibility** (`servingEntry.visibleTo`): a namespaced group is visible only to callers in its
+  namespace, and to callers with the wildcard namespace `*` (service identities), as
+  `authlib.NamespaceMatches` decides. A caller without a namespace sees none. The engine knows only
+  `NamespacedBackend`, never the group layout.
+- **Listing** (`servingEntry.listedFor`): documents that list every group (root discovery, the
+  manifest list and index, the status page) list a namespaced group only to callers in its own
+  namespace, never to `*` callers, so they don't grow with the number of namespaces. A `*` caller
+  still uses a group, and reads its group and version discovery, OpenAPI document and manifest,
+  by naming it.
+- **Dispatch** treats a group the caller can't see as unknown, before the OpenAPI cache, so its
+  answer is exactly that for a group the router doesn't serve.
+- **The guard** (`namespaceGuard`) wraps each backend's handler: it repeats the caller check and
+  requires a namespaced path to name the group's namespace. Of the other paths it serves only root,
+  group and version discovery and the version's OpenAPI document (marked `private`, so the shared
+  OpenAPI cache never stores it); anything else is a 404, as is any path with an empty segment
+  other than `/apis/<group>/`, which dispatch forwards to every group's handler alike.
+- **Discovery:** the published `/apis` and `/openapi/v3` documents, manifest list and index leave
+  namespaced groups out. A caller with some listed to it gets documents built per request with them
+  merged in. Groups not listed to it are skipped before any aggregated discovery fetch, so the
+  shared discovery cache is only filled, with a caller's credentials, by callers in the group's
+  namespace. A namespaced group's manifest is a 404 for other namespaces, and its status and
+  shadowed entries are absent for every caller it isn't listed to, even where a real group shadows
+  it (`shadowedGroup.Namespace`). While any namespaced group is served, root discovery and the
+  `/apis/discovery` tree are `Cache-Control: private`.
+- **RBAC:** each namespaced group has its own roles, with its own `<group>/<resource>:<verb>`
+  actions, which the authz service checks as for any plugin group. In middleware mode the local
+  source declares them at runtime: after the first successful poll and each one whose key set
+  changed, it calls `ReplaceFixedRoles` (acimpl, an optional interface of the access control
+  service) with the roles of every manifest it serves (`manifestRoleRegistrations`, so a manifest
+  without roles gets a reader and a writer for viewers and editors, as in the rule above), owned by
+  `namespaced:<owner group>`. That replaces the owner's whole set, so a removed group's or kind's
+  roles go away. A failed poll, or one without the owner, declares nothing; a failed declaration is
+  retried on the next poll. The cloud loader declares none: pluginmanifests is to reconcile them
+  as GlobalRoles from the `_manifests` route. No token
+  can name these groups, so for service permissions only, unified storage and the plugin route
+  authorizer accept a permission for the owner's whole group (`<owner>:*`, or a wildcard matching
+  it) for a namespaced group of the request's namespace; see
+  `specs/2026-10-16-namespaced-groups-identity.md`.
 
 ## Serving and discovery
 
@@ -194,8 +259,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
   - Every other group comes from `discoveryCache`, keyed by backend key with a TTL
-    (`discoveryCacheTTL`) and shared across callers, since discovery isn't filtered per caller.
-    Caller-scoped groups never use it.
+    (`discoveryCacheTTL`) and shared across callers, since a group's discovery isn't filtered per
+    caller. Caller-scoped groups never use it, and a namespaced group's entry is read and filled
+    only by callers in its namespace.
     A miss is fetched with the caller's credentials. Concurrent callers share one fetch, misses run
     in parallel, and each fetch is bounded by `discoveryFetchTimeout`. Only complete fetches are
     stored.
@@ -258,7 +324,14 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - Request metrics are recorded in `metrics.go`. Route state is read at scrape time by
     `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
     serving never update gauges.
-  - Labels stay bounded. `group` is only a served group; any other is `unknown` (`KnownGroup`).
+  - Labels stay bounded. `group` is only a served group; any other is `unknown`
+    (`GrafanaRouter.metricGroup`). A namespaced group is labelled with its owner group
+    (`NamespacedBackend.OwnerGroup`, `backendMetricGroup`), everywhere a metric takes a group, and
+    `grafana_router_breaker_state` counts the groups under each label, so no label set repeats.
+    Logs and traces keep the full group. Their in-process API servers label the metrics they record
+    themselves by the owner too (`pluginroute.Options.MetricGroup`), but the generic API server's
+    own `apiserver_*` request and watch metrics stay labelled by group; see the namespaced groups
+    spec.
     `verb` is limited to `metricVerbs`, and any other value is `other`. `route`, `reason`, `state`
     and `result` have fixed sets of values. A new label value must come from a fixed set too.
   - In middleware mode, only requests the router owns (`owns`) are instrumented.
@@ -301,6 +374,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
+| `namespaced_groups` | Comma-separated plugin groups (`*.ext.grafana.app`) whose plugins also serve `<name>.<namespace>.<group>`; see Route sources. With the cloud loader it needs `plugins_url` or `core_url`. It is also read by the local plugin loader, and doesn't select the cloud loader by itself. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
@@ -387,4 +461,7 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 - `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
+- `specs/2026-10-16-router-namespaced-groups.md`: namespaced groups (`namespaced_groups`).
 - `specs/2026-10-10-router-review-plan.md`: open work.
+- `specs/2026-10-16-namespaced-groups-identity.md`: how service tokens reach namespaced groups,
+  and the optional authlib change.

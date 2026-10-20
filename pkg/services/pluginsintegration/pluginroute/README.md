@@ -101,9 +101,10 @@ are mounted on the API server like any other builder's routes.
 ## Authorization
 
 Requests must first pass the app plugin access check. Manifest roles are then
-registered as fixed Grafana roles for the kinds they name. When a manifest has
-no roles, default reader and writer roles are bound to the Viewer and Editor
-basic roles. Folder permissions still determine access to individual
+registered as fixed Grafana roles for the kinds they name. Every kind that no
+manifest role names itself gets default reader and writer roles, bound to the
+Viewer and Editor basic roles, so a role for a custom route (`Kind/<route>`)
+adds to them. Folder permissions still determine access to individual
 folder-scoped objects.
 
 Cluster-scoped kinds are reserved for service identities unless the manifest
