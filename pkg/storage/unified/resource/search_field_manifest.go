@@ -33,6 +33,19 @@ func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error 
 	return nil
 }
 
+// ManifestReloader returns a ManifestWatcher onChange callback that reloads the
+// live manifests on top of the built-in ones, keeping the current search fields
+// when a reload fails.
+func (o SearchOptions) ManifestReloader(logger log.Logger) func([]*app.ManifestData) {
+	return func(live []*app.ManifestData) {
+		if err := o.ReloadManifests(AppManifests(), live); err != nil {
+			logger.Error("manifest reload failed, keeping current search fields", "error", err)
+			return
+		}
+		logger.Info("manifest reload applied", "live_manifests", len(live))
+	}
+}
+
 // NewManifestBackedProvider is ManifestBackedProvider for compiled-in
 // manifests, where an invalid declaration is a bug rather than bad input, so it
 // panics instead of returning an error.
