@@ -17,7 +17,9 @@ import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
+import { dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
+import { isFullDashboardEditing } from '../types/dashboard';
 
 import { CopyActionButton, DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
@@ -131,7 +133,9 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
   useEffect(() => () => headerActions?.closeGroupByPicker(), [headerActions]);
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
-  const { isEditing, viewPanel, editable } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const { viewPanel, editable } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const { hoverHeader, title } = panel.useState();
   const isSelectionEnabled = Boolean(useContext(ElementSelectionContext)?.enabled);
 
@@ -163,6 +167,9 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
   };
 
   const onEdit = () => {
+    if (dashboardModesEnabled() && isViewingDashboard(dashboard.state)) {
+      dashboard.setDashboardMode('edit', 'panel_menu');
+    }
     DashboardInteractions.panelActionClicked('edit', panelId, 'actions_popover', panel.state.pluginId);
     locationService.partial({ editPanel: panelId, viewPanel: undefined });
   };

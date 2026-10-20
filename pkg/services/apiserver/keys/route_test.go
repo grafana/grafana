@@ -54,16 +54,17 @@ func TestListKeysRoute_PublishesReferencedSchemas(t *testing.T) {
 
 	for _, want := range []string{
 		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyRequest",
-		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadataList",
+		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyResponse",
 		// Reached transitively.
-		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadata",
-		"io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
-		"io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta",
+		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyItem",
 	} {
 		assert.Contains(t, r.Schemas, want)
 	}
 
-	assert.NotContains(t, r.Schemas, "io.k8s.apimachinery.pkg.apis.meta.v1.ListOptions")
+	// The envelope is self-contained: no Kubernetes meta types to resolve.
+	for name := range r.Schemas {
+		assert.NotContains(t, name, "io.k8s.")
+	}
 
 	// Every $ref the spec emits must be one of the published components.
 	bodyRef := r.Spec.Post.RequestBody.Content["application/json"].Schema.Ref.String()

@@ -18,6 +18,7 @@ import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } 
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
+import { canManuallyEditDashboard } from '../scene/dashboardModes';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -60,13 +61,16 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
  */
 export function hasViewPanelPaneContent(panel: VizPanel): boolean {
   const viewPanelOptions = panel.getPlugin()?.viewPanelOptions;
-  return Boolean(viewPanelOptions?.quickToggles || viewPanelOptions?.fanout?.enabled);
+  const canEditOptions = canManuallyEditDashboard(getDashboardSceneLike(panel).state);
+  return Boolean((canEditOptions && viewPanelOptions?.quickToggles) || viewPanelOptions?.fanout?.enabled);
 }
 
 function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
   const dashboard = getDashboardSceneLike(model);
   const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
-  const { viewPanel } = dashboard.useState();
+  const state = dashboard.useState();
+  const { viewPanel } = state;
+  const canEditOptions = canManuallyEditDashboard(state);
   const { panelRef } = model.useState();
   const panel = panelRef.resolve();
   //const { fieldConfig, options } = panel.useState();
@@ -110,7 +114,9 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
               </Button>
             </Box>
           )}
-          {viewPanelOptions?.quickToggles && <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />}
+          {canEditOptions && viewPanelOptions?.quickToggles && (
+            <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />
+          )}
           {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
         </Box>
       </ScrollContainer>

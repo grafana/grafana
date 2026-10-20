@@ -180,6 +180,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run test:rspack
+    - run: yarn run test:release
 
   frontend-packages-unit-tests:
     needs:

@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Falha ao carregar o conteúdo: {{error}}",
+        "hide-secrets": "",
         "loading": "A carregar conteúdo...",
         "notifications-title": "Pré-visualização da configuração de notificações",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Pré-visualização das regras de alertas"
       },
       "recording-rules": "Regras de gravação",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "A origem de dados do Prometheus para armazenar regras de gravação em",
       "label-target-data-source": "Origem de dados de destino",
-      "target-data-source-required": "Selecione uma origem de dados de destino"
+      "target-data-source-required": "Selecione uma origem de dados de destino",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Selecione o espaço de nome e o grupo para a sua regra de gravação.",
@@ -3918,6 +3923,11 @@
     },
     "viz-wrapper": {
       "table": "Tabela"
+    },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "welcome-header": {
       "description-alert-activity": "Veja o que está a alertar atualmente e explore dados históricos para investigar problemas atuais ou passados.",
@@ -6032,6 +6042,24 @@
       "tooltip-next": "Seguinte",
       "tooltip-previous": "Anterior"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Edição do esquema do Assistente"
@@ -6109,6 +6137,9 @@
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
     "plan-placeholder-badge": {
       "text": "Dados de amostra",
       "tooltip": "Os números apresentados são dados de amostra para fins ilustrativos e não provêm de consultas reais."
@@ -6147,6 +6178,9 @@
           "no-template-variables-found": "Nenhuma variável de modelo encontrada"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Cancelar",
@@ -7590,6 +7624,33 @@
       "body-restore-version": "Tem a certeza de que pretende restaurar o painel de controlo para a versão {{version}}? Todas as alterações não guardadas serão perdidas.",
       "confirmText-restore-version": "Sim, restaurar para a versão {{version}}",
       "title-restore-version": "Restaurar versão"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Guardar",
@@ -10081,6 +10142,7 @@
             "name-humidity": "Humidade (%H)",
             "name-locale": "Formato local",
             "name-number": "Número",
+            "name-ordinal": "",
             "name-percent-1": "Percentagem (0,0-1,0)",
             "name-percent-100": "Percentagem (0-100)",
             "name-pixels": "Pixels",
@@ -10206,7 +10268,9 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10762,13 +10826,21 @@
       "cell-filter-out": "Retirar o filtro de valor",
       "cell-inspect": "Inspecionar valor",
       "cell-inspect-tooltip": "Inspecionar valor",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtrar valores",
+      "column-menu-hide": "",
       "column-menu-label": "Opções de coluna para {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Atualizar filtro",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Copiar para a área de transferência",
       "csv-counts": "Linhas:{{rows}}, Colunas:{{columns}}",
       "csv-placeholder": "Introduza o CSV aqui...",
       "edit-column-filter": "Editar filtro em {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Adicionar todos os valores exibidos ao filtro",
         "blanks": "(Em branco)",
@@ -10802,6 +10874,8 @@
           "count": "Número"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Inspecionar valor",
       "loading": "A carregar tabela",
       "nested-table": {
@@ -10811,6 +10885,8 @@
       "no-rows": "Sem linhas",
       "no-values-label": "Nenhum valor",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "Ordenar por coluna {{column}}",
       "sort-by-column-ascending": "Ordenar por coluna {{column}}, ascendente",
       "sort-by-column-descending": "Ordenar por coluna {{column}}, descendente",
@@ -10820,7 +10896,8 @@
       },
       "tooltip": {
         "trigger": "Alternar dica de ferramenta"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Etiquetas"
@@ -11117,6 +11194,8 @@
       "incident-filter-all": "Todos os Incidentes",
       "incident-filter-label": "Filtrar incidentes por etiqueta",
       "incident-tab-label": "Incidentes",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "As suas equipas",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11193,6 +11272,17 @@
       "error-title": "Não foi possível carregar as publicações recentes no blogue",
       "read-more": "Leia mais no blogue da Grafana Labs",
       "title": "Novidades do blogue"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11955,6 +12045,11 @@
       "load-newer": "A carregar registos mais recentes...",
       "load-older": "A carregar registos mais antigos..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Recolher etiquetas",
       "expand": "Expandir etiquetas"
@@ -12005,6 +12100,7 @@
       "inline-mode": "Mostrar em linha",
       "inline-no-scrolls": "Mudar para vista expandida",
       "inline-with-scrolls": "Mudar para vista condensada",
+      "link-fallback-label": "",
       "link-value-tooltip": "Valor do link",
       "links-section": "Links",
       "log-attributes-field": "Atributos de registo",
@@ -12014,13 +12110,14 @@
       "move-displayed-field-up": "Mover para cima",
       "no-details": "Nenhum campo a mostrar.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Afixar registo",
       "prettify": "Embelezar",
       "remove-displayed-field": "Remover o campo",
       "remove-log": "Remover registo",
       "scroll-to-logline": "Deslizar para a linha de registo",
       "search": {
-        "no-results": "Não há resultados para mostrar."
+        "no-results": ""
       },
       "search-placeholder": "Pesquisar por nomes e valores dos campos",
       "show-context": "Mostrar contexto",
@@ -13184,6 +13281,7 @@
       "created-by-me": "Criado por mim",
       "error-conflict": "Este bloco de notas foi alterado enquanto estava a adicionar-lhe algo. Tente novamente adicionar o painel à versão mais recente.",
       "error-generic": "Falha ao adicionar o painel ao bloco de notas",
+      "error-open-conflict": "",
       "list-error": "Falha ao carregar os blocos de notas",
       "list-error-body": "Ocorreu um erro ao carregar os seus blocos de notas. Tente novamente ou crie um novo.",
       "list-no-matches": "Nenhum bloco de notas corresponde a estes filtros.",
@@ -13192,6 +13290,8 @@
       "list-truncated": "Nem todos os blocos de notas são mostrados. Restrinja a pesquisa para encontrar outros.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Pesquisar por título",
       "sort-alphabetical": "Por ordem alfabética (A–Z)",
       "sort-label": "Ordenar blocos de notas",
@@ -13199,13 +13299,20 @@
       "sort-updated": "Atualizado recentemente",
       "submit": "Adicionar ao bloco de notas",
       "success": "Painel adicionado a {{title}}",
+      "success-cells": "",
       "success-link": "Ver bloco de notas",
       "tag-placeholder": "Filtrar por etiqueta",
       "target-description": "Escolha onde adicionar o painel.",
       "target-existing": "Bloco de notas existente",
       "target-label": "Bloco de notas de destino",
       "target-new": "Novo bloco de notas",
-      "title": "Adicionar painel ao bloco de notas"
+      "title": "Adicionar painel ao bloco de notas",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -13871,6 +13978,9 @@
       "label-plugin-id": "ID do plugin",
       "label-severity": "Gravidade"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Todos os plugins estão atualizados"
     },
@@ -13892,6 +14002,10 @@
     "plugin-details-body": {
       "needs-service-account": "O plugin {{pluginName}} precisa de uma conta de serviço para poder consultar a Grafana. A lista seguinte contém as permissões disponíveis para a conta de serviço:",
       "page-not-found": "Página não encontrada."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Obsoleto"
@@ -16526,6 +16640,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página baseia-se na altura do painel.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Um campo que contém objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar a cor de fundo de uma linha sim, outra não",
@@ -16564,7 +16679,9 @@
     "name-max-height": "",
     "name-min-column-width": "Largura mínima da coluna",
     "name-page-size": "Tamanho da página",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Estilo do campo",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
@@ -16727,6 +16844,7 @@
     "editor": {
       "aria-label-content": "Conteúdo de texto",
       "aria-label-mode": "Modo de texto: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Números das linhas",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16890,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
