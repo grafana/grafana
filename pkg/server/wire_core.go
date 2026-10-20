@@ -195,7 +195,6 @@ import (
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -247,7 +246,6 @@ var wireBasicSet = wire.NewSet(
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
-	cloudwatch.ProvideService,
 	azuremonitor.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
@@ -485,6 +483,8 @@ var wireBasicSet = wire.NewSet(
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
+	router.ProvideGrafanaRouter,
+	wire.Bind(new(resource.ManifestDiscovery), new(*router.GrafanaRouter)),
 	router.ProvideService,
 	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,

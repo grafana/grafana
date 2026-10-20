@@ -1,8 +1,39 @@
+import { type QueryReturnValue } from '@reduxjs/toolkit/query/react';
+
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import {
+  type NotificationsSourceParams,
+  resolveAlertmanagerConfig,
+} from '../components/import-to-gma/resolveAlertmanagerConfig';
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
 import { type WithNotificationOptions, alertingApi } from './alertingApi';
+
+/** Args for the wizard's interactive dry-run validation. No `promote` — the wizard never promotes from Step 1. */
+export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote'>;
+
+function fileSignature(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+/**
+ * Built from stable fields, not the raw args, since `File` has no own enumerable properties to
+ * key on. Prefixed with the endpoint's own name since the cache-key namespace is shared across `alertingApi`.
+ */
+function serializeValidateAlertmanagerConfigImportArgs(queryArgs: ValidateAlertmanagerConfigImportArgs): string {
+  const { source, yamlFile, templateFiles = [], datasourceName, configIdentifier } = queryArgs;
+  const signature =
+    source === 'yaml'
+      ? {
+          source,
+          file: yamlFile ? fileSignature(yamlFile) : null,
+          templates: templateFiles.map(fileSignature).sort(),
+          configIdentifier,
+        }
+      : { source, datasourceName, configIdentifier };
+  return `validateAlertmanagerConfigImport(${JSON.stringify(signature)})`;
+}
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -106,6 +137,42 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         },
         notificationOptions,
       }),
+    }),
+
+    /**
+     * Interactive Step 1 dry-run validation, keyed by a signature of the inputs so each edit gets
+     * its own isolated cache entry. Reuses `dryRunAlertmanagerConfig`'s request via `.initiate()`.
+     */
+    validateAlertmanagerConfigImport: build.query<ConvertAlertmanagerResponse, ValidateAlertmanagerConfigImportArgs>({
+      serializeQueryArgs: ({ queryArgs }) => serializeValidateAlertmanagerConfigImportArgs(queryArgs),
+      // Explicit return type breaks a circular reference: this queryFn dispatches convertToGMAApi's
+      // own dryRunAlertmanagerConfig endpoint, which TypeScript can't infer while still defining it.
+      queryFn: async (
+        args,
+        { dispatch }
+      ): Promise<QueryReturnValue<ConvertAlertmanagerResponse, unknown, {} | undefined>> => {
+        let resolved;
+        try {
+          resolved = await resolveAlertmanagerConfig(args);
+        } catch (err) {
+          return { error: err instanceof Error ? err : new Error(String(err)) };
+        }
+
+        try {
+          // Reuse the dry-run mutation's request logic (URL, headers, body shape) by dispatching
+          // it directly, rather than duplicating it here.
+          const data = await dispatch(
+            convertToGMAApi.endpoints.dryRunAlertmanagerConfig.initiate({
+              alertmanagerConfig: resolved.alertmanagerConfig,
+              templateFiles: resolved.templateFiles,
+              configIdentifier: args.configIdentifier,
+            })
+          ).unwrap();
+          return { data };
+        } catch (error) {
+          return { error };
+        }
+      },
     }),
 
     /**

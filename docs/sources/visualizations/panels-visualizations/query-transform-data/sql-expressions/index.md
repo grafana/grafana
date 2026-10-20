@@ -43,6 +43,10 @@ For information about the new panel query editor experience, currently in public
 
 ![Example of a SQL expression](/media/docs/sql-expressions/sql-expressions-example-1.png)
 
+To see examples of filtering, aggregation, and JOIN operations with SQL expressions, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="SQL Expressions Showcase" url="https://play.grafana.org/d/mapr4nb/" >}}
+
 ## Before you begin
 
 - Grafana enables SQL expressions by default. You don't need to set a feature toggle or change your configuration to use them.
