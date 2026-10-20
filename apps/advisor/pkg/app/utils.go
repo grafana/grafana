@@ -22,26 +22,17 @@ import (
 
 var retryAnnotationPollingInterval = 1 * time.Second
 
-// newCheckMap returns new instances of the registered checks, by ID.
-func newCheckMap(checkRegistry checkregistry.CheckService) map[string]checks.Check {
-	checkMap := map[string]checks.Check{}
-	for _, c := range checkRegistry.Checks() {
-		checkMap[c.ID()] = c
-	}
-	return checkMap
-}
-
-func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
+func getCheck(obj resource.Object, checkRegistry checkregistry.CheckService) (checks.Check, error) {
 	labels := obj.GetLabels()
 	objTypeLabel, ok := labels[checks.TypeLabel]
 	if !ok {
 		return nil, errors.New("missing check type as label")
 	}
-	c, ok := checkMap[objTypeLabel]
+	c, ok := checkRegistry.Check(objTypeLabel)
 	if !ok {
 		supportedTypes := ""
-		for k := range checkMap {
-			supportedTypes += k + ", "
+		for _, c := range checkRegistry.Checks() {
+			supportedTypes += c.ID() + ", "
 		}
 		return nil, fmt.Errorf("unknown check type %s. Supported types are: %s", objTypeLabel, supportedTypes)
 	}
