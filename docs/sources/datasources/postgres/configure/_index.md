@@ -158,12 +158,12 @@ A self-signed client certificate, for example one generated with `openssl`, is o
 
 These settings control how Grafana manages connections to your PostgreSQL server. Tune these values if you share the database with other applications or use connection pooling software such as PgBouncer.
 
-| Setting       | Description                                                                                                                                                                                                          |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Max open      | The maximum number of open connections to the database. The default is `100`. Reduce this if your PostgreSQL server has a low `max_connections` limit or if multiple Grafana instances connect to the same database. |
-| Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.                                                                               |
-| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections.   |
-| Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). Set a lower value if your network or security policy requires periodic reconnection.                             |
+| Setting       | Description                                                                                                                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Max open      | The maximum number of open connections to the database. The default is `100`. Reduce this if your PostgreSQL server has a low `max_connections` limit or if multiple Grafana instances connect to the same database.                         |
+| Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.                                                                                                       |
+| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections.                           |
+| Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). If set to `0`, connections are reused indefinitely. Set a lower value if your network or security policy requires periodic reconnection. |
 
 **Private data source connect:**
 
@@ -328,7 +328,7 @@ The following table lists all `jsonData` and `secureJsonData` fields supported w
 | `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                                                                                                                                                     |
 | `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                                                                                                                                                     |
 | `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                                                                                                                                                      |
-| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                                                                                                                                         |
+| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. `0` means no limit. Default: `14400`.                                                                                                                                     |
 | `postgresVersion`        | `jsonData`       | Server version code for the query builder. Examples: `900` (9.0), `903` (9.3), `1000` (10), `1100` (11), `1200` (12), `1300` (13), `1400` (14), `1500` (15). Grafana auto-detects this on save when possible. |
 | `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                                                                                                                                                 |
 | `timeInterval`           | `jsonData`       | Lower limit for `$__interval` and `$__interval_ms`. Same format as **Min time interval** (for example, `1m`).                                                                                                 |
