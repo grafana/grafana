@@ -5,6 +5,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"path"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -28,9 +31,56 @@ func TestCanonicalAPIPath(t *testing.T) {
 		"/apis/g%2Fother/v1/things":               false,
 		"/apis/g%2fother/v1/things":               false,
 		"/openapi/v3/apis/g/../other/v1":          false,
+		"/apis/g//":                               false,
+		"/apis/g/v1/.":                            false,
+		"/apis/g/v1/.hidden":                      true,
+		"/apis/g/v1/a..b":                         true,
+		"/apis/g/v1/a%252fb":                      true,
+		"/apis/g/v1/%2e%2e/x":                     false,
+		"/openapi/v3/":                            true,
 	} {
 		require.Equal(t, want, canonicalAPIPath(httptest.NewRequest(http.MethodGet, target, nil).URL), target)
 	}
+}
+
+// canonicalAPIPathReference is the definition canonicalAPIPath implements
+// without building a cleaned path or lowercasing the escaped one.
+func canonicalAPIPathReference(u *url.URL) bool {
+	p := strings.TrimSuffix(u.Path, "/")
+	if path.Clean(p) != p {
+		return false
+	}
+	return !strings.Contains(strings.ToLower(u.EscapedPath()), "%2f")
+}
+
+func TestCanonicalAPIPathStaleRawPath(t *testing.T) {
+	// RawPath is ignored when it no longer encodes Path, as after a rewrite.
+	u := &url.URL{Path: "/apis/g/v1/things", RawPath: "/apis/other%2Fv1/things"}
+	require.True(t, canonicalAPIPath(u))
+	require.Equal(t, canonicalAPIPathReference(u), canonicalAPIPath(u))
+}
+
+func FuzzCanonicalAPIPath(f *testing.F) {
+	for _, target := range []string{
+		"/apis", "/apis/", "/apis/g/v1/things", "/apis//v1", "/apis/g/./v1", "/apis/g/../v1", "/apis/g/v1/..",
+		"/apis/g//", "/apis/g%2Fv1", "/apis/g/v1/a%252fb", "/openapi/v3/apis/g/v1", "/apis/g/v1/.hidden",
+	} {
+		u, err := url.Parse(target)
+		if err != nil {
+			f.Fatal(err)
+		}
+		f.Add(u.Path, u.RawPath)
+	}
+	f.Fuzz(func(t *testing.T, decoded, raw string) {
+		// Paths reaching the router are absolute.
+		if !strings.HasPrefix(decoded, "/") {
+			return
+		}
+		u := &url.URL{Path: decoded, RawPath: raw}
+		if got, want := canonicalAPIPath(u), canonicalAPIPathReference(u); got != want {
+			t.Fatalf("Path=%q RawPath=%q: got %v, want %v", decoded, raw, got, want)
+		}
+	})
 }
 
 func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {

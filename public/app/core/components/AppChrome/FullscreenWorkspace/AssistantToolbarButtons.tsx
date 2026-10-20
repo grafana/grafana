@@ -54,13 +54,14 @@ export function AssistantToolbarButtons() {
   const { chrome } = useGrafana();
   const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
 
   const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
   const assistantComponentId = assistantComponentTitle
     ? getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, assistantComponentTitle)
     : undefined;
-  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId;
+  // Held hidden, the sidebar reads as closed, so the button shows it instead of closing it unseen.
+  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId && !floatingHidden;
 
   const shouldRender = fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined;
 
