@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -111,7 +112,11 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 		perms = append(perms, perm)
 	}
 
-	return perms, res.Err()
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("error getting permissions: %w", err)
+	}
+
+	return perms, nil
 }
 
 var _ PermissionStore = (*StaticPermissionStore)(nil)
