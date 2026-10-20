@@ -1,12 +1,42 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { AppEvents, CoreApp } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
+
+// The suggestion pipeline itself has its own dedicated coverage — see getVizSuggestionForQuery's tests.
+jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => ({
+  getVizSuggestionForQuery: jest.fn(),
+}));
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: jest.fn(),
+}));
+
+const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
+const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
+
+// A picked visualization block activates its real VizPanel, which loads its plugin — see NotebookAutosave.test.ts.
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
+
+beforeEach(() => {
+  mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+});
 
 import { type NotebookEditHistory } from '../NotebookEditHistory';
 import { NotebookScene } from '../NotebookScene';
@@ -273,6 +303,39 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
+    });
+
+    it('opens the saved-queries drawer with the Notebook context and inserts the selected query on selection', async () => {
+      const openDrawer = jest.fn();
+      mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const suggestion = {
+        pluginId: 'barchart',
+        name: 'barchart',
+        description: '',
+        options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
+        hash: '0',
+        score: 100,
+      };
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await user.click(screen.getAllByRole('button', { name: 'Click to add above' })[0]);
+      fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+      const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+      fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
+
+      expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: CoreApp.Notebook } }));
+
+      const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
+      await act(async () => {
+        await openDrawer.mock.calls[0][0].onSelectQuery(query, 'My query title');
+      });
+
+      expect(cellNames(manager)).toEqual(['visualization-1', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.body?.state.pluginId).toBe('barchart');
+      expect(manager.state.cells[0].state.body?.state.title).toBe('My query title');
     });
   });
 
@@ -863,6 +926,154 @@ describe('NotebookLayoutManager', () => {
       const manager = buildManager(buildNarrativeCells(['a']));
 
       expect(manager.addCell('code', 0)).toBe(manager.state.cells[0]);
+    });
+  });
+
+  describe('addCellFromSavedQuery', () => {
+    const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
+    const suggestion = {
+      pluginId: 'barchart',
+      name: 'barchart',
+      description: '',
+      options: { showValue: 'always' },
+      fieldConfig: { defaults: {}, overrides: [] },
+      hash: '0',
+      score: 100,
+    };
+
+    beforeEach(() => {
+      mockGetVizSuggestionForQuery.mockReset();
+    });
+
+    it('inserts a visualization cell at the given index and applies the suggested viz type and the query', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const manager = buildManager(buildNarrativeCells(['a', 'b']));
+
+      const cell = await manager.addCellFromSavedQuery(1, query, 'My query title');
+
+      expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b']);
+      expect(cell?.state.body?.state).toMatchObject({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options,
+        fieldConfig: suggestion.fieldConfig,
+        title: 'My query title',
+        hoverHeader: false,
+      });
+      expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+
+    it('records the whole pick as a single undo step', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const manager = buildManager(buildNarrativeCells(['a', 'b']));
+      const history = attachHistory(manager);
+
+      await manager.addCellFromSavedQuery(1, query, 'My query title');
+      history.undo();
+
+      expect(cellNames(manager)).toEqual(['a', 'b']);
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    it('still applies the query when no suggestion is found, falling back to the default viz', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(undefined);
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      const cell = await manager.addCellFromSavedQuery(1, query);
+
+      expect(cell?.state.body?.state.pluginId).toBe('timeseries');
+      expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+
+    // A toast inviting a retry here would be wrong — the query is applied regardless (asserted
+    // below), so retrying from the menu would insert or convert a second cell.
+    it('still applies the query when the suggestion lookup fails, warning rather than erroring', async () => {
+      mockGetVizSuggestionForQuery.mockRejectedValue(new Error('datasource unreachable'));
+      const emit = jest.spyOn(appEvents, 'emit');
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      const cell = await manager.addCellFromSavedQuery(1, query);
+
+      expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+      expect(emit).toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
+      expect(emit).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
+    });
+
+    // Same clamp addCell applies, for the same trailing-slot reason.
+    it('inserts before the trailing empty slot when the position offered is past it', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const trailing = new NotebookCellItem({
+        elementName: 'paragraph-1',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: '' } },
+      });
+      const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
+
+      await manager.addCellFromSavedQuery(manager.state.cells.length, query);
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'visualization-1', 'paragraph-1']);
+    });
+  });
+
+  describe('convertCellFromSavedQuery', () => {
+    const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
+    const suggestion = {
+      pluginId: 'barchart',
+      name: 'barchart',
+      description: '',
+      options: {},
+      fieldConfig: { defaults: {}, overrides: [] },
+      hash: '0',
+      score: 100,
+    };
+
+    beforeEach(() => {
+      mockGetVizSuggestionForQuery.mockReset();
+    });
+
+    it('converts the cell into a panel with the suggested viz type and the query', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const trailing = new NotebookCellItem({
+        elementName: 'paragraph-1',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: '' } },
+      });
+      const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
+
+      await manager.convertCellFromSavedQuery(trailing, query);
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+      expect(trailing.state.content).toBeUndefined();
+      expect(trailing.state.body?.state.pluginId).toBe(suggestion.pluginId);
+      expect(getQueryRunnerFor(trailing.state.body)?.state.queries).toEqual([query]);
+    });
+
+    it('records the conversion as a single undo step', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const [a, b] = buildNarrativeCells(['a', 'b']);
+      const manager = buildManager([a, b]);
+      const history = attachHistory(manager);
+      const before = b.state.content;
+
+      await manager.convertCellFromSavedQuery(b, query);
+      history.undo();
+
+      expect(b.state.body).toBeUndefined();
+      expect(b.state.content).toEqual(before);
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    it('leaves a cell deleted during the suggestion lookup alone', async () => {
+      let resolveSuggestion: (value: typeof suggestion) => void = () => {};
+      mockGetVizSuggestionForQuery.mockReturnValue(new Promise((resolve) => (resolveSuggestion = resolve)));
+      const [a, b] = buildNarrativeCells(['a', 'b']);
+      const manager = buildManager([a, b]);
+
+      const pending = manager.convertCellFromSavedQuery(b, query);
+      manager.setState({ cells: [a] });
+      resolveSuggestion(suggestion);
+      await pending;
+
+      expect(b.state.body).toBeUndefined();
     });
   });
 
