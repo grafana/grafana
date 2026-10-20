@@ -434,6 +434,46 @@ it('uses local filter state without row transformations enabled', async () => {
   expect(screen.getByRole('gridcell', { name: 'alpha' })).toBeInTheDocument();
 });
 
+it('hides local filters for fields with duplicate identities', () => {
+  const { props } = setup();
+  props.data = applyFieldOverrides({
+    data: [
+      toDataFrame({
+        fields: [
+          {
+            name: 'x',
+            type: FieldType.string,
+            values: ['a1', 'a2', 'a3'],
+            config: { displayName: 'First', custom: { filterable: true } },
+          },
+          {
+            name: 'x',
+            type: FieldType.string,
+            values: ['b1', 'b2', 'b3'],
+            config: { displayName: 'Second', custom: { filterable: true } },
+          },
+          {
+            name: 'y',
+            type: FieldType.string,
+            values: ['c1', 'c2', 'c3'],
+            config: { displayName: 'Unique', custom: { filterable: true } },
+          },
+        ],
+      }),
+    ],
+    fieldConfig: { defaults: {}, overrides: [] },
+    theme: createTheme(),
+    replaceVariables: (value) => value,
+  })[0];
+
+  render(<TableNG {...props} rowTransformationsEnabled={false} rowTransformations={undefined} />);
+
+  expect(screen.getByRole('gridcell', { name: 'b2' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Filter Unique' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Filter First' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Filter Second' })).not.toBeInTheDocument();
+});
+
 it('clears an active filter when its field stops being filterable', () => {
   const { props, api, filter } = setup();
   api.set('table', [filter('Name', ['alpha'])]);

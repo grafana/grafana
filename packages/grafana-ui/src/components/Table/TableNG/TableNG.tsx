@@ -58,13 +58,16 @@ export function TableNG(props: TableNGProps) {
   }
   const frameCache = preparedFrames.current.cache;
   const data = useMemo(() => {
-    if (!props.rowTransformationsEnabled) {
+    if (
+      !props.rowTransformationsEnabled &&
+      !props.data.fields.some((field) => field.config.custom?.filterable || field.type === FieldType.nestedFrames)
+    ) {
       return props.data;
     }
     const frame = props.data;
     const prepare = (frame: DataFrame): DataFrame => {
       const hasNestedFrames = frame.fields.some((field) => field.type === FieldType.nestedFrames);
-      const cached = hasNestedFrames ? undefined : frameCache.get(frame);
+      const cached = hasNestedFrames || !props.rowTransformationsEnabled ? undefined : frameCache.get(frame);
       if (
         cached?.fields === frame.fields &&
         cached.length === frame.length &&
@@ -95,6 +98,24 @@ export function TableNG(props: TableNGProps) {
       };
       const duplicateNames = duplicates(names);
       const duplicateIdentities = duplicates(identities);
+      if (!props.rowTransformationsEnabled) {
+        const fields = frame.fields.map((field, index) => {
+          const ambiguous = duplicateNames.has(names[index]) || duplicateIdentities.has(identities[index]);
+          if (!ambiguous && field.type !== FieldType.nestedFrames) {
+            return field;
+          }
+          return {
+            ...field,
+            ...(field.type === FieldType.nestedFrames
+              ? { values: field.values.map((children: DataFrame[] | undefined) => children?.map(prepare)) }
+              : {}),
+            ...(ambiguous
+              ? { config: { ...field.config, custom: { ...field.config.custom, filterable: false } } }
+              : {}),
+          };
+        });
+        return fields.every((field, index) => field === frame.fields[index]) ? frame : { ...frame, fields };
+      }
       const prepared = {
         ...frame,
         fields: frame.fields.map((field, index) => ({
