@@ -36,7 +36,7 @@ var (
 
 	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receivers.notFound", errutil.WithPublicMessage("Receiver not found"))
 
-	// ErrReceiverUpdateInTransaction is returned when a caller runs UpdateReceiver inside its own SQL transaction.
+	// ErrReceiverUpdateInTransaction is returned when a caller renames a receiver inside its own SQL transaction.
 	ErrReceiverUpdateInTransaction = errutil.Internal("alerting.notifications.receivers.updateInTransaction")
 
 	ErrReceiverExists = errutil.Conflict("alerting.notifications.receivers.exists", errutil.WithPublicMessage("Receiver with this name already exists. Use a different name or update an existing one."))

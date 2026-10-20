@@ -111,21 +111,53 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 	}
 }
 
-func TestReceiverService_UpdateReceiverRejectsExistingTransaction(t *testing.T) {
-	secrets := fake_secrets.NewFakeSecretsService()
-	sut := createReceiverServiceSut(t, &secrets)
-	requester := &user.SignedInUser{OrgID: 1}
-	receiver, err := sut.cfgStore.Get(t.Context(), requester.OrgID)
-	require.NoError(t, err)
-	r, err := receiver.GetReceiver(legacy_storage.NameToUid("grafana-default-email"))
-	require.NoError(t, err)
-	sut.xact = receiverPermissionTransactionFunc(func(context.Context, func(context.Context) error) error {
-		t.Fatal("update must reject the caller's transaction before writing")
-		return nil
-	})
-	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
-	_, err = sut.UpdateReceiver(ctx, r, nil, requester.OrgID, requester)
-	require.ErrorIs(t, err, models.ErrReceiverUpdateInTransaction)
+func TestReceiverService_UpdateReceiverInExistingTransaction(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		rename bool
+	}{
+		{name: "rename is rejected", rename: true},
+		{name: "unchanged name is allowed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			secrets := fake_secrets.NewFakeSecretsService()
+			sut := createReceiverServiceSut(t, &secrets)
+			requester := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+				1: {
+					accesscontrol.ActionAlertingNotificationsWrite: nil,
+					accesscontrol.ActionAlertingNotificationsRead:  nil,
+				},
+			}}
+			ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
+			receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+			require.NoError(t, err)
+			if tc.rename {
+				receiver.Name = "renamed"
+			}
+			called := false
+			sut.xact = receiverPermissionTransactionFunc(func(ctx context.Context, work func(context.Context) error) error {
+				if tc.rename {
+					t.Fatal("a rename must reject the caller's transaction before writing")
+				}
+				called = true
+				return work(ctx)
+			})
+			sut.resourcePermissions = receiverPermissionSpy{
+				FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
+				refresh: func(context.Context, identity.Requester) {
+					t.Fatal("an update without a rename must not refresh permissions")
+				},
+			}
+
+			_, err = sut.UpdateReceiver(ctx, receiver, nil, requester.OrgID, requester)
+			if tc.rename {
+				require.ErrorIs(t, err, models.ErrReceiverUpdateInTransaction)
+				return
+			}
+			require.NoError(t, err)
+			require.True(t, called)
+		})
+	}
 }
 
 func TestReceiverService_UpdateReceiverAllowsTypedNilSession(t *testing.T) {
