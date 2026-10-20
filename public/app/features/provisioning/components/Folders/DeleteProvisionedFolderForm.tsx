@@ -18,7 +18,7 @@ import { type FolderDTO } from 'app/types/folders';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -257,6 +257,8 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
   return (
     <ProvisionedFormGate
       isLoading={isLoading}
+      // A deleted repository gets its own notice, not the generic "Repository not found" banner
+      isOrphaned={view.status === RepoViewStatus.Orphaned}
       isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
       readOnlyMessage={t(
