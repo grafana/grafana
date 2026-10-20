@@ -10,15 +10,14 @@ import (
 )
 
 // Cache is the read + write-through surface of a Store: read the current
-// snapshot and write fresh reads through between re-lists. A reader that keeps
-// a count warm (e.g. a controller getter) takes this rather than the full
-// Store. Eviction is deliberately absent: only the informer removes objects (a
-// version-dated DeleteAt on a live delete, or the next re-list's Replace) — a
-// reader cannot date a NotFound, so it must not guess the object away.
+// snapshot and write individual objects through between re-lists. A reader that
+// keeps a count warm (e.g. a controller getter) takes this rather than the full
+// Store.
 type Cache interface {
 	List(ctx context.Context) []runtime.Object
 	// Update writes obj into the store and reports whether the store took it.
 	Update(ctx context.Context, obj runtime.Object) bool
+	Delete(ctx context.Context, namespace, name string)
 }
 
 // Store is the informer's snapshot of a resource kind, keyed by namespace/name.
@@ -50,7 +49,8 @@ type Store interface {
 	// DeleteAt is the informer's live-delete write-through: it removes the object
 	// and records a tombstone at rv (the delete's resource version) so a subsequent
 	// re-list whose snapshot predates rv does not resurrect the just-deleted object
-	// as a spurious add.
+	// as a spurious add. The plain Cache.Delete (no rv) is for readers, which evict
+	// on a NotFound they cannot date and so leave no tombstone.
 	DeleteAt(ctx context.Context, namespace, name string, rv int64)
 }
 
@@ -125,9 +125,21 @@ func (s *store) Update(_ context.Context, obj runtime.Object) bool {
 	return true
 }
 
+// Delete removes an object from the store, the write-through counterpart to
+// Update for a reader that has just observed the object is gone (a NotFound). It
+// records no tombstone: a reader cannot date the deletion, so it leaves the
+// re-list reconciliation to DeleteAt, which the informer calls with the delete's
+// resource version.
+func (s *store) Delete(_ context.Context, namespace, name string) {
+	s.deleteKey(keyFor(namespace, name), 0)
+}
+
 // DeleteAt removes an object and tombstones it at rv; see Store.
 func (s *store) DeleteAt(_ context.Context, namespace, name string, rv int64) {
-	key := keyFor(namespace, name)
+	s.deleteKey(keyFor(namespace, name), rv)
+}
+
+func (s *store) deleteKey(key string, rv int64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.items, key)
@@ -147,8 +159,6 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 		}
 	}
 
-	// The diff must run under the lock: once next is published as s.items, a
-	// concurrent write-through Update mutates it, so reading it unlocked races.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	prev := s.items

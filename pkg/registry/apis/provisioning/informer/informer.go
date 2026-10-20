@@ -1,13 +1,18 @@
 package informer
 
 import (
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"k8s.io/client-go/tools/cache"
 )
 
-// DeltaSource aliases the unified-storage informer's event-source seam, kept
-// under this package's name because it is the type the provisioning wiring and
-// controllers reference.
-type DeltaSource = usinformer.DeltaSource
+// DeltaSource is the subset of cache.SharedIndexInformer the controllers use to
+// receive events: register a handler (whose registration reports HasSynced) and
+// run until stopped. Both an apiserver-backed SharedIndexInformer and the
+// NATS-backed informer.Informer satisfy it, so the wiring can pick a source
+// without the controller knowing which it is.
+type DeltaSource interface {
+	AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
+	Run(stopCh <-chan struct{})
+}
 
 // queueGroup is the NATS queue group every provisioning informer joins, so each
 // notification is round-robined to a single replica rather than broadcast to all.

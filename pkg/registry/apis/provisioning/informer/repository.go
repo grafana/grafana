@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -14,8 +15,6 @@ import (
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/infra/nats"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -24,10 +23,6 @@ import (
 // RepositoryGetter is the read seam the repository controller reconciles
 // against: the single repository under reconciliation, and the count for the
 // quota check. Get must return a current object; the count tolerates staleness.
-//
-// Under NATS, Get enforces the freshness floor the informer events announce,
-// returning usinformer.ErrStaleRead when the API cannot yet serve the object at
-// that version.
 type RepositoryGetter interface {
 	Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error)
 	// CountRepositories includes repositories awaiting their finalizers, so a
@@ -47,18 +42,15 @@ type RepositoryGetter interface {
 // A non-nil keys makes the NATS re-list keys-only; nil keeps the full-object
 // list.
 //
-// The NATS pair shares a freshness floor: each delivered event raises the floor
-// to the resource version it announced, and the getter refuses to hand the
-// controller anything older (a NATS notification is published after the write
-// commits, but the read may land on a replica that has not seen it yet — an
-// apiserver watch never has this gap because the event carries the object).
-// Floor enforcement outcomes are counted on reg (nil disables them).
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, reg prometheus.Registerer) (DeltaSource, RepositoryGetter) {
+// freshness instruments how the getter's reads compare to the notifications
+// that triggered them (see freshness.go); nil disables the observation. It
+// applies to the NATS path only — the apiserver path reads a cache the watch
+// keeps current, so there is no cross-replica read visibility to measure.
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
-		floor := usinformer.NewRVFloor()
-		staleReads := usinformer.NewStaleReadMetrics(reg, provisioningapis.RepositoryResourceInfo.GroupVersionResource().Resource)
-		recorder := metrics.Recorder(provisioningapis.RepositoryResourceInfo.GroupVersionResource())
+		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
+		recorder := metrics.Recorder(gvr)
 		source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, recorder)
 		// The informer is the repository controller's only feed, and everything
 		// that creates provisioning work lives in its reconcile: scheduled syncs,
@@ -69,11 +61,10 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		// reconciled under round-robin delivery. In degraded mode only the
 		// live-event latency is lost until the subscription opens.
 		source.AllowDegradedStart()
-		// Every delivered event raises the floor before the controller's handler
-		// enqueues the key, so the getter can refuse reconcile reads staler than
-		// the event that triggered them.
-		source.TrackFloor(floor)
-		return source, NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store, floor, staleReads)
+		announced := newAnnouncements()
+		source.SetAnnouncements(announced)
+		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
+		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(gvr.Resource))
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
@@ -121,28 +112,23 @@ func (g cachedRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, name
 
 // NewClientRepositoryGetter backs Get with the API client, fresh for the
 // reconcile, and the count with the NATS informer's store, which avoids an API
-// LIST on every quota check. Each successful Get is written back into the store,
-// so the count includes the repository the reconcile just read; a NotFound
-// writes nothing — eviction belongs to the informer (a dated DeleteAt on a live
-// delete, or the next re-list), and the count's tolerance covers the gap.
-//
-// floor is the freshness floor the informer events raise; Get refuses to return
-// a read below it (retrying briefly, then usinformer.ErrStaleRead). A nil floor
-// disables the check; metrics counts the enforcement outcomes (nil disables).
-func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache, floor *usinformer.RVFloor, metrics *usinformer.StaleReadMetrics) RepositoryGetter {
-	return clientRepositoryGetter{client: c, store: store, reader: usinformer.NewFreshReader(floor, metrics)}
+// LIST on every quota check. Each Get is written back into the store (or evicted
+// on NotFound), so the count includes the repository the reconcile just read.
+func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
+	return clientRepositoryGetter{client: c, store: store}
 }
 
 type clientRepositoryGetter struct {
 	client typedclient.ProvisioningV0alpha1Interface
 	store  usinformer.Cache
-	reader usinformer.FreshReader
 }
 
 func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	repo, err := usinformer.GetFresh(ctx, g.reader, namespace, name, func(ctx context.Context) (*provisioningapis.Repository, error) {
-		return g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
-	})
+	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		g.store.Delete(ctx, namespace, name)
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}

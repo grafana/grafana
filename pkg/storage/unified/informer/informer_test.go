@@ -171,12 +171,6 @@ func event(action resourcepb.WatchNotification_Type, name string) *resourcepb.Wa
 	}
 }
 
-func eventWithRV(action resourcepb.WatchNotification_Type, name string, rv int64) *resourcepb.WatchNotification {
-	e := event(action, name)
-	e.ResourceVersion = rv
-	return e
-}
-
 func subject() string {
 	return resourcewatch.Subject(testGVR, testNamespace)
 }
@@ -189,18 +183,8 @@ func subject() string {
 // down from a t.Cleanup (which fires after the bubble).
 func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) (*Informer, func()) {
 	t.Helper()
-	return startConfigured(t, sub, seed, newObject, handler, nil)
-}
-
-// startConfigured is start with a pre-Run configuration hook, for options that
-// must be set before the informer runs (e.g. TrackFloor).
-func startConfigured(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler, configure func(*Informer)) (*Informer, func()) {
-	t.Helper()
 	list := func(context.Context) ([]runtime.Object, int64, error) { return seed, 0, nil }
 	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list)
-	if configure != nil {
-		configure(n)
-	}
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -240,9 +224,7 @@ func TestInformer_InitialListDeliversAdds(t *testing.T) {
 // A live ADDED goes through OnAdd, a MODIFIED through OnUpdate, and a DELETED
 // through OnDelete. The delivered object is the minimal one built from the
 // notification's identity — the controllers re-fetch, so the informer does not
-// read the object. Adds carry the announced resource version (the store's
-// re-list reconciliation needs it recorded); updates stay version-less, the
-// shape ProcessedMetrics.ClassifyUpdate keys "live" off.
+// read the object.
 func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -250,88 +232,15 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 		_, stop := start(t, sub, nil, newObjectFunc, handler)
 		defer stop()
 
-		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_ADDED, "fresh", 101))
-		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_MODIFIED, "changed", 102))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "changed"))
 		sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
 		synctest.Wait()
 
 		assert.Equal(t, []string{"fresh"}, handler.addedNames())
 		assert.Equal(t, []string{"changed"}, handler.updatedNames())
 		assert.Equal(t, []string{"gone"}, handler.deletedNames())
-
-		require.Len(t, handler.adds, 1)
-		assert.Equal(t, "101", handler.adds[0].ResourceVersion, "the add must carry the announced resource version")
-		require.Len(t, handler.updates, 1)
-		assert.Empty(t, handler.updates[0].ResourceVersion, "the update must stay minimal — delivery classification keys off it")
 	})
-}
-
-// With TrackFloor, live events maintain the freshness floor before handlers
-// run: adds and updates raise it to the announced version, a delete flips it to
-// a deletion watermark at the delete's version (an older delete must not erase
-// a newer announcement's floor), and a re-list raises it for the objects it
-// delivers.
-func TestInformer_TracksFloor(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		sub := newFakeSubscriber()
-		handler := &recordingHandler{}
-		floor := NewRVFloor()
-		_, stop := startConfigured(t, sub, []runtime.Object{objWithRV("seeded", rvStale)}, newObjectFunc, handler,
-			func(n *Informer) { n.TrackFloor(floor) })
-		defer stop()
-
-		assert.Equal(t, rvStale, floor.Floor(testNamespace, "seeded"), "the initial list raises floors for the objects it delivers")
-
-		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_MODIFIED, "changed", rvFresh))
-		synctest.Wait()
-		assert.Equal(t, rvFresh, floor.Floor(testNamespace, "changed"), "a live update raises the floor")
-
-		// A delete that predates the announced version — a recreate's events
-		// arriving out of order — must leave the newer floor standing.
-		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvStale))
-		synctest.Wait()
-		rv, deleted := floor.Watermark(testNamespace, "changed")
-		assert.Equal(t, rvFresh, rv, "an older delete must not erase a newer announcement's floor")
-		assert.False(t, deleted)
-
-		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvFresh+1))
-		synctest.Wait()
-		rv, deleted = floor.Watermark(testNamespace, "changed")
-		assert.Equal(t, rvFresh+1, rv, "a delete above the floor becomes the deletion watermark")
-		assert.True(t, deleted, "a pre-delete read must still be rejectable; only a 404 is truth now")
-	})
-}
-
-// A re-list that reports an object removed tombstones its floor at the
-// snapshot's listRV — but a floor raised by a live event the LIST predates
-// (e.g. a recreate whose ADDED went to another queue-group member while the
-// LIST caught the absence window) must survive live, or the queued reconcile
-// would trust a lagging 404.
-func TestInformer_RelistTombstonesFloorsAtListRV(t *testing.T) {
-	floor := NewRVFloor()
-	calls := 0
-	list := func(context.Context) ([]runtime.Object, int64, error) {
-		calls++
-		if calls == 1 {
-			return []runtime.Object{objWithRV("fresh", rvStale), objWithRV("gone", rvStale)}, rvStale, nil
-		}
-		// Both objects absent from this snapshot, dated between the two floors.
-		return nil, rvStale + 1, nil
-	}
-	n := NewInformer(nil, testGVR, testNamespace, time.Minute, "", NewStore(), nil, list)
-	n.TrackFloor(floor)
-
-	require.NoError(t, n.relist(context.Background(), true))
-	// A live announcement newer than the upcoming snapshot.
-	floor.Raise(testNamespace, "fresh", rvFresh)
-
-	require.NoError(t, n.relist(context.Background(), false))
-	rv, deleted := floor.Watermark(testNamespace, "fresh")
-	assert.Equal(t, rvFresh, rv, "a floor newer than the list snapshot must survive its removal")
-	assert.False(t, deleted)
-	rv, deleted = floor.Watermark(testNamespace, "gone")
-	assert.Equal(t, rvStale+1, rv, "a removal the snapshot postdates becomes a deletion watermark at listRV")
-	assert.True(t, deleted)
 }
 
 // A live DELETED drops the object from the informer's snapshot so a
@@ -1027,3 +936,109 @@ func TestInformer_MetricsObserveLiveSubscription(t *testing.T) {
 		})
 	})
 }
+
+// recordedAnnouncements captures the announcement hook, and can run a callback
+// at each observation so a test can check when it ran relative to dispatch.
+type recordedAnnouncements struct {
+	mu        sync.Mutex
+	announced map[string]int64
+	forgotten []forgottenKey
+}
+
+// forgottenKey is one Forget call, with the version the delete carried.
+type forgottenKey struct {
+	key string
+	rv  int64
+}
+
+func newRecordedAnnouncements() *recordedAnnouncements {
+	return &recordedAnnouncements{announced: map[string]int64{}}
+}
+
+func (r *recordedAnnouncements) Announce(namespace, name string, rv int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.announced[namespace+"/"+name] = rv
+}
+
+func (r *recordedAnnouncements) Forget(namespace, name string, rv int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.announced, namespace+"/"+name)
+	r.forgotten = append(r.forgotten, forgottenKey{key: namespace + "/" + name, rv: rv})
+}
+
+func (r *recordedAnnouncements) version(namespace, name string) int64 {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.announced[namespace+"/"+name]
+}
+
+func (r *recordedAnnouncements) forgottenKeys() []forgottenKey {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]forgottenKey(nil), r.forgotten...)
+}
+
+var _ Announcements = (*recordedAnnouncements)(nil)
+
+func eventAt(action resourcepb.WatchNotification_Type, name string, rv int64) *resourcepb.WatchNotification {
+	evt := event(action, name)
+	evt.ResourceVersion = rv
+	return evt
+}
+
+// A write announces its version; a delete forgets the key instead, because the
+// object is gone from storage and no subsequent read is expected to reach it.
+func TestInformer_AnnouncesLiveNotifications(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		ann := newRecordedAnnouncements()
+
+		n, stop := start(t, sub, nil, newObjectFunc, &recordingHandler{})
+		defer stop()
+		n.SetAnnouncements(ann)
+
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_ADDED, "added", 11))
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_MODIFIED, "changed", 12))
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_DELETED, "gone", 13))
+		synctest.Wait()
+
+		assert.Equal(t, int64(11), ann.version(testNamespace, "added"))
+		assert.Equal(t, int64(12), ann.version(testNamespace, "changed"))
+		assert.Zero(t, ann.version(testNamespace, "gone"))
+		// The delete's own version goes with it: arrival order does not follow
+		// version order, so the observer has to be able to date the delete.
+		assert.Equal(t, []forgottenKey{{key: testNamespace + "/gone", rv: 13}}, ann.forgottenKeys())
+	})
+}
+
+// The announcement has to be in place before the event is dispatched: a handler
+// enqueues the key synchronously, so a worker's read could otherwise be judged
+// against an announcement that had not been recorded yet.
+func TestInformer_AnnouncesBeforeDispatch(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		ann := newRecordedAnnouncements()
+		var atDispatch int64
+		handler := dispatchProbe(func() { atDispatch = ann.version(testNamespace, "added") })
+
+		n, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
+		n.SetAnnouncements(ann)
+
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_ADDED, "added", 11))
+		synctest.Wait()
+
+		assert.Equal(t, int64(11), atDispatch)
+	})
+}
+
+// dispatchProbe runs fn on every delivery.
+type dispatchProbe func()
+
+func (h dispatchProbe) OnAdd(interface{}, bool)           { h() }
+func (h dispatchProbe) OnUpdate(interface{}, interface{}) { h() }
+func (h dispatchProbe) OnDelete(interface{})              { h() }
+
+var _ cache.ResourceEventHandler = dispatchProbe(nil)

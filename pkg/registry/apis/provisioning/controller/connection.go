@@ -273,6 +273,9 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	err := cc.processFn(ctx, key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	cc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.
@@ -293,11 +296,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	// Retry transient conditions: the service being unavailable, and reads that
-	// are provably staler than the event that triggered them (the write is
-	// committed, the read path just has not caught up — retrying is exactly what
-	// heals it, where dropping the key would defer it to the next re-list).
-	if !apierrors.IsServiceUnavailable(err) && !errors.Is(err, usinformer.ErrStaleRead) {
+	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("ConnectionController will not retry")
 		cc.queue.Forget(key)
 		return true
@@ -311,14 +310,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	}
 	cc.queueLag.add(key)
 	cc.queue.AddRateLimited(key)
-	// Name the transient condition being retried, the same shape as the
-	// repository controller.
-	switch {
-	case errors.Is(err, usinformer.ErrStaleRead):
-		logger.Warn("ConnectionController will retry as read is staler than the triggering event", "queue_len", cc.queue.Len())
-	default:
-		logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
-	}
+	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 
 	return true
 }

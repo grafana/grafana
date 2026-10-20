@@ -1170,10 +1170,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// jobs and is the driver's only recovery path. The handler must be
 			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			jobSource, jobFloor := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
-			// Under NATS the floor lets the driver tell a claim 404 caused by
-			// read-visibility lag from a genuinely deleted job; nil otherwise.
-			driver.TrackFloor(jobFloor)
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
 			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
 				return fmt.Errorf("add job event handler: %w", err)
 			}
@@ -1199,6 +1196,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// One per process; see RelistProjectionMetrics.
 			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
+			// Likewise one per process; see FreshnessMetrics.
+			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
 
 			// The repository delta source and the getter it backs.
 			var repoKeys keysapi.Lister
@@ -1206,7 +1205,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
 			}
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, b.registry)
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
@@ -1255,7 +1254,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
 			}
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, b.registry)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,

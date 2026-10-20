@@ -22,29 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-// DeltaSource is the subset of cache.SharedIndexInformer the controllers use to
-// receive events: register a handler (whose registration reports HasSynced) and
-// run until stopped. Both an apiserver-backed SharedIndexInformer and the
-// NATS-backed Informer satisfy it, so wiring can pick a source without the
-// controller knowing which it is.
-type DeltaSource interface {
-	AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
-	Run(stopCh <-chan struct{})
-}
-
-var _ DeltaSource = (*Informer)(nil)
-
 // ObjectFunc builds a minimal typed object carrying just the identity from a
 // notification (namespace + name). The controllers treat a change notification
 // as a signal — they re-fetch the object from the API in their reconcile — so
 // the informer does not read the object itself; it hands the handler the
 // smallest object that carries the queue key. It must be the resource's concrete
-// type, because the handlers key off the type (e.g. *Repository). Only ADDED
-// deliveries get the announced resource version stamped on (the store
-// write-through records it); MODIFIED deliveries stay version-less, the shape
-// delivery classification keys "live" off. Freshness enforcement does not ride
-// the dispatched object at all — the informer maintains it out of band via the
-// tracked RVFloor (see TrackFloor).
+// type, because the handlers key off the type (e.g. *Repository).
 //
 // A nil ObjectFunc means the resource is driven only by the periodic re-list of
 // full objects, not by live notifications — for handlers that read the object
@@ -98,6 +81,26 @@ type Metrics interface {
 	ObserveRelistEvent(verb string, rv int64)
 	ObserveReconnect()
 	ObserveLiveSubscription(open bool)
+}
+
+// Announcements observes which object each live notification was about and at
+// what resource version, so a consumer can tell whether the read its reconcile
+// then performs actually observed that write. It is recorded before the event
+// is dispatched, so it is in place by the time a handler has enqueued the key.
+//
+// This is instrumentation, not a gate: the informer never reads it back and
+// nothing in the delivery or reconcile path depends on it. Announce carries a
+// committed write's version (ADDED/MODIFIED); Forget drops the key on a DELETED,
+// whose object is already gone from storage, so a reader cannot mistake the
+// correct NotFound that follows for a read that lagged an announcement. Both
+// carry the notification's version, because arrival order does not follow it:
+// notifications for one key can come from different storage replicas, so a
+// delete can land after the re-create that superseded it.
+//
+// Implementations must not block: observations are made on the delivery path.
+type Announcements interface {
+	Announce(namespace, name string, rv int64)
+	Forget(namespace, name string, rv int64)
 }
 
 // defaultResync is the fallback re-list cadence when a caller passes a
@@ -157,10 +160,10 @@ type Informer struct {
 	// See SetMetrics.
 	metrics Metrics
 
-	// floor, when set, is maintained as events are delivered: live notifications
-	// and re-list deliveries raise it to the version they announce, deletes flip
-	// it to a deletion watermark at the delete's version. See TrackFloor.
-	floor *RVFloor
+	// announcements records the identity and version of each live notification
+	// for the read-freshness instrumentation; nil disables it. See
+	// SetAnnouncements.
+	announcements Announcements
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
@@ -246,15 +249,13 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // live updates. Call before Run.
 func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
 
-// TrackFloor makes the informer maintain floor as it delivers events, so a
-// consumer re-fetching an object (e.g. via GetFresh) can refuse reads staler
-// than what was announced. Opt-in: informers whose consumers do not enforce
-// read freshness skip the bookkeeping. Call before Run.
-func (n *Informer) TrackFloor(floor *RVFloor) { n.floor = floor }
-
 // SetMetrics registers the observer for delivered events and reconnects; a nil
 // observer (the default) disables observation. Call before Run.
 func (n *Informer) SetMetrics(m Metrics) { n.metrics = m }
+
+// SetAnnouncements registers the observer for live notification identities and
+// versions; a nil observer (the default) disables it. Call before Run.
+func (n *Informer) SetAnnouncements(a Announcements) { n.announcements = a }
 
 // registration implements cache.ResourceEventHandlerRegistration by deferring to
 // the informer's sync state, so a NATS informer registration is interchangeable
@@ -472,22 +473,17 @@ func (n *Informer) onNotification() nats.MessageHandler {
 
 		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
 
-		// Maintain the freshness floor before dispatching: the notification is
-		// published only after the write is committed, so once a handler enqueues
-		// the key, a reconcile read below this version is provably stale. A delete
-		// flips the floor to a deletion watermark at the delete's version rather
-		// than dropping it: a queued reconcile must reject a pre-delete object
-		// served by a lagging replica (only a 404, or a re-create at a higher
-		// version, is truth) — while a floor already raised above the delete
-		// belongs to a re-create whose events arrived out of order and is kept.
-		// Dispatched objects deliberately keep their RV shape (adds stamped for
-		// the store write-through, updates minimal): consumers such as
-		// ProcessedMetrics classify deliveries by it.
-		if n.floor != nil {
+		// Record what this notification announced before anything is dispatched:
+		// a handler enqueues the key synchronously, so a read taken by the worker
+		// that picks it up must be judged against an announcement that was already
+		// in place when that read started. A DELETED forgets the key instead —
+		// the object is gone from storage by then, so the NotFound a re-fetch
+		// returns is the truth, not a lagging read.
+		if n.announcements != nil {
 			if evt.Type == resourcepb.WatchNotification_DELETED {
-				n.floor.Deleted(evt.Namespace, evt.Name, evt.ResourceVersion)
+				n.announcements.Forget(evt.Namespace, evt.Name, evt.ResourceVersion)
 			} else {
-				n.floor.Raise(evt.Namespace, evt.Name, evt.ResourceVersion)
+				n.announcements.Announce(evt.Namespace, evt.Name, evt.ResourceVersion)
 			}
 		}
 
@@ -571,54 +567,22 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 		if !initial {
 			rv = objectResourceVersion(o)
 		}
-		n.floorRaise(o)
 		n.observeRelistEvent(VerbAdd, rv)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 	}
 
 	for _, obj := range updated {
 		o := obj
-		n.floorRaise(o)
 		n.observeRelistEvent(VerbUpdate, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 	}
 
 	for _, obj := range removed {
 		o := obj
-		n.floorDeleted(o, listRV)
 		n.observeRelistEvent(VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
 	return nil
-}
-
-// floorRaise lifts the tracked floor to obj's announced version, so re-list
-// deliveries hold reconcile reads to the same freshness bar live events do; a
-// live event that outran this LIST has already raised the floor higher, and a
-// raise never lowers it.
-func (n *Informer) floorRaise(obj runtime.Object) {
-	if n.floor == nil {
-		return
-	}
-	if acc, err := meta.Accessor(obj); err == nil {
-		n.floor.Raise(acc.GetNamespace(), acc.GetName(), objectResourceVersion(obj))
-	}
-}
-
-// floorDeleted flips the tracked floor to a deletion watermark for an object a
-// re-list observed gone, dated at listRV (the snapshot's date): a queued
-// reconcile must reject pre-delete state a lagging replica may still serve,
-// while trusting a 404. A floor above listRV was raised by a live event the
-// LIST predates (e.g. a recreate whose ADDED went to another queue-group member
-// while the LIST captured the absence window) and is kept live. An undatable
-// list (listRV 0) records nothing; the floor TTL bounds any leftover.
-func (n *Informer) floorDeleted(obj runtime.Object, listRV int64) {
-	if n.floor == nil {
-		return
-	}
-	if acc, err := meta.Accessor(obj); err == nil {
-		n.floor.Deleted(acc.GetNamespace(), acc.GetName(), listRV)
-	}
 }
 
 func (n *Informer) observeLiveEvent(verb string, rv int64) {

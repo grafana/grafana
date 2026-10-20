@@ -49,6 +49,9 @@ const (
 	indexStorageFile        = "file"
 	boltTimeout             = "1s"
 	unownedIndexIdleTimeout = 10 * time.Minute
+
+	// How often an index persists the RV of updates that changed no documents.
+	rvPersistInterval = 5 * time.Minute
 )
 
 // Keys used to store internal data in index.
@@ -1842,6 +1845,10 @@ type bleveIndex struct {
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
 
+	// Owned by the updater goroutine.
+	rvPersistInterval time.Duration
+	rvPersistedAt     time.Time
+
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
 	updaterShutdown bool               // When set to true, index is getting closed and updater is no longer going to update index.
@@ -1904,6 +1911,8 @@ func (b *bleveBackend) newBleveIndex(
 		logger:                 logger,
 		updaterFn:              updaterFn,
 		minUpdateInterval:      b.opts.IndexMinUpdateInterval,
+		rvPersistInterval:      rvPersistInterval,
+		rvPersistedAt:          time.Now(),
 		indexMetrics:           b.indexMetrics,
 		enforceSortCapability:  b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,
@@ -2077,8 +2086,21 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	}
 
 	b.resourceVersion.Store(rv)
+	b.rvPersistedAt = time.Now()
 
 	return nil
+}
+
+// advanceResourceVersion moves the index to rv after an incremental update that changed docs documents.
+// Persisting the RV of an update that changed nothing only shortens replay after a reopen, but each write
+// costs a scorch epoch and two bolt fsyncs. So such RVs are persisted at most once per rvPersistInterval.
+// The persisted RV can lag behind the index contents this way, but never get ahead of them.
+func (b *bleveIndex) advanceResourceVersion(rv int64, docs int) error {
+	if docs == 0 && b.rvPersistInterval > 0 && time.Since(b.rvPersistedAt) < b.rvPersistInterval {
+		b.resourceVersion.Store(rv)
+		return nil
+	}
+	return b.updateResourceVersion(rv)
 }
 
 func setRV(index bleve.Index, rv int64) error {
@@ -3944,7 +3966,7 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
 	if err == nil && listRV > 0 && listRV != sinceRV {
-		err = b.updateResourceVersion(listRV) // updates b.resourceVersion
+		err = b.advanceResourceVersion(listRV, docs) // updates b.resourceVersion
 	}
 
 	elapsed := time.Since(startTime)

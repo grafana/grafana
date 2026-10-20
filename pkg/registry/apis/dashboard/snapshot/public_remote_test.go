@@ -40,11 +40,11 @@ func (s *publicSnapshotStore) Read(ctx context.Context, req *resourcepb.ReadRequ
 	md, _ := metadata.FromIncomingContext(ctx)
 	s.readMetadata = append(s.readMetadata, md)
 	s.reads = append(s.reads, req)
-	if req.Key.Resource != "snapshots" || req.Key.Namespace != "default" || req.Key.Name != "public-key" ||
+	if req.Key.Resource != "snapshots" || req.Key.Namespace != "org-2" || req.Key.Name != "public-key" ||
 		len(md.Get("x-access-token")) != 1 || md.Get("x-access-token")[0] != "service-token" || len(md.Get("x-id-token")) != 0 {
 		return nil, status.Error(codes.PermissionDenied, "out of scope")
 	}
-	return &resourcepb.ReadResponse{Value: []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Snapshot","metadata":{"name":"public-key","namespace":"default"},"spec":{"deleteKey":"secret"},"blobs":{"dashboard":{"uid":"blob-1"}}}`)}, nil
+	return &resourcepb.ReadResponse{Value: []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Snapshot","metadata":{"name":"public-key","namespace":"org-2"},"spec":{"deleteKey":"secret"},"blobs":{"dashboard":{"uid":"blob-1"}}}`)}, nil
 }
 
 func (s *publicSnapshotStore) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
@@ -91,7 +91,8 @@ func TestPublicSnapshotMetadataWithStandaloneRemoteClient(t *testing.T) {
 			require.NoError(t, err)
 			t.Cleanup(destroy)
 			getter := remoteSnapshotGetter{store: store}
-			ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "default"), &identity.StaticRequester{Type: authlib.TypeAnonymous})
+			// Use a concrete namespace to exercise direct metadata reads; default resolves keys through LIST.
+			ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "org-2"), &identity.StaticRequester{Type: authlib.TypeAnonymous})
 			// Strict enforcement rejects the unmodified anonymous metadata lookup.
 			_, err = getter.Get(ctx, "public-key", &metav1.GetOptions{})
 			require.Error(t, err)
@@ -115,7 +116,7 @@ func TestPublicSnapshotMetadataWithStandaloneRemoteClient(t *testing.T) {
 				require.Equal(t, []string{"service-token"}, server.blobMetadata[0].Get("x-access-token"))
 			}
 			require.Len(t, server.reads, 1)
-			require.Equal(t, "default", server.reads[0].Key.Namespace)
+			require.Equal(t, "org-2", server.reads[0].Key.Namespace)
 			require.Equal(t, []string{"service-token"}, server.readMetadata[0].Get("x-access-token"))
 			require.Empty(t, server.readMetadata[0].Get("x-id-token"))
 

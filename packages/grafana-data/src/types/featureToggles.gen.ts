@@ -425,11 +425,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Renders ad hoc filters and group by in a single unified control
-  * @default true
-  */
-  dashboardUnifiedDrilldownControls?: boolean;
-  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -946,8 +941,9 @@ export interface FeatureToggles {
   */
   interactiveLearning?: boolean;
   /**
-  * Enables the alerting triage feature
-  * @default false
+  * Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
+  * @deprecated
+  * @default true
   */
   alertingTriage?: boolean;
   /**

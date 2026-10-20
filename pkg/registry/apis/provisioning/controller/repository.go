@@ -339,17 +339,11 @@ func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigge
 // for a fast, rate-limited retry rather than dropped until the next informer
 // resync. A Kubernetes 503 qualifies, as does a decrypt/KMS outage
 // (ErrSecretDecryptFailed) -- a plain sentinel that is not a 503 StatusError but
-// is a transient infrastructure failure all the same -- and so does a read
-// provably staler than the event that triggered it (ErrStaleRead): the write is
-// committed and the read path just has not caught up, so retrying is what heals
-// it, where dropping the key would defer the event to the next re-list. This is
-// the single source of truth for the retry decision: both the worker's queue
-// predicate and the delete branch's error-preference switch consult it, so they
-// cannot drift.
+// is a transient infrastructure failure all the same. This is the single source
+// of truth for the retry decision: both the worker's queue predicate and the
+// delete branch's error-preference switch consult it, so they cannot drift.
 func isRetryableProcessError(err error) bool {
-	return apierrors.IsServiceUnavailable(err) ||
-		errors.Is(err, repository.ErrSecretDecryptFailed) ||
-		errors.Is(err, usinformer.ErrStaleRead)
+	return apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed)
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -394,6 +388,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	repoType, err := rc.processFn(key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	rc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.
@@ -432,17 +429,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	}
 	rc.queueLag.add(key)
 	rc.queue.AddRateLimited(key)
-	// Name the transient condition being retried: a stale read heals as soon as
-	// the read path catches up with the event, while the others point at
-	// infrastructure.
-	switch {
-	case errors.Is(err, usinformer.ErrStaleRead):
-		logger.Warn("RepositoryController will retry as read is staler than the triggering event", "queue_len", rc.queue.Len())
-	case apierrors.IsServiceUnavailable(err):
-		logger.Info("RepositoryController will retry as service is unavailable", "queue_len", rc.queue.Len())
-	default:
-		logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
-	}
+	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
 
 	return true
 }

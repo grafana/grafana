@@ -4357,7 +4357,7 @@ func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheL
 	addedElsewhere := blockedOverQuotaRepo(namespace, "added-elsewhere", time.Now(), false)
 	rc, patcher, stub, _ := newQuotaController(t, 1, repo)
 
-	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), usinformer.NewStore(), nil, nil)
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), usinformer.NewStore())
 	rc.repos = getter
 	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
 
@@ -4380,7 +4380,7 @@ func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) 
 	store := usinformer.NewStore()
 	store.Update(context.Background(), &metav1.PartialObjectMetadata{ObjectMeta: other.ObjectMeta})
 	clientset := fake.NewClientset(repo, other)
-	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), store, nil, nil)
+	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), store)
 	rc.repos = getter
 	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
 

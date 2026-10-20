@@ -320,7 +320,7 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	// This replica's store has seen only the older repository.
 	store := usinformer.NewStore()
 	store.Update(ctx, &metav1.PartialObjectMetadata{ObjectMeta: existing.ObjectMeta})
-	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), store, nil, nil)
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), store)
 
 	_, err := getter.Get(ctx, "ns", added.Name)
 	require.NoError(t, err)
