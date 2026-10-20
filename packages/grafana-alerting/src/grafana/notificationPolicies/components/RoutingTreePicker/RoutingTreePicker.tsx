@@ -14,8 +14,7 @@ export interface RoutingTreePickerProps {
   /** `null` means "use the default policy" - no explicit tree chosen. */
   value: RoutingTreeView | null;
   onChange: (value: RoutingTreeView | null) => void;
-  /** Alert instance label sets to preview which policy route would receive the notification,
-   * whether `value` is explicit or `null` (default policy). Omit to skip the preview. */
+  /** Label sets of the alert instances to preview routing for. Omit to skip the preview. */
   instancesToPreview?: Label[][];
   /** Link target for "View policies". Omit to hide the link. */
   viewPoliciesHref?: string;
@@ -25,7 +24,7 @@ function isUsingDefaultPolicy(value: RoutingTreeView | null): boolean {
   return value === null || value.isDefault;
 }
 
-/** Lets a caller pick which notification policy tree routes an alert rule, with no alert-rule-form dependency. */
+/** Picks which notification policy tree routes an alert rule. */
 export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPoliciesHref }: RoutingTreePickerProps) {
   const usingDefault = isUsingDefaultPolicy(value);
   const [isExpanded, setIsExpanded] = useState(!usingDefault);
@@ -37,8 +36,7 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
   // Collapsing is left to the effect above so the picker only claims the default once the parent accepts it.
   const handleResetToDefault = () => onChange(null);
 
-  // RoutingTreeSelector always returns the concrete tree object, even the default-named one — normalize
-  // to null so the dropdown and Reset button agree on one "default" representation.
+  // The selector returns the default tree as an object; normalize to null so the dropdown and Reset agree.
   const handleRoutingTreeSelectorChange = (tree: RoutingTree) => {
     const view = toRoutingTreeView(tree);
     onChange(view.isDefault ? null : view);
@@ -66,7 +64,7 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
           <Stack direction="row" gap={1} alignItems="center">
             <RoutingTreeSelector
               isClearable={false}
-              // "" is the default tree; the selector shows its friendly label once the list loads, not the raw name.
+              // '' is the selector's default tree; the raw name would flash until the list loads.
               value={value ? value.name : ''}
               onChange={handleRoutingTreeSelectorChange}
               aria-label={t('alerting.routing-tree-picker.selector-aria', 'Select notification policy')}
