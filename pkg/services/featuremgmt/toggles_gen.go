@@ -395,6 +395,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzUserPermissionsSearch
+	// Route user permission searches through embedded AuthZ.
+	FlagAuthzUserPermissionsSearch = "authz.userPermissionsSearch"
+
 	// FlagAuthzLegacyUserPermissions
 	// Load legacy Access Control permissions through embedded AuthZ.
 	FlagAuthzLegacyUserPermissions = "authz.legacyUserPermissions"
