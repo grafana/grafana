@@ -2,7 +2,7 @@ import { type Page, type Locator } from '@playwright/test';
 
 import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight, getColumnIdx, getSelectedFilterCount, waitForTableLoad } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx, getRangeFilterValueCount, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -408,7 +408,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const minColumnIdx = await getColumnIdx(table, 'Min');
 
-    // --- Baseline: collect the full set of Min option titles from the Min filter popup ---
+    // --- Baseline: count finite Min values before cross-filtering ---
     const minHeader = page.getByRole('columnheader').nth(minColumnIdx);
     await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
     const minFilterContainer = dashboardPage.getByGrafanaSelector(
@@ -416,11 +416,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     );
     await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
 
-    // Count all option rows in the Min filter popup before any cross-filter is applied.
-    // The List component is virtualized so we can't rely on DOM element count — instead click
-    // "Select all" (which operates on the full data array) and parse the "N selected" label.
-    await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const allMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
+    const allMinValueCount = await getRangeFilterValueCount(minFilterContainer, selectors);
 
     // Close without applying
     await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
@@ -449,19 +445,16 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // Table should now show only "up" rows
     await expect(firstInfoCell, 'first info cell is "up" after filtering').toHaveText('up');
 
-    // --- Open the Min filter popup again; cross-filter should restrict the options ---
+    // --- Open the Min filter popup again; cross-filter should restrict its values ---
     await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
     await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
 
-    await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const crossFilteredMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
+    const crossFilteredMinValueCount = await getRangeFilterValueCount(minFilterContainer, selectors);
 
-    // With Info filtered to "up" only, Min options must be a subset of (or equal to) the full set.
-    // In practice the data has multiple Info values, so the Min option list should be smaller.
-    expect(
-      crossFilteredMinOptionCount,
-      'cross-filtered min option count is less than all min option count'
-    ).toBeLessThan(allMinOptionCount);
+    // With Info filtered to "up" only, fewer Min values remain.
+    expect(crossFilteredMinValueCount, 'cross-filtered Min value count is less than all Min value count').toBeLessThan(
+      allMinValueCount
+    );
 
     // Close the filter popup
     await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();

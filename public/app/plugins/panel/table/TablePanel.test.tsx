@@ -218,7 +218,7 @@ it.each(['hide-first', 'filter-first'])(
       await user.click(screen.getByRole('checkbox', { name: 'Show Value' }));
       await user.click(screen.getByLabelText('Column options for Value'));
       await user.click(await screen.findByText('Update filter'));
-      await user.click(screen.getByRole('button', { name: 'Clear' }));
+      await user.click(screen.getByRole('button', { name: 'Clear filter' }));
       await hide('Value');
       await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual(['three', 'one', 'two']));
       expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['three', 'one', 'two']);
