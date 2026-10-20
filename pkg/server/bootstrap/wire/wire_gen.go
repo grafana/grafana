@@ -564,25 +564,30 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
+	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:            cfg,
-		Features:       featureToggles,
-		DB:             sqlStore,
-		Tracer:         tracingService,
-		Reg:            registerer,
-		Authzc:         accessClient,
-		Docs:           documentBuilderSupplier,
-		SecureValues:   v4,
-		VectorBackend:  vectorBackend,
-		Embedder:       embedder,
-		Reranker:       reranker,
-		DashboardStats: ossDashboardStats,
-		KV:             kv,
-		EDB:            dbProvider,
-		ExperimentalKV: experimentalKVOptions,
-		Publisher:      publisherService,
-		Subscriber:     subscriberService,
-		WatchExpiry:    watchExpiry,
+		Cfg:               cfg,
+		Features:          featureToggles,
+		DB:                sqlStore,
+		Tracer:            tracingService,
+		Reg:               registerer,
+		Authzc:            accessClient,
+		Docs:              documentBuilderSupplier,
+		SecureValues:      v4,
+		VectorBackend:     vectorBackend,
+		Embedder:          embedder,
+		Reranker:          reranker,
+		DashboardStats:    ossDashboardStats,
+		KV:                kv,
+		EDB:               dbProvider,
+		ExperimentalKV:    experimentalKVOptions,
+		Publisher:         publisherService,
+		Subscriber:        subscriberService,
+		WatchExpiry:       watchExpiry,
+		ManifestDiscovery: grafanaRouter,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -915,10 +920,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
-	if err != nil {
-		return nil, err
-	}
-	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1363,25 +1364,30 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
+	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:            cfg,
-		Features:       featureToggles,
-		DB:             sqlStore,
-		Tracer:         tracingService,
-		Reg:            registerer,
-		Authzc:         accessClient,
-		Docs:           documentBuilderSupplier,
-		SecureValues:   v4,
-		VectorBackend:  vectorBackend,
-		Embedder:       embedder,
-		Reranker:       reranker,
-		DashboardStats: ossDashboardStats,
-		KV:             kv,
-		EDB:            dbProvider,
-		ExperimentalKV: experimentalKVOptions,
-		Publisher:      publisherService,
-		Subscriber:     subscriberService,
-		WatchExpiry:    watchExpiry,
+		Cfg:               cfg,
+		Features:          featureToggles,
+		DB:                sqlStore,
+		Tracer:            tracingService,
+		Reg:               registerer,
+		Authzc:            accessClient,
+		Docs:              documentBuilderSupplier,
+		SecureValues:      v4,
+		VectorBackend:     vectorBackend,
+		Embedder:          embedder,
+		Reranker:          reranker,
+		DashboardStats:    ossDashboardStats,
+		KV:                kv,
+		EDB:               dbProvider,
+		ExperimentalKV:    experimentalKVOptions,
+		Publisher:         publisherService,
+		Subscriber:        subscriberService,
+		WatchExpiry:       watchExpiry,
+		ManifestDiscovery: grafanaRouter,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1716,10 +1722,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
-	if err != nil {
-		return nil, err
-	}
-	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
 	if err != nil {
 		return nil, err
 	}

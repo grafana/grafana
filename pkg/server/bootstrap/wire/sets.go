@@ -484,6 +484,7 @@ var Basic = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	router.ProvideGrafanaRouter,
+	wire.Bind(new(resource.ManifestDiscovery), new(*router.GrafanaRouter)),
 	router.ProvideService,
 	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,
