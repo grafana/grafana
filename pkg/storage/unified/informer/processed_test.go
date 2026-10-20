@@ -78,6 +78,15 @@ func TestProcessedMetrics_RecordReconcile(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := NewProcessedMetrics(reg, "repositories", false)
 
+	// Both outcome series are pre-created at zero so error-rate queries return 0,
+	// not no-data, before the first reconcile runs.
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
+# HELP grafana_provisioning_reconcile_total Reconcile executions per operator, by resource and outcome (success = returned no error; error = returned an error and is typically retried). Counts every execution, including retries, so it is the denominator for reconcile error rate.
+# TYPE grafana_provisioning_reconcile_total counter
+grafana_provisioning_reconcile_total{outcome="error",resource="repositories"} 0
+grafana_provisioning_reconcile_total{outcome="success",resource="repositories"} 0
+`), "grafana_provisioning_reconcile_total"))
+
 	m.RecordReconcile(nil)
 	m.RecordReconcile(nil)
 	m.RecordReconcile(errors.New("boom"))

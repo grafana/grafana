@@ -77,6 +77,16 @@ type ProcessedMetrics struct {
 // as a duplicate rather than passing unnoticed.
 func NewProcessedMetrics(reg prometheus.Registerer, resource string, natsBacked bool) *ProcessedMetrics {
 	constLabels := prometheus.Labels{"resource": resource}
+	reconcile := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name:        "grafana_provisioning_reconcile_total",
+		Help:        "Reconcile executions per operator, by resource and outcome (success = returned no error; error = returned an error and is typically retried). Counts every execution, including retries, so it is the denominator for reconcile error rate.",
+		ConstLabels: constLabels,
+	}, []string{"outcome"})
+	// Pre-create both outcome series at zero so an error-rate query selecting
+	// outcome="error" returns 0 (not no-data) before the first failure occurs.
+	reconcile.WithLabelValues(string(OutcomeSuccess))
+	reconcile.WithLabelValues(string(OutcomeError))
+
 	return &ProcessedMetrics{
 		natsBacked: natsBacked,
 		processed: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
@@ -93,11 +103,7 @@ func NewProcessedMetrics(reg prometheus.Registerer, resource string, natsBacked 
 			NativeHistogramMinResetDuration: time.Hour,
 			ConstLabels:                     constLabels,
 		}, []string{"source"}),
-		reconcile: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name:        "grafana_provisioning_reconcile_total",
-			Help:        "Reconcile executions per operator, by resource and outcome (success = returned no error; error = returned an error and is typically retried). Counts every execution, including retries, so it is the denominator for reconcile error rate.",
-			ConstLabels: constLabels,
-		}, []string{"outcome"}),
+		reconcile: reconcile,
 	}
 }
 
