@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // BenchmarkGrafanaRouter measures steady-state handling without network I/O or
@@ -58,6 +60,40 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 			})
 		}
 	})
+}
+
+// BenchmarkServiceMiddleware measures the router as Grafana's API server
+// middleware, with request metrics: requests for its own groups, and the
+// embedded API server's requests it passes on.
+func BenchmarkServiceMiddleware(b *testing.B) {
+	groups := make([]string, 100)
+	for i := range groups {
+		groups[i] = fmt.Sprintf("app-%d.grafana.app", i)
+	}
+	svc := newService(dummyRoutesLoader{groups: groups}, nil, prometheus.NewRegistry())
+	svc.middleware = true
+	if err := svc.router.reconcile(b.Context()); err != nil {
+		b.Fatal(err)
+	}
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	group := groups[len(groups)-1]
+	for _, tc := range []struct{ name, path string }{
+		{"resource", "/apis/" + group + "/v0alpha1/namespaces/default/widgets/abc"},
+		{"embedded_group", "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards/abc"},
+		{"outside_apis", "/api/dashboards/uid/abc"},
+	} {
+		b.Run(tc.name, func(b *testing.B) {
+			req := newAuthenticatedRequest(http.MethodGet, tc.path, nil)
+			w := &benchmarkResponseWriter{header: make(http.Header)}
+			b.ReportAllocs()
+			for b.Loop() {
+				clear(w.header)
+				svc.HandleFunc(w, req, next)
+			}
+		})
+	}
 }
 
 func BenchmarkGrafanaRouterConditional(b *testing.B) {

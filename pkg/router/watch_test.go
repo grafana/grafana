@@ -136,7 +136,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrument(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {

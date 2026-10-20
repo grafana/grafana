@@ -165,7 +165,7 @@ func TestRequestGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		req := httptest.NewRequest(http.MethodGet, "http://router"+tc.path, nil)
-		if got := requestGroup(req); got != tc.wantGroup {
+		if got := requestGroupOf(req); got != tc.wantGroup {
 			t.Errorf("requestGroup(%q) = %q, want %q", tc.path, got, tc.wantGroup)
 		}
 	}

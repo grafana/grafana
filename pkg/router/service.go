@@ -78,7 +78,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.metrics.instrument(s.router, w, req, next)
+		s.metrics.instrument(s.router, w, req, next, apiGroup(req.URL.Path))
 	})
 	for _, path := range []string{apisPrefix, openapiV3Prefix} {
 		httpRouter.Handle(path, handler)
@@ -104,11 +104,12 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 	if s.middleware {
 		// Requests for groups the router doesn't serve belong to the embedded
 		// API server, which has its own metrics; don't count them as the router's.
-		if !s.router.owns(req) {
-			s.router.HandleFunc(w, req, next)
+		group := apiGroup(req.URL.Path)
+		if !s.router.owns(req, group) {
+			s.router.handle(w, req, next, group)
 			return
 		}
-		s.metrics.instrument(s.router, w, req, next)
+		s.metrics.instrument(s.router, w, req, next, group)
 		return
 	}
 	next.ServeHTTP(w, req)

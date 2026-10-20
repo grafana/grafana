@@ -10,8 +10,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sony/gobreaker/v2"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // unknownGroupLabel replaces groups the router does not serve, so arbitrary
@@ -130,11 +128,10 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 }
 
 // requestGroup returns the group a request is for: the group of an
-// /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
-// document, which is served by the same backend. The /apis/discovery tree has
-// no group.
-func requestGroup(req *http.Request) string {
-	path := req.URL.Path
+// /apis/<group>/... path, as apiGroup reads it, or of an
+// /openapi/v3/apis/<group>/<version> document, which is served by the same
+// backend. The /apis/discovery tree has no group.
+func requestGroup(path, group string) string {
 	if isDiscoveryPath(path) {
 		return ""
 	}
@@ -144,7 +141,7 @@ func requestGroup(req *http.Request) string {
 		}
 		return group
 	}
-	return utils.APIGroupFromRequest(req)
+	return group
 }
 
 // namesGroup reports whether path has a non-empty segment after /apis/,
@@ -157,10 +154,11 @@ func namesGroup(path string) bool {
 	return ok && segment != "" && !isDiscoveryPath(path)
 }
 
-// instrument serves req through gr.HandleFunc with request metrics, then logs
-// the outcome. next is forwarded to HandleFunc unchanged.
-func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
-	group := requestGroup(req)
+// instrument serves req through gr.handle with request metrics, then logs
+// the outcome. next and apiGroup, the request's apiGroup, are forwarded to
+// handle unchanged.
+func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler, apiGroup string) {
+	group := requestGroup(req.URL.Path, apiGroup)
 	metricGroup := group
 	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
 		metricGroup = unknownGroupLabel
@@ -187,13 +185,13 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		m.longRunning.WithLabelValues(metricGroup).Inc()
 		defer m.longRunning.WithLabelValues(metricGroup).Dec()
 		defer func() { finish(time.Since(start)) }()
-		gr.HandleFunc(rec.writer(), req, next)
+		gr.handle(rec.writer(), req, next, apiGroup)
 		return
 	}
 
 	m.inFlight.Inc()
 	defer m.inFlight.Dec()
-	gr.HandleFunc(rec.writer(), req, next)
+	gr.handle(rec.writer(), req, next, apiGroup)
 	duration := time.Since(start)
 	m.duration.WithLabelValues(metricGroup, verb, route()).Observe(duration.Seconds())
 	finish(duration)

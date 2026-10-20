@@ -204,6 +204,12 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 // HandleFunc is the single serving entry point for /apis and /openapi/v3.
 // Anything the router does not own falls through to next.
 func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
+	r.handle(w, req, next, apiGroup(req.URL.Path))
+}
+
+// handle is HandleFunc for a request whose group, apiGroup(req.URL.Path), the
+// caller has already read, so a request reads it once.
+func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
 	path := req.URL.Path
 	isOpenAPI := path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
 	isAPIs := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/")
@@ -248,7 +254,6 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 
 	// An invalid group name gets no group, so it goes to next: no backend
 	// can serve it.
-	group := utils.APIGroupFromRequest(req)
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
@@ -343,6 +348,22 @@ func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler,
 	return next, false
 }
 
+// apiGroup returns the group of an /apis/<group>[/...] path, or "" when there
+// is none or it is not a valid group name (see utils.IsAPIGroup). Unlike
+// utils.APIGroupFromRequest it reads only the first segment: the router
+// rejects a non-canonical path before it routes by group.
+func apiGroup(path string) string {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	if !ok {
+		return ""
+	}
+	group, _, _ := strings.Cut(rest, "/")
+	if !utils.IsAPIGroup(group) {
+		return ""
+	}
+	return group
+}
+
 // breakerState is the group breaker's state, read without changing it. Only
 // entries built outside newHandlerEntry, in tests, lack a view.
 func (e servingEntry) breakerState() gobreaker.State {
@@ -357,7 +378,7 @@ func (e servingEntry) breakerState() gobreaker.State {
 // rejects before routing. In
 // middleware mode everything else belongs to the embedded API server, which
 // has its own metrics.
-func (r *GrafanaRouter) owns(req *http.Request) bool {
+func (r *GrafanaRouter) owns(req *http.Request, group string) bool {
 	path := req.URL.Path
 	inTree := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/") ||
 		path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
@@ -371,7 +392,7 @@ func (r *GrafanaRouter) owns(req *http.Request) bool {
 	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
 		return true
 	case strings.HasPrefix(path, apisPrefix+"/"):
-		return r.KnownGroup(utils.APIGroupFromRequest(req))
+		return r.KnownGroup(group)
 	}
 	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
 		return group == discoveryGroup || r.KnownGroup(group)
