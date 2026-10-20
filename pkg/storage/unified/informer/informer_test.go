@@ -1087,25 +1087,30 @@ func TestInformer_PruneListRemovesWithoutRedispatchingSurvivors(t *testing.T) {
 
 // A prune list reads a fresh snapshot, so it can surface a key the preceding
 // partial rotation never saw — a job created after the rotation's snapshots whose
-// live event this replica missed. That key is a first observation (an add), and
-// the prune must still deliver it: suppressing it would store the job silently and
-// leave it unenqueued until a later rotation reached its page, adding a full
-// rotation of recovery latency even with idle workers. Only already-known
-// survivors (updates) are suppressed.
-func TestInformer_PruneListDeliversNewlyDiscoveredKeys(t *testing.T) {
+// live event this replica missed. The prune must NOT dispatch it: the prune
+// bypasses the paging capacity gate, so releasing a churned backlog of such keys in
+// one pass would be the spike the backpressure exists to prevent. Replace still
+// stores the key, so the next capacity-gated list re-observes it and delivers it as
+// an update — deferred through the bounded path, not dropped.
+func TestInformer_PruneListDefersNewKeysToTheGatedRotation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
 		handler := &recordingHandler{}
 		ctx := context.Background()
 
 		// phase 0: complete list of a,b. phase 1: prune snapshot where b is gone, a
-		// survives, and c is newly created (first seen here, never delivered before).
+		// survives, and c is newly created (first seen here). phase 2: an ordinary
+		// gated re-list re-observes the stored c.
 		var phase atomic.Int64
 		list := func(context.Context) ([]runtime.Object, int64, error) {
-			if phase.Load() == 0 {
+			switch phase.Load() {
+			case 0:
 				return []runtime.Object{obj("a"), obj("b")}, 0, nil
+			case 1:
+				return []runtime.Object{obj("a"), obj("c")}, 0, ErrPruneList
+			default:
+				return []runtime.Object{obj("a"), obj("c")}, 0, nil
 			}
-			return []runtime.Object{obj("a"), obj("c")}, 0, ErrPruneList
 		}
 		store := NewStore()
 		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, store, newObjectFunc, list)
@@ -1119,12 +1124,21 @@ func TestInformer_PruneListDeliversNewlyDiscoveredKeys(t *testing.T) {
 		require.True(t, n.HasSynced())
 		require.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
 
+		// The prune removes b and stores c, but dispatches neither an add for c nor an
+		// update for the survivor a — it is not an enqueue path.
 		phase.Store(1)
 		n.signalReconnect()
 		synctest.Wait()
-		assert.Contains(t, handler.addedNames(), "c", "a key first seen in a prune list is delivered as an add")
-		assert.Equal(t, []string{"b"}, handler.deletedNames(), "the absent key is still removed")
-		assert.Empty(t, handler.updatedNames(), "the survivor is still not re-dispatched")
-		assert.ElementsMatch(t, []string{"a", "c"}, storeNames(store.List(ctx)))
+		assert.Equal(t, []string{"b"}, handler.deletedNames(), "the absent key is removed")
+		assert.NotContains(t, handler.addedNames(), "c", "a prune must not dispatch a newly-seen key (no uncapped enqueue)")
+		assert.Empty(t, handler.updatedNames(), "nor re-dispatch the survivor")
+		assert.ElementsMatch(t, []string{"a", "c"}, storeNames(store.List(ctx)), "but c is stored for the gated rotation to find")
+
+		// The next capacity-gated list re-observes c (now known) and delivers it as an
+		// update — the bounded path the jobs handler enqueues as a recovery.
+		phase.Store(2)
+		n.signalReconnect()
+		synctest.Wait()
+		assert.Contains(t, handler.updatedNames(), "c", "the gated rotation re-delivers the deferred key as an update")
 	})
 }

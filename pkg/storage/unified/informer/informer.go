@@ -55,9 +55,11 @@ type ObjectFunc func(namespace, name string) runtime.Object
 //     only) and never diffs for removals.
 //   - ErrPruneList — a complete, consistent snapshot delivered to reconcile
 //     removals after a sequence of partial lists already delivered the objects it
-//     had seen. The informer diffs it for deletes and delivers adds for keys it has
-//     never seen, but suppresses the updates of already-known survivors so a prune
-//     does not re-enqueue the whole backlog.
+//     had seen. The informer diffs it for deletes and dispatches the removals only;
+//     it suppresses adds and updates, because the prune bypasses the paging capacity
+//     gate and re-dispatching a churned backlog in one pass would be the spike the
+//     partial lists exist to avoid. New keys it discovers are still stored, so the
+//     capacity-gated rotation re-delivers them through its bounded path.
 //
 // See relist. Any other non-nil error means the list failed.
 type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, err error)
@@ -71,13 +73,15 @@ var ErrPartialList = errors.New("nats informer: partial list")
 
 // ErrPruneList is returned by a ListFunc alongside a complete, consistent snapshot
 // that exists to prune: the informer runs the delete diff (Store.Replace) so the
-// snapshot drops keys no longer present. It is used when a sequence of partial
-// lists has already rotated through and delivered every object they saw, so
-// re-dispatching the full surviving set would re-enqueue the whole backlog in one
-// pass — the very spike the partial lists exist to avoid. The informer therefore
-// suppresses the updates (survivors) but still delivers the adds (keys the rotation
-// never saw, e.g. a job created since its snapshots whose live event this replica
-// missed) and the removals. Like ErrPartialList it is a signal, not a failure.
+// snapshot drops keys no longer present, and dispatches the removals only. It is
+// used when a sequence of partial lists has already rotated through and delivered
+// every object they saw. Because the prune bypasses the paging capacity gate to
+// read the whole set, it must not be an enqueue path: re-dispatching the survivors,
+// or releasing every key first seen here (a churned backlog of missed-ADDED jobs),
+// would be the one-pass spike the partial lists exist to avoid. The new keys are
+// still stored, so the capacity-gated rotation re-observes and delivers them on a
+// later pass — deferred through the bounded path, not dropped. Like ErrPartialList
+// it is a signal, not a failure.
 var ErrPruneList = errors.New("nats informer: prune list")
 
 // Verb values passed to the Metrics event observations.
@@ -561,16 +565,15 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// already delivered here filtered out.
 	added, updated, removed := n.store.Replace(objs, listRV)
 	if prune {
-		// A prune re-list reconciles the snapshot after a rotation of partial lists
-		// already delivered every object the rotation had seen. Those already-known
-		// survivors come back as updates; re-dispatching them would re-enqueue the
-		// whole backlog in one pass, so drop them. A key the rotation never saw — a
-		// job created after its snapshots whose live event this replica missed — comes
-		// back as an add, and this prune is its first observation: it must still be
-		// delivered or it waits a full rotation to be enqueued, even with idle workers.
-		// So suppress the updates (survivors) only, never the adds (new keys) or the
-		// removals.
-		updated = nil
+		// A prune re-list exists to reconcile removals; it bypasses the paging
+		// capacity gate to read the whole snapshot, so it must not be an enqueue path.
+		// Dispatch the removals only and suppress both the already-known survivors
+		// (updates) and the keys first seen here (adds): re-dispatching either could
+		// release a large churned backlog in one uncapped pass. Replace has still
+		// stored the new keys, so the capacity-gated rotation re-observes them on a
+		// later pass and delivers them as updates through the normal bounded path —
+		// deferred, not dropped.
+		added, updated = nil, nil
 	}
 	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial, "prune", prune,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
