@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	testingclock "k8s.io/utils/clock/testing"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
@@ -2453,6 +2455,76 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
 }
 
+func TestBuildRepository(t *testing.T) {
+	for _, tt := range []struct {
+		name            string
+		buildErr        error
+		waitForContext  bool
+		parentTimeout   time.Duration
+		cancelParent    bool
+		wantErr         error
+		wantUnavailable bool
+	}{
+		{name: "success"},
+		{name: "provider error", buildErr: repository.ErrPermissionDenied, wantErr: repository.ErrPermissionDenied},
+		{name: "provider timeout", buildErr: fmt.Errorf("get project: %w", context.DeadlineExceeded), wantErr: context.DeadlineExceeded, wantUnavailable: true},
+		{name: "build timeout", waitForContext: true, buildErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded, wantUnavailable: true},
+		{name: "provider reports cancellation after timeout", waitForContext: true, buildErr: context.Canceled, wantErr: context.Canceled, wantUnavailable: true},
+		{name: "provider returns success after timeout", waitForContext: true, wantErr: context.DeadlineExceeded, wantUnavailable: true},
+		{name: "parent deadline", parentTimeout: time.Second, waitForContext: true, buildErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded, wantUnavailable: true},
+		{name: "parent cancellation", cancelParent: true, wantErr: context.Canceled},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				wantTimeout := 30 * time.Second
+				if tt.parentTimeout > 0 {
+					var cancelDeadline context.CancelFunc
+					ctx, cancelDeadline = context.WithTimeout(ctx, tt.parentTimeout)
+					defer cancelDeadline()
+					wantTimeout = tt.parentTimeout
+				}
+				if tt.cancelParent {
+					cancel()
+				}
+
+				cfg := &provisioning.Repository{}
+				built := repository.NewMockRepository(t)
+				factory := repository.NewMockFactory(t)
+				start := time.Now()
+				var receivedContext context.Context
+				factory.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(ctx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
+					receivedContext = ctx
+					deadline, ok := ctx.Deadline()
+					require.True(t, ok)
+					assert.Equal(t, start.Add(wantTimeout), deadline)
+					if tt.waitForContext {
+						<-ctx.Done()
+						assert.Equal(t, wantTimeout, time.Since(start))
+					}
+					return built, tt.buildErr
+				}).Once()
+
+				got, err := buildRepository(ctx, factory, cfg)
+				if tt.wantErr == nil {
+					require.NoError(t, err)
+					assert.Same(t, built, got)
+				} else {
+					require.ErrorIs(t, err, tt.wantErr)
+					assert.Nil(t, got)
+				}
+				assert.Equal(t, tt.wantUnavailable, errors.Is(err, repository.ErrServerUnavailable))
+				assert.Equal(t, tt.wantUnavailable, isRetryableProcessError(err))
+				assert.Error(t, receivedContext.Err(), "the build context must be released when Build returns")
+				if !tt.cancelParent && tt.parentTimeout == 0 {
+					assert.NoError(t, ctx.Err(), "the reconciliation context must remain usable for status updates")
+				}
+			})
+		})
+	}
+}
+
 func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T) {
 	unreachable := fmt.Errorf("%w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
 	unavailable := repository.ErrServerUnavailable
@@ -2464,22 +2536,23 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 		buildErr   error
 		deleting   bool
 		patchErr   error
-		wantErr    error
+		wantRetry  bool
 		wantReason string
 	}{
-		{name: "unreachable", buildErr: unreachable, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "wrapped unreachable", buildErr: fmt.Errorf("create gitlab client: %w", unreachable), wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "joined unreachable", buildErr: errors.Join(errors.New("resolve project failed"), unreachable), wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "unreachable service unavailable", buildErr: unavailable, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "status write failure", buildErr: unreachable, patchErr: patchErr, wantErr: patchErr, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "unreachable during delete", buildErr: unreachable, deleting: true, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "unreachable service unavailable during delete", buildErr: unavailable, deleting: true, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "delete status write failure", buildErr: unavailable, deleting: true, patchErr: patchErr, wantErr: patchErr, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "secret decryption timeout still returns error", buildErr: decryptErr, wantErr: repository.ErrSecretDecryptFailed, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "generic service unavailable still returns error", buildErr: serviceErr, wantErr: serviceErr, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "generic service unavailable during delete still returns error", buildErr: serviceErr, deleting: true, wantErr: serviceErr, wantReason: provisioning.ReasonServiceUnavailable},
-		{name: "unclassified deadline still returns error", buildErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded, wantReason: provisioning.ReasonInvalidSpec},
-		{name: "caller cancellation still returns error", buildErr: context.Canceled, wantErr: context.Canceled, wantReason: provisioning.ReasonInvalidSpec},
+		{name: "unreachable", buildErr: unreachable, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "wrapped unreachable", buildErr: fmt.Errorf("create gitlab client: %w", unreachable), wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "joined unreachable", buildErr: errors.Join(errors.New("resolve project failed"), unreachable), wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "unreachable service unavailable", buildErr: unavailable, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "status write failure", buildErr: unreachable, patchErr: patchErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "unreachable during delete", buildErr: unreachable, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "unreachable service unavailable during delete", buildErr: unavailable, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "delete status write failure", buildErr: unavailable, deleting: true, patchErr: patchErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "secret decryption timeout still returns error", buildErr: decryptErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "generic service unavailable still returns error", buildErr: serviceErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "generic service unavailable during delete still returns error", buildErr: serviceErr, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "build timeout", buildErr: context.DeadlineExceeded, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "build timeout during delete", buildErr: context.DeadlineExceeded, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "caller cancellation still returns error", buildErr: context.Canceled, wantReason: provisioning.ReasonInvalidSpec},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &provisioning.Repository{
@@ -2505,7 +2578,11 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
 			repoGetter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
 			factory := repository.NewMockFactory(t)
-			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildErr).Once()
+			factory.EXPECT().Build(mock.Anything, mock.Anything).Run(func(ctx context.Context, _ *provisioning.Repository) {
+				deadline, ok := ctx.Deadline()
+				require.True(t, ok)
+				assert.InDelta(t, 30, time.Until(deadline).Seconds(), 1)
+			}).Return(nil, tt.buildErr).Once()
 			patcher := &capturePatcher{err: tt.patchErr}
 			finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			rc := &RepositoryController{
@@ -2521,10 +2598,13 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			}
 
 			_, err := rc.process("default/test-repo")
-			if tt.wantErr != nil {
-				require.ErrorIs(t, err, tt.wantErr)
-			} else {
-				require.NoError(t, err, "unreachable builds must finish reconciliation after updating health")
+			require.ErrorIs(t, err, tt.buildErr)
+			assert.Equal(t, tt.wantRetry, isRetryableProcessError(err))
+			if errors.Is(tt.buildErr, context.DeadlineExceeded) {
+				require.ErrorIs(t, err, repository.ErrServerUnavailable)
+			}
+			if tt.patchErr != nil && !tt.deleting {
+				require.ErrorIs(t, err, tt.patchErr)
 			}
 
 			healthOp, ok := patcher.findPatchOp("/status/health")
@@ -2537,7 +2617,8 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			if tt.deleting {
 				assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 			} else {
-				assert.Equal(t, []string{tt.buildErr.Error()}, health.Message)
+				require.Len(t, health.Message, 1)
+				assert.Contains(t, health.Message[0], tt.buildErr.Error())
 			}
 
 			conditionOp, ok := patcher.findPatchOp("/status/conditions/0")
@@ -2562,14 +2643,14 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 		patchErr      error
 		initial       bool
 		wantUnhealthy bool
-		wantErr       error
+		wantRetry     bool
 	}{
-		{name: "initial outage", branchErr: repository.ErrServerUnavailable, initial: true, wantUnhealthy: true},
-		{name: "wrapped outage after healthy", branchErr: wrappedErr, wantUnhealthy: true},
-		{name: "status write failure", branchErr: wrappedErr, patchErr: patchErr, wantUnhealthy: true, wantErr: patchErr},
-		{name: "generic service unavailable still returns error", branchErr: serviceErr, wantErr: serviceErr},
-		{name: "unclassified deadline still returns error", branchErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded},
-		{name: "caller cancellation still returns error", branchErr: context.Canceled, wantErr: context.Canceled},
+		{name: "initial outage", branchErr: repository.ErrServerUnavailable, initial: true, wantUnhealthy: true, wantRetry: true},
+		{name: "wrapped outage after healthy", branchErr: wrappedErr, wantUnhealthy: true, wantRetry: true},
+		{name: "status write failure", branchErr: wrappedErr, patchErr: patchErr, wantUnhealthy: true, wantRetry: true},
+		{name: "generic service unavailable still returns error", branchErr: serviceErr, wantRetry: true},
+		{name: "unclassified deadline still returns error", branchErr: context.DeadlineExceeded},
+		{name: "caller cancellation still returns error", branchErr: context.Canceled},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &provisioning.Repository{
@@ -2616,10 +2697,10 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 			}
 
 			_, err := rc.process("default/test-repo")
-			if tt.wantErr != nil {
-				require.ErrorIs(t, err, tt.wantErr)
-			} else {
-				require.NoError(t, err, "an unavailable default branch must finish reconciliation after updating health")
+			require.ErrorIs(t, err, tt.branchErr)
+			assert.Equal(t, tt.wantRetry, isRetryableProcessError(err))
+			if tt.patchErr != nil {
+				require.ErrorIs(t, err, tt.patchErr)
 			}
 			phase := reconcilePhaseBranch
 			if tt.patchErr != nil {
@@ -3390,6 +3471,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 	for name, buildErr := range map[string]error{
 		"rebuild succeeds":                nil,
 		"rebuild cannot reach repository": fmt.Errorf("%w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded),
+		"rebuild times out":               context.DeadlineExceeded,
 	} {
 		t.Run(name, func(t *testing.T) {
 			namespace := "default"
@@ -3466,7 +3548,11 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			if buildErr != nil {
 				rebuilt = nil
 			}
-			repoFactory.On("Build", mock.Anything, mock.Anything).Return(rebuilt, buildErr).Once()
+			repoFactory.On("Build", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				deadline, ok := args.Get(0).(context.Context).Deadline()
+				require.True(t, ok)
+				assert.InDelta(t, 30, time.Until(deadline).Seconds(), 1)
+			}).Return(rebuilt, buildErr).Once()
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
@@ -3490,7 +3576,12 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			}
 
 			_, err := rc.process(namespace + "/" + repoName)
-			require.NoError(t, err)
+			if buildErr != nil {
+				require.ErrorIs(t, err, buildErr)
+				assert.True(t, isRetryableProcessError(err))
+			} else {
+				require.NoError(t, err)
+			}
 
 			// Regeneration happened: a fresh token status was written and Build was retried.
 			_, found := patcher.findPatchOp("/status/token")
@@ -3503,7 +3594,8 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				health, ok := healthOp["value"].(provisioning.HealthStatus)
 				require.True(t, ok)
 				assert.False(t, health.Healthy)
-				assert.Equal(t, []string{buildErr.Error()}, health.Message)
+				require.Len(t, health.Message, 1)
+				assert.Contains(t, health.Message[0], buildErr.Error())
 
 				conditionOp, ok := patcher.findPatchOp("/status/conditions")
 				require.True(t, ok)
@@ -5259,41 +5351,58 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 // processing stops after maxAttempts total attempts. This tests the NumRequeues-based
 // attempt counting that replaced the old item.attempts field on queueItem.
 func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testing.T) {
-	var processCount atomic.Int32
-	allAttemptsDone := make(chan struct{})
+	for name, processErr := range map[string]error{
+		"service unavailable":    apierrors.NewServiceUnavailable("test"),
+		"repository unavailable": repository.ErrServerUnavailable,
+		"wrapped timeout":        fmt.Errorf("get default branch: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded),
+		"status write failure":   errors.Join(fmt.Errorf("build: %w", repository.ErrServerUnavailable), errors.New("status write failed")),
+	} {
+		t.Run(name, func(t *testing.T) {
+			clock := testingclock.NewFakeClock(time.Now())
+			rc := &RepositoryController{
+				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+					workqueue.DefaultTypedControllerRateLimiter[string](),
+					workqueue.TypedRateLimitingQueueConfig[string]{
+						Name:  "test-retry",
+						Clock: clock,
+					},
+				),
+				logger: logging.DefaultLogger.With("logger", "test"),
+			}
+			t.Cleanup(rc.queue.ShutDown)
+			heartbeatWaiters := clock.Waiters()
+			processCount := 0
 
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-retry",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
+			rc.processFn = func(key string) (string, error) {
+				processCount++
+				return "", processErr
+			}
+
+			rc.queue.Add("test/repo")
+			for attempt := range maxAttempts {
+				require.True(t, rc.processNextWorkItem(t.Context()))
+				if attempt == maxAttempts-1 {
+					break
+				}
+				assert.Equal(t, attempt+1, rc.queue.NumRequeues("test/repo"))
+				require.Eventually(t, func() bool {
+					return clock.Waiters() > heartbeatWaiters
+				}, time.Second, time.Millisecond, "the delayed queue must register its retry timer")
+
+				delay := 5 * time.Millisecond * (1 << attempt)
+				clock.Step(delay - time.Nanosecond)
+				assert.Zero(t, rc.queue.Len(), "the retry must wait for its exponential backoff")
+				clock.Step(time.Nanosecond)
+				require.Eventually(t, func() bool {
+					return rc.queue.Len() == 1
+				}, time.Second, time.Millisecond, "the retry must become available after its backoff")
+			}
+
+			assert.Equal(t, maxAttempts, processCount, "ServiceUnavailable should retry exactly maxAttempts times then give up")
+			assert.Zero(t, rc.queue.NumRequeues("test/repo"), "the final attempt must clear the retry budget")
+			assert.Zero(t, rc.queue.Len())
+		})
 	}
-
-	rc.processFn = func(key string) (string, error) {
-		if processCount.Add(1) == maxAttempts {
-			close(allAttemptsDone)
-		}
-		return "", apierrors.NewServiceUnavailable("test")
-	}
-
-	rc.queue.Add("test/repo")
-
-	ctx, cancel := context.WithCancel(t.Context())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait for the final attempt, then shut down. Once Run returns the count is final.
-	<-allAttemptsDone
-	cancel()
-	<-runDone
-	assert.Equal(t, int32(maxAttempts), processCount.Load(), "ServiceUnavailable should retry exactly maxAttempts times then give up")
 }
 
 // TestRepositoryController_DecryptFailureRetriesUpToMaxAttempts verifies that a
