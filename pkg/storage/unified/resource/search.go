@@ -962,6 +962,13 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 // types: the covered types the caller may search, reporting the ones it left
 // out and the kind of each.
 func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
+	// Unavailable rather than failed: the API that serves this search is enabled
+	// separately, and may be on before this server builds the index.
+	if !s.globalIndexEnabled {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
+		}, nil
+	}
 	// Read once, so the types checked are the types searched, and the kinds
 	// reported are theirs, even if the coverage changes meanwhile.
 	types, kinds := s.globalCoverage.Snapshot()
@@ -982,13 +989,6 @@ func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats 
 		Operator: string(selection.In),
 		Values:   searched,
 	})
-	// Unavailable rather than failed: the API that serves this search is enabled
-	// separately, and may be on before this server builds the index.
-	if !s.globalIndexEnabled {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
-		}, nil
-	}
 
 	rsp, err := s.searchIndex(ctx, stats, req, nsr, prepare)
 	if rsp != nil {
