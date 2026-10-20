@@ -949,51 +949,66 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
+	if nsr.IsGlobal() {
+		return s.searchGlobal(ctx, span, stats, req, nsr, prepare)
+	}
+	if _, _, err := s.checkSearchServicePermissions(ctx, req, []NamespacedResource{nsr}); err != nil {
+		return permissionErrorResponse(span, err), nil
+	}
+	return s.searchIndex(ctx, stats, req, nsr, prepare)
+}
+
+// searchGlobal searches the namespace-wide index, which holds several resource
+// types: the covered types the caller may search, reporting the ones it left
+// out and the kind of each.
+func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	// Read once, so the types checked are the types searched, and the kinds
 	// reported are theirs, even if the coverage changes meanwhile.
-	// Kept, because the federated lookup below reuses nsr for other keys.
-	global := nsr.IsGlobal()
-	sources := []NamespacedResource{nsr}
-	var kinds map[schema.GroupResource]string
-	if global {
-		var types []schema.GroupResource
-		types, kinds = s.globalCoverage.Snapshot()
-		sources = globalSources(nsr.Namespace, types)
-	}
-	excluded, err := s.checkSearchServicePermissions(ctx, req, sources)
+	types, kinds := s.globalCoverage.Snapshot()
+	searched, skipped, err := s.checkSearchServicePermissions(ctx, req, globalSources(nsr.Namespace, types))
 	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+		return permissionErrorResponse(span, err), nil
 	}
-	if global {
-		// Named rather than the excluded ones left out, so the index also hides a
-		// type it still holds documents of after the coverage dropped it.
-		searched := make([]string, 0, len(sources))
-		for _, src := range sources {
-			if gr := src.Group + "/" + src.Resource; !slices.Contains(excluded, gr) {
-				searched = append(searched, gr)
-			}
-		}
-		// A filter on no values matches everything.
-		if len(searched) == 0 {
-			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(errors.New("the global search covers no types"))}, nil
-		}
-		// Cloned so the caller's request is not changed underneath it.
-		req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
-		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
-			Key:      SEARCH_FIELD_GROUP_RESOURCE,
-			Operator: string(selection.In),
-			Values:   searched,
-		})
+	// A filter on no types would match every type.
+	if len(searched) == 0 {
+		return permissionErrorResponse(span, errors.New("the global search covers no types")), nil
 	}
+	// Named rather than the skipped ones left out, so the index also hides a
+	// type it still holds documents of after the coverage dropped it. Cloned so
+	// the caller's request is not changed underneath it.
+	req = proto.Clone(req).(*resourcepb.ResourceSearchRequest)
+	req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+		Key:      SEARCH_FIELD_GROUP_RESOURCE,
+		Operator: string(selection.In),
+		Values:   searched,
+	})
 	// Unavailable rather than failed: the API that serves this search is enabled
 	// separately, and may be on before this server builds the index.
-	if global && !s.globalIndexEnabled {
+	if !s.globalIndexEnabled {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
 		}, nil
 	}
+
+	rsp, err := s.searchIndex(ctx, stats, req, nsr, prepare)
+	if rsp != nil {
+		rsp.SkippedTypes = skipped
+		rsp.Kinds = make(map[string]string, len(kinds))
+		for gr, kind := range kinds {
+			rsp.Kinds[gr.Group+"/"+gr.Resource] = kind
+		}
+	}
+	return rsp, err
+}
+
+func permissionErrorResponse(span trace.Span, err error) *resourcepb.ResourceSearchResponse {
+	span.SetStatus(otelcodes.Error, err.Error())
+	span.RecordError(err)
+	return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}
+}
+
+// searchIndex searches the index for nsr, with the indexes req federates.
+func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -1001,12 +1016,10 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		}, nil
 	}
 
-	// Get the federated indexes
 	federate := make([]ResourceIndex, len(req.Federated))
 	for i, f := range req.Federated {
-		nsr.Group = f.Group
-		nsr.Resource = f.Resource
-		federate[i], err = s.getOrCreateIndex(ctx, stats, nsr, "federatedSearch")
+		key := NamespacedResource{Namespace: nsr.Namespace, Group: f.Group, Resource: f.Resource}
+		federate[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
@@ -1017,17 +1030,7 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	if prepare != nil {
 		prepare(idx)
 	}
-	rsp, err := idx.Search(ctx, s.access, req, federate, stats)
-	if rsp != nil && len(excluded) > 0 {
-		rsp.SkippedTypes = excluded
-	}
-	if rsp != nil && global {
-		rsp.Kinds = make(map[string]string, len(kinds))
-		for gr, kind := range kinds {
-			rsp.Kinds[gr.Group+"/"+gr.Resource] = kind
-		}
-	}
-	return rsp, err
+	return idx.Search(ctx, s.access, req, federate, stats)
 }
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with
