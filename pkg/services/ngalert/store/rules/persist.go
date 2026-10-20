@@ -130,6 +130,8 @@ type MaintenanceStore interface {
 
 // Store is the full surface implemented by *RuleStore.
 type Store interface {
+	// GetFolderUIDsWithMissingFullpath supports legacy-only fullpath maintenance, not app-platform rules.
+	GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error)
 	NamespaceStore
 	RuleReader
 	RulePageReader

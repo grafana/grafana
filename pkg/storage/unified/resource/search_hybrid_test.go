@@ -557,7 +557,7 @@ func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource      { return 
 func (f *fakeSearchBackend) RemoveExpiredTrash(context.Context)        {}
 func (f *fakeSearchBackend) SnapshotCountThreshold() int64             { return 0 }
 func (f *fakeSearchBackend) Stop()                                     {}
-func (f *fakeSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration) (ResourceIndex, error) {
+func (f *fakeSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration, BuildIndexOptions) (ResourceIndex, error) {
 	return f.idx, nil
 }
 

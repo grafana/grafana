@@ -3,8 +3,12 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { type NavModelItem, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { contextSrv, RedirectToUrlKey } from 'app/core/services/context_srv';
+import { getLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 
 import { Page } from './Page';
 import { type PageProps } from './types';
@@ -81,4 +85,26 @@ describe('Render', () => {
     setup({ navId: 'child1', pageNav });
     expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
   });
+});
+
+it('retains the section label instead of a sensitive page title for login', () => {
+  const originalSignedIn = contextSrv.user.isSignedIn;
+  const originalLocation = locationService.getLocation();
+  contextSrv.user.isSignedIn = true;
+  setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
+  locationService.replace('/d/abc/test');
+  sessionStorage.clear();
+  try {
+    const node = { id: 'dashboards/browse', text: 'Dashboards' };
+    const { renderResult } = setup({ navModel: { node, main: node }, pageNav: { text: 'Sensitive dashboard' } });
+    expect(document.title).toBe('Sensitive dashboard - Dashboards - Grafana');
+    renderResult.unmount();
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/test'));
+    expect(getLoginSectionTitle()).toBe('Dashboards');
+  } finally {
+    contextSrv.user.isSignedIn = originalSignedIn;
+    setTestFlags({});
+    sessionStorage.clear();
+    locationService.replace(originalLocation);
+  }
 });

@@ -72,7 +72,7 @@ func (h *Handler) GlobalSearchRoute(kinds map[schema.GroupResource]string) Route
 		Path:    resource.GlobalSearchResource + "/" + searchPathSegment,
 		Spec:    globalSearchRouteSpec(),
 		Handler: h.GlobalSearchFor(kinds),
-		Schemas: envelopeSchemas(searchQueryGoName, searchResultsGoName),
+		Schemas: envelopeSchemas(searchQueryGoName, globalSearchResultsGoName),
 	}
 }
 
@@ -156,8 +156,8 @@ func globalSearchRouteSpec() *spec3.PathProps {
 		description:  globalSearchDescription(),
 		requestKind:  searchv0.KindSearchQuery,
 		requestGo:    searchQueryGoName,
-		responseKind: searchv0.KindSearchResults,
-		responseGo:   searchResultsGoName,
+		responseKind: searchv0.KindGlobalSearchResults,
+		responseGo:   globalSearchResultsGoName,
 		example:      globalSearchExample(),
 	})
 }
