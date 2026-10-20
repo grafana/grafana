@@ -146,7 +146,39 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
   })
-  .setSuggestionsSupplier(tableSuggestionsSupplier);
+  .setSuggestionsSupplier(tableSuggestionsSupplier)
+  // Prototype: settings and promotionPath are placeholders until promotion is implemented.
+  .setPanelInteractions({
+    interactions: [
+      {
+        id: 0,
+        name: 'toggleColumnVisibility',
+        description: 'Hide or show a column',
+        mutates: 'TRANSFORMATION',
+        settings: ['columnName'],
+        // Will add or edit the organize fields transformation's excludeByName.
+        promotionPath: (panel) => panel,
+      },
+      {
+        id: 1,
+        name: 'reorderColumns',
+        description: 'Reorder columns',
+        mutates: 'TRANSFORMATION',
+        settings: ['columnOrder'],
+        // Will add or edit the organize fields transformation's indexByName.
+        promotionPath: (panel) => panel,
+      },
+      {
+        id: 2,
+        name: 'renameColumn',
+        description: 'Rename a column',
+        mutates: 'TRANSFORMATION',
+        settings: ['columnName', 'newColumnName'],
+        // Will add or edit the organize fields transformation's renameByName.
+        promotionPath: (panel) => panel,
+      },
+    ],
+  });
 
 // `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
 // rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.

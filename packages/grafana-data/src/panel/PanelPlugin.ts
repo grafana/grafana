@@ -17,6 +17,7 @@ import {
   type PanelMigrationHandler,
   type PanelTypeChangedHandler,
   type PanelPluginDataSupport,
+  type PanelData,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
@@ -175,6 +176,30 @@ export interface PluginViewOptionsQuickToggles {
   fieldConfigProperties: string[];
 }
 
+/**
+ * A viewer-only interaction a panel supports, such as hiding a table column.
+ * Interactions are applied at runtime and can later be promoted into the saved panel.
+ *
+ * @alpha
+ */
+export interface PanelInteraction {
+  id: number;
+  name: string;
+  description?: string;
+  /** What part of the panel the interaction changes when it is promoted. */
+  mutates: 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
+  settings: unknown[];
+  /** Applies the interaction's settings to the saved panel. */
+  promotionPath: (panel: PanelData, settings: unknown) => PanelData;
+}
+
+/**
+ * @alpha
+ */
+export interface PanelInteractions {
+  interactions: PanelInteraction[];
+}
+
 export class PanelPlugin<
   TOptions = any,
   TFieldConfigOptions extends object = {},
@@ -186,6 +211,7 @@ export class PanelPlugin<
   };
 
   private _viewPanelOptions?: PanelPluginViewOptions;
+  private _panelInteractions?: PanelInteractions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
@@ -267,6 +293,11 @@ export class PanelPlugin<
 
   get viewPanelOptions() {
     return this._viewPanelOptions;
+  }
+
+  /** @alpha */
+  get panelInteractions(): PanelInteractions | undefined {
+    return this._panelInteractions;
   }
 
   /**
@@ -738,6 +769,16 @@ export class PanelPlugin<
    */
   setViewPanelOptions(options: PanelPluginViewOptions) {
     this._viewPanelOptions = options;
+    return this;
+  }
+
+  /**
+   * Declare the viewer-only interactions this panel supports.
+   *
+   * @alpha
+   */
+  setPanelInteractions(interactions: PanelInteractions) {
+    this._panelInteractions = interactions;
     return this;
   }
 }
