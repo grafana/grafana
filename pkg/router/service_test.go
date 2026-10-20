@@ -231,3 +231,36 @@ func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 	}))
 	require.Equal(t, http.StatusTeapot, recorder.Code)
 }
+
+func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
+	svc := newService(dummyRoutesLoader{groups: []string{"owned.grafana.app"}}, nil, prometheus.NewRegistry())
+	svc.middleware = true
+	require.NoError(t, svc.router.reconcile(t.Context()))
+
+	for _, target := range []string{
+		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards",
+		"/apis/dashboard.grafana.app",
+		"/apis/Not_A.Group/v1/things",
+		"/openapi/v3/apis/dashboard.grafana.app/v1",
+		"/openapi/v3/apis/owned.grafana.app",
+		"/api/dashboards/uid/abc",
+	} {
+		t.Run(target, func(t *testing.T) {
+			// The shortcut must answer as the router would: through next.
+			for name, serve := range map[string]func(http.ResponseWriter, *http.Request, http.Handler){
+				"service": svc.HandleFunc,
+				"router":  svc.router.HandleFunc,
+			} {
+				var called bool
+				next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					called = true
+					w.WriteHeader(http.StatusTeapot)
+				})
+				rec := httptest.NewRecorder()
+				serve(rec, newAuthenticatedRequest(http.MethodGet, target, nil), next)
+				require.True(t, called, "%s did not call next", name)
+				require.Equal(t, http.StatusTeapot, rec.Code, name)
+			}
+		})
+	}
+}
