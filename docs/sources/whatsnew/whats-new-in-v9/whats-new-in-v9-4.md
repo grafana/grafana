@@ -89,7 +89,7 @@ We've updated the **Details** section of a log line. Previously some of the inte
 
 Learn more about viewing logs in our [Logs panel documentation](../../../panels-visualizations/visualizations/logs/).
 
-### Loki datasource query validation
+### Loki data source query validation
 
 _Generally available in all editions of Grafana._
 
