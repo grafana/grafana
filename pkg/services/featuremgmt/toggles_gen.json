@@ -3152,16 +3152,19 @@
     {
       "metadata": {
         "name": "grafana.recordedQueriesDisableCreate",
-        "resourceVersion": "1792177003058",
-        "creationTimestamp": "2026-10-16T18:56:43Z"
+        "resourceVersion": "1792440007514",
+        "creationTimestamp": "2026-10-16T18:56:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 20:00:07.51491703 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables creating new recorded queries while preserving access to existing queries",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

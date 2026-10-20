@@ -1539,10 +1539,10 @@ export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluati
  *
  * **Details:**
  * - flag key: `grafana.recordedQueriesDisableCreate`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.recordedQueriesDisableCreate", false, options).value;
+  return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
 };
 
 /**

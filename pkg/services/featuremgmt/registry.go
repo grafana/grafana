@@ -196,10 +196,10 @@ var (
 		{
 			Name:         "grafana.recordedQueriesDisableCreate",
 			Description:  "Disables creating new recorded queries while preserving access to existing queries",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
