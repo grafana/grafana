@@ -5,9 +5,13 @@
  * rule: a plan preview is read-only.
  */
 
+import { isEqual } from 'lodash';
+
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
+import type { DashboardSceneState } from '../scene/types/dashboard';
 
 import { SceneMutationClient } from './SceneMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from './commands/lazyRegistry';
@@ -56,28 +60,52 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
    * Does not add conversation scoping to the mutation API -- a caller still acts on whatever
    * scene is mounted, regardless of conversation. Only closes that gap for a plan preview.
    */
-  async execute(mutation: MutationRequest): Promise<MutationResult> {
+  async execute(mutation: MutationRequest, callerPluginId?: string): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
+    let building: DashboardSceneState['planning'];
     if (this.scene.isPlanning() && !PLANNING_ALLOWED_COMMANDS.has(type) && !this.isReadOnly(type)) {
       const { planning } = this.scene.state;
-      if (planning?.phase === 'building') {
-        const result = await super.execute(mutation);
-        // Only a write that landed replaces the screen: a rejected one leaves an empty dashboard
-        // behind it while the build retries. A concurrent write that landed first has already
-        // ended it, and END_PLANNING ends it if the build never lands one.
-        if (result.success && this.scene.state.planning === planning) {
-          this.scene.setState({ planning: undefined });
-        }
-        return result;
+      if (planning?.phase !== 'building') {
+        return {
+          success: false,
+          error: 'This dashboard is a plan preview and is read-only until it is built or dismissed.',
+          changes: [],
+        };
       }
-      return {
-        success: false,
-        error: 'This dashboard is a plan preview and is read-only until it is built or dismissed.',
-        changes: [],
-      };
+      building = planning;
     }
 
-    return super.execute(mutation);
+    const checkWrite = () =>
+      dashboardModesEnabled() &&
+      isViewingDashboard(this.scene.state) &&
+      callerPluginId !== 'grafana-assistant-app' &&
+      !PLANNING_ALLOWED_COMMANDS.has(type)
+        ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'
+        : undefined;
+    const result = await super.executeChecked(
+      mutation,
+      checkWrite,
+      callerPluginId === 'grafana-assistant-app' ? (write) => this.scene.withAssistantWrite(write) : undefined
+    );
+    // Some commands update child scenes directly rather than publishing undoable actions.
+    if (
+      dashboardModesEnabled() &&
+      result.success &&
+      !this.isReadOnly(type) &&
+      !PLANNING_ALLOWED_COMMANDS.has(type) &&
+      type !== 'ENTER_EDIT_MODE' &&
+      type !== 'CREATE_NOTEBOOK_SPEC' &&
+      result.changes.some(({ previousValue, newValue }) => !isEqual(previousValue, newValue))
+    ) {
+      this.scene.recordEditMutation(callerPluginId === 'grafana-assistant-app' ? 'assistant' : 'user');
+    }
+    // Only a write that landed replaces the building screen: a rejected one leaves an empty dashboard
+    // behind it while the build retries. A concurrent write that landed first has already ended it,
+    // and END_PLANNING ends it if the build never lands one.
+    if (building && result.success && this.scene.state.planning === building) {
+      this.scene.setState({ planning: undefined });
+    }
+    return result;
   }
 }

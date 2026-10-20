@@ -224,6 +224,11 @@ message ResourceSearchResponse {
 
   // Populated only when result_format is FIELD_VALUES.
   repeated ResourceSearchRow rows = 12;
+
+  // Types a global search left out, as {group}/{resource}, so the results are
+  // incomplete: the calling service may not search them on the user's behalf,
+  // or this server does not check their results against the user.
+  repeated string skipped_types = 13;
 }
 
 message ResourceSearchField {

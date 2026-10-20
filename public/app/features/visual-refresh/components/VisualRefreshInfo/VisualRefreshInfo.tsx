@@ -1,4 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   FlagKeys,
   getLocalStorageProvider,
@@ -34,7 +35,7 @@ export function VisualRefreshInfo() {
     // this prevents users from being stuck in the visual refresh if the rollout flag is later disabled
     getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force ? undefined : false });
     if (!force) {
-      appEvents.publish(new VisualRefreshFeedbackEvent({ type: 'return' }));
+      appEvents.publish(new VisualRefreshFeedbackEvent({ type: 'return', theme: config.theme2.name }));
     }
   };
 

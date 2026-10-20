@@ -6,6 +6,8 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { type ExploreItemState } from 'app/types/explore';
 
+import { getQueryExpressionText } from '../utils/queries';
+
 export function useExplorePageContext(panes: Array<[string, ExploreItemState]>): void {
   const [items, setItems] = useState<ChatContextItem[]>([]);
 
@@ -100,8 +102,7 @@ function buildDatasourceContext(
   return items;
 }
 
-// maintain these field lists to avoid passing full query objects to the assistant.
-const EXPRESSION_FIELDS = new Set(['expr', 'expression', 'query', 'rawSql', 'rawQuery']);
+// Only these fields leave the browser, so the assistant never sees a full query object.
 const METADATA_FIELDS = new Set([
   'queryType',
   'format',
@@ -126,15 +127,12 @@ function getDisplayText(query: DataQuery, ds?: DataSourceApi): string | undefine
 function summarizeQuery(query: DataQuery, ds?: DataSourceApi): Record<string, unknown> {
   const summary: Record<string, unknown> = { refId: query.refId };
 
-  const displayText = getDisplayText(query, ds);
-  if (displayText) {
-    summary.expression = displayText;
+  const expression = getDisplayText(query, ds) || getQueryExpressionText(query);
+  if (expression) {
+    summary.expression = expression;
   }
 
   for (const [key, value] of Object.entries(query)) {
-    if (!summary.expression && EXPRESSION_FIELDS.has(key) && value) {
-      summary.expression = value;
-    }
     if (METADATA_FIELDS.has(key) && value != null) {
       summary[key] = value;
     }

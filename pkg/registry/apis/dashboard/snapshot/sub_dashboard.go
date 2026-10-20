@@ -67,8 +67,11 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, err
 	}
 
-	// Get the snapshot from unified storage
-	obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
+	lookupCtx, err := publicSnapshotGetContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := r.getter.Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

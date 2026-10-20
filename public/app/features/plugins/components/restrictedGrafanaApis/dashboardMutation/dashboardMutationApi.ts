@@ -77,33 +77,37 @@ const planPreview = new DashboardPlanPreview(() => {
   return client instanceof DashboardMutationClient ? client : null;
 });
 
-export const dashboardMutationApi: DashboardMutationAPI = {
-  execute: (mutation: MutationRequest) => {
-    if (mutation.type.toUpperCase() === 'RENDER_PLAN') {
-      return planPreview.render(mutation.payload);
-    }
-    if (mutation.type.toUpperCase() === 'END_PLANNING') {
-      return planPreview.end(mutation.payload);
-    }
-    const client = currentClient();
-    if (!client) {
-      return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
-    }
-    return client.execute(mutation);
-  },
-  getPayloadSchema: (commandId: string) => {
-    const normalized = commandId.toUpperCase();
-    // Without the building screen RENDER_PLAN is advertised as an older core's, with no `phase`, so a
-    // caller checking for the screen sees none and never asks for it.
-    if (normalized === 'RENDER_PLAN' && !isPlanBuildingScreenEnabled()) {
-      return renderPlanPreviewPayloadSchema;
-    }
-    // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
-    // command can run.
-    const cmd = allMutationCommands().find((c) => c.name === normalized);
-    return cmd?.payloadSchema ?? null;
-  },
-  getAvailableCommands: () => {
-    return [...new Set(['RENDER_PLAN', ...(currentClient()?.getAvailableCommands() ?? [])])];
-  },
-};
+export const dashboardMutationApi: DashboardMutationAPI = createDashboardMutationApi();
+
+export function createDashboardMutationApi(pluginId?: string): DashboardMutationAPI {
+  return {
+    execute: (mutation: MutationRequest) => {
+      if (mutation.type.toUpperCase() === 'RENDER_PLAN') {
+        return planPreview.render(mutation.payload);
+      }
+      if (mutation.type.toUpperCase() === 'END_PLANNING') {
+        return planPreview.end(mutation.payload);
+      }
+      const client = currentClient();
+      if (!client) {
+        return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
+      }
+      return client instanceof DashboardMutationClient ? client.execute(mutation, pluginId) : client.execute(mutation);
+    },
+    getPayloadSchema: (commandId: string) => {
+      const normalized = commandId.toUpperCase();
+      // Without the building screen RENDER_PLAN is advertised as an older core's, with no `phase`, so a
+      // caller checking for the screen sees none and never asks for it.
+      if (normalized === 'RENDER_PLAN' && !isPlanBuildingScreenEnabled()) {
+        return renderPlanPreviewPayloadSchema;
+      }
+      // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
+      // command can run.
+      const cmd = allMutationCommands().find((c) => c.name === normalized);
+      return cmd?.payloadSchema ?? null;
+    },
+    getAvailableCommands: () => {
+      return [...new Set(['RENDER_PLAN', ...(currentClient()?.getAvailableCommands() ?? [])])];
+    },
+  };
+}
