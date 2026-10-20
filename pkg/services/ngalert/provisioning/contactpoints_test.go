@@ -364,6 +364,60 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
 	})
 
+	t.Run("update refreshes caller permissions after a rename commits", func(t *testing.T) {
+		failure := errors.New("save failed")
+		for _, tc := range []struct {
+			name    string
+			rename  bool
+			saveErr error
+			want    []string
+		}{
+			{name: "rename", rename: true, want: []string{"copy", "save", "refresh"}},
+			{name: "unchanged name", want: []string{"save"}},
+			{name: "save failure", rename: true, saveErr: failure, want: []string{"copy", "save"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				cfg := createEncryptedConfig(t, secretsService)
+				store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+				sut.receiverService = &fakeReceiverService{}
+
+				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+				require.NoError(t, err)
+				if tc.rename {
+					cp.Name = "new-name"
+				}
+
+				var calls []string
+				store.UpdateFn = func(ctx context.Context, _ *models.SaveAlertmanagerConfigurationCmd) error {
+					assertInTransaction(t, ctx)
+					calls = append(calls, "save")
+					return tc.saveErr
+				}
+				sut.resourcePermissions = contactPointPermissionSpy{
+					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
+					copy: func(ctx context.Context) {
+						assertInTransaction(t, ctx)
+						calls = append(calls, "copy")
+					},
+					refresh: func(ctx context.Context, u identity.Requester) {
+						require.Nil(t, ctx.Value(NopTransactionManager{}), "refresh must run after the transaction")
+						require.Same(t, adminUser, u)
+						calls = append(calls, "refresh")
+					},
+				}
+
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, cp, models.ProvenanceAPI)
+				if tc.saveErr != nil {
+					require.ErrorIs(t, err, failure)
+				} else {
+					require.NoError(t, err)
+				}
+				require.Equal(t, tc.want, calls)
+			})
+		}
+	})
+
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
@@ -1057,6 +1111,21 @@ func TestIntegrationAuthorization(t *testing.T) {
 			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 		})
 	})
+}
+
+type contactPointPermissionSpy struct {
+	*fakes.FakeReceiverPermissionsService
+	copy    func(context.Context)
+	refresh func(context.Context, identity.Requester)
+}
+
+func (s contactPointPermissionSpy) CopyPermissions(ctx context.Context, _ int64, _, _ string) (int, error) {
+	s.copy(ctx)
+	return 0, nil
+}
+
+func (s contactPointPermissionSpy) RefreshPermissions(ctx context.Context, user identity.Requester) {
+	s.refresh(ctx, user)
 }
 
 func createContactPointServiceSut(t *testing.T,

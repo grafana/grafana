@@ -365,8 +365,8 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 
+	renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
 		if renamed {
 			if newReceiverCreated {
 				// Copy receiver permissions
@@ -395,6 +395,10 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	})
 	if err != nil {
 		return err
+	}
+	// Refresh after commit, so that the caller's permissions include the copied receiver permissions.
+	if renamed && newReceiverCreated {
+		ecp.resourcePermissions.RefreshPermissions(ctx, user)
 	}
 	return nil
 }
