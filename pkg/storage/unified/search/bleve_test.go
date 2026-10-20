@@ -2544,14 +2544,14 @@ func TestIndexUpdateRVPersistInterval(t *testing.T) {
 				require.Equal(t, int64(10), persisted)
 			}
 
-			// Graceful close persists the latest RV in every case.
+			// Close leaves the RV as persisted; a reopen replays from there.
 			require.NoError(t, idx.stopUpdaterAndCloseIndex())
 			reopened, err := bleve.Open(dir)
 			require.NoError(t, err)
 			defer func() { require.NoError(t, reopened.Close()) }()
-			persisted, err = getRV(reopened)
+			reopenedRV, err := getRV(reopened)
 			require.NoError(t, err)
-			require.Equal(t, int64(20), persisted)
+			require.Equal(t, persisted, reopenedRV)
 		})
 	}
 }

@@ -71,36 +71,6 @@ func TestKVLeaseTTLBounds(t *testing.T) {
 	}
 }
 
-func TestIndexRVPersistIntervalWithinEventRetention(t *testing.T) {
-	for _, tc := range []struct {
-		name      string
-		interval  string
-		retention string
-		expected  time.Duration
-	}{
-		{name: "disabled", interval: "0s", retention: "1h", expected: 0},
-		{name: "within retention", interval: "5m", retention: "1h", expected: 5 * time.Minute},
-		{name: "lookback reaches retention", interval: "59m59s", retention: "1h", expected: 0},
-		{name: "longer than retention", interval: "2h", retention: "1h", expected: 0},
-		{name: "longer than a shortened retention", interval: "45m", retention: "30m", expected: 0},
-		{name: "unset retention uses the backend default", interval: "30m", retention: "0s", expected: 30 * time.Minute},
-		{name: "longer than the backend default", interval: "90m", retention: "0s", expected: 0},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
-			assert.NoError(t, err)
-			section := cfg.Raw.Section("unified_storage")
-			section.Key("index_rv_persist_interval").SetValue(tc.interval)
-			section.Key("event_retention_period").SetValue(tc.retention)
-
-			cfg.setUnifiedStorageConfig()
-
-			assert.Equal(t, tc.expected, cfg.IndexRVPersistInterval)
-		})
-	}
-}
-
 func TestSeededWatchesEnabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string

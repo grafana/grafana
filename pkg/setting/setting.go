@@ -739,7 +739,6 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
-	IndexRVPersistInterval                     time.Duration // Persist the RV of index updates that changed no documents at most this often. 0 persists every RV change.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.

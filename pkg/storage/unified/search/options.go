@@ -103,7 +103,6 @@ func NewSearchOptions(
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
-			IndexRVPersistInterval:         cfg.IndexRVPersistInterval,
 			SearchFields:                   searchFields,
 			Snapshot:                       snapshot,
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,

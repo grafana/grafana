@@ -234,7 +234,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
-	cfg.IndexRVPersistInterval = section.Key("index_rv_persist_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	// Off by default: this builds a global index per namespace, holding the
 	// dashboards and folders already covered by their own indexes.
@@ -283,18 +282,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
-	// After a crash an index catches up from its persisted RV, which can lag by up to
-	// index_rv_persist_interval. That catch-up reads the event store, so the events
-	// must not have been pruned yet.
-	eventRetention := cfg.EventRetentionPeriod
-	if eventRetention <= 0 {
-		eventRetention = time.Hour // the storage backend's default
-	}
-	if cfg.IndexRVPersistInterval > 0 && cfg.IndexRVPersistInterval+cfg.SearchLookback >= eventRetention {
-		cfg.Logger.Warn("index_rv_persist_interval plus search_lookback must be shorter than event_retention_period, disabling it",
-			"configured", cfg.IndexRVPersistInterval, "search_lookback", cfg.SearchLookback, "event_retention_period", eventRetention)
-		cfg.IndexRVPersistInterval = 0
-	}
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)

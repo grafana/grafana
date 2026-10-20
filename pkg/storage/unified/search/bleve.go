@@ -48,6 +48,9 @@ const (
 	indexStorageMemory = "memory"
 	indexStorageFile   = "file"
 	boltTimeout        = "1s"
+
+	// How often an index persists the RV of updates that changed no documents.
+	rvPersistInterval = 5 * time.Minute
 )
 
 // Keys used to store internal data in index.
@@ -91,10 +94,6 @@ type BleveOptions struct {
 
 	// Minimum time between index updates.
 	IndexMinUpdateInterval time.Duration
-
-	// Minimum time between persisting the RV of index updates that changed no documents.
-	// 0 persists every RV change.
-	IndexRVPersistInterval time.Duration
 
 	// This function is called to check whether the index is owned by the current instance.
 	// Indexes that are not owned by current instance are eligible for cleanup.
@@ -1844,10 +1843,9 @@ type bleveIndex struct {
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
 
-	// Owned by the updater goroutine, and by close after the updater has stopped.
+	// Owned by the updater goroutine.
 	rvPersistInterval time.Duration
 	rvPersistedAt     time.Time
-	rvDirty           bool // resourceVersion is newer than the RV persisted in the index.
 
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
@@ -1911,7 +1909,7 @@ func (b *bleveBackend) newBleveIndex(
 		logger:                 logger,
 		updaterFn:              updaterFn,
 		minUpdateInterval:      b.opts.IndexMinUpdateInterval,
-		rvPersistInterval:      b.opts.IndexRVPersistInterval,
+		rvPersistInterval:      rvPersistInterval,
 		indexMetrics:           b.indexMetrics,
 		enforceSortCapability:  b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,
@@ -2086,19 +2084,17 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 
 	b.resourceVersion.Store(rv)
 	b.rvPersistedAt = time.Now()
-	b.rvDirty = false
 
 	return nil
 }
 
 // advanceResourceVersion moves the index to rv after an incremental update that changed docs documents.
-// Persisting the RV of an update that changed nothing only shortens replay after a restart, but each write
-// costs a scorch epoch and two bolt fsyncs. So such RVs are persisted at most once per rvPersistInterval, and on close.
+// Persisting the RV of an update that changed nothing only shortens replay after a reopen, but each write
+// costs a scorch epoch and two bolt fsyncs. So such RVs are persisted at most once per rvPersistInterval.
 // The persisted RV can lag behind the index contents this way, but never get ahead of them.
 func (b *bleveIndex) advanceResourceVersion(rv int64, docs int) error {
 	if docs == 0 && b.rvPersistInterval > 0 && time.Since(b.rvPersistedAt) < b.rvPersistInterval {
 		b.resourceVersion.Store(rv)
-		b.rvDirty = true
 		return nil
 	}
 	return b.updateResourceVersion(rv)
@@ -3836,11 +3832,6 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 
 	b.updaterWg.Wait()
 	// Close index only after updater is not working on it anymore.
-	if b.rvDirty {
-		if err := setRV(b.index, b.resourceVersion.Load()); err != nil {
-			b.logger.Warn("Failed to persist RV before closing index", "err", err)
-		}
-	}
 	return b.index.Close()
 }
 
