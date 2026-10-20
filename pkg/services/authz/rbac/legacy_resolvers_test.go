@@ -360,14 +360,17 @@ func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
 			UserID:  1,
 			Role:    "Viewer",
 			TeamIDs: []int64{10},
-		},
-		{
-			UserID:  1,
-			Role:    "Viewer",
-			TeamIDs: []int64{10},
 			Action:  "folders:read",
 		},
 	}, permissions.queries)
+	require.Equal(t, []store.PermissionsQuery{
+		{
+			UserID:        1,
+			Role:          "Viewer",
+			TeamIDs:       []int64{10},
+			IsServerAdmin: false,
+		},
+	}, permissions.presenceQueries)
 }
 
 func TestLegacyCheckResolversOverGRPC(t *testing.T) {
