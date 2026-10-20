@@ -31,6 +31,7 @@ import { serializeTilingLayout } from '../../serialization/layoutSerializers/Til
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { useDashboard } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -48,11 +49,16 @@ const VIEW_TYPE_VIZ = 'viz';
  * A top level only layout that renders its panels with the TilingLayout component from @grafana/ui.
  * It is not part of the layoutRegistry as it is not selectable for rows or tabs.
  */
-export class TilingLayoutManager extends SceneObjectBase<TilingLayoutManagerState> implements DashboardLayoutManager {
+export class TilingLayoutManager
+  extends SceneObjectBase<TilingLayoutManagerState>
+  implements DashboardLayoutManager, DashboardLayoutItem
+{
   public static Component = TilingLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
   public readonly isTilingLayoutManager = true;
+  // The panels are direct children, so the manager is the layout item that panel editing and library panels look for.
+  public readonly isDashboardLayoutItem = true as const;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -89,6 +95,15 @@ export class TilingLayoutManager extends SceneObjectBase<TilingLayoutManagerStat
 
   public getOutlineChildren(): SceneObject[] {
     return this.state.panels;
+  }
+
+  // Not an item with options of its own, which also satisfies the layout manager's getOptions.
+  public getOptions(): never[] {
+    return [];
+  }
+
+  public setElementBody(body: VizPanel) {
+    // Not supported yet
   }
 
   public getAllGridTypes(): string[] {
