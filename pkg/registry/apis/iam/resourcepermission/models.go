@@ -69,14 +69,12 @@ type rbacAssignmentCreate struct {
 	SubjectID        any    // int64 for user/team, string for builtin_role
 	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
 	AssignmentColumn string // "user_id", "team_id", or "role"
-	DatasourceType   string // e.g. "loki"
 }
 
 func (g *rbacAssignmentCreate) permission() accesscontrol.Permission {
 	p := accesscontrol.Permission{
-		Action:         g.Action,
-		Scope:          g.Scope,
-		DatasourceType: g.DatasourceType,
+		Action: g.Action,
+		Scope:  g.Scope,
 	}
 	p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(p.Scope)
 	return p
@@ -92,7 +90,6 @@ type rbacAssignment struct {
 	SubjectUID       string    `xorm:"subject_uid"`
 	SubjectType      string    `xorm:"subject_type"` // 'user', 'team', or 'builtin_role'
 	IsServiceAccount bool      `xorm:"is_service_account"`
-	DatasourceType   string    `xorm:"datasource_type"`
 }
 
 // newV0ResourcePermission creates a new v0alpha1.ResourcePermission from the given groupResourceName and permission specs.
@@ -149,32 +146,31 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(ctx context.Context, ns
 
 	// parseScopeCtxCached resolves and caches scope→GRN lookups.
 	// Returns (nil, nil) for orphaned id-scoped rows so callers can skip them.
-	parseScopeCtxCached := func(scope, datasourceType string) (*groupResourceName, error) {
-		key := scope + ":" + datasourceType
-		if grn, ok := scopeCache[key]; ok {
+	parseScopeCtxCached := func(scope string) (*groupResourceName, error) {
+		if grn, ok := scopeCache[scope]; ok {
 			return grn, nil
 		}
-		grn, err := s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, scope, datasourceType)
+		grn, err := s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, scope)
 		if err != nil {
 			if idStore.IsNotFoundError(err) {
 				logger.Warn("Dropping permission with orphaned scope", "scope", scope, "error", err)
-				scopeCache[key] = nil
+				scopeCache[scope] = nil
 				return nil, nil
 			}
 			return nil, err
 		}
-		scopeCache[key] = grn
+		scopeCache[scope] = grn
 		return grn, nil
 	}
 
-	grn, err := parseScopeCtxCached(assignments[0].Scope, assignments[0].DatasourceType)
+	grn, err := parseScopeCtxCached(assignments[0].Scope)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
 		// Ensure all assignments belong to the same resource
-		parsedGrn, err := parseScopeCtxCached(assign.Scope, assign.DatasourceType)
+		parsedGrn, err := parseScopeCtxCached(assign.Scope)
 		if err != nil {
 			return nil, err
 		}
@@ -272,18 +268,12 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 }
 
 // ParseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
-// If the scope is a datasource scope, the datasourceType is used to resolve the concrete group.
-func (s *ResourcePermSqlBackend) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
-	return s.mappers.ParseScope(scope, datasourceType)
+func (s *ResourcePermSqlBackend) ParseScope(scope string) (*groupResourceName, error) {
+	return s.mappers.ParseScope(scope)
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name>
 // (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components.
-//
-// FIXME: strings.SplitN(name, "-", 3) mangles groups that contain hyphens
-// (e.g. grafana-testdata-datasource.datasource.grafana.app). A delimiter-free
-// encoding (e.g. base64-encoded group, or a different separator) is needed
-// before datasource permissions can work with hyphenated plugin IDs.
 func splitResourceName(resourceName string) (*groupResourceName, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
 	parts := strings.SplitN(resourceName, "-", 3)

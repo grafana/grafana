@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/flagext"
+	"github.com/grafana/dskit/grpcclient"
+	"github.com/grafana/dskit/middleware"
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -21,11 +24,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/flagext"
-	"github.com/grafana/dskit/grpcclient"
-	"github.com/grafana/dskit/middleware"
-	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -38,8 +36,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -78,6 +78,9 @@ type Options struct {
 	// gated on Enabled(), so a disabled bus starts nothing.
 	Subscriber  nats.Subscriber
 	WatchExpiry resource.WatchExpiry
+	// ManifestDiscovery loads the manifests the router publishes under
+	// /apis/discovery, which in-process storage reads for search.
+	ManifestDiscovery resource.ManifestDiscovery
 }
 
 // natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
@@ -293,19 +296,21 @@ func newClient(opts options.StorageOptions,
 
 		if cfg.QOSEnabled {
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
-				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-				Registerer:       reg,
-				Logger:           cfg.Logger,
+				MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+				MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+				Registerer:             reg,
+				Logger:                 cfg.Logger,
 			})
-			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
-				return nil, fmt.Errorf("failed to start queue: %w", err)
-			}
 			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
+			}
+
+			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
+				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
 
 			err = services.StartAndAwaitRunning(ctx, scheduler)
@@ -349,28 +354,9 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 	return searchClient, nil
 }
 
-// NewRemoteResourceClientFromConfig creates a unified-storage client using the
-// storage and optional search-server addresses from [grafana-apiserver].
-func NewRemoteResourceClientFromConfig(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer,
-	reg prometheus.Registerer,
-) (resource.ResourceClient, error) {
-	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
-		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
-	})
-}
-
-// NewRemoteResourceClientWithAuth creates a remote client with explicit authentication,
-// retaining the configured storage/search connections, keepalive, and instrumentation.
-func NewRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
-	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
-		return resource.NewRemoteResourceClient(tracer, conn, indexConn, auth)
-	})
-}
-
-func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Registerer, newClient func(grpc.ClientConnInterface, grpc.ClientConnInterface) (resource.ResourceClient, error)) (resource.ResourceClient, error) {
+// NewStandaloneRemoteResourceClientWithAuth creates a standalone remote client with explicit
+// authentication, using the storage and optional search-server addresses from [grafana-apiserver].
+func NewStandaloneRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	address := apiserverCfg.Key("address").MustString("")
 	if address == "" {
@@ -394,7 +380,7 @@ func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Register
 		indexConn = searchConn
 	}
 
-	client, err := newClient(storageConn, indexConn)
+	client, err := resource.NewStandaloneRemoteResourceClient(tracer, storageConn, indexConn, auth)
 	if err != nil {
 		_ = storageConn.Close()
 		if searchConn != nil {
@@ -433,12 +419,12 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 		return resourcepb.NewResourceIndexClient(cc), nil
 	}
 
-	// Mirror NewRemoteResourceClient so exchanges preserve the caller's ID token.
+	// Mirror NewStandaloneRemoteResourceClient so exchanges preserve the caller's identity.
 	if grpcClientAuth {
 		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
-		clientInt, err := resource.NewAuthnGrpcClientInterceptor(
+		clientInt, err := resourceclient.NewAuthnGrpcClientInterceptor(
 			otel.Tracer("github.com/grafana/grafana/pkg/storage/unified"),
-			resource.RemoteResourceClientConfig{
+			resourceclient.RemoteResourceClientConfig{
 				Token:            clientCfg.Token,
 				TokenExchangeURL: clientCfg.TokenExchangeURL,
 				Audiences:        []string{"resourceStore"},
@@ -446,6 +432,7 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 				AllowInsecure:    cfg.Env == setting.Dev,
 				IsDev:            cfg.Env == setting.Dev,
 			},
+			resourceclient.ModeStandalone,
 		)
 		if err != nil {
 			_ = conn.Close()
