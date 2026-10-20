@@ -24,7 +24,10 @@ export type Props = {
 export function DataLayerControl({ layer, enabledLayer, inMenu }: Props) {
   const elementId = `data-layer-${layer.state.key}`;
   const { data } = layer.useState();
-  const { isEnabled, isHidden } = (enabledLayer ?? layer).useState();
+  const enabledState = (enabledLayer ?? layer).useState();
+  // Scene data layers type these as optional. The base layer defaults to enabled and visible.
+  const isEnabled = enabledState.isEnabled !== false;
+  const isHidden = enabledState.isHidden === true;
   const { isSelected, isSelectable } = useElementSelection(layer.state.key);
   const showLoading = Boolean(data && data.state === LoadingState.Loading);
   const styles = useStyles2(getStyles);
