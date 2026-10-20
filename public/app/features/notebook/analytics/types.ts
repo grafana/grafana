@@ -311,7 +311,7 @@ export const NOTEBOOK_ADDED_CELL_TYPE = {
   MARKDOWN: 'markdown',
 } as const;
 
-export type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTEBOOK_ADDED_CELL_TYPE];
+type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTEBOOK_ADDED_CELL_TYPE];
 
 /**
  * A cell added through the "Add to notebook" option. A cell added from inside the notebook, by its own
