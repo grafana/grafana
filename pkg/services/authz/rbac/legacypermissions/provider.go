@@ -25,11 +25,7 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 		// The REST client remains lazy to avoid an apiserver cycle.
 		migrated = NewZanzanaPermissionResolver(zanzanaClient, users, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
-	loader := NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
-	if migrated != nil {
-		loader.search.callerDirectory = users
-	}
-	return loader
+	return NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
 }
 
 func ProvideClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {

@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -34,7 +33,6 @@ const userPermissionsChunkSize = 1000
 type LegacySearchService struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
 	store              store.SearchPermissionStore
-	callerDirectory    user.Service
 	staticRoles        func(context.Context) map[string]*accesscontrol.RoleDTO
 	actions            accesscontrol.ActionResolver
 	enforcementEnabled func() bool
@@ -83,7 +81,7 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		return status.Error(codes.InvalidArgument, "action and action prefix are mutually exclusive")
 	}
 	ctx = request.WithNamespace(ctx, ns.Value)
-	callerID, err := s.resolveSearchCallerID(ctx, ns, req.Caller)
+	callerID, err := s.store.GetSearchCallerID(ctx, ns, kind, uid, req.Caller.InternalId)
 	if err != nil {
 		return searchRPCError(err, codes.PermissionDenied, "caller could not be resolved")
 	}
@@ -115,20 +113,6 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		results = s.mergePermissions(withSearchDirectoryContext(ctx, requester, ns.Value), requester, options, results, enforced)
 	}
 	return streamSearchResults(ctx, stream, results, visible)
-}
-
-func (s *LegacySearchService) resolveSearchCallerID(ctx context.Context, ns types.NamespaceInfo, assertion *authzv1.LegacyPermissionIdentity) (int64, error) {
-	kind, uid := types.IdentityType(assertion.Type), assertion.Uid
-	callerID, err := s.store.GetSearchCallerID(ctx, ns, kind, uid, assertion.InternalId)
-	if !errors.Is(err, store.ErrSearchCallerNotFound) || s.callerDirectory == nil {
-		return callerID, err
-	}
-	requester := searchRequester(ns, assertion, nil)
-	found, lookupErr := s.callerDirectory.GetByUID(withSearchDirectoryContext(ctx, requester, ns.Value), &user.GetUserByUIDQuery{UID: uid})
-	if lookupErr != nil || found == nil || found.ID <= 0 || found.UID != uid || found.IsServiceAccount != (kind == types.TypeServiceAccount) || (assertion.InternalId != nil && *assertion.InternalId != found.ID) {
-		return 0, err
-	}
-	return found.ID, nil
 }
 
 func withSearchDirectoryContext(ctx context.Context, requester *legacyRequester, namespace string) context.Context {

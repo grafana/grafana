@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -17,8 +16,6 @@ type SearchPermissionStore interface {
 	GetUsersBasicRoles(context.Context, types.NamespaceInfo, []int64) (map[int64][]string, error)
 	GetSearchCallerID(context.Context, types.NamespaceInfo, types.IdentityType, string, *int64) (int64, error)
 }
-
-var ErrSearchCallerNotFound = errors.New("caller not found")
 
 func searchTables(query string, helper *legacysql.LegacyDatabaseHelper) (string, error) {
 	replacements := []string{}
@@ -54,7 +51,7 @@ func (s *SQLPermissionsStore) GetSearchCallerID(ctx context.Context, ns types.Na
 			return err
 		}
 		if !exists {
-			return ErrSearchCallerNotFound
+			return fmt.Errorf("caller not found")
 		}
 		return nil
 	})

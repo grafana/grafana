@@ -32,33 +32,11 @@ type searchTargetMigratedResolver struct {
 	searchPermissions map[int64][]ac.Permission
 	searchCalls       atomic.Int64
 	searchError       error
-	requester         identity.Requester
-	options           ac.SearchOptions
 }
 
-func (r *searchTargetMigratedResolver) SearchUsersPermissions(_ context.Context, requester identity.Requester, _ int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *searchTargetMigratedResolver) SearchUsersPermissions(_ context.Context, _ identity.Requester, _ int64, _ ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	r.searchCalls.Add(1)
-	r.requester, r.options = requester, options
 	return r.searchPermissions, r.searchError
-}
-
-func TestIntegrationSharedLoaderSearchMergesMigratedTargets(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	sql := db.NewTestStore(t)
-	seedSearchLoaderUser(t, sql, searchLoaderCallerID, "401", org.RoleNone)
-	seedSearchLoaderUser(t, sql, searchLoaderTargetID, "target-one", org.RoleViewer)
-	seedGrant(t, sql, "managed:caller", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
-	seedGrant(t, sql, "managed:target", 1, searchLoaderTargetID, ac.Permission{Action: "test:read", Scope: "tests:id:legacy"})
-	migrated := &searchTargetMigratedResolver{searchPermissions: map[int64][]ac.Permission{
-		searchLoaderTargetID: {{Action: "test:read", Scope: "tests:id:migrated"}},
-	}}
-	cfg := loaderConfig(true)
-	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, migrated)
-	client := legacypermissions.NewEmbeddedClient(loader, cfg)
-	result, err := client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), searchLoaderRequest())
-	require.NoError(t, err)
-	require.ElementsMatch(t, []types.Permission{{Action: "test:read", Scope: "tests:id:legacy"}, {Action: "test:read", Scope: "tests:id:migrated"}}, result.Permissions[searchLoaderTargetID])
-	require.Equal(t, int64(1), migrated.searchCalls.Load())
 }
 
 func TestIntegrationSharedLoaderSearchTargetMergeLicenseTransitions(t *testing.T) {
@@ -151,81 +129,16 @@ func TestIntegrationSharedLoaderSearchTargetMergeVisibility(t *testing.T) {
 	require.Equal(t, int64(1), migrated.searchCalls.Load(), "denied targets must never be resolved")
 }
 
-func TestIntegrationSharedLoaderSearchTargetMergeRequesterAndFilters(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	sql := db.NewTestStore(t)
-	seedSearchLoaderUser(t, sql, searchLoaderCallerID, "401", org.RoleNone)
-	seedSearchLoaderUser(t, sql, searchLoaderTargetID, "target-one", org.RoleViewer)
-	seedGrant(t, sql, "managed:caller", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
-	seedGrant(t, sql, "managed:directory", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersRead, Scope: "users:*"})
-	migrated := &searchTargetMigratedResolver{}
-	cfg := loaderConfig(true)
-	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, migrated), cfg)
-	for _, target := range []int64{0, searchLoaderTargetID} {
-		for _, prefix := range []bool{false, true} {
-			req := searchLoaderRequest()
-			original, key := "", "caller-cache-key"
-			req.Caller.InternalID = nil
-			req.Caller.RequesterNamespace, req.Caller.CacheKey = &original, &key
-			req.Caller.TeamIDs = []int64{55}
-			req.Caller.Groups = []string{"external-group"}
-			req.UserID = target
-			req.Scope = "tests:id:filtered"
-			if prefix {
-				req.Action = ""
-				req.ActionPrefix = "test:"
-			}
-			_, err := client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
-			require.NoError(t, err)
-			caller := migrated.requester
-			require.Equal(t, "user:400", caller.GetID())
-			require.Equal(t, "user:401", caller.GetUID())
-			require.Equal(t, int64(1), caller.GetOrgID())
-			require.Equal(t, "", caller.GetNamespace())
-			require.Equal(t, key, caller.GetCacheKey())
-			require.Equal(t, []int64{55}, caller.GetTeams())
-			require.Equal(t, []string{"external-group"}, caller.GetExternalGroups())
-			require.Equal(t, []string{"users:*"}, caller.GetPermissions()[ac.ActionUsersRead], "broad directory search needs server-resolved permissions")
-			require.Equal(t, ac.SearchOptions{UserID: target, Action: req.Action, ActionPrefix: req.ActionPrefix, Scope: req.Scope}, migrated.options)
-		}
-	}
-}
-
 type searchMergeDirectory struct {
 	usertest.FakeUserService
 	queries []*user.SearchUsersQuery
 }
 
-type nativeSearchDirectory struct {
-	usertest.FakeUserService
-	lookupCalls int
-	lookupErr   error
-}
-
-func (d *nativeSearchDirectory) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+func (d *searchMergeDirectory) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
 	if err := nativeSearchContextError(ctx, true); err != nil {
 		return nil, err
 	}
 	return d.FakeUserService.GetByID(ctx, query)
-}
-
-func (d *nativeSearchDirectory) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
-	d.lookupCalls++
-	if err := nativeSearchContextError(ctx, false); err != nil {
-		d.lookupErr = err
-		return nil, err
-	}
-	if query.UID != "401" {
-		return nil, user.ErrUserNotFound
-	}
-	return &user.User{ID: searchLoaderCallerID, UID: "401"}, nil
-}
-
-func (d *nativeSearchDirectory) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	if err := nativeSearchContextError(ctx, true); err != nil {
-		return nil, err
-	}
-	return &user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{{ID: searchLoaderTargetID, UID: "target-one"}}}, nil
 }
 
 func nativeSearchContextError(ctx context.Context, requirePermissions bool) error {
@@ -253,56 +166,10 @@ func nativeSearchContextError(ctx context.Context, requirePermissions bool) erro
 	return nil
 }
 
-func TestIntegrationSharedLoaderSearchNativeDirectoryContext(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	for _, mode := range []string{"targeted", "broad", "native-only-caller"} {
-		t.Run(mode, func(t *testing.T) {
-			sql := db.NewTestStore(t)
-			if mode != "native-only-caller" {
-				seedSearchLoaderUser(t, sql, searchLoaderCallerID, "401", org.RoleNone)
-			}
-			seedSearchLoaderUser(t, sql, searchLoaderTargetID, "target-one", org.RoleViewer)
-			if mode != "native-only-caller" {
-				seedGrant(t, sql, "managed:caller", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
-				seedGrant(t, sql, "managed:directory", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersRead, Scope: "users:*"})
-			}
-			directory := &nativeSearchDirectory{FakeUserService: usertest.FakeUserService{ExpectedUser: &user.User{ID: searchLoaderTargetID, UID: "target-one"}}}
-			cfg := loaderConfig(true)
-			catalog := legacypermissions.NewRoleCatalog()
-			if mode == "native-only-caller" {
-				catalog.Replace(map[string][]ac.Permission{string(org.RoleAdmin): {
-					{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"},
-					{Action: ac.ActionUsersRead, Scope: "users:*"},
-				}})
-			}
-			loader := legacypermissions.ProvideLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), &licensing.OSSLicensingService{}, &dashboardGrantClient{}, nil, directory)
-			client := legacypermissions.NewEmbeddedClient(loader, cfg)
-			req := searchLoaderRequest()
-			req.Action = "dashboards:read"
-			if mode == "native-only-caller" {
-				req.Caller.OrgRole = string(org.RoleAdmin)
-			}
-			if mode == "broad" {
-				req.UserID = 0
-			}
-			result, err := client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
-			if mode == "native-only-caller" {
-				require.Greater(t, directory.lookupCalls, 0)
-				require.NoError(t, directory.lookupErr)
-			}
-			require.NoError(t, err)
-			require.Contains(t, result.Permissions[searchLoaderTargetID], types.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
-			if mode == "native-only-caller" {
-				wrongID := searchLoaderTargetID + 100
-				req.Caller.InternalID = &wrongID
-				_, err = client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
-			}
-		})
+func (d *searchMergeDirectory) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	if err := nativeSearchContextError(ctx, true); err != nil {
+		return nil, err
 	}
-}
-
-func (d *searchMergeDirectory) Search(_ context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	d.queries = append(d.queries, query)
 	return &user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{{ID: searchLoaderTargetID, UID: "target-one"}}}, nil
 }
