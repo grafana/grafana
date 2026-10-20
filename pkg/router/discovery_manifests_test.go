@@ -355,6 +355,25 @@ func TestBuildDiscoveryOpenAPIWithoutSchemas(t *testing.T) {
 // TestReconcileSkipsTheReservedDiscoveryGroup checks that no source can
 // install a backend for the discovery group, which the router serves itself,
 // even one whose source did not drop it.
+func TestReconcileSkipsInvalidGroupNames(t *testing.T) {
+	invalid := &fakeBackend{key: "invalid", group: testAPIGroup("Not_A.Group", "v1")}
+	other := &fakeBackend{key: "other", group: testAPIGroup(manifestTestGroup, "v1")}
+	r := NewGrafanaRouter(staticLoader{backends: []Backend{invalid, other}}, nil)
+	require.NoError(t, r.reconcile(t.Context()))
+	require.NotContains(t, r.served, "Not_A.Group")
+	require.Contains(t, r.served, manifestTestGroup)
+
+	// Every advertised group can be dispatched.
+	var list metav1.APIGroupList
+	require.NoError(t, json.Unmarshal(r.apiGroupList.Load().body, &list))
+	for _, g := range list.Groups {
+		require.NotEqual(t, "Not_A.Group", g.Name)
+	}
+	var index handler3.OpenAPIV3Discovery
+	require.NoError(t, json.Unmarshal(r.openapiIndex.Load().body, &index))
+	require.NotContains(t, index.Paths, "apis/Not_A.Group/v1")
+}
+
 func TestReconcileSkipsTheReservedDiscoveryGroup(t *testing.T) {
 	claim := &fakeBackend{key: "claim", group: testAPIGroup(discoveryGroup, "v1")}
 	other := &fakeBackend{key: "other", group: testAPIGroup(manifestTestGroup, "v1")}

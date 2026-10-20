@@ -682,6 +682,14 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			logging.FromContext(ctx).Warn("router: skipping backend for the reserved discovery group", "source", b.Source(), "key", b.Key())
 			continue
 		}
+		if !utils.IsAPIGroup(group) {
+			// Requests are dispatched by apiGroup, which reads no group from an
+			// invalid name, so such a backend could be advertised but never
+			// reached. Aggregate discovery, for one, reports whatever groups a
+			// target lists.
+			logging.FromContext(ctx).Warn("router: skipping backend with an invalid group name", "group", group, "source", b.Source(), "key", b.Key())
+			continue
+		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
