@@ -1671,7 +1671,8 @@
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T11:47:50Z"
+        "creationTimestamp": "2026-03-11T11:47:50Z",
+        "deletionTimestamp": "2026-10-15T14:41:56Z"
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
