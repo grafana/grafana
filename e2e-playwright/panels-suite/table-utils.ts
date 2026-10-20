@@ -72,3 +72,19 @@ export const getSelectedFilterCount = async (
 
   return result;
 };
+
+export const getRangeFilterValueCount = async (
+  filterContainer: Locator,
+  selectors: E2ESelectorGroups
+): Promise<number> => {
+  const histogram = filterContainer.getByTestId(
+    selectors.components.Panels.Visualization.TableNG.Filters.Range.histogram
+  );
+  await expect(histogram).toBeVisible();
+  const label = await histogram.getAttribute('aria-label');
+  const count = label?.match(/Value distribution, (\d+) finite values/)?.[1];
+  if (count === undefined) {
+    throw new Error(`Could not read numeric filter value count from histogram label: ${label}`);
+  }
+  return Number(count);
+};

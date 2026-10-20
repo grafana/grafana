@@ -11123,6 +11123,7 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "filter-popup-row-count": "{{selected}} of {{total}} rows",
       "footer": {
         "reducer": {
           "count": "Count"
@@ -11141,21 +11142,15 @@
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "range": {
         "apply": "Apply",
-        "cancel": "Cancel",
-        "clear": "Clear",
         "empty": "No finite values match the other filters.",
         "end": "End",
         "histogram": "Value distribution, {{amount}} finite values",
         "invalid": "Enter valid bounds with minimum no greater than maximum.",
         "label": "Filter {{field}}",
-        "matches": "{{amount}} of {{total}} rows match",
         "maximum": "Maximum",
         "minimum": "Minimum",
-        "missing": "Include missing / non-finite values ({{amount}})",
         "start": "Start",
-        "timezone": "Timezone: {{timeZone}}",
-        "unbounded": "No limit",
-        "units": "Exact bounds use raw values (field unit: {{unit}})."
+        "unbounded": "No limit"
       },
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",

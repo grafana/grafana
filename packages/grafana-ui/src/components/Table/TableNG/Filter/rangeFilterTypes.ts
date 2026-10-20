@@ -2,7 +2,7 @@ import { type Field } from '@grafana/data';
 
 import { type TableRow } from '../types';
 
-export type Range = { min?: number; max?: number; includeMissing: boolean };
+type Range = { min?: number; max?: number; includeMissing: boolean };
 
 export interface RangeFilterProps {
   field: Field;
