@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apiserver
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
