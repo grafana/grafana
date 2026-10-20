@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // datasourceAudience is the audience datasource API servers accept for every
@@ -14,15 +16,26 @@ import (
 // those groups names it rather than the group itself.
 const datasourceAudience = "*.datasource.grafana.app"
 
-// VerifyAccessTokenForRequest verifies token as authnlib.VerifyAccessTokenForRequest
-// does: with the configured audiences, or else the API group req is addressed
-// to. For a request to a datasource group, it also accepts datasourceAudience.
+// VerifyAccessTokenForRequest verifies token with verifier, which checks the
+// configured audiences. If only the audience check fails, it verifies token
+// again with the API group req is addressed to (see utils.APIGroupFromRequest)
+// as the allowed audience, or datasourceAudience for a datasource group. keys
+// must be the keys verifier uses; without them, or for a request to no API
+// group, only the configured audiences are accepted.
 func VerifyAccessTokenForRequest(ctx context.Context, token string, req *http.Request, verifier authnlib.Verifier[authnlib.AccessTokenClaims], keys authnlib.KeyRetriever) (*authnlib.Claims[authnlib.AccessTokenClaims], error) {
-	claims, err := authnlib.VerifyAccessTokenForRequest(ctx, token, req, verifier, keys)
-	if !errors.Is(err, authnlib.ErrInvalidAudience) || keys == nil || !isDatasourceGroup(authnlib.APIGroupFromRequest(req)) {
+	claims, err := verifier.Verify(ctx, token)
+	if !errors.Is(err, authnlib.ErrInvalidAudience) || keys == nil {
 		return claims, err
 	}
-	return authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{datasourceAudience}}, keys).Verify(ctx, token)
+	group := utils.APIGroupFromRequest(req)
+	if group == "" {
+		return nil, err
+	}
+	audiences := []string{group}
+	if isDatasourceGroup(group) {
+		audiences = append(audiences, datasourceAudience)
+	}
+	return authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: audiences}, keys).Verify(ctx, token)
 }
 
 // isDatasourceGroup reports whether group is <type>.datasource.grafana.app for
