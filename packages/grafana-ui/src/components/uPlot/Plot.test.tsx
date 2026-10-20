@@ -207,7 +207,7 @@ describe('UPlotChart', () => {
     // (e.g. AnnotationsPlugin) rely on no render landing in between, which only holds while the plot is
     // constructed in the same commit's layout phase. Constructing it in a passive effect caused annotations
     // to intermittently never render.
-    it('constructs uPlot in the layout phase of the commit, on mount and on config change', () => {
+    it('has constructed uPlot by the time sibling layout effects run, on mount and on config change', () => {
       const { data, config } = mockData();
       const plotsConstructedAtLayoutEffect: number[] = [];
       const recordPlotCount = () => {
@@ -236,6 +236,8 @@ describe('UPlotChart', () => {
         </>
       );
 
+      // The probe runs after the layout effects of UPlotChart and before its passive effects. If a passive effect
+      // constructs uPlot, the probe records [0, 1].
       expect(plotsConstructedAtLayoutEffect).toEqual([1, 2]);
     });
   });
