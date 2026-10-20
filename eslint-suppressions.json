@@ -1546,7 +1546,7 @@
   },
   "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 8
+      "count": 6
     }
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.tsx": {
@@ -1655,12 +1655,12 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts": {
