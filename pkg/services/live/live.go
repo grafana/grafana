@@ -185,7 +185,7 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, numLocalSubscribersGetter, configProvider)
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -23,23 +25,67 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/live/model"
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 )
+
+// numLocalSubscribersGetter reports how many clients of this pod are subscribed
+// to a channel. Centrifuge has no unsubscribe hook we can hang teardown off, so
+// presence polling is how a watch learns its last subscriber left.
+type numLocalSubscribersGetter interface {
+	GetNumLocalSubscribers(channel string) (int, error)
+}
+
+// defaultCheckInterval and defaultMaxZeroChecks mirror runstream.Manager: poll
+// subscriber presence every 5s and stop after 3 consecutive empty checks, so
+// navigating away and straight back reuses the watch instead of reopening it.
+const (
+	defaultCheckInterval = 5 * time.Second
+	defaultMaxZeroChecks = 3
+)
+
+// watchKey identifies one upstream watch. The channel is part of the key, so
+// every subscriber gets its own watch and the apiserver authorizes the stream
+// for the subscribing user.
+type watchKey struct {
+	namespace string
+	gvr       schema.GroupVersionResource
+	name      string
+	channel   string
+}
 
 // WatchRunner will start a watch task and broadcast results
 type WatchRunner struct {
 	publisher      model.ChannelPublisher
+	subscribers    numLocalSubscribersGetter
 	configProvider apiserver.RestConfigProvider
 
+	// newClient is a seam for tests, which cannot stand up a loopback apiserver.
+	newClient func(ctx context.Context) (dynamic.Interface, error)
+
+	checkInterval time.Duration
+	maxZeroChecks int
+
 	watchingMu sync.Mutex
-	watching   map[string]*watcher
+	watching   map[watchKey]*watcher
 }
 
-func NewWatchRunner(publisher model.ChannelPublisher, configProvider apiserver.RestConfigProvider) *WatchRunner {
-	return &WatchRunner{
+func NewWatchRunner(publisher model.ChannelPublisher, subscribers numLocalSubscribersGetter, configProvider apiserver.RestConfigProvider) *WatchRunner {
+	r := &WatchRunner{
 		publisher:      publisher,
+		subscribers:    subscribers,
 		configProvider: configProvider,
-		watching:       make(map[string]*watcher),
+		checkInterval:  defaultCheckInterval,
+		maxZeroChecks:  defaultMaxZeroChecks,
+		watching:       make(map[watchKey]*watcher),
 	}
+	r.newClient = func(ctx context.Context) (dynamic.Interface, error) {
+		cfg, err := r.configProvider.GetRestConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return dynamic.NewForConfig(cfg)
+	}
+	return r
 }
 
 func (b *WatchRunner) GetHandlerForPath(_ string) (model.ChannelHandler, error) {
@@ -49,7 +95,7 @@ func (b *WatchRunner) GetHandlerForPath(_ string) (model.ChannelHandler, error) 
 // Valid paths look like: {version}/{resource}[={name}]/{user.uid}
 // * v0alpha1/dashboards/u12345
 // * v0alpha1/dashboards=ABCD/u12345
-func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	// To make sure we do not share resources across users, include the UID in the path
 	userID := u.GetIdentifier()
 	if u.GetIdentityType() == types.TypeAnonymous {
@@ -57,15 +103,28 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 	} else if userID == "" {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("missing user identity")
 	}
-	if !strings.HasSuffix(e.Path, userID) {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("path must end with user uid (%s)", userID)
+
+	// Parse before anything else: it carries the exact user check, and both it and
+	// the group gate below must run on every subscribe, not only when a watch is
+	// created. Reusing an existing watcher without them would let a user attach to
+	// a stream opened for someone else.
+	gvr, name, err := parseWatchRequest(e.Channel, userID)
+	if err != nil {
+		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
+
+	// Test this with only provisioning support -- then we can evaluate a broader rollout
+	if gvr.Group != provisioning.GROUP {
+		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied,
+			fmt.Errorf("watching provisioned resources is only allowed for provisioning (for now)")
+	}
+
+	key := watchKey{namespace: u.GetNamespace(), gvr: gvr, name: name, channel: e.Channel}
 
 	b.watchingMu.Lock()
 	defer b.watchingMu.Unlock()
 
-	current, ok := b.watching[e.Channel]
-	if ok && !current.done {
+	if current, ok := b.watching[key]; ok && current.attach(e.Channel) {
 		return model.SubscribeReply{
 			JoinLeave: false,
 			Presence:  false,
@@ -73,31 +132,16 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		}, backend.SubscribeStreamStatusOK, nil
 	}
 
-	// Try to start a watcher for this request
-	gvr, name, err := parseWatchRequest(e.Channel, userID)
+	uclient, err := b.newClient(ctx)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
 
-	// Test this with only provisiong support -- then we can evaluate a broader rollout
-	if gvr.Group != provisioning.GROUP {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied,
-			fmt.Errorf("watching provisioned resources is OK allowed (for now)")
-	}
-
-	// doesn't matter what GetRestConfig sees for context, matters for watch below
-	cfg, err := b.configProvider.GetRestConfig(context.Background())
-	if err != nil {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
-	}
-
-	// add user to both requester and authInfo context keys, older implementations are still using requester
-	ctx := identity.WithRequester(types.WithAuthInfo(context.Background(), u), u)
-	uclient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
-	}
-	client := uclient.Resource(gvr).Namespace(u.GetNamespace())
+	// The watch outlives this subscribe request, so it cannot borrow its context.
+	// The requester is what the loopback transport hands the apiserver, which is
+	// what authorizes the stream.
+	watchCtx, cancel := context.WithCancel(identity.WithRequester(context.Background(), u))
+	client := uclient.Resource(gvr).Namespace(key.namespace)
 
 	opts := v1.ListOptions{}
 	if len(name) > 1 {
@@ -114,26 +158,51 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		}
 	}
 
-	watch, err := client.Watch(ctx, opts)
+	stream, err := client.Watch(watchCtx, opts)
 	if err != nil {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
+		cancel()
+		return model.SubscribeReply{}, watchErrorStatus(err), err
 	}
 
-	current = &watcher{
-		ns:        u.GetNamespace(),
-		channel:   e.Channel,
-		publisher: b.publisher,
-		watch:     watch,
+	current := &watcher{
+		runner:      b,
+		key:         key,
+		ns:          key.namespace,
+		publisher:   b.publisher,
+		subscribers: b.subscribers,
+		watch:       stream,
+		cancel:      cancel,
+		channels:    map[string]int{e.Channel: 0},
 	}
 
-	b.watching[e.Channel] = current
-	go current.run(ctx)
+	b.watching[key] = current
+	go current.run(watchCtx)
 
 	return model.SubscribeReply{
 		JoinLeave: false, // need unsubscribe envents
 		Presence:  false,
 		Recover:   false,
 	}, backend.SubscribeStreamStatusOK, nil
+}
+
+// remove drops the watcher from the registry, but only when it is still the one
+// registered: a successor may already have taken the key while this one stopped.
+func (b *WatchRunner) remove(key watchKey, w *watcher) {
+	b.watchingMu.Lock()
+	defer b.watchingMu.Unlock()
+	if b.watching[key] == w {
+		delete(b.watching, key)
+	}
+}
+
+// watchErrorStatus keeps an authorization failure recognizable to the frontend.
+// Reporting every watch error as "unknown channel" hides a 403 behind a channel
+// error, and the client's polling fallback is what then surfaces the real cause.
+func watchErrorStatus(err error) backend.SubscribeStreamStatus {
+	if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+		return backend.SubscribeStreamStatusPermissionDenied
+	}
+	return backend.SubscribeStreamStatusNotFound
 }
 
 func parseWatchRequest(channel string, user string) (gvr schema.GroupVersionResource, name string, err error) {
@@ -168,47 +237,152 @@ func (b *WatchRunner) OnPublish(_ context.Context, u identity.Requester, e model
 }
 
 type watcher struct {
-	ns        string
-	channel   string
-	publisher model.ChannelPublisher
-	done      bool
-	watch     watch.Interface
+	runner      *WatchRunner
+	key         watchKey
+	ns          string
+	publisher   model.ChannelPublisher
+	subscribers numLocalSubscribersGetter
+	watch       watch.Interface
+	cancel      context.CancelFunc
+
+	mu       sync.Mutex
+	stopping bool
+	// channels maps a subscriber channel to its consecutive zero-subscriber
+	// checks. A watcher with no channels left has nothing to publish to.
+	channels map[string]int
+}
+
+// attach registers a subscriber channel and resets its idle count. It reports
+// false once the watcher is stopping, so the caller opens a fresh watch rather
+// than joining one that is already tearing down.
+func (w *watcher) attach(channel string) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.stopping {
+		return false
+	}
+	w.channels[channel] = 0
+	return true
+}
+
+// detach drops a channel and reports how many remain.
+func (w *watcher) detach(channel string) int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	delete(w.channels, channel)
+	return len(w.channels)
+}
+
+// channelList snapshots the subscriber channels so publishing happens outside
+// the lock: in HA mode the publisher writes to Redis and must not block attach.
+func (w *watcher) channelList() []string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	channels := make([]string, 0, len(w.channels))
+	for channel := range w.channels {
+		channels = append(channels, channel)
+	}
+	return channels
+}
+
+// channelCount reports how many subscriber channels the watcher still serves.
+func (w *watcher) channelCount() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return len(w.channels)
+}
+
+// idleChannels returns the channels that have had no local subscriber for
+// maxZeroChecks consecutive polls. A channel whose count could not be read is
+// left alone: a presence lookup failing is not evidence that nobody is
+// listening, and treating it as such would tear down a live watch.
+func (w *watcher) idleChannels(logger logging.Logger) []string {
+	var idle []string
+	for _, channel := range w.channelList() {
+		full := orgchannel.PrependK8sNamespace(w.ns, channel)
+		num, err := w.subscribers.GetNumLocalSubscribers(full)
+		if err != nil {
+			logger.Error("error checking num subscribers", "channel", full, "err", err)
+			continue
+		}
+
+		w.mu.Lock()
+		if _, ok := w.channels[channel]; !ok {
+			// Detached while we were polling.
+			w.mu.Unlock()
+			continue
+		}
+		if num > 0 {
+			w.channels[channel] = 0
+		} else if w.channels[channel]++; w.channels[channel] >= w.runner.maxZeroChecks {
+			idle = append(idle, channel)
+		}
+		w.mu.Unlock()
+	}
+	return idle
+}
+
+// stop is the watcher's only teardown path: it closes the upstream watch,
+// cancels its context and unregisters it. stopping is set first and under
+// w.mu alone, so a concurrent attach refuses before remove takes watchingMu —
+// the two locks are never held in the opposite order.
+func (w *watcher) stop() {
+	w.mu.Lock()
+	w.stopping = true
+	w.mu.Unlock()
+
+	w.watch.Stop()
+	w.cancel()
+	w.runner.remove(w.key, w)
 }
 
 func (b *watcher) run(ctx context.Context) {
-	logger := logging.FromContext(ctx).With("channel", b.channel)
+	logger := logging.FromContext(ctx).With("channel", b.key.channel, "resource", b.key.gvr.Resource)
+	defer b.stop()
+
+	ticker := time.NewTicker(b.runner.checkInterval)
+	defer ticker.Stop()
 
 	ch := b.watch.ResultChan()
 	for {
 		select {
 		// This is sent when there are no longer any subscriptions
 		case <-ctx.Done():
-			logger.Info("context done", "channel", b.channel)
-			b.watch.Stop()
-			b.done = true
+			logger.Info("context done")
 			return
+
+		case <-ticker.C:
+			remaining := b.channelCount()
+			for _, channel := range b.idleChannels(logger) {
+				logger.Debug("no active subscribers, dropping channel", "channel", channel)
+				remaining = b.detach(channel)
+			}
+			if remaining == 0 {
+				logger.Debug("no active subscribers, stopping watch")
+				return
+			}
 
 		// Each watch event
 		case event, ok := <-ch:
 			if !ok {
-				logger.Info("watch stream broken", "channel", b.channel)
-				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
-				return
+				logger.Info("watch stream broken")
+				return // will force reconnect from the frontend
 			}
 
 			data, err := marshalWatchEvent(event)
 			if err != nil {
-				logger.Error("marshal error", "channel", b.channel, "err", err)
+				logger.Error("marshal error", "err", err)
 				continue
 			}
 
-			err = b.publisher(b.ns, b.channel, data)
-			if err != nil {
-				logger.Error("publish error", "channel", b.channel, "err", err)
-				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
-				continue
+			for _, channel := range b.channelList() {
+				if err := b.publisher(b.ns, channel, data); err != nil {
+					logger.Error("publish error", "channel", channel, "err", err)
+					// The channel is unusable; the frontend reconnects and resubscribes.
+					if b.detach(channel) == 0 {
+						return
+					}
+				}
 			}
 		}
 	}
