@@ -151,6 +151,12 @@ type Service struct {
 	singleFlight              singleflight.Group
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
+
+	// ownedRoles names the roles each ReplaceFixedRoles owner registered.
+	// Guarded by rolesMu.
+	ownedRoles map[string]map[string]bool
+	// seedMu serialises writing the declared roles to the database.
+	seedMu sync.Mutex
 }
 
 func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
@@ -601,6 +607,9 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	_, span := tracer.Start(ctx, "accesscontrol.acimpl.RegisterFixedRoles")
 	defer span.End()
 
+	s.seedMu.Lock()
+	defer s.seedMu.Unlock()
+
 	s.rolesMu.Lock()
 	registrations := s.registrations.Slice()
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
@@ -716,6 +725,8 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	}
 
 	if updatedBasicRoles {
+		s.seedMu.Lock()
+		defer s.seedMu.Unlock()
 		s.rolesMu.RLock()
 		rolesSnapshot := s.getBasicRolePermissionsLocked()
 		s.rolesMu.RUnlock()

@@ -401,6 +401,14 @@ func (s *Seeder) ClearPluginRoles(ID string) {
 	}
 }
 
+// ForgetFixedRoles stops counting the named fixed roles as seeded, so the next
+// RemoveAbsentRoles deletes them unless they are seeded again.
+func (s *Seeder) ForgetFixedRoles(names ...string) {
+	for _, name := range names {
+		delete(s.seededFixedRoles, name)
+	}
+}
+
 func (s *Seeder) MarkSeededAlready() {
 	s.hasSeededAlready = true
 }

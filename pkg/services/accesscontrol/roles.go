@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -450,6 +451,13 @@ func (m *RegistrationList) Append(regs ...RoleRegistration) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 	m.registrations = append(m.registrations, regs...)
+}
+
+// Replace removes the registrations remove reports and appends regs, in one step.
+func (m *RegistrationList) Replace(remove func(registration RoleRegistration) bool, regs ...RoleRegistration) {
+	m.mx.Lock()
+	defer m.mx.Unlock()
+	m.registrations = append(slices.DeleteFunc(m.registrations, remove), regs...)
 }
 
 func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
