@@ -658,10 +658,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagPreferLibraryPanelTitle
-	// Prefer library panel title over viz panel title.
-	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
-
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
