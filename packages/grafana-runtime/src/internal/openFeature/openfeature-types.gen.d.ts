@@ -25,7 +25,6 @@ declare module "@openfeature/core" {
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
     | "externalServiceAccounts"
