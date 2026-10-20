@@ -366,7 +366,6 @@ const injectedRtkApi = api
             to: queryArg.to,
             userId: queryArg.userId,
             userUID: queryArg.userUid,
-            alertId: queryArg.alertId,
             alertUID: queryArg.alertUid,
             dashboardId: queryArg.dashboardId,
             dashboardUID: queryArg.dashboardUid,
@@ -1946,9 +1945,6 @@ export type GetAnnotationsApiArg = {
   userId?: number;
   /** Limit response to annotations created by a specific user, identified by UID. */
   userUid?: string;
-  /** Find annotations for a specified alert rule by its ID.
-    deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead. */
-  alertId?: number;
   /** Find annotations for a specified alert rule by its UID. */
   alertUid?: string;
   /** Find annotations that are scoped to a specific dashboard */
@@ -3365,8 +3361,10 @@ export type RevokeAuthTokenCmd = {
 };
 export type Json = object;
 export type Annotation = {
+  /** Only set on alert annotations created before alertUID was recorded. Use alertUID instead. */
   alertId?: number;
   alertName?: string;
+  alertUID?: string;
   avatarUrl?: string;
   created?: number;
   /** Deprecated: Use DashboardUID and OrgID instead */

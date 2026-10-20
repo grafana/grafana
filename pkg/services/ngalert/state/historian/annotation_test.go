@@ -96,6 +96,7 @@ func TestAnnotationHistorian(t *testing.T) {
 
 		require.NoError(t, err)
 		query := store.lastQuery
+		require.Equal(t, "my-rule", query.AlertUID)
 		require.Equal(t, now.UnixMilli(), query.To)
 		require.Equal(t, now.Add(-10*time.Second).UnixMilli(), query.From)
 	})
@@ -253,16 +254,27 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 
 func createAnnotation() annotations.Item {
 	return annotations.Item{
-		ID:      1,
-		OrgID:   1,
-		AlertID: 1,
-		Text:    "MyAlert {a=b} - No data",
-		Data:    simplejson.New(),
-		Epoch:   time.Now().UnixNano() / int64(time.Millisecond),
+		ID:       1,
+		OrgID:    1,
+		AlertUID: "my-rule",
+		Text:     "MyAlert {a=b} - No data",
+		Data:     simplejson.New(),
+		Epoch:    time.Now().UnixNano() / int64(time.Millisecond),
 	}
 }
 
 func TestBuildAnnotations(t *testing.T) {
+	t.Run("identifies the rule by UID only", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		rule := history_model.RuleMeta{ID: 7, UID: "my-rule"}
+
+		items := backend.buildAnnotations(rule, []state.StateTransition{makeStateTransition()}, log.NewNopLogger())
+
+		require.Len(t, items, 1)
+		require.Equal(t, "my-rule", items[0].AlertUID)
+		require.Zero(t, items[0].AlertID)
+	})
+
 	t.Run("data wraps nil values when values are nil", func(t *testing.T) {
 		backend := createTestAnnotationBackendSut(t)
 		logger := log.NewNopLogger()

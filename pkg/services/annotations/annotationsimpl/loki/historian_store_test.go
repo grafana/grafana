@@ -3,10 +3,8 @@ package loki
 import (
 	"context"
 	"encoding/json"
-	"maps"
 	"math/rand"
 	"net/url"
-	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -83,32 +81,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		fakeLokiClient := NewFakeLokiClient()
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
-		t.Run("can query history by alert id", func(t *testing.T) {
-			rule := dashboardRules[dashboard1.UID][0]
-
-			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
-			}
-
-			query := annotations.ItemQuery{
-				OrgID:   1,
-				AlertID: rule.ID,
-				From:    start.UnixMilli(),
-				To:      start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
-			}
-			res, err := store.Get(
-				context.Background(),
-				query,
-				&annotation_ac.AccessResources{
-					Dashboards: map[string]int64{
-						dashboard1.UID: dashboard1.ID,
-					},
-				},
-			)
-			require.NoError(t, err)
-			require.Len(t, res, numTransitions)
-		})
-
 		t.Run("can query history by alert uid", func(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 
@@ -133,35 +105,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.Len(t, res, numTransitions)
-		})
-
-		t.Run("should return ErrLokiStoreNotFound if rule is not found by ID", func(t *testing.T) {
-			rules := slices.Concat(slices.Collect(maps.Values(dashboardRules))...)
-			// In Postgres ID is integer, so limit range. Zero is excluded because AlertID 0 means "no alert filter".
-			id := rand.Int63n(999) + 1
-			// make sure id is not known
-			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {
-				return rule.ID == id
-			}) >= 0 {
-				id = rand.Int63n(999) + 1
-			}
-
-			query := annotations.ItemQuery{
-				OrgID:   1,
-				AlertID: id,
-				From:    start.UnixMilli(),
-				To:      start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
-			}
-			_, err := store.Get(
-				context.Background(),
-				query,
-				&annotation_ac.AccessResources{
-					Dashboards: map[string]int64{
-						dashboard1.UID: dashboard1.ID,
-					},
-				},
-			)
-			require.ErrorIs(t, err, ErrLokiStoreNotFound)
 		})
 
 		t.Run("should return empty response if rule is not found by UID", func(t *testing.T) {
@@ -384,7 +327,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				transition := transitions[i]
 
 				expected := &annotations.ItemDTO{
-					AlertID:      rule.ID,
+					AlertUID:     rule.UID,
 					DashboardID:  dashboard1.ID, // nolint: staticcheck
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
@@ -641,13 +584,11 @@ func TestBuildTransition(t *testing.T) {
 
 func createTestLokiStore(t *testing.T, sql *sqlstore.SQLStore, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
-	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 
 	return &LokiHistorianStore{
-		client:    client,
-		db:        sql,
-		log:       log.NewNopLogger(),
-		ruleStore: ruleStore,
+		client: client,
+		db:     sql,
+		log:    log.NewNopLogger(),
 	}
 }
 
@@ -775,7 +716,7 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 }
 
 func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) {
-	require.Equal(t, expected.AlertID, actual.AlertID)
+	require.Equal(t, expected.AlertUID, actual.AlertUID)
 	require.Equal(t, expected.AlertName, actual.AlertName)
 	if expected.PanelID != 0 {
 		require.Equal(t, expected.PanelID, actual.PanelID)
