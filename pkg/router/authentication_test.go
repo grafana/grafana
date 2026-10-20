@@ -17,6 +17,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -139,7 +140,9 @@ func TestStandaloneRouterGroupAudience(t *testing.T) {
 	cfg.Target = []string{"router"}
 	cfg.ExtJWTAuth.JWKSUrl = server.URL
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry())
+	router, err := ProvideGrafanaRouter(cfg)
+	require.NoError(t, err)
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry(), router)
 	require.NoError(t, err)
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, (&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "test-key"))
 	require.NoError(t, err)
