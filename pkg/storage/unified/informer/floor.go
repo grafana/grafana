@@ -34,12 +34,16 @@ const (
 	// until it ages out; by TTL time the periodic re-list has long since
 	// delivered the truth. Expiry is enforced at both touch points: reads drop
 	// an expired entry rather than return it (so an orphan cannot outlive the
-	// TTL just because no event traffic triggers a sweep), and Raise amortizes a
-	// full sweep over the event stream to bound memory for keys nobody reads
-	// again.
+	// TTL just because no event traffic triggers a sweep), and every recorded
+	// announcement (Raise and Deleted alike) amortizes a full sweep over the
+	// event stream to bound memory for keys nobody reads again. Deletes have to
+	// sweep as well: a replica can receive deletes for keys whose adds were
+	// round-robined elsewhere, and a delete delivery enqueues no reconcile, so
+	// those watermarks are never visited by a read.
 	floorTTL = 15 * time.Minute
-	// sweepInterval is how often Raise scans for expired floors, so expiry cost
-	// is amortized over the event stream instead of paid per call.
+	// sweepInterval is how often a recorded announcement scans for expired
+	// floors, so expiry cost is amortized over the event stream instead of paid
+	// per call.
 	sweepInterval = time.Minute
 
 	// defaultStaleReadRetries and defaultStaleReadBackoff bound how long GetFresh
@@ -118,6 +122,7 @@ func (f *RVFloor) Deleted(namespace, name string, rv int64) {
 	rv = resource.ToSnowflakeRV(rv)
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.sweepLocked()
 	key := floorKey(namespace, name)
 	e, ok := f.floors[key]
 	if ok && e.rv > rv {
@@ -206,10 +211,13 @@ func floorKey(namespace, name string) string {
 //	grafana_provisioning_stale_reads_exhausted_total{resource}
 //
 // A retry means a read (or claim) contradicted the floor and another attempt
-// was scheduled; an exhaustion means the attempts ran out and the key was
-// surrendered to the re-list backstop. Retries without exhaustions mean the
-// floor is absorbing the lag; exhaustions mean the lag outlasts the retry
-// budget.
+// was scheduled; an exhaustion means one caller's retry budget ran out and the
+// key went back to its work queue. The controllers re-queue ErrStaleRead, so a
+// key stuck through every queue attempt counts an exhaustion per attempt, and
+// only the last one hands recovery to the periodic re-list; the jobs driver
+// spends its whole budget in one pass, so there an exhaustion is the surrender.
+// Retries without exhaustions mean the floor is absorbing the lag; exhaustions
+// mean the lag outlasts a single budget.
 type StaleReadMetrics struct {
 	retries   prometheus.Counter
 	exhausted prometheus.Counter
@@ -233,7 +241,7 @@ func NewStaleReadMetrics(reg prometheus.Registerer, resource string) *StaleReadM
 		}),
 		exhausted: promauto.With(reg).NewCounter(prometheus.CounterOpts{
 			Name:        "grafana_provisioning_stale_reads_exhausted_total",
-			Help:        "Stale-read retry budgets that ran out, surrendering the key to the periodic re-list backstop, by resource.",
+			Help:        "Stale-read retry budgets that ran out, handing the key back to its work queue and, after the caller's final attempt, to the periodic re-list backstop, by resource.",
 			ConstLabels: constLabels,
 		}),
 	}
@@ -296,18 +304,22 @@ func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, n
 	}
 
 	for attempt := 0; ; attempt++ {
-		// Re-read the watermark on every attempt: a newer announcement can land
-		// during the backoff, and a retry must not accept a read below the floor
-		// as it stands now — only comparing against the floor captured before the
-		// loop would let a read at the old floor slip through and be reconciled
-		// ahead of the newer event's own (already queued) reconcile.
+		obj, err := fetch(ctx)
+
+		// Read the watermark after the fetch returns, and on every attempt. The
+		// fetch is a network round trip, so an event landing while it is in
+		// flight — a newer write, or the delete this result predates — must still
+		// indict the result: a pre-delete object judged against the floor as it
+		// stood before the delete would otherwise pass, and the delete delivery
+		// enqueues no reconcile to correct it. Reading per attempt likewise
+		// catches announcements that land during the backoff, which a floor
+		// captured once before the loop would miss.
 		var floor int64
 		var deleted bool
 		if r.Floor != nil {
 			floor, deleted = r.Floor.Watermark(namespace, name)
 		}
 
-		obj, err := fetch(ctx)
 		switch {
 		case apierrors.IsNotFound(err) && (floor == 0 || deleted):
 			return zero, err

@@ -128,6 +128,25 @@ func TestRVFloor_ExpiredFloorNotReturnedOnRead(t *testing.T) {
 	assert.Empty(t, f.floors, "the expired entry must be dropped, not just hidden")
 }
 
+// Expiry must not depend on Raise traffic either: a replica can receive deletes
+// for keys whose adds were round-robined elsewhere, and a delete delivery
+// enqueues no reconcile, so nothing would ever read those watermarks. Recording
+// a delete sweeps for that reason.
+func TestRVFloor_DeletedSweepsExpiredEntries(t *testing.T) {
+	f := NewRVFloor()
+	now := time.Now()
+	f.now = func() time.Time { return now }
+
+	f.Deleted("ns", "orphan", rvStale)
+	now = now.Add(floorTTL + sweepInterval)
+	f.Deleted("ns", "recent", rvFresh)
+
+	assert.Len(t, f.floors, 1, "the expired watermark must be swept, not left allocated")
+	rv, deleted := f.Watermark("ns", "recent")
+	assert.Equal(t, rvFresh, rv)
+	assert.True(t, deleted)
+}
+
 func TestRVFloor_ReRaiseKeepsEntryAlive(t *testing.T) {
 	f := NewRVFloor()
 	now := time.Now()
@@ -204,6 +223,25 @@ func TestGetFresh_RetainsFloorAcrossAttempts(t *testing.T) {
 // the backoff window tightens the bar for the retries already in flight, so a
 // read at the pre-announcement floor cannot slip through and be reconciled
 // ahead of the newer event's own reconcile.
+// The watermark is read after the fetch, so a delete announced while the read
+// was in flight still indicts its result: the object the API served predates the
+// delete, and a delete delivery enqueues no reconcile that would correct an
+// accepted one.
+func TestGetFresh_RejectsStateDeletedDuringFetch(t *testing.T) {
+	floor := NewRVFloor()
+	floor.Raise(testNamespace, "r", rvStale)
+
+	got, err := GetFresh(context.Background(), FreshReader{Floor: floor, Retries: 2}, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			// Delivered mid-fetch: a watermark read before the fetch would have
+			// seen the live floor this object still meets.
+			floor.Deleted(testNamespace, "r", rvFresh)
+			return objWithRV("r", rvStale), nil
+		})
+	require.ErrorIs(t, err, ErrStaleRead)
+	assert.Nil(t, got, "a pre-delete object must not reach the caller")
+}
+
 func TestGetFresh_RefreshesFloorBetweenAttempts(t *testing.T) {
 	floor := NewRVFloor()
 	floor.Raise(testNamespace, "r", rvStale)
