@@ -137,7 +137,7 @@ By default, links open in a new tab.
 
 ### Review blocked resources
 
-When a panel tries to load content from a URL, Grafana blocks it and shows a banner at the top of the dashboard and in the panel editor.
+In most cases, when a panel tries to load content from a URL, Grafana blocks it and shows a banner at the top of the dashboard and in the panel editor.
 To load the content, complete the following steps:
 
 1. In the banner, click **Review**.
@@ -167,7 +167,7 @@ Before you allow a source, consider the following risks:
 - **Data in URLs**: Panel content can put dashboard variables and query results into URLs. The website receives that data with each request.
 - **Viewer information**: The website receives your IP address, your browser details, and the time of each request. The requests don't include the address of your Grafana instance or the dashboard, unless the panel content puts it in a URL.
 - **Content changes**: The website can change what it serves after you allow it. An approval doesn't lock the content that you reviewed.
-- **Embedded pages**: An iframe from the website can show any content in the panel, and it can load content from other websites. It can't run scripts, submit forms, or read your Grafana session or the dashboard.
+- **Embedded pages**: An iframe from the website can show any content in the panel, and it can load content from other websites. However, it can't run scripts, submit forms, or read your Grafana session or the dashboard.
 
 Only allow websites that you trust with the data on the dashboard.
 
