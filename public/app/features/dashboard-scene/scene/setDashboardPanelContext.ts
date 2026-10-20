@@ -292,9 +292,14 @@ function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
 
   const panelData = sceneGraph.getData(vizPanel).state.data;
   const snapshot = vizPanel.getPanelContext().notices?.getSnapshot();
-  const visibleStatuses = (
-    snapshot?.hostInitialized ? snapshot.items : getPanelDataStatusItems(panelData, vizPanel.state._pluginLoadError)
-  ).filter((item) => (item.origin === 'query' || item.origin === 'notice') && item.assistant !== 'hidden');
+  const visibleStatusIds = snapshot?.hostInitialized
+    ? new Set(snapshot.items.filter((item) => item.assistant !== 'hidden').map((item) => item.id))
+    : undefined;
+  const visibleStatuses = getPanelDataStatusItems(panelData, vizPanel.state._pluginLoadError).filter(
+    (item) =>
+      (item.origin === 'query' || item.origin === 'notice') &&
+      (!visibleStatusIds || visibleStatusIds.has(`external:${item.id}`))
+  );
   const visibleErrors = new Set(visibleStatuses.filter((item) => item.origin === 'query').map((item) => item.error));
   const errors = (panelData?.errors ?? (panelData?.error ? [panelData.error] : [])).filter((error) =>
     visibleErrors.has(error)
