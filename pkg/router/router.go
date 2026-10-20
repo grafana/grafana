@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -245,7 +246,9 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 
-	group := groupFromPath(path)
+	// An invalid group name gets no group, so it goes to next: no backend
+	// can serve it.
+	group := utils.APIGroupFromRequest(req)
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
@@ -340,16 +343,6 @@ func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler,
 	return next, false
 }
 
-// groupFromPath returns the group segment of an /apis/<group>[/...] path.
-// The caller guarantees the /apis/ prefix and a non-root path.
-func groupFromPath(path string) string {
-	rest := strings.TrimPrefix(path, apisPrefix+"/")
-	if i := strings.IndexByte(rest, '/'); i >= 0 {
-		rest = rest[:i]
-	}
-	return rest
-}
-
 // breakerState is the group breaker's state, read without changing it. Only
 // entries built outside newHandlerEntry, in tests, lack a view.
 func (e servingEntry) breakerState() gobreaker.State {
@@ -378,21 +371,12 @@ func (r *GrafanaRouter) owns(req *http.Request) bool {
 	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
 		return true
 	case strings.HasPrefix(path, apisPrefix+"/"):
-		return r.KnownGroup(groupFromPath(path))
+		return r.KnownGroup(utils.APIGroupFromRequest(req))
 	}
 	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
 		return group == discoveryGroup || r.KnownGroup(group)
 	}
 	return false
-}
-
-// GroupFromPath returns the group of an /apis/<group>[/...] path, or "" for
-// any other path, including the /apis root.
-func GroupFromPath(path string) string {
-	if path == apisPrefix || path == apisPrefix+"/" || (path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/")) {
-		return ""
-	}
-	return groupFromPath(path)
 }
 
 // KnownGroup reports whether group has a live backend in the current

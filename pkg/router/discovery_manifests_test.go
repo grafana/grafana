@@ -225,7 +225,7 @@ func TestServeManifestDiscovery(t *testing.T) {
 	t.Run("not a group", func(t *testing.T) {
 		require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS.md", nil)))
 		require.False(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discoveryx", nil)))
-		require.Empty(t, requestGroup("/apis/discovery/v1alpha2"), "no group metric label")
+		require.Empty(t, requestGroup(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2", nil)), "no group metric label")
 		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discoveryx/v1", nil))
 		require.Equal(t, http.StatusTeapot, rec.Code, "only the exact segment is the discovery tree")
 	})
@@ -334,7 +334,7 @@ func TestDiscoveryOpenAPI(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, serve(http.MethodGet, "/openapi/v3/apis/discovery/v9").Code)
 	require.Equal(t, http.StatusMethodNotAllowed, serve(http.MethodPost, "/openapi/v3/apis/discovery/v1alpha2").Code)
 	require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)))
-	require.Empty(t, requestGroup("/openapi/v3/apis/discovery/v1alpha2"), "no group metric label")
+	require.Empty(t, requestGroup(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)), "no group metric label")
 
 	var index handler3.OpenAPIV3Discovery
 	require.NoError(t, json.Unmarshal(serve(http.MethodGet, "/openapi/v3").Body.Bytes(), &index))

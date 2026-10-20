@@ -4,11 +4,14 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sony/gobreaker/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // unknownGroupLabel replaces groups the router does not serve, so arbitrary
@@ -130,7 +133,8 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 // /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
 // document, which is served by the same backend. The /apis/discovery tree has
 // no group.
-func requestGroup(path string) string {
+func requestGroup(req *http.Request) string {
+	path := req.URL.Path
 	if isDiscoveryPath(path) {
 		return ""
 	}
@@ -140,15 +144,25 @@ func requestGroup(path string) string {
 		}
 		return group
 	}
-	return GroupFromPath(path)
+	return utils.APIGroupFromRequest(req)
+}
+
+// namesGroup reports whether path has a non-empty segment after /apis/,
+// outside the discovery tree, even when that segment is not a valid group or
+// the path is not canonical. Its metrics then count under unknownGroupLabel,
+// not the root's empty group.
+func namesGroup(path string) bool {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	segment, _, _ := strings.Cut(rest, "/")
+	return ok && segment != "" && !isDiscoveryPath(path)
 }
 
 // instrument serves req through gr.HandleFunc with request metrics, then logs
 // the outcome. next is forwarded to HandleFunc unchanged.
 func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
-	group := requestGroup(req.URL.Path)
+	group := requestGroup(req)
 	metricGroup := group
-	if group != "" && !gr.KnownGroup(group) {
+	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
 		metricGroup = unknownGroupLabel
 	}
 	verb := metricVerb(requestVerb(req))
