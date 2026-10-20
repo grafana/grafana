@@ -2226,10 +2226,10 @@ func TestApiGetSnapshots(t *testing.T) {
 	// Add to the intervals already present in the base config (referenced by routes) rather than
 	// replacing the map, otherwise the route references become dangling and validation fails.
 	for _, interval := range []v1.TimeInterval{
-		v1.NewTimeInterval("MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
-		v1.NewTimeInterval("MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
-		v1.NewTimeInterval("TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
-		v1.NewTimeInterval("TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("MuteTimeIntervalA"), "MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("MuteTimeIntervalB"), "MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("TimeIntervalA"), "TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("TimeIntervalB"), "TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
 	} {
 		cfg.TimeIntervals[interval.UID] = interval
 	}

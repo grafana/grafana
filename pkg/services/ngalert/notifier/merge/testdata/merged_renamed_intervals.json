@@ -52,6 +52,7 @@
     ],
     "time_intervals": [
       {
+        "uid": "bXRpLTE",
         "name": "mti-1",
         "time_intervals": [
           {
@@ -65,10 +66,12 @@
         ]
       },
       {
+        "uid": "bXRpLTFfbWltaXItMTIzNDU",
         "name": "mti-1_mimir-12345",
         "time_intervals": null
       },
       {
+        "uid": "dGktMQ",
         "name": "ti-1",
         "time_intervals": [
           {
@@ -80,10 +83,12 @@
         ]
       },
       {
+        "uid": "dGktMV9taW1pci0xMjM0NQ",
         "name": "ti-1_mimir-12345",
         "time_intervals": null
       },
       {
+        "uid": "dGktMg",
         "name": "ti-2",
         "time_intervals": [
           {

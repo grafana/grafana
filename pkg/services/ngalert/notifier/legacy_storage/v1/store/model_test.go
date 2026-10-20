@@ -302,7 +302,7 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 				}
 			],
 			"time_intervals": [
-				{"name": "weekends", "time_intervals": [{"weekdays": ["saturday", "sunday"]}]}
+				{"uid": "weekends-uid", "name": "weekends", "time_intervals": [{"weekdays": ["saturday", "sunday"]}]}
 			]
 		},
 		"extra_config": [
@@ -360,6 +360,7 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 
 	require.Len(t, c.AlertmanagerConfig.TimeIntervals, 1)
 	assert.Equal(t, "weekends", c.AlertmanagerConfig.TimeIntervals[0].Name)
+	assert.Equal(t, "weekends-uid", c.AlertmanagerConfig.TimeIntervals[0].UID)
 
 	// AMConfigDB's own fields.
 	require.Len(t, c.ExtraConfigs, 1)
