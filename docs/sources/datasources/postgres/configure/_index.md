@@ -79,14 +79,14 @@ If your database is publicly accessible but protected by a firewall, you must al
 
 **Authentication section:**
 
-| Setting               | Description                                                                                                                                                                                                                                                                                                                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                             |
-| Password              | Enter the password used to connect to the PostgreSQL database. This field is optional. If left empty, the PostgreSQL client driver resolves the password using the standard [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) (`.pgpass`). To use a non-default password file location, set the `PGPASSFILE` environment variable in the Grafana server process. |
-| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible.                                                                                                                                           |
-| TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                                                                                                                                         |
-| - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                                                                                                                                    |
-| - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                                                                                                                                         |
+| Setting               | Description                                                                                                                                                                                                                                                                                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                                                                                 |
+| Password              | Enter the password used to connect to the PostgreSQL database. This field is optional. If left empty, the PostgreSQL client driver can read the password from a [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) (`.pgpass`). Refer to [Use PostgreSQL client files](#use-postgresql-client-files). |
+| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible.                                                                               |
+| TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                                                                             |
+| - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                                                                        |
+| - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                                                                             |
 
 ### TLS/SSL mode reference
 
@@ -127,6 +127,29 @@ If you select the **verify-ca** or **verify-full** mode with the **certificate c
 | TLS/SSL Root Certificate   | Provide the root certificate. Grafana uses it to verify the server certificate.            |
 | TLS/SSL Client Certificate | Optional. Provide the client certificate. Only needed when the server enforces mutual TLS. |
 | TLS/SSL Client Key         | Optional. Provide the client key. Only needed when the server enforces mutual TLS.         |
+
+### Use PostgreSQL client files
+
+If you leave **Password** or the TLS/SSL certificate settings empty, the PostgreSQL client driver can use these files from the home directory of the Grafana server process:
+
+- `.pgpass`, the [password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html)
+- `.postgresql/root.crt`, the root certificate
+- `.postgresql/postgresql.crt` and `.postgresql/postgresql.key`, the client certificate and key
+
+On Windows, the driver uses `pgpass.conf` and the certificate files in `%APPDATA%\postgresql\` instead.
+
+Grafana doesn't pass its environment variables to the data source by default, so the driver can't find these files. To use them, add `grafana-postgresql-datasource` to `forward_host_env_vars` in the Grafana configuration file, and then restart Grafana:
+
+```ini
+[plugins]
+forward_host_env_vars = grafana-postgresql-datasource
+```
+
+The driver reads the files from the directory in the `HOME` environment variable. In the Grafana Docker image, `HOME` is `/usr/share/grafana`. To use a password file in a different location, set the `PGPASSFILE` environment variable in the Grafana server process.
+
+{{< admonition type="note" >}}
+`forward_host_env_vars` passes all environment variables of the Grafana server process to the data source. The driver also uses `PG*` variables, such as `PGPASSWORD`, for settings that the data source doesn't set.
+{{< /admonition >}}
 
 ### Connect to a cloud-hosted PostgreSQL database
 
