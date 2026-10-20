@@ -37,7 +37,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, textColor?: string) => 
     wrapper: css({
       color: text,
       background,
-      padding: `3px ${theme.spacing.x1}`,
+      padding: theme.spacing(0.375, 1),
       fontSize: theme.typography.sm.fontSize,
 
       border: `solid 1px ${border}`,
