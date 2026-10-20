@@ -9,6 +9,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
@@ -20,7 +21,6 @@ import { type DashboardSceneState } from '../types/dashboard';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 afterEach(() => setTestFlags({}));
 
