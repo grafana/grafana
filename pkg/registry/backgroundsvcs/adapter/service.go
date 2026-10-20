@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 )
 
-var _ services.NamedService = &serviceAdapter{}
+var _ services.NamedService = (*serviceAdapter)(nil)
 
 // serviceAdapter adapts a Grafana background service to dskit's NamedService interface.
 // It wraps the background service with dskit's BasicService to provide the standard

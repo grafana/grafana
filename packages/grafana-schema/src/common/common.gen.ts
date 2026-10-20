@@ -811,6 +811,10 @@ export interface TableColorTextCellOptions {
  * Json view cell options
  */
 export interface TableJsonViewCellOptions {
+  /**
+   * Enables syntax highlighting. Defaults to true when omitted.
+   */
+  syntaxHighlighting?: boolean;
   type: TableCellDisplayMode.JSONView;
 }
 
@@ -851,6 +855,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 
@@ -1064,6 +1069,10 @@ export interface TableOptions {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open.
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
@@ -1112,6 +1121,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
+  /**
+   * Whether the column can be hidden from the table.
+   */
+  hideable?: boolean;
   inspect: boolean;
   minWidth?: number;
   /**

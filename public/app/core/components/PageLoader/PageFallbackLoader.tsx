@@ -1,9 +1,11 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings -- temporary scaffold page, not yet user-facing */
 import { css, cx } from '@emotion/css';
+import { useLayoutEffect } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 interface PageFallbackLoaderStep {
   id: string;
@@ -24,6 +26,13 @@ const DEFAULT_STEPS: PageFallbackLoaderStep[] = [
 export const PageFallbackLoader = ({ steps = DEFAULT_STEPS }: PageFallbackLoaderProps) => {
   const styles = useStyles2(getStyles);
   const activeIndex = steps.findIndex((step) => !step.done);
+  const { chrome } = useGrafana();
+
+  // Mirrors Page.tsx's chrome update, or the nav stays hidden on a cold load.
+  // Side effect: breadcrumb flashes to "Home" until the real page mounts.
+  useLayoutEffect(() => {
+    chrome.update({});
+  }, [chrome]);
 
   return (
     <div data-testid="page-fallback-loader" className={styles.wrapper}>

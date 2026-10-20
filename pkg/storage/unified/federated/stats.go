@@ -2,6 +2,7 @@ package federated
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -37,6 +38,17 @@ type LegacyStatsGetter struct {
 	Cfg *setting.Cfg
 }
 
+// CountError identifies which legacy resource count failed while preserving the underlying error.
+type CountError struct {
+	Resources []string
+	Err       error
+}
+
+func (e *CountError) Error() string { return e.Err.Error() }
+func (e *CountError) Unwrap() error { return e.Err }
+
+var ErrLegacyStatsUnavailable = errors.New("legacy stats source is unavailable")
+
 // kv_store convention used to mark a resource as fully migrated for one stack: namespace
 // "unified_storage.is_migrated", key "<resource>.<group>" (the same string shape as our own
 // alertRuleResource-style constants), org_id always 0 for this entry specifically (unlike
@@ -68,6 +80,9 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	if s.SQL == nil {
+		return nil, &CountError{Resources: LegacyCountedResources, Err: ErrLegacyStatsUnavailable}
+	}
 	info, err := claims.ParseNamespace(in.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read namespace")
@@ -77,8 +92,16 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	}
 
 	helper, err := s.SQL(ctx)
+	if errors.Is(err, legacysql.ErrNamespaceDeleted) {
+		// The stack was deleted or migrated away and its namespace is being torn down. Fall back
+		// to the unified storage counts alone, as when legacy counts are disabled; failing here
+		// turns every folder delete in that namespace into a 500. Any other lookup failure,
+		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
+		// its legacy rows can come back, so it must not be treated as empty.
+		return &resourcepb.ResourceStatsResponse{}, nil
+	}
 	if err != nil {
-		return nil, err
+		return nil, &CountError{Resources: LegacyCountedResources, Err: err}
 	}
 
 	folders := folderSet(in)
@@ -87,17 +110,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// extraWhere, when non-empty, is ANDed onto the org+folder filter. It must be a
 		// literal fragment with no bound parameters.
-		fn := func(table, folderCol, g, r string, existCheck bool, extraWhere string) error {
-			// if existCheck is true, do not error out if the table does not exist
-			if existCheck {
-				exists, err := sess.IsTableExist(helper.Table(table))
-				if !exists {
-					return nil
-				} else if err != nil {
-					return err
-				}
-			}
-
+		fn := func(table, folderCol, g, r string, extraWhere string) error {
 			tableName := helper.Table(table)
 			countChunk := func(chunk []string) (int64, error) {
 				where, args := buildFolderWhere(folderCol, info.OrgID, chunk)
@@ -146,35 +159,35 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// folder that still holds alert rules look empty.
 		alertRulesStale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
 		if err != nil {
-			return err
+			return &CountError{Resources: []string{"alertrules"}, Err: err}
 		}
 		if !alertRulesStale {
-			err = fn("alert_rule", "namespace_uid", group, "alertrules", false, "(record IS NULL OR record = '')")
+			err = fn("alert_rule", "namespace_uid", group, "alertrules", "(record IS NULL OR record = '')")
 			if err != nil {
-				return err
+				return &CountError{Resources: []string{"alertrules"}, Err: err}
 			}
 		}
 
 		recordingRulesStale, err := s.legacyTableIsStale(sess, helper, recordingRuleResource)
 		if err != nil {
-			return err
+			return &CountError{Resources: []string{"recordingrules"}, Err: err}
 		}
 		if !recordingRulesStale {
-			err = fn("alert_rule", "namespace_uid", group, "recordingrules", false, "(record IS NOT NULL AND record != '')")
+			err = fn("alert_rule", "namespace_uid", group, "recordingrules", "(record IS NOT NULL AND record != '')")
 			if err != nil {
-				return err
+				return &CountError{Resources: []string{"recordingrules"}, Err: err}
 			}
 		}
 
 		// Legacy library_elements table
 		libraryPanelsStale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
 		if err != nil {
-			return err
+			return &CountError{Resources: []string{"library_elements"}, Err: err}
 		}
 		if !libraryPanelsStale {
-			err = fn("library_element", "folder_uid", group, "library_elements", false, "")
+			err = fn("library_element", "folder_uid", group, "library_elements", "")
 			if err != nil {
-				return err
+				return &CountError{Resources: []string{"library_elements"}, Err: err}
 			}
 		}
 		return nil

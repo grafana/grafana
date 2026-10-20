@@ -104,7 +104,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			span.End()
-			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
+			result.Responses[refId] = dataResponseFromError(err)
 			return result, nil
 		}
 
@@ -273,10 +273,7 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))
 		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
 		err := fmt.Errorf("request failed with error: %s", graphiteError)
-		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
-			return nil, backend.DownstreamError(err)
-		}
-		return nil, backend.PluginError(err)
+		return nil, newHTTPStatusError(res.StatusCode, backend.ErrorSourceFromHTTPStatus(res.StatusCode), err)
 	}
 
 	var data []TargetResponseDTO

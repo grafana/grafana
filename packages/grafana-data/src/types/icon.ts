@@ -223,6 +223,7 @@ export const availableIconsIndex = {
   monitor: true,
   'multi-step': true,
   'open-telemetry': true,
+  pages: true,
   palette: true,
   'panel-add': true,
   paragraph: true,
@@ -316,6 +317,7 @@ export const availableIconsIndex = {
   'cursor-logo': true,
   'github-copilot-logo': true,
   robot: true,
+  workflows: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

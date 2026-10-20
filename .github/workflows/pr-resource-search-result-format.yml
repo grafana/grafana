@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   check:
-    name: Require FIELD_VALUES for new direct Go search clients
+    name: Guard resource search result formats
     runs-on: ubuntu-x64-small
     timeout-minutes: 5
     container:
@@ -60,5 +60,89 @@ jobs:
           echo "Comparing against base commit $base_sha"
           semgrep scan --strict --error \
             --config pkg/storage/unified/semgrep/resource-search-field-values.yaml \
+            --baseline-commit "$base_sha" \
+            "${files[@]}"
+
+      - name: Test table producer rule
+        run: semgrep test --strict --config pkg/storage/unified/semgrep/resource-search-no-table-producers.yaml pkg/storage/unified/semgrep/resource-search-no-table-producers.go
+
+      - name: Check new ResourceTable search producers
+        env:
+          SEMGREP_SEND_METRICS: 'off'
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          targets_file=$(mktemp)
+          git grep -lz -E 'ResourceSearchResponse|ResourceTable' -- '*.go' \
+            ':(exclude)**/*_test.go' \
+            ':(exclude)**/*.pb.go' \
+            ':(exclude)pkg/storage/unified/testing/**' \
+            ':(exclude)pkg/storage/unified/semgrep/**' > "$targets_file"
+
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < "$targets_file"
+
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No ResourceSearchResponse or ResourceTable usage found"
+            exit 1
+          fi
+          echo "Scanning ${#files[@]} files containing ResourceSearchResponse or ResourceTable usage"
+
+          base_sha=$(git rev-parse HEAD^1)
+          echo "Comparing against base commit $base_sha"
+          # No --strict: semgrep can't parse Go 1.26 new(expr) yet, and partial parsing is enough to find these patterns.
+          semgrep scan --error \
+            --config pkg/storage/unified/semgrep/resource-search-no-table-producers.yaml \
+            --baseline-commit "$base_sha" \
+            "${files[@]}"
+
+  no-federated:
+    name: Forbid new federated search requests
+    runs-on: ubuntu-x64-small
+    timeout-minutes: 5
+    container:
+      image: semgrep/semgrep:1.171.0@sha256:bdf7013b2c3634a487671158da77c554f531742326b543a9464d2adf6c433ac8
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Test rule
+        run: semgrep test --strict --config pkg/storage/unified/semgrep/resource-search-no-federated.yaml pkg/storage/unified/semgrep/resource-search-no-federated.go
+
+      - name: Check for new federated search requests
+        env:
+          SEMGREP_SEND_METRICS: 'off'
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          targets_file=$(mktemp)
+          git grep -lz 'Federated' -- '*.go' \
+            ':(exclude)**/*_test.go' \
+            ':(exclude)**/*.pb.go' \
+            ':(exclude)pkg/storage/unified/semgrep/**' > "$targets_file" || true
+
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < "$targets_file"
+
+          if (( ${#files[@]} == 0 )); then
+            echo "No Go files mention Federated"
+            exit 0
+          fi
+          echo "Scanning ${#files[@]} files mentioning Federated"
+
+          # Only fails on federated requests added by this PR, so the existing callers still pass.
+          base_sha=$(git rev-parse HEAD^1)
+          echo "Comparing against base commit $base_sha"
+          # No --strict: semgrep can't parse Go 1.26 new(expr) yet, and partial parsing is enough to find this pattern.
+          semgrep scan --error \
+            --config pkg/storage/unified/semgrep/resource-search-no-federated.yaml \
             --baseline-commit "$base_sha" \
             "${files[@]}"

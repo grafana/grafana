@@ -84,18 +84,23 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-const searchRulesPathSegment = "searchRules"
+// The rule search routes. The apiserver parses each as a request on a resource
+// with this name, which the rules authorizer relies on to require list on the
+// rule kind it searches.
+const (
+	SearchAlertRulesResource     = "searchAlertRules"
+	SearchRecordingRulesResource = "searchRecordingRules"
+)
 
-// buildSearchRoutes wires the cross-kind and per-kind rule search handlers
-// (provided by the registry) to their namespaced compatibility routes. A route
+// buildSearchRoutes wires the per-kind rule search handlers
+// (provided by the registry) to their namespaced routes. A route
 // is skipped when its handler is unset, so manifest validation without a
 // backing instance does not register a nil handler.
 func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
 	handlers := simple.AppVersionRouteHandlers{}
 	for path, handler := range map[string]simple.AppCustomRouteHandler{
-		"/" + searchRulesPathSegment:                cfg.SearchRulesHandler,
-		"/alertrules/" + searchRulesPathSegment:     cfg.SearchAlertRulesHandler,
-		"/recordingrules/" + searchRulesPathSegment: cfg.SearchRecordingRulesHandler,
+		"/" + SearchAlertRulesResource:     cfg.SearchAlertRulesHandler,
+		"/" + SearchRecordingRulesResource: cfg.SearchRecordingRulesHandler,
 	} {
 		if handler == nil {
 			continue

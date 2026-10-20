@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -29,6 +30,24 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 func setupTestKV(t *testing.T) KV {
 	db := setupTestBadgerDB(t)
 	return NewBadgerKV(db)
+}
+
+func TestAllSectionsSorted(t *testing.T) {
+	require.True(t, slices.IsSorted(AllSections), "AllSections must be sorted by value for binary search validation")
+}
+
+func TestIsSupportedSection(t *testing.T) {
+	for _, section := range AllSections {
+		t.Run(section, func(t *testing.T) {
+			require.True(t, IsSupportedSection(section))
+		})
+	}
+
+	for _, section := range []string{"", "unknown", "unified", DataSection + "/unknown"} {
+		t.Run("unsupported/"+section, func(t *testing.T) {
+			require.False(t, IsSupportedSection(section))
+		})
+	}
 }
 
 func TestPrefixRangeEnd(t *testing.T) {

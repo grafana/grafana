@@ -2,7 +2,8 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
-import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { isFloatingExtensionSidebarHeld } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 
@@ -39,16 +40,14 @@ function renderEmpty() {
 }
 
 describe('AssistantDashboardEmpty', () => {
-  const originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-
   beforeEach(() => {
     jest.clearAllMocks();
     latestOnSubmit = undefined;
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+    setTestFlags({});
   });
 
   it('adds a panel through the sidebar instead of opening the panel editor', () => {
@@ -57,13 +56,6 @@ describe('AssistantDashboardEmpty', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add visualization' }));
 
     expect(addNewPanel).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps Grid: outside the layout dropdown', () => {
-    renderEmpty();
-
-    expect(screen.getByText('Grid:')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Grid:' })).toHaveDisplayValue('Auto');
   });
 
   it('derives planning summaries from context data and forwards the original selection', () => {
@@ -106,6 +98,25 @@ describe('AssistantDashboardEmpty', () => {
       dashboards: [{ uid: 'dash-1', title: 'Checkout' }],
     });
     expect(mockStartPlanning.mock.calls[0][0].context).toBe(contextItems);
+  });
+
+  it('holds the floating Assistant hidden while its own prompt stands in, until the prompt is submitted', () => {
+    renderEmpty();
+    expect(isFloatingExtensionSidebarHeld()).toBe(true);
+
+    act(() => {
+      latestOnSubmit?.('monitor checkout', []);
+    });
+
+    expect(isFloatingExtensionSidebarHeld()).toBe(false);
+  });
+
+  it('does not hold the floating Assistant on a dashboard the Assistant already drives', () => {
+    const dashboard = new DashboardScene({ isEditing: true, body: AutoGridLayoutManager.createEmpty() });
+    jest.spyOn(dashboard, 'getEditSessionSource').mockReturnValue('assistant');
+    render(<AssistantDashboardEmpty dashboard={dashboard} />);
+
+    expect(isFloatingExtensionSidebarHeld()).toBe(false);
   });
 
   it('falls back to every datasource when the user picked none', () => {

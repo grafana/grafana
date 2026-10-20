@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 
-import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 
 import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
@@ -14,11 +14,12 @@ jest.mock('../../dashboard/api/ResponseTransformers', () => ({
 }));
 
 jest.mock('../../dashboard/api/utils', () => ({
+  ...jest.requireActual('../../dashboard/api/utils'),
   isDashboardV2Spec: (obj: unknown) => typeof obj === 'object' && obj !== null && 'elements' in obj,
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
-  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {} })),
+  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {}, forEachChild: jest.fn() })),
 }));
 
 jest.mock('@grafana/scenes', () => {
@@ -49,10 +50,17 @@ function buildApplyDashboard(uid?: string): DashboardScene {
       isEditing: true,
       meta: {},
       body: { editModeChanged: jest.fn() },
-      sidebar: { closePane: jest.fn() },
+      sidebar: {
+        closePane: jest.fn(),
+        enableSelection: jest.fn(),
+        disableSelection: jest.fn(),
+        refreshAfterRebuild: jest.fn(),
+      },
     },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
+    applyDashboardMode: DashboardScene.prototype.applyDashboardMode,
+    activateSidebar: jest.fn(),
     setState: jest.fn(),
     forEachChild: jest.fn(),
     publishEvent: jest.fn((event: { payload?: { perform?: () => void } }) => {

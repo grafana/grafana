@@ -3,9 +3,11 @@ package resource
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"slices"
 	"strings"
 	"testing"
@@ -47,6 +49,13 @@ func setupBadgerKV(t *testing.T) KV {
 }
 
 func setupSqlKV(t *testing.T) kv.KV {
+	t.Helper()
+	store, _ := setupSqlKVWithDB(t)
+	return store
+}
+
+func setupSqlKVWithDB(t *testing.T) (kv.KV, *sql.DB) {
+	t.Helper()
 	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -54,7 +63,7 @@ func setupSqlKV(t *testing.T) kv.KV {
 	require.NoError(t, err)
 	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
-	return kv
+	return kv, dbConn.SqlDB()
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
@@ -1070,6 +1079,51 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 	})
 }
 
+type noNULCursorKV struct{ kv.KV }
+
+func (s noNULCursorKV) Keys(ctx context.Context, section string, opt kv.ListOptions) iter.Seq2[string, error] {
+	if strings.ContainsRune(opt.StartKey, 0) || strings.ContainsRune(opt.EndKey, 0) {
+		return func(yield func(string, error) bool) {
+			yield("", fmt.Errorf("invalid byte sequence for encoding UTF8: 0x00"))
+		}
+	}
+	return s.KV.Keys(ctx, section, opt)
+}
+
+func TestPagedKeysNoNULCursor(t *testing.T) {
+	store := noNULCursorKV{setupBadgerKV(t)}
+	for _, key := range []string{"a", "a-long", "b"} {
+		w, err := store.Save(t.Context(), kv.EventsSection, key)
+		require.NoError(t, err)
+		_, err = w.Write([]byte("value"))
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+	}
+	var got []string
+	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{}, 1) {
+		require.NoError(t, err)
+		got = append(got, key)
+	}
+	require.Equal(t, []string{"a", "a-long", "b"}, got)
+
+	got = nil
+	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{StartKey: "a-long"}, 1) {
+		require.NoError(t, err)
+		got = append(got, key)
+	}
+	require.Equal(t, []string{"a-long", "b"}, got)
+
+	got = nil
+	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{}, 1) {
+		require.NoError(t, err)
+		got = append(got, key)
+		if key == "a" {
+			require.NoError(t, store.Delete(t.Context(), kv.EventsSection, key))
+		}
+	}
+	require.Equal(t, []string{"a", "a-long", "b"}, got)
+}
+
 func TestIntegrationDataStore_Keys(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreKeys)
 	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreKeys)
@@ -1818,21 +1872,21 @@ func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds
 	require.NoError(t, err)
 
 	// Get key at rv2 should return rv2
-	dataKey, err := ds.GetResourceKeyAtRevision(ctx, key, rv2)
+	dataKey, err := ds.GetResourceKeyAtRevision(ctx, key, rv2, false)
 	require.NoError(t, err)
 
 	require.Equal(t, rv2, dataKey.ResourceVersion)
 	require.Equal(t, DataActionUpdated, dataKey.Action)
 
 	// Get key at rv1 should return rv1
-	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, rv1)
+	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, rv1, false)
 	require.NoError(t, err)
 
 	require.Equal(t, rv1, dataKey.ResourceVersion)
 	require.Equal(t, DataActionCreated, dataKey.Action)
 
 	// Get key at revision 0 should return latest (rv3)
-	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, 0)
+	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, 0, false)
 	require.NoError(t, err)
 
 	require.Equal(t, rv3, dataKey.ResourceVersion)

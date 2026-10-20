@@ -21,12 +21,12 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -61,7 +61,10 @@ func RegisterAppInstaller(
 	reg prometheus.Registerer,
 	tracer tracing.Tracer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer), tracer, reg)
+	config := newConfigFromSettings(cfg)
+	metrics := ProvideMetrics(reg)
+	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, metrics, config.FolderCacheEnabled, config.FolderCacheTTL)
+	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, metrics, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -78,13 +81,13 @@ func NewAppInstaller(
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
 	tracer trace.Tracer,
+	metrics *Metrics,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
 	if folderResolver == nil {
 		return nil, fmt.Errorf("annotation service requires folder resolver")
 	}
 	logger := log.New("annotation.app")
-	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
 		logger:  logger,
 		tracer:  tracer,
@@ -128,6 +131,7 @@ func NewAppInstaller(
 		snowflakeNode:  sfNode,
 		maxScopeCount:  cfg.MaxScopeCount,
 		retentionTTL:   cfg.RetentionTTL,
+		maxAge:         cfg.MaxAge,
 		metrics:        installer.metrics,
 		logger:         logger,
 	}

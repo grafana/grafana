@@ -131,11 +131,20 @@ Grafana supports the following cache backends: in-memory, Redis, and Memcached.
 Storing cached queries in-memory can increase the Grafana memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 {{< /admonition >}}
 
-When a panel queries a data source with cached data, it either fetches fresh data or uses cached data depending on the panel's **interval**. Grafana uses the interval to round the query time range to a nearby cached time range, which increases the likelihood of cache hits. As a result, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
+For time series queries, when a panel queries a data source with cached data, it either fetches fresh data or uses cached data depending on the panel's **interval**. Grafana uses the interval to round the query time range to a nearby cached time range, which increases the likelihood of cache hits. As a result, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
 
 A panel's interval is visible in the [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/). Grafana calculates it as `time range / max data points`, where max data points depends on the panel's width. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` retrieves fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, Grafana serves cached data for this panel for up to 10 minutes before it queries the data source again for new data.
 
 You can configure a panel to retrieve data more often by increasing the **Max data points** setting in the panel's [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/).
+
+### How caching differs for time series and non-time series queries
+
+Grafana builds each cache key from three parts: the data source instance, the query, and the time range. How effective caching is depends on how the query uses that time range.
+
+- **Time series queries:** Grafana rounds the requested time range to the panel's interval, as described previously. Because relative time ranges, such as `last 6 hours`, shift slightly on every refresh, this rounding snaps successive requests into the same cached time range, so repeated dashboard loads frequently hit the cache.
+- **Non-time series queries:** Queries that don't scale with the panel's width or max data points, such as table results or SQL queries that ignore the dashboard time range, gain little from interval rounding. Grafana reuses a cached result only when a later request produces the same cache key, that is, an identical query and time range within the configured TTL. Grafana doesn't reuse subsets of a cached result: if you query `t0` to `t1` and then `t0` to `t2`, Grafana runs a fresh query for the full `t0` to `t2` range.
+
+For non-time series data sources, the TTL is the primary control over how long results are served from the cache. If results change more or less often than the configured TTL, override the TTL for individual panels in the panel's [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/).
 
 ### Benefits of caching
 

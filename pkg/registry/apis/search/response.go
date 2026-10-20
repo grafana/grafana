@@ -3,6 +3,8 @@ package search
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -12,6 +14,12 @@ import (
 type decodedResults struct {
 	items          []searchv0.ResultItem
 	lastSortFields []string
+}
+
+// ToSearchResults lets custom endpoints reuse result decoding and row-based
+// continuation before applying their own response metadata policy.
+func ToSearchResults(res *resourcepb.ResourceSearchResponse, gvr schema.GroupVersionResource, kind string, limit int64) (*searchv0.SearchResults, error) {
+	return searchResults(res, kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kind: kind}, limit)
 }
 
 // searchResults maps a backend search response into the public envelope.
@@ -35,6 +43,24 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 		Facets: facets(res.GetFacet()),
 	}
 	return out, nil
+}
+
+// globalSearchResults is searchResults for the search across resource types,
+// which also reports the types it left out.
+func globalSearchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.GlobalSearchResults, error) {
+	results, err := searchResults(res, kind, limit)
+	if err != nil {
+		return nil, err
+	}
+	return &searchv0.GlobalSearchResults{
+		TypeMeta: metaForKind(searchv0.KindGlobalSearchResults),
+		Metadata: searchv0.GlobalResultsMetadata{
+			ResultsMetadata: results.Metadata,
+			SkippedTypes:    res.GetSkippedTypes(),
+		},
+		Items:  results.Items,
+		Facets: results.Facets,
+	}, nil
 }
 
 // trashResults maps a backend search response into the trash envelope. No facets:
@@ -90,6 +116,9 @@ func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsEx
 }
 
 func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decodedResults, error) {
+	// The search server reads manifests at runtime, so it can name kinds this
+	// process does not know. An older server sends none.
+	kind.reportedKinds = res.GetKinds()
 	switch res.GetResultFormat() {
 	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
 		return decodeTableResults(res.GetResults(), kind)
@@ -176,11 +205,21 @@ func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*r
 }
 
 func resultItem(kind kindRef, key *resourcepb.ResourceKey) searchv0.ResultItem {
+	group, resourceName, kindName := kind.group, kind.resource, kind.kind
+	if kind.spansResourceTypes() {
+		group, resourceName = key.GetGroup(), key.GetResource()
+		// An unknown pair leaves the kind empty rather than borrowing another
+		// result's: the group and resource still identify the object.
+		var ok bool
+		if kindName, ok = kind.reportedKinds[group+"/"+resourceName]; !ok {
+			kindName = kind.kinds[schema.GroupResource{Group: group, Resource: resourceName}]
+		}
+	}
 	return searchv0.ResultItem{
 		Resource: searchv0.ResourceRef{
-			Group:    kind.group,
-			Resource: kind.resource,
-			Kind:     kind.kind,
+			Group:    group,
+			Resource: resourceName,
+			Kind:     kindName,
 			Name:     key.GetName(),
 		},
 	}

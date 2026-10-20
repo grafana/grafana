@@ -5,19 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -25,14 +30,15 @@ import (
 
 // HybridSearch implements ResourceIndexServer. Runs the lexical and
 // semantic legs concurrently, each filtered and authz-checked, then
-// fuses the rankings with RRF. When a reranker is configured, the fused
+// fuses each resource's rankings with RRF and interleaves resource types.
+// When a reranker is configured, the combined
 // pool (top maxRerankCandidates) is re-scored by a cross-encoder and
 // results below the requested min_relevance threshold are dropped. Both
 // legs fetch 2x the requested limit so near-miss overlaps can still fuse
 // into the top results.
 //
-// Returns Unimplemented when no embedding provider or vector backend is
-// configured.
+// Without an embedding provider or vector backend, searches the regular
+// resource index using only the lexical leg.
 func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (resp *resourcepb.HybridSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.HybridSearch")
 	defer span.End()
@@ -41,6 +47,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	// Labels captured before validation so the missing-key early returns
 	// still observe a labeled sample, mirroring VectorSearch.
 	group, resource := "unknown", "unknown"
+	//nolint:staticcheck // Continue accepting requests from older clients.
 	if req != nil && req.Key != nil {
 		if g := req.Key.GetGroup(); g != "" {
 			group = g
@@ -50,137 +57,197 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	defer func() {
-		if s.vectorMetrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
-				time.Since(start).Seconds(),
-			)
-		}
+		metricutil.ObserveWithExemplar(ctx,
+			s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
+			time.Since(start).Seconds(),
+		)
 	}()
 
-	if s.embedder == nil || s.vectorBackend == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search not configured")
+	if s.search == nil {
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
-	if err := validateHybridSearchRequest(req); err != nil {
+	keys, err := parseHybridSearchRequest(req)
+	if err != nil {
 		return nil, err
 	}
-
-	limit := int(req.Limit)
-	switch {
-	case limit <= 0:
-		limit = defaultVectorSearchLimit
-	case limit > maxVectorSearchLimit:
-		limit = maxVectorSearchLimit
+	namespace := keys[0].Namespace
+	// Global callers can supply arbitrary resource names, including rejected targets.
+	if req.RequireHybridEnabled || len(keys) > 1 {
+		group, resource = GlobalSearchGroup, GlobalSearchResource
+	} else {
+		group, resource = keys[0].Group, keys[0].Resource
 	}
-	depth := hybridFetchDepth(limit)
-
+	limit := min(int(req.Limit), maxVectorSearchLimit)
+	if limit <= 0 {
+		limit = defaultVectorSearchLimit
+	}
+	semanticQuery := req.Query
+	if req.SemanticQuery != "" {
+		semanticQuery = req.SemanticQuery
+	}
 	span.SetAttributes(
-		attribute.String("namespace", req.Key.Namespace),
-		attribute.String("group", req.Key.Group),
-		attribute.String("resource", req.Key.Resource),
+		attribute.String("namespace", namespace),
+		attribute.String("group", group),
+		attribute.String("resource", resource),
+		attribute.Int("resource_count", len(keys)),
 		attribute.Int("limit", limit),
 	)
 
-	// Reject unauthenticated and cross-tenant requests before they consume
-	// a slot of the target namespace's rate budget or embed quota.
+	// Reject unauthenticated and cross-tenant requests before spending quota.
 	user, ok := types.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
-	if !types.NamespaceMatches(user.GetNamespace(), req.Key.Namespace) {
+	if !types.NamespaceMatches(user.GetNamespace(), namespace) {
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
-	coll, allowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+	targets, err := s.prepareHybridTargets(ctx, req, keys)
 	if err != nil {
-		return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
-	}
-	if !allowed {
-		return nil, status.Error(codes.NotFound, "collection not found")
-	}
-
-	if coll.IsExternal && s.externalLexical == nil {
-		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
-	}
-	// Before the rate check so rejected requests don't burn budget.
-	if err := validateHybridSearchFilters(req, coll.IsExternal); err != nil {
 		return nil, err
 	}
-
-	// Hybrid embeds a query, so it draws from the same per-tenant budget
-	// as VectorSearch.
-	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+	semanticEnabled := s.embedder != nil && s.vectorBackend != nil
+	if semanticEnabled {
+		if err := s.checkVectorSearchRateLimit(ctx, namespace); err != nil {
+			return nil, err
+		}
+	}
+	candidates, err := s.hybridSearchCandidates(ctx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
+	if err != nil {
 		return nil, err
 	}
-
-	embedText := req.Query
-	if req.SemanticQuery != "" {
-		embedText = req.SemanticQuery
+	results := candidates[0].results
+	if len(candidates) > 1 {
+		results = interleaveHybridCandidates(candidates)
 	}
-
-	// Both legs get the same translated filters.
-	var vectorFilters []vector.SearchFilter
-	if coll.IsExternal {
-		vectorFilters = hybridExternalFilters(req.Filters)
-	} else {
-		vectorFilters = hybridVectorFilters(req.Filters)
-	}
-
-	g, gctx := errgroup.WithContext(ctx)
-
-	var lex []lexicalHit
-	g.Go(func() error {
-		var err error
-		lex, err = s.hybridLexicalLeg(gctx, user, req, coll, depth, vectorFilters)
-		return err
-	})
-
-	var sem []vector.VectorSearchResult
-	g.Go(func() error {
-		var err error
-		sem, err = s.hybridSemanticLeg(gctx, user, req, coll, embedText, depth, vectorFilters)
-		return err
-	})
-
-	if err := g.Wait(); err != nil {
-		return nil, s.grpcStatusError(ctx, "hybrid search", err)
-	}
-
-	fused := fuseRRF(req.Key, lex, sem)
 	if !req.SkipRerank {
-		var err error
-		fused, err = s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
+		results, err = s.rerankHybridResults(ctx, semanticQuery, results, req.MinRelevance)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if len(fused) > limit {
-		fused = fused[:limit]
+	span.SetAttributes(attribute.Int("results_truncated", max(0, len(results)-limit)))
+	if len(results) > limit {
+		results = results[:limit]
 	}
+	s.enrichHybridResults(ctx, namespace, candidates, results)
+	return &resourcepb.HybridSearchResponse{Results: results}, nil
+}
 
-	// Independent lookups over disjoint fields; run concurrently.
-	eg, egCtx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		s.resolveFolderTitles(egCtx, req.Key.Namespace, fused)
-		return nil
+type hybridTarget struct {
+	key        *resourcepb.ResourceKey
+	collection vector.Collection
+}
+
+type hybridCandidates struct {
+	key      *resourcepb.ResourceKey
+	results  []*resourcepb.HybridSearchResult
+	lexUIDs  map[string]struct{}
+	external bool
+}
+
+func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb.HybridSearchRequest, keys []*resourcepb.ResourceKey) ([]hybridTarget, error) {
+	targets := make([]hybridTarget, len(keys))
+	for i, key := range keys {
+		var coll vector.Collection
+		if s.embedder != nil && s.vectorBackend != nil {
+			var allowed bool
+			var err error
+			coll, allowed, err = s.resolveAllowedCollection(ctx, key.Group, key.Resource)
+			if err != nil {
+				return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
+			}
+			if !allowed {
+				return nil, status.Error(codes.NotFound, "collection not found")
+			}
+			if coll.IsExternal && s.externalLexical == nil {
+				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
+			}
+		}
+		if req.RequireHybridEnabled && !coll.IsExternal && !s.hybridSearchConfig.Enabled(key.Group, key.Resource) {
+			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
+		}
+		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
+			return nil, err
+		}
+		targets[i] = hybridTarget{key: key, collection: coll}
+	}
+	return targets, nil
+}
+
+func (s *searchServer) hybridSearchCandidates(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, targets []hybridTarget, semanticQuery string, depth int) ([]hybridCandidates, error) {
+	g, gctx := errgroup.WithContext(ctx)
+	// Each resource has two legs; bound their total concurrency across resources.
+	g.SetLimit(8)
+	// All semantic legs share one vector while lexical retrieval runs concurrently.
+	// The shared group lets either leg cancel embedding without waiting on another resource.
+	embedding := sync.OnceValues(func() ([]float32, error) {
+		return s.embedVectorSearchQuery(gctx, targets[0].key.Namespace, semanticQuery)
 	})
-	// resolveManagedBy queries the kind's own bleve index; external kinds have none.
-	if !coll.IsExternal {
-		eg.Go(func() error {
-			s.resolveManagedBy(egCtx, req.Key, lexicalUIDSet(lex), fused)
-			return nil
+	lex := make([][]lexicalHit, len(targets))
+	sem := make([][]vector.VectorSearchResult, len(targets))
+	for i, target := range targets {
+		if gctx.Err() != nil {
+			break
+		}
+		filters := hybridVectorFilters(req.Filters)
+		if target.collection.IsExternal {
+			filters = hybridExternalFilters(req.Filters)
+		}
+		g.Go(func() error {
+			var err error
+			lex[i], err = s.hybridLexicalLeg(gctx, user, req, target, depth, filters)
+			return err
 		})
+		if s.embedder != nil && s.vectorBackend != nil {
+			g.Go(func() error {
+				dense, err := embedding()
+				if err != nil {
+					return err
+				}
+				sem[i], err = s.hybridSemanticLeg(gctx, user, target, dense, depth, filters)
+				return err
+			})
+		}
 	}
-	_ = eg.Wait() // both are best-effort and never return an error
-
-	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+	if err := g.Wait(); err != nil {
+		return nil, s.grpcStatusError(ctx, "hybrid search", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, status.FromContextError(err).Err()
+	}
+	candidates := make([]hybridCandidates, len(targets))
+	lexicalResultsTruncated := 0
+	for i, target := range targets {
+		for _, hit := range lex[i] {
+			if hit.lexicalTruncated {
+				lexicalResultsTruncated++
+			}
+		}
+		candidates[i] = hybridCandidates{
+			key: target.key, results: fuseRRF(target.key, lex[i], sem[i]),
+			lexUIDs: lexicalUIDSet(lex[i]), external: target.collection.IsExternal,
+		}
+	}
+	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_results_truncated", lexicalResultsTruncated))
+	return candidates, nil
 }
 
 // hybridLexicalLeg runs the lexical retrieval: FTS over stored rows for
 // external collections (authz-filtered per hit), bleve for internal (the
 // index enforces authz itself).
-func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, coll vector.Collection, depth int, filters []vector.SearchFilter) ([]lexicalHit, error) {
+func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, target hybridTarget, depth int, filters []vector.SearchFilter) ([]lexicalHit, error) {
+	key, coll := target.key, target.collection
 	if !coll.IsExternal {
-		lexResp, err := s.Search(ctx, hybridLexicalRequest(req, depth))
+		lexReq := hybridLexicalRequest(req, key, depth)
+		lexResp, err := s.searchWithIndex(ctx, lexReq, func(idx ResourceIndex) {
+			queryFields, rerankFields := hybridLexicalFields(idx.SearchFieldDefinitions(), s.reranker != nil && !req.SkipRerank)
+			lexReq.QueryFields = queryFields
+			for _, field := range rerankFields {
+				if !slices.Contains(lexReq.Fields, field) {
+					lexReq.Fields = append(lexReq.Fields, field)
+				}
+			}
+		})
 		if err := searchCallError(lexResp, err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
@@ -192,7 +259,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	}
 
 	hits, err := s.externalLexical.LexicalSearch(ctx, vector.LexicalQuery{
-		Namespace: req.Key.Namespace,
+		Namespace: key.Namespace,
 		Model:     s.embedder.Model,
 		Resource:  coll.PartitionKey,
 		Query:     req.Query,
@@ -206,7 +273,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	for i, h := range hits {
 		items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
 	}
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, items)
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, key, items)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -227,20 +294,16 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	return lex, nil
 }
 
-// hybridSemanticLeg embeds the query and runs the vector search,
-// authz-filtering the hits.
-func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, coll vector.Collection, embedText string, depth int, filters []vector.SearchFilter) ([]vector.VectorSearchResult, error) {
-	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, embedText)
-	if err != nil {
-		return nil, err
-	}
+// hybridSemanticLeg filters vector hits using the target resource's authorization.
+func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInfo, target hybridTarget, dense []float32, depth int, filters []vector.SearchFilter) ([]vector.VectorSearchResult, error) {
+	key, coll := target.key, target.collection
 	results, err := s.vectorBackend.Search(ctx,
-		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
+		key.Namespace, s.embedder.Model, coll.PartitionKey,
 		dense, depth, filters...)
 	if err != nil {
 		return nil, fmt.Errorf("vector backend: %w", err)
 	}
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, key, results)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -425,7 +488,7 @@ func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
 	if err == nil {
 		return grpcErrorFromErrorResult(resp.GetError())
 	}
-	if res := errorResultFromGRPCDetails(err); res != nil {
+	if res := resourceutil.ErrorResultFromGRPCDetails(err); res != nil {
 		return grpcErrorFromErrorResult(res)
 	}
 	return err
@@ -439,15 +502,29 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	if len(results) > maxRerankCandidates {
 		results = results[:maxRerankCandidates]
 	}
-	// Chunks[0] is the best text per resource: closest embedded chunk, whole-resource text for unchunked kinds, or the synthesized title chunk for lexical-only hits.
+	// Keep the best semantic chunk (or title), with returned lexical text as
+	// additional context even when the resource was found by both legs.
 	texts := make([]string, len(results))
+	lexicalRerankTextsTruncated := 0
 	for i, r := range results {
 		texts[i] = r.Chunks[0].Content
+		text, truncated := lexicalRerankText(r.Lexical)
+		if truncated {
+			lexicalRerankTextsTruncated++
+		}
+		if text != "" && !strings.Contains(texts[i], text) {
+			if strings.Contains(text, texts[i]) {
+				texts[i] = text
+			} else {
+				texts[i] = strings.TrimSpace(texts[i] + "\n" + text)
+			}
+		}
 		// One empty document (titleless lexical-only hit) would 400 the whole provider call.
 		if texts[i] == "" {
 			texts[i] = r.Key.Name
 		}
 	}
+	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_rerank_texts_truncated", lexicalRerankTextsTruncated))
 
 	scores, err := s.reranker.Score(ctx, query, texts)
 	if err != nil {
@@ -461,10 +538,8 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 			fmt.Errorf("%d scores for %d results", len(scores), len(results))), nil
 	}
 
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.RerankCandidatesTotal.
-			WithLabelValues(s.reranker.Model).Add(float64(len(results)))
-	}
+	s.vectorMetrics.RerankCandidatesTotal.
+		WithLabelValues(s.reranker.Model).Add(float64(len(results)))
 	for i, r := range results {
 		r.Score = scores[i]
 	}
@@ -482,7 +557,7 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 				kept = append(kept, r)
 			}
 		}
-		if dropped := len(results) - len(kept); dropped > 0 && s.vectorMetrics != nil {
+		if dropped := len(results) - len(kept); dropped > 0 {
 			s.vectorMetrics.RerankDroppedResultsTotal.
 				WithLabelValues(s.reranker.Model, minRelevance).Add(float64(dropped))
 		}
@@ -491,10 +566,10 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	return results, nil
 }
 
-// rerankFallback logs and returns the RRF-ordered input. Failed provider
+// rerankFallback logs and preserves the candidate order. Failed provider
 // calls are visible in the rerank duration histogram's error/timeout series.
 func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
-	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
+	s.log.Warn(msg+"; preserving candidate order", "err", err, "model", s.reranker.Model)
 	return results
 }
 
@@ -502,20 +577,20 @@ func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, 
 const rrfK = 60
 
 // maxChunksPerHybridResult bounds response size; only the best chunk
-// influences score, the rest are payload for RAG consumers.
+// is used for reranking alongside lexical text; the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
 
-// maxRerankCandidates caps the scored pool (the fused legs can reach 2x the
-// per-leg depth) so reranking is always a single provider call: it tracks
-// maxVectorSearchLimit but can never exceed Vertex's 200-records/call cap.
-const maxRerankCandidates = min(maxVectorSearchLimit, 200)
+// maxRerankCandidates bounds the combined candidate pool scored in one provider call.
+const maxRerankCandidates = 500
 
 type lexicalHit struct {
-	uid         string
-	title       string
-	folder      string
-	managerKind string
-	managerID   string
+	uid              string
+	title            string
+	folder           string
+	managerKind      string
+	managerID        string
+	lexical          map[string]*structpb.Value
+	lexicalTruncated bool
 
 	// Best chunk, only set by the external leg; bleve hits get a
 	// synthesized title chunk in fuseRRF instead.
@@ -559,6 +634,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		r.Folder = h.folder
 		r.ManagedByKind = h.managerKind
 		r.ManagedById = h.managerID
+		r.Lexical = h.lexical
 		if h.chunkContent != "" {
 			if lexChunks == nil {
 				lexChunks = make(map[string]*resourcepb.HybridSearchChunk, len(lex))
@@ -728,6 +804,7 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
 		}
+		hit.lexical, hit.lexicalTruncated = boundedLexicalFields(values)
 		hits = append(hits, hit)
 	}
 	return hits, nil
@@ -773,37 +850,36 @@ var languageToDSTypes = map[string][]string{
 	},
 }
 
-// validateHybridSearchRequest returns nil when valid, otherwise an
-// InvalidArgument status error. Unlike Search/VectorSearch, hybrid never
-// embeds errors in a successful response — request failures are always
-// gRPC statuses so client metrics/alerting can track them.
-func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
+// Hybrid search uses gRPC status errors instead of response-embedded errors
+// so failed requests remain visible to client metrics.
+func parseHybridSearchRequest(req *resourcepb.HybridSearchRequest) ([]*resourcepb.ResourceKey, error) {
 	reqErr := func(msg string) error {
 		return status.Error(codes.InvalidArgument, msg)
 	}
-	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return reqErr("missing namespace, group or resource")
+	keys, err := hybridSearchKeys(req)
+	if err != nil {
+		return nil, err
 	}
 	if strings.TrimSpace(req.Query) == "" {
-		return reqErr("query must not be empty")
+		return nil, reqErr("query must not be empty")
 	}
 	if len(req.Query) > 1000 {
-		return reqErr("query exceeds maximum length of 1000 bytes")
+		return nil, reqErr("query exceeds maximum length of 1000 bytes")
 	}
 	if len(req.SemanticQuery) > 1000 {
-		return reqErr("semantic_query exceeds maximum length of 1000 bytes")
+		return nil, reqErr("semantic_query exceeds maximum length of 1000 bytes")
 	}
 	if req.SemanticQuery != "" && strings.TrimSpace(req.SemanticQuery) == "" {
-		return reqErr("semantic_query must not be whitespace")
+		return nil, reqErr("semantic_query must not be whitespace")
 	}
 	if req.MinRelevance != "" {
 		if _, err := rerank.ParseRelevance(req.MinRelevance); err != nil {
-			return reqErr(fmt.Sprintf("unsupported min_relevance %q (expected lowest, low, medium, high, or highest)", req.MinRelevance))
+			return nil, reqErr(fmt.Sprintf("unsupported min_relevance %q (expected lowest, low, medium, high, or highest)", req.MinRelevance))
 		}
 		// A threshold without reranking is meaningless — reject rather than
 		// silently ignore one of the two.
 		if req.SkipRerank {
-			return reqErr("min_relevance cannot be combined with skip_rerank")
+			return nil, reqErr("min_relevance cannot be combined with skip_rerank")
 		}
 	}
 	// Duplicate keys would diverge between legs: the lexical leg ANDs
@@ -811,50 +887,57 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	seen := make(map[string]struct{}, len(req.Filters))
 	totalValues := 0
 	for _, f := range req.Filters {
-		if f.Key == "" {
-			return reqErr("filter key must not be empty")
+		if f == nil || f.Key == "" {
+			return nil, reqErr("filter key must not be empty")
 		}
 		// Both legs evaluate every filter with IN semantics; accepting
 		// other operators would silently misinterpret them.
 		switch selection.Operator(f.Operator) {
 		case selection.In, selection.Equals, selection.DoubleEquals, selection.Operator(""):
 		default:
-			return reqErr(fmt.Sprintf("unsupported filter operator %q (only in/= are supported)", f.Operator))
+			return nil, reqErr(fmt.Sprintf("unsupported filter operator %q (only in/= are supported)", f.Operator))
 		}
 		if _, dup := seen[f.Key]; dup {
-			return reqErr(fmt.Sprintf("duplicate filter key %q", f.Key))
+			return nil, reqErr(fmt.Sprintf("duplicate filter key %q", f.Key))
 		}
 		seen[f.Key] = struct{}{}
 		if len(f.Values) == 0 {
-			return reqErr(fmt.Sprintf("filter %q has no values", f.Key))
+			return nil, reqErr(fmt.Sprintf("filter %q has no values", f.Key))
 		}
 		totalValues += len(f.Values)
 	}
 	// Values become SQL parameters; mirror the write path's cap.
 	if totalValues > maxFilterValues {
-		return reqErr(fmt.Sprintf("too many filter values: %d > %d", totalValues, maxFilterValues))
+		return nil, reqErr(fmt.Sprintf("too many filter values: %d > %d", totalValues, maxFilterValues))
 	}
-	return nil
+	if len(keys) > 1 {
+		for _, filter := range req.Filters {
+			if filter.Key != "uid" && filter.Key != "folder" {
+				return nil, reqErr("cross-resource filters support only uid and folder")
+			}
+		}
+	}
+	return keys, nil
 }
 
 // validateHybridSearchFilters applies the per-kind filter contract after
 // collection resolution: internal = closed allowlist enforced natively by
 // both legs; external = any metadata key (both legs share one table).
-func validateHybridSearchFilters(req *resourcepb.HybridSearchRequest, isExternal bool) error {
+func validateHybridSearchFilters(filters []*resourcepb.Requirement, key *resourcepb.ResourceKey, isExternal bool) error {
 	reqErr := func(msg string) error {
 		return status.Error(codes.InvalidArgument, msg)
 	}
 	if isExternal {
 		return nil
 	}
-	for _, f := range req.Filters {
+	for _, f := range filters {
 		if _, ok := hybridFilterKeys[f.Key]; !ok {
 			return reqErr(fmt.Sprintf("unsupported filter key %q", f.Key))
 		}
 		// These keys map to dashboard index fields and dashboard chunk
 		// metadata; other kinds have no equivalents, so the filter would
 		// silently match nothing — reject instead.
-		if (f.Key == "datasource_uid" || f.Key == "language") && req.Key.Resource != "dashboards" {
+		if (f.Key == "datasource_uid" || f.Key == "language") && key.Resource != "dashboards" {
 			return reqErr(fmt.Sprintf("filter %q is only supported for dashboards", f.Key))
 		}
 		// Unknown languages would leave the lexical leg unfiltered while
@@ -874,9 +957,9 @@ func validateHybridSearchFilters(req *resourcepb.HybridSearchRequest, isExternal
 // Field names "reference.DataSource" and "ds_types" are the dashboard
 // index's declared fields (search/builders/dashboard.go); importing the
 // builders package here would cycle, hence the literals.
-func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, depth int) *resourcepb.ResourceSearchRequest {
+func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, key *resourcepb.ResourceKey, depth int) *resourcepb.ResourceSearchRequest {
 	out := &resourcepb.ResourceSearchRequest{
-		Options:      &resourcepb.ListOptions{Key: req.Key},
+		Options:      &resourcepb.ListOptions{Key: key},
 		Query:        req.Query,
 		Limit:        int64(depth),
 		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},

@@ -1,11 +1,11 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import {
+  expectGroupByInUrl,
+  getAdHocFilterOptionValues,
   getGroupByInput,
-  getGroupByOptions,
+  getGroupByPills,
   getGroupByRestoreButton,
-  getGroupByValues,
-  getMarkdownHTMLContent,
 } from './cuj-selectors';
 import { prepareAPIMocks } from './utils';
 
@@ -14,7 +14,6 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
-    dashboardUnifiedDrilldownControls: false,
   },
 });
 
@@ -27,42 +26,40 @@ test.describe(
   },
   () => {
     test('Groupby data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
-      prepareAPIMocks(page);
-      const groupByOptions = getGroupByOptions(page);
-      const groupByValues = getGroupByValues(page);
+      await prepareAPIMocks(page);
+      const groupByOptions = getAdHocFilterOptionValues(page);
+      const groupByPills = getGroupByPills(page);
       const groupByRestoreButton = getGroupByRestoreButton(page);
 
       await test.step('1.Apply a groupBy across one or mulitple dimensions', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const groupByVariable = getGroupByInput(dashboardPage, selectors);
-        await groupByVariable.click();
+        const groupByInput = getGroupByInput(dashboardPage, selectors);
+        await groupByInput.click();
 
         const groupByOption = groupByOptions.nth(1);
+        const key = (await groupByOption.textContent())!;
 
         await groupByOption.click();
         await page.locator('body').click();
 
-        const selectedValues = await groupByValues.allTextContents();
-
-        // assert the panel is visible and has the correct value
-        const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
-        await expect(markdownContent).toContainText(`GroupByVar: ${selectedValues.join(', ')}`);
+        await expect(groupByPills.filter({ hasText: key })).toBeVisible();
+        await expectGroupByInUrl(page, key);
       });
 
       await test.step('2.Autocomplete for the groupby values', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const groupByVariable = getGroupByInput(dashboardPage, selectors);
-        await expect(groupByVariable).toBeVisible();
-        await groupByVariable.click();
+        const groupByInput = getGroupByInput(dashboardPage, selectors);
+        await expect(groupByInput).toBeVisible();
+        await groupByInput.click();
 
         const groupByOption = groupByOptions.nth(0);
         const text = await groupByOption.textContent();
 
         const optionsCount = await groupByOptions.count();
 
-        await groupByVariable.fill(text!);
+        await groupByInput.fill(text!);
 
         const searchedOptionsCount = await groupByOptions.count();
 
@@ -72,51 +69,45 @@ test.describe(
       await test.step('3.Edit and restore default groupBy', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        // Wait for the page to load
-        const groupByVariable = getGroupByInput(dashboardPage, selectors);
-        await expect(groupByVariable).toBeVisible();
+        const groupByInput = getGroupByInput(dashboardPage, selectors);
+        await expect(groupByInput).toBeVisible();
 
-        const initialSelectedOptionsCount = await groupByValues.count();
+        const initialSelectedCount = await groupByPills.count();
 
-        await groupByVariable.click();
+        await groupByInput.click();
 
         const groupByOption = groupByOptions.nth(1);
         await groupByOption.click();
         await page.locator('body').click();
 
-        const afterEditOptionsCount = await groupByValues.count();
-
-        expect(afterEditOptionsCount).toBe(initialSelectedOptionsCount + 1);
+        await expect(groupByPills).toHaveCount(initialSelectedCount + 1);
 
         await groupByRestoreButton.click();
 
-        await expect(groupByValues).not.toHaveCount(afterEditOptionsCount);
-        await expect(groupByValues).toHaveCount(initialSelectedOptionsCount);
+        await expect(groupByPills).toHaveCount(initialSelectedCount);
       });
 
       await test.step('4.Enter multiple values using keyboard only', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const groupByVariable = getGroupByInput(dashboardPage, selectors);
-        await groupByVariable.click();
+        const groupByInput = getGroupByInput(dashboardPage, selectors);
+        await groupByInput.click();
 
-        const groupByOptionOne = groupByOptions.nth(0);
-        const groupByOptionTwo = groupByOptions.nth(1);
-        const textOne = await groupByOptionOne.textContent();
-        const textTwo = await groupByOptionTwo.textContent();
+        const textOne = (await groupByOptions.nth(0).textContent())!;
+        const textTwo = (await groupByOptions.nth(1).textContent())!;
 
-        await groupByVariable.fill(textOne!);
+        await groupByInput.fill(textOne);
         await page.keyboard.press('Enter');
 
-        await groupByVariable.fill(textTwo!);
+        await groupByInput.fill(textTwo);
         await page.keyboard.press('Enter');
 
         // Need to press escape twice - once to close the menu and once to blur the input
         await page.keyboard.press('Escape');
         await page.keyboard.press('Escape');
 
-        await expect(page.getByText(textOne!, { exact: false }).first()).toBeVisible();
-        await expect(page.getByText(textTwo!, { exact: false }).first()).toBeVisible();
+        await expect(groupByPills.filter({ hasText: textOne })).toBeVisible();
+        await expect(groupByPills.filter({ hasText: textTwo })).toBeVisible();
       });
     });
   }

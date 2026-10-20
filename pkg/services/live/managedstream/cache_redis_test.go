@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		Addr: addr,
 		DB:   db,
 	})
-	prefix := uuid.New().String()
+	prefix := uuid.NewV4().String()
 
 	t.Cleanup(redisCleanup(t, redisClient, prefix))
 

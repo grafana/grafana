@@ -97,6 +97,10 @@ For users that rely on multiple views of the same dataset, transformations offer
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
 
+To see transformations in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Transforms - Rows to fields" url="https://play.grafana.org/d/T5dVQV47z/" >}}
+
 > **Note:** Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
 
 ## Transformation types
@@ -974,6 +978,47 @@ The result after applying the outer join transformation looks like the following
 | 5         | NULL     | NULL             | HIST101  | B     |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
+
+#### Join on multiple fields
+
+A join drops any query that doesn’t contain the field you’re joining on. So if you try to add another **Join by field** transformation using a different field, some of the queries you need may already have been removed by the first join.
+
+Use the **Keep unjoined** option to maintain those queries instead of dropping them, so that a later **Join by field** transformation can join them on a different field. Enable it on every join except the last one.
+
+For example, one query returns measurements with two IDs, and the query run on each ID returns that ID's name:
+
+**Query A:**
+
+| GroupID | ProductID | Value |
+| ------- | --------- | ----- |
+| g1      | p1        | 1     |
+
+**Query B:**
+
+| GroupID | GroupName |
+| ------- | --------- |
+| g1      | Alpha     |
+
+**Query C:**
+
+| ProductID | ProductName |
+| --------- | ----------- |
+| p1        | Widget      |
+
+Add two transformations:
+
+1. **Join by field** on `GroupID`, with **Keep unjoined** enabled. Query C has no `GroupID`, so it's passed through rather than dropped.
+1. **Join by field** on `ProductID`. The result of the first join still has a `ProductID` column, so it joins with query C.
+
+The result looks like this:
+
+| ProductID | GroupID | Value | GroupName | ProductName |
+| --------- | ------- | ----- | --------- | ----------- |
+| p1        | g1      | 1     | Alpha     | Widget      |
+
+The field being joined on moves to the first column, so the column order changes at each step. Add an **Organize fields by name** transformation afterwards if you need a specific order.
+
+Leave **Keep unjoined** disabled unless you're chaining joins. When it's disabled, a query that doesn't contain the selected field is treated as a failed input to the join. As a result, an inner join correctly returns no rows if a query doesn't contain that field.
 
 ### Join by labels
 

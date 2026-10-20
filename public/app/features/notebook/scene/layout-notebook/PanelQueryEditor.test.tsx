@@ -129,8 +129,8 @@ const getDataSourceInstance = jest.fn(async (..._args: unknown[]) => ({
   getDefaultQuery: () => defaultQueryForNewType,
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(async (ref?: DataSourceRef | string) => settingsForRef(ref)),
   getDataSourceInstance: (...args: unknown[]) => getDataSourceInstance(...args),
   useDataSourceInstanceSettings: (ref?: DataSourceRef | string) => ({
@@ -187,6 +187,13 @@ describe('PanelQueryEditor', () => {
     render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     expect(await screen.findByTestId('resolved-datasource-A')).toHaveTextContent('default-uid');
+  });
+
+  it('mounts the time-range control inline, next to Add query', async () => {
+    const { panel, cell } = buildPanel();
+    render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    expect(await screen.findByRole('button', { name: /time range/i })).toBeInTheDocument();
   });
 
   it('offers a datasource picker when nothing resolves', async () => {

@@ -31,7 +31,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
-import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
+import { getIntervalsQueryFromNewIntervalModel } from '../utils/getIntervalsQueryFromNewIntervalModel';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
@@ -253,9 +253,7 @@ export function sceneVariablesSetToVariables(
         ],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
-        enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-          ? (variable.state.enableGroupBy ?? false)
-          : false,
+        enableGroupBy: variable.state.enableGroupBy ?? false,
       };
       variables.push(adhocVariable);
     } else if (sceneUtils.isSwitchVariable(variable)) {
@@ -603,9 +601,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
-          enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-            ? (variable.state.enableGroupBy ?? false)
-            : false,
+          enableGroupBy: variable.state.enableGroupBy ?? false,
         },
       };
       variables.push(adhocVariable);

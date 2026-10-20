@@ -12,6 +12,12 @@ jest.mock('@grafana/runtime/unstable', () => ({
   updateAppPluginSettings: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginSettings: undefined,
+  updateAppPluginSettings: undefined,
+}));
+
 const mockRuntimeGetAppPluginSettings = jest.mocked(runtimeGetPluginSettings);
 const mockRuntimeUpdateAppPluginSettings = jest.mocked(runtimeUpdateAppPluginSettings);
 const mockData: Partial<PluginMeta> = { enabled: true, pinned: true };

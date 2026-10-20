@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -69,7 +70,7 @@ func TestParents(t *testing.T) {
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
 				var nothing *folders.Folder // needs to be an object
-				m.On("Get", context.TODO(), "parent", &metav1.GetOptions{}).Return(
+				m.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(
 					nothing, fmt.Errorf("custom error message"))
 			},
 			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{
@@ -84,7 +85,7 @@ func TestParents(t *testing.T) {
 				folder: "parent", // not a folder
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
-				m.On("Get", context.TODO(), "parent", &metav1.GetOptions{}).Return(
+				m.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(
 					&unstructured.Unstructured{}, // not a folder
 					nil).Once()
 			},
@@ -100,7 +101,7 @@ func TestParents(t *testing.T) {
 				folder: "test",
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
-				m.On("Get", context.TODO(), "test", &metav1.GetOptions{}).Return(
+				m.On("Get", mock.Anything, "test", &metav1.GetOptions{}).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
@@ -119,7 +120,7 @@ func TestParents(t *testing.T) {
 			if tt.getter == nil && tt.setupFn == nil {
 				// Default to filling the getter with expected results
 				for _, item := range tt.expected.Items {
-					m.On("Get", context.TODO(), item.Name, &metav1.GetOptions{}).Return(
+					m.On("Get", mock.Anything, item.Name, &metav1.GetOptions{}).Return(
 						&folders.Folder{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: item.Name,
@@ -136,7 +137,7 @@ func TestParents(t *testing.T) {
 			} else {
 				for k, v := range tt.getter {
 					v.Name = k // set the name
-					m.On("Get", context.TODO(), k, &metav1.GetOptions{}).Return(v, nil).Maybe()
+					m.On("Get", mock.Anything, k, &metav1.GetOptions{}).Return(v, nil).Maybe()
 				}
 				if tt.setupFn != nil {
 					tt.setupFn(m)

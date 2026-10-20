@@ -200,7 +200,9 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 			Backend: cfg.UnifiedAlerting.StateHistory.Backend,
 			Primary: cfg.UnifiedAlerting.StateHistory.MultiPrimary,
 		}
-		if cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID != "" {
+		// Only sent when alert states are actually written there, so the frontend can rely on it being set
+		// to decide whether to show the alert activity page.
+		if cfg.UnifiedAlerting.StateHistory.WritesToPrometheus() {
 			frontendSettings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID
 		}
 		if cfg.UnifiedAlerting.StateHistory.PrometheusMetricName != "" {
@@ -213,6 +215,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 	}
 
 	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = cfg.UnifiedAlerting.RecordingRules.Enabled
+	frontendSettings.UnifiedAlerting.NotificationHistoryEnabled = cfg.UnifiedAlerting.NotificationHistory.Enabled
 	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
 
 	if cfg.UnifiedAlerting.Enabled != nil {
