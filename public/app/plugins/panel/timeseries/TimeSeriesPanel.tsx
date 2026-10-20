@@ -61,7 +61,7 @@ export const TimeSeriesPanel = ({
     canExecuteActions,
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
-    experimentalOpenExemplar,
+    openExemplar,
   } = usePanelContext();
   const theme = useTheme2();
   const getVisibleExemplarLabels = useMemo(() => memoizeOne(getVisibleLabels), []);
@@ -248,7 +248,7 @@ export const TimeSeriesPanel = ({
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {/* always mounted: uPlot reads hooks only when the plot is created, so a late mount would never initialize */}
                 <ExemplarsPlugin
-                  openExemplar={experimentalOpenExemplar}
+                  openExemplar={openExemplar}
                   visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
                   config={uplotConfig}
                   exemplars={data.annotations ?? noAnnotations}

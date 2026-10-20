@@ -233,7 +233,7 @@ describe('ExemplarsPlugin', () => {
       onHandled: jest.fn(() => {
         pending = false;
       }),
-    } satisfies NonNullable<PanelContext['experimentalOpenExemplar']>;
+    } satisfies NonNullable<PanelContext['openExemplar']>;
   };
 
   it('renders nothing before uPlot hooks', () => {

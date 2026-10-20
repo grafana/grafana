@@ -53,7 +53,7 @@ export interface PanelContext {
    *
    * @alpha -- experimental
    */
-  experimentalOpenExemplar?: {
+  openExemplar?: {
     getRequest: (exemplars: DataFrame[]) => { requestId: string; frameIndex: number; rowIndex: number } | undefined;
     onHandled: (requestId: string) => void;
   };

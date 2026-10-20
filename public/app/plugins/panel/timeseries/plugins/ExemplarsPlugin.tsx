@@ -18,7 +18,7 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   visibleSeries?: VisibleExemplarLabels;
-  openExemplar?: PanelContext['experimentalOpenExemplar'];
+  openExemplar?: PanelContext['openExemplar'];
   maxHeight?: number;
   maxWidth?: number;
 }
