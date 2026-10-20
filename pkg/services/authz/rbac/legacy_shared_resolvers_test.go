@@ -301,7 +301,7 @@ func TestLegacyResolverContextFailureDenies(t *testing.T) {
 	require.NoError(t, err)
 	want := &authzextv1.LegacyCheckResponse{
 		Allowed: false,
-		Error:   "could not evaluate legacy expression: could not get legacy identity scopes: could not get legacy identity permissions: folder permissions unavailable",
+		Error:   "could not evaluate legacy expression: could not get legacy identity scopes: could not get legacy identity permissions: could not get user permissions: folder permissions unavailable",
 	}
 	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
 	require.Zero(t, calls)
