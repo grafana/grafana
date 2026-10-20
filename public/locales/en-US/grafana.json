@@ -6181,6 +6181,9 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "query-editor": {
+      "load-error": "Failed to load panel plugins"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -8105,6 +8108,12 @@
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
+    },
+    "time-regions": {
+      "advanced-description-cron": "Cron syntax",
+      "advanced-description-rest": " to define a recurrence schedule and duration",
+      "advanced-description-use": "Use ",
+      "advanced-label": "Advanced"
     },
     "variables": {
       "title": "Variables"
