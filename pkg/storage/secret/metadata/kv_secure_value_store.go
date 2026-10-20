@@ -473,12 +473,13 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 
 	// Only inactive secure values have gc keys. The gc keys are sorted by version and versions are time ordered,
 	// so the oldest inactive secure values come first.
+	// There's no limit because secure values that are not eligible would take up the batch.
 	gcKeys := make([]string, 0, maxBatchSize)
 
+	// TODO: unbounded number of entries
 	for gcKey, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: gcKeyPrefix,
 		EndKey:   resource.PrefixRangeEnd(gcKeyPrefix),
-		Limit:    int64(maxBatchSize),
 	}) {
 		if err != nil {
 			return nil, fmt.Errorf("listing gc keys in the kv store: %w", err)
@@ -521,6 +522,9 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 				key:   keyValue.Key,
 				value: &value,
 			})
+			if len(eligible) >= int(maxBatchSize) {
+				break
+			}
 		}
 	}
 

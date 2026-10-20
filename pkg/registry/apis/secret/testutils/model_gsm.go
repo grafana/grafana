@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	claims "github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -320,6 +322,43 @@ func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL tim
 	}
 
 	return out, nil
+}
+
+func (m *ModelGsm) Lease(now time.Time, leaseTTL time.Duration, svs []*ModelSecureValue) {
+	for _, sv := range svs {
+		sv.leaseCreated = now
+		sv.leaseDuration = time.Duration(leaseTTL.Seconds()*math.Pow(2, float64(sv.gcAttempts))) * time.Second
+	}
+}
+
+func (m *ModelGsm) IncGCAttemptCount(svs []*ModelSecureValue) map[*ModelSecureValue]int {
+	out := make(map[*ModelSecureValue]int, len(svs))
+	for _, sv := range svs {
+		if _, ok := out[sv]; ok {
+			continue
+		}
+		if !sv.active {
+			sv.gcAttempts++
+		}
+		out[sv] = sv.gcAttempts
+	}
+	return out
+}
+
+func (m *ModelGsm) SetInactiveAllFromGroup(namespace, apiGroup string) error {
+	for _, sv := range m.SecureValues {
+		if sv.Namespace != namespace || !sv.active || len(sv.OwnerReferences) == 0 {
+			continue
+		}
+		gv, err := schema.ParseGroupVersion(sv.OwnerReferences[0].APIVersion)
+		if err != nil {
+			return err
+		}
+		if gv.Group == apiGroup {
+			sv.active = false
+		}
+	}
+	return nil
 }
 
 // EligibleInactiveSecureValues returns every inactive secure value that can be leased, in no particular order.

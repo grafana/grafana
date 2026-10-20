@@ -204,13 +204,72 @@ func TestPropertyStateMachine(t *testing.T) {
 						}
 					},
 					"setInactiveAllFromGroup": func(t *rapid.T) {
-						// TODO: implement
+						namespace := testutils.NamespaceGen.Draw(t, "namespace")
+						apiGroup := testutils.APIGroupGen.Draw(t, "apiGroup")
+						modelErr := model.SetInactiveAllFromGroup(namespace, apiGroup)
+						err := sut.SecureValueMetadataStorage.SetInactiveAllFromGroup(t.Context(), xkube.Namespace(namespace), apiGroup)
+						require.ErrorIs(t, err, modelErr)
 					},
 					"leaseInactiveSecureValues": func(t *rapid.T) {
-						// TODO: implement
+						// Taken from secureValueMetadataStorage.acquireLeases
+						const (
+							minAge   = 10 * time.Minute
+							leaseTTL = 5 * time.Minute
+						)
+						maxBatchSize := rapid.Uint16Range(1, 10).Draw(t, "maxBatchSize")
+						eligible := model.EligibleInactiveSecureValues(sut.Clock.Now(), minAge)
+						leased, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
+						require.NoError(t, err)
+						require.Equal(t, min(len(eligible), int(maxBatchSize)), len(leased))
+
+						// The backends may pick different secure values than the model when more are eligible than fit in a batch.
+						// Versions whose activation failed have no recorded sut version so they are matched by namespace and name.
+						modelLeased := make([]*testutils.ModelSecureValue, 0, len(leased))
+						for _, v := range leased {
+							i := slices.IndexFunc(eligible, func(m *testutils.ModelSecureValue) bool {
+								if m.Namespace != v.Namespace || m.Name != v.Name {
+									return false
+								}
+								version, ok := versions[versionKey{namespace: m.Namespace, name: m.Name, version: m.Status.Version}]
+								return !ok || version == v.Status.Version
+							})
+							require.NotEqualf(t, -1, i, "sut leased a secure value that is not eligible in the model: %s/%s/%d", v.Namespace, v.Name, v.Status.Version)
+							modelLeased = append(modelLeased, eligible[i])
+							eligible = slices.Delete(eligible, i, i+1)
+						}
+						model.Lease(sut.Clock.Now(), leaseTTL, modelLeased)
 					},
 					"incGCAttemptCount": func(t *rapid.T) {
-						// TODO: implement
+						if len(model.SecureValues) == 0 {
+							return
+						}
+						indexes := rapid.SliceOfNDistinct(rapid.IntRange(0, len(model.SecureValues)-1), 1, -1, rapid.ID).Draw(t, "indexes")
+
+						modelInput := make([]*testutils.ModelSecureValue, 0, len(indexes))
+						input := make([]contracts.SecureValueIdentifier, 0, len(indexes))
+						for _, i := range indexes {
+							sv := model.SecureValues[i]
+							// The sut version is unknown for versions whose activation failed
+							version, ok := versions[versionKey{namespace: sv.Namespace, name: sv.Name, version: sv.Status.Version}]
+							if !ok {
+								continue
+							}
+							modelInput = append(modelInput, sv)
+							input = append(input, contracts.SecureValueIdentifier{Namespace: xkube.Namespace(sv.Namespace), Name: sv.Name, Version: version})
+						}
+						if len(input) == 0 {
+							return
+						}
+
+						modelCounts := model.IncGCAttemptCount(modelInput)
+						counts, err := sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), input)
+						require.NoError(t, err)
+						// The sut returns counts keyed by guid which the model doesn't know
+						require.ElementsMatch(t, slices.Collect(maps.Values(modelCounts)), slices.Collect(maps.Values(counts)))
+					},
+					"advanceTime": func(t *rapid.T) {
+						duration := time.Duration(rapid.IntRange(1, 60).Draw(t, "minutes")) * time.Minute
+						sut.Clock.AdvanceBy(duration)
 					},
 				})
 			})
