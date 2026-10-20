@@ -18,6 +18,7 @@ import (
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
+	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
 	//   - Permissions: NoOrgID globals, contextual team grants and SharedWithMe.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
@@ -77,7 +78,10 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		},
 	)
 	if err != nil {
-		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+		return &authzextv1.LegacyCheckResponse{
+			Allowed: false,
+			Error:   fmt.Errorf("could not evaluate legacy expression: %w", err).Error(),
+		}, nil
 	}
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
