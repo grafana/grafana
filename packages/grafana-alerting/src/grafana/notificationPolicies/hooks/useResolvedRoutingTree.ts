@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { findRoutingTreeByName } from '../routingTree.utils';
 import { type RoutingTreeView, toRoutingTreeView } from '../routingTreeView';
 
@@ -20,9 +22,10 @@ export function useResolvedRoutingTree(name?: string): ResolvedRoutingTree {
   const { trees, currentData, isError } = useRoutingTrees();
 
   const found = findRoutingTreeByName(trees, name);
+  const tree = useMemo(() => (found ? toRoutingTreeView(found) : null), [found]);
   const isResolving = !currentData && !isError;
   const isNotFound = Boolean(currentData) && !found;
 
   // A refetch that fails keeps the last good list; that list is still a valid answer.
-  return { tree: found ? toRoutingTreeView(found) : null, isResolving, isNotFound, isError: isError && !currentData };
+  return { tree, isResolving, isNotFound, isError: isError && !currentData };
 }
