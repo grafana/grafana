@@ -273,6 +273,9 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	err := cc.processFn(ctx, key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	cc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.
