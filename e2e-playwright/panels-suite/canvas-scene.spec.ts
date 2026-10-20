@@ -2,7 +2,11 @@ import { type Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
+// The standalone canvas plugin (loaded by default) reads the legacy toggle; core canvas reads OpenFeature.
 test.use({
+  featureToggles: {
+    canvasPanelPanZoom: true,
+  },
   openFeature: {
     flags: { canvasPanelPanZoom: true },
   },
