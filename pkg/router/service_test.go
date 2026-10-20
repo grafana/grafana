@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -253,7 +254,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 
 func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 	cfg := setting.NewCfg()
-	loader := &cloudLoader{singleTenantFallback: newTestSingleTenantFallback(t)}
+	loader := &cloudLoader{BasicService: services.NewIdleService(nil, nil), singleTenantFallback: newTestSingleTenantFallback(t)}
 	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
@@ -262,4 +263,44 @@ func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 		w.WriteHeader(http.StatusTeapot)
 	}))
 	require.Equal(t, http.StatusTeapot, recorder.Code)
+}
+
+// lifecycleLoader is a routes loader with its own background lifecycle, like
+// the cloud loader.
+type lifecycleLoader struct {
+	dummyRoutesLoader
+	services.Service
+}
+
+// Inside Grafana nothing else starts the loader's lifecycle, so the service
+// runs it; the router module composes the two itself.
+func TestServiceRunsLoaderLifecycleInsideGrafana(t *testing.T) {
+	loader := lifecycleLoader{Service: services.NewIdleService(nil, nil)}
+	svc, err := provideTestService(setting.NewCfg(), featuremgmt.WithFeatures(), loader)
+	require.NoError(t, err)
+
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+	require.Equal(t, services.Running, loader.State())
+
+	require.NoError(t, services.StopAndAwaitTerminated(t.Context(), svc))
+	require.Equal(t, services.Terminated, loader.State())
+
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
+	standalone, err := ProvideService(cfg, featuremgmt.WithFeatures(), lifecycleLoader{Service: services.NewIdleService(nil, nil)}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
+	require.NoError(t, err)
+	require.Nil(t, standalone.loaderLifecycle, "the router module runs the loader itself")
+}
+
+// A failed loader fails the service, as it fails the router module.
+func TestServiceFailsWhenLoaderFails(t *testing.T) {
+	loader := lifecycleLoader{Service: services.NewBasicService(nil, func(ctx context.Context) error {
+		return errors.New("poll loop crashed")
+	}, nil)}
+	svc, err := provideTestService(setting.NewCfg(), featuremgmt.WithFeatures(), loader)
+	require.NoError(t, err)
+
+	require.NoError(t, svc.StartAsync(t.Context()))
+	err = svc.AwaitTerminated(t.Context())
+	require.ErrorContains(t, err, "poll loop crashed")
 }

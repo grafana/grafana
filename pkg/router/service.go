@@ -36,6 +36,12 @@ type Service struct {
 
 	standalone bool
 	middleware bool
+
+	// loaderLifecycle is the routes loader's own background lifecycle, run by
+	// this service inside Grafana. The router module composes it with the
+	// service itself instead (see initRouterModule).
+	loaderLifecycle services.Service
+	loaderFailures  *services.FailureWatcher
 }
 
 // ProvideGrafanaRouter creates the router without its routes loader, which
@@ -67,6 +73,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newServiceFor(router, reg)
 	s.standalone = slices.Contains(cfg.Target, "router")
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	if lifecycle, ok := loader.(services.Service); ok && !s.standalone {
+		s.loaderLifecycle = lifecycle
+		s.loaderFailures = services.NewFailureWatcher()
+		s.loaderFailures.WatchService(lifecycle)
+	}
 	return s, nil
 }
 
@@ -138,6 +149,13 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) starting(ctx context.Context) error {
+	// A loader with a lifecycle fills its routes only while it runs, so start
+	// it before the router's first reconcile.
+	if s.loaderLifecycle != nil {
+		if err := services.StartAndAwaitRunning(ctx, s.loaderLifecycle); err != nil {
+			return fmt.Errorf("starting routes loader: %w", err)
+		}
+	}
 	if err := s.router.Run(ctx); err != nil {
 		return fmt.Errorf("starting router: %w", err)
 	}
@@ -153,6 +171,8 @@ func (s *Service) running(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
+		case err := <-s.loaderFailures.Chan():
+			return fmt.Errorf("routes loader failed: %w", err)
 		case <-ticker.C:
 			s.reportReady(ctx)
 		}
@@ -166,6 +186,9 @@ func (s *Service) stopping(error) error {
 	// Watches never go idle, so the server's shutdown would otherwise wait for
 	// each one to end. Clients re-establish them against another replica.
 	s.router.closeWatches()
+	if s.loaderLifecycle != nil {
+		return services.StopAndAwaitTerminated(context.Background(), s.loaderLifecycle)
+	}
 	return nil
 }
 
