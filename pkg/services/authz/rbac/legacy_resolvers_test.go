@@ -360,7 +360,6 @@ func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
 			UserID:  1,
 			Role:    "Viewer",
 			TeamIDs: []int64{10},
-			Limit:   1,
 		},
 		{
 			UserID:  1,

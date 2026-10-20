@@ -166,11 +166,9 @@ func (s *Service) getLegacyIdentityPermissions(
 	}
 
 	// AccessControl skips resolvers only when the entire permission set is empty.
-	// A filtered action query cannot establish that, so check for one grant using
-	// the same identity/role/team restrictions, without loading a full snapshot.
-	query.Action = ""
-	query.ActionSets = nil
-	query.Limit = 1
+	// A filtered action query cannot establish that, so check for grants using
+	// the same identity/role/team restrictions without an action filter.
+	// TODO: Use HasUserPermissions once the separate permission-store change lands.
 	grants, err := s.permissionStore.GetUserPermissions(ctx, ns, query)
 	if err != nil {
 		return nil, false, err
