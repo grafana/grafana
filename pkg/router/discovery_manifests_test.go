@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -629,4 +630,34 @@ func TestManifestIndexIsRenderedOnce(t *testing.T) {
 	again, pageAgain := docs.indexDocs()
 	require.Same(t, index, again)
 	require.Same(t, page, pageAgain)
+}
+
+// In-process readers get the same manifests HTTP clients do, and copies they
+// can't use to change what the router serves.
+func TestManifestDiscoveryListAndGet(t *testing.T) {
+	r := NewGrafanaRouter(dummyRoutesLoader{}, nil)
+	r.publishManifestDocs(t.Context(), testManifestBackends())
+
+	list, err := r.List(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, "AppManifestList", list.Kind)
+	require.Equal(t, appmanifestv1alpha2.GroupVersion.String(), list.APIVersion)
+
+	var served appmanifestv1alpha2.AppManifestList
+	var body bytes.Buffer
+	require.NoError(t, r.manifestDocs.Load().writeList(&body))
+	require.NoError(t, json.Unmarshal(body.Bytes(), &served))
+	require.Equal(t, served.Items, list.Items)
+
+	manifest, err := r.Get(t.Context(), manifestTestGroup)
+	require.NoError(t, err)
+	require.Equal(t, list.Items[0], *manifest)
+
+	manifest.Spec.AppName = "changed"
+	again, err := r.Get(t.Context(), manifestTestGroup)
+	require.NoError(t, err)
+	require.Equal(t, "widgets", again.Spec.AppName)
+
+	_, err = r.Get(t.Context(), "gadgets.example.com")
+	require.True(t, apierrors.IsNotFound(err), "a group without a manifest is not found")
 }

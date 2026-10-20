@@ -172,22 +172,18 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	require.Contains(t, recorder.Body.String(), `"kind":"AppManifestList"`)
 }
 
-// In-process storage reads the discovery tree through LocalManifestDiscovery,
-// which must reach nothing else the router serves.
-func TestProvideServiceSetsLocalManifestDiscovery(t *testing.T) {
-	discovery := resource.ProvideLocalManifestDiscovery()
-	_, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry(), discovery)
+// In-process storage reads the router's manifests through the discovery it is
+// given, which must be the router itself.
+func TestProvideServiceSetsManifestDiscovery(t *testing.T) {
+	discovery := resource.ProvideEventualManifestDiscovery()
+	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(), dummyRoutesLoader{}, prometheus.NewRegistry(), discovery)
 	require.NoError(t, err)
+	svc.router.publishManifestDocs(t.Context(), testManifestBackends())
 
-	get := func(path string) *http.Response {
-		req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost"+path, nil)
-		resp, err := discovery.RoundTrip(req)
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = resp.Body.Close() })
-		return resp
-	}
-	require.Equal(t, http.StatusOK, get(manifestDiscoveryList).StatusCode)
-	require.Equal(t, http.StatusNotFound, get("/apis/dummy-backend-1.ext.grafana.app/v0alpha1").StatusCode)
+	list, err := discovery.List(t.Context())
+	require.NoError(t, err)
+	require.Len(t, list.Items, 1)
+	require.Equal(t, manifestTestGroup, list.Items[0].Name)
 }
 
 func TestRouterTargetCloudFallback(t *testing.T) {

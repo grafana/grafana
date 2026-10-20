@@ -478,7 +478,7 @@ var wireBasicSet = wire.NewSet(
 	resource.ProvideIndexMetrics,
 	resource.ProvideVectorMetrics,
 	resource.ProvideEventualClient,
-	resource.ProvideLocalManifestDiscovery,
+	resource.ProvideEventualManifestDiscovery,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server

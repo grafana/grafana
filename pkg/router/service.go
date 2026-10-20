@@ -44,7 +44,7 @@ type Service struct {
 // tree is served and in-process storage can read its manifests through
 // discovery (nil in the router module); the middleware feature toggle controls
 // whether it routes any other request.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer, discovery *resource.LocalManifestDiscovery) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer, discovery *resource.EventualManifestDiscovery) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
@@ -62,7 +62,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s.standalone = standalone
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	if discovery != nil && !standalone {
-		discovery.Set(http.HandlerFunc(s.serveDiscovery))
+		discovery.Set(s.router)
 	}
 	return s, nil
 }
@@ -120,16 +120,6 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		return
 	}
 	next.ServeHTTP(w, req)
-}
-
-// serveDiscovery serves only the /apis/discovery tree, for in-process clients
-// that must not reach the groups the router would otherwise proxy.
-func (s *Service) serveDiscovery(w http.ResponseWriter, req *http.Request) {
-	if !isDiscoveryPath(req.URL.Path) {
-		http.NotFound(w, req)
-		return
-	}
-	s.metrics.instrument(s.router, w, req, http.NotFoundHandler())
 }
 
 // Run adapts Service to the full server's background-service lifecycle.

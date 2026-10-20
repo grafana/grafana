@@ -918,8 +918,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	localManifestDiscovery := resource.ProvideLocalManifestDiscovery()
-	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer, localManifestDiscovery)
+	eventualManifestDiscovery := resource.ProvideEventualManifestDiscovery()
+	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer, eventualManifestDiscovery)
 	if err != nil {
 		return nil, err
 	}
@@ -1716,8 +1716,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	localManifestDiscovery := resource.ProvideLocalManifestDiscovery()
-	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer, localManifestDiscovery)
+	eventualManifestDiscovery := resource.ProvideEventualManifestDiscovery()
+	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer, eventualManifestDiscovery)
 	if err != nil {
 		return nil, err
 	}
