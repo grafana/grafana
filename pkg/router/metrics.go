@@ -163,10 +163,11 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
 		metricGroup = unknownGroupLabel
 	}
-	verb := metricVerb(requestVerb(req))
 	start := time.Now()
 	rec := newStatusRecorder(w)
 	req, outcome := withRequestOutcome(req)
+	// Recorded on outcome, so the router doesn't parse the request again.
+	verb := metricVerb(requestVerb(req))
 	route := func() string {
 		if outcome.route == "" {
 			return routeNext

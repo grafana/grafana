@@ -128,6 +128,12 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		// API server, which has its own metrics; don't count them as the router's.
 		group := apiGroup(req.URL.Path)
 		if !s.router.owns(req, group) {
+			// Without a single-tenant fallback, which middleware mode doesn't
+			// set up, the router passes every request it doesn't own to next.
+			if s.router.unregisteredGroupHandler == nil {
+				next.ServeHTTP(w, req)
+				return
+			}
 			s.router.handle(w, req, next, group)
 			return
 		}
