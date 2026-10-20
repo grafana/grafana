@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -124,7 +125,29 @@ func TestReceiverService_UpdateReceiverRejectsExistingTransaction(t *testing.T) 
 	})
 	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
 	_, err = sut.UpdateReceiver(ctx, r, nil, requester.OrgID, requester)
-	require.ErrorContains(t, err, "receiver updates cannot run inside an existing SQL transaction")
+	require.ErrorIs(t, err, models.ErrReceiverUpdateInTransaction)
+}
+
+func TestReceiverService_UpdateReceiverAllowsTypedNilSession(t *testing.T) {
+	secrets := fake_secrets.NewFakeSecretsService()
+	sut := createReceiverServiceSut(t, &secrets)
+	requester := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
+	}}
+	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, (*sqlstore.DBSession)(nil))
+	receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+	require.NoError(t, err)
+	called := false
+	sut.xact = receiverPermissionTransactionFunc(func(ctx context.Context, work func(context.Context) error) error {
+		called = true
+		return work(ctx)
+	})
+	_, err = sut.UpdateReceiver(ctx, receiver, nil, requester.OrgID, requester)
+	require.NoError(t, err)
+	require.True(t, called, "a typed nil session is not a transaction")
 }
 
 type receiverPermissionTransactionFunc func(context.Context, func(context.Context) error) error

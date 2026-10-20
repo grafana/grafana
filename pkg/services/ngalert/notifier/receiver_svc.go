@@ -464,8 +464,8 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	))
 	defer span.End()
 	// This method must own the transaction so the permission refresh runs after commit.
-	if ctx.Value(sqlstore.ContextSessionKey{}) != nil {
-		return nil, errors.New("receiver updates cannot run inside an existing SQL transaction")
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+		return nil, models.ErrReceiverUpdateInTransaction.Errorf("receiver updates cannot run inside an existing SQL transaction")
 	}
 	// check origin of the provided receiver
 	if r.Origin != models.ResourceOriginGrafana {

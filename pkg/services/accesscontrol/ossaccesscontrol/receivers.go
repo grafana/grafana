@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -163,12 +164,17 @@ func (r ReceiverPermissionsService) RefreshPermissions(ctx context.Context, user
 	if user == nil || !user.IsIdentityType(claims.TypeUser) {
 		return
 	}
+	// Remote AuthZ cannot see uncommitted changes, so a reload inside a transaction can cache old permissions.
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+		r.log.Warn("Skipped receiver permission refresh inside a SQL transaction", "user", user.GetUID())
+		return
+	}
 
 	// Reload also refreshes basic-role and team caches, which ClearUserPermissionCache does not clear.
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if _, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true}); err != nil {
-		r.log.Debug("Failed to clear user permissions cache", "error", err)
+		r.log.Warn("Failed to refresh user permissions after receiver update", "user", user.GetUID(), "error", err)
 	}
 }
 

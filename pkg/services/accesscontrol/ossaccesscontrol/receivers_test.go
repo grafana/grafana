@@ -110,6 +110,11 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 					if rollback {
 						require.Contains(t, permissions, oldGrant)
 						require.NotContains(t, permissions, newGrant)
+						// Read from the database, not the cache, to prove the rollback.
+						permissions, err = ac.GetUserPermissions(ctx, requester, accesscontrol.Options{ReloadCache: true})
+						require.NoError(t, err)
+						require.Contains(t, permissions, oldGrant)
+						require.NotContains(t, permissions, newGrant)
 					} else {
 						require.Contains(t, permissions, newGrant)
 						require.NotContains(t, permissions, oldGrant)
@@ -125,18 +130,24 @@ func TestReceiverPermissionsRefresh(t *testing.T) {
 		name      string
 		requester identity.Requester
 		cancel    bool
+		session   any
 		err       error
 		wantCalls int
 	}{
 		{name: "user", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, wantCalls: 1},
 		{name: "failure", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, err: errors.New("AuthZ unavailable"), wantCalls: 1},
 		{name: "cancellation", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, cancel: true, wantCalls: 1},
+		{name: "inside SQL transaction", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, session: &sqlstore.DBSession{}},
+		{name: "typed nil SQL session", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, session: (*sqlstore.DBSession)(nil), wantCalls: 1},
 		{name: "nil user"},
 		{name: "service account", requester: &user.SignedInUser{UserID: 7, OrgID: 1, IsServiceAccount: true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			type requestKey struct{}
 			ctx := context.WithValue(t.Context(), requestKey{}, "request metadata")
+			if tc.session != nil {
+				ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, tc.session)
+			}
 			var deadline time.Time
 			if tc.cancel {
 				var cancel context.CancelFunc

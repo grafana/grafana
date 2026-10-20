@@ -90,9 +90,11 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
-			// TODO: Before routing these callers to remote AuthZ, move permission
-			// refreshes (including receiver permission copying) after the outermost
-			// transaction commits. SQL sessions cannot be shared over remote gRPC.
+			// Receiver renames now refresh permissions after commit. No other caller is
+			// known to read permissions inside a transaction.
+			// TODO: Before routing to remote AuthZ, confirm that no caller reads
+			// permissions inside a transaction, then remove this bridge. SQL sessions
+			// cannot be shared over remote gRPC.
 			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
