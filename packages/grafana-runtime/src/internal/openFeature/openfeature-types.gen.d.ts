@@ -110,7 +110,6 @@ declare module "@openfeature/core" {
     | "recentlyViewedDashboards"
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
-    | "enableAppChromeExtensions"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
