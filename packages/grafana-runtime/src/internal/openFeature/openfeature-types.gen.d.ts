@@ -174,6 +174,7 @@ declare module "@openfeature/core" {
     | "grafana.growthHomepage"
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
+    | "assistant.dashboardPlanBuildingScreen"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"

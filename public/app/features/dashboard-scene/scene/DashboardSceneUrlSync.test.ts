@@ -427,6 +427,7 @@ describe('DashboardSceneUrlSync', () => {
 
   describe('while planning', () => {
     const planning = {
+      phase: 'preview' as const,
       planId: 'plan-1',
       planTitle: 'Kafka overview',
       onBuild: jest.fn(),
