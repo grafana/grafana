@@ -26,7 +26,7 @@ func TestAddAutogenConfig(t *testing.T) {
 	}
 	// defaultRoute is the definition.Route form of rootRoute, i.e. the tree AddAutogenConfig actually mutates.
 	defaultRoute := func() *definition.Route {
-		return v1.RouteToDB(rootRoute())
+		return RouteToAPI(rootRoute())
 	}
 	configGen := func(receivers []string, muteIntervals []string) *v1.AMConfigV1 {
 		cfg := &v1.AMConfigV1{
@@ -300,7 +300,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			if tt.skipInvalid {
 				onInvalid = IgnoreInvalidReceivers
 			}
-			route := v1.RouteToDB(tt.existingConfig.AlertmanagerConfig.Route)
+			route := RouteToAPI(tt.existingConfig.AlertmanagerConfig.Route)
 			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, route, onInvalid, nil)
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
