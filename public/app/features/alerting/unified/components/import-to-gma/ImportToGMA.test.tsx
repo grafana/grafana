@@ -1,10 +1,9 @@
 import { HttpResponse, http } from 'msw';
-import * as React from 'react';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { type CodeEditor } from '@grafana/ui';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -27,12 +26,12 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-// Monaco doesn't render usable content in jsdom — stub it with a plain textarea (same pattern as
-// Templates.test.tsx) so the redacted preview content can be asserted on directly.
-type CodeEditorProps = React.ComponentProps<typeof CodeEditor>;
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value }: CodeEditorProps) => <textarea data-testid="code-editor" value={value} readOnly />,
+// Keep these tests focused on the preview's content and editor integration.
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
+    <textarea data-testid="code-editor" aria-label={label} value={value} readOnly={readOnly} />
+  )),
 }));
 
 // Selects which fixture the mocked Step1Content below seeds. Prefixed `mock` per Jest's rule for
@@ -368,6 +367,10 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     // aria-label disambiguates the two cards' otherwise-identical "Preview" buttons.
     await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
     const notificationsDialog = await screen.findByRole('dialog', { name: /notifications config preview/i });
+    await screen.findByRole('textbox', { name: /notifications config preview/i });
+    expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ height: '500px', language: 'yaml', readOnly: true, lineWrapping: true })
+    );
     // Modal renders both its own close-icon button and the explicit "Close" button below the content.
     const closeButtons = within(notificationsDialog).getAllByRole('button', { name: /close/i });
     await user.click(closeButtons[closeButtons.length - 1]);
@@ -450,6 +453,9 @@ describe('ImportToGMA wizard — datasource-fetch preview redaction', () => {
     const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
     expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
     expect(editor.value).toContain('"receiver": "default"');
+    expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ height: '500px', language: 'json', readOnly: true, lineWrapping: true })
+    );
   });
 
   it('does not reopen the notifications preview after it is dismissed while still loading', async () => {
@@ -500,6 +506,8 @@ describe('ImportToGMA wizard — datasource-fetch preview redaction', () => {
     const dialog = await screen.findByRole('dialog', { name: /notifications config preview/i });
 
     // The fetch above is still pending (gated on fetchGate) — dismiss now, while still loading.
+    expect(within(dialog).getByText('Loading content...')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('textbox')).not.toBeInTheDocument();
     const closeButtons = within(dialog).getAllByRole('button', { name: /close/i });
     await user.click(closeButtons[closeButtons.length - 1]);
     expect(screen.queryByRole('dialog', { name: /notifications config preview/i })).not.toBeInTheDocument();
