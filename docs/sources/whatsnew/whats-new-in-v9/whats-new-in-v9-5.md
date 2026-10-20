@@ -69,7 +69,7 @@ Dashboard panels contain a lot of information, some of which is difficult to dis
 
 We’ve improved panels without titles, made panel descriptions and errors more succinct, and linked key actions from the header of the panel. All of these are laid out from left to right in a row, so there are no overlapping, unusable components.
 
-Grafana’s new panel design is available only for React-based panels. No Angular-based panels, like the legacy Graph and Worldmap panels, are redesigned. As a reminder, Angular is deprecated in Grafana and will be removed in a future release. See our [deprecation docs](../../../developers/angular_deprecation/) for more information.
+Grafana’s new panel design is available only for React-based panels. No Angular-based panels, like the legacy Graph and Worldmap panels, are redesigned. As a reminder, Angular is deprecated in Grafana and will be removed in a future release. See our [deprecation docs](https://archive.grafana.com/docs/grafana/v12.2/developers/angular_deprecation/) for more information.
 
 {{< figure src="/media/docs/grafana/panel-redesign-whats-new-9.5.png" max-width="750px" caption="Panel header with open menu" >}}
 
@@ -108,7 +108,7 @@ _Generally available in all editions of Grafana._
 
 Support bundles provide a simple way to collect information about your Grafana instance through Grafana's user interface. In a few clicks, you can create a support bundle containing data about migrations, plugins, settings, and more. After you've created a support bundle, you can either examine it yourself, or share it with your colleagues or Grafana engineers to aid in troubleshooting of your Grafana instance.
 
-Learn more about support bundles and how to configure them in our [support bundle documentation](../../../troubleshooting/support-bundles/).
+Learn more about support bundles and how to configure them in our [support bundle documentation](https://archive.grafana.com/docs/grafana/v12.4/troubleshooting/support-bundles/).
 
 {{< figure src="/static/img/docs/troubleshooting/support-bundle.png" max-width="750px" caption="Create a support bundle to resolve issues faster" >}}
 

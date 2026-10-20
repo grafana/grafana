@@ -58,11 +58,11 @@ In addition, you can use our [detect-angular-dashboards](https://github.com/graf
 
 Use the aforementioned tooling and warnings to plan migrations to React based [visualizations](https://grafana.com/docs/grafana/latest/panels-visualizations/) and [data sources](https://grafana.com/docs/grafana/latest/datasources/) included in Grafana or from the [Grafana plugins catalog](https://grafana.com/grafana/plugins/).
 
-To learn more, refer to the [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/), which includes [recommended alternative plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/angular-plugins/).
+To learn more, refer to the [Angular support deprecation](https://archive.grafana.com/docs/grafana/v12.2/developers/angular_deprecation/), which includes [recommended alternative plugins](https://archive.grafana.com/docs/grafana/v12.2/developers/angular_deprecation/angular-plugins/).
 
 {{< youtube id="XlEVs6g8dC8" >}}
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/)
+[Documentation](https://archive.grafana.com/docs/grafana/v12.2/developers/angular_deprecation/)
 
 ### Data visualization quality of life improvements
 

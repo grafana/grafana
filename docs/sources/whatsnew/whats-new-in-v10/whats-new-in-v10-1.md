@@ -463,7 +463,7 @@ To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team 
 
 _Generally available in all editions of Grafana_
 
-We've made the following updates to increase awareness of the [Angular deprecation](../../../developers/angular_deprecation/) and its consequences in future releases of Grafana:
+We've made the following updates to increase awareness of the [Angular deprecation](https://archive.grafana.com/docs/grafana/v12.2/developers/angular_deprecation/) and its consequences in future releases of Grafana:
 
 #### UI changes
 
@@ -475,7 +475,7 @@ We've made the following updates to increase awareness of the [Angular deprecati
 
 - Angular Plugins will not be loaded if [angular_support_enabled](../../../setup-grafana/configure-grafana/#angular_support_enabled) is set to `false`.
 
-Learn more in our [Angular support deprecation documentation](../../../developers/angular_deprecation/).
+Learn more in our [Angular support deprecation documentation](https://archive.grafana.com/docs/grafana/v12.2/developers/angular_deprecation/).
 
 ### Deprecated provisioning of data sources with invalid UIDs
 
