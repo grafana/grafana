@@ -173,10 +173,18 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		}
 		return outcome.route
 	}
+	// The router rejects a non-canonical path before routing, so it is no
+	// group's request, even when its first segment names a served group.
+	resultGroup := func() string {
+		if outcome.route == routeInvalid && metricGroup != "" {
+			return unknownGroupLabel
+		}
+		return metricGroup
+	}
 	finish := func(duration time.Duration) {
-		m.requests.WithLabelValues(metricGroup, verb, route(), strconv.Itoa(rec.status)).Inc()
+		m.requests.WithLabelValues(resultGroup(), verb, route(), strconv.Itoa(rec.status)).Inc()
 		if outcome.failure != "" {
-			m.backendFailures.WithLabelValues(metricGroup, outcome.pluginID, outcome.failure).Inc()
+			m.backendFailures.WithLabelValues(resultGroup(), outcome.pluginID, outcome.failure).Inc()
 		}
 		logRequest(req, group, rec.status, duration)
 	}
@@ -193,7 +201,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	defer m.inFlight.Dec()
 	gr.handle(rec.writer(), req, next, apiGroup)
 	duration := time.Since(start)
-	m.duration.WithLabelValues(metricGroup, verb, route()).Observe(duration.Seconds())
+	m.duration.WithLabelValues(resultGroup(), verb, route()).Observe(duration.Seconds())
 	finish(duration)
 }
 

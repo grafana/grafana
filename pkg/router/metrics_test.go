@@ -129,6 +129,11 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, serve(invalid))
 	verb := requestVerb(httptest.NewRequest(http.MethodGet, invalid, nil))
 	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
+
+	// It is no group's request, even when its first segment is a served group.
+	require.Equal(t, http.StatusBadRequest, serve("/apis/test-app/../other-app/v1/things"))
+	require.Equal(t, uint64(2), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
+	require.Zero(t, requestCount(t, svc, "test-app", verb, routeInvalid, "400"))
 }
 
 func TestDiscoveryResultMetrics(t *testing.T) {
