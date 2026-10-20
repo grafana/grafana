@@ -1,7 +1,9 @@
-import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import {
+  type AdhocVariableKind,
   type ConstantVariableKind,
   type CustomVariableKind,
+  type GroupByVariableKind,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -52,6 +54,35 @@ const makeConstantVariableKind = (overrides: Partial<ConstantVariableKind['spec'
     hide: 'dontHide',
     skipUrlSync: false,
     ...overrides,
+  },
+});
+
+const makeAdhocVariableKind = (): AdhocVariableKind => ({
+  kind: 'AdhocVariable',
+  group: 'prometheus',
+  datasource: { name: 'prom' },
+  spec: {
+    name: 'adhoc',
+    baseFilters: [],
+    filters: [],
+    defaultKeys: [],
+    hide: 'dontHide',
+    skipUrlSync: false,
+    allowCustomValue: true,
+  },
+});
+
+const makeGroupByVariableKind = (): GroupByVariableKind => ({
+  kind: 'GroupByVariable',
+  group: 'prometheus',
+  datasource: { name: 'prom' },
+  spec: {
+    name: 'groupby',
+    current: { text: ['job'], value: ['job'] },
+    options: [],
+    multi: true,
+    hide: 'dontHide',
+    skipUrlSync: false,
   },
 });
 
@@ -112,6 +143,20 @@ describe('createSectionVariables', () => {
     expect(result!.state.variables).toHaveLength(2);
     expect(result!.state.variables[0].state.name).toBe('env');
     expect(result!.state.variables[1].state.name).toBe('version');
+  });
+
+  it('should merge a GroupByVariable into the section adhoc variable with the same datasource', () => {
+    const result = deserializeSectionVariables([makeAdhocVariableKind(), makeGroupByVariableKind()]);
+
+    expect(result!.state.variables).toHaveLength(1);
+    const adhoc = result!.state.variables[0] as AdHocFiltersVariable;
+    expect(adhoc).toBeInstanceOf(AdHocFiltersVariable);
+    expect(adhoc.state.enableGroupBy).toBe(true);
+    expect(adhoc.state.filters).toEqual([expect.objectContaining({ key: 'job', operator: 'groupBy' })]);
+  });
+
+  it('should drop a GroupByVariable without a matching section adhoc variable instead of throwing', () => {
+    expect(deserializeSectionVariables([makeGroupByVariableKind()])).toBeUndefined();
   });
 });
 

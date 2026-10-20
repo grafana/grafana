@@ -1,6 +1,7 @@
 import { type SceneVariables, SceneVariableSet } from '@grafana/scenes';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { migrateGroupByVariablesV2 } from '../groupByMigration';
 import { sceneVariablesSetToSchemaV2Variables } from '../sceneVariablesSetToVariables';
 import { createSceneVariableFromVariableModel } from '../transformSaveModelSchemaV2ToScene';
 
@@ -19,7 +20,9 @@ export function deserializeSectionVariables(variables?: VariableKind[]): SceneVa
   }
 
   // VariableKind is structurally identical to TypedVariableModelV2
-  const sceneVariables = variables.map((variable) => createSceneVariableFromVariableModel(variable));
+  const sceneVariables = migrateGroupByVariablesV2(variables).map((variable) =>
+    createSceneVariableFromVariableModel(variable)
+  );
   if (sceneVariables.length === 0) {
     return undefined;
   }
