@@ -607,7 +607,7 @@ func deleteFolders(
 	for _, entry := range foldersToDelete {
 		// The root folder holds every managed resource of the repository, so
 		// deleting it always fails and would fail every following sync too.
-		if isRepositoryRoot(entry.Path) {
+		if resources.IsRootFolderPath(entry.Path) {
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
 				WithAction(repository.FileActionIgnored).
 				WithName(entry.UID).

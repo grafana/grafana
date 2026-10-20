@@ -119,7 +119,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	change repository.VersionedFileChange,
 ) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
-	if isRepositoryRoot(folderPath) {
+	if resources.IsRootFolderPath(folderPath) {
 		return nil, nil
 	}
 
@@ -183,7 +183,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	change repository.VersionedFileChange,
 ) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
-	if isRepositoryRoot(folderPath) {
+	if resources.IsRootFolderPath(folderPath) {
 		return nil, nil
 	}
 
@@ -276,7 +276,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	// A directory-level rename in the original diff already handles this
 	// folder via RenameFolderPath; skip to avoid duplicate processing.
 	oldFolderPath := folderPathForMetadataChange(change.PreviousPath)
-	if isRepositoryRoot(oldFolderPath) || input.HadChangeOriginallyAt(oldFolderPath) {
+	if resources.IsRootFolderPath(oldFolderPath) || input.HadChangeOriginallyAt(oldFolderPath) {
 		return warnings, nil
 	}
 
@@ -477,14 +477,6 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 		OldUID: existing.Name,
 		Reason: provisioning.ReasonFolderMetadataDeleted,
 	}
-}
-
-// isRepositoryRoot reports whether a folder path is the repository root. A
-// `_folder.json` at the root never defines a folder identity: the root folder
-// UID is pinned by the repository configuration, so it must not be replayed or
-// replaced (full sync ignores root metadata for the same reason).
-func isRepositoryRoot(folderPath string) bool {
-	return folderPath == ""
 }
 
 // folderPathForMetadataChange converts a `_folder.json` file path into the

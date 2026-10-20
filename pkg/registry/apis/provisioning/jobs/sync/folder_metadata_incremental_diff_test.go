@@ -1328,6 +1328,13 @@ func expectFolderMetadataRead(repo *compositeRepo, folderPath, ref, uid string) 
 	expectFolderMetadataReadTimes(repo, folderPath, ref, uid, 1)
 }
 
+func TestFolderPathForMetadataChange_Root(t *testing.T) {
+	for _, metadataPath := range []string{"_folder.json", "/_folder.json", "./_folder.json"} {
+		require.True(t, resources.IsRootFolderPath(folderPathForMetadataChange(metadataPath)), "%q is root metadata", metadataPath)
+	}
+	require.False(t, resources.IsRootFolderPath(folderPathForMetadataChange("a/_folder.json")))
+}
+
 func TestIsFolderRelocating(t *testing.T) {
 	folder := func(name, path string) provisioning.ResourceListItem {
 		return provisioning.ResourceListItem{
