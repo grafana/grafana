@@ -2387,7 +2387,7 @@ __metadata:
     marked: "npm:^16.3.0"
     marked-mangle: "npm:^1.1.12"
     moment-timezone: "npm:^0.6.0"
-    ol: "npm:^10.7.0"
+    ol: "npm:^10.10.0"
     papaparse: "npm:^5.5.3"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
@@ -3183,7 +3183,7 @@ __metadata:
     monaco-editor: "npm:^0.34.1"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.7"
-    ol: "npm:^10.7.0"
+    ol: "npm:^10.10.0"
     prismjs: "npm:^1.30.0"
     react: "npm:19.2.8"
     react-calendar: "npm:^6.0.0"
@@ -6426,13 +6426,6 @@ __metadata:
     "@parcel/watcher-win32-x64":
       optional: true
   checksum: 10/c163dff1828fa249c00f24931332dea5a8f2fcd1bfdd0e304ccdf7619c58bff044526fa39241fd2121d2a2141f71775ce3117450d78c4df3070d152282017644
-  languageName: node
-  linkType: hard
-
-"@petamoriken/float16@npm:^3.4.7":
-  version: 3.5.0
-  resolution: "@petamoriken/float16@npm:3.5.0"
-  checksum: 10/a39d1040553b98019633c7a9e530931be9182ec1c6271a0d690ed6ab409a340255dcf578fece21f7fd1a7c036bb425544e42f59a0a109e84f641c73cd6e99b6d
   languageName: node
   linkType: hard
 
@@ -18393,22 +18386,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geotiff@npm:^2.1.3":
-  version: 2.1.3
-  resolution: "geotiff@npm:2.1.3"
-  dependencies:
-    "@petamoriken/float16": "npm:^3.4.7"
-    lerc: "npm:^3.0.0"
-    pako: "npm:^2.0.4"
-    parse-headers: "npm:^2.0.2"
-    quick-lru: "npm:^6.1.1"
-    web-worker: "npm:^1.2.0"
-    xml-utils: "npm:^1.0.2"
-    zstddec: "npm:^0.1.0"
-  checksum: 10/91475680b882c11e6c28b4538c8703da03a13fa1b3f8f9d456aa3b274cb71fb01f04aadb29006c3a607c20b724b936a95899ad8ef65d26a11eed59ba9f81c61f
-  languageName: node
-  linkType: hard
-
 "geotiff@npm:^3.1.0-beta.0":
   version: 3.1.0-beta.0
   resolution: "geotiff@npm:3.1.0-beta.0"
@@ -24756,7 +24733,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol@npm:10.10.0":
+"ol@npm:10.10.0, ol@npm:^10.10.0":
   version: 10.10.0
   resolution: "ol@npm:10.10.0"
   dependencies:
@@ -24767,19 +24744,6 @@ __metadata:
     rbush: "npm:^4.0.0"
     zarrita: "npm:^0.7.1"
   checksum: 10/a92725fce8253a00006a02aa4cb2e34586c8bd9edd5127be646352b4c4735be1af8684cc0e82bd218d7fdd03e490f1d85e8b0c292ff9a4a0222169cdd6bb14b2
-  languageName: node
-  linkType: hard
-
-"ol@npm:^10.7.0":
-  version: 10.7.0
-  resolution: "ol@npm:10.7.0"
-  dependencies:
-    "@types/rbush": "npm:4.0.0"
-    earcut: "npm:^3.0.0"
-    geotiff: "npm:^2.1.3"
-    pbf: "npm:4.0.1"
-    rbush: "npm:^4.0.0"
-  checksum: 10/f39fdb6a4d8e89114b0c2a450a59e12c7a040c8c546a27909347a80279355412f9cb197709c9715cfce5f989fc9861d9be7ce4c629c939a9ade0fe01ac980e0d
   languageName: node
   linkType: hard
 
@@ -25542,17 +25506,6 @@ __metadata:
   version: 2.0.0
   resolution: "pathval@npm:2.0.0"
   checksum: 10/b91575bf9cdf01757afd7b5e521eb8a0b874a49bc972d08e0047cfea0cd3c019f5614521d4bc83d2855e3fcc331db6817dfd533dd8f3d90b16bc76fad2450fc1
-  languageName: node
-  linkType: hard
-
-"pbf@npm:4.0.1":
-  version: 4.0.1
-  resolution: "pbf@npm:4.0.1"
-  dependencies:
-    resolve-protobuf-schema: "npm:^2.1.0"
-  bin:
-    pbf: bin/pbf
-  checksum: 10/9e2821fec1511cdaacf205c1279a33991119a2b8469208071d22e6204162dc8a4d216f647ce92759601e3d685fa913d4739278a86aa9ac126d04a1a3ac66bf12
   languageName: node
   linkType: hard
 
@@ -32016,13 +31969,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-worker@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "web-worker@npm:1.2.0"
-  checksum: 10/61a9d046504891ea25754eae08053a4f62a52798a5612039da9df92aca6c52c47eb0e2e35dbbe4c7ba1ba9622ad5783479ddd2e391ae6aed1f99c9b278309c53
-  languageName: node
-  linkType: hard
-
 "web-worker@npm:^1.5.0":
   version: 1.5.0
   resolution: "web-worker@npm:1.5.0"
@@ -32592,13 +32538,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xml-utils@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "xml-utils@npm:1.0.2"
-  checksum: 10/321e8f7d2ab7a7f4369259ae7a9f787343c925b9b3f04f25df88a98229cb8a7023fa1dd12e4b34d66963da130baaf651296e90abc82f6b3162c0c8f21dd87f23
-  languageName: node
-  linkType: hard
-
 "xml-utils@npm:^1.10.2":
   version: 1.10.2
   resolution: "xml-utils@npm:1.10.2"
@@ -32868,13 +32807,6 @@ __metadata:
   version: 4.6.5
   resolution: "zod@npm:4.6.5"
   checksum: 10/db004952e4dc6eab38b70f0cdef9251a65da84f5d08c5a0ef85e2590cfa9c477544ce734161ff5c05f89a15f0967137607a7feb16716195e04965f030db47213
-  languageName: node
-  linkType: hard
-
-"zstddec@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "zstddec@npm:0.1.0"
-  checksum: 10/818d7a7b910509bed32a5ae42352dc45e87e4ee8470c27352859824540efceb9643864afbbb93564beb76822d72a946a6ee7cfbf01627ee34a1cd9656f2857b8
   languageName: node
   linkType: hard
 
