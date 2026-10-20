@@ -147,10 +147,10 @@ The following HTML in a [text visualization](https://grafana.com/docs/grafana/<G
 
 Keep the following in mind when you use `$__theme`:
 
-- **Values follow the current theme:** The variable returns values from the theme that's active when Grafana interpolates it. The text visualization updates as soon as a user switches between light and dark themes. Other places pick up the new values the next time they're interpolated, for example when the dashboard refreshes.
+- **Values follow the current theme:** The variable returns values from the theme that's active when Grafana interpolates it. For example, the text visualization updates as soon as a user switches between light and dark themes. Other places pick up the new values the next time they're interpolated, like when the dashboard refreshes.
 - **Only single values resolve:** A path must end at a single value, like a color or a size. A path to a group of values, like `${__theme.colors}`, a missing path, like `${__theme.colors.nope}`, or `${__theme}` without a path remains literal text, so you can spot a typo.
 - **Units are part of the value:** Most sizes include their unit, like `12px`. A few return only a number, like `${__theme.typography.fontSize}`, which returns `14`. Add the unit yourself: `${__theme.typography.fontSize}px`.
-- **Use `typography.size` for pixel font sizes:** Font sizes of text styles, like `${__theme.typography.h3.fontSize}`, are in `rem`. For pixel values, use `${__theme.typography.size.xs}`, `sm`, `md`, or `lg`.
+- **Use `typography.size` for pixel font sizes:** The theme's text styles, like headings and body text, set their font sizes in `rem`, a unit relative to the page's base font size. For a font size in pixels, use `${__theme.typography.size.sm}`, or `xs`, `md`, or `lg`.
 - **Use hues for visualization colors:** `${__theme.visualization.palette.<INDEX>}` returns a color name, like `semi-dark-yellow`, which isn't a valid CSS color. Use `${__theme.visualization.hues.<HUE>.shades.<SHADE>.color}` for the color value.
 - **Spacing isn't available:** Use `${__theme.spacing.gridSize}`, which always returns `8`, and multiply it. For example, `calc(${__theme.spacing.gridSize}px * 2)` returns `16px`.
 
