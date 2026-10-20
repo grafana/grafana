@@ -202,6 +202,10 @@ func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, acce
 //   - Checks: update on "team-a" (passes) AND update on "team-b" (fails)
 //   - Result: DENIED
 func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
+	if err := parsed.loadExisting(ctx); err != nil {
+		return err
+	}
+
 	// Determine the resource name for the authorization check
 	var name string
 	if parsed.Existing != nil {
@@ -214,22 +218,30 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 	// user-controlled JSON content — see parser.go:222-236). It is always checked.
 	metaFolder := parsed.Meta.GetFolder()
 
-	// For existing resources, also check the current DB location when it differs
-	// from the destination. This prevents a user from moving a resource out of a
-	// folder they can write to and into one they cannot, by simply writing the file
-	// to a different path. Both source and destination must be authorised.
+	// For existing resources, also check the current DB location. This prevents a
+	// user from modifying, moving or deleting a resource in a folder they cannot
+	// write to by addressing it through a path in a folder they can. Both source
+	// and destination must be authorised.
 	if parsed.Existing != nil {
 		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
 			existingFolder := meta.GetFolder()
-			if existingFolder != metaFolder {
-				if err := a.access.Check(ctx, authlib.CheckRequest{
-					Group:    parsed.GVR.Group,
-					Resource: parsed.GVR.Resource,
-					Name:     name,
-					Verb:     verb,
-				}, existingFolder); err != nil {
-					return err
-				}
+			existingAccess := a.access
+			// TODO: use parsed.FolderScoped once every supported release line has it.
+			// This check avoids it so the same patch applies to older release lines.
+			gr := parsed.GVR.GroupResource()
+			if verb != utils.VerbGet && (existingFolder != "" || gr == FolderResource.GroupResource() || gr == DashboardResource.GroupResource()) {
+				existingAccess = auth.WithoutFallback(a.access)
+			}
+			if err := existingAccess.Check(ctx, authlib.CheckRequest{
+				Group:    parsed.GVR.Group,
+				Resource: parsed.GVR.Resource,
+				Name:     name,
+				Verb:     verb,
+			}, existingFolder); err != nil {
+				return err
+			}
+			if existingFolder == metaFolder {
+				return nil
 			}
 		}
 	}
