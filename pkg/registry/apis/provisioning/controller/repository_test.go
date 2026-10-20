@@ -11,11 +11,11 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
-	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -2455,76 +2455,6 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
 }
 
-func TestBuildRepository(t *testing.T) {
-	for _, tt := range []struct {
-		name            string
-		buildErr        error
-		waitForContext  bool
-		parentTimeout   time.Duration
-		cancelParent    bool
-		wantErr         error
-		wantUnavailable bool
-	}{
-		{name: "success"},
-		{name: "provider error", buildErr: repository.ErrPermissionDenied, wantErr: repository.ErrPermissionDenied},
-		{name: "provider timeout", buildErr: fmt.Errorf("get project: %w", context.DeadlineExceeded), wantErr: context.DeadlineExceeded, wantUnavailable: true},
-		{name: "build timeout", waitForContext: true, buildErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded, wantUnavailable: true},
-		{name: "provider reports cancellation after timeout", waitForContext: true, buildErr: context.Canceled, wantErr: context.Canceled, wantUnavailable: true},
-		{name: "provider returns success after timeout", waitForContext: true, wantErr: context.DeadlineExceeded, wantUnavailable: true},
-		{name: "parent deadline", parentTimeout: time.Second, waitForContext: true, buildErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded, wantUnavailable: true},
-		{name: "parent cancellation", cancelParent: true, wantErr: context.Canceled},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				ctx, cancel := context.WithCancel(t.Context())
-				defer cancel()
-				wantTimeout := 30 * time.Second
-				if tt.parentTimeout > 0 {
-					var cancelDeadline context.CancelFunc
-					ctx, cancelDeadline = context.WithTimeout(ctx, tt.parentTimeout)
-					defer cancelDeadline()
-					wantTimeout = tt.parentTimeout
-				}
-				if tt.cancelParent {
-					cancel()
-				}
-
-				cfg := &provisioning.Repository{}
-				built := repository.NewMockRepository(t)
-				factory := repository.NewMockFactory(t)
-				start := time.Now()
-				var receivedContext context.Context
-				factory.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(ctx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
-					receivedContext = ctx
-					deadline, ok := ctx.Deadline()
-					require.True(t, ok)
-					assert.Equal(t, start.Add(wantTimeout), deadline)
-					if tt.waitForContext {
-						<-ctx.Done()
-						assert.Equal(t, wantTimeout, time.Since(start))
-					}
-					return built, tt.buildErr
-				}).Once()
-
-				got, err := buildRepository(ctx, factory, cfg)
-				if tt.wantErr == nil {
-					require.NoError(t, err)
-					assert.Same(t, built, got)
-				} else {
-					require.ErrorIs(t, err, tt.wantErr)
-					assert.Nil(t, got)
-				}
-				assert.Equal(t, tt.wantUnavailable, errors.Is(err, repository.ErrServerUnavailable))
-				assert.Equal(t, tt.wantUnavailable, isRetryableProcessError(err))
-				assert.Error(t, receivedContext.Err(), "the build context must be released when Build returns")
-				if !tt.cancelParent && tt.parentTimeout == 0 {
-					assert.NoError(t, ctx.Err(), "the reconciliation context must remain usable for status updates")
-				}
-			})
-		})
-	}
-}
-
 func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T) {
 	unreachable := fmt.Errorf("%w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
 	unavailable := repository.ErrServerUnavailable
@@ -2577,12 +2507,18 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
 			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
 			repoGetter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
-			factory := repository.NewMockFactory(t)
-			factory.EXPECT().Build(mock.Anything, mock.Anything).Run(func(ctx context.Context, _ *provisioning.Repository) {
+			extra := repository.NewMockExtra(t)
+			extra.EXPECT().Type().Return(repo.Spec.Type)
+			extra.EXPECT().Build(mock.Anything, mock.Anything).Run(func(ctx context.Context, _ *provisioning.Repository) {
 				deadline, ok := ctx.Deadline()
 				require.True(t, ok)
 				assert.InDelta(t, 30, time.Until(deadline).Seconds(), 1)
 			}).Return(nil, tt.buildErr).Once()
+			factory, err := repository.ProvideFactory(
+				map[provisioning.RepositoryType]struct{}{repo.Spec.Type: {}},
+				[]repository.Extra{extra}, noop.NewTracerProvider().Tracer("test"),
+			)
+			require.NoError(t, err)
 			patcher := &capturePatcher{err: tt.patchErr}
 			finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			rc := &RepositoryController{
@@ -2597,7 +2533,7 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			_, err := rc.process("default/test-repo")
+			_, err = rc.process("default/test-repo")
 			require.ErrorIs(t, err, tt.buildErr)
 			assert.Equal(t, tt.wantRetry, isRetryableProcessError(err))
 			if errors.Is(tt.buildErr, context.DeadlineExceeded) {
@@ -3541,18 +3477,24 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
 			// The first build fails because the token secret is missing, triggering regeneration.
-			repoFactory := repository.NewMockFactory(t)
-			repoFactory.On("Build", mock.Anything, mock.Anything).
+			repoExtra := repository.NewMockExtra(t)
+			repoExtra.EXPECT().Type().Return(repo.Spec.Type)
+			repoExtra.On("Build", mock.Anything, mock.Anything).
 				Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
 			var rebuilt repository.Repository = mockRepo
 			if buildErr != nil {
 				rebuilt = nil
 			}
-			repoFactory.On("Build", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			repoExtra.On("Build", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				deadline, ok := args.Get(0).(context.Context).Deadline()
 				require.True(t, ok)
 				assert.InDelta(t, 30, time.Until(deadline).Seconds(), 1)
 			}).Return(rebuilt, buildErr).Once()
+			repoFactory, err := repository.ProvideFactory(
+				map[provisioning.RepositoryType]struct{}{repo.Spec.Type: {}},
+				[]repository.Extra{repoExtra}, noop.NewTracerProvider().Tracer("test"),
+			)
+			require.NoError(t, err)
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
@@ -3575,7 +3517,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				tracer:            tracing.InitializeTracerForTest(),
 			}
 
-			_, err := rc.process(namespace + "/" + repoName)
+			_, err = rc.process(namespace + "/" + repoName)
 			if buildErr != nil {
 				require.ErrorIs(t, err, buildErr)
 				assert.True(t, isRetryableProcessError(err))
@@ -3586,7 +3528,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			// Regeneration happened: a fresh token status was written and Build was retried.
 			_, found := patcher.findPatchOp("/status/token")
 			assert.True(t, found, "expected /status/token to be written after regenerating the missing token")
-			repoFactory.AssertExpectations(t)
+			repoExtra.AssertExpectations(t)
 			mockConn.AssertExpectations(t)
 			if buildErr != nil {
 				healthOp, ok := patcher.findPatchOp("/status/health")

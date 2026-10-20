@@ -95,7 +95,7 @@ func (f *finalizer) process(ctx context.Context,
 			// fails when credentials have expired. That failure blocks deletion —
 			// forcing it is done by removing this finalizer, not by tolerating the
 			// error.
-			repo, buildErr := buildRepository(ctx, f.repoFactory, cfg)
+			repo, buildErr := f.repoFactory.Build(ctx, cfg)
 			if buildErr != nil {
 				err = fmt.Errorf("create repository from configuration: %w", buildErr)
 			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {

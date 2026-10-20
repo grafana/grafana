@@ -44,8 +44,7 @@ import (
 const loggerName = "provisioning-repository-controller"
 
 const (
-	maxAttempts            = 3
-	repositoryBuildTimeout = 30 * time.Second
+	maxAttempts = 3
 )
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
@@ -1216,7 +1215,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	phase = reconcilePhaseBuild
 	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
-	repo, err := buildRepository(buildCtx, rc.repoFactory, obj)
+	repo, err := rc.repoFactory.Build(buildCtx, obj)
 	buildSpan.End()
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
@@ -1264,7 +1263,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			obj = obj.DeepCopy()
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
 
-			repo, err = buildRepository(ctx, rc.repoFactory, obj)
+			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
 			patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
@@ -1554,28 +1553,6 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, nil, suppressWebhooks, nil
-}
-
-// buildRepository applies repositoryBuildTimeout to the factory call and wraps
-// deadline failures with repository.ErrServerUnavailable for health reporting
-// and retries. It preserves provider and context errors while leaving the
-// caller's context usable for status updates after the build context expires.
-func buildRepository(ctx context.Context, factory repository.Factory, obj *provisioning.Repository) (repository.Repository, error) {
-	buildCtx, cancel := context.WithTimeout(ctx, repositoryBuildTimeout)
-	defer cancel()
-
-	repo, err := factory.Build(buildCtx, obj)
-	if ctxErr := buildCtx.Err(); ctxErr != nil && !errors.Is(err, ctxErr) {
-		err = errors.Join(err, ctxErr)
-	}
-	switch {
-	case err == nil:
-		return repo, nil
-	case errors.Is(err, context.DeadlineExceeded) && !errors.Is(err, repository.ErrServerUnavailable):
-		return nil, fmt.Errorf("repository build timed out: %w: %w", repository.ErrServerUnavailable, err)
-	default:
-		return nil, err
-	}
 }
 
 // repositoryFailurePatchOps returns patches marking the repository unhealthy
