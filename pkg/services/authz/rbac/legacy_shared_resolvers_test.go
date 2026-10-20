@@ -20,6 +20,54 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+func TestWithLegacyScopeResolversCreatesNewService(t *testing.T) {
+	ac := acimpl.ProvideAccessControlTest()
+	original := NewTestService("u-1", []accesscontrol.Permission{
+		{
+			Action: "folders:write",
+			Scope:  "folders:uid:parent",
+		},
+	}, nil)
+	withResolvers := original.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+	withoutResolvers := withResolvers.WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
+	require.NotSame(t, original, withResolvers)
+	require.NotSame(t, withResolvers, withoutResolvers)
+
+	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(&legacyResolverFolders{
+		parents: []*folder.Folder{{UID: "parent"}},
+	}))
+
+	for _, tc := range []struct {
+		name    string
+		service *Service
+		allowed bool
+	}{
+		{
+			name:    "original remains without resolvers",
+			service: original,
+			allowed: false,
+		},
+		{
+			name:    "configured service sees late registration after creating another copy",
+			service: withResolvers,
+			allowed: true,
+		},
+		{
+			name:    "second copy uses its own resolver configuration",
+			service: withoutResolvers,
+			allowed: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := legacyPermissionRequest("user:u-1", "folders:write", "folders:uid:child")
+			got, err := tc.service.LegacyCheck(legacyCheckContext(t), req)
+			require.NoError(t, err)
+			want := &authzextv1.LegacyCheckResponse{Allowed: tc.allowed}
+			require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
+		})
+	}
+}
+
 func TestLegacyCheckReusesLateFolderRegistration(t *testing.T) {
 	ac := acimpl.ProvideAccessControlTest()
 	s := NewTestService("u-1", []accesscontrol.Permission{

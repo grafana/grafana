@@ -154,7 +154,10 @@ func ProvideAuthZClients(
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 			rbacSettings,
-		).WithLegacyScopeResolvers(scopeResolvers, apirequest.GetNamespaceMapper(cfg))
+		).WithLegacyScopeResolvers(
+			scopeResolvers,
+			apirequest.GetNamespaceMapper(cfg),
+		)
 
 		channel := &inprocgrpc.Channel{}
 
@@ -440,8 +443,8 @@ func (lc *NoopCache) Delete(ctx context.Context, key string) error {
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-	}, []grpc.StreamClientInterceptor{
-		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-	}
+			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}, []grpc.StreamClientInterceptor{
+			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}
 }

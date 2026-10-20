@@ -37,25 +37,29 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	// AccessControl denies an identity with no permissions at all.
-	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:66 (AccessControl.evaluate).
+	// AccessControl denies an identity when its full permission map is empty.
+	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:71 (AccessControl.evaluate).
 	//
 	// Our queries only load permissions for the actions in this request. An empty
 	// result may mean the identity has permissions for other actions.
 	// An empty ALL returns true even with no permissions. Evaluate(nil) checks
-	// whether this expression can do that. Resolvers also run only when the
-	// identity has some grant, including grants for other actions. If either
-	// applies and our queries return nothing, check for other permissions before
-	// allowing the request or skipping resolution.
+	// whether this expression can do that.
+	//
+	// After direct evaluation denies, AccessControl attempts scope mutation if
+	// the full permission map is non-empty, even if it only contains other actions.
+	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:82 (AccessControl.evaluate).
+	//
+	// If either case applies and our queries return nothing, check for other
+	// permissions before allowing the request or skipping resolution.
 	checkUnrelatedPermissions := evaluator.Evaluate(nil) ||
 		(!req.GetSkipScopeResolution() && s.legacyScopeResolvers.HasResolvers())
-	permissions, hasPermissions, err := s.getLegacyIdentityPermissions(
+	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
 		ctx, ns, idType, userUID, actions, checkUnrelatedPermissions, req.GetSkipCache(),
 	)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
-	if !hasPermissions {
+	if !hasAnyPermissions {
 		return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
 	}
 
@@ -63,7 +67,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		ctx,
 		evaluator,
 		permissions,
-		hasPermissions,
+		hasAnyPermissions,
 		req.GetSkipScopeResolution(),
 		legacyScopeRequest{
 			namespace:    ns,
@@ -90,15 +94,19 @@ func (s *Service) getLegacyIdentityScopes(
 	checkUnrelatedPermissions bool,
 	skipCache bool,
 ) ([]string, bool, error) {
-	permissions, hasPermissions, err := s.getLegacyIdentityPermissions(
+	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
 		ctx, ns, idType, userUID, []string{action}, checkUnrelatedPermissions, skipCache,
 	)
 	if err != nil {
 		return nil, false, err
 	}
-	return permissions[action], hasPermissions, nil
+	return permissions[action], hasAnyPermissions, nil
 }
 
+// getLegacyIdentityPermissions returns grants for the requested actions and whether
+// any permissions were found. The boolean can be true even when the map is empty:
+// render identities have fixed grants, and checkUnrelatedPermissions enables a
+// lookup for grants on other actions when the requested actions have none.
 func (s *Service) getLegacyIdentityPermissions(
 	ctx context.Context,
 	ns types.NamespaceInfo,
@@ -168,12 +176,12 @@ func (s *Service) getLegacyIdentityPermissions(
 	// AccessControl skips resolvers only when the entire permission set is empty.
 	// A filtered action query cannot establish that, so check for any grant using
 	// the same identity/role/team restrictions without an action filter.
-	hasPermissions, err := s.permissionStore.HasUserPermissions(ctx, ns, query)
+	hasAnyPermissions, err := s.permissionStore.HasUserPermissions(ctx, ns, query)
 	if err != nil {
 		return nil, false, err
 	}
 
-	return permissions, hasPermissions, nil
+	return permissions, hasAnyPermissions, nil
 }
 
 func (s *Service) getLegacyUserPermissionQuery(

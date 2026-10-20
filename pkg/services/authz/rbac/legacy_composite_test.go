@@ -298,8 +298,8 @@ func TestService_LegacyCheckEmptyComposites(t *testing.T) {
 							require.NoError(t, err)
 							require.Empty(t, response.GetError())
 
-							hasPermissions := subject == "render:0" || len(grants.permissions) > 0
-							require.Equal(t, hasPermissions && tc.allowedWithPermissions, response.GetAllowed())
+							hasAnyPermissions := subject == "render:0" || len(grants.permissions) > 0
+							require.Equal(t, hasAnyPermissions && tc.allowedWithPermissions, response.GetAllowed())
 							require.Nil(t, localEvaluator.user)
 
 							if subject == "render:0" {
