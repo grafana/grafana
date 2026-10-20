@@ -256,9 +256,6 @@ function FormContent({
           {error && <ProvisioningAlert error={error} />}
 
           <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              {t('provisioning.save-resource.button-cancel', 'Cancel')}
-            </Button>
             <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
               {isDelete
                 ? request.isLoading
@@ -267,6 +264,9 @@ function FormContent({
                 : request.isLoading
                   ? t('provisioning.save-resource.button-saving', 'Saving...')
                   : t('provisioning.save-resource.button-save', 'Save')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
           </Stack>
         </Stack>

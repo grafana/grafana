@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
@@ -25,7 +27,7 @@ func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
 				calls := map[string]int{}
 				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
 					require.Equal(t, "tenant.example.com", req.URL.Host)
-					group := GroupFromPath(req.URL.Path)
+					group := utils.APIGroupFromRequest(req)
 					calls[group]++
 					code := http.StatusNoContent
 					if group == "broken" {
