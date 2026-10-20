@@ -465,7 +465,6 @@
     "@opentelemetry/core": "2.11.0",
     "shell-quote": "1.11.0",
     "tmp": "0.2.7",
-    "yaml@npm:^1.10.0": "1.10.3",
     "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
     "axios": "1.20.0",
     "@braintree/sanitize-url@npm:^7.0.1": "7.0.1",
