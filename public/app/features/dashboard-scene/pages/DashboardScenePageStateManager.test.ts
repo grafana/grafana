@@ -1055,7 +1055,9 @@ describe('DashboardScenePageStateManager v2', () => {
         let loadedSpy: jest.SpyInstance;
 
         beforeEach(() => {
-          loadedSpy = jest.spyOn(DashboardInteractions, 'globalVariablesLoaded').mockImplementation(() => undefined);
+          loadedSpy = jest
+            .spyOn(DashboardInteractions, 'predefinedVariablesLoaded')
+            .mockImplementation(() => undefined);
         });
 
         afterEach(() => {

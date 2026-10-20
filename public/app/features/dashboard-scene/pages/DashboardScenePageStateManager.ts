@@ -1099,7 +1099,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
-      DashboardInteractions.globalVariablesLoaded({
+      DashboardInteractions.predefinedVariablesLoaded({
         global_count: 0,
         folder_count: 0,
         total_count: 0,
@@ -1116,7 +1116,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
     const counts = countPredefinedVariableOrigins(predefinedVariables);
 
-    DashboardInteractions.globalVariablesLoaded({
+    DashboardInteractions.predefinedVariablesLoaded({
       ...counts,
       mode,
     });
