@@ -418,7 +418,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   queryEditor: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(2),
+    padding: theme.spacing(1),
     background: theme.colors.background.secondary,
   }),
   panel: css({
