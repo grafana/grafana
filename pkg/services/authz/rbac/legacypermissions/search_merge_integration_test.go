@@ -18,6 +18,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -193,6 +194,112 @@ func TestIntegrationSharedLoaderSearchTargetMergeRequesterAndFilters(t *testing.
 type searchMergeDirectory struct {
 	usertest.FakeUserService
 	queries []*user.SearchUsersQuery
+}
+
+type nativeSearchDirectory struct {
+	usertest.FakeUserService
+	lookupCalls int
+	lookupErr   error
+}
+
+func (d *nativeSearchDirectory) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	if err := nativeSearchContextError(ctx, true); err != nil {
+		return nil, err
+	}
+	return d.FakeUserService.GetByID(ctx, query)
+}
+
+func (d *nativeSearchDirectory) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
+	d.lookupCalls++
+	if err := nativeSearchContextError(ctx, false); err != nil {
+		d.lookupErr = err
+		return nil, err
+	}
+	if query.UID != "401" {
+		return nil, user.ErrUserNotFound
+	}
+	return &user.User{ID: searchLoaderCallerID, UID: "401"}, nil
+}
+
+func (d *nativeSearchDirectory) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	if err := nativeSearchContextError(ctx, true); err != nil {
+		return nil, err
+	}
+	return &user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{{ID: searchLoaderTargetID, UID: "target-one"}}}, nil
+}
+
+func nativeSearchContextError(ctx context.Context, requirePermissions bool) error {
+	req := contexthandler.FromContext(ctx)
+	if req == nil || req.Req == nil || req.SignedInUser == nil {
+		return errors.New("native user directory requires a request context")
+	}
+	if req.GetUID() != "user:401" {
+		return errors.New("native user directory requires the validated caller identity")
+	}
+	orgID, ok := identity.OrgIDFrom(ctx)
+	if !ok || orgID != 1 || req.GetOrgID() != 1 {
+		return errors.New("native user directory requires the resolved organization")
+	}
+	if requirePermissions && len(req.GetPermissions()[ac.ActionUsersRead]) == 0 {
+		return errors.New("native user directory requires the server-resolved caller permissions")
+	}
+	if !identity.IsServiceIdentity(ctx) {
+		return errors.New("native user directory search requires the internal service identity")
+	}
+	service, err := identity.GetRequester(ctx)
+	if err != nil || service.GetNamespace() != "default" || service.GetOrgID() != 1 {
+		return errors.New("native user directory requires a tenant-scoped service identity")
+	}
+	return nil
+}
+
+func TestIntegrationSharedLoaderSearchNativeDirectoryContext(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, mode := range []string{"targeted", "broad", "native-only-caller"} {
+		t.Run(mode, func(t *testing.T) {
+			sql := db.NewTestStore(t)
+			if mode != "native-only-caller" {
+				seedSearchLoaderUser(t, sql, searchLoaderCallerID, "401", org.RoleNone)
+			}
+			seedSearchLoaderUser(t, sql, searchLoaderTargetID, "target-one", org.RoleViewer)
+			if mode != "native-only-caller" {
+				seedGrant(t, sql, "managed:caller", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
+				seedGrant(t, sql, "managed:directory", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersRead, Scope: "users:*"})
+			}
+			directory := &nativeSearchDirectory{FakeUserService: usertest.FakeUserService{ExpectedUser: &user.User{ID: searchLoaderTargetID, UID: "target-one"}}}
+			cfg := loaderConfig(true)
+			catalog := legacypermissions.NewRoleCatalog()
+			if mode == "native-only-caller" {
+				catalog.Replace(map[string][]ac.Permission{string(org.RoleAdmin): {
+					{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"},
+					{Action: ac.ActionUsersRead, Scope: "users:*"},
+				}})
+			}
+			loader := legacypermissions.ProvideLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), &licensing.OSSLicensingService{}, &dashboardGrantClient{}, nil, directory)
+			client := legacypermissions.NewEmbeddedClient(loader, cfg)
+			req := searchLoaderRequest()
+			req.Action = "dashboards:read"
+			if mode == "native-only-caller" {
+				req.Caller.OrgRole = string(org.RoleAdmin)
+			}
+			if mode == "broad" {
+				req.UserID = 0
+			}
+			result, err := client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
+			if mode == "native-only-caller" {
+				require.Greater(t, directory.lookupCalls, 0)
+				require.NoError(t, directory.lookupErr)
+			}
+			require.NoError(t, err)
+			require.Contains(t, result.Permissions[searchLoaderTargetID], types.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
+			if mode == "native-only-caller" {
+				wrongID := searchLoaderTargetID + 100
+				req.Caller.InternalID = &wrongID
+				_, err = client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+			}
+		})
+	}
 }
 
 func (d *searchMergeDirectory) Search(_ context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {

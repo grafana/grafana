@@ -47,16 +47,18 @@ func newLoaderSearchService(loader *Loader) *LegacySearchService {
 		}
 		return MergeUserPermissions(permissions, migrated), nil
 	}
-	search.mergePermissions = func(ctx context.Context, caller identity.Requester, options ac.SearchOptions, legacy map[int64][]ac.Permission, enforced bool) map[int64][]ac.Permission {
-		if loader.zanzana == nil || (!enforced && loader.license.Edition() != licensing.OpenSourceEdition) {
-			return legacy
+	if loader.zanzana != nil {
+		search.mergePermissions = func(ctx context.Context, caller identity.Requester, options ac.SearchOptions, legacy map[int64][]ac.Permission, enforced bool) map[int64][]ac.Permission {
+			if !enforced && loader.license.Edition() != licensing.OpenSourceEdition {
+				return legacy
+			}
+			migrated, err := loader.zanzana.SearchUsersPermissions(ctx, caller, caller.GetOrgID(), options)
+			if err != nil {
+				loader.log.Warn("could not get zanzana search permissions, using legacy only", "error", err)
+				return legacy
+			}
+			return MergePermissions(legacy, migrated)
 		}
-		migrated, err := loader.zanzana.SearchUsersPermissions(ctx, caller, caller.GetOrgID(), options)
-		if err != nil {
-			loader.log.Warn("could not get zanzana search permissions, using legacy only", "error", err)
-			return legacy
-		}
-		return MergePermissions(legacy, migrated)
 	}
 	return search
 }
@@ -68,9 +70,13 @@ func searchRequester(ns types.NamespaceInfo, assertion *authzv1.LegacyPermission
 	}
 	return &legacyRequester{
 		SignedInUser: &user.SignedInUser{
-			OrgID: ns.OrgID, UserID: assertion.GetInternalId(), OrgRole: identity.RoleType(assertion.OrgRole),
+			OrgID: ns.OrgID, UserID: assertion.GetInternalId(), UserUID: assertion.Uid,
+			Namespace: namespace, IsServiceAccount: types.IdentityType(assertion.Type) == types.TypeServiceAccount,
+			OrgRole:        identity.RoleType(assertion.OrgRole),
 			IsGrafanaAdmin: assertion.IsGrafanaAdmin,
 			TeamIDs:        assertion.TeamIds, //nolint:staticcheck // Numeric legacy RBAC memberships remain distinct from contextual groups.
+			TeamUIDs:       assertion.Groups,
+			ExternalGroups: assertion.Groups,
 			Permissions:    map[int64]map[string][]string{ns.OrgID: ac.Reduce(permissions)},
 		},
 		identity: assertion, namespace: namespace,
