@@ -195,14 +195,33 @@ const findExemplarSelection = (
       continue;
     }
 
-    const fields = previousFrame.fields.map((previousField) =>
-      dataFrame.fields.find(
-        (field) =>
+    const previousFields = previousFrame.fields;
+    const currentFields = dataFrame.fields;
+    let remappedFields: Array<(typeof currentFields)[number] | undefined> | undefined;
+
+    for (let index = 0; index < previousFields.length; index++) {
+      const previousField = previousFields[index];
+      let matchingField: (typeof currentFields)[number] | undefined;
+
+      for (let fieldIndex = 0; fieldIndex < currentFields.length; fieldIndex++) {
+        const field = currentFields[fieldIndex];
+        if (
           field.name === previousField.name &&
           field.type === previousField.type &&
           isEqual(field.labels, previousField.labels)
-      )
-    );
+        ) {
+          matchingField = field;
+          break;
+        }
+      }
+
+      if (remappedFields || matchingField !== currentFields[index]) {
+        remappedFields ??= currentFields.slice();
+        remappedFields[index] = matchingField;
+      }
+    }
+
+    const fields = remappedFields ?? currentFields;
     for (let rowIndex = 0; rowIndex < dataFrame.length; rowIndex++) {
       if (
         fields.every(
