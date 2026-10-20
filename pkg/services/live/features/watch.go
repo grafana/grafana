@@ -9,7 +9,9 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
@@ -49,6 +51,12 @@ const (
 // interactive, so a stuck apiserver must fail the subscription rather than hold
 // the websocket handler.
 const probeTimeout = 10 * time.Second
+
+// checkTimeout bounds the per-event authorization read. It is shorter than
+// probeTimeout because it runs on the delivery path: a slow check holds up the
+// watch stream, and losing one event to the frontend's polling fallback is
+// better than stalling every subscriber behind it.
+const checkTimeout = 5 * time.Second
 
 // watchKey identifies one upstream watch.
 //
@@ -154,7 +162,7 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	b.watchingMu.Lock()
 	defer b.watchingMu.Unlock()
 
-	if current, ok := b.watching[key]; ok && current.attach(e.Channel) {
+	if current, ok := b.watching[key]; ok && current.attach(e.Channel, u) {
 		return model.SubscribeReply{
 			JoinLeave: false,
 			Presence:  false,
@@ -198,7 +206,9 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 		subscribers: b.subscribers,
 		watch:       stream,
 		cancel:      cancel,
-		channels:    map[string]int{e.Channel: 0},
+		client:      client,
+		shared:      shared,
+		channels:    map[string]*subscriber{e.Channel: {requester: u}},
 	}
 
 	b.watching[key] = current
@@ -241,20 +251,22 @@ func watchIdentity(u identity.Requester, shared bool) context.Context {
 }
 
 // authorizeSubscriber asks the apiserver whether this user may read the
-// resource, standing in for the per-user watch a shared watcher replaces. A
-// Limit=1 list is the cheapest request that runs the whole authorizer chain,
+// resource at all. It is the admission half of what the per-user watch used to
+// get from the apiserver for free: a user with no access to the collection is
+// refused the subscription outright, with a permission error, rather than
+// joining a watcher and silently receiving nothing.
+//
+// A Limit=1 list is the cheapest request that runs the whole authorizer chain,
 // and list is equivalent to watch for this group: the provisioning authorizer
 // resolves get, list and watch to the same read permission. No field selector,
-// because the check is for the collection.
+// because the check is deliberately for the collection - the filtering half,
+// which decides individual objects, is authorizedFor on the delivery path.
 //
-// Authorizing the collection once is only equivalent to the apiserver's
-// per-event filtering while authorization is uniform across a namespace, which
-// holds for provisioning on two counts: none of its permissions carry a scope,
-// and it is outside the unified storage RBAC allowlist, so the per-event
-// checker resolves to allow-all. Revisit if either changes - a scope on a
-// watched resource, or provisioning reaching the enforced path (its allowlist
-// entry, or [unified_storage] authz_exemption_enabled without an exemption for
-// it).
+// The two halves mirror how the apiserver authorizes a watch: a collection
+// decision when the stream opens (register.go), and a per-object decision on
+// every event (server.go). Admission alone would be equivalent only while
+// authorization stays uniform across a namespace, which is a property of this
+// resource group rather than a guarantee, so it is not relied on.
 func authorizeSubscriber(ctx context.Context, u identity.Requester, client dynamic.ResourceInterface) error {
 	ctx, cancel := context.WithTimeout(identity.WithRequester(ctx, u), probeTimeout)
 	defer cancel()
@@ -312,24 +324,57 @@ type watcher struct {
 	subscribers numLocalSubscribersGetter
 	watch       watch.Interface
 	cancel      context.CancelFunc
+	// client reads the watched resource. It takes its identity from the context
+	// of each call, so one client serves every subscriber's check.
+	client dynamic.ResourceInterface
+	// shared is true when this watcher serves more than one user, which is what
+	// makes a per-subscriber check necessary.
+	shared bool
 
 	mu       sync.Mutex
 	stopping bool
-	// channels maps a subscriber channel to its consecutive zero-subscriber
-	// checks. A watcher with no channels left has nothing to publish to.
-	channels map[string]int
+	channels map[string]*subscriber
+}
+
+// subscriber is one Live channel attached to a watcher: who is listening, and
+// how many consecutive polls have found nobody there. A watcher with no
+// subscribers left has nothing to publish to.
+//
+// One channel carries exactly one principal, and the whole per-event check
+// depends on it. Centrifuge delivers to a channel, not to a client, so there is
+// no hook that could filter one subscriber's messages differently from
+// another's on the same channel; filtering has to happen at the publisher, by
+// choosing which channels an event is published to. That is only the same thing
+// as choosing subscribers because the channel path ends with the requester's
+// own UID, which parseWatchRequest enforces on every subscribe. Anonymous
+// subscribers deliberately share one "anonymous" channel: they are a single
+// principal with one org role, so a decision taken for any of them holds for
+// all of them.
+//
+// Consolidating channels (dropping the UID segment) would therefore remove the
+// ability to filter, not just rename a channel.
+type subscriber struct {
+	requester  identity.Requester
+	zeroChecks int
 }
 
 // attach registers a subscriber channel and resets its idle count. It reports
 // false once the watcher is stopping, so the caller opens a fresh watch rather
 // than joining one that is already tearing down.
-func (w *watcher) attach(channel string) bool {
+func (w *watcher) attach(channel string, u identity.Requester) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.stopping {
 		return false
 	}
-	w.channels[channel] = 0
+	if existing, ok := w.channels[channel]; ok {
+		existing.zeroChecks = 0
+		// Same channel means the same principal, so this either re-attaches the
+		// same user or another anonymous subscriber; both authorize alike.
+		existing.requester = u
+		return true
+	}
+	w.channels[channel] = &subscriber{requester: u}
 	return true
 }
 
@@ -341,16 +386,23 @@ func (w *watcher) detach(channel string) int {
 	return len(w.channels)
 }
 
-// channelList snapshots the subscriber channels so publishing happens outside
-// the lock: in HA mode the publisher writes to Redis and must not block attach.
-func (w *watcher) channelList() []string {
+// subscriberList snapshots the subscribers so checking and publishing happen
+// outside the lock: a check is an apiserver round-trip and the publisher writes
+// to Redis in HA mode, neither of which may block attach.
+func (w *watcher) subscriberList() []channelSubscriber {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	channels := make([]string, 0, len(w.channels))
-	for channel := range w.channels {
-		channels = append(channels, channel)
+	subs := make([]channelSubscriber, 0, len(w.channels))
+	for channel, sub := range w.channels {
+		subs = append(subs, channelSubscriber{channel: channel, requester: sub.requester})
 	}
-	return channels
+	return subs
+}
+
+// channelSubscriber is a subscriber snapshot, safe to use off the lock.
+type channelSubscriber struct {
+	channel   string
+	requester identity.Requester
 }
 
 // channelCount reports how many subscriber channels the watcher still serves.
@@ -366,8 +418,8 @@ func (w *watcher) channelCount() int {
 // listening, and treating it as such would tear down a live watch.
 func (w *watcher) idleChannels(logger logging.Logger) []string {
 	var idle []string
-	for _, channel := range w.channelList() {
-		full := orgchannel.PrependK8sNamespace(w.ns, channel)
+	for _, sub := range w.subscriberList() {
+		full := orgchannel.PrependK8sNamespace(w.ns, sub.channel)
 		num, err := w.subscribers.GetNumLocalSubscribers(full)
 		if err != nil {
 			logger.Error("error checking num subscribers", "channel", full, "err", err)
@@ -375,15 +427,16 @@ func (w *watcher) idleChannels(logger logging.Logger) []string {
 		}
 
 		w.mu.Lock()
-		if _, ok := w.channels[channel]; !ok {
+		current, ok := w.channels[sub.channel]
+		if !ok {
 			// Detached while we were polling.
 			w.mu.Unlock()
 			continue
 		}
 		if num > 0 {
-			w.channels[channel] = 0
-		} else if w.channels[channel]++; w.channels[channel] >= w.runner.maxZeroChecks {
-			idle = append(idle, channel)
+			current.zeroChecks = 0
+		} else if current.zeroChecks++; current.zeroChecks >= w.runner.maxZeroChecks {
+			idle = append(idle, sub.channel)
 		}
 		w.mu.Unlock()
 	}
@@ -448,17 +501,119 @@ func (b *watcher) run(ctx context.Context) {
 				continue
 			}
 
-			for _, channel := range b.channelList() {
-				if err := b.publisher(b.ns, channel, data); err != nil {
-					logger.Error("publish error", "channel", channel, "err", err)
-					// The channel is unusable; the frontend reconnects and resubscribes.
-					if b.detach(channel) == 0 {
-						return
-					}
-				}
+			if b.deliver(ctx, logger, event, data) == 0 {
+				logger.Debug("no subscribers left, stopping watch")
+				return
 			}
 		}
 	}
+}
+
+// deliver publishes one event to every subscriber entitled to it, and reports
+// how many subscribers remain. A shared watcher checks each subscriber against
+// the apiserver first (see authorizedFor); a per-subscriber watcher does not,
+// because the apiserver already authorized its stream for the one user on it.
+func (b *watcher) deliver(ctx context.Context, logger logging.Logger, event watch.Event, data []byte) int {
+	subs := b.subscriberList()
+	remaining := len(subs)
+
+	allowed := make([]bool, len(subs))
+	if b.shared {
+		name := objectName(event.Object)
+		// Check every subscriber concurrently: the checks are independent
+		// apiserver reads, and running them in series would hold up the watch
+		// stream for one round-trip per subscriber.
+		var wg sync.WaitGroup
+		for i, sub := range subs {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				allowed[i] = b.authorizedFor(ctx, logger, sub, event.Type, name)
+			}()
+		}
+		wg.Wait()
+	} else {
+		for i := range allowed {
+			allowed[i] = true
+		}
+	}
+
+	for i, sub := range subs {
+		if !allowed[i] {
+			continue
+		}
+		if err := b.publisher(b.ns, sub.channel, data); err != nil {
+			logger.Error("publish error", "channel", sub.channel, "err", err)
+			// The channel is unusable; the frontend reconnects and resubscribes.
+			remaining = b.detach(sub.channel)
+		}
+	}
+	return remaining
+}
+
+// authorizedFor reports whether this subscriber may see this object, by reading
+// it back from the apiserver as that user. The shared stream is opened as the
+// service, so it carries every object in the namespace; this is what puts the
+// per-user decision back, and it keeps the apiserver authoritative rather than
+// re-deriving policy here.
+//
+// The GET's outcome is used only as the decision - the object published is the
+// one the stream delivered, so every subscriber sees the same resourceVersion
+// and the same event type.
+//
+//   - no error: visible to this user, publish.
+//   - Forbidden/Unauthorized: the authorizer rejected the read before storage
+//     was consulted, so this user may not see it. Skip, silently - a subscriber
+//     must not learn that the object exists.
+//   - NotFound: the authorizer let the read through and the object is gone,
+//     which is exactly what a DELETED event reports. Publish.
+//   - anything else: fail closed and log. The event is lost for this
+//     subscriber; the frontend's polling fallback is the backstop.
+//
+// Cost is one read per (event x subscriber) while the toggle is on. Provisioning
+// event rates are low (job progress, repository health), and its authorization
+// is uniform across a namespace today, so this is mostly safety margin - but it
+// is what keeps the shared stream correct if per-object scoping ever lands,
+// without that becoming a silent authorization hole.
+func (b *watcher) authorizedFor(ctx context.Context, logger logging.Logger, sub channelSubscriber, eventType watch.EventType, name string) bool {
+	if eventType == watch.Error || eventType == watch.Bookmark {
+		// Carries no object, so there is nothing to authorize against; the
+		// subscriber was authorized for the collection when it subscribed.
+		return true
+	}
+	if name == "" {
+		logger.Warn("watch event carries no object name, dropping", "channel", sub.channel, "type", eventType)
+		return false
+	}
+
+	ctx, cancel := context.WithTimeout(identity.WithRequester(ctx, sub.requester), checkTimeout)
+	defer cancel()
+
+	_, err := b.client.Get(ctx, name, v1.GetOptions{})
+	switch {
+	case err == nil:
+		return true
+	case apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err):
+		return false
+	case apierrors.IsNotFound(err):
+		return true
+	default:
+		logger.Error("authorization check failed, dropping event", "channel", sub.channel, "name", name, "err", err)
+		return false
+	}
+}
+
+// objectName reads metadata.name off a watch event's object, or "" when the
+// event carries nothing with a name.
+func objectName(obj runtime.Object) string {
+	if obj == nil {
+		return ""
+	}
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return ""
+	}
+	return accessor.GetName()
 }
 
 // marshalWatchEvent serializes a watch event to JSON. This is extracted from the

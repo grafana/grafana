@@ -180,6 +180,11 @@ type fakeWatches struct {
 	listers          []identity.Requester
 	err              error
 	listErr          func(uid string) error
+	// getErr denies the per-event authorization read for a (user, name) pair.
+	getErr func(uid, name string) error
+	// objects seed every fake client, so the per-event read finds them.
+	objects []runtime.Object
+	gets    []string
 }
 
 func (f *fakeWatches) client(t *testing.T) func(context.Context) (dynamic.Interface, error) {
@@ -189,9 +194,12 @@ func (f *fakeWatches) client(t *testing.T) func(context.Context) (dynamic.Interf
 	scheme.AddKnownTypeWithName(testGVR.GroupVersion().WithKind("RepositoryList"), &unstructured.UnstructuredList{})
 
 	return func(context.Context) (dynamic.Interface, error) {
+		f.mu.Lock()
+		objs := append([]runtime.Object(nil), f.objects...)
+		f.mu.Unlock()
 		c := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
 			testGVR: "RepositoryList",
-		})
+		}, objs...)
 		c.PrependWatchReactor("*", func(action k8stesting.Action) (bool, watch.Interface, error) {
 			f.mu.Lock()
 			defer f.mu.Unlock()
@@ -252,6 +260,26 @@ func (c recordingResource) List(ctx context.Context, opts v1.ListOptions) (*unst
 	return c.ResourceInterface.List(ctx, opts)
 }
 
+func (c recordingResource) Get(ctx context.Context, name string, opts v1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	requester, _ := identity.GetRequester(ctx)
+	uid := ""
+	if requester != nil {
+		uid = requester.GetIdentifier()
+	}
+
+	c.watches.mu.Lock()
+	c.watches.gets = append(c.watches.gets, uid+"/"+name)
+	getErr := c.watches.getErr
+	c.watches.mu.Unlock()
+
+	if getErr != nil {
+		if err := getErr(uid, name); err != nil {
+			return nil, err
+		}
+	}
+	return c.ResourceInterface.Get(ctx, name, opts, subresources...)
+}
+
 func (c recordingResource) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	requester, _ := identity.GetRequester(ctx)
 
@@ -260,6 +288,22 @@ func (c recordingResource) Watch(ctx context.Context, opts v1.ListOptions) (watc
 	c.watches.mu.Unlock()
 
 	return c.ResourceInterface.Watch(ctx, opts)
+}
+
+func (f *fakeWatches) getCalls() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]string(nil), f.gets...)
+}
+
+// repository builds a named object of the watched kind, for the fake client to
+// serve and the fake watch to emit.
+func repository(name string) *unstructured.Unstructured {
+	obj := &unstructured.Unstructured{}
+	obj.SetGroupVersionKind(testGVR.GroupVersion().WithKind("Repository"))
+	obj.SetNamespace("default")
+	obj.SetName(name)
+	return obj
 }
 
 func (f *fakeWatches) lastWatcher() identity.Requester {
@@ -393,8 +437,8 @@ func TestOnSubscribe_NamespaceIsPartOfTheKey(t *testing.T) {
 	require.Equal(t, 2, r.watches.count())
 	require.ElementsMatch(t, []string{"default", "org-2"}, r.watches.namespaces)
 
-	r.watches.at(0).Add(&unstructured.Unstructured{})
-	r.watches.at(1).Add(&unstructured.Unstructured{})
+	r.watches.at(0).Add(repository("repo-1"))
+	r.watches.at(1).Add(repository("repo-1"))
 
 	require.Eventually(t, func() bool {
 		r.publisher.mu.Lock()
@@ -484,7 +528,7 @@ func TestWatcherLifecycle(t *testing.T) {
 		require.NoError(t, err)
 
 		r.publisher.failOn(channel, errors.New("broken"))
-		r.watches.at(0).Add(&unstructured.Unstructured{})
+		r.watches.at(0).Add(repository("repo-1"))
 		require.Eventually(t, func() bool { return r.watcherCount() == 0 }, time.Second, 5*time.Millisecond)
 	})
 }
@@ -549,6 +593,7 @@ func TestSharedWatch(t *testing.T) {
 	t.Run("one upstream watch serves every subscriber", func(t *testing.T) {
 		enableSharedWatch(t, true)
 		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
 		r.checkInterval = time.Hour
 
 		for _, uid := range []string{"u1", "u2"} {
@@ -560,7 +605,7 @@ func TestSharedWatch(t *testing.T) {
 		require.Equal(t, 1, r.watches.count(), "both users must share one apiserver watch")
 		require.Equal(t, 1, r.watcherCount())
 
-		r.watches.at(0).Add(&unstructured.Unstructured{})
+		r.watches.at(0).Add(repository("repo-1"))
 		require.Eventually(t, func() bool {
 			return len(r.publisher.channels()) == 2
 		}, time.Second, 5*time.Millisecond)
@@ -570,6 +615,7 @@ func TestSharedWatch(t *testing.T) {
 	t.Run("the shared watch runs as the service, scoped to the namespace", func(t *testing.T) {
 		enableSharedWatch(t, true)
 		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
 		r.checkInterval = time.Hour
 
 		_, err := r.subscribe(t, testRequester("u1", "stacks-7"), channelFor("u1"))
@@ -590,6 +636,7 @@ func TestSharedWatch(t *testing.T) {
 	t.Run("a user who cannot read the resource is denied and does not attach", func(t *testing.T) {
 		enableSharedWatch(t, true)
 		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
 		r.checkInterval = time.Hour
 		r.watches.listErr = func(uid string) error {
 			if uid == "u2" {
@@ -608,7 +655,7 @@ func TestSharedWatch(t *testing.T) {
 		require.Equal(t, 1, r.watcherCount(), "the denied user must not create a watcher")
 
 		// And the denied user must not be published to.
-		r.watches.at(0).Add(&unstructured.Unstructured{})
+		r.watches.at(0).Add(repository("repo-1"))
 		require.Eventually(t, func() bool {
 			return len(r.publisher.channels()) == 1
 		}, time.Second, 5*time.Millisecond)
@@ -618,6 +665,7 @@ func TestSharedWatch(t *testing.T) {
 	t.Run("authorization is re-checked when attaching to an existing watcher", func(t *testing.T) {
 		enableSharedWatch(t, true)
 		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
 		r.checkInterval = time.Hour
 		u := testRequester("u1", "default")
 
@@ -633,6 +681,7 @@ func TestSharedWatch(t *testing.T) {
 	t.Run("a subscriber leaving drops only its own channel", func(t *testing.T) {
 		enableSharedWatch(t, true)
 		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
 
 		for _, uid := range []string{"u1", "u2"} {
 			r.subscriber.set(orgchannel.PrependK8sNamespace("default", channelFor(uid)), 1)
@@ -646,14 +695,14 @@ func TestSharedWatch(t *testing.T) {
 			r.watchingMu.Lock()
 			defer r.watchingMu.Unlock()
 			for _, w := range r.watching {
-				return len(w.channelList()) == 1
+				return len(w.subscriberList()) == 1
 			}
 			return false
 		}, time.Second, 5*time.Millisecond)
 
 		require.Equal(t, 1, r.watcherCount(), "the remaining subscriber keeps the watch open")
 
-		r.watches.at(0).Add(&unstructured.Unstructured{})
+		r.watches.at(0).Add(repository("repo-1"))
 		require.Eventually(t, func() bool {
 			return len(r.publisher.channels()) == 1
 		}, time.Second, 5*time.Millisecond)
@@ -681,6 +730,7 @@ func TestSharedWatch(t *testing.T) {
 func TestSharedWatch_ResourceVersionOfTheOpeningSubscriber(t *testing.T) {
 	enableSharedWatch(t, true)
 	r := newTestRunner(t)
+	r.watches.objects = []runtime.Object{repository("repo-1")}
 	r.checkInterval = time.Hour
 
 	_, _, err := r.OnSubscribe(t.Context(), testRequester("u1", "default"), model.SubscribeEvent{
@@ -706,6 +756,7 @@ func TestSharedWatch_ResourceVersionOfTheOpeningSubscriber(t *testing.T) {
 func TestOnSubscribe_AnonymousIsLeftToTheApiserver(t *testing.T) {
 	enableSharedWatch(t, true)
 	r := newTestRunner(t)
+	r.watches.objects = []runtime.Object{repository("repo-1")}
 	r.checkInterval = time.Hour
 
 	anonymous := &identity.StaticRequester{Type: types.TypeAnonymous, Namespace: "default"}
@@ -731,4 +782,122 @@ func TestWatcherLifecycle_PresenceErrorKeepsTheWatch(t *testing.T) {
 	r.subscriber.mu.Unlock()
 
 	require.Never(t, func() bool { return r.watcherCount() == 0 }, 60*time.Millisecond, 5*time.Millisecond)
+}
+
+func TestSharedWatch_PerEventAuthorizationCheck(t *testing.T) {
+	t.Run("an event only reaches the subscribers the apiserver lets read it", func(t *testing.T) {
+		enableSharedWatch(t, true)
+		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
+		r.checkInterval = time.Hour
+		// u2 may subscribe (the collection probe passes) but may not read this
+		// particular object - the case a subscribe-time check alone would miss.
+		r.watches.getErr = func(uid, name string) error {
+			if uid == "u2" && name == "repo-1" {
+				return apierrors.NewForbidden(testGVR.GroupResource(), name, errors.New("no read"))
+			}
+			return nil
+		}
+
+		for _, uid := range []string{"u1", "u2"} {
+			_, err := r.subscribe(t, testRequester(uid, "default"), channelFor(uid))
+			require.NoError(t, err)
+		}
+		require.Equal(t, 1, r.watches.count())
+
+		r.watches.at(0).Add(repository("repo-1"))
+
+		require.Eventually(t, func() bool {
+			return len(r.publisher.channels()) >= 1
+		}, time.Second, 5*time.Millisecond)
+		require.Never(t, func() bool {
+			return len(r.publisher.channels()) > 1
+		}, 100*time.Millisecond, 10*time.Millisecond)
+		require.Equal(t, []string{channelFor("u1")}, r.publisher.channels())
+
+		// Both subscribers were checked, each as itself.
+		require.ElementsMatch(t, []string{"u1/repo-1", "u2/repo-1"}, r.watches.getCalls())
+	})
+
+	t.Run("a deleted object still reaches subscribers the authorizer admits", func(t *testing.T) {
+		enableSharedWatch(t, true)
+		r := newTestRunner(t)
+		// Deliberately not seeded: the read 404s, which is what a hard delete
+		// looks like. NotFound means the authorizer let the read through.
+		r.checkInterval = time.Hour
+
+		_, err := r.subscribe(t, testRequester("u1", "default"), channelFor("u1"))
+		require.NoError(t, err)
+
+		r.watches.at(0).Delete(repository("repo-1"))
+		require.Eventually(t, func() bool {
+			return len(r.publisher.channels()) == 1
+		}, time.Second, 5*time.Millisecond)
+	})
+
+	t.Run("a check that fails for any other reason drops the event", func(t *testing.T) {
+		enableSharedWatch(t, true)
+		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
+		r.checkInterval = time.Hour
+		r.watches.getErr = func(string, string) error { return errors.New("apiserver unavailable") }
+
+		_, err := r.subscribe(t, testRequester("u1", "default"), channelFor("u1"))
+		require.NoError(t, err)
+
+		r.watches.at(0).Add(repository("repo-1"))
+		require.Never(t, func() bool {
+			return len(r.publisher.channels()) > 0
+		}, 100*time.Millisecond, 10*time.Millisecond)
+		// Failing closed must not take the watcher down with it; the frontend's
+		// polling fallback is what recovers the missed event.
+		require.Equal(t, 1, r.watcherCount())
+	})
+
+	t.Run("a per-subscriber watch is not re-checked per event", func(t *testing.T) {
+		enableSharedWatch(t, false)
+		r := newTestRunner(t)
+		r.watches.objects = []runtime.Object{repository("repo-1")}
+		r.checkInterval = time.Hour
+
+		_, err := r.subscribe(t, testRequester("u1", "default"), channelFor("u1"))
+		require.NoError(t, err)
+
+		r.watches.at(0).Add(repository("repo-1"))
+		require.Eventually(t, func() bool {
+			return len(r.publisher.channels()) == 1
+		}, time.Second, 5*time.Millisecond)
+
+		// The apiserver authorized this stream for its one user already.
+		require.Empty(t, r.watches.getCalls())
+	})
+}
+
+// TestSharedWatch_ChannelCarriesOnePrincipal guards the invariant the per-event
+// check rests on: Centrifuge delivers per channel, so filtering per subscriber
+// only works while a channel cannot carry two principals.
+func TestSharedWatch_ChannelCarriesOnePrincipal(t *testing.T) {
+	enableSharedWatch(t, true)
+	r := newTestRunner(t)
+	r.watches.objects = []runtime.Object{repository("repo-1")}
+	r.checkInterval = time.Hour
+
+	// A user may only ever subscribe to a channel ending in their own UID, so
+	// two authenticated users can never land on the same channel.
+	_, err := r.subscribe(t, testRequester("u1", "default"), channelFor("u1"))
+	require.NoError(t, err)
+
+	status, err := r.subscribe(t, testRequester("u2", "default"), channelFor("u1"))
+	require.Error(t, err)
+	require.Equal(t, backend.SubscribeStreamStatusNotFound, status)
+
+	r.watchingMu.Lock()
+	defer r.watchingMu.Unlock()
+	require.Len(t, r.watching, 1)
+	for _, w := range r.watching {
+		subs := w.subscriberList()
+		require.Len(t, subs, 1)
+		require.Equal(t, channelFor("u1"), subs[0].channel)
+		require.Equal(t, "u1", subs[0].requester.GetIdentifier())
+	}
 }
