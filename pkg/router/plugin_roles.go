@@ -63,9 +63,13 @@ func declareManifestRoles(service ac.Service, group, pluginName string, manifest
 // RBAC registrations.
 //
 // The manifest's own role names are used, so a plugin decides what its roles
-// are called and who holds them. A manifest that declares no roles falls back
-// to a reader and a writer role bound to the basic roles, so its kinds are
-// usable without every plugin having to spell the same two roles out.
+// are called and who holds them. Every kind no declared role names gets a
+// default reader and writer role bound to the basic roles, so its kinds are
+// usable without every plugin having to spell the same two roles out, and a
+// role for a custom route (Kind/<route>) is added to them rather than replacing
+// them. A manifest that names a kind itself in any role takes over that kind's
+// access, and one that declares a role called reader or writer replaces that
+// default.
 //
 // ManifestRole.Routes is not converted: a custom route never reaches unified
 // storage, so it is authorized by the plugin's app access and by any access
@@ -78,8 +82,9 @@ func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestD
 	if len(resources) == 0 {
 		return nil
 	}
+	out := defaultRoleRegistrations(group, pluginName, defaultRoleResources(manifest.Roles, resources), manifest.Roles)
 	if len(manifest.Roles) == 0 {
-		return defaultRoleRegistrations(group, pluginName, resources)
+		return out
 	}
 
 	grants := roleGrants(group, manifest.RoleBindings)
@@ -87,10 +92,9 @@ func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestD
 		// Every other degenerate case here warns; this one is the easiest to hit
 		// by omission and the hardest to spot, since the roles do get registered
 		// -- they just reach nobody until an administrator assigns them.
-		logging.DefaultLogger.Warn("manifest declares roles but binds none to a basic role; its kinds are unreachable by default",
+		logging.DefaultLogger.Warn("manifest declares roles but binds none to a basic role; what they grant is unreachable by default",
 			"group", group)
 	}
-	out := make([]ac.RoleRegistration, 0, len(manifest.Roles))
 	// Sorted, so the same manifest always declares the same list.
 	for _, name := range slices.Sorted(maps.Keys(manifest.Roles)) {
 		role := manifest.Roles[name]
@@ -120,11 +124,32 @@ func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestD
 	return out
 }
 
+// defaultRoleResources returns the kinds the default roles grant, with their
+// resource names: every served kind that no declared role names itself. A role
+// kind naming a custom route (Kind/<route>) does not count, so a role for a
+// route is added to the defaults. A kind counts as named even when its entry
+// grants nothing, so a mistake in a role never widens access to the kind.
+func defaultRoleResources(roles map[string]app.ManifestRole, resources map[string]string) map[string]string {
+	out := maps.Clone(resources)
+	for _, role := range roles {
+		for _, kind := range role.Kinds {
+			if !strings.Contains(kind.Kind, "/") {
+				delete(out, kind.Kind)
+			}
+		}
+	}
+	return out
+}
+
 // defaultRoleRegistrations grants a manifest's kinds through the basic roles.
 // Folder permissions still decide which objects a holder reaches, so this is
 // the same shape as a dashboard: every viewer may read the kinds in folders
-// they can view, and every editor may write them in folders they can edit.
-func defaultRoleRegistrations(group, pluginName string, resources map[string]string) []ac.RoleRegistration {
+// they can view, and every editor may write them in folders they can edit. A
+// default the manifest declares a role of the same name for is left out.
+func defaultRoleRegistrations(group, pluginName string, resources map[string]string, declared map[string]app.ManifestRole) []ac.RoleRegistration {
+	if len(resources) == 0 {
+		return nil
+	}
 	defaults := []struct {
 		name        string
 		displayName string
@@ -138,6 +163,9 @@ func defaultRoleRegistrations(group, pluginName string, resources map[string]str
 
 	out := make([]ac.RoleRegistration, 0, len(defaults))
 	for _, d := range defaults {
+		if _, ok := declared[d.name]; ok {
+			continue
+		}
 		out = append(out, ac.RoleRegistration{
 			Role: ac.RoleDTO{
 				Version:     1,

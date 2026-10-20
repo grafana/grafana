@@ -1,12 +1,17 @@
 package router
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const testRoleGroup = "example.ext.grafana.app"
@@ -79,7 +84,7 @@ func TestManifestRoleRegistrationsFromManifest(t *testing.T) {
 	}
 
 	roles := byName(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
-	require.Len(t, roles, 2, "the defaults are not added on top of declared roles")
+	require.Len(t, roles, 2, "a kind a declared role names gets no default roles")
 
 	reader := roles["fixed:"+testRoleGroup+":testkind:reader"]
 	require.Equal(t, "TestKind reader", reader.Role.DisplayName)
@@ -90,6 +95,90 @@ func TestManifestRoleRegistrationsFromManifest(t *testing.T) {
 	require.Equal(t, "testkind:writer", writer.Role.DisplayName, "the role name stands in for a missing title")
 	require.Equal(t, []string{"Editor"}, writer.Grants)
 	require.Contains(t, actions(t, writer), testRoleGroup+"/testkinds:create")
+}
+
+// A role that grants only a kind's custom route is added to the default roles,
+// and the defaults leave out only the kinds a declared role names itself.
+func TestManifestRoleRegistrationsKeepsDefaults(t *testing.T) {
+	manifest := roleTestManifest()
+	for i := range manifest.Versions {
+		manifest.Versions[i].Kinds = append(manifest.Versions[i].Kinds,
+			app.ManifestVersionKind{Kind: "OtherKind", Plural: "OtherKinds", Scope: "Namespaced"})
+	}
+	viewer := app.ManifestRolePermissionSetViewer
+	editor := app.ManifestRolePermissionSetEditor
+	manifest.Roles = map[string]app.ManifestRole{
+		"example:renderer":     {Kinds: []app.ManifestRoleKind{{Kind: "TestKind/render", PermissionSet: &editor}}},
+		"example:other-reader": {Kinds: []app.ManifestRoleKind{{Kind: "OtherKind", PermissionSet: &viewer}}},
+	}
+	manifest.RoleBindings = &app.ManifestRoleBindings{
+		Viewer: []string{"example:other-reader"},
+		Admin:  []string{"example:renderer"},
+	}
+
+	roles := byName(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
+	require.Len(t, roles, 4)
+	require.Equal(t, []string{testRoleGroup + "/testkinds:get"}, actions(t, roles["fixed:"+testRoleGroup+":reader"]),
+		"OtherKind is named by a declared role, so it takes over that kind's access")
+	require.NotContains(t, actions(t, roles["fixed:"+testRoleGroup+":writer"]), testRoleGroup+"/otherkinds:create")
+	require.Contains(t, actions(t, roles["fixed:"+testRoleGroup+":writer"]), testRoleGroup+"/testkinds:create")
+	require.Contains(t, actions(t, roles["fixed:"+testRoleGroup+":example:renderer"]), testRoleGroup+"/testkinds/render:create")
+	require.Equal(t, []string{testRoleGroup + "/otherkinds:get"}, actions(t, roles["fixed:"+testRoleGroup+":example:other-reader"]))
+
+	t.Run("a declared role named as a default replaces it", func(t *testing.T) {
+		manifest := roleTestManifest()
+		manifest.Roles = map[string]app.ManifestRole{
+			"writer": {Kinds: []app.ManifestRoleKind{{Kind: "TestKind/render", PermissionSet: &editor}}},
+		}
+		manifest.RoleBindings = &app.ManifestRoleBindings{Admin: []string{"writer"}}
+
+		roles := byName(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
+		require.Len(t, roles, 2)
+		require.Equal(t, []string{"Viewer"}, roles["fixed:"+testRoleGroup+":reader"].Grants)
+		writer := roles["fixed:"+testRoleGroup+":writer"]
+		require.Equal(t, []string{"Admin"}, writer.Grants)
+		require.NotContains(t, actions(t, writer), testRoleGroup+"/testkinds:create")
+	})
+}
+
+// A route's declared access check is granted by a role kind naming the route,
+// as the action the authz service derives for the check: here to admins only,
+// while editors keep writing the kind itself through the default writer.
+func TestManifestRoleRegistrationsGrantDeclaredRouteCheck(t *testing.T) {
+	manifest := roleTestManifest()
+	post := &spec3.Operation{}
+	post.AddExtension(manifestroutes.ExtensionAuthzResource, "testkinds")
+	post.AddExtension(manifestroutes.ExtensionAuthzSubresource, "expose")
+	post.AddExtension(manifestroutes.ExtensionAuthzVerb, "create")
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/namespaces/{namespace}/testkinds/{name}/expose": {Post: post},
+	}
+	editor := app.ManifestRolePermissionSetEditor
+	manifest.Roles = map[string]app.ManifestRole{
+		"example:exposer": {Title: "Exposer", Kinds: []app.ManifestRoleKind{{Kind: "TestKind/expose", PermissionSet: &editor}}},
+	}
+	manifest.RoleBindings = &app.ManifestRoleBindings{Admin: []string{"example:exposer"}}
+
+	routes, problems := manifestroutes.Parse(manifest.Versions[1], manifestroutes.Options{})
+	require.Empty(t, problems)
+	require.Len(t, routes, 1)
+	check := routes[0].Authz[http.MethodPost]
+	// The action the authz service checks for a kind it holds no mapping for.
+	verb, ok := rbac.ActionVerb(check.Verb)
+	require.True(t, ok)
+	action := testRoleGroup + "/" + check.Resource + "/" + check.Subresource + ":" + verb
+	require.Equal(t, testRoleGroup+"/testkinds/expose:create", action)
+
+	held := map[string][]string{}
+	for _, reg := range manifestRoleRegistrations(testRoleGroup, "Example", manifest) {
+		require.NoError(t, ac.ValidateFixedRole(reg.Role))
+		for basic := range ac.BuiltInRolesWithParents(reg.Grants) {
+			held[basic] = append(held[basic], actions(t, reg)...)
+		}
+	}
+	require.Contains(t, held[string(org.RoleAdmin)], action)
+	require.NotContains(t, held[string(org.RoleEditor)], action)
+	require.Contains(t, held[string(org.RoleEditor)], testRoleGroup+"/testkinds:create")
 }
 
 // A role may grant a kind's custom route, which a route's declared check names
