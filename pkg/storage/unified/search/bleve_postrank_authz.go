@@ -352,13 +352,15 @@ func (p *postRankPage) documents() search.DocumentMatchCollection {
 	return docs
 }
 
-// authzResources builds the resource-type -> verb map used to authorize hits.
-// The primary resource uses the verb implied by req.Permission; federated
+// authzResources builds the {group}/{resource} -> verb map used to authorize
+// hits. The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
 //
-// A hit whose resource type is absent from the map is dropped, so a
-// namespace-wide index has to list every type it covers. Each hit is still
-// authorized against its own type and group, read from its document id.
+// A hit whose type is absent from the map is dropped. A namespace-wide index
+// answers every type under anyResourceType instead: its covered types change
+// with the manifests, and the search server limits each search to the ones it
+// may search with a filter. Each hit is still authorized against its own type and
+// group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
@@ -366,16 +368,57 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	}
 	resources := map[string]string{}
 	if b.key.IsGlobal() {
-		for _, gr := range resource.GlobalSearchResourceTypes() {
-			resources[gr.Resource] = verb
-		}
+		resources[anyResourceType] = verb
 	} else {
-		resources[b.key.Resource] = verb
+		resources[b.key.Group+"/"+b.key.Resource] = verb
+	}
+	if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && (b.key.IsGlobal() || (b.key.Group == folderGroup && b.key.Resource == folderResource)) {
+		resources[folderGroup+"/"+folderResource] = utils.VerbCreate
 	}
 	for _, federated := range req.Federated {
-		resources[federated.Resource] = utils.VerbGet
+		resources[federated.Group+"/"+federated.Resource] = utils.VerbGet
 	}
 	return resources
+}
+
+// anyResourceType keys the verb for every type in authzResources.
+const anyResourceType = "*"
+
+// authzVerb returns the verb a hit of the type is authorized with, and false
+// when hits of the type are not returned.
+func authzVerb(resources map[string]string, group, resourceType string) (string, bool) {
+	if verb, ok := resources[group+"/"+resourceType]; ok {
+		return verb, true
+	}
+	verb, ok := resources[anyResourceType]
+	return verb, ok
+}
+
+const (
+	folderGroup    = "folder.grafana.app"
+	folderResource = "folders"
+)
+
+// batchCheckItem authorizes a folder hit under permission=create by the right to
+// create dashboards inside it; every other hit is checked as itself.
+func batchCheckItem(info docInfo) authz.BatchCheckItem {
+	if info.verb == utils.VerbCreate && info.group == folderGroup && info.resourceType == folderResource {
+		return authz.BatchCheckItem{
+			Folder:    info.name,
+			Verb:      utils.VerbCreate,
+			Group:     dashboardGroup,
+			Resource:  "dashboards",
+			Namespace: info.namespace,
+		}
+	}
+	return authz.BatchCheckItem{
+		Name:      info.name,
+		Folder:    info.folder,
+		Verb:      info.verb,
+		Group:     info.group,
+		Resource:  info.resourceType,
+		Namespace: info.namespace,
+	}
 }
 
 // parseHitDocInfo extracts the authorization fields from an already-ranked hit.
@@ -389,7 +432,7 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 		return docInfo{}, false
 	}
 	resourceType := parts[2]
-	verb, ok := resources[resourceType]
+	verb, ok := authzVerb(resources, parts[1], resourceType)
 	if !ok {
 		return docInfo{}, false
 	}
@@ -480,16 +523,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// sparse-access users.
 	firstReq.Size = baseWindow
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 
 	page := postRankPage{index: index, query: firstReq.Query, sort: firstReq.Sort, fields: firstReq.Fields, limit: limit, stats: stats}
 
@@ -659,16 +693,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 		return nil, 0, false, nil
 	}
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 	agg, authorized, exhausted, err := b.aggregateFacetsFromTop(
 		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats, trashAuthz,
 	)

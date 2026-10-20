@@ -25,6 +25,8 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookAnalytics } from '../../analytics/main';
+import { NOTEBOOK_BLOCK_INSERT_VIA, type NotebookBlockInsertVia } from '../../analytics/types';
 import {
   type CellContentKind,
   defaultCodeCellContentKind,
@@ -184,6 +186,17 @@ export class NotebookLayoutManager
     }
 
     return undefined;
+  }
+
+  /**
+   * Reports a block somebody chose to insert. Nothing goes out for a manager with no scene above it,
+   * which has no notebook to name.
+   */
+  private reportBlockInserted(blockType: NotebookBlockType, via: NotebookBlockInsertVia): void {
+    const scene = this.notebookScene;
+    if (scene) {
+      NotebookAnalytics.blockInserted(scene.state.uid ?? '', blockType, via);
+    }
   }
 
   /**
@@ -511,7 +524,13 @@ export class NotebookLayoutManager
    * starter content actually differs. The "/" menu does not hit this: typing "/" has already
    * claimed the slot before convertCell runs.
    */
-  public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
+  public convertCell(cell: NotebookCellItem, type: NotebookBlockType, via?: NotebookBlockInsertVia): void {
+    // Reported when the pick is made, before the early returns below: picking Paragraph on an empty
+    // paragraph changes nothing, and it is still a block somebody asked for.
+    if (via) {
+      this.reportBlockInserted(type, via);
+    }
+
     if (type === 'visualization') {
       this.convertCellToPanel(cell);
       return;
@@ -632,7 +651,11 @@ export class NotebookLayoutManager
    *
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
-  public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
+  public addCell = (
+    type: NotebookBlockType,
+    index: number,
+    via?: NotebookBlockInsertVia
+  ): NotebookCellItem | undefined => {
     // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
@@ -654,6 +677,10 @@ export class NotebookLayoutManager
       perform: () => this.insertCell(built.cell, built.index),
       undo: () => this.removeCellInstance(built.cell),
     });
+
+    if (via) {
+      this.reportBlockInserted(type, via);
+    }
 
     return built.cell;
   };
@@ -683,7 +710,7 @@ export class NotebookLayoutManager
    * also needs a fresh panel key, for the same reasons duplicate() rekeys. Narrative content is cloned
    * rather than reused, so editing the copy cannot change the original.
    */
-  public duplicateCell(cell: NotebookCellItem): void {
+  public duplicateCell(cell: NotebookCellItem, via?: NotebookBlockInsertVia): void {
     const index = this.state.cells.indexOf(cell);
     if (index === -1) {
       return;
@@ -705,6 +732,10 @@ export class NotebookLayoutManager
       perform: () => this.insertCell(copy, index + 1),
       undo: () => this.removeCellInstance(copy),
     });
+
+    if (via) {
+      this.reportBlockInserted(blockTypeOf(cell), via);
+    }
   }
 
   /**
@@ -737,6 +768,29 @@ export class NotebookLayoutManager
     });
 
     return cell;
+  }
+
+  /**
+   * Appends cells built outside the notebook, such as content added from another surface, as one
+   * undoable step. They go above the trailing empty block, which stays the typeable slot at the end.
+   * Returns the index the first one landed on.
+   */
+  public appendCells(cells: NotebookCellItem[], label: string): number {
+    const last = this.state.cells.at(-1);
+    const index = last && isEmptyMarkdown(last.state.content) ? this.state.cells.length - 1 : this.state.cells.length;
+
+    this.executeEdit({
+      label,
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
+      perform: () => {
+        const next = this.state.cells.filter((cell) => !cells.includes(cell));
+        next.splice(Math.min(index, next.length), 0, ...cells);
+        this.setState({ cells: next });
+      },
+      undo: () => this.setState({ cells: this.state.cells.filter((cell) => !cells.includes(cell)) }),
+    });
+
+    return index;
   }
 
   public removeCell(cell: NotebookCellItem): void {
@@ -903,9 +957,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   }, [isEditing, cells, model, requestFocus]);
 
   const onAdd = useCallback(
-    (type: NotebookBlockType, index: number) => {
+    (type: NotebookBlockType, index: number, via: NotebookBlockInsertVia) => {
       // The reader asked for a block, so the caret belongs in it rather than one click away.
-      requestFocus(model.addCell(type, index)?.state.key);
+      requestFocus(model.addCell(type, index, via)?.state.key);
     },
     [model, requestFocus]
   );
@@ -985,8 +1039,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
-                    onAdd={onAdd}
-                    onDuplicate={() => model.duplicateCell(cell)}
+                    onAdd={(type, cellIndex) => onAdd(type, cellIndex, NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU)}
+                    onDuplicate={() => model.duplicateCell(cell, NOTEBOOK_BLOCK_INSERT_VIA.DUPLICATE)}
                     onDelete={() => confirmRemoveCell(model, cell)}
                     onAdvance={(remainder, marker) => {
                       // With neither a marker nor a remainder, insertCellAfter's own empty-paragraph
@@ -1013,7 +1067,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
           </Droppable>
         </DragDropContext>
 
-        {isEditing && <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length)} />}
+        {isEditing && (
+          <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length, NOTEBOOK_BLOCK_INSERT_VIA.FOOTER)} />
+        )}
       </div>
     </div>
   );
@@ -1132,3 +1188,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
       },
   }),
 });
+
+/**
+ * The block a cell comes to when it is duplicated. A markdown cell is a heading when it opens with
+ * heading syntax and a paragraph otherwise, which is how the menu's two text blocks are told apart.
+ */
+function blockTypeOf(cell: NotebookCellItem): NotebookBlockType {
+  const { body, content } = cell.state;
+  if (body) {
+    return 'visualization';
+  }
+  if (content?.kind === 'Code') {
+    return 'code';
+  }
+
+  return content?.kind === 'Markdown' && /^\s{0,3}#{1,6}\s/.test(content.spec.text) ? 'heading' : 'paragraph';
+}

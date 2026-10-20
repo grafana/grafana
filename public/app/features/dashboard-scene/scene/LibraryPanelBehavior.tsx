@@ -1,6 +1,5 @@
 import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   sceneGraph,
@@ -79,7 +78,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     titleItems.push(new PanelNotices());
 
     let title;
-    if (config.featureToggles.preferLibraryPanelTitle) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PreferLibraryPanelTitle, false)) {
       title = libPanelModel.title ?? vizPanel.state.title;
     } else {
       title = vizPanel.state.title ?? libPanelModel.title;

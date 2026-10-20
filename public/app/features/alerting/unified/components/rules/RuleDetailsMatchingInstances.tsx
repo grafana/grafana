@@ -29,6 +29,7 @@ interface Props {
   pagination?: PaginationProps;
   itemsDisplayLimit?: number;
   enableFiltering?: boolean;
+  showSilenceAction?: boolean;
 }
 
 interface ShowMoreStats {
@@ -84,7 +85,13 @@ function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }
 }
 
 export function RuleDetailsMatchingInstances(props: Props) {
-  const { rule, itemsDisplayLimit = Number.POSITIVE_INFINITY, pagination, enableFiltering = false } = props;
+  const {
+    rule,
+    itemsDisplayLimit = Number.POSITIVE_INFINITY,
+    pagination,
+    enableFiltering = false,
+    showSilenceAction = false,
+  } = props;
   const { promRule, namespace, instanceTotals } = rule;
 
   const [queryString, setQueryString] = useState<string>();
@@ -177,6 +184,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
         pagination={pagination}
         footerRow={footerRow}
         showNotificationColumn={rulerRuleType.grafana.alertingRule(rule.rulerRule)}
+        showSilenceAction={showSilenceAction}
       />
     </>
   );

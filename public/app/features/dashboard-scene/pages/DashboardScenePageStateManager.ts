@@ -61,7 +61,9 @@ import {
 } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled } from '../scene/dashboardModes';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -460,8 +462,16 @@ abstract class DashboardScenePageStateManagerBase<T>
         return;
       }
 
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false) &&
+        Boolean(options.uid)
+      ) {
         restoreDashboardStateFromLocalStorage(dashboard);
+      }
+
+      const mode = consumeDashboardModeAfterSave(options.uid);
+      if (mode && dashboardModesEnabled()) {
+        dashboard.setDashboardMode(mode, 'restore');
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -1015,7 +1025,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false) &&
+        Boolean(uid)
+      ) {
         restoreDashboardStateFromLocalStorage(scene);
       }
 
@@ -1382,7 +1395,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const scene = transformSaveModelSchemaV2ToScene(rsp, reloadOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false) &&
+        Boolean(uid)
+      ) {
         restoreDashboardStateFromLocalStorage(scene);
       }
 

@@ -19,7 +19,12 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION, NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
-import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
+import {
+  createNotebook,
+  NotebookConflictError,
+  readNotebookResourceVersion,
+  updateNotebook,
+} from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
@@ -34,6 +39,7 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 jest.mock('../api/notebookResource', () => ({
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
+  readNotebookResourceVersion: jest.fn(),
   NotebookConflictError: jest.requireActual('../api/notebookResource').NotebookConflictError,
 }));
 
@@ -51,6 +57,8 @@ jest.mock('../analytics/main', () => ({
     editSessionEnded: jest.fn(),
     autosaveFailed: jest.fn(),
     autosaveConflictResolved: jest.fn(),
+    autosaveRetried: jest.fn(),
+    viewOnlyChangesResolved: jest.fn(),
   },
 }));
 
@@ -373,6 +381,35 @@ describe('NotebookAutosave', () => {
 
     expect(savedTexts()).toEqual(['Hello world', 'Hello world']);
     expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  it('reports the Retry button with how many saves had failed in a row, and sends the save again', async () => {
+    const scene = activateEditing();
+    jest.mocked(NotebookAnalytics.autosaveRetried).mockClear();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    scene.autosave.retryFromButton();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(NotebookAnalytics.autosaveRetried).toHaveBeenCalledTimes(1);
+    expect(NotebookAnalytics.autosaveRetried).toHaveBeenCalledWith(scene.state.uid ?? '', 1);
+    expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  // The overwrite also goes through `retry`, and is already reported as the answer to the conflict prompt.
+  it('does not count a retry that is not the button', async () => {
+    const scene = activateEditing();
+    jest.mocked(NotebookAnalytics.autosaveRetried).mockClear();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    scene.autosave.retry();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(NotebookAnalytics.autosaveRetried).not.toHaveBeenCalled();
   });
 
   it('reports increasing attempts for failures in a row, and starts over after a save lands', async () => {
@@ -707,6 +744,48 @@ describe('NotebookAutosave', () => {
     await waiting;
 
     expect(settled).toBe(true);
+  });
+
+  describe('isSavedElsewhere', () => {
+    it('is false before this scene has a version to compare, without asking the server', async () => {
+      const scene = activateEditing();
+
+      expect(await scene.autosave.isSavedElsewhere()).toBe(false);
+      expect(readNotebookResourceVersion).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['the server still holds this version', '5', false],
+      ['someone else saved since', '9', true],
+      ['the server reports no version', undefined, false],
+    ])('compares with the server: %s', async (_label, serverVersion, expected) => {
+      const scene = activateEditing();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue(serverVersion);
+
+      expect(await scene.autosave.isSavedElsewhere()).toBe(expected);
+    });
+
+    // Otherwise this scene's own save, landing during the check, would read as someone else's.
+    it('lets a save of its own that is already running land before comparing', async () => {
+      let finishSave = () => {};
+      jest.mocked(updateNotebook).mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishSave = () => resolve({ generation: 3, resourceVersion: '7' });
+          })
+      );
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue('7');
+      const scene = activateEditing();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      editFirstCell(scene, 'Mine');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      const checking = scene.autosave.isSavedElsewhere();
+      finishSave();
+
+      expect(await checking).toBe(false);
+    });
   });
 
   it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {
@@ -1307,6 +1386,7 @@ describe('NotebookAutosave', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(panel.state.fieldConfig.overrides).toHaveLength(1);
         expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenLastCalledWith(scene.state.uid ?? '', 'keep', 1);
 
         stopPanel();
       });
@@ -1339,6 +1419,21 @@ describe('NotebookAutosave', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(panel.state.fieldConfig.overrides).toEqual([]);
         expect(updateNotebook).not.toHaveBeenCalled();
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenLastCalledWith(scene.state.uid ?? '', 'discard', 1);
+
+        stopPanel();
+      });
+
+      // The Cancel button, the close button and Escape all reach the modal's onDismiss.
+      it('reports cancelling, and leaves the notebook as a read', async () => {
+        const { scene, stopPanel, payload } = await readAndRecolour();
+        jest.mocked(NotebookAnalytics.viewOnlyChangesResolved).mockClear();
+
+        payload?.onDismiss?.();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenCalledTimes(1);
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenCalledWith(scene.state.uid ?? '', 'cancel', 1);
 
         stopPanel();
       });

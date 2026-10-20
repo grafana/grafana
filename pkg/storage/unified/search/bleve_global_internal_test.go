@@ -54,7 +54,7 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			doc("folder.grafana.app", "folders", "folder-a"),
 		}})
 		return 1, err
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
@@ -96,6 +96,15 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		}))
 	})
 
+	// How the search server leaves out the types it cannot search.
+	t.Run("a request can leave out types", func(t *testing.T) {
+		assert.ElementsMatch(t, []string{"dash-a", "dash-b"}, search(&resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_GROUP_RESOURCE,
+			Operator: string(selection.NotIn),
+			Values:   []string{"folder.grafana.app/folders"},
+		}))
+	})
+
 	t.Run("a hit is authorized against its own resource type", func(t *testing.T) {
 		// Permission on folders alone leaves the dashboards out, even though they
 		// share the index.
@@ -132,6 +141,45 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			"folder-a": "folder.grafana.app/folders",
 		}, found)
 	})
+}
+
+func TestSearchResponseResourceVersion(t *testing.T) {
+	src := newTestNsResource()
+	for _, tc := range []struct {
+		name string
+		key  resource.NamespacedResource
+		rv   int64
+	}{
+		{name: "per resource", key: src, rv: 42},
+		{name: "global", key: resource.GlobalSearchKey(src.Namespace)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t)
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: src.Namespace})
+			idx, err := backend.BuildIndex(ctx, tc.key, 1, "test", indexTestDocs(src, 1, 42), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+				resourcepb.ResourceSearchRequest_UNSPECIFIED,
+				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+				resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			} {
+				t.Run(format.String(), func(t *testing.T) {
+					response, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+						Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+							Namespace: src.Namespace, Group: src.Group, Resource: src.Resource,
+						}},
+						Limit:        10,
+						ResultFormat: format,
+					}, nil, nil)
+					require.NoError(t, err)
+					require.Nil(t, response.Error)
+					assert.Equal(t, int64(1), response.TotalHits)
+					assert.Equal(t, tc.rv, response.ResourceVersion)
+				})
+			}
+		})
+	}
 }
 
 func TestVerifyKeyPerResourceIndex(t *testing.T) {
@@ -253,7 +301,7 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 			doc("folder.grafana.app", "folders", "shared"),
 			doc("dashboard.grafana.app", "dashboards", "zzz"),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
@@ -293,7 +341,7 @@ var (
 
 func TestCompletedTypeBuildsAreEmptyOnANewIndex(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	builds, err := idx.CompletedTypeBuilds()
@@ -304,7 +352,7 @@ func TestCompletedTypeBuildsAreEmptyOnANewIndex(t *testing.T) {
 // Recording one type keeps what is recorded for the others, to the nanosecond.
 func TestCompletedTypeBuildsAreRecordedPerType(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday}))
@@ -323,7 +371,7 @@ func TestCompletedTypeBuildsAreRecordedPerType(t *testing.T) {
 // and a forgotten type is no longer recorded at all.
 func TestCompletedTypeBuildsRecordNeverImportedAndForgottenTypes(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{}))
@@ -354,7 +402,7 @@ func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 		backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
 		idx, err := backend.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(index resource.ResourceIndex) (int64, error) {
 			return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: docs})
-		}, nil, false, time.Time{}, 0)
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 		require.NoError(t, idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
 			Action: resource.ActionDelete,
@@ -368,7 +416,7 @@ func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 	reopened, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
 	idx, err := reopened.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(resource.ResourceIndex) (int64, error) {
 		return 0, errors.New("the index on disk should have been reused, not built again")
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	types, err := idx.DocumentTypes()
@@ -382,7 +430,7 @@ func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 // Zero until recorded, then kept to the nanosecond.
 func TestReconciledAtIsRecorded(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	at, err := idx.ReconciledAt()
@@ -409,7 +457,7 @@ func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
 			}
 			return rv, index.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday})
 		}
-		_, err := backend.BuildIndex(t.Context(), typeBuildsKey, docs, "test", build, nil, false, time.Time{}, 0)
+		_, err := backend.BuildIndex(t.Context(), typeBuildsKey, docs, "test", build, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 		backend.Stop()
 	}
@@ -417,7 +465,7 @@ func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
 	reopened, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
 	idx, err := reopened.BuildIndex(t.Context(), typeBuildsKey, docs, "test", func(resource.ResourceIndex) (int64, error) {
 		return 0, errors.New("the index on disk should have been reused, not built again")
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	builds, err := idx.CompletedTypeBuilds()
@@ -433,7 +481,7 @@ func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
 	key := resource.GlobalSearchKey("ns")
 	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	backend.Stop()
 
@@ -510,7 +558,7 @@ func testGlobalIndexSearchesAFolderAndEverythingBelowIt(t *testing.T) {
 			folderTreeDoc(key, "dashboards", "dash-root", ""),
 			folderTreeDoc(key, "dashboards", "dash-other", "other"),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []string{"mid", "leaf", "dash-top", "dash-mid", "dash-leaf"}, searchFolderTree(t, index, "top"),
@@ -545,7 +593,7 @@ func TestGlobalIndexFolderTreeSearchEndsAtALoop(t *testing.T) {
 			folderTreeDoc(key, "folders", "loop-b", "loop-a"),
 			folderTreeDoc(key, "dashboards", "dash-a", "loop-a"),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []string{"loop-a", "loop-b", "dash-a"}, searchFolderTree(t, index, "loop-a"))
@@ -563,7 +611,7 @@ func TestGlobalIndexFolderTreeSurvivesReopening(t *testing.T) {
 				folderTreeDoc(key, "folders", "mid", "top"),
 				folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
 			}})
-		}, nil, false, time.Time{}, 0)
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 		backend.Stop()
 	}
@@ -571,7 +619,7 @@ func TestGlobalIndexFolderTreeSurvivesReopening(t *testing.T) {
 	reopened, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
 	index, err := reopened.BuildIndex(t.Context(), key, 10, "test", func(resource.ResourceIndex) (int64, error) {
 		return 0, errors.New("the index on disk should have been reused, not built again")
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []string{"mid", "dash-mid"}, searchFolderTree(t, index, "top"))
 }
@@ -580,7 +628,7 @@ func TestGlobalIndexFolderTreeSurvivesReopening(t *testing.T) {
 func TestPerResourceIndexRefusesFolderTreeSearches(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index, err := backend.BuildIndex(t.Context(), key, 1, "test", func(resource.ResourceIndex) (int64, error) { return 1, nil }, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(t.Context(), key, 1, "test", func(resource.ResourceIndex) (int64, error) { return 1, nil }, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}), NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -609,7 +657,7 @@ func TestGlobalIndexFolderTreeKeepsUpWithConcurrentMoves(t *testing.T) {
 			folderTreeDoc(key, "folders", "mid", "a"),
 			folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	var wg sync.WaitGroup
@@ -687,7 +735,7 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 			folderTreeDoc(key, "folders", "top", ""),
 			folderTreeDoc(key, "dashboards", "dash-top", "top"),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	search := func(operator string, values ...string) *resourcepb.ResourceSearchResponse {
@@ -770,7 +818,7 @@ func BenchmarkGlobalFolderTree(b *testing.B) {
 			}
 		}
 		return 1, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(b, err)
 	b.Logf("built %d documents in %s", len(items), time.Since(start))
 	index := built.(*bleveIndex)
@@ -912,7 +960,7 @@ func TestFolderSetSearcherStopsOnCancelAndFailsOnUnreadableFolders(t *testing.T)
 			items = append(items, folderTreeDoc(key, "dashboards", fmt.Sprintf("dash-%d", i), "elsewhere"))
 		}
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	idx := built.(*bleveIndex)
 	advanced, err := idx.index.Advanced()
@@ -956,7 +1004,7 @@ func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
 			folderTreeDoc(key, "dashboards", "dash-top", "top"),
 			folderTreeDoc(key, "dashboards", "dash-root", ""),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	idx := built.(*bleveIndex)
 

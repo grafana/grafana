@@ -8,6 +8,7 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
+import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -21,6 +22,7 @@ export interface DashboardViewState {
   body: AnyDashboardLayoutManager;
   /** True when editing */
   isEditing?: boolean;
+  mode?: DashboardMode;
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel key to view in fullscreen */
@@ -89,16 +91,40 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   planning?: DashboardPlanningState;
 }
 
-export interface DashboardPlanningState {
+export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  return Boolean(state.isEditing && (!dashboardModesEnabled() || getDashboardMode(state) === 'edit'));
+}
+
+export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  return dashboardModesEnabled() && getDashboardMode(state) !== 'edit';
+}
+
+interface DashboardPlanningBase {
   /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
   planId: string;
   /** Title of the plan being previewed, shown in the banner. */
   planTitle: string;
+}
+
+/** The plan rendered with sample data, waiting for the user to build or dismiss it. */
+export interface DashboardPlanPreviewState extends DashboardPlanningBase {
+  phase: 'preview';
   /** Build the plan: attach real queries to the scaffolded panels. */
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
 }
+
+/**
+ * The user chose Build and the builder has not written anything yet. The dashboard shows a
+ * loading screen, with nothing left to decide, until the build's first write replaces it or
+ * END_PLANNING clears it.
+ */
+interface DashboardPlanBuildingState extends DashboardPlanningBase {
+  phase: 'building';
+}
+
+export type DashboardPlanningState = DashboardPlanPreviewState | DashboardPlanBuildingState;
 
 interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
