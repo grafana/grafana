@@ -32,6 +32,7 @@ import { NotebookAnalytics } from '../analytics/main';
 import {
   NOTEBOOK_EDIT_SESSION_END_REASON,
   NOTEBOOK_EDIT_SESSION_SOURCE,
+  NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION,
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
@@ -304,15 +305,33 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
         yesButtonVariant: 'destructive',
         onConfirm: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.DISCARD,
+            changed.length
+          );
           this.startEditing(source);
           this.autosave.discardVizChanges();
         },
         altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
         onAltAction: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.KEEP,
+            changed.length
+          );
           this.startEditing(source);
           this.autosave.keepVizChanges(changed);
         },
         noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
+        // The Cancel button, the close button and Escape all land here: none says more than "not this".
+        onDismiss: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.CANCEL,
+            changed.length
+          );
+        },
       })
     );
   }

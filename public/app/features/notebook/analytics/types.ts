@@ -1,5 +1,7 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 
+import { type NotebookBlockType } from '../scene/layout-notebook/edit/NotebookBlockTypeMenu';
+
 // One EventProperty interface per notebook event, plus the property groups that several events send.
 //
 // Share a group when one reader in shape.ts computes it in one go, and every event means the same
@@ -24,6 +26,8 @@ export interface NotebookShape extends EventProperty {
   textCellCount: number;
   /** Code cells among cellCount. */
   codeCellCount: number;
+  /** Deduplicated languages the notebook's code cells are written in. */
+  codeLanguages: string[];
   /** Panels among panelCount that have at least one real query configured. */
   configuredPanelCount: number;
   /** Distinct datasource types among datasourceTypes. */
@@ -64,7 +68,25 @@ export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
   wasCached: boolean;
   /** Whether a host other than the notebook route is showing this notebook, such as the Assistant canvas. */
   embedded: boolean;
+  /** Where the reader came from. `direct` when the link carried no source: a pasted link, a reload, the nav menu. */
+  source: NotebookLoadSource;
 }
+
+/**
+ * Where a notebook page was opened from, read off the `source` param the in-app links carry. The
+ * names match `NOTEBOOK_ENTRY_POINT` where the surface is the same one. `DIRECT` is everything that
+ * says nothing: the param is only ever added by the links listed here, and it is cleaned off the url
+ * once read.
+ */
+export const NOTEBOOK_LOAD_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  EXPLORE: 'explore',
+  DASHBOARD_PANEL: 'dashboard_panel',
+  PLUGIN: 'plugin',
+  DIRECT: 'direct',
+} as const;
+
+export type NotebookLoadSource = (typeof NOTEBOOK_LOAD_SOURCE)[keyof typeof NOTEBOOK_LOAD_SOURCE];
 
 /**
  * The surface a notebook came from, for every event that has to name one. `EXPLORE`,
@@ -171,6 +193,10 @@ export interface NotebookCreatedProperties extends EventProperty, Partial<AddedP
   source: NotebookEntryPoint;
   /** Cells in the notebook at the moment it was created, excluding the trailing empty editor block. */
   cellCount: number;
+  /** `new` when the add-panel modal created it. Left off for a blank notebook, which was not an add. */
+  target?: NotebookAddTarget;
+  /** Whether the add-panel modal pinned the panel to the time range it was sent with. Left off with `target`. */
+  lockTimeRange?: boolean;
 }
 
 /**
@@ -331,6 +357,10 @@ export interface NotebookCellAddedFromAddToNotebookProperties extends EventPrope
   source: NotebookEntryPoint;
   /** Where the panel landed, counting from 0. Doubles as the notebook's size before the add. */
   position: number;
+  /** Always `existing`: a cell added to a notebook that was just created is counted on `created`. */
+  target: NotebookAddTarget;
+  /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
+  lockTimeRange: boolean;
 }
 
 export interface NotebookAutosaveFailedProperties extends EventProperty {
@@ -396,6 +426,8 @@ export interface NotebookAddFailedProperties extends EventProperty {
   target: NotebookAddTarget;
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
+  /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
+  lockTimeRange: boolean;
 }
 
 export const NOTEBOOK_INCIDENT_ACTION = {
@@ -409,5 +441,103 @@ export interface NotebookIncidentActionClickedProperties extends EventProperty {
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which IRM action was picked: declaring an incident, or attaching to an existing one. */
+  action: NotebookIncidentAction;
+}
+
+/**
+ * How a block came to be inserted. `PLUS_MENU` is the add button above a cell, `FOOTER` the buttons
+ * under the last one, `SLASH_MENU` a "/" typed into an empty paragraph, and `DUPLICATE` the cell's own
+ * duplicate action. Enter splitting a paragraph and the empty block the editor keeps at the bottom are
+ * not insertions anybody chose, so they send nothing.
+ */
+export const NOTEBOOK_BLOCK_INSERT_VIA = {
+  PLUS_MENU: 'plus_menu',
+  FOOTER: 'footer',
+  SLASH_MENU: 'slash_menu',
+  DUPLICATE: 'duplicate',
+} as const;
+
+export type NotebookBlockInsertVia = (typeof NOTEBOOK_BLOCK_INSERT_VIA)[keyof typeof NOTEBOOK_BLOCK_INSERT_VIA];
+
+export interface NotebookBlockInsertedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for one that has no uid yet. */
+  notebookUid: string;
+  /** Which block was inserted. A duplicated cell is described by the block it comes to. */
+  blockType: NotebookBlockType;
+  /** Which control inserted it. */
+  via: NotebookBlockInsertVia;
+}
+
+/**
+ * Why the leave prompt came up. `saving` is a notebook whose last changes autosave has not finished
+ * writing. `conflict` is one whose changes could not be saved because somebody else saved first.
+ */
+export const NOTEBOOK_LEAVE_PROMPT_REASON = {
+  SAVING: 'saving',
+  CONFLICT: 'conflict',
+} as const;
+
+export type NotebookLeavePromptReason =
+  (typeof NOTEBOOK_LEAVE_PROMPT_REASON)[keyof typeof NOTEBOOK_LEAVE_PROMPT_REASON];
+
+/**
+ * How the user answered the leave prompt. `stay` covers every way of not confirming, the Stay
+ * button, the close button and Escape. The browser's own prompt on a reload or a closed tab is not
+ * here: the page gives no way to read the answer.
+ */
+export const NOTEBOOK_LEAVE_PROMPT_RESOLUTION = {
+  LEAVE: 'leave',
+  STAY: 'stay',
+} as const;
+
+export type NotebookLeavePromptResolution =
+  (typeof NOTEBOOK_LEAVE_PROMPT_RESOLUTION)[keyof typeof NOTEBOOK_LEAVE_PROMPT_RESOLUTION];
+
+export interface NotebookLeavePromptResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Why the prompt came up. */
+  reason: NotebookLeavePromptReason;
+  /** Which way the user answered. */
+  resolution: NotebookLeavePromptResolution;
+}
+
+/**
+ * How the user answered the "unsaved panel changes" prompt that edit mode asks before it starts.
+ * `discard` throws the changes away, `keep` carries them into the edit session, and `cancel` covers
+ * every way of not confirming and leaves the notebook as a read.
+ */
+export const NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION = {
+  DISCARD: 'discard',
+  KEEP: 'keep',
+  CANCEL: 'cancel',
+} as const;
+
+export type NotebookViewOnlyChangesResolution =
+  (typeof NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION)[keyof typeof NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION];
+
+export interface NotebookViewOnlyChangesResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which way the user answered. */
+  resolution: NotebookViewOnlyChangesResolution;
+  /** Panels the reader had changed while viewing, which is what the prompt was about. */
+  changedPanelCount: number;
+}
+
+export interface NotebookAutosaveRetriedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for a notebook that has no uid yet. */
+  notebookUid: string;
+  /** Failures in a row for this notebook when the Retry button was pressed. */
+  attempt: number;
+}
+
+export interface NotebookIncidentActionCompletedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /**
+   * Which IRM action finished. Only `attach` is sent today: IRM's declare form gives the notebook no
+   * callback for the incident being created, only for it closing.
+   */
   action: NotebookIncidentAction;
 }

@@ -209,7 +209,8 @@ describe('addToExistingNotebook', () => {
       'nb1',
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
-      { panel: panel('p95 latency'), isLibraryPanel: false }
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      false
     );
   });
 
@@ -228,7 +229,8 @@ describe('addToExistingNotebook', () => {
       'nb1',
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
-      { panel: panel('p95 latency'), isLibraryPanel: true }
+      { panel: panel('p95 latency'), isLibraryPanel: true },
+      false
     );
   });
 
@@ -252,14 +254,37 @@ describe('addToExistingNotebook', () => {
       'nb1',
       NOTEBOOK_ENTRY_POINT.PLUGIN,
       0,
-      undefined
+      undefined,
+      false
     );
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
       2,
       'nb1',
       NOTEBOOK_ENTRY_POINT.PLUGIN,
       1,
-      { panel: panel('p95 latency'), isLibraryPanel: false }
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      false
+    );
+  });
+
+  // The modal's choice, handed over for the event: the cells already carry whatever it did to them.
+  it('passes on whether the modal locked the time range', async () => {
+    captureWrite();
+
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      'user',
+      true
+    );
+
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      0,
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      true
     );
   });
 
@@ -353,10 +378,13 @@ describe('createNotebookWithContent', () => {
       'plugin'
     );
 
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, {
-      panel: panel('Chart'),
-      isLibraryPanel: true,
-    });
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'plugin',
+      2,
+      { panel: panel('Chart'), isLibraryPanel: true },
+      false
+    );
   });
 
   it('describes no panel when the new notebook holds several', async () => {
@@ -371,7 +399,27 @@ describe('createNotebookWithContent', () => {
       'plugin'
     );
 
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined);
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false);
+  });
+
+  it('passes on whether the modal locked the time range', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'explore',
+      'user',
+      true
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'explore',
+      1,
+      { panel: panel('Chart'), isLibraryPanel: false },
+      true
+    );
   });
 
   it('reports the caller entry point and cell count once the notebook is created', async () => {
@@ -384,10 +432,13 @@ describe('createNotebookWithContent', () => {
     );
 
     expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1, {
-      panel: panel('Chart'),
-      isLibraryPanel: false,
-    });
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'explore',
+      1,
+      { panel: panel('Chart'), isLibraryPanel: false },
+      false
+    );
     // The cell arrived as part of the creation, and `created` already carries the cell count.
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).not.toHaveBeenCalled();
   });

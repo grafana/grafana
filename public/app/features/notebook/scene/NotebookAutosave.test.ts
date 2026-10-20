@@ -57,6 +57,8 @@ jest.mock('../analytics/main', () => ({
     editSessionEnded: jest.fn(),
     autosaveFailed: jest.fn(),
     autosaveConflictResolved: jest.fn(),
+    autosaveRetried: jest.fn(),
+    viewOnlyChangesResolved: jest.fn(),
   },
 }));
 
@@ -379,6 +381,35 @@ describe('NotebookAutosave', () => {
 
     expect(savedTexts()).toEqual(['Hello world', 'Hello world']);
     expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  it('reports the Retry button with how many saves had failed in a row, and sends the save again', async () => {
+    const scene = activateEditing();
+    jest.mocked(NotebookAnalytics.autosaveRetried).mockClear();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    scene.autosave.retryFromButton();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(NotebookAnalytics.autosaveRetried).toHaveBeenCalledTimes(1);
+    expect(NotebookAnalytics.autosaveRetried).toHaveBeenCalledWith(scene.state.uid ?? '', 1);
+    expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  // The overwrite also goes through `retry`, and is already reported as the answer to the conflict prompt.
+  it('does not count a retry that is not the button', async () => {
+    const scene = activateEditing();
+    jest.mocked(NotebookAnalytics.autosaveRetried).mockClear();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    scene.autosave.retry();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(NotebookAnalytics.autosaveRetried).not.toHaveBeenCalled();
   });
 
   it('reports increasing attempts for failures in a row, and starts over after a save lands', async () => {
@@ -1355,6 +1386,7 @@ describe('NotebookAutosave', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(panel.state.fieldConfig.overrides).toHaveLength(1);
         expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenLastCalledWith(scene.state.uid ?? '', 'keep', 1);
 
         stopPanel();
       });
@@ -1387,6 +1419,21 @@ describe('NotebookAutosave', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(panel.state.fieldConfig.overrides).toEqual([]);
         expect(updateNotebook).not.toHaveBeenCalled();
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenLastCalledWith(scene.state.uid ?? '', 'discard', 1);
+
+        stopPanel();
+      });
+
+      // The Cancel button, the close button and Escape all reach the modal's onDismiss.
+      it('reports cancelling, and leaves the notebook as a read', async () => {
+        const { scene, stopPanel, payload } = await readAndRecolour();
+        jest.mocked(NotebookAnalytics.viewOnlyChangesResolved).mockClear();
+
+        payload?.onDismiss?.();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenCalledTimes(1);
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenCalledWith(scene.state.uid ?? '', 'cancel', 1);
 
         stopPanel();
       });
