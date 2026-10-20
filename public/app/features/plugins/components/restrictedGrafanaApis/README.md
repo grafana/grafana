@@ -10,7 +10,7 @@ If you only would like to share functionality with certain plugin IDs.
 **How to add an API to the list?**
 
 1. Add the API to a separate file under `public/app/features/plugins/components/restrictedGrafanaApis/`
-2. Reference the API in the `restrictedGrafanaApis` variable in `public/app/features/plugins/components/restrictedGrafanaApis/RestrictedGrafanaApisProvider.tsx`
+2. Add the API to `sharedApis` in `public/app/features/plugins/components/restrictedGrafanaApis/restrictedGrafanaApis.ts`.
 3. Update the `RestrictedGrafanaApisContextType` type under `packages/grafana-data/src/context/plugins/RestrictedGrafanaApis.tsx`
 
 **How to share an API with plugins?**
@@ -48,46 +48,25 @@ if (addPanel) {
 ```
 
 **How to use restricted APIs outside a component (app plugins only)?**
-An app plugin's module code runs when Grafana loads the plugin, before any of its roots (the app pages, its
-extension components) mounts. `useRestrictedGrafanaApis()` only works inside those roots. Code that has to run
-from the start, such as a listener that should exist on every page, can ask for the APIs while the module loads
-with `AppPlugin.onRestrictedApis`. Use the hook everywhere else.
+`useRestrictedGrafanaApis()` works only inside an app page or an extension component. For code that runs when Grafana loads the plugin, use `AppPlugin.onRestrictedApis()`:
 
 ```ts
 import { AppPlugin } from '@grafana/data';
 
 export const plugin = new AppPlugin();
 
-// Older Grafana versions have no `onRestrictedApis`: check before calling it.
+// Older Grafana versions do not have onRestrictedApis.
 if (typeof plugin.onRestrictedApis === 'function') {
-  plugin.onRestrictedApis(({ addPanel }) => {
-    // Called once, after the module has loaded.
+  plugin.onRestrictedApis(({ extensionSidebar }) => {
+    if (extensionSidebar?.canFloat()) {
+      extensionSidebar.setPresentation('floating');
+    }
   });
 }
 ```
 
-The contract:
-
-- Call `onRestrictedApis` while the module evaluates, as you call `addLink` or `addComponent`. Grafana calls each
-  listener once, after the module has loaded, from the app plugin import (`pluginImporter`). A later call is never
-  answered.
-- Each listener gets the APIs this plugin may have, the same objects the hook returns inside its roots. A listener
-  that throws is logged and does not fail the plugin's load.
-- Feature-detect it: on Grafana versions without it, the method does not exist.
-
-What it does not change: existing plugins and the hook work as before. A plugin that does not call
-`onRestrictedApis` costs nothing at load: the resolver is only loaded for plugins that ask, which pay one small
-lookup.
-
-Differences from the hook:
-
-- An API that exists only behind a feature flag is included if the flag is on when the plugin loads, and the set
-  is not updated afterwards. Such APIs must check their flag on every call, so a stale handle refuses instead of
-  acting.
-- APIs tied to a mounted root are not included. Today that is the Dashboard Mutation API, which acts on what the
-  plugin's roots show.
-
-Why it keeps the security model: the APIs are resolved for the id Grafana loaded the module for, never an id
-the plugin supplies, and through the same allow and block lists as the hook. Both use one filter,
-`getAllowedRestrictedGrafanaApis`. The provider and the load path read one list of APIs,
-`restrictedGrafanaApis.ts`, so an API added there reaches both in the same way.
+- Call `onRestrictedApis()` in the file that creates the `AppPlugin`.
+- To use the APIs in other files, pass them on from the listener, for example to a function that the other file exports. Do not import `plugin` into other files to call `onRestrictedApis()`. If that call runs before `plugin` exists, the plugin fails to load.
+- Grafana calls each listener one time, after the plugin loads. Grafana ignores listeners that you add after the plugin loads.
+- The listener gets the same APIs as the hook, with the same allow list and block list. The Dashboard Mutation API is the exception: it acts on what the plugin's mounted pages show, so only the hook has it.
+- If a listener throws an error, Grafana will log the error and continue to load the plugin.
