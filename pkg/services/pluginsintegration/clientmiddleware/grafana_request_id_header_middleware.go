@@ -7,8 +7,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -83,11 +82,7 @@ func IsRequestURLInAllowList(url *url.URL, cfg *setting.Cfg) bool {
 
 func GetGrafanaRequestIDHeaders(req *http.Request, cfg *setting.Cfg, logger log.Logger) map[string]string {
 	// Generate a new Grafana request ID and sign it with the secret key
-	uid, err := uuid.NewRandom()
-	if err != nil {
-		logger.Debug("Failed to generate Grafana request ID", "error", err)
-		return nil
-	}
+	uid := uuid.NewV4()
 	grafanaRequestID := uid.String()
 
 	hmac := hmac.New(sha256.New, []byte(cfg.IPRangeACSecretKey))
@@ -123,6 +118,16 @@ func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *ba
 	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
 	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *HostedGrafanaACHeaderMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

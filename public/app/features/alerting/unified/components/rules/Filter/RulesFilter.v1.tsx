@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -304,7 +305,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
                 }}
                 {...rest}
                 placeholder={t('alerting.rules-filter.rulesSearchInput-placeholder-search', 'Search')}
-                data-testid="search-query-input"
+                data-testid={selectors.pages.Alerting.searchInput}
               />
             </Field>
             <input type="submit" hidden />

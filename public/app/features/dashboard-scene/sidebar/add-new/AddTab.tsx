@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
@@ -31,10 +32,10 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
   const label = useMemo(() => {
     // With no panels there is nothing to group, so present the action as a plain "add"
     if (layout instanceof TabsLayoutManager || isLayoutEmpty) {
-      return t('dashboard-scene.add-tab.add-label', 'Add tab');
+      return t('dashboard.sidebar.add.tab.add-label', 'Add tab');
     }
 
-    return t('dashboard-scene.add-tab.group-label', 'Group into tabs');
+    return t('dashboard.sidebar.add.tab.group-label', 'Group into tabs');
   }, [layout, isLayoutEmpty]);
 
   const disabledTooltip = useMemo(() => getDisableTabsMessage(disableTabsReason), [disableTabsReason]);
@@ -44,6 +45,13 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
   }, [layout]);
 
   return (
-    <AddButton icon="layers" label={label} onClick={onAddTabClick} disabled={disableTabs} tooltip={disabledTooltip} />
+    <AddButton
+      icon="layers"
+      label={label}
+      testId={selectors.components.Sidebar.addNewTabButton}
+      onClick={onAddTabClick}
+      disabled={disableTabs}
+      tooltip={disabledTooltip}
+    />
   );
 }

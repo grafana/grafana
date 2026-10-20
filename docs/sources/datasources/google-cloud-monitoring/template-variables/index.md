@@ -18,7 +18,8 @@ labels:
     - oss
 menuTitle: Template variables
 title: Google Cloud Monitoring template variables
-weight: 300
+weight: 350
+review_date: 2026-08-11
 ---
 
 # Google Cloud Monitoring template variables

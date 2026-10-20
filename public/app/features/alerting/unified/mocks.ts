@@ -44,6 +44,7 @@ import {
   type GrafanaAlertState,
   GrafanaAlertStateDecision,
   type GrafanaPromAlertingRuleDTO,
+  type GrafanaPromRuleGroupDTO,
   type GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
@@ -237,6 +238,15 @@ export const mockGrafanaPromAlertingRule = (
     ...partial,
   };
 };
+
+export const mockGrafanaPromRuleGroup = (partial: Partial<GrafanaPromRuleGroupDTO> = {}): GrafanaPromRuleGroupDTO => ({
+  name: 'my-group',
+  file: 'my-folder',
+  folderUid: 'NAMESPACE_UID',
+  interval: 60,
+  rules: [mockGrafanaPromAlertingRule()],
+  ...partial,
+});
 
 export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {}): RulerGrafanaRuleDTO => {
   return {
@@ -778,6 +788,20 @@ export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}):
   model: {
     type: ExpressionQueryType.threshold,
     refId: 'C',
+    ...partial,
+  },
+});
+
+export const mockResampleExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+  refId: 'B',
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.resample,
+    refId: 'B',
+    window: '10s',
+    downsampler: 'mean',
+    upsampler: 'fillna',
     ...partial,
   },
 });

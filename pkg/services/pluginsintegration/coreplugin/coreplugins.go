@@ -18,22 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
 )
 
 const (
-	CloudWatch    = "cloudwatch"
 	AzureMonitor  = "grafana-azure-monitor-datasource"
 	Graphite      = "graphite"
-	InfluxDB      = "influxdb"
 	TestData      = "grafana-testdata-datasource"
 	TestDataAlias = "testdata"
-	MySQL         = "mysql"
 	Grafana       = "grafana"
 )
 
@@ -74,19 +68,15 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
 }
 
-func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
-	grap *graphite.Service, idb *influxdb.Service, td *testdatasource.Service, my *mysql.Service,
-	graf *grafanads.Service) *Registry {
+func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service,
+	grap *graphite.Service, td *testdatasource.Service, graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:   asBackendPlugin(cw),
 		AzureMonitor: asBackendPlugin(am),
 		Graphite:     asBackendPlugin(grap),
-		InfluxDB:     asBackendPlugin(idb),
 		TestData:     asBackendPlugin(td),
-		MySQL:        asBackendPlugin(my),
 		Grafana:      asBackendPlugin(graf),
 	})
 }
@@ -187,16 +177,10 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		jsonData.ID = TestData
 		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
 		svc = testdatasource.ProvideService()
-	case CloudWatch:
-		svc = cloudwatch.ProvideService()
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
-	case InfluxDB:
-		svc = influxdb.ProvideService(httpClientProvider)
-	case MySQL:
-		svc = mysql.ProvideService()
 	default:
 		return nil, ErrCorePluginNotFound
 	}

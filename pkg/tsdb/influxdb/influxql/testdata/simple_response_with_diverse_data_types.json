@@ -1,1 +1,0 @@
-{"results":[{"statement_id":0,"series":[{"name":"Annotation","columns":["time","domain","type","ASD","details"],"values":[[1697789142916,"AASD157","fghg",null,"Something happened AtTime=2023-10-20T08:05:42.902036"],[1697789142918,"HUY23","val23",null,"Something else happened AtTime=2023-10-20T08:05:42.902036"]]}]}]}

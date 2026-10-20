@@ -9,8 +9,7 @@ import {
   type PluginMetaInfo,
   PluginType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstanceList } from '@grafana/runtime';
 
 import { ConnectionPicker } from './ConnectionPicker';
 import { INFINITY_DATASOURCE_TYPE } from './utils';
@@ -39,9 +38,7 @@ function createDataSource(name: string, uid: string, dsType: string): DataSource
     name,
     uid,
     meta,
-    isDefault: false,
     type: dsType,
-    readOnly: false,
   };
 }
 
@@ -51,8 +48,8 @@ const otherDS = createDataSource('Other DS', 'other-uid', 'prometheus');
 
 const allDataSources = [infinityDS1, infinityDS2, otherDS];
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: jest.fn(),
 }));
 

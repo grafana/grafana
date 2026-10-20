@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationSigningKeyStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx, store := context.Background(), NewSigningKeyStore(db.InitTestDB(t))
+	ctx, store := context.Background(), NewSigningKeyStore(db.InitTestDB(t)) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	t.Run("Should successfully add new singing key", func(_ *testing.T) {
 		key, err := store.Add(ctx, &signingkeys.SigningKey{KeyID: "1", AddedAt: time.Now().UTC(), PrivateKey: ""}, false)

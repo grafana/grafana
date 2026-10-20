@@ -52,8 +52,8 @@ func TestJobCleanupController_Run_StopsOnContextCancel(t *testing.T) {
 // running, Run waits for it to finish before returning.
 //
 // This mirrors the behavior tested for ConnectionController and RepositoryController
-// in controller/shutdown_test.go: in-progress work completes before the shutdown
-// is acknowledged.
+// in their respective controller test files: in-progress work completes before
+// the shutdown is acknowledged.
 func TestJobCleanupController_Run_CompletesInitialCleanupBeforeExiting(t *testing.T) {
 	cleanupStarted := make(chan struct{})
 	cleanupRelease := make(chan struct{})
@@ -169,8 +169,8 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 	store := &MockStore{}
 	// Claim blocks until ctx is cancelled, simulating drivers that are
 	// mid-claim when the shutdown signal arrives.
-	store.EXPECT().Claim(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(ctx context.Context, _, _ string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, _, _ string, _ string) (*provisioning.Job, func(), error) {
 			claimActive.Add(1)
 			defer claimActive.Add(-1)
 			<-ctx.Done()

@@ -9,6 +9,7 @@ package usagestats
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
@@ -33,12 +34,7 @@ func (d StatsDeclaration) GroupResource() string {
 }
 
 func (d StatsDeclaration) HasMetric(name string) bool {
-	for _, m := range d.Metrics {
-		if m == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Metrics, name)
 }
 
 var dashboardsDeclaration = StatsDeclaration{

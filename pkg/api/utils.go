@@ -49,7 +49,7 @@ func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, e
 		return true, err
 	}
 
-	return hs.isProviderEnabled(hs.Cfg, info.AuthModule), nil
+	return hs.isProviderEnabled(ctx, hs.Cfg, info.AuthModule), nil
 }
 
 func ValidateAndNormalizeEmail(email string) (string, error) {

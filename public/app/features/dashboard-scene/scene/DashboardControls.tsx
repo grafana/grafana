@@ -24,6 +24,7 @@ import {
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
@@ -35,13 +36,16 @@ import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
+import { AddControlsButton } from './ControlsAddButton';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
+import { DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
+import { dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -213,16 +217,18 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const panelEditVariables = getPanelEditVariables(dashboard);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
 
   if (!model.hasControls()) {
     // The controls row hosts the dashboard action buttons (with new layouts) and the panel edit
     // actions, so it must render even when the dashboard itself contributes no other controls.
     // DashboardControlActions handles the per-button visibility, including the sidebar cases.
-    if ((config.featureToggles.dashboardNewLayouts || editPanel) && kioskMode !== KioskMode.Full) {
+    if ((dashboardNewLayoutsEnabled || editPanel) && kioskMode !== KioskMode.Full) {
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
+            {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
@@ -254,12 +260,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {(config.featureToggles.dashboardNewLayouts || editPanel) && (
+        {(dashboardNewLayoutsEnabled || editPanel) && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardUnifiedDrilldownControls && !config.featureToggles.dashboardNewLayouts && (
+        {config.featureToggles.dashboardUnifiedDrilldownControls && !dashboardNewLayoutsEnabled && (
           <div className={styles.fixedControls}>
             <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>
@@ -276,6 +282,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+      {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton
         dashboard={dashboard}
         hideVariableControls={hideVariableControls}
@@ -314,8 +321,14 @@ function DashboardControlActions({
   const isEditingLibraryPanel = Boolean(editPanel && isLibraryPanel(editPanel.state.panelRef.resolve()));
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
-  const showSaveButton = isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel;
-  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable && !editPanel;
+  const modesEnabled = dashboardModesEnabled();
+  const hasChanges = dashboard.state.isDirty;
+  const showSaveButton =
+    isEditing &&
+    (canSave || canSaveAs) &&
+    !isEditingLibraryPanel &&
+    (!modesEnabled || getDashboardMode(dashboard.state) !== 'view' || hasChanges || !hasUid);
+  const showEditButton = (hasUid || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
   const showPanelEditButtons = Boolean(editPanel);
 
@@ -323,7 +336,7 @@ function DashboardControlActions({
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
-      {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
+      {!modesEnabled && showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
       {showPanelEditButtons && <PanelEditButtons dashboard={dashboard} />}
       {isPlaying && (
@@ -355,6 +368,7 @@ function DashboardControlActions({
           )}
         </ButtonGroup>
       )}
+      {modesEnabled && !isPlaying && <DashboardModePicker dashboard={dashboard} />}
     </>
   );
 }

@@ -30,6 +30,7 @@ export const CloudEvaluationBehavior = () => {
       title={t('alerting.cloud-evaluation-behavior.title-set-evaluation-behavior', 'Set evaluation behavior')}
     >
       <Field
+        noMargin
         label={t('alerting.cloud-evaluation-behavior.label-pending-period', 'Pending period')}
         description={t(
           'alerting.cloud-evaluation-behavior.description-pending-period',
@@ -37,7 +38,7 @@ export const CloudEvaluationBehavior = () => {
         )}
       >
         <div className={styles.flexRow}>
-          <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
+          <Field noMargin invalid={!!errors.forTime?.message} error={errors.forTime?.message}>
             <Input
               {...register('forTime', {
                 pattern: {
@@ -76,9 +77,6 @@ export const CloudEvaluationBehavior = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  inlineField: css({
-    marginBottom: 0,
-  }),
   flexRow: css({
     display: 'flex',
     flexDirection: 'row',

@@ -3,9 +3,13 @@ package setting
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"gopkg.in/ini.v1"
 )
 
@@ -14,6 +18,8 @@ const (
 	defaultLoginMaxInactiveLifetime     = "7d"
 	defaultLoginMaxLifetime             = "30d"
 	defaultTokenRotationIntervalMinutes = 10
+	defaultOAuthRefreshLockMinWaitMs    = int64(1000)
+	defaultOAuthRefreshLockWaitBudgetMs = int64(5000)
 	defaultUserLastSeenUpdateInterval   = "15m"
 )
 
@@ -28,14 +34,45 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 
 	cfg.Raw = iniFile
 	readSecretKey(iniFile, cfg)
+	readAdminSettings(iniFile, cfg)
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
+	readOAuthCookieMaxAge(iniFile, cfg)
+	readOAuthRefreshLockSettings(iniFile, cfg)
+	readCookieSecuritySettings(iniFile, cfg)
+	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		return err
+	}
+	readGrafanaComSettings(iniFile, cfg)
 	return readUserLastSeenUpdateInterval(iniFile, cfg)
 }
 
 func readSecretKey(iniFile *ini.File, cfg *Cfg) {
 	cfg.SecretKey = valueAsString(iniFile.Section("security"), "secret_key", "")
+}
+
+func readAdminSettings(iniFile *ini.File, cfg *Cfg) {
+	security := iniFile.Section("security")
+	cfg.AdminUser = valueAsString(security, "admin_user", "")
+	cfg.AdminPassword = valueAsString(security, "admin_password", "")
+	cfg.AdminEmail = valueAsString(security, "admin_email", "")
+	if cfg.AdminEmail == "" && cfg.AdminUser != "" {
+		cfg.AdminEmail = cfg.AdminUser + "@localhost"
+	}
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
+
+	users := iniFile.Section("users")
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
+		string(identity.RoleViewer), []string{
+			string(identity.RoleNone),
+			string(identity.RoleViewer),
+			string(identity.RoleEditor),
+			string(identity.RoleAdmin),
+		})
 }
 
 func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -57,11 +94,69 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 		return fmt.Errorf("auth.login_maximum_lifetime_duration: %w", err)
 	}
 
-	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(defaultTokenRotationIntervalMinutes)
-	if cfg.TokenRotationIntervalMinutes < 2 {
-		cfg.TokenRotationIntervalMinutes = 2
-	}
+	cfg.TokenRotationIntervalMinutes = max(auth.Key("token_rotation_interval_minutes").MustInt(defaultTokenRotationIntervalMinutes), 2)
 	return nil
+}
+
+func readOAuthCookieMaxAge(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthCookieMaxAge = iniFile.Section("auth").Key("oauth_state_cookie_max_age").MustInt(600)
+}
+
+func readOAuthAllowInsecureEmailLookup(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthAllowInsecureEmailLookup = iniFile.Section("auth").Key("oauth_allow_insecure_email_lookup").MustBool(false)
+}
+
+func readOAuthRefreshLockSettings(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(defaultOAuthRefreshLockMinWaitMs)
+	cfg.OAuthRefreshTokenServerLockWaitBudgetMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_wait_budget_ms").MustInt64(defaultOAuthRefreshLockWaitBudgetMs)
+}
+
+func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {
+	security := iniFile.Section("security")
+	cfg.CookieSecure = security.Key("cookie_secure").MustBool(false)
+
+	samesiteString := valueAsString(security, "cookie_samesite", "lax")
+	if samesiteString == "disabled" {
+		cfg.CookieSameSiteDisabled = true
+	} else {
+		validSameSiteValues := map[string]http.SameSite{
+			"lax":    http.SameSiteLaxMode,
+			"strict": http.SameSiteStrictMode,
+			"none":   http.SameSiteNoneMode,
+		}
+		if samesite, ok := validSameSiteValues[samesiteString]; ok {
+			cfg.CookieSameSiteMode = samesite
+		} else {
+			cfg.CookieSameSiteMode = http.SameSiteLaxMode
+		}
+	}
+}
+
+// readServerURLSettings sets AppURL even when the URL fails to parse, so
+// callers can include the offending value in their error reporting.
+func readServerURLSettings(iniFile *ini.File, cfg *Cfg) error {
+	server := iniFile.Section("server")
+	appURL := valueAsString(server, "root_url", "http://localhost:3000/")
+	if appURL[len(appURL)-1] != '/' {
+		appURL += "/"
+	}
+	cfg.AppURL = appURL
+
+	parsed, err := url.Parse(appURL)
+	if err != nil {
+		return fmt.Errorf("server.root_url: %w", err)
+	}
+	cfg.AppSubURL = strings.TrimSuffix(parsed.Path, "/")
+	return nil
+}
+
+func readGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
+	grafanaComURL := valueAsString(iniFile.Section("grafana_net"), "url", "")
+	if grafanaComURL == "" {
+		grafanaComURL = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+	}
+	cfg.GrafanaComURL = grafanaComURL
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComURL+"/api")
 }
 
 func readUserLastSeenUpdateInterval(iniFile *ini.File, cfg *Cfg) error {

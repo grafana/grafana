@@ -142,7 +142,7 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot index format: %w", err)
 	}
 
-	// Read RV/build info from the staged snapshot instead of the live index so
+	// Read metadata from the staged snapshot instead of the live index so
 	// the uploaded metadata matches the copied snapshot contents even if the live
 	// index advanced while CopyTo was running.
 	snapshotIdx, err := bleve.OpenUsing(stagingDir, map[string]interface{}{"bolt_timeout": boltTimeout})
@@ -152,6 +152,11 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 
 	rv, err := getRV(snapshotIdx)
 	bi, biErr := getBuildInfo(snapshotIdx)
+	var reconciledAt time.Time
+	var reconciledErr error
+	if key.IsGlobal() {
+		reconciledAt, reconciledErr = getReconciledAt(snapshotIdx)
+	}
 	// docCount is recorded in the manifest for debugging only; a read failure
 	// shouldn't fail the upload, so we log and fall back to zero ("unknown").
 	docCount, docErr := snapshotIdx.DocCount()
@@ -164,15 +169,25 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 	if biErr != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
+	if reconciledErr != nil {
+		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot reconciliation time: %w", reconciledErr)
+	}
 	if docErr != nil {
 		b.log.Warn("reading snapshot doc count; recording zero", "err", docErr)
 		docCount = 0
 	}
 
 	meta := IndexMeta{
-		BuildVersion:          bi.BuildVersion,
-		IndexFormat:           indexFormat,
+		BuildVersion:       bi.BuildVersion,
+		IndexFormat:        indexFormat,
+		Features:           bi.Features,
+		ReaderRequirements: bi.ReaderRequirements,
+		// Describes the index being uploaded, not this binary: an index built before
+		// index features existed records none, and readers must not read that as
+		// "has no features".
+		FeaturesRecorded:      bi.Features != nil,
 		LatestResourceVersion: rv,
+		ReconciledAt:          reconciledAt,
 		DocCount:              docCount,
 	}
 	// bi.BuildTime is the original index creation time; it survives reopens and

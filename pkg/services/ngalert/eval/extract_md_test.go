@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -52,6 +53,67 @@ func TestExtractEvalString(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			require.Equal(t, tc.outString, extractEvalString(tc.inFrame))
+		})
+	}
+}
+
+// TestExtractEvalStringKeepsOrderWithinVar checks that rendering keeps the order the
+// captures arrived in. attachCaptureValues sorts the captures of one RefID with
+// compareCaptures, and the sort by Var in extractEvalString must not undo that.
+//
+// Every case carries thirteen captures because sort.Slice and sort.SliceStable only
+// differ above twelve elements. Below that both run an insertion sort, which is stable.
+//
+// This is a separate test rather than another case of TestExtractEvalString because the
+// expected value here is an order, and spelling thirteen captures out as one rendered
+// string would hide which one moved.
+func TestExtractEvalStringKeepsOrderWithinVar(t *testing.T) {
+	testCases := []struct {
+		name string
+		// vars gives the Var of each capture. The value of a capture is its position
+		// here, so want can name the captures by the order they went in.
+		vars []string
+		want []float64
+	}{
+		{
+			name: "already grouped by Var",
+			vars: []string{"A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "B"},
+			want: []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+		},
+		{
+			name: "interleaved Vars",
+			vars: []string{"B", "A", "A", "A", "A", "B", "A", "A", "A", "A", "B", "A", "A"},
+			want: []float64{1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 0, 5, 10},
+		},
+		{
+			name: "Vars in reverse order",
+			vars: []string{"B", "B", "B", "B", "B", "B", "A", "A", "A", "A", "A", "A", "A"},
+			want: []float64{6, 7, 8, 9, 10, 11, 12, 0, 1, 2, 3, 4, 5},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			captures := make([]NumberValueCapture, 0, len(tc.vars))
+			for i, v := range tc.vars {
+				captures = append(captures, NumberValueCapture{
+					Var:    v,
+					Labels: data.Labels{"host": strconv.Itoa(i)},
+					Type:   "reduce",
+					Value:  new(float64(i)),
+				})
+			}
+
+			frame := newMetaFrame(captures, new(1.0))
+			extractEvalString(frame)
+
+			// extractEvalString sorts Meta.Custom in place, so the slice now holds the
+			// order the captures were rendered in.
+			var order []float64
+			for _, c := range frame.Meta.Custom.([]NumberValueCapture) {
+				order = append(order, *c.Value)
+			}
+			require.Equal(t, tc.want, order)
 		})
 	}
 }

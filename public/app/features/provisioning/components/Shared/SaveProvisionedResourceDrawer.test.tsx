@@ -337,6 +337,41 @@ describe('SaveProvisionedResourceDrawer', () => {
     });
   });
 
+  describe('enforced branch name template', () => {
+    // A write-first repo (workflows: ['write', 'branch']) that enforces a branch template must still
+    // send the templated branch as `ref`: the drawer switches to the branch workflow and the
+    // read-only branch field must not be dropped from the submitted ref.
+    it('sends the enforced template branch as ref when saving a provisioned resource', async () => {
+      mockRepoView({
+        repository: {
+          ...mockRepository,
+          workflows: ['write', 'branch'],
+          branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/enforced-branch' },
+        },
+      });
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({
+            ref: 'grafana/enforced-branch',
+            path: 'playlists/test-playlist.json',
+            resource: { upsert: {} },
+          });
+        })
+      );
+
+      const { user } = setup();
+
+      const branch = await screen.findByRole('textbox', { name: /branch/i });
+      await waitFor(() => expect(branch).toHaveValue('grafana/enforced-branch'));
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');
+    });
+  });
+
   it('renders nothing and warns in dev when the resource is not a registered provisioning kind', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     // The resource's apiVersion/kind don't resolve to a registry entry, so the resolver bails out.

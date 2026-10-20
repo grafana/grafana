@@ -31,7 +31,8 @@ async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions
   const gazetteer = await getGazetteer(options?.gazetteer ?? GAZETTEER_OPTIONS.countries.path);
 
   if (!gazetteer.frame) {
-    return Promise.reject('missing frame in gazetteer');
+    const reason = gazetteer.error ?? 'it contains no lookup data';
+    return Promise.reject(new Error(`Could not look up fields in "${gazetteer.path}": ${reason}`));
   }
 
   return addFieldsFromGazetteer(frames, gazetteer, fieldMatches);
@@ -61,7 +62,8 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
           fields.push({ ...gazetteerField, values: buffer });
         }
 
-        for (let valueIndex = 0; valueIndex < gazetteer.count!; valueIndex++) {
+        // One lookup per row: the buffers above are sized to the frame, not to the gazetteer
+        for (let valueIndex = 0; valueIndex < frameLength; valueIndex++) {
           const foundValue = gazetteer.find(values[valueIndex]);
 
           if (foundValue?.index != null) {

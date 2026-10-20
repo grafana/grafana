@@ -9,6 +9,7 @@ import {
 import { type SearchState } from 'app/features/search/types';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { getGrafanaSearcher } from '../../search/service/searcher';
 import { initialState, SearchStateManager } from '../../search/state/SearchStateManager';
 
 // Subclass SearchStateManager to customize the setStateAndDoSearch behavior.
@@ -21,6 +22,9 @@ export class TrashStateManager extends SearchStateManager {
   // Clear stale results so the skeleton shows while fresh data loads on navigation
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     this.setState({ result: undefined });
+    // Folder locations may still link to folders deleted since the previous visit.
+    // Reloading here lets the lookup overlap the trash fetch that the search below starts.
+    getGrafanaSearcher().reloadLocationInfo();
     super.initStateFromUrl(folderUid, doInitialSearch);
   }
 
@@ -65,7 +69,9 @@ export class TrashStateManager extends SearchStateManager {
   // Get tags from deleted dashboards cache
   getTagOptions = async (): Promise<TermCount[]> => {
     try {
-      const deletedHits = await deletedDashboardsCache.get();
+      // Unfiltered, so the options cover everything in trash rather than the current results.
+      // Trash rejects facets, so counting the rows is the only way to build this.
+      const deletedHits = await deletedDashboardsCache.searchAllForOptions();
       const tagCounts = new Map<string, number>();
 
       deletedHits.forEach((hit) => {

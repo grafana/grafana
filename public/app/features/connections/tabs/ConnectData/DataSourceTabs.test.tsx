@@ -2,7 +2,7 @@ import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { LayoutModes, PluginType } from '@grafana/data';
+import { type GrafanaConfig, LayoutModes, locationUtil, PluginType } from '@grafana/data';
 import { setPluginLinksHook, setPluginComponentsHook, setPluginFunctionsHook } from '@grafana/runtime';
 import { setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -121,34 +121,29 @@ jest.mock('@grafana/runtime', () => {
         },
       }),
     }),
+    // Resolve instance settings synchronously so the FavoriteButton in
+    // EditDataSourceActions does not update state after the test's render.
+    useDataSourceInstanceSettings: jest.fn((uid: string) => ({
+      isLoading: false,
+      settings: {
+        id: 1,
+        uid: uid,
+        type: PluginType.datasource,
+        name: uid,
+        access: 'proxy',
+        readOnly: false,
+        jsonData: {},
+        meta: {
+          id: uid,
+          name: uid,
+          type: PluginType.datasource,
+          backend: true,
+          isBackend: true,
+        },
+      },
+    })),
   };
 });
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  // Resolve instance settings synchronously so the FavoriteButton in
-  // EditDataSourceActions does not update state after the test's render.
-  useDataSourceInstanceSettings: jest.fn((uid: string) => ({
-    isLoading: false,
-    settings: {
-      id: 1,
-      uid: uid,
-      type: PluginType.datasource,
-      name: uid,
-      access: 'proxy',
-      readOnly: false,
-      jsonData: {},
-      meta: {
-        id: uid,
-        name: uid,
-        type: PluginType.datasource,
-        backend: true,
-        isBackend: true,
-      },
-    },
-  })),
-}));
-
 describe('DataSourceEditTabs', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'test';
@@ -191,5 +186,31 @@ describe('DataSourceEditTabs', () => {
     expect(insightsTab).toBeInTheDocument();
     expect(insightsTab).toHaveTextContent('Insights');
     expect(insightsTab).toHaveAttribute('href', '/connections/datasources/edit/x/insights');
+  });
+
+  describe('with appSubUrl', () => {
+    beforeAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    afterAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    it('prefixes the tab hrefs with the subpath exactly once', async () => {
+      const path = ROUTES.DataSourcesEdit.replace(':uid', mockDatasources[0].uid);
+      renderPage(path);
+
+      const permissionsTab = await screen.findByTestId('data-testid Tab Permissions');
+      expect(permissionsTab).toHaveAttribute('href', '/grafana/connections/datasources/edit/x/permissions');
+    });
   });
 });

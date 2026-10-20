@@ -10,8 +10,8 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { AddButton } from './AddButton';
 
 export const useBuildAddAnnotation = (dataLayers: DashboardDataLayerSet) =>
-  useCallback(() => {
-    const newAnnotation = dataLayers.createDefaultAnnotationLayer();
+  useCallback(async () => {
+    const newAnnotation = await dataLayers.createDefaultAnnotationLayer();
     annotationEditActions.addAnnotation({
       source: dataLayers,
       addedObject: newAnnotation,
@@ -24,8 +24,8 @@ export function AddAnnotationQuery({ dashboardScene }: { dashboardScene: Dashboa
   return (
     <AddButton
       icon="comment-alt"
-      label={t('dashboard-scene.annotation-control.label-annotation-query', 'Annotation query')}
-      tooltip={t('dashboard-scene.annotation-control.description-add-event-data-to-graphs', 'Add event data to graphs')}
+      label={t('dashboard.sidebar.add.annotation-query.label', 'Annotation query')}
+      tooltip={t('dashboard.sidebar.add.annotation-query.description', 'Add event data to graphs')}
       onClick={onAddAnnotationClick}
     />
   );

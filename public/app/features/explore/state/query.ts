@@ -20,8 +20,7 @@ import {
   type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
@@ -36,7 +35,6 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
@@ -50,6 +48,7 @@ import {
 import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
+import { withLokiInfiniteScrollBound, type InfiniteScrollTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { SupportingQueryType } from '../../loki-helpers/types';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -488,7 +487,7 @@ async function handleHistory(
       if (query.datasource?.uid === datasource.uid) {
         return filterQuery(datasource, query);
       } else {
-        const queryDS = await getDatasourceSrv().get(query.datasource);
+        const queryDS = await getDataSourceInstance(query.datasource);
         return filterQuery(queryDS, query);
       }
     })
@@ -719,7 +718,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
 interface RunLoadMoreLogsQueriesOptions {
   exploreId: string;
-  absoluteRange: AbsoluteTimeRange;
+  absoluteRange: InfiniteScrollTimeRange;
 }
 /**
  * Dedicated action to run log queries requesting more results.
@@ -742,12 +741,18 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const logRefIds = queryResponse.logsFrames.map((frame) => frame.refId);
     const logQueries = queries
       .filter((query) => logRefIds.includes(query.refId))
-      .map((query: DataQuery) => ({
-        ...query,
-        datasource: query.datasource || datasourceInstance?.getRef(),
-        refId: query.refId,
-        supportingQueryType: SupportingQueryType.InfiniteScroll,
-      }));
+      .map((query: DataQuery) =>
+        withLokiInfiniteScrollBound(
+          {
+            ...query,
+            datasource: query.datasource || datasourceInstance?.getRef(),
+            refId: query.refId,
+            supportingQueryType: SupportingQueryType.InfiniteScroll,
+          },
+          absoluteRange,
+          datasourceInstance?.type
+        )
+      );
 
     if (!hasNonEmptyQuery(logQueries) || !datasourceInstance) {
       return;

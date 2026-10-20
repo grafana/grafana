@@ -23,10 +23,12 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
 
   // TODO this type check here is hacky and should be replaced with a more generic solid solution
   const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
+  const readOnly = element.isReadOnly === true;
   const onCopy = element.onCopy?.bind(element);
-  const onDuplicate = element.onDuplicate?.bind(element);
-  const onDelete = element.onDelete?.bind(element);
-  const onConfirmDelete = element.onConfirmDelete?.bind(element);
+  const onDuplicate = readOnly ? undefined : element.onDuplicate?.bind(element);
+  const onDelete = readOnly ? undefined : element.onDelete?.bind(element);
+  const onConfirmDelete = readOnly ? undefined : element.onConfirmDelete?.bind(element);
+  const onRemove = readOnly ? element.onRemove?.bind(element) : undefined;
 
   const onDeleteElement = () => {
     if (onConfirmDelete) {
@@ -34,7 +36,12 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
     } else if (onDelete) {
       onDelete();
     }
-    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName, 'edit_pane');
+  };
+
+  const onRemoveElement = () => {
+    onRemove?.();
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName, 'edit_pane');
   };
 
   return (
@@ -42,16 +49,16 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
       {element.renderActions && element.renderActions()}
       {onDuplicate && (
         <Button
-          tooltip={t('dashboard.layout.common.duplicate', 'Duplicate')}
+          tooltip={t('dashboard.sidebar.element-actions.duplicate', 'Duplicate')}
           tooltipPlacement="bottom"
           variant="secondary"
           size="sm"
           icon="copy"
           fill="text"
           data-testid={selectors.components.EditPaneHeader.duplicate}
-          onClick={onDuplicate}
+          onClick={() => onDuplicate()}
         >
-          <Trans i18nKey="dashboard.layout.common.duplicate">Duplicate</Trans>
+          <Trans i18nKey="dashboard.sidebar.element-actions.duplicate">Duplicate</Trans>
         </Button>
       )}
       {onCopy && (
@@ -61,11 +68,11 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           icon="clipboard-alt"
           fill="text"
           data-testid={selectors.components.EditPaneHeader.copy}
-          onClick={onCopy}
-          tooltip={t('dashboard.layout.common.copy-tooltip', 'Copy')}
+          onClick={() => onCopy()}
+          tooltip={t('dashboard.sidebar.element-actions.copy-tooltip', 'Copy')}
           tooltipPlacement="bottom"
         >
-          <Trans i18nKey="dashboard.layout.common.copy">Copy</Trans>
+          <Trans i18nKey="dashboard.sidebar.element-actions.copy">Copy</Trans>
         </Button>
       )}
       {canPaste && hasCopiedPanel && (
@@ -81,22 +88,30 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
             DashboardInteractions.trackPastePanelClick('editPaneHeader', getLayoutType(target), 'click');
           }}
         >
-          <Trans i18nKey="dashboard.layout.common.paste">Paste</Trans>
+          <Trans i18nKey="dashboard.sidebar.element-actions.paste">Paste</Trans>
         </Button>
       )}
-      {(onDelete || onConfirmDelete) && (
+      {(onDelete || onConfirmDelete || onRemove) && (
         <>
           <FlexItem grow={1} />
           <Button
-            onClick={onDeleteElement}
+            onClick={onRemove ? onRemoveElement : onDeleteElement}
             size="sm"
             variant="secondary"
             icon="trash-alt"
             fill="text"
             data-testid={selectors.components.EditPaneHeader.deleteButton}
-            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            tooltip={
+              onRemove
+                ? t('dashboard.sidebar.element-actions.remove', 'Remove')
+                : t('dashboard.sidebar.element-actions.delete', 'Delete')
+            }
           >
-            <Trans i18nKey="dashboard.layout.common.delete">Delete</Trans>
+            {onRemove ? (
+              <Trans i18nKey="dashboard.sidebar.element-actions.remove">Remove</Trans>
+            ) : (
+              <Trans i18nKey="dashboard.sidebar.element-actions.delete">Delete</Trans>
+            )}
           </Button>
         </>
       )}

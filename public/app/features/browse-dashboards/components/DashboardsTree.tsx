@@ -293,8 +293,8 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
     return (
-      <div key={key} {...rowProps}>
-        <hr className={styles.divider} />
+      <div key={key} {...rowProps} role="presentation">
+        <hr className={styles.divider} aria-hidden />
       </div>
     );
   }
@@ -365,10 +365,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     row: css({
       gap: theme.spacing(1),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
 
     divider: css({
-      borderTop: `1px solid ${theme.colors.border.weak}`,
+      borderTop: 'none',
       width: '100%',
       margin: 0,
     }),
@@ -379,8 +380,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     headerRow: css({
-      backgroundColor: theme.colors.background.secondary,
       height: HEADER_HEIGHT,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
 
     bodyRow: css({

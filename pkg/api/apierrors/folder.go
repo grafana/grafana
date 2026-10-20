@@ -36,8 +36,7 @@ func ToFolderErrorResponse(err error) response.Response {
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		msg := err.Error()
-		var grafanaErr errutil.Error
-		if errors.As(err, &grafanaErr) {
+		if _, ok := errors.AsType[errutil.Error](err); ok {
 			for _, s := range stableDashboardErrSentinels {
 				if errors.Is(err, s) {
 					msg = s.Error()
@@ -53,8 +52,7 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
 		errors.Is(err, folder.ErrMaximumDepthReached) ||
 		errors.Is(err, folder.ErrInvalidUID) {
-		var grafanaErr errutil.Error
-		if errors.As(err, &grafanaErr) {
+		if _, ok := errors.AsType[errutil.Error](err); ok {
 			for _, s := range stableFolderErrSentinels {
 				if errors.Is(err, s) {
 					return response.Error(http.StatusBadRequest, s.Error(), nil)
@@ -75,20 +73,25 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
 	}
 
+	statusErr := storageStatusError(err)
+
 	// --- 409 Conflict ---
-	if errors.Is(err, folder.ErrSameUIDExists) {
-		return response.Error(http.StatusConflict, err.Error(), nil)
+	if isFolderAlreadyExists(err, statusErr) {
+		return response.Error(http.StatusConflict, "a folder with the same UID already exists", err)
 	}
 
 	// --- 412 Precondition Failed ---
-	if errors.Is(err, folder.ErrVersionMismatch) ||
-		k8sErrors.IsAlreadyExists(err) {
+	if errors.Is(err, folder.ErrVersionMismatch) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
+	// A storage conflict can be write contention rather than a confirmed duplicate UID.
+	if statusErr != nil && (statusErr.ErrStatus.Code == http.StatusConflict || k8sErrors.IsConflict(statusErr)) {
+		return response.Error(http.StatusConflict, "the folder operation conflicted with another request; please retry", err)
+	}
+
 	// --- Kubernetes status errors ---
-	var statusErr *k8sErrors.StatusError
-	if errors.As(err, &statusErr) {
+	if statusErr != nil {
 		message := statusErr.ErrStatus.Message
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))
@@ -97,6 +100,11 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, fmt.Sprintf("Folder API error: %s", err.Error()), err)
+}
+
+func isFolderAlreadyExists(err error, statusErr *k8sErrors.StatusError) bool {
+	return errors.Is(err, folder.ErrSameUIDExists) ||
+		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr))
 }
 
 func ToFolderStatusError(err error) k8sErrors.StatusError {
@@ -135,13 +143,21 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 		},
 	}
 
+	// folderStorage.Create wraps errors in a StatusError before the legacy API consumes them.
+	// Keep AlreadyExists distinct from other 409s so duplicates do not become retry conflicts.
+	if statusErr.ErrStatus.Code == http.StatusConflict {
+		statusErr.ErrStatus.Reason = metav1.StatusReasonConflict
+		if isFolderAlreadyExists(err, storageStatusError(err)) {
+			statusErr.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
+		}
+	}
+
 	// Preserve the structured errutil message ID in Status.Details.UID so
 	// downstream consumers (e.g. provisioning's IsFolderValidationAPIError)
 	// can match the rejection without relying on the human-readable message.
 	// errutil.Error.Status() is the source of truth for the message ID; if
 	// the underlying error is one, copy its Details across.
-	var grafanaErr errutil.Error
-	if errors.As(err, &grafanaErr) {
+	if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
 		if details := grafanaErr.Status().Details; details != nil {
 			statusErr.ErrStatus.Details = details
 		}

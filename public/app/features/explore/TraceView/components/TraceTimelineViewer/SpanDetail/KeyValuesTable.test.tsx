@@ -15,7 +15,22 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { locationService, reportInteraction } from '@grafana/runtime';
+
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
+
+const mockSetReturnToPrevious = jest.fn();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+  useReturnToPrevious: jest.fn(() => mockSetReturnToPrevious),
+  config: {
+    buildInfo: {
+      version: '11.0.0',
+    },
+  },
+}));
 
 const data = [
   { key: 'span.kind', value: 'client' },
@@ -33,6 +48,11 @@ const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
 };
 
 describe('LinkValue', () => {
+  beforeEach(() => {
+    (reportInteraction as jest.Mock).mockClear();
+    mockSetReturnToPrevious.mockClear();
+  });
+
   it('renders as expected', () => {
     const link = {
       title: 'titleValue',
@@ -57,9 +77,110 @@ describe('LinkValue', () => {
     const linkEl = screen.getByRole('link', { name: 'titleValue' });
     expect(linkEl.firstChild).toBe(linkEl.querySelector('svg'));
   });
+
+  it('reports an interaction when clicked', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    const link = {
+      title: 'View in Asserts',
+      path: 'http://example.com/asserts',
+      pluginId: 'grafana-asserts-app',
+      group: { name: 'service.name' },
+      category: 'service.name',
+      onClick,
+    };
+    render(
+      <LinkValue link={link} datasourceType="tempo">
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'View in Asserts' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
+      grafana_version: '11.0.0',
+      datasourceType: 'tempo',
+      pluginId: 'grafana-asserts-app',
+      group: 'service.name',
+      category: 'service.name',
+      location: 'value',
+    });
+    expect(onClick).toHaveBeenCalled();
+    expect(onClick.mock.calls[0][0].defaultPrevented).toBe(true);
+  });
+
+  it('navigates in the same tab even when the plugin also supplies onClick', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc', onClick }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'Related traces' }));
+
+    expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    expect(mockSetReturnToPrevious).toHaveBeenCalledWith('Trace');
+    expect(onClick).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
+
+  it('keeps a new tab when the plugin sets openInNewTab', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc', openInNewTab: true }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    const linkEl = screen.getByRole('link', { name: 'Related traces' });
+    expect(linkEl).toHaveAttribute('target', '_blank');
+    await user.click(linkEl);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
+
+  it('navigates in the same tab when openLinksInSameTab is set', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc' }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'Related traces' }));
+
+    expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    expect(mockSetReturnToPrevious).toHaveBeenCalledWith('Trace');
+    pushSpy.mockRestore();
+  });
+
+  it('does not push when openLinksInSameTab is unset', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(<LinkValue link={{ title: 'Related traces', path: '/explore?left=abc' }}>value</LinkValue>);
+
+    const linkEl = screen.getByRole('link', { name: 'Related traces' });
+    expect(linkEl).toHaveAttribute('target', '_blank');
+    await user.click(linkEl);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(mockSetReturnToPrevious).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
 });
 
 describe('KeyValuesTable tests', () => {
+  beforeEach(() => {
+    (reportInteraction as jest.Mock).mockClear();
+    mockSetReturnToPrevious.mockClear();
+  });
+
   it('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
   });
@@ -76,7 +197,7 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getAllByRole('cell')).toHaveLength(12);
     expect(screen.getAllByTestId('KeyValueTable--keyColumn')).toHaveLength(4);
-    expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
     expect(screen.getByRole('row', { name: 'jsonkey { "hello": "world" }' })).toBeInTheDocument();
   });
 
@@ -92,12 +213,44 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    } as KeyValuesTableProps);
+    });
 
     const link = screen.getByRole('link', { name: 'More info about client' });
     expect(link).toBeInTheDocument();
     expect(link.firstChild).toBe(link.querySelector('svg'));
     expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
+  });
+
+  it('reports an interaction when a single resource link is clicked', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    setup({
+      datasourceType: 'tempo',
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                path: 'http://example.com/docs',
+                title: 'More info about client',
+                pluginId: 'grafana-asserts-app',
+                group: { name: 'span.kind' },
+                onClick,
+              },
+            ]
+          : [],
+    });
+
+    await user.click(screen.getByRole('link', { name: 'More info about client' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
+      grafana_version: '11.0.0',
+      datasourceType: 'tempo',
+      pluginId: 'grafana-asserts-app',
+      group: 'span.kind',
+      category: undefined,
+      location: 'value',
+    });
+    expect(onClick).toHaveBeenCalled();
   });
 
   it('renders a dropdown menu when multiple links are available', async () => {
@@ -120,19 +273,60 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    } as KeyValuesTableProps);
+    });
 
     expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
 
     // Accessible name comes from the associated value label, not a generic aria-label
-    await user.click(screen.getByRole('button', { name: /"client"/ }));
+    await user.click(screen.getByRole('button', { name: 'client' }));
 
     expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
     expect(screen.getByTitle('Docs')).toBeInTheDocument();
     expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
+  });
+
+  it('reports an interaction when a menu resource link is clicked', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    setup({
+      datasourceType: 'tempo',
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                path: 'http://example.com/docs',
+                title: 'Docs',
+                description: 'Documentation',
+                pluginId: 'grafana-asserts-app',
+                group: { name: 'span.kind' },
+                onClick,
+              },
+              {
+                path: 'http://example.com/dashboard',
+                title: 'Dashboard',
+                description: 'Service dashboard',
+                pluginId: 'grafana-other-app',
+                group: { name: 'span.kind' },
+              },
+            ]
+          : [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'client' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Documentation' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
+      grafana_version: '11.0.0',
+      datasourceType: 'tempo',
+      pluginId: 'grafana-asserts-app',
+      group: 'span.kind',
+      category: undefined,
+      location: 'menu',
+    });
+    expect(onClick).toHaveBeenCalled();
   });
 
   it('opens the dropdown when clicking the attribute value text', async () => {
@@ -153,9 +347,9 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    } as KeyValuesTableProps);
+    });
 
-    await user.click(screen.getByText(/"client"/));
+    await user.click(screen.getByText('client'));
 
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
@@ -210,7 +404,7 @@ describe('KeyValuesTable tests', () => {
           : undefined,
     });
 
-    expect(screen.getByText('"postgresql"')).toBeInTheDocument();
+    expect(screen.getByText('postgresql')).toBeInTheDocument();
     expect(screen.getByTestId('attribute-plugin-promo-trigger')).toBeInTheDocument();
     expect(screen.queryByText('Find slow queries faster')).not.toBeInTheDocument();
 

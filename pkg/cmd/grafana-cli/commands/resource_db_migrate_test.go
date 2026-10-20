@@ -26,6 +26,7 @@ var kvTables = []string{
 	"search_snapshot_data",
 	"resource_stats_daily",
 	"resource_stats_aggregates",
+	"resource_version_policy",
 }
 
 func TestIntegrationResourceDbMigrate(t *testing.T) {

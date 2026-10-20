@@ -1,0 +1,741 @@
+import { clsx } from 'clsx';
+import {
+  type CSSProperties,
+  type Dispatch,
+  type JSX,
+  type Key,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+  useCallback,
+  useMemo,
+} from 'react';
+
+import {
+  DataHoverClearEvent,
+  DataHoverEvent,
+  FALLBACK_COLOR,
+  type DataFrame,
+  type Field,
+  FieldType,
+  type GrafanaTheme2,
+  getDisplayProcessor,
+  formattedValueToString,
+  type TimeRange,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import {
+  Cell,
+  type CellRendererProps,
+  type DataGridHandle,
+  type RenderCellProps,
+  type RenderRowProps,
+  Row,
+} from '@grafana/react-data-grid';
+import {
+  FieldColorModeId,
+  TableCellDisplayMode,
+  TableCellTooltipPlacement,
+  type TableFooterOptions,
+} from '@grafana/schema';
+
+import { type PanelContext } from '../../PanelChrome';
+
+import { AutoCellRenderer, getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { getCellMenuOptions } from './cellMenuOptions';
+import { HeaderCell } from './components/HeaderCell';
+import { SummaryCell } from './components/SummaryCell';
+import { TableCellActions } from './components/TableCellActions';
+import { TableCellTooltip } from './components/TableCellTooltip';
+import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
+import {
+  getCellActionStyles,
+  getDefaultCellStyles,
+  getHeaderCellStyles,
+  getColumnSettleStyles,
+  getLinkStyles,
+  getMaxHeightCellStyles,
+  getTooltipStyles,
+  getJustifyContent,
+  IS_SAFARI_26,
+} from './styles';
+import {
+  type CellRootRenderer,
+  type FilterType,
+  type FromFieldsResult,
+  type GetActionsFunctionLocal,
+  type InspectCellProps,
+  type NestedRowEntry,
+  type TableCellStyleOptions,
+  type TableFilterActionCallback,
+  type TableRow,
+  type TableSummaryRow,
+  type TypographyCtx,
+  type TextWrapFallback,
+  type TableWarning,
+} from './types';
+import {
+  type ApplyFilterResult,
+  canFieldBeColorized,
+  displayJsonValue,
+  getAlignment,
+  getApplyToRowBgFn,
+  type getCellColorInlineStylesFactory,
+  getCellOptions,
+  getDisplayName,
+  getSummaryCellTextAlign,
+  isCellInspectEnabled,
+  isSortableField,
+  parseStyleJson,
+  predicateByName,
+  rendersAsJson,
+  shouldTextOverflow,
+  shouldTextWrap,
+} from './utils';
+
+// -----------------------------------------------------------------------------
+// useDataGridRows
+// -----------------------------------------------------------------------------
+
+/**
+ * @internal
+ * Memoized renderer for the `renderRow` prop on DataGrid. Applies aria attributes and
+ * shared-crosshair event handlers.
+ */
+export function useDataGridRows(
+  fields: Field[],
+  panelContext: PanelContext,
+  expandedRows: Set<string>,
+  enableSharedCrosshair: boolean,
+  getStableKey: (rowIdx: number) => string
+): (key: Key, props: RenderRowProps<TableRow, TableSummaryRow>) => ReactNode {
+  return useMemo(
+    () =>
+      // eslint-disable-next-line react/display-name
+      (key: Key, props: RenderRowProps<TableRow, TableSummaryRow>): ReactNode => {
+        const { row } = props;
+        const rowIdx = row.__index;
+        const isExpanded = expandedRows.has(getStableKey(rowIdx));
+
+        // Don't render non-expanded child rows
+        if (row.__depth === 1) {
+          if (!isExpanded) {
+            return null;
+          }
+          return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
+        }
+
+        const handlers: Partial<typeof props> = {};
+        if (enableSharedCrosshair) {
+          const timeField = fields.find((f) => f.type === FieldType.time);
+          if (timeField) {
+            handlers.onMouseEnter = () => {
+              panelContext.eventBus.publish(
+                new DataHoverEvent({
+                  point: {
+                    time: timeField?.values[rowIdx],
+                  },
+                })
+              );
+            };
+            handlers.onMouseLeave = () => {
+              panelContext.eventBus.publish(new DataHoverClearEvent());
+            };
+          }
+        }
+
+        return <Row key={key} {...props} {...handlers} />;
+      },
+    [fields, panelContext, expandedRows, enableSharedCrosshair, getStableKey]
+  );
+}
+
+// -----------------------------------------------------------------------------
+// useColumnBuilderFromFields
+// -----------------------------------------------------------------------------
+
+export interface ColumnBuildConfig {
+  wrapFallback?: TextWrapFallback;
+  nestedWrapFallback?: TextWrapFallback;
+  disableKeyboardEvents?: boolean;
+  hoverOverflow?: boolean;
+  disableSanitizeHtml?: boolean;
+  hasColumnSidebar?: boolean;
+  reorderable?: boolean;
+  filter: FilterType;
+  /**
+   * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
+   * `firstColumnInset` style, applied under `noPanelPadding`). It comes out of the cell's content
+   * box, so it has to be taken off the width handed to width-driven cells. Only set by callers
+   * whose first column is a field column: a nested table's first column is the expander, which
+   * carries the inset itself.
+   */
+  firstColumnExtraPadding?: number;
+  lastColumnExtraPadding?: number;
+  frozenColumns: number;
+  getCellActions: GetActionsFunctionLocal;
+  getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>;
+  getTextColorForBackground: (color: string) => string;
+  gridRef: RefObject<DataGridHandle | null>;
+  maxRowHeight?: number;
+  numFrozenColsFullyInView: number;
+  onCellFilterAdded?: TableFilterActionCallback;
+  onHideColumn?: (displayName: string) => void;
+  canHideColumn?: boolean;
+  onOpenColumnPanel?: (columnKey: string) => void;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
+  rowHeightFn: (row: TableRow) => number;
+  setFilter: Dispatch<SetStateAction<FilterType>>;
+  setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  settlingColumnKeys?: ReadonlySet<string>;
+  showTypeIcons?: boolean;
+  tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
+  theme: GrafanaTheme2;
+  timeRange?: TimeRange;
+  typographyCtx: TypographyCtx;
+}
+
+export type FromFieldsFn = (
+  fields: Field[],
+  widths: number[],
+  frame: DataFrame,
+  rawRows: TableRow[],
+  visibleRows: TableRow[],
+  lastColumnExtraPadding?: number
+) => FromFieldsResult;
+
+/**
+ * Returns a copy of `fields` with the table's cell-type-specific display processors attached — the
+ * Pill mappings override and the JSON pretty-printer. These are derived on fresh field objects
+ * rather than mutated onto the caller's fields: the column builder used to attach them by mutating
+ * the shared field objects mid-render, which leaked into other consumers of the data frame and made
+ * any display-dependent measurement order-sensitive (widths could shift once the builder had run,
+ * e.g. on sort). Fields that need neither processor are returned by reference, unchanged.
+ */
+export function prepareFieldsForDisplay(fields: Field[], theme: GrafanaTheme2): Field[] {
+  return fields.map((field) => {
+    const cellType = getCellOptions(field).type;
+    let prepared = field;
+
+    // Pill cells with value mappings: use the single fixed-color calculator so mappings win over the
+    // default thresholds mode (a hack), then recompute the display for that adjusted config.
+    if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
+      prepared = {
+        ...field,
+        config: {
+          ...field.config,
+          color: {
+            ...field.config.color,
+            mode: FieldColorModeId.Fixed,
+            fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
+          },
+        },
+      };
+      prepared.display = getDisplayProcessor({ field: prepared, theme });
+    }
+
+    // JSONView cells, and `other` fields left on the default cell type, render their value as
+    // pretty-printed JSON. Copy first (if the Pill branch above didn't already) so the original
+    // field object is never mutated.
+    if (rendersAsJson(field, cellType)) {
+      prepared = prepared === field ? { ...field } : prepared;
+      prepared.display = displayJsonValue(prepared);
+    }
+
+    return prepared;
+  });
+}
+
+/**
+ * Builds column definitions and cell root renderers from a set of fields.
+ * Internal: callers should use `useColumnBuilderFromFields`, which memoizes the
+ * per-call closure and resolves `resolvedFilterResult` (flat → top-level filterResult,
+ * nested → per-parent via `parentIndex`).
+ */
+function buildColumnsFromFields(
+  fields: Field[],
+  widths: number[],
+  frame: DataFrame,
+  rawRows: TableRow[],
+  visibleRows: TableRow[],
+  resolvedFilterResult: ApplyFilterResult,
+  config: ColumnBuildConfig
+): FromFieldsResult {
+  const {
+    wrapFallback,
+    theme,
+    getCellColorInlineStyles,
+    getTextColorForBackground,
+    rowHeight,
+    rowHeightFn,
+    filter,
+    setFilter,
+    setInspectCell,
+    gridRef,
+    getCellActions,
+    onCellFilterAdded,
+    onHideColumn,
+    canHideColumn = false,
+    onOpenColumnPanel,
+    onFieldAddToAssistant,
+    onCellAddToAssistant,
+    frozenColumns,
+    numFrozenColsFullyInView,
+    maxRowHeight,
+    disableKeyboardEvents,
+    hoverOverflow = true,
+    disableSanitizeHtml,
+    hasColumnSidebar,
+    reorderable = false,
+    settlingColumnKeys,
+    showTypeIcons,
+    tableRefreshEnabled,
+    jsonSyntaxHighlightingEnabled,
+    timeRange,
+    firstColumnExtraPadding = 0,
+    lastColumnExtraPadding = 0,
+    typographyCtx,
+  } = config;
+
+  // Resolve the apply-to-row background function against this frame's own fields.
+  // Nested tables are independent frames: their apply-to-row coloring must read from
+  // the nested field's own values at the nested row's local `__index`, not from the
+  // parent frame. Deriving it here (rather than passing a single top-level closure via
+  // config) keeps `applyToRowBgFn(row.__index)` correct for both flat and nested rows.
+  const applyToRowBgFn = getApplyToRowBgFn(frame.fields, getCellColorInlineStyles) ?? undefined;
+
+  // Attach cell-type display processors up front, on copies, instead of mutating fields in the loop.
+  const preparedFields = prepareFieldsForDisplay(fields, theme);
+
+  const result: FromFieldsResult = {
+    columns: [],
+    cellRootRenderers: {},
+  };
+
+  const fieldFooters: Array<TableFooterOptions | undefined> = [];
+  let isFieldUniformFooter = true;
+  let firstFooterReducers: string[] | undefined;
+  for (const field of fields) {
+    const footer = field.config?.custom?.footer;
+    const reducers: string[] | undefined = footer?.reducers;
+
+    fieldFooters.push(footer);
+
+    // if reducers are undefined or empty on the footer, don't retain them for comparison.
+    if (reducers === undefined || reducers.length === 0) {
+      continue;
+    }
+
+    // first time we encounter a viable footer config, store it and move on.
+    if (firstFooterReducers === undefined) {
+      firstFooterReducers = reducers;
+      continue;
+    }
+
+    // for all other viable footer configs, check to see if the reducers match the first one we encountered.
+    if (reducers.length !== firstFooterReducers.length || reducers.some((r, idx) => firstFooterReducers?.[idx] !== r)) {
+      isFieldUniformFooter = false;
+      break;
+    }
+  }
+
+  // Caller resolves whether to use the top-level or per-parent filter result.
+  const parentIndex = visibleRows[0]?.__parentIndex;
+  const { crossFilterRows, crossFilterTailRows } = resolvedFilterResult;
+
+  let lastRowIdx = -1;
+  // shared when whole row will be styled by a single cell's color
+  let rowCellStyle: Partial<CSSProperties> = {
+    color: undefined,
+    background: undefined,
+  };
+
+  for (let i = 0; i < preparedFields.length; i++) {
+    const field = preparedFields[i];
+    const cellOptions = getCellOptions(field);
+    const cellType = cellOptions.type;
+
+    // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
+    // the text-align css property, and for others, we'll use justify-content to align the cell
+    // contents with flexbox. We always just get both and provide both when styling the cell.
+    const textAlign = getAlignment(field);
+    const justifyContent = getJustifyContent(textAlign);
+    const displayName = getDisplayName(field);
+    const headerCellClass = clsx(
+      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
+    );
+    const CellType = getCellRenderer(field, cellOptions);
+
+    const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
+    const fieldWarnings: TableWarning[] = [];
+    if (wrappingDisabled) {
+      fieldWarnings.push({
+        id: 'wrapping-disabled',
+        message: t(
+          'grafana-ui.table.wrapping-disabled-warning',
+          'Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content.'
+        ),
+      });
+    }
+    const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
+    const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
+    const showAssistant = Boolean(tableRefreshEnabled && onCellAddToAssistant != null);
+    const columnCellMenuOptions = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: showAssistant });
+    const isTextCell = CellType === AutoCellRenderer || rendersAsJson(field, cellType);
+    const width = widths[i];
+    const contentWidth =
+      width -
+      CELL_HORIZONTAL_CHROME -
+      (i === 0 ? firstColumnExtraPadding : 0) -
+      (i === fields.length - 1 ? lastColumnExtraPadding : 0);
+
+    // helps us avoid string cx and emotion per-cell
+    const cellActionClassName = clsx('table-cell-actions', getCellActionStyles(theme, textAlign, tableRefreshEnabled));
+
+    const shouldOverflow =
+      !wrappingDisabled &&
+      !IS_SAFARI_26 &&
+      typeof rowHeight !== 'string' &&
+      (shouldTextOverflow(field) || Boolean(maxRowHeight));
+    const textWidthCache = new Map<string, number>();
+    const textWrap = !wrappingDisabled && (typeof rowHeight === 'string' || shouldTextWrap(field));
+    const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
+    const fieldAppliesToRow =
+      cellOptions.type === TableCellDisplayMode.ColorBackground && cellOptions.applyToRow === true;
+    const cellStyleOptions: TableCellStyleOptions = {
+      tableRefreshEnabled,
+      textAlign,
+      textWrap,
+      shouldOverflow,
+      hoverOverflow,
+      maxHeight: maxRowHeight,
+    };
+
+    const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
+    const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
+    const linkStyles = getLinkStyles(theme, canBeColorized);
+    const cellParentStyles = clsx(defaultCellStyles, linkStyles);
+    const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
+    const styleFieldValue = field.config.custom?.styleField;
+    const styleField = styleFieldValue ? frame.fields.find(predicateByName(styleFieldValue)) : undefined;
+    const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
+    const hasValidStyleField = Boolean(styleFieldName);
+
+    // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
+
+    // this fires first
+    const renderCellRoot: CellRootRenderer = (
+      key: Key,
+      props: CellRendererProps<TableRow, TableSummaryRow>
+    ): ReactNode => {
+      const rowIdx = props.row.__index;
+
+      // meh, this should be cached by the renderRow() call?
+      if (rowIdx !== lastRowIdx) {
+        lastRowIdx = rowIdx;
+
+        rowCellStyle.color = undefined;
+        rowCellStyle.background = undefined;
+
+        // generate shared styles for whole row
+        if (applyToRowBgFn != null) {
+          rowCellStyle = { ...rowCellStyle, ...applyToRowBgFn(rowIdx) };
+        }
+      }
+
+      let style: CSSProperties = { ...rowCellStyle };
+      // When this field itself opts into applyToRow, it defers to the shared row color
+      // (chosen from the first such field) rather than painting its own color over it.
+      if (canBeColorized && !fieldAppliesToRow) {
+        const value = props.row[props.column.key];
+        const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
+        const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
+        Object.assign(style, cellColorStyles);
+      }
+      if (hasValidStyleField) {
+        style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
+      }
+      const value = props.row[props.column.key];
+      const formattedValue = shouldOverflow ? formattedValueToString(field.display!(value)) : '';
+      const oversized = isTextCell && formattedValue.length > TABLE.MAX_WRAP_TEXT_LENGTH;
+      let measuredWidth = textWidthCache.get(formattedValue);
+      if (!oversized && measuredWidth == null && formattedValue !== '') {
+        measuredWidth = typographyCtx.measureWidth(formattedValue);
+        textWidthCache.set(formattedValue, measuredWidth);
+      }
+      const hasOverflow =
+        shouldOverflow &&
+        !oversized &&
+        (maxRowHeight != null || rendersAsJson(field, cellType) || (measuredWidth ?? 0) > contentWidth);
+
+      return (
+        <Cell
+          key={key}
+          {...props}
+          className={clsx(
+            props.className,
+            cellParentStyles,
+            hasOverflow && OVERFLOW_CELL_CLASS,
+            cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
+          )}
+          style={style}
+        />
+      );
+    };
+
+    result.cellRootRenderers[displayName] = renderCellRoot;
+
+    let wrapCellContent: (
+      props: RenderCellProps<TableRow, TableSummaryRow>,
+      content: JSX.Element,
+      warnings: TableWarning[]
+    ) => JSX.Element = (_props, content) => content;
+
+    const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+      const rowIdx = props.row.__index;
+      const value = props.row[props.column.key];
+      // Only rendered text cells need this check; fixed-height tables still avoid scanning values.
+      const oversized =
+        isTextCell &&
+        (!cellInspect || (hoverOverflow && shouldOverflow)) &&
+        (field.display ? formattedValueToString(field.display(value)) : String(value ?? '')).length >
+          TABLE.MAX_WRAP_TEXT_LENGTH;
+      const inspect = cellInspect || oversized;
+      const cellMenuOptions =
+        inspect === cellInspect
+          ? columnCellMenuOptions
+          : getCellMenuOptions({ cellInspect: inspect, showFilters, hasAssistantAction: showAssistant });
+      const cellWarnings: TableWarning[] = [];
+      if (hoverOverflow && shouldOverflow && oversized) {
+        cellWarnings.push({
+          id: 'hover-expansion-disabled',
+          message: t(
+            'grafana-ui.table.hover-expansion-disabled-warning',
+            'Content is too long to expand on hover. Use Inspect value to view the full content.'
+          ),
+        });
+      }
+      // TODO: it would be nice to get rid of passing height down as a prop. but this value
+      // is cached so the cost of calling for every cell is low.
+      // NOTE: some cell types still require a height to be passed down, so that's why string-based
+      // cell types are going to just pass down the max cell height as a numeric height for those cells.
+      const height = rowHeightFn(props.row);
+
+      const actionProps = tableRefreshEnabled
+        ? {
+            tableRefreshEnabled: true as const,
+            groups: cellMenuOptions,
+            onAddToAssistant: showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined,
+          }
+        : { tableRefreshEnabled: false as const, cellInspect: inspect, showFilters };
+
+      let cellResult = (
+        <>
+          <CellType
+            cellOptions={cellOptions}
+            frame={frame}
+            field={field}
+            height={height}
+            rowIdx={rowIdx}
+            theme={theme}
+            value={value}
+            width={contentWidth}
+            timeRange={timeRange}
+            cellInspect={inspect}
+            showFilters={showFilters}
+            getActions={getCellActions}
+            disableSanitizeHtml={disableSanitizeHtml}
+            jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
+            tableRefreshEnabled={tableRefreshEnabled}
+            getTextColorForBackground={getTextColorForBackground}
+          />
+          {cellMenuOptions.length > 0 && (
+            <TableCellActions
+              {...actionProps}
+              field={field}
+              value={value}
+              displayName={displayName}
+              className={cellActionClassName}
+              setInspectCell={setInspectCell}
+              onCellFilterAdded={onCellFilterAdded}
+            />
+          )}
+        </>
+      );
+
+      if (maxRowHeight != null) {
+        cellResult = <div className={clsx(maxHeightClassName, cellSpecificStyles)}>{cellResult}</div>;
+      }
+
+      return wrapCellContent(props, cellResult, cellWarnings);
+    };
+
+    const tooltipFieldName = field.config.custom?.tooltip?.field;
+    if (tooltipFieldName || (isTextCell && hoverOverflow && shouldOverflow)) {
+      // The tooltip field is usually hidden, so it's not part of `preparedFields`. Run it through the
+      // same preparation so the tooltip formats its value exactly like a rendered cell would.
+      const rawTooltipField = tooltipFieldName ? frame.fields.find(predicateByName(tooltipFieldName)) : undefined;
+      const tooltipField = rawTooltipField ? prepareFieldsForDisplay([rawTooltipField], theme)[0] : field;
+      const tooltipDisplayName = getDisplayName(tooltipField);
+      const tooltipCellOptions = getCellOptions(tooltipField);
+      const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+
+      const tooltipCellStyleOptions = {
+        tableRefreshEnabled,
+        textAlign: getAlignment(tooltipField),
+        // tooltips are free-floating overlays that should reveal the full value, so we
+        // always wrap their content and never inherit the per-row cell-height clamp
+        // (which would line-clamp/cut off the content).
+        textWrap: true,
+        shouldOverflow: false,
+        hoverOverflow: true,
+      } satisfies TableCellStyleOptions;
+      const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
+      const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
+      const tooltipSpecificStyles = getCellSpecificStyles(
+        tooltipCellOptions.type,
+        tooltipField,
+        theme,
+        tooltipCellStyleOptions
+      );
+      const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
+      const tooltipClasses = getTooltipStyles(theme, textAlign);
+
+      const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
+      const tooltipWidth =
+        placement === TableCellTooltipPlacement.Left || placement === TableCellTooltipPlacement.Right
+          ? tooltipField.config.custom?.width
+          : width;
+
+      const tooltipProps = {
+        showFieldContent: Boolean(rawTooltipField),
+        cellOptions: tooltipCellOptions,
+        classes: tooltipClasses,
+        className: clsx(tooltipClasses.tooltipContent, tooltipDefaultStyles, tooltipSpecificStyles, tooltipLinkStyles),
+        data: frame,
+        disableSanitizeHtml,
+        jsonSyntaxHighlightingEnabled,
+        tableRefreshEnabled,
+        field: tooltipField,
+        getActions: getCellActions,
+        getTextColorForBackground,
+        gridRef,
+        placement,
+        renderer: tooltipFieldRenderer,
+        theme,
+        width: tooltipWidth,
+      } satisfies Partial<React.ComponentProps<typeof TableCellTooltip>>;
+
+      wrapCellContent = (props, content, warnings): JSX.Element => {
+        if (!rawTooltipField && warnings.length === 0) {
+          return content;
+        }
+        // cached so we don't care about multiple calls.
+        const tooltipHeight = rowHeightFn(props.row);
+        let tooltipStyle: CSSProperties = { ...rowCellStyle };
+        if (tooltipCanBeColorized) {
+          const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]);
+          const tooltipCellColorStyles = getCellColorInlineStyles(
+            tooltipCellOptions,
+            tooltipDisplayValue,
+            applyToRowBgFn != null
+          );
+          Object.assign(tooltipStyle, tooltipCellColorStyles);
+        }
+
+        return (
+          <TableCellTooltip
+            {...tooltipProps}
+            warnings={warnings}
+            height={tooltipHeight}
+            rowIdx={props.row.__index}
+            style={tooltipStyle}
+          >
+            {content}
+          </TableCellTooltip>
+        );
+      };
+    }
+
+    result.columns.push({
+      field,
+      key: displayName,
+      name: displayName,
+      width,
+      headerCellClass,
+      frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+      resizable: field.config.custom?.resizable,
+      sortable: isSortableField(field),
+      draggable: reorderable,
+      renderCell: renderCellContent,
+      renderHeaderCell: ({ column, sortDirection }) => (
+        <HeaderCell
+          warnings={fieldWarnings}
+          column={column}
+          rows={rawRows}
+          field={field}
+          filter={filter}
+          setFilter={setFilter}
+          disableKeyboardEvents={disableKeyboardEvents}
+          direction={sortDirection}
+          showTypeIcons={showTypeIcons}
+          parentIndex={parentIndex}
+          crossFilterRows={crossFilterRows}
+          crossFilterTailRows={crossFilterTailRows}
+          tableRefreshEnabled={tableRefreshEnabled}
+          hasColumnSidebar={hasColumnSidebar}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={canHideColumn}
+          onOpenColumnPanel={onOpenColumnPanel}
+          onAddToAssistant={onFieldAddToAssistant ? () => onFieldAddToAssistant(frame, field) : undefined}
+          selectFirstCell={() => {
+            gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });
+          }}
+        />
+      ),
+      renderSummaryCell: () => (
+        <SummaryCell
+          rows={visibleRows}
+          footers={fieldFooters}
+          field={field}
+          colIdx={i}
+          textAlign={getSummaryCellTextAlign(textAlign, cellType)}
+          rowLabel={isFieldUniformFooter && i === 0}
+          hideLabel={isFieldUniformFooter && i !== 0}
+        />
+      ),
+    });
+  }
+
+  return result;
+}
+
+/**
+ * @internal
+ * Memoized factory for the per-call `fromFields` function consumed by TableFlat / TableNested.
+ * When `nestedRows` is provided, the filter result is resolved per-call from the parent index;
+ * otherwise the top-level `filterResult` is used directly.
+ */
+export function useColumnBuilderFromFields(
+  filterResult: ApplyFilterResult,
+  config: ColumnBuildConfig,
+  nestedRows?: NestedRowEntry[]
+): FromFieldsFn {
+  return useCallback(
+    (fields, widths, frame, rawRows, visibleRows, lastColumnExtraPadding = 0) => {
+      const parentIndex = visibleRows[0]?.__parentIndex;
+      const resolvedFilterResult =
+        parentIndex == null || nestedRows == null ? filterResult : nestedRows[parentIndex].filterResult;
+      return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, {
+        ...config,
+        wrapFallback: rawRows[0]?.__parentIndex != null ? config.nestedWrapFallback : config.wrapFallback,
+        lastColumnExtraPadding,
+      });
+    },
+    [filterResult, nestedRows, config]
+  );
+}

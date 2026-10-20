@@ -18,6 +18,19 @@
           }
         ]
       },
+      "_deleted_rv_sort": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "index": true,
+            "docvalues": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
       "_provisioned": {
         "enabled": true,
         "dynamic": true,
@@ -25,6 +38,18 @@
           {
             "type": "boolean",
             "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "_rv": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
             "skip_freq_norm": true
           }
         ]
@@ -49,6 +74,44 @@
             "store": true,
             "index": true,
             "skip_freq_norm": true
+          }
+        ]
+      },
+      "deleted_by": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "docvalues": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "deleted_rv": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "deletion_time": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "number",
+            "store": true,
+            "index": true,
+            "docvalues": true
           }
         ]
       },
@@ -338,7 +401,8 @@
       },
       "labels": {
         "enabled": true,
-        "dynamic": true
+        "dynamic": true,
+        "default_analyzer": "keyword"
       },
       "managedBy": {
         "enabled": true,
@@ -347,6 +411,7 @@
           {
             "type": "text",
             "analyzer": "keyword",
+            "store": true,
             "index": true,
             "skip_freq_norm": true
           }

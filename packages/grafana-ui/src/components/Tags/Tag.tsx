@@ -20,7 +20,8 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
   name: string;
   icon?: IconName;
-  /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling. */
+  /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling.
+   * The index wraps around, so a value beyond the number of colors is fine. */
   colorIndex?: number;
   onClick?: OnTagClick;
 }
@@ -75,20 +76,32 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
   const { background, text } =
     colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
   return {
-    wrapper: css({
-      appearance: 'none',
-      borderStyle: 'none',
-      fontWeight: visualRefreshEnabled ? theme.typography.fontWeightRegular : theme.typography.fontWeightMedium,
-      fontSize: theme.typography.size.sm,
-      lineHeight: theme.typography.bodySmall.lineHeight,
-      verticalAlign: 'baseline',
-      backgroundColor: background,
-      color: text,
-      whiteSpace: 'pre',
-      textShadow: 'none',
-      padding: '3px 6px',
-      borderRadius: theme.shape.radius.sm,
-    }),
+    wrapper: css(
+      {
+        appearance: 'none',
+        borderStyle: 'none',
+        fontWeight: theme.typography.fontWeightMedium,
+        fontSize: theme.typography.size.sm,
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        verticalAlign: 'baseline',
+        backgroundColor: background,
+        color: text,
+        whiteSpace: 'pre',
+        textShadow: 'none',
+        padding: '3px 6px',
+        borderRadius: theme.shape.radius.sm,
+      },
+      visualRefreshEnabled && {
+        gap: '3px',
+        borderRadius: theme.shape.radius.pill,
+        padding: `3px ${theme.spacing.x1}`,
+        // needed for the icon/text gap below to take effect
+        display: 'inline-flex',
+        alignItems: 'center',
+        fontSize: theme.typography.size.xs,
+        fontWeight: theme.typography.fontWeightRegular,
+      }
+    ),
     hover: css({
       '&:hover': {
         opacity: 0.85,

@@ -88,12 +88,12 @@ func TestConcurrentSequenceAccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	for i := 0; i < numRoutines; i++ {
+	for i := range numRoutines {
 		wg.Add(1)
 		go func(routineID int) {
 			defer wg.Done()
 
-			for j := 0; j < valuesPerRoutine; j++ {
+			for j := range valuesPerRoutine {
 				val, err := sg.Next(ctx, "test", "concurrent")
 				require.NoError(t, err)
 

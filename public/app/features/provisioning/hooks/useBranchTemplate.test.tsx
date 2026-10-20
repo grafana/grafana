@@ -1,7 +1,6 @@
 import { useForm } from 'react-hook-form';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type WorkflowOption } from '../types';
@@ -33,11 +32,15 @@ function Host({
   vars,
   workflow = 'branch',
   defaultRef = '',
+  resetTo,
 }: {
   repository?: RepositoryView;
   vars: BranchTemplateVars;
   workflow?: WorkflowOption;
   defaultRef?: string;
+  /** When set, renders a button that reruns reset() with this ref, mirroring the Save drawer's
+   *  reset(defaultValues, { keepDirtyValues }) overwriting the non-dirty ref on a parent re-render. */
+  resetTo?: string;
 }) {
   const methods = useForm<{ ref?: string }>({ defaultValues: { ref: defaultRef } });
   const { locked } = useBranchTemplate({
@@ -58,31 +61,16 @@ function Host({
         onChange={(e) => methods.setValue('ref', e.currentTarget.value, { shouldDirty: true })}
       />
       <output data-testid="locked">{String(locked)}</output>
+      {resetTo !== undefined && (
+        <button type="button" onClick={() => methods.reset({ ref: resetTo }, { keepDirtyValues: true })}>
+          reset
+        </button>
+      )}
     </>
   );
 }
 
 describe('useBranchTemplate', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('leaves the field untouched when the flag is off even with a template configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    expect(input).toHaveValue('');
-    expect(screen.getByTestId('locked')).toHaveTextContent('false');
-  });
-
   it('leaves the field untouched for the write workflow', () => {
     render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} workflow="write" />);
 
@@ -163,6 +151,23 @@ describe('useBranchTemplate', () => {
     expect(input).toHaveValue('grafana/create-testx');
   });
 
+  it('re-applies the enforced template after a form reset overwrites the ref', async () => {
+    // The Save drawer runs reset(defaultValues, { keepDirtyValues }) whenever the parent re-renders
+    // (e.g. selecting a target folder), overwriting the hook's non-dirty ref. Because the enforced
+    // field is read-only, the hook must treat that as a reset (not a user edit) and reassert the
+    // template instead of freezing on the generated branch.
+    const repository = makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true });
+    const { user } = render(<Host repository={repository} vars={dashboardVars} resetTo="dashboard/2023-01-01-xyz" />);
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+
+    await user.click(screen.getByRole('button', { name: /reset/i }));
+
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+    expect(input).toHaveAttribute('readonly');
+  });
+
   it('reports locked and keeps the field read-only when enforcement is on', async () => {
     render(<Host repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true })} vars={dashboardVars} />);
 
@@ -187,14 +192,6 @@ describe('useBranchTemplate', () => {
     expect(screen.getByTestId('locked')).toHaveTextContent('false');
     expect(input).not.toHaveAttribute('readonly');
     await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
-  });
-
-  it('does not lock when the flag is off even with enforcement configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true })} vars={dashboardVars} />);
-
-    expect(screen.getByTestId('locked')).toHaveTextContent('false');
-    expect(screen.getByRole('textbox', { name: /branch/i })).not.toHaveAttribute('readonly');
   });
 
   it('does not lock when enforcement is set but no template is configured', async () => {

@@ -64,13 +64,13 @@ type staticContactPointValidator struct {
 
 func newStaticContactPointValidator(am *v1.AMConfigV1) staticContactPointValidator {
 	availableReceivers := make(map[string]struct{})
-	for _, receiver := range am.AlertmanagerConfig.GetReceivers() {
+	for _, receiver := range am.GetReceivers() {
 		availableReceivers[receiver.GetName()] = struct{}{}
 	}
 
 	availableTimeIntervals := make(map[string]struct{})
-	for _, interval := range am.AlertmanagerConfig.TimeIntervals {
-		availableTimeIntervals[interval.Name] = struct{}{}
+	for _, interval := range am.TimeIntervals {
+		availableTimeIntervals[interval.Title] = struct{}{}
 	}
 
 	return staticContactPointValidator{

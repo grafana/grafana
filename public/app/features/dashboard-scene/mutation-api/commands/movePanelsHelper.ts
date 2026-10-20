@@ -11,7 +11,7 @@
  *
  * Additionally, `RowsLayoutManager.addPanel()` silently drops panels when
  * its rows array is empty, and both container layout managers delegate
- * through `dashboardEditActions` which may not behave correctly outside
+ * through the undo/redo edit actions which may not behave correctly outside
  * the interactive editing flow.
  *
  * This helper resolves the target to a leaf grid layout and directly

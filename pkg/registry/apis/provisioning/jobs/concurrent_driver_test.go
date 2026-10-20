@@ -68,6 +68,47 @@ func TestConcurrentJobDriver_HasCapacity(t *testing.T) {
 	assert.False(t, driver.HasCapacity(0), "once numDrivers keys are queued there is no capacity")
 }
 
+// gaugeValueByName reads the single-sample gauge `name` from the gatherer.
+func gaugeValueByName(t *testing.T, g prometheus.Gatherer, name string) float64 {
+	t.Helper()
+	mfs, err := g.Gather()
+	require.NoError(t, err)
+	for _, mf := range mfs {
+		if mf.GetName() == name {
+			require.Len(t, mf.GetMetric(), 1)
+			return mf.GetMetric()[0].GetGauge().GetValue()
+		}
+	}
+	t.Fatalf("metric %q not found", name)
+	return 0
+}
+
+// TestConcurrentJobDriver_WorkerQueueSizeGauge verifies the worker-queue-size gauge
+// reports the live depth of the replica's local work queue at scrape time.
+func TestConcurrentJobDriver_WorkerQueueSizeGauge(t *testing.T) {
+	const metricName = "grafana_provisioning_jobs_worker_queue_size"
+
+	reg := prometheus.NewRegistry()
+	driver, err := NewConcurrentJobDriver(
+		1,
+		time.Minute, 30*time.Second, 30*time.Second,
+		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
+		reg, nil, false,
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, 0.0, gaugeValueByName(t, reg, metricName))
+
+	driver.queue.Add("ns/job-a")
+	driver.queue.Add("ns/job-b")
+	require.Equal(t, 2.0, gaugeValueByName(t, reg, metricName))
+
+	// Get removes the key from the queue (Len drops); Done clears it from processing.
+	key, _ := driver.queue.Get()
+	driver.queue.Done(key)
+	require.Equal(t, 1.0, gaugeValueByName(t, reg, metricName))
+}
+
 // TestConcurrentJobDriver_EventHandler_Enqueue verifies which informer add
 // events feed the work queue: minimal (NATS-style) objects and unclaimed full
 // objects enqueue, while full objects that already carry a claim are skipped.
@@ -156,8 +197,8 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
@@ -191,8 +232,8 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, errors.New("transient API error")
 		}).Maybe()
@@ -226,8 +267,8 @@ func TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "pending-job").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "pending-job", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
@@ -265,7 +306,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	completed := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
 		Return(claimedJob, func() { rollbackCalled.Store(true) }, nil).Once()
 	store.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
@@ -335,8 +376,8 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	completeCalled := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return claimedJob.DeepCopy(), func() {}, nil
 		}).Maybe()
@@ -415,8 +456,8 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 	releaseComplete := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			if claims.Add(1) > 1 {
 				// Later attempts only need to be counted.
 				return nil, nil, ErrAlreadyClaimed
@@ -498,8 +539,8 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			if claims.Add(1) == 1 {
 				close(firstClaimStarted)
 				<-release

@@ -4,6 +4,7 @@ import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } fro
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
@@ -350,7 +351,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
             {/* actions */}
             <Stack direction="row" alignItems="center">
               <Button
-                data-testid="save-rule"
+                data-testid={selectors.components.AlertRules.saveRuleButton}
                 variant="primary"
                 type="button"
                 onClick={handleSubmit((values) => submit(values), onInvalid)}
@@ -484,7 +485,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   contentOuter: css({
-    background: theme.colors.background.primary,
     overflow: 'hidden',
     maxWidth: theme.breakpoints.values.xl,
     flex: 1,

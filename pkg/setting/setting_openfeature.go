@@ -21,7 +21,6 @@ const (
 )
 
 type OpenFeatureSettings struct {
-	APIEnabled   bool
 	ProviderType features.OpenFeatureProviderType
 	URL          *url.URL
 	TargetingKey string
@@ -33,7 +32,6 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	cfg.OpenFeature = OpenFeatureSettings{}
 
 	config := cfg.Raw.Section("feature_toggles.openfeature")
-	cfg.OpenFeature.APIEnabled = config.Key("enable_api").MustBool(true)
 
 	providerType := config.Key("provider").Validate(func(in string) string {
 		if in == "" {

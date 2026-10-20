@@ -1,18 +1,23 @@
 import { css, cx } from '@emotion/css';
-import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
-import { useLocation } from 'react-router';
+import { type DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
+import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type TabItem } from './TabItem';
@@ -25,7 +30,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
@@ -39,6 +45,24 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
+  const { Draggable } = useDragAndDrop(isDraggable);
+  const showLayoutIndicator = isEditing && isActive;
+  const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
+
+  const tabSuffix = useMemo(() => {
+    if (!showLayoutIndicator && !isConditionallyHidden) {
+      return undefined;
+    }
+
+    return function TabSuffix({ className }: { className?: string }) {
+      return (
+        <span className={cx(className, styles.tabSuffix)}>
+          {showLayoutIndicator && layoutMode && <LayoutModeIndicator layoutType={layoutMode} />}
+          {isConditionallyHidden && <IsHiddenSuffix />}
+        </span>
+      );
+    };
+  }, [showLayoutIndicator, isConditionallyHidden, layoutMode, styles.tabSuffix]);
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
@@ -82,7 +106,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             )}
             active={isActive}
             title={titleInterpolated}
-            suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
+            suffix={tabSuffix}
             href={href}
             aria-selected={isActive}
             onChangeTab={(evt) => {
@@ -120,6 +144,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             }}
             label={titleInterpolated}
             data-tab-activation-key={key}
+            data-dashboard-element-key={key}
+            data-dashboard-element-type="tab"
             {...titleCollisionProps}
           />
         </div>
@@ -130,11 +156,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
 function IsHiddenSuffix() {
   return (
-    <Box paddingLeft={1} display={'inline'}>
-      <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
-        <Icon name="eye-slash" />
-      </Tooltip>
-    </Box>
+    <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
+      <Icon name="eye-slash" />
+    </Tooltip>
   );
 }
 
@@ -164,6 +188,15 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  tabSuffix: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+
+    '&& svg': {
+      margin: 0,
+    },
+  }),
   selectedTab: css({
     '&.dashboard-selected-element': {
       outlineOffset: '-2px',

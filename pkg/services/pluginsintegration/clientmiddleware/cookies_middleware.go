@@ -63,18 +63,36 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string]string{}
+			}
+			t.Headers[cookieHeaderName] = cookieStr
+		}
+	case *backend.QueryChunkedDataRequest:
+		if cookieStr == "" {
+			delete(t.Headers, cookieHeaderName)
+		} else {
+			if t.Headers == nil {
+				t.Headers = map[string]string{}
+			}
 			t.Headers[cookieHeaderName] = cookieStr
 		}
 	case *backend.CheckHealthRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string]string{}
+			}
 			t.Headers[cookieHeaderName] = cookieStr
 		}
 	case *backend.CallResourceRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string][]string{}
+			}
 			t.Headers[cookieHeaderName] = []string{cookieStr}
 		}
 	}
@@ -93,6 +111,19 @@ func (m *CookiesMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	}
 
 	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *CookiesMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	err := m.applyCookies(ctx, req.PluginContext, req)
+	if err != nil {
+		return err
+	}
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
 func (m *CookiesMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

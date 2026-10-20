@@ -48,7 +48,7 @@ func (p *Provisioning) Authenticate(ctx context.Context, r *authn.Request) (*aut
 	}, nil
 }
 
-func (*Provisioning) IsEnabled() bool {
+func (*Provisioning) IsEnabled(context.Context) bool {
 	return true
 }
 

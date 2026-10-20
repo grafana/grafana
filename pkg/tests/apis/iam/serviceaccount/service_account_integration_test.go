@@ -2,7 +2,9 @@ package serviceaccount
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,10 +32,13 @@ var gvrServiceAccounts = schema.GroupVersionResource{
 }
 
 func TestIntegrationServiceAccounts(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationServiceAccounts)
+}
+
+func testIntegrationServiceAccounts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Figure out why rest.Mode5 is failing
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Service Account CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -52,10 +57,15 @@ func TestIntegrationServiceAccounts(t *testing.T) {
 				},
 			})
 			doServiceAccountCRUDTestsUsingTheNewAPIs(t, helper)
-			doServiceAccountListFilteringTest(t, helper)
 
-			if mode < 3 {
+			// TODO: Figure out why doServiceAccountListFilteringTest is failing in rest.Mode4 and rest.Mode5
+			if mode < rest.Mode4 {
+				doServiceAccountListFilteringTest(t, helper)
+			}
+
+			if mode < rest.Mode3 {
 				doServiceAccountCRUDTestsUsingTheLegacyAPIs(t, helper)
+				doServiceAccountScopedPermissionTests(t, helper)
 			}
 		})
 	}
@@ -182,6 +192,125 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "only service identities can create external service accounts")
+	})
+
+	t.Run("should update service account using the new APIs as admin", func(t *testing.T) {
+		ctx := context.Background()
+
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		createdUID := created.GetName()
+		t.Cleanup(func() {
+			_ = saClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		})
+
+		toUpdate := created.DeepCopy()
+		require.NoError(t, unstructured.SetNestedField(toUpdate.Object, "Updated Service Account 1", "spec", "title"))
+		require.NoError(t, unstructured.SetNestedField(toUpdate.Object, "Editor", "spec", "role"))
+		require.NoError(t, unstructured.SetNestedField(toUpdate.Object, true, "spec", "disabled"))
+
+		updated, err := saClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Updated Service Account 1", updatedSpec["title"])
+		require.Equal(t, "Editor", updatedSpec["role"])
+		require.Equal(t, true, updatedSpec["disabled"])
+		require.Equal(t, createdUID, updated.GetName())
+
+		// The update response must carry the original creation timestamp rather than a
+		// zero value, and must not lose the deprecated internal id the legacy APIs rely on.
+		updatedCreationTS := updated.GetCreationTimestamp()
+		require.False(t, updatedCreationTS.IsZero())
+		require.Equal(t, created.GetCreationTimestamp(), updated.GetCreationTimestamp())
+
+		createdMeta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		updatedMeta, err := utils.MetaAccessor(updated)
+		require.NoError(t, err)
+		require.NotZero(t, createdMeta.GetDeprecatedInternalID())                                      // nolint:staticcheck
+		require.Equal(t, createdMeta.GetDeprecatedInternalID(), updatedMeta.GetDeprecatedInternalID()) // nolint:staticcheck
+
+		fetched, err := saClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Updated Service Account 1", fetchedSpec["title"])
+		require.Equal(t, "Editor", fetchedSpec["role"])
+		require.Equal(t, true, fetchedSpec["disabled"])
+	})
+
+	t.Run("should not be able to update service account without a title", func(t *testing.T) {
+		ctx := context.Background()
+
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		createdUID := created.GetName()
+		t.Cleanup(func() {
+			_ = saClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		})
+
+		toUpdate := created.DeepCopy()
+		require.NoError(t, unstructured.SetNestedField(toUpdate.Object, "", "spec", "title"))
+
+		_, err = saClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "service account must have a title")
+	})
+
+	t.Run("should not be able to update service account when using a user with insufficient permissions", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		created, err := adminClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		createdUID := created.GetName()
+		t.Cleanup(func() {
+			_ = adminClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		})
+
+		for _, user := range []apis.User{
+			helper.Org1.Editor,
+			helper.Org1.Viewer,
+		} {
+			t.Run(fmt.Sprintf("with basic role_%s", user.Identity.GetOrgRole()), func(t *testing.T) {
+				saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+					User:      user,
+					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+					GVR:       gvrServiceAccounts,
+				})
+
+				toUpdate := created.DeepCopy()
+				require.NoError(t, unstructured.SetNestedField(toUpdate.Object, "Should Not Be Updated", "spec", "title"))
+
+				_, err := saClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+				require.Error(t, err)
+				var statusErr *errors.StatusError
+				require.ErrorAs(t, err, &statusErr)
+				require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+			})
+		}
 	})
 
 	t.Run("should create service account with generateName and get it using the new APIs as a GrafanaAdmin", func(t *testing.T) {
@@ -324,6 +453,56 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 		require.Equal(t, "default", sa.GetNamespace())
 	})
 
+	t.Run("should create service account using legacy APIs, update it using the new APIs and read it back using the legacy APIs", func(t *testing.T) {
+		ctx := context.Background()
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		legacySAPayload := `{
+			"name": "Test Service Account to update",
+			"role": "Viewer"
+		}`
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "POST",
+			Path:   "/api/serviceaccounts",
+			Body:   []byte(legacySAPayload),
+		}, &serviceaccounts.ServiceAccountDTO{})
+
+		require.NotNil(t, rsp)
+		require.Equal(t, 201, rsp.Response.StatusCode)
+		require.NotEmpty(t, rsp.Result.UID)
+
+		t.Cleanup(func() {
+			_ = saClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
+		})
+
+		sa, err := saClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		toUpdate := sa.DeepCopy()
+		require.NoError(t, unstructured.SetNestedField(toUpdate.Object, "Updated Service Account", "spec", "title"))
+		require.NoError(t, unstructured.SetNestedField(toUpdate.Object, "Editor", "spec", "role"))
+
+		_, err = saClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		legacyRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   fmt.Sprintf("/api/serviceaccounts/%d", rsp.Result.Id),
+		}, &serviceaccounts.ServiceAccountProfileDTO{})
+
+		require.NotNil(t, legacyRsp)
+		require.Equal(t, 200, legacyRsp.Response.StatusCode)
+		require.Equal(t, "Updated Service Account", legacyRsp.Result.Name)
+		require.Equal(t, "Editor", legacyRsp.Result.Role)
+	})
+
 	t.Run("should create service account using legacy APIs and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -360,4 +539,147 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 	})
+}
+
+func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	const updatedName = "Updated scoped resource"
+
+	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
+		cases := serviceaccountPermissionCases()
+
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				targetID, otherID := createScopedServiceAccountTargets(t, helper, i)
+				grantedID := targetID
+				if tc.wrongTarget {
+					grantedID = otherID
+				}
+
+				grants := []resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           tc.actions,
+						Resource:          serviceaccounts.ScopeServiceAccountRoot,
+						ResourceAttribute: "id",
+						ResourceID:        grantedID,
+					},
+				}
+				caller := helper.CreateUser(fmt.Sprintf("serviceaccount-scope-%d", i), apis.Org1, org.RoleNone, grants)
+
+				path := fmt.Sprintf("/api/serviceaccounts/%s", targetID)
+				before := readScopedServiceAccountAsAdmin(t, helper, path)
+
+				get := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: path}, &struct{}{})
+				expected := http.StatusForbidden
+				if tc.read {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, get.Response.StatusCode, string(get.Body))
+
+				body, err := json.Marshal(map[string]interface{}{"name": updatedName})
+				require.NoError(t, err)
+				update := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodPatch,
+					Path:   path,
+					Body:   body,
+				}, &struct{}{})
+				expected = http.StatusForbidden
+				if tc.write {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, update.Response.StatusCode, string(update.Body))
+
+				after := readScopedServiceAccountAsAdmin(t, helper, path)
+				if tc.write {
+					require.Equal(t, updatedName, after["name"])
+				} else {
+					require.Equal(t, before, after)
+				}
+
+				deleted := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodDelete,
+					Path:   path,
+				}, &struct{}{})
+				require.Equal(t, http.StatusForbidden, deleted.Response.StatusCode, string(deleted.Body))
+
+				stillExists := readScopedServiceAccountAsAdmin(t, helper, path)
+				require.Equal(t, after, stillExists)
+			})
+		}
+	})
+}
+
+type serviceaccountPermissionCase struct {
+	name        string
+	actions     []string
+	read        bool
+	write       bool
+	wrongTarget bool
+}
+
+func serviceaccountPermissionCases() []serviceaccountPermissionCase {
+	return []serviceaccountPermissionCase{
+		{name: "no permissions"},
+		{
+			name:    "read only",
+			actions: []string{serviceaccounts.ActionRead},
+			read:    true,
+		},
+		{
+			name:    "write only",
+			actions: []string{serviceaccounts.ActionWrite},
+			write:   true,
+		},
+		{
+			name:    "read and write",
+			actions: []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
+			read:    true,
+			write:   true,
+		},
+		{name: "permission management only", actions: []string{serviceaccounts.ActionPermissionsWrite}},
+		{
+			name:        "different target",
+			actions:     []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionPermissionsWrite},
+			wrongTarget: true,
+		},
+	}
+}
+
+func readScopedServiceAccountAsAdmin(t *testing.T, helper *apis.K8sTestHelper, path string) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.Admin,
+		Path: path,
+	}, &map[string]interface{}{})
+	require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
+
+	return *response.Result
+}
+
+func createScopedServiceAccountTargets(t *testing.T, helper *apis.K8sTestHelper, index int) (string, string) {
+	t.Helper()
+
+	ctx := context.Background()
+	admin := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvrServiceAccounts,
+	})
+	suffixes := []string{"target", "other"}
+	ids := make([]string, 0, len(suffixes))
+	for _, suffix := range suffixes {
+		name := fmt.Sprintf("scope-%d-%s", index, suffix)
+		title := fmt.Sprintf("Scope %d %s", index, suffix)
+		created := createNamedServiceAccount(t, ctx, helper, admin, name, title)
+		t.Cleanup(func() {
+			require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+		})
+
+		id := created.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, id)
+		ids = append(ids, id)
+	}
+
+	return ids[0], ids[1]
 }

@@ -1,0 +1,25 @@
+name: Setup Playwright
+description: Install Playwright browsers, restored from a cache keyed on the Playwright version.
+
+runs:
+  using: composite
+  steps:
+    - name: Get Playwright version
+      id: version
+      shell: bash
+      run: |
+        set -euo pipefail
+        version="$(jq -er '.devDependencies["@playwright/test"]' package.json)"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.version.outputs.version }}-chromium
+
+    # Runs on a cache hit too: --with-deps installs system packages that live
+    # outside the cached browser directory.
+    - name: Install Playwright browsers
+      shell: bash
+      run: yarn playwright install chromium --with-deps

@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -32,8 +33,8 @@ type ProvisioningStore interface {
 	// deriving ManagerProperties from the provenance column.
 	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
 
-	// GetManagerPropertiesByUIDs returns ManagerProperties for specific UIDs of a resource type.
-	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	// GetAllManagerProperties returns all ManagerProperties for a given org and resource type.
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 
 	// SetManagerProperties stores ManagerProperties for an object, also deriving and
 	// storing the legacy provenance column for backwards compatibility.
@@ -48,16 +49,10 @@ type TransactionManager interface {
 
 // RuleStore represents the ability to persist and query alert rules.
 type RuleStore interface {
-	GetAlertRuleByUID(ctx context.Context, query *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error)
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
-	ListAlertRulesPaginated(ctx context.Context, query *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error)
-	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.InsertRule) ([]models.AlertRuleKeyWithId, error)
-	UpdateAlertRules(ctx context.Context, user *models.UserUID, rule []models.UpdateRule) error
-	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, ruleUID ...string) error
-	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
-	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*models.AlertRuleVersion, error)
-	ListDeletedRules(ctx context.Context, orgID int64) ([]*models.AlertRule, error)
+	rulestore.RuleReader
+	rulestore.RulePageReader
+	rulestore.RuleWriter
+	rulestore.RuleVersionReader
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.

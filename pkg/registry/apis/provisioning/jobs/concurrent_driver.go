@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -116,7 +117,7 @@ func NewConcurrentJobDriver(
 
 	recordConcurrentDriverMetric(registry, numDrivers)
 
-	return &ConcurrentJobDriver{
+	driver := &ConcurrentJobDriver{
 		numDrivers:           numDrivers,
 		jobTimeout:           jobTimeout,
 		leaseRenewalInterval: leaseRenewalInterval,
@@ -136,7 +137,21 @@ func NewConcurrentJobDriver(
 		cooldowns: make(map[string]time.Time),
 		triggers:  make(map[string]queuedEvent),
 		logger:    logging.DefaultLogger.With("logger", "concurrent-job-driver"),
-	}, nil
+	}
+
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_jobs_worker_queue_size",
+			Help: "Number of job keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(driver.queue.Len()) },
+	))
+
+	return driver, nil
 }
 
 // HasCapacity reports whether the jobs re-list should fetch another page, given
@@ -379,6 +394,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.store,
 				c.repoGetter,
 				c.historicJobs,
+				strconv.Itoa(driverID),
 				c.metrics,
 				c.processed,
 				c.workers...,

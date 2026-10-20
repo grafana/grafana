@@ -7,9 +7,10 @@ import { type AnnotationPanelFilter } from '@grafana/schema';
 import { Checkbox, Combobox, type ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 
-import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';
@@ -17,7 +18,7 @@ import { annotationEditActions } from './actions';
 export function AnnotationNameInput({ layer, autoFocus }: { layer: AnnotationLayer; autoFocus: boolean }) {
   const { name } = layer.useState();
   const oldName = useRef(name);
-  const inputRef = useEditPaneInputAutoFocus({ autoFocus });
+  const inputRef = useSidebarInputAutoFocus({ autoFocus });
 
   return (
     <Field label={t('dashboard.sidebar.annotation.name', 'Name')} noMargin>

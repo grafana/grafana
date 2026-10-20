@@ -41,7 +41,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Run Playwright tests (fsperf)
         id: pw-fsperf
@@ -53,6 +53,15 @@ jobs:
           GRAFANA_ADMIN_USER: ${{ env.FSPERF_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
         run: yarn e2e:playwright --grep @performance --reporter json
+
+      - name: Run Playwright tests (login page)
+        id: pw-login
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ./login-pw-results.json
+          METRICS_OUTPUT_PATH: ./login-metrics.txt
+          GRAFANA_URL: https://fsperf.grafana-dev.net
+        run: yarn e2e:playwright --project unauthenticated --grep @login-page-performance --reporter json
 
       - name: Bench report (fsperf)
         id: bench-fsperf
@@ -79,16 +88,45 @@ jobs:
               --log-level DEBUG \
               /pw-results.json
 
+      - name: Bench report (login page)
+        id: bench-login
+        if: always()
+        continue-on-error: true
+        run: |
+          docker run \
+            --rm \
+            --volume="./login-pw-results.json:/pw-results.json" \
+            --volume="./login-metrics.txt:/metrics.txt" \
+            -e PROMETHEUS_URL="$PROMETHEUS_URL" \
+            -e PROMETHEUS_USER="$PROMETHEUS_USER" \
+            -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.2 report \
+              --service grafana \
+              --service-url "https://fsperf.grafana-dev.net" \
+              --service-version "rrc-instant" \
+              --suite-name "FrontendLoginPerfTests" \
+              --report-input playwright \
+              --report-output log \
+              --prometheus-metrics \
+              --run-metrics-file "/metrics.txt" \
+              --run-stage rrc \
+              --log-level DEBUG \
+              /pw-results.json
+
       - name: Check status
         env:
           FSPERF_PW_OUTCOME: ${{ steps.pw-fsperf.outcome }}
           FSPERF_BENCH_OUTCOME: ${{ steps.bench-fsperf.outcome }}
+          LOGIN_PW_OUTCOME: ${{ steps.pw-login.outcome }}
+          LOGIN_BENCH_OUTCOME: ${{ steps.bench-login.outcome }}
 
         run: |
           echo "FSPERF_PW_OUTCOME: $FSPERF_PW_OUTCOME"
           echo "FSPERF_BENCH_OUTCOME: $FSPERF_BENCH_OUTCOME"
+          echo "LOGIN_PW_OUTCOME: $LOGIN_PW_OUTCOME"
+          echo "LOGIN_BENCH_OUTCOME: $LOGIN_BENCH_OUTCOME"
 
-          if [[ "$FSPERF_PW_OUTCOME" != "success" || "$FSPERF_BENCH_OUTCOME" != "success" ]]; then
+          if [[ "$FSPERF_PW_OUTCOME" != "success" || "$FSPERF_BENCH_OUTCOME" != "success" || "$LOGIN_PW_OUTCOME" != "success" || "$LOGIN_BENCH_OUTCOME" != "success" ]]; then
             echo "One or more test steps failed."
             exit 1
           fi

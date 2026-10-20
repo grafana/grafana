@@ -3,8 +3,8 @@
  */
 
 // Contact Points
-export * from './grafana/api/notifications/v0alpha1/types';
-export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/useContactPoints';
+export { type ContactPoint, type Integration } from './grafana/api/notifications/v1beta1/types';
+export { useListContactPoints } from './grafana/contactPoints/hooks/v1beta1/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export {
   getContactPointDescription,
@@ -14,22 +14,32 @@ export {
 } from './grafana/contactPoints/utils';
 
 // Notification Policies / Routing Trees
-export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
-export { isDefaultRoutingTreeName, isDefaultRoutingTree } from './grafana/notificationPolicies/routingTrees';
+export {
+  buildRoutingTreeOptions,
+  findRoutingTreeByName,
+  getRoutingTreeDisplayName,
+  isDefaultRoutingTreeName,
+  isDefaultRoutingTree,
+} from './grafana/notificationPolicies/routingTree.utils';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
-export { AlertLabel, type AlertLabelProps } from './grafana/rules/components/labels/AlertLabel';
-export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/labels/AlertLabels';
+export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
+export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
 
 // Matchers
-export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
+// Data sources
+// These bundle the discovery code, which imports @grafana/runtime/unstable (>=13.2, a declared peer).
+export { getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
+export { useDataSourcesWithValidRecordingTarget } from './grafana/dataSources/hooks';
+
 // API endpoints
-export { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';

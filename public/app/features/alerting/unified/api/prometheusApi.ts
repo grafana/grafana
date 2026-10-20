@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types/store';
@@ -50,7 +51,28 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   type?: 'alerting' | 'recording';
   ruleMatchers?: string[];
   plugins?: 'hide' | 'only';
+  metadataOnly?: boolean;
 };
+
+/** A label set on an alert rule. */
+export interface RuleLabel {
+  key: string;
+  value: string;
+}
+
+/**
+ * Distinct labels set on the rules in a response. Internal `__` keys and blank values are left out, and so are
+ * templates like `{{ $labels.team }}`, which only resolve per alert instance.
+ * Exported for unit tests; consumers go through the `getGrafanaRuleLabels` query.
+ */
+export function toRuleLabels(response: PromRulesResponse<GrafanaPromRuleGroupDTO>): RuleLabel[] {
+  const labels = response.data.groups
+    .flatMap((group) => group.rules)
+    .flatMap((rule) => Object.entries(rule.labels ?? {}))
+    .filter(([key, value]) => !key.startsWith('__') && value.trim() !== '' && !value.includes('{{'))
+    .map(([key, value]) => ({ key, value }));
+  return uniqBy(labels, ({ key, value }) => JSON.stringify([key, value]));
+}
 
 export const prometheusApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -108,6 +130,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         dashboardUid,
         ruleMatchers,
         plugins,
+        metadataOnly,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -129,6 +152,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           dashboard_uid: dashboardUid,
           rule_matcher: ruleMatchers,
           plugins: plugins,
+          metadata_only: metadataOnly,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
@@ -137,6 +161,19 @@ export const prometheusApi = alertingApi.injectEndpoints({
         const ruleKey = ruleName ?? '__any__';
         return [{ type: 'GrafanaPrometheusGroups', id: `grafana/${folderKey}/${groupKey}/${ruleKey}` }];
       },
+    }),
+    // Labels on every Grafana alert rule in the org; empty when there are none.
+    getGrafanaRuleLabels: build.query<RuleLabel[], void>({
+      query: () => ({
+        url: `api/prometheus/grafana/api/v1/rules`,
+        // Recording rules never fire, so they're left out. So are alert instances and queries, which labels don't need.
+        params: { rule_type: 'alerting', limit_alerts: 0, compact: true },
+        notificationOptions: { showErrorAlert: false },
+      }),
+      transformResponse: toRuleLabels,
+      // Rule labels rarely change, so they're kept for 10 minutes. Saving a rule clears them sooner.
+      providesTags: ['CombinedAlertRule'],
+      keepUnusedDataFor: 600,
     }),
   }),
 });

@@ -43,6 +43,12 @@ type Reconciler struct {
 	metrics       *reconcilerMetrics
 	leaderElector leaderelection.Elector
 
+	// stateStore persists which namespaces have been reconciled. It is nil when
+	// the deployment has no Grafana database to keep the records in, in which
+	// case EnsureNamespace falls back to treating an existing store as
+	// reconciled.
+	stateStore StateStore
+
 	workQueue chan string
 
 	// queuedNamespaces tracks namespaces that are currently either sitting in
@@ -53,7 +59,8 @@ type Reconciler struct {
 
 	// ensuredNamespaces caches namespaces that have been fully reconciled - the store for this namespace exists with up to date permissions - in this
 	// process lifetime so EnsureNamespace can short-circuit on subsequent calls
-	// without taking any lock or making any RPC.
+	// without taking any lock or making any RPC. stateStore carries the same
+	// knowledge across process restarts.
 	ensuredNamespaces sync.Map
 	ensureSF          singleflight.Group
 
@@ -112,6 +119,7 @@ func NewReconciler(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	leaderElector leaderelection.Elector,
+	stateStore StateStore,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -121,6 +129,7 @@ func NewReconciler(
 		tracer:        tracer,
 		metrics:       newReconcilerMetrics(reg),
 		leaderElector: leaderElector,
+		stateStore:    stateStore,
 		workQueue:     make(chan string, cfg.queueSize()),
 	}
 }
@@ -298,7 +307,10 @@ func (r *Reconciler) runNamespaceReconciliation(ctx context.Context, namespace s
 			"workerID", workerID,
 			"duration", elapsed,
 		}
+		// A nil result means the namespace was deleted, in which case
+		// reconcileNamespace has already dropped its store and its record.
 		if result != nil {
+			r.markReconciled(ctx, namespace)
 			logFields = append(logFields,
 				"expectedTuples", result.ExpectedTuples,
 				"tuplesToAdd", result.TuplesToAdd,
@@ -328,6 +340,7 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) (
 		if apierrors.IsNotFound(err) {
 			r.logger.Warn("Namespace deleted or archived, removing store from Zanzana", "namespace", namespace)
 			r.ensuredNamespaces.Delete(namespace)
+			r.clearReconciled(ctx, namespace)
 			if delErr := r.server.DeleteStore(ctx, namespace); delErr != nil {
 				r.logger.Error("Failed to delete orphaned store", "namespace", namespace, "error", delErr)
 			}
@@ -375,9 +388,10 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) (
 
 // EnsureNamespace is not gated by leader election: it is called inline from
 // the authorization request path and must complete before the caller can
-// proceed. It only creates stores for new namespaces. Any overlap with the
-// leader's background reconciliation loop is safe because reconcileNamespace
-// is idempotent.
+// proceed. It reconciles namespaces that have no record of a completed
+// reconciliation against their current store. Any overlap with the leader's
+// background reconciliation loop is safe because reconcileNamespace is
+// idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
 	if _, ok := r.ensuredNamespaces.Load(namespace); ok {
 		return nil
@@ -401,25 +415,32 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 			return false, fmt.Errorf("failed to get store: %w", err)
 		}
 
+		if r.isReconciled(ctx, namespace, store) {
+			r.ensuredNamespaces.Store(namespace, struct{}{})
+			return false, nil
+		}
+
 		if store == nil {
 			storeCreated = true
 			if _, err = r.server.GetOrCreateStore(ctx, namespace); err != nil {
 				return false, fmt.Errorf("failed to create store: %w", err)
 			}
+		}
 
-			if _, err = r.reconcileNamespace(ctx, namespace); err != nil {
-				return false, fmt.Errorf("failed to reconcile namespace: %w", err)
-			}
+		if _, err = r.reconcileNamespace(ctx, namespace); err != nil {
+			return false, fmt.Errorf("failed to reconcile namespace: %w", err)
+		}
 
-			// Verify the store still exists — reconcileNamespace may have
-			// deleted it if the namespace was removed while we were working.
-			store, err = r.server.GetStore(ctx, namespace)
-			if err != nil || store == nil {
-				return false, fmt.Errorf("store disappeared during reconciliation for namespace %s", namespace)
-			}
+		// Verify the store still exists — reconcileNamespace may have
+		// deleted it if the namespace was removed while we were working.
+		store, err = r.server.GetStore(ctx, namespace)
+		if err != nil || store == nil {
+			return false, fmt.Errorf("store disappeared during reconciliation for namespace %s", namespace)
 		}
 
 		span.SetAttributes(attribute.Bool("ensure.store_created", storeCreated))
+
+		r.markReconciled(ctx, namespace)
 
 		r.logger.Info("EnsureNamespace reconciled namespace",
 			"namespace", namespace,

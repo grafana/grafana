@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
@@ -15,15 +15,19 @@ import { createDataSourceVariableAdapter } from './adapter';
 import { createDataSourceOptions } from './reducer';
 
 interface Args {
-  sources?: DataSourceInstanceSettings[];
+  sources?: DataSourceInstanceListItem[];
+  defaultSource?: DataSourceInstanceListItem;
   query?: string;
   regex?: string;
 }
 
-function getTestContext({ sources = [], query, regex }: Args = {}) {
-  const getListMock = jest.fn().mockReturnValue(sources);
-  const getDatasourceSrvMock = jest.fn().mockReturnValue({ getList: getListMock });
-  const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
+function getTestContext({ sources = [], defaultSource, query, regex }: Args = {}) {
+  const getDataSourceInstanceListMock = jest.fn().mockResolvedValue(sources);
+  const getDefaultDataSourceInstanceListItemMock = jest.fn().mockResolvedValue(defaultSource);
+  const dependencies: DataSourceVariableActionDependencies = {
+    getDataSourceInstanceList: getDataSourceInstanceListMock,
+    getDefaultDataSourceInstanceListItem: getDefaultDataSourceInstanceListItemMock,
+  };
   const datasource = datasourceBuilder()
     .withId('0')
     .withRootStateKey('key')
@@ -31,7 +35,17 @@ function getTestContext({ sources = [], query, regex }: Args = {}) {
     .withRegEx(regex!)
     .build();
 
-  return { getListMock, getDatasourceSrvMock, dependencies, datasource };
+  return { getDataSourceInstanceListMock, getDefaultDataSourceInstanceListItemMock, dependencies, datasource };
+}
+
+function toListItem(name: string, meta: ReturnType<typeof getMockPlugin>): DataSourceInstanceListItem {
+  const settings = getDataSourceInstanceSetting(name, meta);
+  return {
+    uid: settings.uid,
+    type: settings.type,
+    name: settings.name,
+    meta: settings.meta,
+  };
 }
 
 describe('data source actions', () => {
@@ -41,11 +55,8 @@ describe('data source actions', () => {
     describe('and there is no regex', () => {
       it('then the correct actions are dispatched', async () => {
         const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-        const sources: DataSourceInstanceSettings[] = [
-          getDataSourceInstanceSetting('first-name', meta),
-          getDataSourceInstanceSetting('second-name', meta),
-        ];
-        const { datasource, dependencies, getListMock, getDatasourceSrvMock } = getTestContext({
+        const sources: DataSourceInstanceListItem[] = [toListItem('first-name', meta), toListItem('second-name', meta)];
+        const { datasource, dependencies, getDataSourceInstanceListMock } = getTestContext({
           sources,
           query: 'mock-data-id',
         });
@@ -72,6 +83,7 @@ describe('data source actions', () => {
                 {
                   sources,
                   regex: undefined as unknown as RegExp,
+                  defaultDataSourceUid: undefined,
                 }
               )
             )
@@ -87,21 +99,17 @@ describe('data source actions', () => {
           )
         );
 
-        expect(getListMock).toHaveBeenCalledTimes(1);
-        expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
-        expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
       });
     });
 
     describe('and there is a regex', () => {
       it('then the correct actions are dispatched', async () => {
         const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-        const sources: DataSourceInstanceSettings[] = [
-          getDataSourceInstanceSetting('first-name', meta),
-          getDataSourceInstanceSetting('second-name', meta),
-        ];
+        const sources: DataSourceInstanceListItem[] = [toListItem('first-name', meta), toListItem('second-name', meta)];
 
-        const { datasource, dependencies, getListMock, getDatasourceSrvMock } = getTestContext({
+        const { datasource, dependencies, getDataSourceInstanceListMock } = getTestContext({
           sources,
           query: 'mock-data-id',
           regex: '/.*(second-name).*/',
@@ -129,6 +137,7 @@ describe('data source actions', () => {
                 {
                   sources,
                   regex: /.*(second-name).*/,
+                  defaultDataSourceUid: undefined,
                 }
               )
             )
@@ -144,9 +153,65 @@ describe('data source actions', () => {
           )
         );
 
-        expect(getListMock).toHaveBeenCalledTimes(1);
-        expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
-        expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
+      });
+    });
+
+    describe('and one of the sources is the default data source', () => {
+      it('then the dispatched action includes the default data source uid', async () => {
+        const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
+        const sources: DataSourceInstanceListItem[] = [toListItem('first-name', meta), toListItem('second-name', meta)];
+
+        const { datasource, dependencies, getDataSourceInstanceListMock, getDefaultDataSourceInstanceListItemMock } =
+          getTestContext({
+            sources,
+            defaultSource: sources[1],
+            query: 'mock-data-id',
+          });
+
+        const tester = await reduxTester<RootReducerType>()
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            toKeyedAction(
+              'key',
+              addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+            )
+          )
+          .whenAsyncActionIsDispatched(
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
+            true
+          );
+
+        tester.thenDispatchedActionsShouldEqual(
+          toKeyedAction(
+            'key',
+            createDataSourceOptions(
+              toVariablePayload(
+                { type: 'datasource', id: '0' },
+                {
+                  sources,
+                  regex: undefined as unknown as RegExp,
+                  defaultDataSourceUid: sources[1].uid,
+                }
+              )
+            )
+          ),
+          toKeyedAction(
+            'key',
+            setCurrentVariableValue(
+              toVariablePayload(
+                { type: 'datasource', id: '0' },
+                { option: { text: 'first-name', value: 'first-name', selected: false } }
+              )
+            )
+          )
+        );
+
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
+        expect(getDefaultDataSourceInstanceListItemMock).toHaveBeenCalledTimes(1);
+        expect(getDefaultDataSourceInstanceListItemMock).toHaveBeenCalledWith(sources);
       });
     });
   });

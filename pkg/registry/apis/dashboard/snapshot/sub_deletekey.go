@@ -10,6 +10,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // deleteKeyREST exposes the plaintext deleteKey via a dedicated subresource
@@ -17,12 +19,14 @@ import (
 // It reads from the unwrapped inner storage which retains the deleteKey in the spec,
 // unlike the public-facing storage wrapper which strips it on GET/LIST.
 type deleteKeyREST struct {
-	getter rest.Getter
+	getter        rest.Getter
+	accessControl ac.AccessControl
+	blobs         resourcepb.BlobStoreClient
 }
 
 // NewDeleteKeyREST creates a new subresource handler for the deleteKey endpoint.
-func NewDeleteKeyREST(getter rest.Getter) (rest.Storage, error) {
-	return &deleteKeyREST{getter: getter}, nil
+func NewDeleteKeyREST(getter rest.Getter, accessControl ac.AccessControl, blobs resourcepb.BlobStoreClient) (rest.Storage, error) {
+	return &deleteKeyREST{getter: getter, accessControl: accessControl, blobs: blobs}, nil
 }
 
 var (
@@ -53,8 +57,11 @@ func (r *deleteKeyREST) ProducesObject(verb string) interface{} {
 }
 
 func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// Read from the inner (unwrapped) storage which retains deleteKey in the spec.
-	obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
+	lookupCtx, err := snapshotLookupContext(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := r.getter.Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +69,11 @@ func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.O
 	snap, ok := obj.(*dashv0.Snapshot)
 	if !ok {
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
+	}
+
+	// Disclosure of the capability requires the same policy as administrative deletion.
+	if err := authorizeSnapshotDelete(ctx, snap, r.accessControl, r.blobs); err != nil {
+		return nil, err
 	}
 
 	deleteKey := ""

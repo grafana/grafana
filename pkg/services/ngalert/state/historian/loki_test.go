@@ -9,20 +9,23 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
+	"text/scanner"
 	"time"
-
-	"github.com/grafana/alerting/notify/historian/lokiclient"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	"github.com/grafana/alerting/http/instrument/instrumenttest"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/prometheus/prometheus/util/strutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,6 +42,53 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 )
+
+// test that whatever buildQueryTail creates actually can be parsed by Loki correctly.
+func TestQueryUIDEscapingMatchesWriter(t *testing.T) {
+	for _, uid := range []string{
+		"plain-uid",
+		"quote\"and\\backslash",
+		"\n\r\t\b\f\x00\x01\x1f\x7f",
+		"<html>&",
+		"日本語😀",
+		"line\u2028paragraph\u2029",
+		`literal\n\u003c\"`,
+		"`backticks`",
+		`\" | json | ruleUID="other`,
+	} {
+		t.Run(fmt.Sprintf("%q", uid), func(t *testing.T) {
+			rule := createTestRule()
+			rule.UID = uid
+			rule.DashboardUID = uid
+			stream := StatesToStream(rule, singleFromNormal(&state.State{State: eval.Alerting}), nil, log.NewNopLogger())
+			require.Len(t, stream.Values, 1)
+			entry := requireSingleEntry(t, stream)
+
+			tail, err := buildQueryTail(models.HistoryQuery{RuleUID: uid, DashboardUID: uid})
+			require.NoError(t, err)
+
+			// Use the same string scanner and decoder as Loki's LogQL lexer.
+			var lexer scanner.Scanner
+			lexer.Init(strings.NewReader(tail))
+			lexer.Error = func(_ *scanner.Scanner, msg string) { t.Error(msg) }
+			var literals []string
+			for token := lexer.Scan(); token != scanner.EOF; token = lexer.Scan() {
+				if token == scanner.String || token == scanner.RawString {
+					value, err := strutil.Unquote(lexer.TokenText())
+					require.NoError(t, err)
+					literals = append(literals, value)
+				}
+			}
+			require.Len(t, literals, 4)
+			assert.Contains(t, stream.Values[0].V, literals[0])
+			assert.Contains(t, stream.Values[0].V, literals[1])
+			assert.Equal(t, uid, literals[2])
+			assert.Equal(t, entry.RuleUID, literals[2])
+			assert.Equal(t, uid, literals[3])
+			assert.Equal(t, entry.DashboardUID, literals[3])
+		})
+	}
+}
 
 func TestRemoteLokiBackend(t *testing.T) {
 	t.Run("statesToStream", func(t *testing.T) {
@@ -246,7 +296,7 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:   123,
 				RuleUID: "rule-uid",
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`},
+			exp: []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid"`},
 		},
 		{
 			name: "filters dashboardUID in log line",
@@ -254,7 +304,16 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:        123,
 				DashboardUID: "dash-uid",
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`},
+			exp: []string{`{orgID="123",from="state-history"} |= "dash-uid" | json | dashboardUID="dash-uid"`},
+		},
+		{
+			name: "escapes UIDs for JSON line filters and LogQL field filters",
+			query: models.HistoryQuery{
+				RuleUID:      "rule\"\\\n",
+				DashboardUID: "<dash>&\t",
+			},
+			maxQuerySize: 300,
+			exp:          []string{`{orgID="0",from="state-history"} |= "rule\\\"\\\\\\n" |= "\\u003cdash\\u003e\\u0026\\t" | json | ruleUID="rule\"\\\n" | dashboardUID="<dash>&\t"`},
 		},
 		{
 			name: "filters panelID in log line",
@@ -284,7 +343,8 @@ func TestBuildLogQuery(t *testing.T) {
 					mustNewMatcher(t, labels.MatchEqual, "customlabel", "customvalue"),
 				},
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
+			maxQuerySize: 200,
+			exp:          []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
 		},
 		{
 			name: "should return if query does not exceed max limit",
@@ -295,7 +355,8 @@ func TestBuildLogQuery(t *testing.T) {
 					mustNewMatcher(t, labels.MatchEqual, "customlabel", strings.Repeat("!", 24)),
 				},
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`},
+			maxQuerySize: 124,
+			exp:          []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`},
 		},
 		{
 			name: "should return error if query is too long",
@@ -306,7 +367,8 @@ func TestBuildLogQuery(t *testing.T) {
 					mustNewMatcher(t, labels.MatchEqual, "customlabel", strings.Repeat("!", 25)),
 				},
 			},
-			expErr: ErrLokiQueryTooLong,
+			maxQuerySize: 124,
+			expErr:       ErrLokiQueryTooLong,
 		},
 		{
 			name: "filters instance labels with not-equal operator",
@@ -409,7 +471,7 @@ func TestBuildLogQuery(t *testing.T) {
 				},
 			},
 			maxQuerySize: 200,
-			exp:          []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | previous=~"^Pending.*" | current=~"^Alerting.*" | labels_instance="localhost:9090"`},
+			exp:          []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid" | previous=~"^Pending.*" | current=~"^Alerting.*" | labels_instance="localhost:9090"`},
 		},
 	}
 
@@ -1058,10 +1120,8 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	// Helper to create simple folder access override functions.
 	canReadRulesInFolders := func(folderUids ...string) func(folderUID string) (bool, error) {
 		return func(folderUID string) (bool, error) {
-			for _, f := range folderUids {
-				if folderUID == f {
-					return true, nil
-				}
+			if slices.Contains(folderUids, folderUID) {
+				return true, nil
 			}
 			return false, nil
 		}

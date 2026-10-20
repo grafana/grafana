@@ -1,10 +1,12 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
-import { isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/expressionRef';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
+import { isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
@@ -37,6 +39,8 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
+  ref = normalizeEmptyRef(ref);
+
   if (isExpressionReference(ref)) {
     const expressionDs = getExpressionDataSourceInstance();
     if (!expressionDs) {
@@ -89,8 +93,28 @@ export async function getDataSourceInstance(
       inflightLoads.delete(cacheUid);
     }
   } catch (err) {
+    // The list or the settings failed to load. Boot data would hide that failure, so do not fall back.
+    if (isDataSourceLoadError(err)) {
+      throw err;
+    }
     return getDataSourceInstanceFallback(ref, scopedVars, err);
   }
+}
+
+// Legacy DataSourceSrv.get() treats an empty ref ('' or { uid: '' }) as "default datasource"
+// (or a type-only lookup when ref.type is set). getDataSourceInstanceSettings only does this
+// for null/undefined, so normalize here to keep getDataSourceInstance in parity with get().
+function normalizeEmptyRef(ref: DataSourceRef | string | null | undefined): DataSourceRef | string | null | undefined {
+  if (ref === '') {
+    return undefined;
+  }
+  if (typeof ref === 'object' && ref !== null && ref.uid === '') {
+    // Keep the object only when a type-only lookup is possible; otherwise this is a plain
+    // "default datasource" request (same as an empty string), and normalizing to undefined
+    // lets describeRef report 'default' instead of 'unknown' if resolution fails.
+    return ref.type ? { ...ref, uid: undefined } : undefined;
+  }
+  return ref;
 }
 
 async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInstanceSettings): Promise<DataSourceApi> {
@@ -155,6 +179,7 @@ export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegist
 
   upsertRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
   setRuntimePlugin(dataSource.uid, dataSource);
+  notifyDataSourceCacheChanged();
 }
 
 /**

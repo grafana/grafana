@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // ExportFolders will load the full folder tree into memory and update the repositoryResources tree
@@ -67,8 +69,8 @@ func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions,
 		Ref:                  options.Branch,
 		Path:                 options.Path,
 		GenerateNewFolderIDs: options.GenerateNewFolderIDs,
-		OnFolder: func(folder resources.Folder, created bool, err error) error {
-			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
+		OnFolder: func(folder resources.Folder, created bool, startedAt time.Time, err error) error {
+			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated).WithStartTime(startedAt)
 
 			// A folder that failed to write must keep a non-ignored action: the
 			// recorder discards errors on FileActionIgnored results, so labelling
@@ -147,7 +149,10 @@ func exportFolderAncestry(ctx context.Context, options provisioning.ExportJobOpt
 // roots at the highest unmanaged folder, exactly as the full export resolves it.
 func collectFolderAncestry(ctx context.Context, folderUID string, folderClient dynamic.ResourceInterface, tree resources.FolderTree, seen map[string]struct{}) error {
 	current := folderUID
-	for current != "" {
+	// Unified storage now stamps the root parent as "general" instead of "";
+	// stop the walk at either sentinel so we don't try to fetch a non-existent
+	// "general" folder object.
+	for !folder.IsRootFolderUID(current) {
 		if _, ok := seen[current]; ok {
 			return nil
 		}

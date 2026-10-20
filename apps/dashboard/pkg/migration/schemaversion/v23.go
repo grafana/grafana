@@ -124,8 +124,14 @@ func convertToArrays(result map[string]interface{}) {
 	}
 }
 
-// convertToSingleValues converts arrays to single values (both value and text must be single values)
+// convertToSingleValues converts arrays to single values. Matches the frontend's
+// alignCurrentWithMulti, which only collapses when current.value is an array and
+// then converts BOTH value and text. If value is not an array the option is left
+// untouched (text must not be collapsed on its own).
 func convertToSingleValues(result map[string]interface{}) {
+	if !IsArray(result["value"]) {
+		return
+	}
 	convertArrayToSingle(result, "value")
 	convertArrayToSingle(result, "text")
 }

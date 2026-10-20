@@ -7,10 +7,8 @@ import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import {
-  getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
-} from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
@@ -56,13 +54,14 @@ export function AssistantToolbarButtons() {
   const { chrome } = useGrafana();
   const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
 
   const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
   const assistantComponentId = assistantComponentTitle
     ? getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, assistantComponentTitle)
     : undefined;
-  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId;
+  // Held hidden, the sidebar reads as closed, so the button shows it instead of closing it unseen.
+  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId && !floatingHidden;
 
   const shouldRender = fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined;
 
@@ -102,7 +101,7 @@ export function AssistantToolbarButtons() {
               <Icon name="message-sparkles" size="lg" />
             </span>
           }
-          onClick={() => chrome.setFullscreenWorkspace(true)}
+          onClick={() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true })}
           aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
           tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
         >

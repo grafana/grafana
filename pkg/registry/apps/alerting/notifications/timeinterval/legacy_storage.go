@@ -13,8 +13,8 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 var (
@@ -22,10 +22,10 @@ var (
 )
 
 type TimeIntervalService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance definitions.Provenance, version string) error
+	GetMuteTimings(ctx context.Context, orgID int64) ([]v1.TimeInterval, error)
+	CreateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error)
+	UpdateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error)
+	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -82,7 +82,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	for _, mt := range timings {
-		if mt.UID == uid {
+		if mt.UID == v1.ResourceUID(uid) {
 			return ConvertToK8sResource(info.OrgID, mt, s.namespacer)
 		}
 	}
@@ -156,10 +156,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	if p.Name != interval.UID {
-		return nil, false, errors.NewBadRequest("title of cannot be changed. Consider creating a new resource.")
-	}
-
 	updated, err := s.service.UpdateMuteTiming(ctx, interval, info.OrgID)
 	if err != nil {
 		return nil, false, err
@@ -197,8 +193,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(prov), version) // TODO add support for dry-run option
-	return old, false, err                                                                           // false - will be deleted async
+	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, prov, version) // TODO add support for dry-run option
+	return old, false, err                                                   // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {

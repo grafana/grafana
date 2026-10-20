@@ -10,7 +10,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	commonapi "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -22,9 +21,6 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -89,9 +85,6 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -109,8 +102,8 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitLab Connection",
-			Type:  provisioning.GitlabConnectionType,
-			Gitlab: &provisioning.GitlabConnectionConfig{
+			Type:  provisioning.GitlabOAuthConnectionType,
+			OAuth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "gitlab-client-123",
 			},
 		},
@@ -130,8 +123,8 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
-	require.Equal(t, provisioning.GitlabConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "gitlab-client-123", createdConn.Spec.Gitlab.ClientID)
+	require.Equal(t, provisioning.GitlabOAuthConnectionType, createdConn.Spec.Type)
+	require.Equal(t, "gitlab-client-123", createdConn.Spec.OAuth.ClientID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -147,9 +140,6 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -167,8 +157,8 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Bitbucket Connection",
-			Type:  provisioning.BitbucketConnectionType,
-			Bitbucket: &provisioning.BitbucketConnectionConfig{
+			Type:  provisioning.BitbucketOAuthConnectionType,
+			OAuth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "bitbucket-client-456",
 			},
 		},
@@ -188,8 +178,8 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
-	require.Equal(t, provisioning.BitbucketConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "bitbucket-client-456", createdConn.Spec.Bitbucket.ClientID)
+	require.Equal(t, provisioning.BitbucketOAuthConnectionType, createdConn.Spec.Type)
+	require.Equal(t, "bitbucket-client-456", createdConn.Spec.OAuth.ClientID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -204,9 +194,6 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -268,9 +255,6 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -337,9 +321,6 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -377,26 +358,39 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 	_, err = client.Resource.Create(t.Context(), unstructuredObj, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// Get the current object
-	current, err := client.Resource.Get(t.Context(), "test-update-connection", metav1.GetOptions{})
-	require.NoError(t, err)
+	// Read-modify-write with retry on 409 conflicts: the ConnectionController's async /status
+	// patches bump the object's RV, so an Update guarded by a stale RV can lose the race. Re-fetch
+	// the latest RV inside the loop so each attempt applies against current state.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		current, err := client.Resource.Get(t.Context(), "test-update-connection", metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	currentConn, err := common.FromUnstructured[provisioning.Connection](current)
-	require.NoError(t, err)
+		currentConn, err := common.FromUnstructured[provisioning.Connection](current)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	// Update the AppID
-	currentConn.Spec.GitHub.AppID = "999999"
+		// Update the AppID
+		currentConn.Spec.GitHub.AppID = "999999"
 
-	unstructuredObj, err = common.ToUnstructured(currentConn)
-	require.NoError(t, err)
+		unstructuredObj, err := common.ToUnstructured(currentConn)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	updated, err := client.Resource.Update(t.Context(), unstructuredObj, metav1.UpdateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, updated)
+		updated, err := client.Resource.Update(t.Context(), unstructuredObj, metav1.UpdateOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	updatedConn, err := common.FromUnstructured[provisioning.Connection](updated)
-	require.NoError(t, err)
-	require.Equal(t, "999999", updatedConn.Spec.GitHub.AppID)
+		updatedConn, err := common.FromUnstructured[provisioning.Connection](updated)
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, "999999", updatedConn.Spec.GitHub.AppID)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	// Verify the update persisted
 	retrieved, err := client.Resource.Get(t.Context(), "test-update-connection", metav1.GetOptions{})
@@ -418,9 +412,6 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)

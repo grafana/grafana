@@ -536,7 +536,8 @@ func (f *FakePluginFileStore) File(ctx context.Context, pluginID, pluginVersion,
 }
 
 type FakeAuthService struct {
-	Result *auth.ExternalService
+	Result  *auth.ExternalService
+	Removed []string
 }
 
 func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID string) (bool, error) {
@@ -548,6 +549,7 @@ func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID 
 }
 
 func (f *FakeAuthService) RemoveExternalService(ctx context.Context, pluginID string) error {
+	f.Removed = append(f.Removed, pluginID)
 	return nil
 }
 

@@ -20,6 +20,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Google Cloud Monitoring data source issues
 weight: 500
+review_date: 2026-08-11
 ---
 
 # Troubleshoot Google Cloud Monitoring data source issues
@@ -278,9 +279,9 @@ These errors occur when using template variables with the Google Cloud Monitorin
 
 For more information on template variables, refer to the [template variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/).
 
-## Pre-configured dashboard issues
+## Dashboard issues
 
-These issues occur with the bundled pre-configured dashboards.
+These issues occur with dashboards that use the Google Cloud Monitoring data source. As of plugin version 12.6.1, the plugin no longer bundles curated dashboards, so the data source **Dashboards** tab doesn't list them. To build dashboards, use community and Grafana-authored dashboards from the [Grafana dashboards catalog](https://grafana.com/grafana/dashboards/?dataSource=stackdriver) or recreate panels with the [query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/).
 
 ### Imported dashboards show no data
 
@@ -293,7 +294,7 @@ These issues occur with the bundled pre-configured dashboards.
 
 1. Verify the data source name in the dashboard matches your Google Cloud Monitoring data source.
 1. Check that the service account has access to the projects shown in the project variable.
-1. Ensure the resources (Compute Engine instances, Cloud SQL, etc.) exist and are emitting metrics.
+1. Ensure the resources (Compute Engine instances, Cloud SQL, and similar) exist and are emitting metrics.
 1. Verify the required GCP services are enabled in your project.
 
 ## Enable debug logging

@@ -126,4 +126,4 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 	}, nil
 }
 
-var _ plugindashboards.Service = &Service{}
+var _ plugindashboards.Service = (*Service)(nil)

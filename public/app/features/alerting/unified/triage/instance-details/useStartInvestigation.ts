@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Labels } from '@grafana/data';
 import { useDispatch } from 'app/types/store';
@@ -11,6 +11,15 @@ import { SupportedPlugin } from '../../types/pluginBridges';
 import { createAbsoluteUrl } from '../../utils/url';
 
 import {
+  trackAssistantInvestigationImpression,
+  trackAssistantInvestigationOpenReport,
+  trackAssistantInvestigationRetry,
+  trackAssistantInvestigationStartClicked,
+  trackAssistantInvestigationStartFailed,
+  trackAssistantInvestigationStartSucceeded,
+  trackAssistantInvestigationWatchLive,
+} from './assistantInvestigationTracking';
+import {
   ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS,
   buildFromAlertRequest,
   getAssistantInvestigationUrl,
@@ -20,6 +29,7 @@ import {
   selectAssistantInvestigation,
   useManualAssistantInvestigationEnabled,
 } from './startInvestigationFromAlert';
+import type { StartInvestigationViewModel } from './startInvestigationViewModel';
 
 export interface UseStartInvestigationArgs {
   instanceLabels: Labels;
@@ -31,23 +41,6 @@ export interface UseStartInvestigationArgs {
   /** ISO timestamp when this firing episode ended; used when the alert is resolved. */
   alertEndsAt?: string;
 }
-
-/**
- * View model for {@link StartInvestigationButton}.
- * The hook owns plugin/feature gating, request identity, RTK Query calls, and polling.
- */
-export type StartInvestigationViewModel =
-  | { status: 'hidden' }
-  | { status: 'waitingIdentity' }
-  | { status: 'lookingUp' }
-  | { status: 'lookupError'; onRetry: () => void }
-  | { status: 'completed'; href: string }
-  | { status: 'starting' }
-  | { status: 'startError'; onStart: () => void }
-  | { status: 'reportFailed'; href: string; onStart: () => void }
-  | { status: 'pollError'; href: string; onRetry: () => void }
-  | { status: 'running'; href: string }
-  | { status: 'idle'; onStart: () => void };
 
 /**
  * Owns Assistant investigation state for a firing alert instance: lookup, start,
@@ -64,6 +57,7 @@ export function useStartInvestigation({
   const dispatch = useDispatch();
   const featureEnabled = useManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
+  const impressionTracked = useRef(false);
 
   // Wait for rule identity when the instance has no labels, otherwise early
   // Start/lookup can hash a different group key once the rule arrives.
@@ -189,10 +183,21 @@ export function useStartInvestigation({
     setShouldPoll(!isAssistantInvestigationTerminal(investigation?.state ?? 'pending'));
   }, [knownId, investigation?.state, isPollError]);
 
-  const onStart = () => {
+  useEffect(() => {
+    if (!featureEnabled || !installed || impressionTracked.current) {
+      return;
+    }
+    trackAssistantInvestigationImpression();
+    impressionTracked.current = true;
+  }, [featureEnabled, installed]);
+
+  const createOnStart = (fromStatus: 'idle' | 'startError' | 'reportFailed') => async () => {
     if (!requestBody) {
       return;
     }
+    // Retries from startError/reportFailed are still starts (from_status), not retry events.
+    trackAssistantInvestigationStartClicked({ from_status: fromStatus });
+
     // Prefer live state when known. When useInstanceAlertState returns null (loading /
     // missing datasource), fall back to history: a closed episode (endsAt, no open
     // startsAt) means resolved — otherwise we would omit endsAt for a resolved alert.
@@ -203,17 +208,26 @@ export function useStartInvestigation({
     // Prefer state-history resolve time; fall back to now so Assistant always gets
     // a non-zero endsAt for resolved alerts (required for downstream context).
     const endsAt = isResolved ? (alertEndsAt ?? new Date().toISOString()) : undefined;
-    startInvestigation({
-      ...requestBody,
-      name: rule?.title,
-      alerts: requestBody.alerts.map((alert) => ({
-        ...alert,
-        ...(alertStartsAt ? { startsAt: alertStartsAt } : {}),
-        ...(endsAt ? { endsAt } : {}),
-        status,
-        generatorURL,
-      })),
-    });
+
+    try {
+      const result = await startInvestigation({
+        ...requestBody,
+        name: rule?.title,
+        alerts: requestBody.alerts.map((alert) => ({
+          ...alert,
+          ...(alertStartsAt ? { startsAt: alertStartsAt } : {}),
+          ...(endsAt ? { endsAt } : {}),
+          status,
+          generatorURL,
+        })),
+      }).unwrap();
+      trackAssistantInvestigationStartSucceeded({
+        from_status: fromStatus,
+        investigation_id: result.id,
+      });
+    } catch {
+      trackAssistantInvestigationStartFailed({ from_status: fromStatus });
+    }
   };
 
   if (!featureEnabled || !installed) {
@@ -229,11 +243,26 @@ export function useStartInvestigation({
   }
 
   if (isLookupError && !investigation) {
-    return { status: 'lookupError', onRetry: () => refetchLookup() };
+    return {
+      status: 'lookupError',
+      onRetry: () => {
+        trackAssistantInvestigationRetry({ retry_type: 'lookup', from_status: 'lookupError' });
+        refetchLookup();
+      },
+    };
   }
 
   if (investigation && isAssistantInvestigationCompleted(investigation.state)) {
-    return { status: 'completed', href: getAssistantInvestigationUrl(investigation.id) };
+    return {
+      status: 'completed',
+      href: getAssistantInvestigationUrl(investigation.id),
+      investigationId: investigation.id,
+      onOpenReport: () =>
+        trackAssistantInvestigationOpenReport({
+          from_status: 'completed',
+          investigation_id: investigation.id,
+        }),
+    };
   }
 
   if (isStarting) {
@@ -246,25 +275,49 @@ export function useStartInvestigation({
     return {
       status: 'reportFailed',
       href: getAssistantInvestigationUrl(investigation.id),
-      onStart,
+      investigationId: investigation.id,
+      onStart: createOnStart('reportFailed'),
+      onOpenReport: () =>
+        trackAssistantInvestigationOpenReport({
+          from_status: 'reportFailed',
+          investigation_id: investigation.id,
+        }),
     };
   }
 
   if (isStartError) {
-    return { status: 'startError', onStart };
+    return { status: 'startError', onStart: createOnStart('startError') };
   }
 
   if (isPollError && knownId && !isAssistantInvestigationTerminal(investigation?.state)) {
     return {
       status: 'pollError',
       href: getAssistantInvestigationUrl(knownId),
-      onRetry: () => refetchPoll(),
+      investigationId: knownId,
+      onRetry: () => {
+        trackAssistantInvestigationRetry({ retry_type: 'poll', from_status: 'pollError' });
+        refetchPoll();
+      },
+      onWatchLive: () =>
+        trackAssistantInvestigationWatchLive({
+          from_status: 'pollError',
+          investigation_id: knownId,
+        }),
     };
   }
 
   if (investigation && !isAssistantInvestigationTerminal(investigation.state)) {
-    return { status: 'running', href: getAssistantInvestigationUrl(investigation.id) };
+    return {
+      status: 'running',
+      href: getAssistantInvestigationUrl(investigation.id),
+      investigationId: investigation.id,
+      onWatchLive: () =>
+        trackAssistantInvestigationWatchLive({
+          from_status: 'running',
+          investigation_id: investigation.id,
+        }),
+    };
   }
 
-  return { status: 'idle', onStart };
+  return { status: 'idle', onStart: createOnStart('idle') };
 }

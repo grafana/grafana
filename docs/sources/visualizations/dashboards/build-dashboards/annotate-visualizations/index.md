@@ -30,6 +30,10 @@ Annotations provide a way to mark points on a visualization with rich events. Th
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" alt="Annotated visualization with annotation context menu open" >}}
 
+To see annotations in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Annotations" url="https://play.grafana.org/d/000000010/" >}}
+
 You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
@@ -258,7 +262,7 @@ To confirm if the built-in query is enabled, take the following steps:
 1. Click the **Dashboard options** icon in the toolbar.
 1. In the sidebar, expand the **Annotations** section.
 1. Expand the **Hidden** section of annotations.
-1. Select the **Annotations & Alerts (Built-in query)**.
+1. Select the **Annotations & Alerts (Built-in)**.
 1. Check if the **Enabled** checkbox is selected.
 
    If you don't want annotations to be fetched and drawn, clear the checkbox.

@@ -17,9 +17,10 @@ import {
   type TimeRange,
   type TimeZone,
 } from '@grafana/data';
+import { findTimeZoneAt } from '@grafana/data/unstable';
 import { AxisPlacement, type VizOrientation } from '@grafana/schema';
 
-import { findTimeZoneAt, resolveIanaName } from '../../DateTimePickers/TimeZonePicker/timeZoneUtils';
+import { resolveIanaName } from '../../DateTimePickers/TimeZonePicker/timeZoneUtils';
 import { type FacetedData, type PlotConfig } from '../types';
 import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, type StackingGroup } from '../utils';
 

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
@@ -19,7 +19,7 @@ import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
-import { FeatureControlButton } from '../FeatureControl/FeatureControlButton';
+import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
 import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -71,19 +71,23 @@ export const SingleTopBar = memo(function SingleTopBar({
       <div className={styles.layout}>
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
           {!menuDockedAndOpen && (
-            <ToolbarButton
-              narrow
-              id={MEGA_MENU_TOGGLE_ID}
-              onClick={onToggleMegaMenu}
-              tooltip={t('navigation.megamenu.open', 'Main menu')}
-              aria-expanded={state.megaMenuOpen}
-            >
-              <Stack gap={0} alignItems="center">
-                <Icon name="bars" size="xl" />
-              </Stack>
-            </ToolbarButton>
+            <>
+              <HomeLogo homeNav={homeNav} />
+              <ToolbarButton
+                narrow
+                id={MEGA_MENU_TOGGLE_ID}
+                data-testid={Components.NavBar.Toggle.button}
+                onClick={onToggleMegaMenu}
+                tooltip={t('navigation.megamenu.open', 'Main menu')}
+                aria-expanded={state.megaMenuOpen}
+                className={cx(state.megaMenuOpen && styles.menuToggleActive)}
+              >
+                <Stack gap={0} alignItems="center">
+                  <Icon name="bars" size="xl" />
+                </Stack>
+              </ToolbarButton>
+            </>
           )}
-          {!menuDockedAndOpen && <HomeLogo homeNav={homeNav} />}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
@@ -99,7 +103,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {!isSmallScreen && <QuickAdd />}
-          <FeatureControlButton />
+          <LazyFeatureControlButton />
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
@@ -124,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefre
     gap: theme.spacing(2),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
-    paddingLeft: menuDockedAndOpen ? theme.spacing(visualRefreshEnabled ? 0.5 : 3.5) : theme.spacing(0.75),
+    paddingLeft: menuDockedAndOpen ? theme.spacing(visualRefreshEnabled ? 0.5 : 3.5) : theme.spacing(1),
     borderBottom: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
   }),
@@ -143,6 +147,14 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefre
   kioskToggle: css({
     [theme.breakpoints.down('lg')]: {
       display: 'none',
+    },
+  }),
+  menuToggleActive: css({
+    backgroundColor: theme.colors.accent.transparent,
+    color: theme.colors.accent.text,
+    '&:hover': {
+      backgroundColor: theme.colors.accent.transparent,
+      color: theme.colors.accent.textEmphasis,
     },
   }),
 });

@@ -128,6 +128,57 @@ export function getVectorSearchHandler(hits: VectorSearchHitInput[] = []) {
   });
 }
 
+export const hybridSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/dashboards/search/hybrid';
+
+/**
+ * Friendly input shape for the hybrid search handler. One entry is one matched
+ * dashboard; the handler maps it to the HybridSearchResults response shape the real
+ * `/search/hybrid` endpoint returns (one hit per dashboard, best match first).
+ */
+export interface HybridSearchHitInput {
+  /** Dashboard UID. */
+  name: string;
+  /** Dashboard title. */
+  title: string;
+  /** Folder UID. */
+  folder?: string;
+  /** Best-effort folder display name. */
+  folderTitle?: string;
+  /** Relevance score (higher = better). */
+  score?: number;
+  /** Resource manager metadata. */
+  managedBy?: DashboardHit['managedBy'];
+  /** Best matching chunk text. */
+  snippet?: string;
+}
+
+/**
+ * Mocks the dashboard API's hybrid (lexical + semantic) search endpoint.
+ * Returns one item per dashboard with its matching chunks.
+ * Honors the request body's `limit`.
+ */
+export function getHybridSearchHandler(hits: HybridSearchHitInput[] = []) {
+  return http.post(hybridSearchRoute, async ({ request }) => {
+    const body = (await request.json()) as { limit?: number };
+    const limit = body.limit || hits.length;
+    const mapped = hits.slice(0, limit).map((hit) => ({
+      resource: { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', name: hit.name },
+      title: hit.title,
+      folder: hit.folder ?? '',
+      folderTitle: hit.folderTitle,
+      score: hit.score ?? 0,
+      managedBy: hit.managedBy,
+      chunks: [{ subresource: '', content: hit.snippet ?? hit.title }],
+    }));
+
+    return HttpResponse.json({
+      apiVersion: 'search.grafana.app/v0alpha1',
+      kind: 'HybridSearchResults',
+      items: mapped,
+    });
+  });
+}
+
 const getDefaultSearchHandler = () =>
   http.get(searchRoute, ({ request }) => {
     const limitFilter = new URL(request.url).searchParams.get('limit') || null;

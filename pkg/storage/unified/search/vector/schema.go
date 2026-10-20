@@ -206,4 +206,21 @@ END $$;`))
 			VALUES ('dashboard.grafana.app', 'dashboards', 'dashboards', false)
 			ON CONFLICT DO NOTHING;
 		`))
+
+	// content_version = extractor version that produced the row; ADD COLUMN on the parent propagates to leaves.
+	mg.AddMigration("add content_version to embeddings",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE embeddings ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
+		`))
+	mg.AddMigration("add content_version to vector_backfill_jobs",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE vector_backfill_jobs ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
+		`))
+
+	// Stored tsvector for external rows' lexical search; nullable so the
+	// ALTER is metadata-only and internal rows never pay for it.
+	mg.AddMigration("add ts to embeddings",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE embeddings ADD COLUMN IF NOT EXISTS ts tsvector;
+		`))
 }

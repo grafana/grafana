@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -17,6 +18,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -38,16 +40,16 @@ type api struct {
 	router             routing.RouteRegister
 	service            *Service
 	permissions        []string
-	features           featuremgmt.FeatureToggles
+	iamFeatures        iamapi.Features
 	restConfigProvider apiserver.DirectRestConfigProvider
 	logger             log.Logger
 }
 
-func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.DirectRestConfigProvider) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, restConfigProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
-	for i := len(manager.permissions) - 1; i >= 0; i-- {
-		permissions = append(permissions, manager.permissions[i])
+	for _, v := range slices.Backward(manager.permissions) {
+		permissions = append(permissions, v)
 	}
 	return &api{
 		cfg:                cfg,
@@ -55,29 +57,25 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 		router:             router,
 		service:            manager,
 		permissions:        permissions,
-		features:           features,
+		iamFeatures:        iamFeatures,
 		restConfigProvider: restConfigProvider,
 		logger:             log.New("resource-permissions-api"),
 	}
 }
 
-// shouldUseK8sAPIs returns true if both feature flags for K8s API redirect are enabled
+// shouldUseK8sAPIs returns true if both gates for K8s API redirect are enabled.
 func (a *api) shouldUseK8sAPIs(ctx context.Context) bool {
-	return k8sResourcePermissionRedirectEnabled(ctx)
+	return k8sResourcePermissionRedirectEnabled(ctx, a.iamFeatures.ResourcePermissionsAPI)
 }
 
-// k8sResourcePermissionRedirectEnabled reports whether both feature flags that
-// gate the K8s resource-permission adapter are enabled for ctx. Both must be on:
-//   - ...ResourcePermissionApis registers the K8s ResourcePermission /apis
-//     endpoints (the destination must exist), and
+// k8sResourcePermissionRedirectEnabled reports whether both gates for the K8s
+// resource-permission adapter are enabled for ctx. Both must be on:
+//   - resourcePermissionsAPIEnabled means the K8s ResourcePermission /apis
+//     endpoints were registered at startup (the destination must exist), and
 //   - ...ResourcePermissionsRedirect redirects legacy permission traffic to them.
-//
-// It is the single source of truth for the redirect gate, shared by the runtime
-// path (shouldUseK8sAPIs) and the startup validation (requiresAPIGroup in
-// service.go) so the two cannot drift.
-func k8sResourcePermissionRedirectEnabled(ctx context.Context) bool {
-	return ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, false, openfeature.TransactionContext(ctx)) &&
-		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+func k8sResourcePermissionRedirectEnabled(ctx context.Context, resourcePermissionsAPIEnabled bool) bool {
+	return resourcePermissionsAPIEnabled &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, false, openfeature.TransactionContext(ctx))
 }
 
 // getFallbackStatus returns "fallback" if K8s redirect is enabled, "success" otherwise
@@ -91,7 +89,16 @@ func (a *api) getFallbackStatus(ctx context.Context) string {
 // unifiedStorageIsAuthoritative returns true when unified storage is the authoritative
 // backend (Mode4 or Mode5). In that case K8s redirect failures must not fall back to legacy.
 func (a *api) unifiedStorageIsAuthoritative(groupResource string) bool {
-	return a.cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
+	return unifiedStorageIsAuthoritative(a.cfg, groupResource)
+}
+
+// unifiedStorageIsAuthoritative reports whether unified storage is the authoritative
+// backend for the given group resource (dualWriterMode > Mode3). When true the legacy
+// tables are not written, so a K8s redirect failure must surface instead of falling back
+// to legacy. It takes cfg explicitly so the service methods can apply the same rule
+// without reaching into the api layer.
+func unifiedStorageIsAuthoritative(cfg *setting.Cfg, groupResource string) bool {
+	return cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
 }
 
 func (a *api) registerEndpoints() {
@@ -396,37 +403,9 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// teamsRedirectRemovedMember records that the K8s teams redirect below actually removed an
-	// existing member. In dual-write modes (Mode1-3) legacy is the primary target of that write,
-	// so the legacy fallback further down then finds the row already gone. A no-op redirect (the
-	// member wasn't there) leaves this false, so a genuinely-absent member still returns 404.
-	teamsRedirectRemovedMember := false
-
-	// Teams-specific redirect: write the membership to Team.Spec.Members via the K8s API.
-	if a.service.options.Resource == "teams" && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
-		removed, err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
-		if errors.Is(err, ErrExternalTeamMember) {
-			return response.Err(err)
-		}
-		if err != nil {
-			span.RecordError(err)
-			a.logger.Warn("Failed to set user permission via team members k8s API", "error", err, "resourceID", resourceID)
-		} else {
-			teamsRedirectRemovedMember = removed
-			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
-		}
-
-		// In Mode4/5 unified storage is authoritative: return the K8s result and do not fall
-		// back to legacy (which would fail for identities that exist only in unified storage).
-		// In Mode0-3 we dual-write, so continue to the legacy path below.
-		if a.unifiedStorageIsAuthoritative(iamv0.TeamResourceInfo.GroupResource().String()) {
-			if err != nil {
-				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "error").Inc()
-				return response.Err(err)
-			}
-			return permissionSetResponse(cmd)
-		}
-	}
+	// Teams membership writes are redirected to Team.Spec.Members inside
+	// service.SetUserPermission, so every caller (HTTP and in-process) shares a
+	// single redirect; there is no teams-specific K8s path in this handler.
 
 	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs(ctx) {
 		err := a.setUserPermissionToK8s(c, c.Namespace, resourceID, userID, cmd.Permission)
@@ -447,14 +426,11 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_user", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	if !a.service.teamsRedirectOwnsWrites(ctx) {
+		metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_user", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	}
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
-		// The teams redirect above already removed the member (and, in dual-write modes, the
-		// legacy team_member row), so this legacy removal finds nothing.
-		if teamsRedirectRemovedMember && errors.Is(err, team.ErrTeamMemberNotFound) {
-			return permissionSetResponse(cmd)
-		}
 		if errors.Is(err, team.ErrTeamMemberNotFound) {
 			return response.Error(http.StatusNotFound, "Team member not found", nil)
 		}
@@ -686,7 +662,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
-	if a.shouldUseK8sAPIs(ctx) {
+	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs(ctx) {
 		err := a.setResourcePermissionsToK8s(c, c.Namespace, resourceID, cmd.Permissions)
 		if err != nil {
 			span.RecordError(err)
@@ -705,7 +681,9 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	if !a.service.teamsRedirectOwnsWrites(ctx) {
+		metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	}
 	_, err := a.service.SetPermissions(c.Req.Context(), c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)

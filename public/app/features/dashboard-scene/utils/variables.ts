@@ -1,5 +1,6 @@
 import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -24,6 +25,7 @@ import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVari
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
+import { applySupportsMultiValueOperators } from './applySupportsMultiValueOperators';
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
@@ -115,7 +117,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
       try {
         // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
         if (v.type === 'adhoc') {
-          return new AdHocFiltersVariable({
+          const adhocVariable = new AdHocFiltersVariable({
             name: v.name,
             label: v.label,
             readOnly: true,
@@ -128,13 +130,16 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
-            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-            supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
+            applicabilityEnabled: getFeatureFlagClient().getBooleanValue(
+              FlagKeys.PerPanelNonApplicableDrilldowns,
+              false
             ),
+            supportsMultiValueOperators: false,
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
+          applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
+          return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable
         return createSnapshotVariable(v);
@@ -215,7 +220,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     const filters: AdHocVariableFilter[] = [];
     variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
 
-    return new AdHocFiltersVariable({
+    const adhocVariable = new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.description,
       skipUrlSync: variable.skipUrlSync,
@@ -228,17 +233,17 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
-      supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
-      ),
+      supportsMultiValueOperators: false,
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.enableGroupBy ?? false)
         : false,
       $behaviors: [new ReportInteractionBehavior({})],
     });
+    applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
+    return adhocVariable;
   }
   // Custom variable
   if (variable.type === 'custom') {
@@ -365,7 +370,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable

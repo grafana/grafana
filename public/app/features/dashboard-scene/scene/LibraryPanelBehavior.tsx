@@ -1,7 +1,9 @@
 import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  sceneGraph,
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
@@ -11,11 +13,14 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
@@ -113,27 +118,51 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const layoutElement = vizPanel.parent!;
 
-    // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
-    // as repeat options should only come from the dashboard panel instance (grid item),
-    // not from the library panel definition.
-    // Exception: Public dashboards and scripted dashboards still need this migration
-    // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
+    // Repeat only exists on DashboardGridItem, so there is nothing to migrate under any other layout
+    // (a notebook cell included). Inside this branch the root is necessarily a DashboardScene, so the
+    // lookup below cannot fail — if it ever does, that is a bug worth surfacing rather than skipping.
+    if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
+      if (this.shouldMigrateRepeat(layoutElement)) {
+        const repeatDirection = libPanelModel.repeatDirection === 'h' ? 'h' : 'v';
+        const expandToGridWidth =
+          repeatDirection === 'h' &&
+          getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth, false);
+
+        layoutElement.setState({
+          variableName: libPanelModel.repeat,
+          repeatDirection,
+          maxPerRow: libPanelModel.maxPerRow,
+          itemHeight: layoutElement.state.height ?? 10,
+          ...(expandToGridWidth && { width: GRID_COLUMN_COUNT }),
+        });
+        layoutElement.performRepeat();
+
+        if (expandToGridWidth) {
+          // The grid reads item widths only when it re-renders.
+          sceneGraph.getLayout(layoutElement)?.forceRender();
+        }
+      }
+    }
+  }
+
+  /**
+   * With server-resolution handling enabled, copy the library repeat only when
+   * the dashboard is unresolved and the grid item has no instance repeat.
+   */
+  private shouldMigrateRepeat(layoutElement: DashboardGridItem): boolean {
     const dashboard = getDashboardSceneFor(this);
+
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution, false)) {
+      if (layoutElement.state.variableName) {
+        return false;
+      }
+
+      return dashboard.state.meta.libraryPanelRepeatUnresolved === true;
+    }
+
     const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
     const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-    const shouldSkipRepeatMigration =
-      config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
-
-    // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
-    if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
-      layoutElement.setState({
-        variableName: libPanelModel.repeat,
-        repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
-        maxPerRow: libPanelModel.maxPerRow,
-        itemHeight: layoutElement.state.height ?? 10,
-      });
-      layoutElement.performRepeat();
-    }
+    return !(isDashboardNewLayoutsEnabled() && !isPublicDashboard && !isScriptedDashboard);
   }
 
   /**

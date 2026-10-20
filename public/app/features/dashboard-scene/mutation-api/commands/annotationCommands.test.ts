@@ -43,10 +43,11 @@ function buildMockScene(
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     publishEvent: undefined,
     setState: jest.fn((partial: Record<string, unknown>) => {
@@ -206,6 +207,19 @@ describe('Annotation mutation commands', () => {
       const set = scene.state.$data as DashboardDataLayerSet;
       expect(set.state.annotationLayers.map((l) => l.state.name)).toEqual(['deploys', 'errors']);
       const layer = set.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+      expect(result.changes).toEqual([
+        {
+          path: '/annotations/deploys',
+          previousValue: expect.objectContaining({
+            kind: 'AnnotationQuery',
+            spec: expect.objectContaining({ name: 'deploys', iconColor: 'red' }),
+          }),
+          newValue: expect.objectContaining({
+            kind: 'AnnotationQuery',
+            spec: expect.objectContaining({ name: 'deploys', iconColor: 'green' }),
+          }),
+        },
+      ]);
       expect(layer.state.query.iconColor).toBe('green');
       expect(layer.state.query.datasource?.type).toBe('prometheus');
       expect(layer.state.query.target).toMatchObject({ expr: 'changes(deploy_total[5m])' });

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -243,19 +245,73 @@ func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
 
 func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)
+}
+
+func TestIntegrationStore_RetrieveServiceAccountsByUIDs(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const orgID int64 = 1
+	ctx := context.Background()
+	sql, store := setupTestDatabase(t)
+	now := time.Now()
+	serviceAccount := &user.User{
+		UID:              "service-account-uid",
+		Login:            "service-account",
+		Email:            "service-account@example.com",
+		Name:             "Service Account",
+		IsServiceAccount: true,
+		OrgID:            orgID,
+		Created:          now,
+		Updated:          now,
+	}
+	regularUser := &user.User{
+		UID:     "regular-user-uid",
+		Login:   "regular-user",
+		Email:   "regular-user@example.com",
+		OrgID:   orgID,
+		Created: now,
+		Updated: now,
+	}
+	require.NoError(t, sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if _, err := sess.Insert(serviceAccount, regularUser); err != nil {
+			return err
+		}
+		_, err := sess.Insert(
+			&org.OrgUser{OrgID: orgID, UserID: serviceAccount.ID, Role: org.RoleViewer, Created: now, Updated: now},
+			&org.OrgUser{OrgID: orgID, UserID: regularUser.ID, Role: org.RoleViewer, Created: now, Updated: now},
+		)
+		return err
+	}))
+
+	serviceAccounts, err := store.RetrieveServiceAccountsByUIDs(ctx, orgID, []string{
+		serviceAccount.UID,
+		serviceAccount.UID,
+		regularUser.UID,
+		"missing-uid",
+	})
+	require.NoError(t, err)
+	require.Len(t, serviceAccounts, 1)
+	assert.Equal(t, serviceAccount.ID, serviceAccounts[0].Id)
+	assert.Equal(t, serviceAccount.UID, serviceAccounts[0].UID)
+	assert.Equal(t, serviceAccount.Login, serviceAccounts[0].Login)
+	assert.Equal(t, serviceAccount.Name, serviceAccounts[0].Name)
+
+	otherOrg, err := store.RetrieveServiceAccountsByUIDs(ctx, orgID+1, []string{serviceAccount.UID})
+	require.NoError(t, err)
+	assert.Empty(t, otherOrg)
 }
 
 func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {

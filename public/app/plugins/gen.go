@@ -27,8 +27,7 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"influxdb": true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":    true, // plugin.json fails validation (mixed)
+	"mixed": true, // plugin.json fails validation (mixed)
 }
 
 const sep = string(filepath.Separator)
