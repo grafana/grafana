@@ -563,7 +563,7 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 					assert.ErrorIs(t, err, ctx.Err())
 				}
 				assert.Equal(t, tt.wantUnavailable, errors.Is(err, ErrServerUnavailable))
-				if tt.buildErr == classifiedErr {
+				if errors.Is(tt.buildErr, classifiedErr) {
 					assert.Same(t, classifiedErr, err, "an already classified deadline must not be wrapped again")
 				}
 			})
