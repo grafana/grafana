@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
-import { type SceneDataProvider, type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import {
+  NewSceneObjectAddedEvent,
+  SceneObjectRemovedEvent,
+  type SceneDataProvider,
+  type VizPanel,
+  useSceneObjectState,
+} from '@grafana/scenes';
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
-import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { ToggleViewPanePaneEvent } from '../sidebar/events';
@@ -27,16 +32,17 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   const { sidebar } = dashboard.useState();
   const { data } = dataProvider.useState();
   const context = usePanelSceneContextObject(panel);
-  const isSmallScreen = !useMediaQueryMinWidth('sm');
   const viewPanelPane = useMemo(() => new ViewPanelSidePane({ panelRef: panel.getRef() }), [panel]);
   const { fanoutMode } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
 
-  // Open pane on mount
+  // Register the pane for URL synchronization without opening it.
   useEffect(() => {
-    if (!isSmallScreen) {
-      sidebar.openPane(viewPanelPane);
-    }
-  }, [sidebar, isSmallScreen, viewPanelPane]);
+    sidebar.publishEvent(new NewSceneObjectAddedEvent(viewPanelPane), true);
+
+    return () => {
+      sidebar.publishEvent(new SceneObjectRemovedEvent(viewPanelPane), true);
+    };
+  }, [sidebar, viewPanelPane]);
 
   // Handle manual toggling of the pane via the sidebar buttons
   // This is done via an event that sidebar pane button publishes as the ViewPanelSidePane instance & panel ref is only available from this component
