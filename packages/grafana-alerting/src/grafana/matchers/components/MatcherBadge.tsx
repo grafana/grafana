@@ -35,6 +35,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, textColor?: string) => 
 
   return {
     wrapper: css({
+      display: 'inline-block',
       color: text,
       background,
       padding: theme.spacing(0.375, 1),
