@@ -2,13 +2,14 @@ import { screen, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
-import { LoadingState } from '@grafana/data';
+import { EventBusSrv, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
 
 import { PanelChrome, type PanelChromeProps } from './PanelChrome';
 import { type PanelChromeHeaderControls, PanelChromeHeaderControlsContext } from './PanelChromeHeaderControlsContext';
+import { PanelContextProvider } from './PanelContext';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -205,6 +206,48 @@ describe('when the header controls are provided from outside the panel', () => {
 
     expect(screen.queryByText('Panel links')).not.toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
+  });
+});
+
+describe('when the panel host shows its series limit control', () => {
+  const renderUntitled = (isSeriesLimitShown: boolean, headerControls?: PanelChromeHeaderControls) =>
+    render(
+      <PanelContextProvider
+        value={{ eventsScope: 'global', eventBus: new EventBusSrv(), isSeriesLimitShown: () => isSeriesLimitShown }}
+      >
+        <PanelChromeHeaderControlsContext.Provider value={headerControls}>
+          <PanelChrome width={100} height={100} hoverHeader titleItems={<button>Show all 5</button>}>
+            {() => <div>Panel&apos;s Content</div>}
+          </PanelChrome>
+        </PanelChromeHeaderControlsContext.Provider>
+      </PanelContextProvider>
+    );
+
+  it('shows the header of a panel without a title, with the control in it', () => {
+    renderUntitled(true);
+
+    const header = screen.getByTestId(selectors.components.Panels.Panel.headerContainer);
+    expect(within(header).getByRole('button', { name: 'Show all 5' })).toBeInTheDocument();
+  });
+
+  it('renders the header instead of the hover slot when the header controls are provided from outside', () => {
+    const hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+
+    renderUntitled(true, { external: true, hoverSlot });
+
+    const header = screen.getByTestId(selectors.components.Panels.Panel.headerContainer);
+    expect(within(header).getByRole('button', { name: 'Show all 5' })).toBeInTheDocument();
+    expect(hoverSlot).toBeEmptyDOMElement();
+
+    hoverSlot.remove();
+  });
+
+  it('keeps the hover header while the series limit control is not shown', () => {
+    renderUntitled(false);
+
+    expect(screen.getByTestId(selectors.components.Panels.Panel.HoverWidget.container)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.headerContainer)).not.toBeInTheDocument();
   });
 });
 
