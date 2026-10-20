@@ -226,6 +226,7 @@ func (h *AnnotationBackend) buildAnnotations(rule history_model.RuleMeta, states
 
 		item := annotations.Item{
 			AlertID:   rule.ID,
+			AlertUID:  rule.UID,
 			OrgID:     state.OrgID,
 			PrevState: state.PreviousFormatted(),
 			NewState:  state.Formatted(),
