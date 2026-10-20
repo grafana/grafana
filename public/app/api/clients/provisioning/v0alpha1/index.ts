@@ -23,6 +23,7 @@ import {
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
+import { withGitSuffix } from '../../../../features/provisioning/utils/git';
 import { handleError } from '../../../utils';
 import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
@@ -181,10 +182,13 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       // Testing a submitted spec touches nothing on the server, so the generated
       // invalidation would only refetch every Repository-tagged query for nothing.
       invalidatesTags: [],
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ body }, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
         } catch (e) {
+          if (body.spec && withGitSuffix(body.spec)) {
+            return;
+          }
           handleProvisioningFormError(e, dispatch, 'Error validating repository');
         }
       },
