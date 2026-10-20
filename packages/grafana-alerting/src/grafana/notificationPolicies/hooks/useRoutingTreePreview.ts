@@ -1,26 +1,40 @@
 import { type Label } from '../../matchers/types';
-import { findRoutingTreeByName } from '../routingTree.utils';
 
 import { useMatchInstancesToSpecificRouteTree } from './useMatchPolicies';
-import { useRoutingTrees } from './useRoutingTrees';
+import { useRoutingTreeLookup } from './useResolvedRoutingTree';
 
 export interface RoutingTreePreviewRoute {
   id: string;
   receiver?: string;
 }
 
-/** The routes of a tree matching the instances, or `null` when the tree is loading, deleted or failed to load. */
+export interface RoutingTreePreviewResult {
+  /** Anything but `found` means the tree couldn't be confirmed, so `routes` is empty and shouldn't be read as "no match". */
+  status: 'resolving' | 'notFound' | 'error' | 'found';
+  /** The tree's routes matching the instances. When `status` is `found`, empty means nothing matched. */
+  routes: RoutingTreePreviewRoute[];
+}
+
+const NO_ROUTES: RoutingTreePreviewRoute[] = [];
+
+/** Previews the routes of a tree that match the instances. An unset name previews the default tree. */
 export function useRoutingTreePreview(
   routingTreeName: string | undefined,
   instances: Label[][]
-): RoutingTreePreviewRoute[] | null {
-  const { trees } = useRoutingTrees();
-  const tree = findRoutingTreeByName(trees, routingTreeName) ?? null;
-  const match = useMatchInstancesToSpecificRouteTree(tree, instances);
+): RoutingTreePreviewResult {
+  const { found, isResolving, isError } = useRoutingTreeLookup(routingTreeName);
+  const match = useMatchInstancesToSpecificRouteTree(found ?? null, instances);
 
-  if (!tree) {
-    return null;
+  if (isError) {
+    return { status: 'error', routes: NO_ROUTES };
+  }
+  if (isResolving) {
+    return { status: 'resolving', routes: NO_ROUTES };
+  }
+  if (!found) {
+    return { status: 'notFound', routes: NO_ROUTES };
   }
 
-  return match ? Array.from(match.matchedPolicies.keys(), ({ id, receiver }) => ({ id, receiver })) : [];
+  const routes = match ? Array.from(match.matchedPolicies.keys(), ({ id, receiver }) => ({ id, receiver })) : NO_ROUTES;
+  return { status: 'found', routes };
 }

@@ -26,6 +26,7 @@ export {
 } from './grafana/notificationPolicies/hooks/useResolvedRoutingTree';
 export {
   useRoutingTreePreview,
+  type RoutingTreePreviewResult,
   type RoutingTreePreviewRoute,
 } from './grafana/notificationPolicies/hooks/useRoutingTreePreview';
 export { type RoutingTreeView } from './grafana/notificationPolicies/routingTreeView';

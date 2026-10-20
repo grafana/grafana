@@ -34,23 +34,23 @@ describe('useRoutingTreePreview', () => {
   it('returns the routes of the named tree that match the instances', async () => {
     const { result } = renderPreview(namedTree.metadata.name);
 
-    await waitFor(() => expect(result.current.preview).not.toBeNull());
-    expect(result.current.preview?.map((route) => route.receiver)).toContain(namedTree.spec.defaults.receiver);
+    await waitFor(() => expect(result.current.preview.status).toBe('found'));
+    expect(result.current.preview.routes.map((route) => route.receiver)).toContain(namedTree.spec.defaults.receiver);
   });
 
   it('maps each matched route to its id and receiver', async () => {
     const { result } = renderPreview(namedTree.metadata.name);
 
-    await waitFor(() => expect(result.current.preview).not.toBeNull());
-    expect(result.current.preview).not.toHaveLength(0);
-    result.current.preview?.forEach((route) => expect(Object.keys(route).sort()).toEqual(['id', 'receiver']));
+    await waitFor(() => expect(result.current.preview.status).toBe('found'));
+    expect(result.current.preview.routes).not.toHaveLength(0);
+    result.current.preview.routes.forEach((route) => expect(Object.keys(route).sort()).toEqual(['id', 'receiver']));
   });
 
   it.each([undefined, '', 'user-defined'])('previews the default policy for the name %p', async (name) => {
     const { result } = renderPreview(name);
 
-    await waitFor(() => expect(result.current.preview).not.toBeNull());
-    expect(result.current.preview?.map((route) => route.receiver)).toContain(defaultTree.spec.defaults.receiver);
+    await waitFor(() => expect(result.current.preview.status).toBe('found'));
+    expect(result.current.preview.routes.map((route) => route.receiver)).toContain(defaultTree.spec.defaults.receiver);
   });
 
   it('previews the default policy when the backend names it with the `default` alias', async () => {
@@ -58,35 +58,32 @@ describe('useRoutingTreePreview', () => {
 
     const { result } = renderPreview('default');
 
-    await waitFor(() => expect(result.current.preview).not.toBeNull());
-    expect(result.current.preview?.map((route) => route.receiver)).toContain(
+    await waitFor(() => expect(result.current.preview.status).toBe('found'));
+    expect(result.current.preview.routes.map((route) => route.receiver)).toContain(
       simpleRoutingTreesListDefaultAlias.items[0].spec.defaults.receiver
     );
   });
 
-  it('has nothing to preview while the tree list is loading', () => {
+  it('is resolving, with no routes, while the tree list is loading', () => {
     const { result } = renderPreview(namedTree.metadata.name);
 
     expect(result.current.list.isLoading).toBe(true);
-    expect(result.current.preview).toBeNull();
+    expect(result.current.preview).toEqual({ status: 'resolving', routes: [] });
   });
 
-  it('has nothing to preview, rather than the default policy, for a tree that does not exist', async () => {
+  it('is not found, rather than falling back to the default policy, for a tree that does not exist', async () => {
     const { result } = renderPreview('deleted-tree');
 
-    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
-    expect(result.current.preview).toBeNull();
+    await waitFor(() => expect(result.current.preview.status).toBe('notFound'));
+    expect(result.current.preview.routes).toEqual([]);
   });
 
-  it.each([undefined, 'team-platform'])(
-    'has nothing to preview when the list cannot be loaded (name %p)',
-    async (name) => {
-      server.use(...routingTreeWithErrorScenario);
+  it.each([undefined, 'team-platform'])('is an error when the list cannot be loaded (name %p)', async (name) => {
+    server.use(...routingTreeWithErrorScenario);
 
-      const { result } = renderPreview(name);
+    const { result } = renderPreview(name);
 
-      await waitFor(() => expect(result.current.list.isError).toBe(true));
-      expect(result.current.preview).toBeNull();
-    }
-  );
+    await waitFor(() => expect(result.current.preview.status).toBe('error'));
+    expect(result.current.preview.routes).toEqual([]);
+  });
 });
