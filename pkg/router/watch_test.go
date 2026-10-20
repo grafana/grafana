@@ -126,7 +126,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, nil, prometheus.NewRegistry())
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: backends}, nil), prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))
@@ -136,7 +136,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrument(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {
@@ -357,4 +357,17 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 			require.Empty(t, rig.backend.queries, "the backend must not be called")
 		})
 	}
+}
+
+func TestRequestVerbIsParsedOncePerRequest(t *testing.T) {
+	req, outcome := withRequestOutcome(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things?watch=true", nil))
+	require.Equal(t, "watch", requestVerb(req))
+	require.Equal(t, "watch", outcome.verb)
+
+	// A later call reads the recorded verb instead of parsing the request.
+	outcome.verb = "recorded"
+	require.Equal(t, "recorded", requestVerb(req))
+
+	// Without an outcome, as for the router's own sub-requests, it parses.
+	require.Equal(t, "list", requestVerb(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things", nil)))
 }

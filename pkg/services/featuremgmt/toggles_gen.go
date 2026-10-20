@@ -671,7 +671,7 @@ const (
 	FlagInteractiveLearning = "interactiveLearning"
 
 	// FlagAlertingTriage
-	// Enables the alerting triage feature
+	// Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
 	FlagAlertingTriage = "alertingTriage"
 
 	// FlagGraphiteBackendMode
@@ -913,6 +913,10 @@ const (
 	// FlagAlertingRulesAPIV2
 	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
 	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
+
+	// FlagAlertingGmaOnlyListView
+	// Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list
+	FlagAlertingGmaOnlyListView = "alerting.gmaOnlyListView"
 
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform

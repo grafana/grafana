@@ -378,7 +378,6 @@
 /scripts/releasefinder.sh @baldm0mma
 
 # OSS Plugin Partnerships backend code
-/pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
@@ -481,6 +480,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/meticulous-feature-flags.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-interval-variable.spec.ts @grafana/dashboards-squad
@@ -1048,6 +1048,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/datasources/ @grafana/grafana-catalog
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/datapro
+/public/app/features/cloudwatch-helpers/ @grafana/datapro
 /public/app/features/loki-helpers/ @grafana/datapro
 /public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
@@ -1212,7 +1213,6 @@ eslint-suppressions.json @grafanabot
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
-/public/app/plugins/datasource/cloudwatch/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/grafana-catalog
 /public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins

@@ -388,6 +388,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	repoType, err := rc.processFn(key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	rc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.

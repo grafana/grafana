@@ -229,6 +229,11 @@ message ResourceSearchResponse {
   // incomplete: the calling service may not search them on the user's behalf,
   // or this server does not check their results against the user.
   repeated string skipped_types = 13;
+
+  // The Kubernetes kind of each type a global search covers, keyed by
+  // {group}/{resource}, for the results to report. The API layer may not know
+  // the kinds this server takes from manifests read at runtime.
+  map<string, string> kinds = 14;
 }
 
 message ResourceSearchField {

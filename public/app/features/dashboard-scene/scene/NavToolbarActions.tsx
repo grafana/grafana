@@ -47,8 +47,11 @@ export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   // A plan preview replaces the whole toolbar with just the banner: the preview never enters
   // edit mode, so none of the normal actions (Edit, Save, Settings, Share) apply, and checking
   // this before any other branching keeps both toolbar variants consistent.
+  // While the plan is building there is nothing left to decide, so the toolbar stays empty.
   if (planning) {
-    return <AppChromeUpdate actions={<PlanningBanner planning={planning} />} />;
+    return (
+      <AppChromeUpdate actions={planning.phase === 'preview' ? <PlanningBanner planning={planning} /> : undefined} />
+    );
   }
 
   return hasNewToolbar ? (

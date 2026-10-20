@@ -159,6 +159,7 @@ func NewSearchOptions(
 			SearchFields:                    searchFields,
 			EmbeddingConfig:                 embeddingConfig,
 			HybridSearchConfig:              hybridSearchConfig,
+			GlobalSearchCoverage:            resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()),
 		}, nil
 	}
 	return resource.SearchOptions{
