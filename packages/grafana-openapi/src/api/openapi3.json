@@ -2949,10 +2949,14 @@
       "Annotation": {
         "properties": {
           "alertId": {
+            "description": "Deprecated. Use alertUID instead.",
             "format": "int64",
             "type": "integer"
           },
           "alertName": {
+            "type": "string"
+          },
+          "alertUID": {
             "type": "string"
           },
           "avatarUrl": {
@@ -15305,15 +15309,6 @@
             }
           },
           {
-            "description": "Find annotations for a specified alert rule by its ID.\ndeprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.",
-            "in": "query",
-            "name": "alertId",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
             "description": "Find annotations for a specified alert rule by its UID.",
             "in": "query",
             "name": "alertUID",
@@ -15390,6 +15385,9 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/getAnnotationsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
