@@ -15,6 +15,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
+	"github.com/grafana/authlib/types"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -119,6 +120,7 @@ func TestSnapshotTier(t *testing.T) {
 }
 
 func TestPickBestSnapshot(t *testing.T) {
+	ns := newTestNsResource()
 	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
 	minV := semver.MustParse("11.4.0")
 	running := semver.MustParse("11.5.0")
@@ -144,13 +146,13 @@ func TestPickBestSnapshot(t *testing.T) {
 	cutoff := func(maxAge time.Duration) time.Time { return now.Add(-maxAge) }
 
 	t.Run("empty list", func(t *testing.T) {
-		_, ok := newBackend(minV).pickBestSnapshot(nil, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, nil, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("dropped by age", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("11.5.0", 100, 2*time.Hour)}
-		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
@@ -161,14 +163,14 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("zero cutoff is no age limit", func(t *testing.T) {
 		old := makeULID(t, now.Add(-30*24*time.Hour))
 		all := map[ulid.ULID]*IndexMeta{old: snap("11.5.0", 100, 30*24*time.Hour)}
-		c, ok := newBackend(minV).pickBestSnapshot(all, time.Time{}, log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, time.Time{}, log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, old, c.key)
 	})
 
 	t.Run("dropped for unparseable version", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("not-a-version", 100, time.Minute)}
-		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
@@ -180,14 +182,14 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	t.Run("dropped for unknown reader requirements", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): requiring("11.5.0", 100, time.Minute, "feature-from-the-future")}
-		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("requirements this instance understands are accepted", func(t *testing.T) {
 		key := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{key: requiring("11.5.0", 100, time.Minute, resource.IndexFeatureDeletedMarker)}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
@@ -206,14 +208,14 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	t.Run("dropped when missing a required feature", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): having("11.5.0", 100, time.Minute)}
-		_, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		_, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
 	})
 
 	t.Run("kept when it has the required feature", func(t *testing.T) {
 		key := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{key: having("11.5.0", 100, time.Minute, "alpha")}
-		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
@@ -223,7 +225,7 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("kept when features were not recorded", func(t *testing.T) {
 		key := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{key: snap("11.5.0", 100, time.Minute)}
-		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
@@ -236,7 +238,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			usable:           having("11.4.5", 100, time.Minute, "alpha"),
 			makeULID(t, now): having("11.5.0", 999, time.Minute),
 		}
-		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, usable, c.key)
 	})
@@ -248,7 +250,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			compatible:       snap("11.5.0", 100, time.Minute),
 			makeULID(t, now): requiring("12.0.0", 999, time.Minute, "feature-from-the-future"),
 		}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, compatible, c.key)
 	})
@@ -262,7 +264,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			newer: snap("11.6.0", 300, time.Minute),  // tier 2 (above running)
 			ideal: snap("11.5.0", 100, 10*time.Hour), // tier 0 wins despite lower RV / older upload
 		}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, ideal, c.key)
 		assert.Equal(t, 0, c.tier)
@@ -275,7 +277,7 @@ func TestPickBestSnapshot(t *testing.T) {
 			older: snap("11.3.0", 100, time.Minute),
 			newer: snap("12.0.0", 999, time.Minute),
 		}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, older, c.key)
 		assert.Equal(t, 1, c.tier)
@@ -284,7 +286,7 @@ func TestPickBestSnapshot(t *testing.T) {
 	t.Run("tier 2 picked as last resort", func(t *testing.T) {
 		only := makeULID(t, now)
 		all := map[ulid.ULID]*IndexMeta{only: snap("12.0.0", 100, time.Minute)}
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, only, c.key)
 		assert.Equal(t, 2, c.tier)
@@ -306,12 +308,12 @@ func TestPickBestSnapshot(t *testing.T) {
 		all[same].IndexFormat = format
 		all[tooNew].IndexFormat = testIndexFormatDelta(t, 1)
 
-		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, legacy, c.key, "empty legacy format remains compatible and normal tie-breaking still applies")
 
 		delete(all, legacy)
-		c, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		c, ok = newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, same, c.key, "same format should beat older format by RV")
 	})
@@ -329,13 +331,13 @@ func TestPickBestSnapshot(t *testing.T) {
 			b: snap("11.5.0", 50, time.Minute),     // best version, lowest RV, newer upload
 			c: snap("11.5.0", 200, 30*time.Minute), // best version, high RV, older upload
 		}
-		got, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		got, ok := newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, c, got.key)
 
 		// Adding d (same version + RV as c, newer upload): d wins via upload-desc tiebreaker.
 		all[d] = snap("11.5.0", 200, time.Minute)
-		got, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		got, ok = newBackend(minV).pickBestSnapshot(ns, all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, d, got.key)
 	})
@@ -1594,6 +1596,115 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
 	return testutil.ToFloat64(ct.metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome))
+}
+
+type pausedInitialListing struct {
+	resource.StorageBackend
+	once    sync.Once
+	started chan struct{}
+	release <-chan struct{}
+}
+
+func (s *pausedInitialListing) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
+	pause := false
+	s.once.Do(func() {
+		pause = true
+		close(s.started)
+	})
+	if pause {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case <-s.release:
+		}
+	}
+	return s.StorageBackend.ListIterator(ctx, req, callback)
+}
+
+func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	ctx = types.WithAuthInfo(ctx, &identity.StaticRequester{
+		Type: types.TypeUser, Login: "testuser", UserID: 1, UserUID: "u1", Namespace: "default", IsGrafanaAdmin: true,
+	})
+	kvStore := newTestBadgerKV(t)
+	storage, err := resource.NewKVStorageBackend(resource.KVBackendOptions{KvStore: kvStore, DisableStorageServices: true})
+	require.NoError(t, err)
+	writer, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: storage})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, writer.Stop(t.Context())) })
+	for _, kind := range []struct{ group, resource, name string }{
+		{group: "dashboard.grafana.app", resource: "dashboards", name: "Dashboard"},
+		{group: "folder.grafana.app", resource: "folders", name: "Folder"},
+	} {
+		for i := range 3 {
+			name := fmt.Sprintf("%s-%d", kind.resource, i)
+			rsp, err := writer.Create(ctx, &resourcepb.CreateRequest{
+				Key: &resourcepb.ResourceKey{Namespace: "default", Group: kind.group, Resource: kind.resource, Name: name},
+				Value: fmt.Appendf(nil, `{"apiVersion":%q,"kind":%q,"metadata":{"name":%q,"namespace":"default"},"spec":{"title":%q}}`,
+					kind.group+"/v1", kind.name, name, name),
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+		}
+	}
+	key := resource.GlobalSearchKey("default")
+	newServer := func(backend *bleveBackend, storage resource.StorageBackend) resource.SearchServer {
+		t.Helper()
+		server, err := resource.NewUninitializedSearchServer(resource.ResourceServerOptions{
+			Backend: storage,
+			Search: resource.SearchOptions{
+				Backend: backend,
+				Resources: &resource.TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+					"dashboard.grafana.app": "dashboards", "folder.grafana.app": "folders",
+				}},
+				GlobalIndexEnabled: true,
+				InitMinCount:       4,
+			},
+			AccessClient: types.FixedAccessClient(true),
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, server.Stop(t.Context())) })
+		return server
+	}
+	store := newTestKVRemoteIndexStoreOn(t, kvStore, "builder")
+	backend, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 5, MaxIndexAge: time.Hour})
+	release := make(chan struct{})
+	paused := &pausedInitialListing{StorageBackend: storage, started: make(chan struct{}), release: release}
+	server := newServer(backend, paused)
+	require.NoError(t, server.Init(ctx))
+	select {
+	case <-paused.started:
+	case <-ctx.Done():
+		t.Fatal("background build did not start")
+	}
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		Limit:   10,
+	}
+	rsp, err := server.Search(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error)
+	close(release)
+	assertSearch := func(server resource.SearchServer) {
+		t.Helper()
+		require.Eventually(t, func() bool {
+			rsp, err := server.Search(ctx, req)
+			return err == nil && rsp.Error == nil && rsp.TotalHits == 6
+		}, 5*time.Second, 10*time.Millisecond)
+	}
+	assertSearch(server)
+	require.Eventually(t, func() bool {
+		snapshots, err := ListIndexSnapshots(ctx, store, key, testLogger)
+		return err == nil && len(snapshots) == 1
+	}, 5*time.Second, 10*time.Millisecond)
+
+	followerStore := newTestKVRemoteIndexStoreOn(t, kvStore, "restorer")
+	followerBackend, metrics := newTestBleveBackend(t, SnapshotOptions{Store: followerStore, MinDocCount: 5, MaxIndexAge: time.Hour})
+	follower := newServer(followerBackend, storage)
+	require.NoError(t, follower.Init(ctx))
+	assertSearch(follower)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
 }
 
 func TestColdStartReplicasShareOneBuild(t *testing.T) {

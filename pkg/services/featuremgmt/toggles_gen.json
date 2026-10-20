@@ -268,7 +268,8 @@
       "metadata": {
         "name": "alertingAIFeedback",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-23T12:38:09Z"
+        "creationTimestamp": "2025-07-23T12:38:09Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-generated feedback from the Grafana UI.",
@@ -282,7 +283,8 @@
       "metadata": {
         "name": "alertingAIGenAlertRules",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T16:42:42Z"
+        "creationTimestamp": "2025-07-16T16:42:42Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-generated alert rules.",
@@ -310,7 +312,8 @@
       "metadata": {
         "name": "alertingAIImproveAlertRules",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T16:42:42Z"
+        "creationTimestamp": "2025-07-16T16:42:42Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-improve alert rules labels and annotations.",
@@ -997,6 +1000,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistant.dashboardPlanBuildingScreen",
+        "resourceVersion": "1792049243204",
+        "creationTimestamp": "2026-10-15T07:27:23Z"
+      },
+      "spec": {
+        "description": "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2180,7 +2197,8 @@
       "metadata": {
         "name": "enableAppChromeExtensions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-06-30T04:32:08Z"
+        "creationTimestamp": "2025-06-30T04:32:08Z",
+        "deletionTimestamp": "2026-10-19T14:29:55Z"
       },
       "spec": {
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
@@ -3149,16 +3167,19 @@
     {
       "metadata": {
         "name": "grafana.recordedQueriesDisableCreate",
-        "resourceVersion": "1792177003058",
-        "creationTimestamp": "2026-10-16T18:56:43Z"
+        "resourceVersion": "1792440007514",
+        "creationTimestamp": "2026-10-16T18:56:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 20:00:07.51491703 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables creating new recorded queries while preserving access to existing queries",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3798,15 +3819,18 @@
     {
       "metadata": {
         "name": "kubernetesAuthzTeamLBACRuleApi",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-20T19:52:16Z"
+        "resourceVersion": "1792441744548",
+        "creationTimestamp": "2026-01-20T19:52:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 20:29:04.54888 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Registers AuthZ TeamLBACRule /apis endpoint",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5888,15 +5912,17 @@
     {
       "metadata": {
         "name": "text.newFeatures",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-12T12:33:51Z"
+        "resourceVersion": "1792435530884",
+        "creationTimestamp": "2026-08-12T12:33:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-19 18:45:30.884278 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new features in text panel",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
