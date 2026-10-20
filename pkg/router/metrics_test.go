@@ -23,14 +23,28 @@ import (
 func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend := proxyBackend(t, group, upstream, &http.Transport{})
-	svc := newService(&mutableLoader{backends: []Backend{backend}}, nil, prometheus.NewRegistry())
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: []Backend{backend}}, nil), prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	return svc
 }
 
+// The helpers below read the request's group as the router's callers do.
+
+func (m *routerMetrics) instrumentRequest(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
+	m.instrument(gr, w, req, next, apiGroup(req.URL.Path))
+}
+
+func (r *GrafanaRouter) ownsRequest(req *http.Request) bool {
+	return r.owns(req, apiGroup(req.URL.Path))
+}
+
+func requestGroupOf(req *http.Request) string {
+	return requestGroup(req.URL.Path, apiGroup(req.URL.Path))
+}
+
 func instrumented(svc *Service, target string) int {
 	recorder := httptest.NewRecorder()
-	svc.metrics.instrument(svc.router, recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	svc.metrics.instrumentRequest(svc.router, recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
 	return recorder.Code
 }
 
@@ -115,16 +129,21 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, serve(invalid))
 	verb := requestVerb(httptest.NewRequest(http.MethodGet, invalid, nil))
 	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
+
+	// It is no group's request, even when its first segment is a served group.
+	require.Equal(t, http.StatusBadRequest, serve("/apis/test-app/../other-app/v1/things"))
+	require.Equal(t, uint64(2), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
+	require.Zero(t, requestCount(t, svc, "test-app", verb, routeInvalid, "400"))
 }
 
 func TestDiscoveryResultMetrics(t *testing.T) {
-	svc := newService(&mutableLoader{backends: []Backend{
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: []Backend{
 		&providerBackend{
 			fakeBackend: fakeBackend{group: metav1.APIGroup{Name: "provided.ext.grafana.app"}, key: "1"},
 			discovery:   thingsDiscovery("provided.ext.grafana.app"),
 		},
 		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
-	}}, nil, prometheus.NewRegistry())
+	}}, nil), prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
 	aggregatedDiscovery(t, svc.router)
@@ -189,7 +208,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		},
 	}
 	reg := prometheus.NewRegistry()
-	svc := newService(loader, nil, reg)
+	svc := newService(NewGrafanaRouter(loader, nil), reg)
 	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
 	return svc, loader, reg
 }
@@ -275,7 +294,7 @@ func TestRequestMetricsVerbLabelIsBounded(t *testing.T) {
 		for _, target := range []string{"/apis", "/apis/test-app/v1/namespaces/ns/things"} {
 			req := newAuthenticatedRequest(http.MethodGet, target, nil)
 			req.Method = fmt.Sprintf("FOO%d", i)
-			svc.metrics.instrument(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
+			svc.metrics.instrumentRequest(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
 		}
 	}
 	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.requests), "arbitrary methods must not create new series")
@@ -309,7 +328,7 @@ func TestRequestMetricsAuthenticationFailures(t *testing.T) {
 			req.Header.Set("X-Access-Token", tc.token)
 		}
 		recorder := httptest.NewRecorder()
-		svc.metrics.instrument(svc.router, recorder, req, next)
+		svc.metrics.instrumentRequest(svc.router, recorder, req, next)
 		require.Equal(t, http.StatusUnauthorized, recorder.Code, tc.target)
 	}
 	require.False(t, nextCalled, "a rejected request never reaches next")
@@ -329,12 +348,12 @@ func TestRejectedWatchesAreCounted(t *testing.T) {
 	target := "/apis/test-app/v1/namespaces/ns/things?watch=true"
 
 	unauthenticated := httptest.NewRequest(http.MethodGet, target, nil)
-	svc.metrics.instrument(svc.router, httptest.NewRecorder(), unauthenticated, http.NotFoundHandler())
+	svc.metrics.instrumentRequest(svc.router, httptest.NewRecorder(), unauthenticated, http.NotFoundHandler())
 
 	upgrade := newAuthenticatedRequest(http.MethodGet, target, nil)
 	upgrade.Header.Set("Connection", "Upgrade")
 	upgrade.Header.Set("Upgrade", "websocket")
-	svc.metrics.instrument(svc.router, httptest.NewRecorder(), upgrade, http.NotFoundHandler())
+	svc.metrics.instrumentRequest(svc.router, httptest.NewRecorder(), upgrade, http.NotFoundHandler())
 
 	requests := svc.metrics.requests
 	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeUnauthenticated, "401")))

@@ -339,11 +339,6 @@
       "count": 1
     }
   },
-  "packages/grafana-runtime/src/utils/useFavoriteDatasources.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "packages/grafana-schema/src/veneer/common.types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -716,11 +711,6 @@
   },
   "public/app/core/components/AccessControl/PermissionList.tsx": {
     "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/AppChrome/AppChromeExtensionPoint.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -1215,7 +1205,7 @@
   },
   "public/app/features/alerting/unified/components/silences/MatchersField.tsx": {
     "@grafana/require-no-margin": {
-      "count": 5
+      "count": 4
     }
   },
   "public/app/features/alerting/unified/components/silences/SilencePeriod.tsx": {
@@ -1574,14 +1564,9 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/saving/getDashboardChanges.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 4
-    }
-  },
   "public/app/features/dashboard-scene/scene/DashboardControls.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/DashboardScene.tsx": {
@@ -1597,11 +1582,6 @@
   "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/scene/dashboard-filters-overview/useFiltersOverviewState.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {
@@ -1632,15 +1612,7 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-rows/RowItem.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-rows/RowItemEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@grafana/require-no-margin": {
       "count": 1
     },
@@ -1648,15 +1620,7 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-tabs/TabItem.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-tabs/TabItemEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@grafana/require-no-margin": {
       "count": 1
     },
@@ -1679,32 +1643,24 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/serialization/groupByMigration.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/sceneVariablesSetToVariables.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 8
+      "count": 3
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts": {
@@ -1740,16 +1696,6 @@
       "count": 5
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -1765,11 +1711,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/editors/AdHocFiltersVariableEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/editors/GroupByVariableEditor.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -1777,7 +1718,7 @@
   },
   "public/app/features/dashboard-scene/settings/variables/utils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/ConfigEmailSharing.tsx": {
@@ -1800,31 +1741,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/sidebar/DashboardSidebarRenderer.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/sidebar/SectionVariablesList.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/sidebar/add-new/AddNewPane.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/sidebar/dashboard/DashboardEditableElement.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    }
-  },
-  "public/app/features/dashboard-scene/sidebar/dashboard/DashboardVariablesList.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1840,14 +1756,9 @@
       "count": 4
     }
   },
-  "public/app/features/dashboard-scene/utils/utils.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/utils/variables.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 7
+      "count": 2
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -2291,11 +2202,6 @@
   },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/admin/components/PluginDetailsPanel.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2306,7 +2212,7 @@
   },
   "public/app/features/plugins/admin/hooks/usePluginDetailsTabs.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/plugins/admin/pages/Browse.tsx": {
@@ -2767,102 +2673,6 @@
   "public/app/plugins/datasource/azuremonitor/utils/messageFromError.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/SecureSocksProxySettingsNewStyling.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    },
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/MetricsQueryEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/SQLBuilderSelectRow.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/SQLFilter.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/SQLGroupBy.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/QueryHeader.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/VariableQueryEditor/VariableQueryEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LogGroupsField.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/shared/MetricStatEditor/MetricStatEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/guards.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/hooks.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/language/dynamic-labels/language.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/tracking.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/types.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
     }
   },
   "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx": {
