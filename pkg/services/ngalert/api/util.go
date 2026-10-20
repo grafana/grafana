@@ -37,10 +37,12 @@ var (
 
 // lotexRulerCompatibleTypes lists the datasource types accepted by
 // isLotexRulerCompatible, for use in error messages.
-const lotexRulerCompatibleTypes = "loki, prometheus, amazon prometheus, azure prometheus, victoriametrics"
+const lotexRulerCompatibleTypes = "loki, prometheus, amazon prometheus, azure prometheus, victoriametrics, victorialogs"
 
 func isLotexRulerCompatible(dsType string) bool {
-	return dsType == datasources.DS_LOKI || datasources.IsPrometheusCompatible(dsType)
+	return dsType == datasources.DS_LOKI ||
+		dsType == datasources.DS_VICTORIA_LOGS ||
+		datasources.IsPrometheusCompatible(dsType)
 }
 
 func toMacaronPath(path string) string {

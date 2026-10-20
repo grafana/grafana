@@ -429,6 +429,12 @@ func TestInstantQueryPath(t *testing.T) {
 			ok:       true,
 		},
 		{
+			name:     "victoria logs datasource",
+			dsType:   datasources.DS_VICTORIA_LOGS,
+			expected: "select/logsql/stats_query",
+			ok:       true,
+		},
+		{
 			name:   "unsupported datasource",
 			dsType: datasources.DS_GRAPHITE,
 		},
@@ -450,6 +456,7 @@ func TestInstantQueryPath(t *testing.T) {
 		datasources.DS_AMAZON_PROMETHEUS,
 		datasources.DS_AZURE_PROMETHEUS,
 		datasources.DS_VICTORIA_METRICS,
+		datasources.DS_VICTORIA_LOGS,
 	} {
 		require.True(t, isLotexRulerCompatible(dsType), dsType)
 		_, ok := instantQueryPath(dsType)

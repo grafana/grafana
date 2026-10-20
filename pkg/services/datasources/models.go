@@ -36,6 +36,7 @@ const (
 	DS_TESTDATA          = "grafana-testdata-datasource"
 	DS_ZIPKIN            = "zipkin"
 	DS_VICTORIA_METRICS  = "victoriametrics-metrics-datasource"
+	DS_VICTORIA_LOGS     = "victoriametrics-logs-datasource"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.

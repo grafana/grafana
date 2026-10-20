@@ -25,6 +25,10 @@ var (
 		rules:  "/prometheus/api/v1/rules",
 		alerts: "/prometheus/api/v1/alerts",
 	}
+	victoriaLogsEndpoints = promEndpoints{
+		rules:  "/select/vmalert/api/v1/rules",
+		alerts: "/select/vmalert/api/v1/alerts",
+	}
 )
 
 type LotexProm struct {
@@ -98,8 +102,10 @@ func (p *LotexProm) getEndpoints(ctx *contextmodel.ReqContext) (*promEndpoints, 
 		routes = prometheusEndpoints
 	case ds.Type == datasources.DS_LOKI:
 		routes = lokiEndpoints
+	case ds.Type == datasources.DS_VICTORIA_LOGS:
+		routes = victoriaLogsEndpoints
 	default:
-		return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
+		return nil, unexpectedDatasourceTypeError(ds.Type, lotexRulerCompatibleTypes)
 	}
 
 	return &routes, nil

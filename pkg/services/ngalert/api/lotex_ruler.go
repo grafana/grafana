@@ -236,8 +236,10 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 		prefix = prometheusPrefix
 	case ds.Type == datasources.DS_LOKI:
 		prefix = lokiPrefix
+	case ds.Type == datasources.DS_VICTORIA_LOGS:
+		return "", fmt.Errorf("%w for datasource type %s", errRulerNotSupported, ds.Type)
 	default:
-		return "", unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
+		return "", unexpectedDatasourceTypeError(ds.Type, lotexRulerCompatibleTypes)
 	}
 
 	// If the datasource is Loki, there's nothing else for us to do - it doesn't have subtypes.

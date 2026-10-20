@@ -134,6 +134,8 @@ func instantQueryPath(dsType string) (string, bool) {
 	switch {
 	case dsType == datasources.DS_LOKI:
 		return "loki/api/v1/query", true
+	case dsType == datasources.DS_VICTORIA_LOGS:
+		return "select/logsql/stats_query", true
 	case datasources.IsPrometheusCompatible(dsType):
 		return "api/v1/query", true
 	default:
