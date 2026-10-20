@@ -31,7 +31,7 @@ function evaluateDynamicFieldMappings(
 ): Record<string, DynamicHandler[]> {
   const result: Record<string, DynamicHandler[]> = {};
 
-  const fieldForName = frame.fields.find((f) => f.name === fieldNameSource);
+  const fieldForName = frame.fields.find((f) => getFieldDisplayName(f, frame) === fieldNameSource);
   if (!fieldForName || fieldForName.type !== FieldType.string) {
     throw Error(`Invalid Source Field`);
   }
@@ -43,11 +43,12 @@ function evaluateDynamicFieldMappings(
   }> = [];
 
   frame.fields.forEach((f) => {
-    if (f.name === fieldForName.name) {
+    const fieldName = getFieldDisplayName(f, frame);
+    if (fieldName === fieldNameSource) {
       return;
     }
-    const fieldName = getFieldDisplayName(f, frame);
-    const mapping = mappings.find((m) => m.fieldName === f.name);
+
+    const mapping = mappings.find((m) => m.fieldName === fieldName);
     const h = lookUpConfigHandler(mapping?.handlerKey || fieldName.toLowerCase());
     if (!h) {
       // TODO: There should maybe be a way to communicate this weird condition to the user?

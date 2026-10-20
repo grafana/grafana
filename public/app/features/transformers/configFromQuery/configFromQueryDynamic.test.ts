@@ -7,6 +7,7 @@ import {
   type ConfigFromQueryTransformOptions,
 } from './configFromQuery';
 import { extractConfigFromQueryDynamic } from './configFromQueryDynamic';
+import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -121,4 +122,49 @@ describe('transformer operator pipeline', () => {
       expect(getFieldDisplayName(result[0].fields[1], result[0], result)).toEqual('The Green');
     });
   });
+
+  it('Should ignore do not use even when auto mapping', async () => {
+    const config = toDataFrame({
+      fields: [
+        { name: 'Field Name', type: FieldType.string, values: ['col1', 'col2'] },
+        { name: 'Color', type: FieldType.string, values: ['red', 'green'] },
+        { name: 'Display Name', type: FieldType.string, values: ['The Red', 'The Green'] },
+      ],
+      refId: 'config',
+    });
+
+    const series = toDataFrame({
+      fields: [
+        { name: 'col1', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'col2', type: FieldType.number, values: [1, 2, 3] },
+      ],
+      refId: 'A',
+    });
+    series.name = 'throughput';
+
+    const cfg = {
+      id: DataTransformerID.configFromData,
+      options: {
+        configRefId: 'config',
+        applyTo: {
+          id: CustomCFQMatchers.dynamicFieldName,
+          options: 'Field Name',
+        },
+        mappings: [
+          { fieldName: 'Color', handlerKey: FieldConfigHandlerKey.Ignore },
+          { fieldName: 'Display Name', handlerKey: 'displayName' },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [config, series])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result.length).toBe(1);
+      expect(result[0].name).toBe('throughput');
+      expect(result[0].fields[0].config.color).toBeUndefined();
+      expect(result[0].fields[1].config.color).toBeUndefined();
+      expect(getFieldDisplayName(result[0].fields[0], result[0], result)).toEqual('The Red');
+      expect(getFieldDisplayName(result[0].fields[1], result[0], result)).toEqual('The Green');
+    });
+  })
 });
