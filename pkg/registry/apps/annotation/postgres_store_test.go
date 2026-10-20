@@ -2,9 +2,12 @@ package annotation
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -323,9 +326,18 @@ func TestIntegrationPostgresCleanup(t *testing.T) {
 		seed(t, store, ctx, "old", old)
 		seed(t, store, ctx, "recent", recent)
 
+		// past the cutoff but ending within the retention window
+		_, err := store.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "spanning", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "spanning", Time: old.UnixMilli(), TimeEnd: new(recent.UnixMilli())},
+		})
+		require.NoError(t, err)
+
 		deleted, err := store.Cleanup(ctx, now.AddDate(0, 0, -90))
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), deleted, "only the old partition's row should be counted")
+		_, err = store.Get(ctx, ns, "spanning")
+		assert.NoError(t, err, "a range ending within the cutoff should be kept")
 
 		remaining := partitionNameSet(ctx, t, store)
 		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
@@ -350,6 +362,64 @@ func TestIntegrationPostgresCleanup(t *testing.T) {
 		assert.Contains(t, remaining, getPartitionName(current.UnixMilli()), "current partition should be kept by the 24h floor")
 		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
 	})
+}
+
+func TestIntegrationPostgresListPartitionPruning(t *testing.T) {
+	store := newTestPostgresStore(t)
+	ns := metav1.NamespaceDefault
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+	now := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	from := now.AddDate(0, 0, -7)
+	seed := func(name string, start, end time.Time) {
+		t.Helper()
+		_, err := store.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: name, Time: start.UnixMilli(), TimeEnd: new(end.UnixMilli())},
+		})
+		require.NoError(t, err)
+	}
+
+	for weeks := 4; weeks <= 20; weeks++ {
+		at := now.AddDate(0, 0, -7*weeks)
+		seed(fmt.Sprintf("old-%d", weeks), at, at)
+	}
+	// Starts before the window but overlaps it, so it lives in a recent partition.
+	seed("long-range", now.AddDate(0, 0, -60), now.Add(-time.Hour))
+	require.Equal(t, getPartitionName(now.Add(-time.Hour).UnixMilli()), partitionOf(t, store.pool, ns, "long-range"))
+	seed("recent", now, now)
+
+	opts := ListOptions{From: from.UnixMilli(), To: now.Add(time.Hour).UnixMilli()}
+
+	list, err := store.List(ctx, ns, opts)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"recent", "long-range"}, annotationNames(list))
+
+	query, args := buildListQuery(ns, opts, 0, 100)
+	rows, err := store.pool.Query(ctx, "EXPLAIN "+query, args...)
+	require.NoError(t, err)
+	scanned := map[string]struct{}{}
+	for rows.Next() {
+		var line string
+		require.NoError(t, rows.Scan(&line))
+		if m := scannedPartition.FindStringSubmatch(line); m != nil {
+			scanned[m[1]] = struct{}{}
+		}
+	}
+	require.NoError(t, rows.Err())
+
+	assert.Equal(t, map[string]struct{}{getPartitionName(now.UnixMilli()): {}}, scanned,
+		"partitions that ended before the window must be pruned")
+}
+
+var scannedPartition = regexp.MustCompile(` on (annotations_\d+w\d+) `)
+
+func partitionOf(t *testing.T, pool *pgxpool.Pool, ns, name string) string {
+	t.Helper()
+	var partition string
+	require.NoError(t, pool.QueryRow(t.Context(),
+		`SELECT tableoid::regclass::text FROM annotations WHERE namespace = $1 AND name = $2`, ns, name).Scan(&partition))
+	return partition
 }
 
 func partitionNameSet(ctx context.Context, t *testing.T, store *PostgreSQLStore) map[string]struct{} {

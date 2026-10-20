@@ -61,7 +61,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // to avoid a race condition when counting up , wait for react-data-grid to finish rendering.
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const longTextColIdx = await getColumnIdx(table, 'Long Text');
 
     // text wrapping is enabled by default on this panel.
@@ -158,7 +158,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const stateColumnHeader = getCell(table, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
@@ -185,7 +185,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
 
@@ -275,7 +275,20 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
   });
 
   test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+    // section is collapsed when the panel has no links, so we need to open it first
+    const expandDataLinksGroup = async () => {
+      const toggle = dashboardPage.getByGrafanaSelector(
+        selectors.components.OptionsGroup.toggle('Data links and actions')
+      );
+      await expect(toggle).toBeVisible();
+      if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+        await toggle.click();
+      }
+    };
+
     const addDataLink = async (title: string, url: string) => {
+      await expandDataLinksGroup();
+
       await dashboardPage
         .getByGrafanaSelector(
           selectors.components.PanelEditor.OptionsPane.fieldLabel('Data links and actions Data links')
@@ -310,7 +323,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await disableAllTextWrap(page, selectors);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     // - pills column currently does not support DataLinks.
     // - we don't apply DataLinks to Actions or DataLinks columns.
@@ -333,8 +346,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
       const cell = getCell(table, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
-      expect(cell.locator('a')).toHaveAttribute('href');
-      expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+      await expect(cell.locator('a')).toHaveAttribute('href');
+      await expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
     }
 
     const headerContainer = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer);
@@ -349,7 +362,21 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      await cell.locator('a').click({ force: true });
+      // Inline links can extend past the clipping cell; click the center of their visible intersection.
+      await cell.scrollIntoViewIfNeeded();
+      const position = await cell.evaluate((element) => {
+        const cellBounds = element.getBoundingClientRect();
+        const linkBounds = element.querySelector('a')!.getBoundingClientRect();
+        return {
+          x:
+            (Math.max(cellBounds.left, linkBounds.left) + Math.min(cellBounds.right, linkBounds.right)) / 2 -
+            cellBounds.left,
+          y:
+            (Math.max(cellBounds.top, linkBounds.top) + Math.min(cellBounds.bottom, linkBounds.bottom)) / 2 -
+            cellBounds.top,
+        };
+      });
+      await cell.click({ position });
       await expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
 
       await headerContainer.click(); // convenient just to click the header to close the tooltip.
@@ -376,7 +403,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const minColumnIdx = await getColumnIdx(table, 'Min');
@@ -503,6 +530,34 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).not.toBeVisible();
   });
 
+  test('Tooltip from field picker can be cleared', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '12' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tooltip from field'))
+    ).toBeVisible();
+    await waitForTableLoad(page);
+
+    // this panel ships with a field override that renders a tooltip caret on the "Info" column.
+    const caret = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret);
+    await expect(caret.first()).toBeVisible();
+
+    const overrideGroup = dashboardPage.getByGrafanaSelector(
+      selectors.components.OptionsGroup.group('panel-options-override-1')
+    );
+    const tooltipFieldPicker = overrideGroup.getByLabel('Tooltip from field');
+    await expect(tooltipFieldPicker).toHaveValue('Long Text');
+
+    // clearing the picker should remove the tooltip entirely, not just leave it stuck on a value.
+    await overrideGroup.getByRole('button', { name: 'Clear value' }).click();
+
+    await expect(tooltipFieldPicker).toHaveValue('');
+    await expect(caret).toHaveCount(0);
+  });
+
   test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
@@ -515,7 +570,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const dataLinkColumnIdx = await getColumnIdx(table, 'Data Link');
@@ -580,7 +635,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
     await waitForTableLoad(panelContent);
 
-    const table = panelContent.locator('.rdg');
+    const table = panelContent.locator('.rdg:not([aria-hidden="true"])');
 
     const frameCombobox = panelContent.getByRole('combobox');
     await expect(frameCombobox).toBeVisible();

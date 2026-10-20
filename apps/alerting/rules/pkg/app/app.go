@@ -33,10 +33,20 @@ func New(cfg app.Config) (app.App, error) {
 				return nil, err
 			}
 			managedKind := simple.AppManagedKind{
-				Kind:      kind,
-				Validator: validator,
-				Mutator:   buildKindMutator(kind, runtimeCfg),
-				Watcher:   buildKindWatcher(kind, runtimeCfg),
+				Kind:    kind,
+				Watcher: buildKindWatcher(kind, runtimeCfg),
+			}
+			// Assign the validator/mutator only when non-nil: these builders return
+			// concrete pointer types, so assigning a nil result straight into the
+			// KindValidator/KindMutator interface fields would yield a non-nil
+			// interface holding a nil pointer. ValidateManifest would then reject a
+			// validation-only kind (e.g. Config, which has no mutator) as "has a
+			// mutator" and fail app init.
+			if validator != nil {
+				managedKind.Validator = validator
+			}
+			if mutator := buildKindMutator(kind, runtimeCfg); mutator != nil {
+				managedKind.Mutator = mutator
 			}
 			// Only kinds with a watcher run an informer (RuleSequence), so this
 			// scopes that watch to WatchNamespace; empty means all namespaces.
@@ -57,7 +67,8 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds:          managedKinds,
+		VersionedCustomRoutes: buildSearchRoutes(runtimeCfg),
 	}
 
 	a, err := simple.NewApp(c)
@@ -71,6 +82,35 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+// The rule search routes. The apiserver parses each as a request on a resource
+// with this name, which the rules authorizer relies on to require list on the
+// rule kind it searches.
+const (
+	SearchAlertRulesResource     = "searchAlertRules"
+	SearchRecordingRulesResource = "searchRecordingRules"
+)
+
+// buildSearchRoutes wires the per-kind rule search handlers
+// (provided by the registry) to their namespaced routes. A route
+// is skipped when its handler is unset, so manifest validation without a
+// backing instance does not register a nil handler.
+func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
+	handlers := simple.AppVersionRouteHandlers{}
+	for path, handler := range map[string]simple.AppCustomRouteHandler{
+		"/" + SearchAlertRulesResource:     cfg.SearchAlertRulesHandler,
+		"/" + SearchRecordingRulesResource: cfg.SearchRecordingRulesHandler,
+	} {
+		if handler == nil {
+			continue
+		}
+		handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodPost}] = handler
+	}
+	if len(handlers) == 0 {
+		return nil
+	}
+	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
@@ -92,6 +132,11 @@ func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.Man
 		return validation.NewBuilder[*v0alpha1.RuleSequence]().
 			WithOpenAPIValidation(md, gk).
 			OnWrite(rulesequence.ValidateWrite(cfg)).
+			Build()
+	case "Config":
+		return validation.NewBuilder[*v0alpha1.Config]().
+			WithOpenAPIValidation(md, gk).
+			OnWrite(config.ValidateConfigWrite(cfg)).
 			Build()
 	}
 	return nil, nil

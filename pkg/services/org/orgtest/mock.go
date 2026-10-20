@@ -284,11 +284,6 @@ func (_m *MockService) InsertOrgUser(_a0 context.Context, _a1 *org.OrgUser) (int
 	return r0, r1
 }
 
-// RegisterDelete provides a mock function with given fields: query
-func (_m *MockService) RegisterDelete(query string) {
-	_m.Called(query)
-}
-
 // RemoveOrgUser provides a mock function with given fields: _a0, _a1
 func (_m *MockService) RemoveOrgUser(_a0 context.Context, _a1 *org.RemoveOrgUserCommand) error {
 	ret := _m.Called(_a0, _a1)

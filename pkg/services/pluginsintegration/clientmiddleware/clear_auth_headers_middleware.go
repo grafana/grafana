@@ -51,6 +51,16 @@ func (m *ClearAuthHeadersMiddleware) QueryData(ctx context.Context, req *backend
 	return m.BaseHandler.QueryData(ctx, req)
 }
 
+func (m *ClearAuthHeadersMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	m.clearHeaders(ctx, req)
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *ClearAuthHeadersMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)

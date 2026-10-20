@@ -16,6 +16,10 @@ on:
       - .citools/src/govulncheck/**
       - go.*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 permissions:
   contents: read
 

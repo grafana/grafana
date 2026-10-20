@@ -15,7 +15,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Annotations
-review_date: 2026-05-19
+review_date: 2026-08-10
 title: Microsoft SQL Server annotations
 weight: 500
 ---

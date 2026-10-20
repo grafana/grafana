@@ -12,6 +12,9 @@ import { createProps, renderPanel } from './test-utils';
 // Stub the lazy CodeMirror bundle used by the inline editor.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // editor/variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({ value, 'aria-label': ariaLabel }: { value: string; 'aria-label'?: string }) => (
     <textarea aria-label={ariaLabel} value={value} readOnly />
   ),
@@ -32,3 +35,4 @@ describe('TextNGPanel edit mode', () => {
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 });
+jest.mock('./SandboxFrame');

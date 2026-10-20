@@ -8,8 +8,12 @@ import (
 
 // ContinueToken represents a pagination token for list operations.
 type ContinueToken struct {
-	// Namespace is the namespace to continue from. Only set for cross-namespace list queries.
+	// Namespace identifies the namespace scope or cross-namespace cursor position.
 	Namespace string `json:"ns,omitempty"`
+	// KeysOnly distinguishes keys-only tokens from regular list tokens.
+	KeysOnly bool `json:"ko,omitempty"`
+	// ClusterWide distinguishes a cross-namespace cursor from a namespaced scope.
+	ClusterWide bool `json:"cw,omitempty"`
 	// Name is the name to continue from. Required for list resources, empty for list history.
 	Name string `json:"n,omitempty"`
 	// ResourceVersion is the resource version for pagination.
@@ -46,5 +50,9 @@ func GetContinueToken(token string) (*ContinueToken, error) {
 
 // NewSearchContinueToken encodes SearchAfter values into a continue token string.
 func NewSearchContinueToken(searchAfter []string, rv int64) (string, error) {
-	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv}.String(), nil
+	return newSearchContinueToken(searchAfter, rv, false)
+}
+
+func newSearchContinueToken(searchAfter []string, rv int64, sortAscending bool) (string, error) {
+	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv, SortAscending: sortAscending}.String(), nil
 }

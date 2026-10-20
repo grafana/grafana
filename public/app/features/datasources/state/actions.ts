@@ -12,13 +12,13 @@ import {
   config,
   type DataSourceSrv,
   DataSourceWithBackend,
+  getPluginSettings,
   HealthCheckError,
   type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -242,9 +242,9 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
 }
 
 export function addDataSource(
-  plugin: DataSourcePluginMeta,
+  plugin: Pick<DataSourcePluginMeta, 'id' | 'name'>,
   editRoute = DATASOURCES_ROUTES.Edit
-): ThunkResult<Promise<void>> {
+): ThunkResult<Promise<string>> {
   return async () => {
     const newInstance = {
       type: plugin.id,
@@ -274,6 +274,8 @@ export function addDataSource(
     });
 
     locationService.push(editRoute.replace(/:uid/gi, uid));
+
+    return uid;
   };
 }
 

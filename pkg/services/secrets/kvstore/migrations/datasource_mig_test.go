@@ -50,7 +50,7 @@ func TestIntegrationMigrate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -73,7 +73,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName} //nolint:staticcheck // Exercise legacy field compatibility.
 		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, dataSource)
@@ -96,7 +96,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName} //nolint:staticcheck // Exercise legacy field compatibility.
 		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, dataSource)

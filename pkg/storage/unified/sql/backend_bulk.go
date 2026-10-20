@@ -9,9 +9,9 @@ import (
 	"os"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -685,7 +685,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 				PreviousRV: -1, // Used for WATCH, but we want to skip watch events
 			},
 			Folder:          req.Folder,
-			GUID:            uuid.New().String(),
+			GUID:            uuid.NewV4().String(),
 			ResourceVersion: resourceVersion,
 			KeyPath:         buildKeyPath(req.Key, resourceVersion, req.Action, req.Folder),
 		})
@@ -698,10 +698,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 	insertStart := time.Now()
 	maxRows := bulkHistoryInsertRowLimit(b.dialect.DialectName())
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsertBulk, sqlBulkResourceHistoryInsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Rows:        rows[start:end],

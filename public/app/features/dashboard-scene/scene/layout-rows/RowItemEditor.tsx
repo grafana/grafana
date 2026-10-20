@@ -3,6 +3,7 @@ import { useId, useMemo, useRef } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useSceneObjectState } from '@grafana/scenes';
 import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,11 +11,22 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
-import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
-import { dashboardEditActions } from '../../sidebar/shared';
-import { getQueryRunnerFor } from '../../utils/utils';
+import {
+  getSectionFiltersCount,
+  AddSectionFilterButton,
+  SectionFiltersCategoryTitle,
+  SectionFiltersList,
+} from '../../sidebar/SectionFiltersList';
+import {
+  getSectionVariablesCount,
+  AddSectionVariableButton,
+  SectionVariablesCategoryTitle,
+  SectionVariablesList,
+} from '../../sidebar/SectionVariablesList';
+import { SidebarCategoryType } from '../../sidebar/types';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -22,7 +34,8 @@ import { type RowItem } from './RowItem';
 
 export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
-  const { layout } = model.useState();
+  // The canvas can remount during DnD loading while this editor remains mounted.
+  const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
 
   const rowCategory = useMemo(
     () =>
@@ -77,8 +90,11 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
-      id: 'dash-row-section-variables',
+      id: SidebarCategoryType.RowSectionVariables,
       isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionVariablesCount(model),
+      headerActions: <AddSectionVariableButton sectionOwner={model} />,
       renderTitle: (isExpanded: boolean) => (
         <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
       ),
@@ -87,7 +103,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'dash-row-section-variables-list',
+        id: SidebarCategoryType.RowSectionVariablesList,
         skipField: true,
         render: () => <SectionVariablesList sectionOwner={model} />,
       })
@@ -99,15 +115,18 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const sectionFiltersCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
-      id: 'dash-row-section-filters',
+      id: SidebarCategoryType.RowSectionFilters,
       isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionFiltersCount(model),
+      headerActions: <AddSectionFilterButton sectionOwner={model} />,
       renderTitle: () => <SectionFiltersCategoryTitle />,
     });
 
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'dash-row-section-filters-list',
+        id: SidebarCategoryType.RowSectionFiltersList,
         skipField: true,
         render: () => <SectionFiltersList sectionOwner={model} />,
       })
@@ -165,20 +184,52 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   );
 }
 
-function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
+export function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { hideHeader: isHeaderHidden = false } = row.useState();
 
-  return <Switch id={id} value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
+  return (
+    <Switch
+      id={id}
+      value={isHeaderHidden}
+      onChange={() =>
+        edit({
+          meta: { actionId: 'row.changeHeaderVisibility' },
+          description: isHeaderHidden
+            ? t('dashboard.edit-actions.row-show-header', 'Show row header')
+            : t('dashboard.edit-actions.row-hide-header', 'Hide row header'),
+          source: row,
+          perform: () => row.onHeaderHiddenToggle(!isHeaderHidden),
+          undo: () => row.onHeaderHiddenToggle(isHeaderHidden),
+        })
+      }
+    />
+  );
 }
 
-function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
-  const { fillScreen } = row.useState();
+export function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
+  const { fillScreen = false } = row.useState();
 
-  return <Switch id={id} value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
+  return (
+    <Switch
+      id={id}
+      value={fillScreen}
+      onChange={() =>
+        edit({
+          meta: { actionId: 'row.changeFillScreen' },
+          description: fillScreen
+            ? t('dashboard.edit-actions.row-fill-screen-disable', 'Disable row fill screen')
+            : t('dashboard.edit-actions.row-fill-screen-enable', 'Enable row fill screen'),
+          source: row,
+          perform: () => row.onChangeFillScreen(!fillScreen),
+          undo: () => row.onChangeFillScreen(fillScreen),
+        })
+      }
+    />
+  );
 }
 
-function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
-  const { layout } = row.useState();
+export function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
+  const { layout, repeatByVariable } = row.useState();
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -194,8 +245,23 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
       <RepeatRowSelect2
         id={id}
         sceneContext={row}
-        repeat={row.state.repeatByVariable}
-        onChange={(repeat) => row.onChangeRepeat(repeat)}
+        repeat={repeatByVariable}
+        onChange={(repeat) => {
+          // The select reports "Disable repeating" as an empty string
+          const nextRepeat = repeat || undefined;
+
+          if (nextRepeat === repeatByVariable) {
+            return;
+          }
+
+          edit({
+            meta: { actionId: 'row.changeRepeat' },
+            description: t('dashboard.edit-actions.row-repeat-variable', 'Row repeat by'),
+            source: row,
+            perform: () => row.onChangeRepeat(nextRepeat),
+            undo: () => row.onChangeRepeat(repeatByVariable),
+          });
+        }}
       />
       {isAnyPanelUsingDashboardDS ? (
         <Alert
@@ -238,7 +304,8 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
     title = generateUniqueTitle('New row', existingNames);
   }
 
-  dashboardEditActions.edit({
+  edit({
+    meta: { actionId: 'row.changeTitle' },
     description: t('dashboard.edit-actions.row-title', 'Change row title'),
     source: row,
     perform: () => row.onChangeTitle(title),

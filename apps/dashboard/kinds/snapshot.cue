@@ -3,6 +3,12 @@ package kinds
 snapshotV0alpha1: {
 	kind:       "Snapshot"
 	pluralName: "Snapshots"
+
+	// Generic read routes bypass the ownership filtering used by snapshot lists.
+	listKeys: false
+	search: {
+		endpoint: false
+	}
 	schema: {
 		spec: {
 			// Snapshot title
@@ -29,5 +35,15 @@ snapshotV0alpha1: {
 			// The raw dashboard (unstructured for now)
 			dashboard?: [string]: _
 		}
+		blobs: {
+			dashboard?: #BlobReference
+		}
 	}
+}
+
+#BlobReference: {
+	uid:          string
+	size?:        int64
+	hash?:        string
+	contentType?: string
 }

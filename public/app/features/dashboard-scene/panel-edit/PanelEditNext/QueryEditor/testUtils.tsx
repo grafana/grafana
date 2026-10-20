@@ -84,6 +84,7 @@ export const mockActions: QueryEditorActions = {
   deleteQuery: jest.fn(),
   duplicateQuery: jest.fn(),
   runQueries: jest.fn(),
+  startQueryPreview: jest.fn(),
   changeDataSource: jest.fn(),
   toggleQueryHide: jest.fn(),
   onQueryOptionsChange: jest.fn(),

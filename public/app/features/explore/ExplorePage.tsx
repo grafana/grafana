@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { type CSSProperties, useEffect } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -65,6 +65,27 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   useKeyboardShortcuts();
   useExplorePageContext(panes);
 
+  // button = 4, padding = 1 x 2
+  const parentStyle: CSSProperties = {
+    height: showCorrelationEditorBar ? `calc(100% - ${theme.spacing(6)})` : '100%', // button = 4, padding = 1 x 2
+  };
+
+  const paneStyle: CSSProperties = {
+    overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    paddingLeft: theme.spacing(2),
+    paddingRight: hasSplit ? theme.spacing(1) : theme.spacing(2),
+  };
+
+  const secondaryPaneStyle: CSSProperties = {
+    overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    paddingLeft: hasSplit ? theme.spacing(1) : 0,
+    paddingRight: hasSplit ? theme.spacing(2) : 0,
+  };
+
   return (
     <Page layout={PageLayoutType.Custom}>
       <div
@@ -84,8 +105,9 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
           maxSize={MIN_PANE_WIDTH * -1}
           primary="second"
           splitVisible={hasSplit}
-          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)})` } : {}} // button = 4, padding = 1 x 2
-          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+          parentStyle={parentStyle}
+          paneStyle={paneStyle}
+          secondaryPaneStyle={secondaryPaneStyle}
           onDragFinished={(size) => size && updateSplitSize(size)}
         >
           {panes.map(([exploreId, pane]) => {

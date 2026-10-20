@@ -244,9 +244,9 @@ func TestGetFresh_RecordsStaleReadMetrics(t *testing.T) {
 		})
 	require.ErrorIs(t, err, ErrStaleRead)
 
-	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.retries.WithLabelValues("widgets")),
+	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.retries),
 		"each rescheduled read counts as a retry")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.exhausted.WithLabelValues("widgets")),
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.exhausted),
 		"giving up counts once as exhausted")
 }
 

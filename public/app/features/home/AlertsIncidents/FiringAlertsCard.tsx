@@ -3,16 +3,17 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { SummaryCard, SummaryCardPrefix } from './SummaryCard';
+import { type FilterScope, formatFilterLabel } from './filterSelection';
 import { severityLevelColor } from './severity';
-import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
+import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -44,46 +45,28 @@ function severityLabel(level?: SeverityLevel): string {
 }
 
 /**
- * Empty-state copy scoped to the active team filter. The "All teams" sentinel is
- * checked first so it never leaks into copy; an explicit team selection overrides
- * the "your teams" default filter, so the copy names that team instead of
- * claiming it's the user's own.
+ * Empty-state copy scoped to the active filter. A picked label overrides the
+ * "your teams" default filter, so the copy names the picked label instead
+ * of claiming it's the user's own teams.
  */
-function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): string {
-  if (selectedTeam === ALL_VARIABLE_VALUE) {
-    return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
+  switch (filterScope.kind) {
+    case 'all':
+      return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+    case 'label':
+      return t('home.firing-alerts-card.empty-selected-label', 'No firing alerts with {{label}}.', {
+        label: formatFilterLabel(filterScope.label),
+        interpolation: { escapeValue: false },
+      });
+    case 'default':
+      return hasTeams
+        ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
+        : t('home.firing-alerts-card.empty', 'You have no firing alerts.');
   }
-  if (selectedTeam) {
-    return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
-      team: selectedTeam,
-      interpolation: { escapeValue: false },
-    });
-  }
-  if (hasTeams) {
-    return t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.');
-  }
-  return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
-}
-
-export function FiringAlertsCard() {
-  if (!canViewFiringAlerts()) {
-    return null;
-  }
-
-  return <FiringAlertsCardInner />;
-}
-
-/**
- * Inner component avoids calling hooks conditionally —
- * the permission gate is in the parent wrapper.
- */
-function FiringAlertsCardInner() {
-  const data = useFiringAlerts();
-  return <FiringAlertsCardView data={data} />;
 }
 
 /** Render-only card body; data comes from useFiringAlerts so callers control where the hook runs. */
-export function FiringAlertsCardView({
+export function FiringAlertsCard({
   data,
   hideFooterActions = false,
 }: {
@@ -98,7 +81,7 @@ export function FiringAlertsCardView({
     visibleAlerts,
     hasAlerts,
     hasTeams,
-    selectedTeam,
+    filterScope,
     loading,
     error,
     refetch,
@@ -171,13 +154,13 @@ export function FiringAlertsCardView({
                 </SummaryCardPrefix>
               )
             }
-            trailing={<SummaryCardAge date={startedAt} />}
+            trailing={<TimeAgoCell date={startedAt} />}
             href={detailHref}
             onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
           />
         );
       }}
-      emptyMessage={emptyMessage(selectedTeam, hasTeams)}
+      emptyMessage={emptyMessage(filterScope, hasTeams)}
       emptyAction={
         canCreate ? (
           <LinkButton

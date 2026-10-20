@@ -5,6 +5,8 @@
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties', [{ forceFix: string[] , calleesToIgnore: string[], basePaths: string[], namespace?: string }]>} RuleDefinition */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties',  [{forceFix: string[], calleesToIgnore: string[], basePaths: string[], namespace?: string}]>} RuleContextWithOptions */
 
+const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
+
 const {
   getNodeValue,
   getTFixers,
@@ -14,8 +16,6 @@ const {
   shouldBeFixed,
   isStringNonAlphanumeric,
 } = require('./translation-utils.cjs');
-
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-i18n/src/eslint/README.md#${name}`

@@ -2,7 +2,7 @@ import { render, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
+import { config, usePluginLinks } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
@@ -29,6 +29,7 @@ const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
     delete: byRole('button', { name: /delete/i }),
+    stateHistory: byRole('button', { name: /show state history/i }),
   },
 };
 
@@ -112,5 +113,41 @@ describe('RuleDetails RBAC', () => {
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('RuleDetails state history button', () => {
+  const grafanaRule = getGrafanaRule({ name: 'Grafana' });
+  const originalStateHistory = config.unifiedAlerting.stateHistory;
+  const originalDeprecatedBackend = config.unifiedAlerting.alertStateHistoryBackend;
+
+  beforeEach(() => {
+    mocks.useIsRuleEditable.mockReturnValue({ loading: false });
+  });
+
+  afterEach(() => {
+    config.unifiedAlerting.stateHistory = originalStateHistory;
+    config.unifiedAlerting.alertStateHistoryBackend = originalDeprecatedBackend;
+  });
+
+  it('renders the button when a backend records state history', async () => {
+    config.unifiedAlerting.stateHistory = { backend: 'annotations' };
+
+    render(<RuleDetails rule={grafanaRule} />);
+
+    expect(await ui.actionButtons.stateHistory.find()).toBeInTheDocument();
+  });
+
+  it.each([
+    { name: 'the prometheus backend cannot answer history queries', stateHistory: { backend: 'prometheus' } },
+    { name: 'state history is turned off', stateHistory: undefined },
+  ])('does not render the button when $name', async ({ stateHistory }) => {
+    config.unifiedAlerting.stateHistory = stateHistory;
+    config.unifiedAlerting.alertStateHistoryBackend = undefined;
+
+    render(<RuleDetails rule={grafanaRule} />);
+    await waitFor(() => {});
+
+    expect(ui.actionButtons.stateHistory.query()).not.toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
 
@@ -59,7 +59,7 @@ func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 func TestIntegrationBeyondDeviceLimit(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	anonDBStore := ProvideAnonDBStore(store, 1)
 
 	anonDevice := &Device{
@@ -82,7 +82,7 @@ func TestIntegrationBeyondDeviceLimit(t *testing.T) {
 func TestIntegrationAnonStore_DeleteDevice(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
 

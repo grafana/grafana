@@ -89,6 +89,11 @@ export const versionedComponents = {
       '13.2.0': 'data-testid BuildDashboardButton from suggestions button',
     },
   },
+  ControlsAddButton: {
+    triggerButton: {
+      '13.3.0': 'data-testid ControlsAddButton trigger button',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */
@@ -141,6 +146,12 @@ export const versionedComponents = {
     addNewVariableButton: {
       '13.2.0': 'data-testid sidebar add new variable button',
       '13.1.0': 'data-testid edit pane add new variable button',
+    },
+    addNewRowButton: {
+      '13.2.0': 'data-testid sidebar add new row button',
+    },
+    addNewTabButton: {
+      '13.2.0': 'data-testid sidebar add new tab button',
     },
   },
   EditPaneHeader: {
@@ -283,6 +294,7 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'TestData noise',
         },
         seriesCount: {
+          '13.2.0': 'data-testid TestData series count',
           [MIN_GRAFANA_VERSION]: 'TestData series count',
         },
         spread: {
@@ -293,6 +305,9 @@ export const versionedComponents = {
         },
         drop: {
           [MIN_GRAFANA_VERSION]: 'TestData drop values',
+        },
+        exemplarCount: {
+          '13.2.0': 'data-testid TestData exemplar count',
         },
       },
     },
@@ -305,6 +320,31 @@ export const versionedComponents = {
     Jaeger: {
       traceIDInput: {
         [MIN_GRAFANA_VERSION]: 'Trace ID',
+      },
+    },
+    InfluxDB: {
+      configPage: {
+        urlInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-url-input',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-url-input',
+        },
+        productSelect: {
+          '13.2.0': 'data-testid influxdb-v2-config-product-select',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-product-select',
+        },
+        queryLanguageSelect: {
+          '13.2.0': 'data-testid influxdb-v2-config-query-language-select',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-query-language-select',
+        },
+        organizationInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-organization-input',
+        },
+        defaultBucketInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-default-bucket-input',
+        },
+        tokenInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-token-input',
+        },
       },
     },
     Prometheus: {
@@ -528,6 +568,9 @@ export const versionedComponents = {
       title: {
         [MIN_GRAFANA_VERSION]: (title: string) => `data-testid Panel header ${title}`,
       },
+      subtitle: {
+        '13.2.0': `data-testid Panel subtitle`,
+      },
       content: {
         '11.1.0': 'data-testid panel content',
       },
@@ -548,6 +591,9 @@ export const versionedComponents = {
       },
       headerCornerInfo: {
         [MIN_GRAFANA_VERSION]: (mode: string) => `Panel header ${mode}`,
+      },
+      headerNotice: {
+        '13.3.0': (severity: string) => `data-testid Panel header notice ${severity}`,
       },
       status: {
         '10.2.0': (status: string) => `data-testid Panel status ${status}`,
@@ -636,6 +682,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
@@ -644,6 +693,34 @@ export const versionedComponents = {
           },
           filterOutButton: {
             '13.2.0': 'data-testid tableng cell-actions filter-out-button',
+          },
+        },
+        headerColumnMenu: {
+          button: {
+            '13.3.0': 'data-testid tableng header column-menu-button',
+          },
+          filterItem: {
+            '13.3.0': 'data-testid tableng header column-menu-filter-item',
+          },
+          activeFilterButton: {
+            '13.3.0': 'data-testid tableng header active-filter-button',
+          },
+          hideItem: {
+            '13.3.0': 'data-testid tableng header column-menu-hide-item',
+          },
+          manageColumnsItem: {
+            '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
+          },
+        },
+        columnsSidebar: {
+          container: {
+            '13.3.0': 'data-testid tableng columns-sidebar',
+          },
+          closeButton: {
+            '13.3.0': 'data-testid tableng columns-sidebar close-button',
+          },
+          row: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar row ${columnName}`,
           },
         },
         Filters: {
@@ -720,6 +797,11 @@ export const versionedComponents = {
         '10.4.0': 'data-testid drawer subtitle',
       },
     },
+    PanelTimeRangeDrawer: {
+      timeComparisonSelect: {
+        '13.3.0': 'data-testid Panel time range drawer time comparison select',
+      },
+    },
     DashboardSaveDrawer: {
       saveButton: {
         '11.1.0': 'data-testid Save dashboard drawer button',
@@ -730,6 +812,14 @@ export const versionedComponents = {
       saveAsTitleInput: {
         '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
+      },
+    },
+    NewLibraryPanelDrawer: {
+      nameInput: {
+        '13.3.0': 'data-testid New library panel name field',
+      },
+      createButton: {
+        '13.3.0': 'data-testid New library panel create button',
       },
     },
   },
@@ -789,6 +879,11 @@ export const versionedComponents = {
       '10.0.0': 'data-testid toggle-viz-picker',
       '8.0.0': 'toggle-viz-picker',
     },
+    VizTypePicker: {
+      searchInput: {
+        '13.2.0': 'data-testid Panel editor viz type picker search input',
+      },
+    },
     toggleVizOptions: {
       '10.1.0': 'data-testid toggle-viz-options',
       [MIN_GRAFANA_VERSION]: 'toggle-viz-options',
@@ -804,6 +899,7 @@ export const versionedComponents = {
       '10.2.0': 'Map controls Show zoom control field property editor',
     },
     showAttributionField: {
+      '13.2.0': 'data-testid Map controls Show optional attribution field property editor',
       '13.1.0': 'data-testid Map controls Show attribution field property editor',
       '10.2.0': 'Map controls Show attribution field property editor',
     },
@@ -825,6 +921,19 @@ export const versionedComponents = {
       '9.2.0': 'show measure tools',
     },
 
+    // [Gauge] Effects options
+    Gauge: {
+      gradientSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor gradient switch',
+      },
+      barGlowSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor bar glow switch',
+      },
+      centerGlowSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor center glow switch',
+      },
+    },
+
     Outline: {
       section: {
         '12.0.0': 'data-testid Outline section',
@@ -837,6 +946,19 @@ export const versionedComponents = {
       },
     },
     ElementEditPane: {
+      List: {
+        ListItem: {
+          editButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit edit button ${itemKey}`,
+          },
+          duplicateButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit duplicate button ${itemKey}`,
+          },
+          deleteButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit delete button ${itemKey}`,
+          },
+        },
+      },
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },
@@ -938,6 +1060,13 @@ export const versionedComponents = {
     },
     active: { [MIN_GRAFANA_VERSION]: () => '[class*="-activeTabStyle"]' },
   },
+  TabbedContainer: {
+    // Shared by every TabbedContainer, so scope it to the surrounding container
+    // (for example pages.Explore.QueryHistory.container) to address one panel's close button.
+    closeButton: {
+      '13.2.0': 'data-testid tabbed-container-close-button',
+    },
+  },
   RefreshPicker: {
     runButtonV2: {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker run button',
@@ -987,6 +1116,14 @@ export const versionedComponents = {
     rows: {
       '13.1.0': 'data-testid Query editor row',
       [MIN_GRAFANA_VERSION]: 'Query editor row',
+    },
+  },
+  QueryEditorCoauthoring: {
+    selectionToolbar: {
+      '13.3.0': 'data-testid query-coauthoring-selection-toolbar',
+    },
+    container: {
+      '13.3.0': 'data-testid query-coauthoring-scroll-body',
     },
   },
   QueryEditorRow: {
@@ -1050,6 +1187,42 @@ export const versionedComponents = {
     stepAdvancedModeSwitch: {
       '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
     },
+    contactPointPicker: {
+      '13.2.0': 'data-testid alert-rule contact-point-picker',
+      [MIN_GRAFANA_VERSION]: 'contact-point-picker',
+    },
+    contactPointInput: {
+      '13.2.0': 'data-testid alert-rule contact-point-input',
+    },
+    pendingPeriodInput: {
+      '13.2.0': 'data-testid alert-rule pending-period-input',
+    },
+    thresholdInput: {
+      '13.2.0': 'data-testid alert-rule threshold-input',
+    },
+    saveRuleButton: {
+      '13.2.0': 'data-testid alert-rule save-rule-button',
+      [MIN_GRAFANA_VERSION]: 'save-rule',
+    },
+    addLabelsButton: {
+      '13.2.0': 'data-testid alert-rule add-labels-button',
+      [MIN_GRAFANA_VERSION]: 'add-labels-button',
+    },
+    folderPicker: {
+      '13.2.0': 'data-testid alert-rule folder-picker',
+      [MIN_GRAFANA_VERSION]: 'folder-picker',
+    },
+    groupPicker: {
+      '13.2.0': 'data-testid alert-rule group-picker',
+      [MIN_GRAFANA_VERSION]: 'group-picker',
+    },
+    routingOptions: {
+      '13.2.0': (mode: string) => `data-testid alert-rule routing-options-${mode}`,
+      [MIN_GRAFANA_VERSION]: (mode: string) => `routing-options-${mode}`,
+    },
+    viewContactPointsLink: {
+      '13.2.0': 'data-testid alert-rule view-contact-points-link',
+    },
   },
   Alert: {
     alertV2: {
@@ -1080,6 +1253,14 @@ export const versionedComponents = {
     },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
+    },
+    filterEditor: {
+      container: {
+        '13.2.0': 'data-testid transformation filter editor container',
+      },
+      topicSelect: {
+        '13.2.0': 'data-testid transformation filter topic select',
+      },
     },
     FilterByValue: {
       addConditionButton: {
@@ -1199,6 +1380,9 @@ export const versionedComponents = {
     item: {
       '9.5.0': 'data-testid Nav menu item',
     },
+    sectionToggleButton: {
+      '13.2.0': (navUrl: string) => `data-testid navigation mega-menu section toggle ${navUrl}`,
+    },
   },
   NavToolbar: {
     container: {
@@ -1206,6 +1390,9 @@ export const versionedComponents = {
     },
     commandPaletteTrigger: {
       '11.5.0': 'data-testid Command palette trigger',
+    },
+    quickAddButton: {
+      '13.2.0': 'data-testid Quick add button',
     },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
@@ -1237,6 +1424,12 @@ export const versionedComponents = {
       },
       pastePanelButton: {
         '11.1.0': 'data-testid Paste panel button',
+      },
+      planningBuildButton: {
+        '13.3.0': 'data-testid Build dashboard plan button',
+      },
+      planningDismissButton: {
+        '13.3.0': 'data-testid Dismiss dashboard plan button',
       },
       discardChangesButton: {
         '11.1.0': 'data-testid Discard changes button',
@@ -1284,6 +1477,14 @@ export const versionedComponents = {
     },
     itemButton: {
       '9.5.0': (title: string) => `data-testid ${title}`,
+    },
+  },
+  EditableTitle: {
+    editButton: {
+      '13.2.0': 'data-testid Editable title edit button',
+    },
+    titleInput: {
+      '13.2.0': 'data-testid Editable title input',
     },
   },
   QueryEditorToolbarItem: {
@@ -1458,6 +1659,39 @@ export const versionedComponents = {
     },
     filtersRow: {
       '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
+    },
+    shareMenu: {
+      triggerButton: {
+        '13.3.0': 'data-testid TraceViewer share trigger-button',
+      },
+      copyLinkButton: {
+        '13.3.0': 'data-testid TraceViewer share copy-link-button',
+      },
+      exportJsonButton: {
+        '13.3.0': 'data-testid TraceViewer share export-json-button',
+      },
+      feedbackLink: {
+        '13.3.0': 'data-testid TraceViewer share feedback-link',
+      },
+    },
+    traceBanner: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer trace-banner',
+      },
+      goToSpanButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner go-to-span-button',
+      },
+      row: {
+        '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+    },
+    spanException: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer span-exception',
+      },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer span-exception stacktrace-button',
+      },
     },
   },
   QueryField: {
@@ -1670,6 +1904,35 @@ export const versionedComponents = {
     },
     variableLinkWrapper: {
       '11.1.1': 'data-testid variable-link-wrapper',
+    },
+  },
+  AdHocFiltersCombobox: {
+    filterInput: {
+      '13.3.0': 'data-testid ad hoc filters combobox filter input',
+    },
+    groupByInput: {
+      '13.3.0': 'data-testid ad hoc filters combobox group by input',
+    },
+    filterPill: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox filter pill ${key}`,
+    },
+    filterPillRemove: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox filter pill remove ${key}`,
+    },
+    groupByPill: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox group by pill ${key}`,
+    },
+    groupByPillRemove: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox group by pill remove ${key}`,
+    },
+    operatorPill: {
+      '13.3.0': 'data-testid ad hoc filters combobox operator pill',
+    },
+    clearAllButton: {
+      '13.3.0': 'data-testid ad hoc filters combobox clear all button',
+    },
+    optionValue: {
+      '13.3.0': (label: string) => `data-testid ad hoc filter option value ${label}`,
     },
   },
   Annotations: {

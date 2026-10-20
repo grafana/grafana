@@ -278,7 +278,7 @@ func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueFi
 		if frame.Fields[valIdx].Labels != nil {
 			f.Fields[1].Labels = frame.Fields[valIdx].Labels.Copy()
 		}
-		for i := 0; i < l; i++ {
+		for i := range l {
 			f.SetRow(i, frame.Fields[tsSchema.TimeIndex].CopyAt(i), frame.Fields[valIdx].CopyAt(i))
 		}
 		s, err := mathexp.SeriesFromFrame(f)

@@ -1,17 +1,103 @@
 import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
+import { getPluginEntitlement } from '../api';
+import { clearEntitlementCache } from '../hooks/usePluginEntitlement';
 import { getCatalogPluginMock } from '../mocks/mockHelpers';
 import { PluginUpdateStrategy } from '../types';
 
 import { VersionList } from './VersionList';
 
+jest.mock('../api', () => ({
+  ...jest.requireActual('../api'),
+  getPluginEntitlement: jest.fn(),
+}));
+
+const mockGetPluginEntitlement = jest.mocked(getPluginEntitlement);
+
 describe('VersionList', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    clearEntitlementCache();
+  });
+
+  it('should disable install buttons for a marketplace plugin the org is not entitled to', async () => {
+    mockGetPluginEntitlement.mockResolvedValue(false);
+
+    const versions = [
+      {
+        version: '1.0.0',
+        createdAt: '',
+        isCompatible: true,
+        grafanaDependency: null,
+      },
+      {
+        version: '1.0.1',
+        createdAt: '',
+        isCompatible: true,
+        grafanaDependency: null,
+      },
+    ];
+
+    const plugin = getCatalogPluginMock({
+      distributionType: 'marketplace',
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+
+    await waitFor(() => {
+      expect(mockGetPluginEntitlement).toHaveBeenCalledWith(plugin.id);
+    });
+
+    const buttons = await screen.findAllByText('Install');
+    buttons.forEach((btn) => expect(btn.closest('button')).toHaveAttribute('aria-disabled', 'true'));
+  });
+
+  it('should enable install buttons for a marketplace plugin the org is entitled to', async () => {
+    mockGetPluginEntitlement.mockResolvedValue(true);
+
+    const versions = [
+      {
+        version: '1.0.0',
+        createdAt: '',
+        isCompatible: true,
+        grafanaDependency: null,
+      },
+    ];
+
+    const plugin = getCatalogPluginMock({
+      distributionType: 'marketplace',
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+
+    await waitFor(() => {
+      expect(mockGetPluginEntitlement).toHaveBeenCalledWith(plugin.id);
+    });
+
+    const button = await screen.findByText('Install');
+    expect(button.closest('button')).toBeEnabled();
+  });
+
   it('should only show installs when no version is installed', () => {
     const versions = [
       {

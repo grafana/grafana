@@ -13,15 +13,24 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
-type connectionRepositoriesConnector struct {
-	getter ConnectionGetter
+//go:generate mockery --name=ConnectionRepositoriesAccess --structname=MockConnectionRepositoriesAccess --inpackage --filename=connection_repositories_access_mock.go --with-expecter
+type ConnectionRepositoriesAccess interface {
+	ConnectionGetter
+	repository.ConnectionSpecGetter
+	ClientGetter
 }
 
-func NewConnectionRepositoriesConnector(getter ConnectionGetter) *connectionRepositoriesConnector {
+type connectionRepositoriesConnector struct {
+	access ConnectionRepositoriesAccess
+}
+
+func NewConnectionRepositoriesConnector(access ConnectionRepositoriesAccess) *connectionRepositoriesConnector {
 	return &connectionRepositoriesConnector{
-		getter: getter,
+		access: access,
 	}
 }
 
@@ -60,26 +69,31 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 		logger.Debug("listing repositories from connection")
 
 		// Use the context from Connect which has namespace information
-		conn, err := c.getter.GetConnection(ctx, name)
+		conn, err := c.access.GetConnection(ctx, name)
 		if err != nil {
 			logger.Error("failed to get connection", "error", err)
 			responder.Error(err)
 			return
 		}
 
-		repos, err := conn.ListRepositories(ctx)
+		lister, ok := conn.(connection.RepositoryLister)
+		if !ok {
+			logger.Debug("list repositories not implemented for connection type")
+			responder.Error(&apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusNotImplemented,
+					Reason:  "NotImplemented",
+					Message: "list repositories not implemented for given connection type",
+				},
+			})
+			return
+		}
+
+		repos, err := lister.ListRepositories(ctx)
 		if err != nil {
-			if errors.Is(err, connection.ErrNotImplemented) {
-				logger.Debug("list repositories not implemented for connection type")
-				responder.Error(&apierrors.StatusError{
-					ErrStatus: metav1.Status{
-						Status:  metav1.StatusFailure,
-						Code:    http.StatusNotImplemented,
-						Reason:  "NotImplemented",
-						Message: "list repositories not implemented for given connection type",
-					},
-				})
-				return
+			if errors.Is(err, connection.ErrAuthentication) {
+				c.invalidateHealth(ctx, name)
 			}
 			logger.Error("failed to list repositories", "error", err)
 			responder.Error(apierrors.NewInternalError(err))
@@ -92,6 +106,28 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 
 		responder.Object(http.StatusOK, result)
 	}), nil
+}
+
+// invalidateHealth clears the last health-check timestamp so the connection
+// controller rechecks (and reports) the failure immediately instead of
+// waiting out the healthy-check cooldown.
+func (c *connectionRepositoriesConnector) invalidateHealth(ctx context.Context, name string) {
+	logger := logging.FromContext(ctx)
+
+	conn, err := c.access.GetConnectionSpec(ctx, name)
+	if err != nil {
+		logger.Error("failed to get connection to invalidate health", "error", err)
+		return
+	}
+
+	patcher := appcontroller.NewConnectionStatusPatcher(c.access.GetClient())
+	if err := patcher.Patch(ctx, conn, map[string]interface{}{
+		"op":    "add",
+		"path":  "/status/health/checked",
+		"value": 0,
+	}); err != nil {
+		logger.Error("failed to invalidate connection health", "error", err)
+	}
 }
 
 var (

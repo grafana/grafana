@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -29,7 +28,7 @@ func NewMuteTimesProvisioner(logger log.Logger,
 
 func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
-	cache := map[int64]map[string]definitions.MuteTimeInterval{}
+	cache := map[int64]map[string]struct{}{}
 	for _, file := range files {
 		for _, muteTiming := range file.MuteTimes {
 			if _, exists := cache[muteTiming.OrgID]; !exists {
@@ -37,13 +36,13 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 				if err != nil {
 					return err
 				}
-				cache[muteTiming.OrgID] = make(map[string]definitions.MuteTimeInterval, len(intervals))
+				cache[muteTiming.OrgID] = make(map[string]struct{}, len(intervals))
 				for _, interval := range intervals {
-					cache[muteTiming.OrgID][interval.Name] = interval
+					cache[muteTiming.OrgID][interval.Title] = struct{}{}
 				}
 			}
-			muteTiming.MuteTime.Provenance = definitions.Provenance(models.ProvenanceFile)
-			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Name]; exists {
+			muteTiming.MuteTime.Provenance = models.ProvenanceFile
+			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Title]; exists {
 				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
 				if err != nil {
 					return err
@@ -63,7 +62,7 @@ func (c *defaultMuteTimesProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, deleteMuteTime := range file.DeleteMuteTimes {
-			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, definitions.Provenance(models.ProvenanceFile), "")
+			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, models.ProvenanceFile, "")
 			if err != nil {
 				return err
 			}

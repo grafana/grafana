@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 )
@@ -43,7 +41,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Plugins",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaPluginv0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaPluginv0alpha1,
 				},
 
 				{
@@ -51,13 +52,11 @@ var appManifestData = app.ManifestData{
 					Plural:     "Metas",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaMetav0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaMetav0alpha1,
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

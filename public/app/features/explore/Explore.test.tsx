@@ -1,6 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -9,6 +8,7 @@ import {
   createTheme,
   type DataSourceApi,
   EventBusSrv,
+  getDefaultTimeRange,
   LoadingState,
   PluginExtensionTypes,
   store,
@@ -117,14 +117,12 @@ const dummyProps: Props = {
   editSavedQueryRef: undefined,
   addingSavedQuery: undefined,
   queriesChangedIndexAtRun: 0,
+  range: getDefaultTimeRange(),
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      savedQueriesRBAC: false,
-    },
   },
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({}),
@@ -258,6 +256,9 @@ describe('Explore', () => {
     it('should retrieve the last visible state from local storage', async () => {
       const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
       setup();
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
@@ -272,8 +273,7 @@ describe('Explore', () => {
 
       expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-
+      // A leading Prometheus card opens by default.
       expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
     });
 

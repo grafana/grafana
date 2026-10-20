@@ -33,6 +33,7 @@ import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type Trace, type TraceSpanReference, type CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
+import { countSummarySpans } from '../utils/summary-span';
 
 import ListView from './ListView';
 import { SpanBarRow } from './SpanBarRow';
@@ -101,7 +102,7 @@ type TVirtualizedTraceViewOwnProps = {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSpanIdForSearch: string;
+  focusedSpanForSearch?: { spanID: string };
   showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement | null>;
@@ -114,7 +115,7 @@ type TVirtualizedTraceViewOwnProps = {
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -248,7 +249,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { headerHeight, focusedSpanId, focusedSpanIdForSearch } = this.props;
+    const { headerHeight, focusedSpanId, focusedSpanForSearch } = this.props;
 
     if (!this.hasScrolledToSpan) {
       this.scrollToSpan(headerHeight, focusedSpanId);
@@ -259,8 +260,8 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
       this.scrollToSpan(headerHeight, focusedSpanId);
     }
 
-    if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
-      this.scrollToSpan(headerHeight, focusedSpanIdForSearch);
+    if (focusedSpanForSearch !== prevProps.focusedSpanForSearch) {
+      this.scrollToSpan(headerHeight, focusedSpanForSearch?.spanID);
     }
   }
 
@@ -419,7 +420,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
       removeHoverIndentGuideId,
       createSpanLink,
       focusedSpanId,
-      focusedSpanIdForSearch,
+      focusedSpanForSearch,
       showSpanFilterMatchesOnly,
       theme,
       datasourceType,
@@ -433,7 +434,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
-    const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
+    const isFocused = spanID === focusedSpanId || spanID === focusedSpanForSearch?.spanID;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
     // Check for direct child "server" span if the span is a "client" span.
@@ -607,11 +608,16 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
   scrollToTop = () => {
     const { topOfViewRef, datasourceType, trace } = this.props;
     topOfViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    // trace can be unset (button still renders); skip analytics rather than dereference it.
+    if (!trace) {
+      return;
+    }
     reportInteraction('grafana_traces_trace_view_scroll_to_top_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
       numServices: trace.services.length,
       numSpans: trace.spans.length,
+      numSummarySpans: countSummarySpans(trace.spans),
     });
   };
 

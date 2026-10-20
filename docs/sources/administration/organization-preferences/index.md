@@ -204,13 +204,11 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 
 ```ini
 [dashboards]
-# Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+# Path to a custom default home dashboard. If empty, Grafana uses the unified homepage.
 default_home_dashboard_path = data/main-dashboard.json
 ```
 
-{{< admonition type="note" >}}
-On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
-{{< /admonition >}}
+Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, move the file and set `default_home_dashboard_path` to its path.
 
 ### Set the home dashboard for your organization
 

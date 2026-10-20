@@ -133,6 +133,10 @@ export const ExemplarMarker = ({
     dataFrame.fields.forEach((field: Field) => {
       const value = field.values[rowIndex];
 
+      if (value == null && field.config.noValue == null) {
+        return;
+      }
+
       links.push(...getFieldDisplayLinks(field, rowIndex));
 
       const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
@@ -252,7 +256,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxWidth: number | undefi
       userSelect: 'text',
     }),
     pinned: css({
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     }),
   };
 };

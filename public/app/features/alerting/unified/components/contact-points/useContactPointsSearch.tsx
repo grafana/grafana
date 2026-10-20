@@ -1,23 +1,17 @@
-import uFuzzy from '@leeoniya/ufuzzy';
 import { uniq } from 'lodash';
 import { useMemo } from 'react';
 
+import { fuzzySearch } from '@grafana/data';
 import { RECEIVER_META_KEY } from 'app/features/alerting/unified/components/contact-points/constants';
 import { type ContactPointWithMetadata } from 'app/features/alerting/unified/components/contact-points/utils';
-
-const fuzzyFinder = new uFuzzy({
-  intraMode: 1,
-  intraIns: 1,
-  intraSub: 1,
-  intraDel: 1,
-  intraTrn: 1,
-});
 
 // let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
 export const useContactPointsSearch = (
   contactPoints: ContactPointWithMetadata[],
   search?: string | null
 ): ContactPointWithMetadata[] => {
+  const normalizedSearch = search?.trim();
+
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);
   }, [contactPoints]);
@@ -29,12 +23,12 @@ export const useContactPointsSearch = (
     );
   }, [contactPoints]);
 
-  if (!search) {
+  if (!normalizedSearch) {
     return contactPoints;
   }
 
-  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
-  const typeHits = fuzzyFinder.filter(typeHaystack, search) ?? [];
+  const nameHits = fuzzySearch(nameHaystack, normalizedSearch);
+  const typeHits = fuzzySearch(typeHaystack, normalizedSearch);
 
   const hits = [...nameHits, ...typeHits];
 

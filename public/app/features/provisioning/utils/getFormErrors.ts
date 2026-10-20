@@ -163,6 +163,15 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     'githubEnterprise.serverUrl': 'serverUrl',
     'secure.privateKey': 'privateKey',
     privateKey: 'privateKey',
+    clientID: 'clientID',
+    'oauth.clientID': 'clientID',
+    'githubEnterpriseOAuth.serverUrl': 'serverUrl',
+    'secure.clientSecret': 'clientSecret',
+    clientSecret: 'clientSecret',
+    'bitbucket.workspace': 'workspace',
+    workspace: 'workspace',
+    'gitOAuth.authURL': 'authURL',
+    'gitOAuth.tokenURL': 'tokenURL',
     'webhook.disabled': 'webhookDisabled',
   };
 

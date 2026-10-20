@@ -109,6 +109,16 @@ var (
 			Buckets:   prometheus.DefBuckets,
 		},
 	)
+
+	// MTSchedulerIsLeader is 1 while this replica holds the MT scheduler leader lease, 0 otherwise.
+	// Only set when leader election is enabled.
+	MTSchedulerIsLeader = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "mt_scheduler_is_leader",
+			Help:      "1 while this replica holds the MT scheduler leader lease, 0 otherwise",
+		},
+	)
 )
 
 // MustRegister registers all metrics with the given registerer. No-op if registerer is nil.
@@ -127,11 +137,11 @@ func MustRegister(registerer prometheus.Registerer) {
 		MTSchedulerNamespacesDiscovered,
 		MTSchedulerNamespaceTicksTotal,
 		MTSchedulerNamespaceTickDurationSeconds,
+		MTSchedulerIsLeader,
 	}
 	for _, metric := range metricsToRegister {
 		if err := registerer.Register(metric); err != nil {
-			var alreadyRegistered prometheus.AlreadyRegisteredError
-			if errors.As(err, &alreadyRegistered) {
+			if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 				continue
 			}
 			panic(err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,27 +17,35 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/nats"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // RepositoryGetter is the read seam the repository controller reconciles
-// against. It exposes exactly what the controller needs — the single repository
-// under reconciliation, and a namespace-wide list for the quota count — so the
-// source can be swapped without touching the controller.
+// against: the single repository under reconciliation, and the count for the
+// quota check. Get must return a current object; the count tolerates staleness.
 //
-// Get must return a current object (the reconcile acts on its spec): under NATS
-// it enforces the freshness floor the informer events announce, returning
-// usinformer.ErrStaleRead when the API cannot yet serve the object at that
-// version. List backs the quota count, which tolerates staleness.
+// Under NATS, Get enforces the freshness floor the informer events announce,
+// returning usinformer.ErrStaleRead when the API cannot yet serve the object at
+// that version.
 type RepositoryGetter interface {
 	Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error)
-	List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error)
+	// CountRepositories includes repositories awaiting their finalizers, so a
+	// namespace stays at its quota until a deletion finishes. That keeps the
+	// count answerable from identities alone.
+	CountRepositories(ctx context.Context, namespace string) (int, error)
+	// ConfirmRepositoryCount is CountRepositories from a source that cannot miss
+	// repositories another replica saw. Slower; used before unblocking.
+	ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error)
 }
 
 // NewRepositoryDeltaSource returns the repository delta source and the getter it
 // backs. Under NATS the getter reads reconcile state fresh from the API and the
-// quota count from the informer's shared snapshot (written back on each reconcile
-// read); otherwise the getter reads the informer's cache lister.
+// quota count from the informer's store; otherwise the getter reads the
+// informer's cache lister.
+//
+// A non-nil keys makes the NATS re-list keys-only; nil keeps the full-object
+// list.
 //
 // The NATS pair shares a freshness floor: each delivered event raises the floor
 // to the resource version it announced, and the getter refuses to hand the
@@ -44,12 +53,13 @@ type RepositoryGetter interface {
 // commits, but the read may land on a replica that has not seen it yet — an
 // apiserver watch never has this gap because the event carries the object).
 // Floor enforcement outcomes are counted on reg (nil disables them).
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) (DeltaSource, RepositoryGetter) {
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, reg prometheus.Registerer) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
 		floor := usinformer.NewRVFloor()
 		staleReads := usinformer.NewStaleReadMetrics(reg, provisioningapis.RepositoryResourceInfo.GroupVersionResource().Resource)
-		source := NewRepositoryInformer(subscriber, client, "", resync, store)
+		recorder := metrics.Recorder(provisioningapis.RepositoryResourceInfo.GroupVersionResource())
+		source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, recorder)
 		// The informer is the repository controller's only feed, and everything
 		// that creates provisioning work lives in its reconcile: scheduled syncs,
 		// health checks, webhook create/rotate, quota. Gating the initial list on
@@ -63,23 +73,22 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		// enqueues the key, so the getter can refuse reconcile reads staler than
 		// the event that triggered them.
 		source.TrackFloor(floor)
-		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, floor, staleReads)
+		return source, NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store, floor, staleReads)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
 }
 
-// NewRepositoryInformer builds an Informer for repositories.
-func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
+// NewRepositoryInformer builds an Informer for repositories. When keys is
+// non-nil the periodic re-list is keys-only; otherwise it lists full objects.
+func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, recorder RelistRecorder) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+		return identity(ns, name, "")
 	}
-	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-			return c.Repositories(namespace).List(ctx, opts)
-		})
-	}
+	list := identityList(keys, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return c.Repositories(namespace).List(ctx, opts)
+	}, recorder)
 	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }
 
@@ -97,52 +106,73 @@ func (g cachedRepositoryGetter) Get(_ context.Context, namespace, name string) (
 	return g.lister.Repositories(namespace).Get(name)
 }
 
-func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*provisioningapis.Repository, error) {
-	return g.lister.Repositories(namespace).List(labels.Everything())
+func (g cachedRepositoryGetter) CountRepositories(_ context.Context, namespace string) (int, error) {
+	repos, err := g.lister.Repositories(namespace).List(labels.Everything())
+	if err != nil {
+		return 0, err
+	}
+	return len(repos), nil
 }
 
-// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
-// for the reconcile — and List with the NATS informer's snapshot (a
-// unified-storage informer Cache). The quota count is the only List caller and
-// tolerates the snapshot's staleness (as stale as the resync interval), so
-// reading it avoids an API LIST on every quota check. Each successful reconcile
-// Get is written back into the store, keeping the count warm between re-lists
-// rather than only as fresh as the last resync; a NotFound writes nothing —
-// eviction belongs to the informer (a dated DeleteAt on a live delete, or the
-// next re-list), and the count's tolerance covers the gap.
+// ConfirmRepositoryCount reads the same lister: the apiserver watch reaches every replica.
+func (g cachedRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
+	return g.CountRepositories(ctx, namespace)
+}
+
+// NewClientRepositoryGetter backs Get with the API client, fresh for the
+// reconcile, and the count with the NATS informer's store, which avoids an API
+// LIST on every quota check. Each successful Get is written back into the store,
+// so the count includes the repository the reconcile just read; a NotFound
+// writes nothing — eviction belongs to the informer (a dated DeleteAt on a live
+// delete, or the next re-list), and the count's tolerance covers the gap.
 //
 // floor is the freshness floor the informer events raise; Get refuses to return
 // a read below it (retrying briefly, then usinformer.ErrStaleRead). A nil floor
 // disables the check; metrics counts the enforcement outcomes (nil disables).
-func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache, floor *usinformer.RVFloor, metrics *usinformer.StaleReadMetrics) RepositoryGetter {
-	return clientGetCachedListRepositoryGetter{client: c, store: store, reader: usinformer.NewFreshReader(floor, metrics)}
+func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache, floor *usinformer.RVFloor, metrics *usinformer.StaleReadMetrics) RepositoryGetter {
+	return clientRepositoryGetter{client: c, store: store, reader: usinformer.NewFreshReader(floor, metrics)}
 }
 
-type clientGetCachedListRepositoryGetter struct {
+type clientRepositoryGetter struct {
 	client typedclient.ProvisioningV0alpha1Interface
 	store  usinformer.Cache
 	reader usinformer.FreshReader
 }
 
-func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 	repo, err := usinformer.GetFresh(ctx, g.reader, namespace, name, func(ctx context.Context) (*provisioningapis.Repository, error) {
 		return g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	})
 	if err != nil {
 		return nil, err
 	}
-	g.store.Update(ctx, repo)
+	// Under round-robin delivery the live ADDED may have reached another
+	// replica, and live MODIFIED events are not stored, so this store may not
+	// hold the repository yet. The quota check that follows has to count it.
+	g.store.Update(ctx, identity(repo.Namespace, repo.Name, repo.ResourceVersion))
 	return repo, nil
 }
 
-func (g clientGetCachedListRepositoryGetter) List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error) {
-	var out []*provisioningapis.Repository
+// CountRepositories walks the cluster-wide store. It holds identities only and
+// one entry per repository, so the walk stays cheap next to the reconcile it
+// serves.
+func (g clientRepositoryGetter) CountRepositories(ctx context.Context, namespace string) (int, error) {
+	count := 0
 	for _, obj := range g.store.List(ctx) {
-		repo, ok := obj.(*provisioningapis.Repository)
-		if !ok || repo.Namespace != namespace {
-			continue
+		if acc, err := meta.Accessor(obj); err == nil && acc.GetNamespace() == namespace {
+			count++
 		}
-		out = append(out, repo)
 	}
-	return out, nil
+	return count, nil
+}
+
+// ConfirmRepositoryCount lists the namespace from the API, which the store can lag.
+func (g clientRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
+	objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return g.client.Repositories(namespace).List(ctx, opts)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(objs), nil
 }

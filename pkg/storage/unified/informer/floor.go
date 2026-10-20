@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -210,26 +211,31 @@ func floorKey(namespace, name string) string {
 // floor is absorbing the lag; exhaustions mean the lag outlasts the retry
 // budget.
 type StaleReadMetrics struct {
-	resource  string
-	retries   *prometheus.CounterVec
-	exhausted *prometheus.CounterVec
+	retries   prometheus.Counter
+	exhausted prometheus.Counter
 }
 
 // NewStaleReadMetrics builds the counters on reg for the given resource label
-// value, reusing collectors already registered on reg so several consumers
-// share the families. A nil reg leaves them unregistered; a nil
-// *StaleReadMetrics is safe to record on.
+// value. A nil reg leaves them unregistered; a nil *StaleReadMetrics is safe to
+// record on.
+//
+// resource is a const label, so each consumer gets its own collector while the
+// scrape still shows one metric family with a resource dimension. Two consumers
+// built for the same resource on one registry is a wiring mistake, and registers
+// as a duplicate rather than passing unnoticed.
 func NewStaleReadMetrics(reg prometheus.Registerer, resource string) *StaleReadMetrics {
+	constLabels := prometheus.Labels{"resource": resource}
 	return &StaleReadMetrics{
-		resource: resource,
-		retries: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_stale_read_retries_total",
-			Help: "Reads or claims rejected by the informer freshness floor (below the announced resource version, or a 404/claim outcome contradicting it) for which another attempt was scheduled, by resource.",
-		}, []string{"resource"})),
-		exhausted: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_stale_reads_exhausted_total",
-			Help: "Stale-read retry budgets that ran out, surrendering the key to the periodic re-list backstop, by resource.",
-		}, []string{"resource"})),
+		retries: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name:        "grafana_provisioning_stale_read_retries_total",
+			Help:        "Reads or claims rejected by the informer freshness floor (below the announced resource version, or a 404/claim outcome contradicting it) for which another attempt was scheduled, by resource.",
+			ConstLabels: constLabels,
+		}),
+		exhausted: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name:        "grafana_provisioning_stale_reads_exhausted_total",
+			Help:        "Stale-read retry budgets that ran out, surrendering the key to the periodic re-list backstop, by resource.",
+			ConstLabels: constLabels,
+		}),
 	}
 }
 
@@ -237,14 +243,14 @@ func (m *StaleReadMetrics) RecordRetried() {
 	if m == nil {
 		return
 	}
-	m.retries.WithLabelValues(m.resource).Inc()
+	m.retries.Inc()
 }
 
 func (m *StaleReadMetrics) RecordExhausted() {
 	if m == nil {
 		return
 	}
-	m.exhausted.WithLabelValues(m.resource).Inc()
+	m.exhausted.Inc()
 }
 
 // FreshReader bundles a freshness floor with the retry policy GetFresh uses to

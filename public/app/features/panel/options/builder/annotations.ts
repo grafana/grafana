@@ -17,9 +17,9 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
   builder.addBooleanSwitch({
     path: 'annotations.multiLane',
     category,
-    name: t('grafana-ui.builder.annotations.multi-lane-name', 'Enable multi-row annotations'),
+    name: t('grafana-ui.builder.annotation-options.multi-lane-name', 'Enable multi-row annotations'),
     description: t(
-      'grafana-ui.builder.annotations.multi-row-desc',
+      'grafana-ui.builder.annotation-options.multi-row-desc',
       'Breaks each annotation frame into a separate row in the visualization'
     ),
     showIf: (_, __, annotations) =>
@@ -32,9 +32,9 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
     id: 'clusteringSwitchEditor',
     path: 'annotations.clustering',
     category,
-    name: t('grafana-ui.builder.annotations.clustering.name', 'Enable annotation clustering'),
+    name: t('grafana-ui.builder.annotation-options.clustering-name', 'Enable annotation clustering'),
     description: t(
-      'grafana-ui.builder.annotations.clustering.desc',
+      'grafana-ui.builder.annotation-options.clustering-desc',
       'Combines high density point annotations into region annotations'
     ),
     showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
@@ -45,9 +45,9 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
     id: 'canvasSwitchEditor',
     path: 'annotations',
     category,
-    name: t('grafana-ui.builder.annotations.canvasControls.name', 'Hide lines and areas'),
+    name: t('grafana-ui.builder.annotation-options.canvas-controls-name', 'Hide lines and areas'),
     description: t(
-      'grafana-ui.builder.annotations.canvasControls.desc',
+      'grafana-ui.builder.annotation-options.canvas-controls-desc',
       'Hides annotation indicator lines and shaded regions'
     ),
     defaultValue: undefined,

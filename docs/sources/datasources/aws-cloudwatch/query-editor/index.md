@@ -227,7 +227,7 @@ This table summarizes common Metrics Insights query keywords:
 
 ## Query CloudWatch Logs
 
-The logs query editor helps you write CloudWatch Logs queries across a selected region and set of log groups.
+The logs query editor helps you write CloudWatch Logs queries across a selected region and a set of log groups or Amazon CloudWatch Logs data sources.
 
 You can query CloudWatch Logs using three supported query language options:
 
@@ -255,12 +255,12 @@ In addition to this, you can use the Logs Insights QL editor and the `anomaly` c
 The **Query language** drop-down is available only when **Logs Mode** is set to Logs Insights.
 
 1. Select the query language you want to use in the **Query language** drop-down.
-1. Specify the log groups you want to query.
+1. Specify the log groups, CloudWatch Logs data sources, or both that you want to query.
 1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
 
 ### Specify log groups to query
 
-You must specify a set of log groups to target for your query using one of the following methods:
+To target log groups in your query, use one of the following methods:
 
 - **Log group name**: Select specific log groups. This is the default behavior. You can select up to 50 log groups.
   Click **Select log groups** to choose the target log groups for your query.
@@ -275,25 +275,42 @@ You can also apply optional filters when specifying log groups with the **Name p
 - **Class**: Filter by [log group class](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html). Choose **Standard** or **Infrequent Access**.
 - **Accounts**: Filter by AWS account. This option is only available when the **Monitoring account** badge appears in the query editor header. You can select up to 20 accounts.
 
+### Specify Amazon CloudWatch Logs data sources to query
+
+Amazon CloudWatch Logs data sources categorize logs by the service or application that generates them and by the type of log. They complement log groups and let you query logs without knowing individual log group names. For details about how Amazon CloudWatch categorizes logs, refer to [Data source discovery and management](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/data-source-discovery-management.html) in the AWS documentation.
+
+Before you use the data source selector, ensure that the IAM role or IAM user for the Grafana data source has the `logs:ListAggregateLogGroupSummaries` permission. For the complete IAM policy examples, refer to [IAM policy examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#iam-policy-examples).
+
+To query logs by CloudWatch Logs data source, follow these steps:
+
+1. Click **Select data sources**.
+1. Search for a data source name or type.
+1. Select up to 10 data sources.
+1. Click **Apply selection**.
+
+You can combine CloudWatch Logs data source selections with specific log groups or with the **Name prefix** and **All log groups** query scopes. When the **Monitoring account** badge appears, the selector includes data sources from the monitoring account and its linked source accounts.
+
+The CloudWatch data source automatically adds the selected CloudWatch Logs data sources to Logs Insights QL and OpenSearch PPL queries.
+
 {{< admonition type="note" >}}
-You must specify the region and log groups when querying with **Logs Insights QL**, **OpenSearch PPL**, and **OpenSearch SQL**.
-In **OpenSearch SQL**, you can specify log groups in multiple ways.
-For details, refer to the [Query log groups with OpenSearch SQL](#query-log-groups-with-opensearch-sql) section.
+When you use **Logs Insights QL**, **OpenSearch PPL**, or **OpenSearch SQL**, you must specify a region and define the logs to query by selecting log groups, selecting CloudWatch Logs data sources, or choosing a supported log group query scope.
+
+In **OpenSearch SQL**, you can specify log groups in multiple ways. For details, refer to the [Query log groups and Amazon CloudWatch Logs data sources with OpenSearch SQL](#query-log-groups-with-opensearch-sql) section.
 {{< /admonition >}}
 
 Click **View in CloudWatch console** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
-### Query log groups with OpenSearch SQL
+### Query log groups and Amazon CloudWatch Logs data sources with OpenSearch SQL {#query-log-groups-with-opensearch-sql}
 
-When querying log groups with OpenSearch SQL, you can use the `$__logGroups` macro to automatically reference log groups selected in the query editor's log group selector. This is the recommended approach as it allows you to manage log groups through the UI.
+When querying log groups and Amazon CloudWatch Logs data sources with OpenSearch SQL, you can use the `$__source` macro to automatically reference the log groups and CloudWatch Logs data sources selected in the query editor. This is the recommended approach as it allows you to manage both types of selection through the UI.
 
 ```sql
 SELECT window.start, COUNT(*) AS exceptionCount
-FROM `$__logGroups`
+FROM `$__source`
 WHERE `@message` LIKE '%Exception%'
 ```
 
-The `$__logGroups` macro expands to the proper `logGroups(logGroupIdentifier: [...])` syntax with the log groups you've selected in the UI.
+The `$__source` macro expands to the proper syntax for the log groups and CloudWatch Logs data sources you've selected in the UI.
 
 Alternatively, you can manually specify a single log group directly in the `FROM` clause:
 
@@ -307,7 +324,7 @@ When querying multiple log groups you **must** use the `logGroups(logGroupIdenti
 
 ```sql
 SELECT window.start, COUNT(*) AS exceptionCount
-FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
+FROM `logGroups(logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
 WHERE `@message` LIKE '%Exception%'
 ```
 

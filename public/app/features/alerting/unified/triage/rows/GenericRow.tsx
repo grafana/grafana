@@ -30,6 +30,7 @@ interface GenericRowProps {
    * Use this for rows whose children should not be auto-expanded (e.g. AlertRuleRow instance list).
    */
   expandable?: boolean;
+  ['data-testid']?: string;
 }
 
 export const GenericRow = ({
@@ -45,6 +46,7 @@ export const GenericRow = ({
   depth = 0,
   showIndentBorder = false,
   expandable = true,
+  ['data-testid']: dataTestId,
 }: GenericRowProps) => {
   const styles = useStyles2(getStyles);
   const { expandGeneration, collapseGeneration } = useWorkbenchContext();
@@ -85,6 +87,7 @@ export const GenericRow = ({
   return (
     <>
       <div
+        data-testid={dataTestId}
         className={cx(
           styles.groupItemWrapper(width, depth, showIndentBorder),
           depth > 0 && styles.indented(depth),

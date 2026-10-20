@@ -30,6 +30,14 @@ export enum CodeLanguage {
 
 export const defaultCodeLanguage: CodeLanguage = CodeLanguage.Plaintext;
 
+/**
+ * Whether the content template renders once, or once per row of query data.
+ */
+export enum RenderMode {
+  Once = 'once',
+  PerRow = 'perRow',
+}
+
 export interface CodeOptions {
   /**
    * The language passed to monaco code editor
@@ -48,12 +56,23 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
 export interface Options {
   code?: CodeOptions;
   content: string;
+  /**
+   * Index of the selected frame, when the query returns more than one
+   */
+  frameIndex?: number;
   mode: TextMode;
+  /**
+   * Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+   */
+  pageSize?: number;
+  renderMode?: RenderMode;
 }
 
 export const defaultOptions: Partial<Options> = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
+  frameIndex: 0,
   mode: TextMode.Markdown,
+  renderMode: RenderMode.Once,
 };

@@ -717,12 +717,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              ]
+              "$ref": "#/components/schemas/Stars"
             }
           },
           "kind": {
@@ -762,8 +757,7 @@
             "description": "The set of resources",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "set"
           }
@@ -776,12 +770,7 @@
           "resource": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/StarsResource"
-                }
-              ]
+              "$ref": "#/components/schemas/StarsResource"
             }
           }
         }

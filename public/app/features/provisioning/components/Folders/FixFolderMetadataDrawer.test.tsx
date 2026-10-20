@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 
@@ -32,8 +32,6 @@ const defaultSettings = {
 };
 
 describe('FixFolderMetadataDrawer', () => {
-  testWithFeatureToggles({ enable: ['provisioning'] });
-
   beforeEach(() => {
     server.use(
       http.get(`${BASE}/settings`, () => HttpResponse.json(defaultSettings)),

@@ -29,12 +29,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
@@ -46,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
@@ -74,6 +77,7 @@ var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
 	extras.ProvideProvisioningOSSConnectionExtras,
 	extras.ProvideFactoryFromConfig,
+	extras.ProvideConnectionFactoryFromConfig,
 )
 
 var configProviderExtras = wire.NewSet(
@@ -94,11 +98,14 @@ var BasicSet = wire.NewSet(
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,
+	legacypermissions.ProvideLoader,
+	legacypermissions.ProvideClient,
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	wire.Bind(new(pluginauth.RBACCleaner), new(*acimpl.Service)),
 	validations.ProvideValidator,
+	ngalertprovisioning.ProvideRuleMutationValidator,
 	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
 	validations.ProvideURLValidator,
 	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
@@ -148,8 +155,8 @@ var BasicSet = wire.NewSet(
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
 	resource.NewGCGate,
+	resource.NewWatchExpiry,
 	unified.ProvideUnifiedStorageClient,
-	sql.ProvideStorageBackend,
 	sql.ProvideExperimentalKV,
 	sql.ProvideKV,
 	sql.ProvideResourceDB,
@@ -158,6 +165,7 @@ var BasicSet = wire.NewSet(
 	rerankprovider.ProvideReranker,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
+	grafanaapiserver.ProvideNoopApiExtensionsRunner,
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	gsmEncryptionManager.ProvideOSSDataKeyCache,

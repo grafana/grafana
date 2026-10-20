@@ -46,6 +46,27 @@ func (Display) OpenAPIModelName() string {
 	return OpenAPIPrefix + "Display"
 }
 
+type CurrentUserInfo struct {
+	Display `json:",inline"`
+
+	// Namespace is the namespace of the current identity.
+	Namespace string `json:"namespace,omitempty"`
+
+	// Role is the org role of the identity in the active organization
+	// (Admin/Editor/Viewer/None).
+	Role string `json:"role,omitempty"`
+
+	// AuthenticatedBy is the authentication provider used for the current identity.
+	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
+
+	// Email is the email address for the current identity.
+	Email string `json:"email,omitempty"`
+}
+
+func (CurrentUserInfo) OpenAPIModelName() string {
+	return OpenAPIPrefix + "CurrentUserInfo"
+}
+
 type IdentityRef struct {
 	// Type of identity e.g. "user".
 	// For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15

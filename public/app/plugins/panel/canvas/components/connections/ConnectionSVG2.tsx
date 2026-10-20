@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 
 import { type ConnectionCoordinates } from '../../panelcfg.gen';
@@ -32,11 +31,12 @@ const htmlElementTypes = ['input', 'textarea'];
 
 export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setConnectionsSVGRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const headId = Date.now() + '_' + idCounter++;
   const CONNECTION_LINE_ID = useMemo(() => `connectionLineId-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
-  const defaultArrowColor = config.theme2.colors.text.primary;
+  const defaultArrowColor = theme.colors.text.primary;
   const defaultArrowSize = 2;
   const defaultArrowDirection: DirectionDimensionConfig = {
     mode: DirectionDimensionMode.Fixed,

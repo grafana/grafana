@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
@@ -34,10 +34,18 @@ interface AddCardButtonProps {
   variant: 'query' | 'transformation';
   afterId?: string;
   alwaysVisible?: boolean;
+  showLabel?: boolean;
   onAdd?: () => void;
 }
 
-export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
+export const AddCardButton = ({
+  variant,
+  afterId,
+  onAdd,
+  alwaysVisible = false,
+  showLabel = false,
+}: AddCardButtonProps) => {
+  const showButtonLabel = alwaysVisible && showLabel;
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { dsSettings } = useDatasourceContext();
@@ -144,11 +152,12 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   }, [afterId, setPendingTransformation, onAdd]);
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
+  const buttonLabel = t('query-editor-next.sidebar.add', 'Add');
 
   if (variant === 'transformation') {
     return (
       <button
-        className={styles.button}
+        className={cx(styles.button, { [styles.buttonWithLabel]: showButtonLabel })}
         data-add-button={!alwaysVisible || undefined}
         data-testid={
           afterId
@@ -160,6 +169,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
         onClick={handleTransformationClick}
       >
         <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
+        {showButtonLabel && buttonLabel}
       </button>
     );
   }
@@ -172,13 +182,14 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
       onVisibleChange={handleMenuVisibleChange}
     >
       <button
-        className={styles.button}
+        className={cx(styles.button, { [styles.buttonWithLabel]: showButtonLabel })}
         data-add-button={!alwaysVisible || undefined}
         data-menu-open={menuOpen || undefined}
         type="button"
         aria-label={ariaLabel}
       >
         <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
+        {showButtonLabel && buttonLabel}
       </button>
     </Dropdown>
   );
@@ -194,10 +205,13 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       height: theme.spacing(2.5),
       borderRadius: theme.shape.radius.sm,
       border: 'none',
-      background: theme.colors.primary.main,
-      color: theme.colors.primary.contrastText,
+      background: theme.colors.secondary.main,
+      color: theme.colors.secondary.contrastText,
       cursor: 'pointer',
       padding: 0,
+      // Never let the row's flex layout shrink this below its own content — the section title
+      // wraps to make room instead.
+      flexShrink: 0,
       willChange: 'transform',
       transform: alwaysVisible ? 'translateZ(0)' : 'translateY(-50%) translateZ(0)',
 
@@ -221,7 +235,7 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       }),
 
       '&:hover': {
-        background: theme.colors.primary.shade,
+        background: theme.colors.secondary.shade,
       },
 
       '&:active': {
@@ -229,6 +243,8 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       },
 
       '&:focus-visible': {
+        // Intentionally not theme.colors.secondary.border — that token is a faint decorative
+        // border for the solid fill and is nearly invisible as a focus ring against it.
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
         ...(!alwaysVisible && {
@@ -236,6 +252,14 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
           pointerEvents: 'auto' as const,
         }),
       },
+    }),
+    buttonWithLabel: css({
+      width: 'auto',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.75),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginLeft: 'auto',
     }),
   };
 }

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId } from 'react';
+import { createElement, useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
@@ -11,16 +11,30 @@ import { type NewsItem } from '../types';
 
 interface NewsItemProps {
   showImage?: boolean;
+  onClick?: () => void;
   index: number;
   data: DataFrameView<NewsItem>;
   className?: string;
+  headingLevel?: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
+function NewsComponent({ showImage, onClick, data, index, className, headingLevel }: NewsItemProps) {
   const titleId = useId();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
   const newsItem = data.get(index);
+  const title = (
+    <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false} onClick={onClick}>
+      {newsItem.title}
+    </TextLink>
+  );
+  const titleElement = headingLevel ? (
+    createElement(`h${headingLevel}`, { className: styles.title, id: titleId }, title)
+  ) : (
+    <div className={styles.title} id={titleId}>
+      {title}
+    </div>
+  );
 
   return (
     <article aria-labelledby={titleId} className={cx(styles.item, className)}>
@@ -32,6 +46,7 @@ function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
           rel="noopener noreferrer"
           className={styles.socialImage}
           aria-hidden
+          onClick={onClick}
         >
           <img src={newsItem.ogImage} alt={newsItem.title} />
         </a>
@@ -41,11 +56,7 @@ function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
           {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
 
-        <h1 className={styles.title} id={titleId}>
-          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false}>
-            {newsItem.title}
-          </TextLink>
-        </h1>
+        {titleElement}
         <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
       </div>
     </article>
@@ -81,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
     marginBottom: theme.spacing(0.5),
     marginRight: theme.spacing(1),
     borderBottom: `2px solid ${theme.colors.border.weak}`,
-    background: visualRefreshEnabled ? theme.components.panel.background : theme.colors.background.primary,
+    background: visualRefreshEnabled ? undefined : theme.colors.background.primary,
     flexDirection: 'row',
     flexShrink: 0,
   }),

@@ -27,41 +27,38 @@ func repo(namespace, name string) *provisioningapis.Repository {
 	return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
 }
 
-// fakeStore is a minimal usinformer.Cache for asserting the client getter's
-// write-through behaviour.
-type fakeStore struct {
-	objs map[string]runtime.Object
+func repoAt(namespace, name, rv string) *provisioningapis.Repository {
+	r := repo(namespace, name)
+	r.ResourceVersion = rv
+	return r
 }
 
-func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
-	s := &fakeStore{objs: map[string]runtime.Object{}}
-	for _, o := range objs {
-		s.objs[o.Namespace+"/"+o.Name] = o
+// terminating marks a repository as deleted but not yet gone.
+func terminating(r *provisioningapis.Repository) *provisioningapis.Repository {
+	now := metav1.Now()
+	r.DeletionTimestamp = &now
+	return r
+}
+
+// seededStore fills a real store the way the re-list does, with identities.
+func seededStore(objs ...*provisioningapis.Repository) usinformer.Store {
+	store := usinformer.NewStore()
+	projected := make([]runtime.Object, 0, len(objs))
+	for _, obj := range objs {
+		projected = append(projected, obj)
 	}
-	return s
+	store.Replace(projectObjects(projected), 1)
+	return store
 }
 
-func (s *fakeStore) List(_ context.Context) []runtime.Object {
-	out := make([]runtime.Object, 0, len(s.objs))
-	for _, o := range s.objs {
-		out = append(out, o)
-	}
-	return out
-}
-
-func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
-	r := obj.(*provisioningapis.Repository)
-	s.objs[r.Namespace+"/"+r.Name] = r
-}
-
-// A live repository notification is delivered as the concrete *Repository the
-// controller's handler expects, built from the notification's identity.
-func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
+// A live repository notification is delivered as an identity, the same shape the
+// re-list stores.
+func TestNewRepositoryInformer_DeliversTheProjection(t *testing.T) {
 	sub := newFakeSubscriber()
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
+	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore(), nil, RelistRecorder{})
 	_, err := inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
@@ -77,17 +74,17 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	})
 
 	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
-	got, ok := rec.last().(*provisioningapis.Repository)
-	require.True(t, ok, "expected *Repository, got %T", rec.last())
+	got, ok := rec.last().(*metav1.PartialObjectMetadata)
+	require.True(t, ok, "expected a projection, got %T", rec.last())
 	assert.Equal(t, "repo-a", got.Name)
 	assert.Equal(t, testNamespace, got.Namespace)
 }
 
-// The cached getter reads the informer's lister for both Get and List.
+// The cached getter reads the informer's lister for both Get and the count.
 func TestNewCachedRepositoryGetter(t *testing.T) {
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	require.NoError(t, indexer.Add(repo(testNamespace, "a")))
-	require.NoError(t, indexer.Add(repo(testNamespace, "b")))
+	require.NoError(t, indexer.Add(terminating(repo(testNamespace, "going"))))
 	require.NoError(t, indexer.Add(repo("other", "c")))
 	getter := NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
 
@@ -95,53 +92,72 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "a", got.Name)
 
-	list, err := getter.List(context.Background(), testNamespace)
+	count, err := getter.CountRepositories(context.Background(), testNamespace)
 	require.NoError(t, err)
-	assert.Len(t, list, 2, "List must be scoped to the namespace")
+	assert.Equal(t, 2, count, "scoped to the namespace, and a repository awaiting its finalizers still counts")
+
+	confirmed, err := getter.ConfirmRepositoryCount(context.Background(), testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, count, confirmed, "the apiserver watch reaches every replica, so the lister already is the confirmation")
 }
 
-// A successful reconcile Get returns the fresh object and writes it back into the
-// store, so a later List (the quota count) reflects it without waiting for a
-// re-list.
-func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
-	client := fake.NewClientset(repo("ns", "fresh"))
-	store := newFakeStore()
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil, nil)
+// The client getter reads the reconcile's object fresh from the API.
+func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
+	full := repoAt("ns", "fresh", "7")
+	full.Spec.Title = "a title"
+	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), usinformer.NewStore(), nil, nil)
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
-	assert.Equal(t, "fresh", got.Name)
+	assert.Equal(t, "a title", got.Spec.Title, "the reconcile gets the whole object")
 
-	list, err := g.List(context.Background(), "ns")
-	require.NoError(t, err)
-	require.Len(t, list, 1)
-	assert.Equal(t, "fresh", list[0].Name, "the fresh Get must be reflected in the store")
+	_, err = g.Get(context.Background(), "ns", "missing")
+	assert.True(t, apierrors.IsNotFound(err))
 }
 
-// A reconcile Get for a vanished object propagates the NotFound and leaves the
-// snapshot alone: eviction is the informer's job (a dated live delete or the
-// next re-list), and the quota count tolerates the gap.
-func TestClientGetCachedListRepositoryGetter_GetNotFoundLeavesSnapshot(t *testing.T) {
-	client := fake.NewClientset()
-	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil, nil)
+// A reconcile Get writes the identity it read into the store, so the count
+// reflects the repository under reconciliation even when this replica never
+// stored it. A NotFound leaves the store alone: eviction is the informer's job
+// (a dated live delete or the next re-list), and the count tolerates the gap.
+func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
+	store := usinformer.NewStore()
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store, nil, nil)
 
-	_, err := g.Get(context.Background(), "ns", "stale")
+	_, err := g.Get(context.Background(), "ns", "fresh")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "an identity, not the whole object")
+
+	store.Update(context.Background(), identity("ns", "gone", "3"))
+	_, err = g.Get(context.Background(), "ns", "gone")
 	require.True(t, apierrors.IsNotFound(err))
-
-	list, err := g.List(context.Background(), "ns")
-	require.NoError(t, err)
-	assert.Len(t, list, 1, "the getter must not evict on a NotFound it cannot date")
+	assert.ElementsMatch(t, []string{"ns/fresh@7", "ns/gone@3"}, identities(t, store.List(context.Background())),
+		"the getter must not evict on a NotFound it cannot date")
 }
 
-// List reads only the requested namespace out of the store.
-func TestClientGetCachedListRepositoryGetter_ListFiltersNamespace(t *testing.T) {
-	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store, nil, nil)
+// The confirmed count reads the API, not the store.
+func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
+	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore(), nil, nil)
 
-	list, err := g.List(context.Background(), "ns-a")
+	cached, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
-	assert.Len(t, list, 2)
+	assert.Zero(t, cached, "the store has seen none of them")
+
+	confirmed, err := g.ConfirmRepositoryCount(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Equal(t, 2, confirmed, "scoped to the namespace")
+}
+
+// The count reads only the requested namespace out of the cluster-wide store, and
+// it agrees with the cached getter: a repository awaiting its finalizers counts,
+// which is what lets the store hold identities alone.
+func TestClientRepositoryGetter_CountFiltersNamespace(t *testing.T) {
+	store := seededStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store, nil, nil)
+
+	count, err := g.CountRepositories(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Equal(t, 3, count)
 }
 
 // Realistic snowflake-range resource versions (above the legacy threshold), so
@@ -158,8 +174,8 @@ func repoWithRV(namespace, name string, rv int64) *provisioningapis.Repository {
 }
 
 // A reconcile Get below the announced floor is not returned: the getter re-reads
-// until the API serves the announced version, then settles the floor.
-func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing.T) {
+// until the API serves the announced version, then keeps it as the watermark.
+func TestClientRepositoryGetter_WaitsForAnnouncedVersion(t *testing.T) {
 	client := fake.NewClientset()
 	var reads atomic.Int32
 	client.PrependReactor("get", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
@@ -171,8 +187,8 @@ func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing
 
 	floor := usinformer.NewRVFloor()
 	floor.Raise("ns", "r", rvFresh)
-	store := newFakeStore()
-	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store,
+	store := usinformer.NewStore()
+	g := clientRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store,
 		reader: usinformer.FreshReader{Floor: floor, Retries: 3}}
 
 	got, err := g.Get(context.Background(), "ns", "r")
@@ -181,19 +197,18 @@ func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing
 	assert.EqualValues(t, 2, reads.Load(), "the stale first read must be retried")
 	assert.Equal(t, rvFresh, floor.Floor("ns", "r"), "the floor persists as the observed watermark")
 
-	list, err := g.List(context.Background(), "ns")
-	require.NoError(t, err)
-	require.Len(t, list, 1, "only the fresh read may be written back to the snapshot")
+	assert.Equal(t, []string{"ns/r@" + strconv.FormatInt(rvFresh, 10)}, identities(t, store.List(context.Background())),
+		"only the fresh read may be written back to the snapshot")
 }
 
 // A 404 while an event announced the object exists is a stale read, not a
 // delete: the getter must not trust it (or evict the snapshot on it).
-func TestClientGetCachedListRepositoryGetter_NotFoundBelowFloorIsStale(t *testing.T) {
+func TestClientRepositoryGetter_NotFoundBelowFloorIsStale(t *testing.T) {
 	client := fake.NewClientset()
 	floor := usinformer.NewRVFloor()
 	floor.Raise("ns", "r", rvFresh)
-	store := newFakeStore(repoWithRV("ns", "r", rvStale))
-	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store,
+	store := seededStore(repoWithRV("ns", "r", rvStale))
+	g := clientRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store,
 		reader: usinformer.FreshReader{Floor: floor, Retries: 3}}
 
 	_, err := g.Get(context.Background(), "ns", "r")
@@ -217,7 +232,7 @@ func TestNewRepositoryDeltaSource_EnforcesNotificationVersion(t *testing.T) {
 		return true, repoWithRV(testNamespace, "r", rvStale), nil
 	})
 	sub := newFakeSubscriber()
-	source, getter := NewRepositoryDeltaSource(sub, client, time.Minute, nil)
+	source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, nil)
 
 	rec := &typeRecorder{}
 	_, err := source.AddEventHandler(rec)
@@ -252,14 +267,14 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute, nil)
+		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil, nil)
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
 
 	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(nil, client, time.Minute, nil)
+		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
 		_, err := getter.Get(context.Background(), testNamespace, "r")

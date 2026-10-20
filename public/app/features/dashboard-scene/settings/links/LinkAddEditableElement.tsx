@@ -1,7 +1,6 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import type { DashboardLink } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -22,6 +21,7 @@ import {
   LinkTextInput,
   LinkTypeSelect,
 } from './LinkBasicOptions';
+import { duplicateLink, LinkEdit, linkSelectionId } from './LinkEdit';
 import { linkEditActions } from './actions';
 import { NEW_LINK } from './utils';
 
@@ -31,34 +31,14 @@ export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 
-function createLinkEdit(dashboard: DashboardSceneLike, linkIndex: number): LinkEdit {
-  const selectionId = linkSelectionId(linkIndex);
-  return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
-}
-
 export function openAddLinkPane(dashboard: DashboardSceneLike) {
   const newLink = createDefaultLink();
   const linkIndex = (dashboard.state.links ?? []).length;
-  const element = createLinkEdit(dashboard, linkIndex);
+  const selectionId = linkSelectionId(linkIndex);
+  const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
 
   linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
 }
-
-export function linkSelectionId(linkIndex: number) {
-  return `dashboard-link-${linkIndex}`;
-}
-
-export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: number) {
-  const element = createLinkEdit(dashboard, linkIndex);
-  dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
-}
-
-export interface LinkEditState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardSceneLike>;
-  linkIndex: number;
-}
-
-export class LinkEdit extends SceneObjectBase<LinkEditState> {}
 
 function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   const dashboard = linkEdit.state.dashboardRef.resolve();
@@ -67,7 +47,7 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useSidebarOptions(
+function useDashboardSidebarOptions(
   this: LinkEditEditableElement,
   linkEdit: LinkEdit,
   isNewElement: boolean
@@ -207,18 +187,12 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useSidebarOptions = useSidebarOptions.bind(this, this.linkEdit);
+  public useSidebarOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+    return useDashboardSidebarOptions.call(this, this.linkEdit, isNewElement);
+  }
 
   public onDuplicate() {
-    const dashboard = this.linkEdit.state.dashboardRef.resolve();
-    const { links } = dashboard.state;
-
-    const link = { ...links[this.linkEdit.state.linkIndex] };
-    link.title = `${link.title} - Copy`;
-    const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
-
-    linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
-    openEditLinkPane(dashboard, links.length);
+    duplicateLink(this.linkEdit.state.dashboardRef.resolve(), this.linkEdit.state.linkIndex);
   }
 
   public onConfirmDelete(): void {

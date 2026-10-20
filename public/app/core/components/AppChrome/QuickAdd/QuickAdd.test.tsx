@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, reportInteraction, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
@@ -36,14 +35,9 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
   };
 });
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
-}));
-
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 jest.mock('@openfeature/react-sdk', () => ({
@@ -126,6 +120,11 @@ describe('QuickAdd', () => {
   it('renders a `New` button', () => {
     setup();
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
+  });
+
+  it('renders nothing when the navtree has no create actions', () => {
+    setup([{ text: 'Dashboards', id: 'dashboards/browse', url: '/dashboards' }]);
+    expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
   });
 
   it('shows isCreateAction options when clicked', async () => {

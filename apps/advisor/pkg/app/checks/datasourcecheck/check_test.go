@@ -335,10 +335,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
-		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
-			Message: "View SigV4 docs",
-			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
-		})
+		assert.Contains(t, failures[0].Links, checks.NewErrorLink("view-sigv4-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/"))
 	})
 
 	t.Run("should return failure when prometheus datasource uses Azure auth", func(t *testing.T) {
@@ -371,10 +368,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
-		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
-			Message: "View Azure auth docs",
-			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
-		})
+		assert.Contains(t, failures[0].Links, checks.NewErrorLink("view-azure-auth-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/"))
 	})
 
 	t.Run("should not return failure when prometheus datasource does not use deprecated auth", func(t *testing.T) {

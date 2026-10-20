@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -24,7 +23,6 @@ interface UseBranchTemplateArgs {
 export function useBranchTemplate({ repository, vars, workflow, value, setBranch }: UseBranchTemplateArgs): {
   locked: boolean;
 } {
-  const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // One token per drawer open; stable across re-renders so the name doesn't churn as vars change.
   const random = useMemo(() => generateBranchToken(), []);
 
@@ -33,7 +31,7 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
   const enforce = repository?.branchOptions?.enforceTemplate ?? false;
   const hasTemplate = Boolean(template?.trim());
 
-  const active = flagEnabled && isBranchWorkflow && hasTemplate;
+  const active = isBranchWorkflow && hasTemplate;
   const rendered = active ? renderBranchName(template, { ...vars, random }) : '';
   // Enforcement requires an actual template AND a non-empty render: with no template (nothing to
   // enforce) or a template that sanitises to '' (e.g. an all-punctuation or non-Latin title), the
@@ -45,13 +43,24 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
   // live template variables — but stop once the user edits the field. We can't gate on react-hook-
   // form's dirty state: reaching the branch workflow by typing a branch name already marks `ref`
   // dirty, which would suppress the first fill. Instead we latch as soon as the field value diverges
-  // from the value the hook last wrote itself. `enforce` still makes the field read-only via `locked`.
+  // from the value the hook last wrote itself.
   const lastApplied = useRef<string | undefined>(undefined);
   const userEdited = useRef(false);
   useEffect(() => {
     if (!active || !rendered) {
       lastApplied.current = undefined;
       userEdited.current = false;
+      return;
+    }
+    // Enforced templates render the field read-only, so a value diverging from what the hook last
+    // wrote is a form reset (the Save drawer re-runs reset on parent re-renders, e.g. selecting a
+    // target folder), never a user edit. Keep re-applying the rendered name so the enforced branch
+    // survives the reset instead of latching off.
+    if (enforce) {
+      if (rendered !== value) {
+        lastApplied.current = rendered;
+        setBranch(rendered);
+      }
       return;
     }
     // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
@@ -65,7 +74,7 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
       lastApplied.current = rendered;
       setBranch(rendered);
     }
-  }, [active, rendered, value, setBranch]);
+  }, [active, enforce, rendered, value, setBranch]);
 
   return { locked };
 }

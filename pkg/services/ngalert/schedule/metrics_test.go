@@ -57,7 +57,7 @@ func TestSchedule_resetMetricsOnStop(t *testing.T) {
 	}()
 
 	// Advance mock clock to trigger ticks and populate metrics
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		mockedClock.Add(time.Second)
 	}
 

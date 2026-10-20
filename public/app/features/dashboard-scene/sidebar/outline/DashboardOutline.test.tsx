@@ -122,7 +122,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
+      await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
 
       unmount();
@@ -135,7 +135,9 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+      expect(
+        await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))
+      ).toBeInTheDocument();
     });
 
     it('should share collapsed state across clones', () => {
@@ -170,7 +172,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
+      await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
 
       unmount();
@@ -190,7 +192,9 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+      expect(
+        await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))
+      ).toBeInTheDocument();
     });
   });
 
@@ -213,7 +217,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
       // select Row lvl 1 (index 3 because Variables is at 0, Annotations at 1, Links at 2)
-      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
+      await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
         index: 3,
         depth: 1,
@@ -259,7 +263,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
       // select Row lvl 1 (index 0 because variables and annotations aren't shown in view mode)
-      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
+      await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
         index: 0,
         depth: 1,
@@ -286,11 +290,13 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
+      const searchInput = await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
+
       expect(
         screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))
       ).not.toBeInTheDocument();
 
-      await user.type(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput), 'Tab level 3 - B');
+      await user.type(searchInput, 'Tab level 3 - B');
 
       // Wait for debounced search to complete
       await waitFor(() => {
@@ -326,7 +332,7 @@ describe('DashboardOutline', () => {
       );
 
       await user.type(
-        screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput),
+        await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput),
         'important system metrics'
       );
 
@@ -354,7 +360,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      const searchInput = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
+      const searchInput = await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
 
       await user.type(searchInput, 'does-not-exist');
       await waitFor(() => {
@@ -389,7 +395,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      const searchInput = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
+      const searchInput = await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
       await user.type(searchInput, 'Row level 1');
       expect(searchInput).toHaveValue('Row level 1');
 
@@ -403,7 +409,9 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue('Row level 1');
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue(
+        'Row level 1'
+      );
     });
 
     it('preserves search query after entering and exiting edit mode', async () => {
@@ -423,7 +431,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      const searchInput = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
+      const searchInput = await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
       await user.type(searchInput, 'Row level 1');
       expect(searchInput).toHaveValue('Row level 1');
 
@@ -444,7 +452,9 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue('Row level 1');
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue(
+        'Row level 1'
+      );
     });
   });
 });

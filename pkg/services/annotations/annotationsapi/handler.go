@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -230,12 +231,16 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if item.Epoch != 0 {
 		anno.Spec.Time = item.Epoch
 	}
-	// Legacy API treats a point annotation as having EpochEnd == Epoch, so if the caller
-	// sends EpochEnd == Epoch, we treat it as a point and clear the end time. This prevents
-	// it from changing to a range when the caller only intended to move the point in time.
-	isPoint := existing.Spec.TimeEnd == nil && (item.EpochEnd == existing.Spec.Time || item.EpochEnd == anno.Spec.Time)
-	if isPoint {
-		anno.Spec.TimeEnd = nil
+	// Legacy API sets Epoch as EpochEnd instead of omitting it,
+	// so treat a match on either the old or new time as no end supplied.
+	wasPoint := existing.Spec.TimeEnd == nil || *existing.Spec.TimeEnd == existing.Spec.Time
+	callerOmittedEnd := item.EpochEnd == 0 || item.EpochEnd == anno.Spec.Time || item.EpochEnd == existing.Spec.Time
+	if wasPoint && callerOmittedEnd {
+		if existing.Spec.TimeEnd == nil {
+			anno.Spec.TimeEnd = nil
+		} else {
+			anno.Spec.TimeEnd = &anno.Spec.Time
+		}
 	} else if item.EpochEnd != 0 {
 		anno.Spec.TimeEnd = &item.EpochEnd
 	}
@@ -291,6 +296,32 @@ func (h *MigrationProxy) Delete(ctx context.Context, orgID int64, annotationID i
 		return ErrGone
 	}
 	return h.client.Delete(ctx, orgID, existing.GetName())
+}
+
+// MassDelete removes every annotation on a dashboard panel from the new store.
+// The new API has no delete-collection route, so this enumerates the panel's annotations
+// via /search and deletes them one by one.
+func (h *MigrationProxy) MassDelete(ctx context.Context, orgID int64, dashboardUID string, panelID int64) error {
+	query := &annotations.ItemQuery{DashboardUID: dashboardUID, PanelID: panelID}
+	const maxMassDeletePasses = 1000
+	for range maxMassDeletePasses {
+		annos, err := h.client.Search(ctx, orgID, query)
+		if err != nil {
+			return err
+		}
+		// Continue querying relevant annotations until the list is empty.
+		if len(annos) == 0 {
+			return nil
+		}
+
+		for _, anno := range annos {
+			if err := h.client.Delete(ctx, orgID, anno.GetName()); err != nil {
+				return fmt.Errorf("deleting annotation %q: %w", anno.GetName(), err)
+			}
+		}
+	}
+
+	return fmt.Errorf("annotation mass delete: exceeded %d passes for dashboard %q panel %d", maxMassDeletePasses, dashboardUID, panelID)
 }
 
 // Get reads a single annotation from the new store. Returns ErrNotFound if the
@@ -366,11 +397,19 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 }
 
 func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) {
+	// Legacy API defaults an unset time to now and silently accepts negative values;
+	// the new API rejects both, so the proxy normalizes them here to keep legacy behavior unchanged
+	epoch := item.Epoch
+	if epoch <= 0 {
+		epoch = time.Now().UnixMilli()
+	}
+
 	spec := annotationV0.AnnotationSpec{
 		Text: item.Text,
-		Time: item.Epoch,
+		Time: epoch,
 		Tags: item.Tags,
 	}
+
 	if item.EpochEnd != 0 {
 		spec.TimeEnd = &item.EpochEnd
 	}

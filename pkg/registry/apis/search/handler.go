@@ -3,6 +3,7 @@
 package search
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,9 +12,11 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -38,21 +41,41 @@ type kindRef struct {
 	version  string
 	resource string
 	kind     string
+
+	// kinds answers what the kind field of a result should say, and is set only by
+	// the global route. That route returns hits of several resource types,
+	// so it cannot name one kind the way a per-kind route does, and a Kubernetes
+	// kind cannot be derived from a group and resource without its manifest.
+	kinds map[schema.GroupResource]string
+	// reportedKinds are the kinds the search server named for one response, by
+	// {group}/{resource}. They win over kinds.
+	reportedKinds map[string]string
+}
+
+// spansResourceTypes reports whether results of this route carry their own
+// resource type.
+func (k kindRef) spansResourceTypes() bool {
+	return k.kinds != nil
 }
 
 func (k kindRef) gvr() schema.GroupVersionResource {
 	return schema.GroupVersionResource{Group: k.group, Version: k.version, Resource: k.resource}
 }
 
+// SearchClient allows callers to wrap search without implementing unrelated index operations.
+type SearchClient interface {
+	Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
+}
+
 // Handler serves the search envelope endpoints for one kind.
 type Handler struct {
-	client   resourcepb.ResourceIndexClient
+	client   SearchClient
 	provider resource.SearchFieldsProvider
 	tracer   trace.Tracer
 	log      log.Logger
 }
 
-func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
+func NewHandler(client SearchClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
 	return &Handler{
 		client:   client,
 		provider: provider,
@@ -63,8 +86,70 @@ func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchF
 
 // SearchFor returns the POST handler for the search endpoint of one kind.
 func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
+	return h.handle(kind, "search.v1.search", searchv0.KindSearchQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.SearchQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return searchResults(res, kind, limit)
+		},
+	)
+}
+
+// GlobalSearchFor returns the POST handler for the search that spans resource
+// types. There is one such endpoint; kinds is only how a result reports the
+// Kubernetes kind of the object it found.
+func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.HandlerFunc {
+	gvr := GlobalSearchGVR()
+	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
+	return h.handle(kind, "search.v1.global", searchv0.KindSearchQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.SearchQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateGlobalSearchQuery(&q, namespace)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return globalSearchResults(res, kind, limit)
+		},
+	)
+}
+
+// TrashFor returns the POST handler for the trash endpoint of one kind.
+func (h *Handler) TrashFor(kind kindRef) http.HandlerFunc {
+	return h.handle(kind, "search.v1.trash", searchv0.KindTrashQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.TrashQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateTrashQuery(&q, kind.gvr(), namespace)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return trashResults(res, kind, limit)
+		},
+	)
+}
+
+// handle is the request flow both endpoints share. Only the body type and the
+// response envelope differ, which is what translate and respond supply.
+func (h *Handler) handle(
+	kind kindRef,
+	spanName string,
+	queryKind string,
+	translate func(*http.Request, string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error),
+	respond func(*resourcepb.ResourceSearchResponse, int64) (any, error),
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := h.tracer.Start(r.Context(), "search.v1.search", trace.WithAttributes(
+		ctx, span := h.tracer.Start(r.Context(), spanName, trace.WithAttributes(
 			attribute.String("search.group", kind.group),
 			attribute.String("search.version", kind.version),
 			attribute.String("search.resource", kind.resource),
@@ -77,31 +162,24 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			return
 		}
 
-		var q searchv0.SearchQuery
-		if err := decodeBody(r, &q); err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
-
-		req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
-		if len(ferrs) > 0 {
-			errhttp.Write(ctx, apierrors.NewInvalid(
-				schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindSearchQuery}, "", ferrs), w)
-			return
-		}
-
-		res, err := h.client.Search(ctx, req)
+		req, ferrs, err := translate(r, namespace)
 		if err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
-		// The backend reports failures in the payload, not as a transport error.
-		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.GetError(res.GetError()), w)
+		if len(ferrs) > 0 {
+			errhttp.Write(ctx, apierrors.NewInvalid(
+				schema.GroupKind{Group: searchv0.GROUP, Kind: queryKind}, "", ferrs), w)
 			return
 		}
 
-		out, err := searchResults(res, kind, req.Limit)
+		res, err := h.client.Search(ctx, req)
+		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+
+		out, err := respond(res, req.Limit)
 		if err != nil {
 			errhttp.Write(ctx, err, w)
 			return

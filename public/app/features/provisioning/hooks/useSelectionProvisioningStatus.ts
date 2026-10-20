@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
+import { type SelectedItemRef, getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
@@ -11,8 +13,7 @@ import { useSelector } from 'app/types/store';
 import { findItem } from '../../browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from '../../browse-dashboards/types';
 
-// This hook can be remove once searching endpoint returns provisioning status
-// It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
+// Search results don't carry provisioning status yet, so resolve it per selected item.
 export function useSelectionProvisioningStatus(
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
   isParentProvisioned: boolean
@@ -21,6 +22,8 @@ export function useSelectionProvisioningStatus(
   const isProvisionedInstance = useIsProvisionedInstance();
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
+  const provisioningEnabled = config.provisioningEnabled;
+
   const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
   const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
   const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
@@ -37,8 +40,8 @@ export function useSelectionProvisioningStatus(
   );
 
   const findItemInState = useCallback(
-    (uid: string) => {
-      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
+    (kind: SelectedItemRef['kind'], uid: string) => {
+      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, kind, uid);
       return item ? { parentUID: item.parentUID, managedBy: item.managedBy } : undefined;
     },
     [browseState]
@@ -80,18 +83,18 @@ export function useSelectionProvisioningStatus(
   );
 
   const checkItemProvisioning = useCallback(
-    async (uid: string, isFolder: boolean): Promise<boolean> => {
+    async (kind: SelectedItemRef['kind'], uid: string): Promise<boolean> => {
       if (isSearching) {
-        return isFolder ? await getFolderMeta(uid) : await getDashboardMeta(uid);
+        return kind === 'folder' ? await getFolderMeta(uid) : await getDashboardMeta(uid);
       }
 
-      const item = findItemInState(uid);
-      if (isFolder) {
+      const item = findItemInState(kind, uid);
+      if (kind === 'folder') {
         return isItemManagedByRepository(item);
       }
 
       // Check parent folder first for dashboards
-      const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
+      const parent = item?.parentUID ? findItemInState('folder', item.parentUID) : undefined;
       if (isItemManagedByRepository(parent)) {
         return true;
       }
@@ -109,11 +112,15 @@ export function useSelectionProvisioningStatus(
         return;
       }
 
-      const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-      const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+      if (!provisioningEnabled) {
+        setStatus({ hasProvisioned: false, hasNonProvisioned: true });
+        return;
+      }
+
+      const refs = getSelectedItemRefs(selectedItems);
 
       // If no items selected
-      if (folders.length === 0 && dashboards.length === 0) {
+      if (refs.length === 0) {
         setStatus({ hasProvisioned: false, hasNonProvisioned: false });
         return;
       }
@@ -121,13 +128,8 @@ export function useSelectionProvisioningStatus(
       let hasProvisioned = false;
       let hasNonProvisioned = false;
 
-      const allItems = [
-        ...folders.map((uid) => ({ uid, isFolder: true })),
-        ...dashboards.map((uid) => ({ uid, isFolder: false })),
-      ];
-
-      for (const { uid, isFolder } of allItems) {
-        const isProvisioned = await checkItemProvisioning(uid, isFolder);
+      for (const { kind, uid } of refs) {
+        const isProvisioned = await checkItemProvisioning(kind, uid);
 
         if (isProvisioned) {
           hasProvisioned = true;
@@ -145,7 +147,7 @@ export function useSelectionProvisioningStatus(
     };
 
     checkProvisioningStatus();
-  }, [selectedItems, isProvisionedInstance, isParentProvisioned, checkItemProvisioning]);
+  }, [selectedItems, isProvisionedInstance, isParentProvisioned, checkItemProvisioning, provisioningEnabled]);
 
   return {
     hasProvisioned: status.hasProvisioned,

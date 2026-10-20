@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Query editor
-review_date: 2026-05-19
+review_date: 2026-08-10
 title: Microsoft SQL Server query editor
 weight: 300
 ---
@@ -220,7 +220,7 @@ You can enable macro support in the `SELECT` clause to simplify time series quer
 
 For backward compatibility, there's an exception to the above rule for queries that return three columns and include a string column named `metric`.
 Instead of transforming the `metric` column into field labels, it becomes the field name, and then the series name is formatted as the value of the `metric` column.
-See the example with the `metric` column below.
+Refer to the example with the `metric` column below.
 
 To optionally customize the default series name formatting, refer to [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name).
 

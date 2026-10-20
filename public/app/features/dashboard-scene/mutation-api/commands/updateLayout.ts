@@ -8,7 +8,7 @@
  * If layoutType is omitted, keeps the current type and just applies options.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';

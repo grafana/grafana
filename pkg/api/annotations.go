@@ -42,7 +42,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		UserUID:      c.Query("userUID"),
 		AlertID:      c.QueryInt64("alertId"),
 		AlertUID:     c.Query("alertUID"),
-		DashboardID:  c.QueryInt64("dashboardId"),
+		DashboardID:  c.QueryInt64("dashboardId"), //nolint:staticcheck // Preserve legacy field compatibility.
 		DashboardUID: c.Query("dashboardUID"),
 		PanelID:      c.QueryInt64("panelId"),
 		Limit:        c.QueryInt64("limit"),
@@ -143,7 +143,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 	item := annotations.Item{
 		OrgID:        c.GetOrgID(),
 		UserID:       userID,
-		DashboardID:  cmd.DashboardId,
+		DashboardID:  cmd.DashboardId, //nolint:staticcheck // Preserve legacy field compatibility.
 		DashboardUID: cmd.DashboardUID,
 		PanelID:      cmd.PanelId,
 		Epoch:        cmd.Time,
@@ -384,7 +384,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 		dashboardUID = cmd.DashboardUID
 		deleteParams = &annotations.DeleteParams{
 			OrgID:        c.GetOrgID(),
-			DashboardID:  cmd.DashboardId,
+			DashboardID:  cmd.DashboardId, //nolint:staticcheck // Preserve legacy field compatibility.
 			DashboardUID: cmd.DashboardUID,
 			PanelID:      cmd.PanelId,
 		}
@@ -645,7 +645,6 @@ type GetAnnotationsParams struct {
 	// Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
 	// in:query
 	// required:false
-	// type: array
 	// collectionFormat: multi
 	Tags []string `json:"tags"`
 	// Return alerts or user created annotations

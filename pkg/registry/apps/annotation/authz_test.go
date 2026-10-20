@@ -3,12 +3,14 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
+
+var testTracer = noop.NewTracerProvider().Tracer("")
 
 // newTestAdapter builds a k8sRESTAdapter with the observability deps wired to
 // no-op test implementations. An optional folderResolver may be passed; otherwise
@@ -32,9 +35,9 @@ func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolde
 	}
 	return &k8sRESTAdapter{
 		store:          store,
+		tracer:         testTracer,
 		accessClient:   ac,
 		folderResolver: resolver,
-		tracer:         tracing.InitializeTracerForTest(),
 		logger:         log.NewNopLogger(),
 		metrics:        ProvideMetrics(nil),
 		// use a large retention window in case of long-running tests.
@@ -64,10 +67,16 @@ func (c *fakeAccessClient) Compile(_ context.Context, _ authtypes.AuthInfo, _ au
 	return nil, nil, nil
 }
 
+// openFGACorrelationID mirrors the validation OpenFGA applies to BatchCheck correlation IDs.
+var openFGACorrelationID = regexp.MustCompile(`^[\w\d-]{1,36}$`)
+
 func (c *fakeAccessClient) BatchCheck(_ context.Context, _ authtypes.AuthInfo, req authtypes.BatchCheckRequest) (authtypes.BatchCheckResponse, error) {
 	c.namespace = req.Namespace
 	results := make(map[string]authtypes.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
+		if !openFGACorrelationID.MatchString(item.CorrelationID) {
+			return authtypes.BatchCheckResponse{}, fmt.Errorf("invalid correlation id %q", item.CorrelationID)
+		}
 		results[item.CorrelationID] = authtypes.BatchCheckResult{Allowed: c.fn(item)}
 	}
 	return authtypes.BatchCheckResponse{Results: results}, nil
@@ -110,7 +119,7 @@ func TestCanAccessAnnotation(t *testing.T) {
 		anno := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
 		}
-		allowed, err := canAccessAnnotation(ctx, accessClient, dashClient, ns, anno, utils.VerbGet)
+		allowed, err := canAccessAnnotation(ctx, testTracer, accessClient, dashClient, ns, anno, utils.VerbGet)
 		require.NoError(t, err)
 		require.True(t, allowed)
 
@@ -129,7 +138,7 @@ func TestCanAccessAnnotation(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
 			Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 		}
-		allowed, err := canAccessAnnotation(ctx, accessClient, dashClient, ns, anno, utils.VerbGet)
+		allowed, err := canAccessAnnotation(ctx, testTracer, accessClient, dashClient, ns, anno, utils.VerbGet)
 		require.NoError(t, err)
 		require.True(t, allowed)
 
@@ -148,7 +157,7 @@ func TestCanAccessAnnotation(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "orphan", Namespace: ns},
 			Spec:       annotationV0.AnnotationSpec{DashboardUID: &missing},
 		}
-		allowed, err := canAccessAnnotation(ctx, accessClient, dashClient, ns, anno, utils.VerbGet)
+		allowed, err := canAccessAnnotation(ctx, testTracer, accessClient, dashClient, ns, anno, utils.VerbGet)
 		require.NoError(t, err)
 		require.True(t, allowed)
 		assert.Equal(t, "", captured.Folder)
@@ -160,7 +169,7 @@ func TestCanAccessAnnotation(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
 			Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 		}
-		_, err := canAccessAnnotation(ctx, accessClient, errClient, ns, anno, utils.VerbGet)
+		_, err := canAccessAnnotation(ctx, testTracer, accessClient, errClient, ns, anno, utils.VerbGet)
 		require.Error(t, err)
 	})
 }
@@ -192,7 +201,7 @@ func TestCanAccessAnnotations(t *testing.T) {
 	t.Run("empty items returns nil", func(t *testing.T) {
 		client := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 		dashClient := newFakeFolderResolver(nil)
-		allowed, err := canAccessAnnotations(ctx, client, dashClient, ns, nil, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, nil, utils.VerbList)
 		require.NoError(t, err)
 		assert.Nil(t, allowed)
 	})
@@ -200,7 +209,7 @@ func TestCanAccessAnnotations(t *testing.T) {
 	t.Run("all allowed", func(t *testing.T) {
 		client := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID})
-		allowed, err := canAccessAnnotations(ctx, client, dashClient, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
 		require.NoError(t, err)
 		assert.Equal(t, []bool{true, true}, allowed)
 	})
@@ -208,7 +217,7 @@ func TestCanAccessAnnotations(t *testing.T) {
 	t.Run("all denied", func(t *testing.T) {
 		client := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return false }}
 		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID})
-		allowed, err := canAccessAnnotations(ctx, client, dashClient, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
 		require.NoError(t, err)
 		assert.Equal(t, []bool{false, false}, allowed)
 	})
@@ -218,7 +227,7 @@ func TestCanAccessAnnotations(t *testing.T) {
 			return req.Group == "annotation.grafana.app"
 		}}
 		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID})
-		allowed, err := canAccessAnnotations(ctx, client, dashClient, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
 		require.NoError(t, err)
 		assert.Equal(t, []bool{true, false}, allowed)
 	})
@@ -229,7 +238,7 @@ func TestCanAccessAnnotations(t *testing.T) {
 			return req.Group == "dashboard.grafana.app" && req.Folder == folderUID
 		}}
 		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID})
-		allowed, err := canAccessAnnotations(ctx, client, dashClient, ns, []annotationV0.Annotation{dashAnno}, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, []annotationV0.Annotation{dashAnno}, utils.VerbList)
 		require.NoError(t, err)
 		assert.Equal(t, []bool{true}, allowed)
 	})
@@ -241,7 +250,7 @@ func TestCanAccessAnnotations(t *testing.T) {
 			return true
 		}}
 		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID})
-		_, err := canAccessAnnotations(ctx, client, dashClient, ns, []annotationV0.Annotation{dashAnno}, utils.VerbList)
+		_, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, []annotationV0.Annotation{dashAnno}, utils.VerbList)
 		require.NoError(t, err)
 		require.Len(t, captured, 1)
 		assert.Equal(t, "dashboard.grafana.app", captured[0].Group)
@@ -255,17 +264,35 @@ func TestCanAccessAnnotations(t *testing.T) {
 	t.Run("dashboard lookup deduped within batch", func(t *testing.T) {
 		client := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID, otherDashUID: ""})
-		_, err := canAccessAnnotations(ctx, client, dashClient, ns, []annotationV0.Annotation{dashAnno, dashAnno2, otherDashAnno, orgAnno}, utils.VerbList)
+		_, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, []annotationV0.Annotation{dashAnno, dashAnno2, otherDashAnno, orgAnno}, utils.VerbList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, dashClient.calls[dashUID], "duplicate dashboard UIDs in batch should be looked up once")
 		assert.Equal(t, 1, dashClient.calls[otherDashUID])
+	})
+
+	t.Run("checks deduped by scope and results mapped back to items", func(t *testing.T) {
+		orgAnno2 := annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "org-anno-2", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{DashboardUID: new(string)},
+		}
+		var captured []authtypes.BatchCheckItem
+		client := &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
+			captured = append(captured, req)
+			return req.Name == dashUID
+		}}
+		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID, otherDashUID: ""})
+		items := []annotationV0.Annotation{dashAnno, orgAnno, otherDashAnno, dashAnno2, orgAnno2}
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, items, utils.VerbList)
+		require.NoError(t, err)
+		assert.Len(t, captured, 3, "one check per unique scope")
+		assert.Equal(t, []bool{true, false, false, true, false}, allowed)
 	})
 
 	t.Run("no auth info returns error", func(t *testing.T) {
 		ctxNoAuth := k8srequest.WithNamespace(context.Background(), ns)
 		client := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 		dashClient := newFakeFolderResolver(nil)
-		_, err := canAccessAnnotations(ctxNoAuth, client, dashClient, ns, []annotationV0.Annotation{orgAnno}, utils.VerbList)
+		_, err := canAccessAnnotations(ctxNoAuth, testTracer, client, dashClient, ns, []annotationV0.Annotation{orgAnno}, utils.VerbList)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsUnauthorized(err))
 	})

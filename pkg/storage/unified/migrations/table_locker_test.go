@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -35,7 +35,7 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 		t.Skip("SQLite uses no-op locker")
 	}
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 
 	gr := schema.GroupResource{Group: "group", Resource: "resource"}
@@ -67,7 +67,7 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 
 func createTestTable(t *testing.T, dbstore db.DB) string {
 	t.Helper()
-	name := fmt.Sprintf("test_lock_%s", uuid.New().String()[:8])
+	name := fmt.Sprintf("test_lock_%s", uuid.NewV4().String()[:8])
 	engine := dbstore.GetEngine()
 	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func createTestTable(t *testing.T, dbstore db.DB) string {
 func TestIntegrationTableLocker(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	engine := dbstore.GetEngine()
 	ctx := context.Background()
@@ -182,7 +182,7 @@ func TestIntegrationTableLockerDisabled(t *testing.T) {
 		t.Skip("SQLite already uses the no-op locker")
 	}
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	engine := dbstore.GetEngine()
 	ctx := context.Background()

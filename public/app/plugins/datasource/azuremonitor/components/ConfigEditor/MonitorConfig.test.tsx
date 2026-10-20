@@ -2,9 +2,16 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 
 import { config } from '@grafana/runtime';
 
+import { useBatchAPIFlag } from '../../featureFlags';
 import { createMockDatasourceSettings } from '../../mocks/datasourceSettings';
 
 import { MonitorConfig, type Props } from './MonitorConfig';
+
+jest.mock('../../featureFlags', () => ({
+  useBatchAPIFlag: jest.fn().mockReturnValue(false),
+  isBatchAPIFlagEnabled: jest.fn().mockReturnValue(false),
+  initFeatureFlags: jest.fn(),
+}));
 
 const defaultProps: Props = {
   options: createMockDatasourceSettings(),
@@ -23,6 +30,8 @@ describe('MonitorConfig', () => {
     config.featureToggles = {
       azureMonitorEnableUserAuth: false,
     };
+    // clearAllMocks does not restore return values; reset so a per-test mockReturnValue(true) cannot leak
+    jest.mocked(useBatchAPIFlag).mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -92,5 +101,21 @@ describe('MonitorConfig', () => {
       expect(screen.getByText('Authentication type')).toBeInTheDocument();
       expect(screen.queryByText(/Current User/i)).not.toBeInTheDocument();
     });
+  });
+
+  it('should show the Batch API toggle when the datasources.azureMonitorBatchAPI feature flag is enabled', () => {
+    jest.mocked(useBatchAPIFlag).mockReturnValue(true);
+
+    render(<MonitorConfig {...defaultProps} />);
+
+    expect(screen.getByText('Enable Batch API')).toBeInTheDocument();
+  });
+
+  it('should hide the Batch API toggle when the datasources.azureMonitorBatchAPI feature flag is disabled', () => {
+    jest.mocked(useBatchAPIFlag).mockReturnValue(false);
+
+    render(<MonitorConfig {...defaultProps} />);
+
+    expect(screen.queryByText('Enable Batch API')).not.toBeInTheDocument();
   });
 });

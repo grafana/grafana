@@ -17,4 +17,11 @@ describe('TokenPermissionsInfo', () => {
     expect(await screen.findByText(/Repository/)).toBeInTheDocument();
     expect(screen.queryByText(/Administration/)).not.toBeInTheDocument();
   });
+
+  it('lists the Webhooks: Read, write, and delete permission for Bitbucket', async () => {
+    render(<TokenPermissionsInfo type="bitbucket" />);
+
+    const row = await screen.findByText(/Webhooks/);
+    expect(row).toHaveTextContent('Webhooks: Read, write, and delete');
+  });
 });

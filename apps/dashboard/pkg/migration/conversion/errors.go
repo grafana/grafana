@@ -2,7 +2,7 @@ package conversion
 
 import "fmt"
 
-var _ error = &ConversionError{}
+var _ error = (*ConversionError)(nil)
 
 // NewConversionError creates a new ConversionError with the given message, current API version, target API version, and function name
 func NewConversionError(msg string, currentAPIVersion, targetAPIVersion string, functionName string) *ConversionError {

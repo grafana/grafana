@@ -65,8 +65,9 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
-// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
-// Deprecated: will be removed in grafana 13
+// LabelKeyDeprecatedInternalID holds the deprecated internal ID of a resource.
+// Resources are now identified by their metadata.name (previously grafana UID)
+// Deprecated: This label will be removed when legacy support via internal IDs is no longer required.
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // Accessor functions for k8s objects

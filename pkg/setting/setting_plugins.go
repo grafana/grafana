@@ -48,6 +48,8 @@ var (
 		"jaeger":                        {ID: "jaeger"},
 		"loki":                          {ID: "loki"},
 		"mysql":                         {ID: "mysql"},
+		"influxdb":                      {ID: "influxdb"},
+		"cloudwatch":                    {ID: "cloudwatch"},
 		"grafana-advisor-app":           {ID: "grafana-advisor-app"},
 		"grafana-postgresql-datasource": {ID: "grafana-postgresql-datasource"},
 		"grafana-pyroscope-datasource":  {ID: "grafana-pyroscope-datasource"},

@@ -302,6 +302,22 @@ func TestValidateSearchFieldDefinitions(t *testing.T) {
 		err := validateSearchFieldDefinitions(StandardSearchFieldDefinitions())
 		require.NoError(t, err)
 	})
+	t.Run("TrashSearchFieldDefinitions passes validation", func(t *testing.T) {
+		err := validateSearchFieldDefinitions(TrashSearchFieldDefinitions())
+		require.NoError(t, err)
+	})
+	// Moving a trash field into the standard set would change IndexAffectingHash for
+	// every kind that has a provider, rebuilding all their indexes, and would expose
+	// the field to live search.
+	t.Run("trash fields stay out of the standard set", func(t *testing.T) {
+		standard := map[string]bool{}
+		for _, def := range StandardSearchFieldDefinitions() {
+			standard[def.Name] = true
+		}
+		for _, def := range TrashSearchFieldDefinitions() {
+			require.False(t, standard[def.Name], "%s must not be a standard field", def.Name)
+		}
+	})
 	t.Run("text on int64 is rejected", func(t *testing.T) {
 		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
 			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityText}},

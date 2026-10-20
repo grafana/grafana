@@ -14,7 +14,7 @@ import (
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-func newRetryTestController(processFn func(string) error) *RepositoryController {
+func newRetryTestController(processFn func(key string) (repoType string, err error)) *RepositoryController {
 	rc := &RepositoryController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
@@ -31,12 +31,12 @@ func newRetryTestController(processFn func(string) error) *RepositoryController 
 // dropping the event until the next re-list.
 func TestProcessNextWorkItem_RetriesStaleReads(t *testing.T) {
 	var calls int
-	rc := newRetryTestController(func(string) error {
+	rc := newRetryTestController(func(string) (string, error) {
 		calls++
 		if calls < maxAttempts {
-			return fmt.Errorf("get repository: %w", usinformer.ErrStaleRead)
+			return "", fmt.Errorf("get repository: %w", usinformer.ErrStaleRead)
 		}
-		return nil
+		return "", nil
 	})
 	rc.queue.Add("ns/r")
 
@@ -51,9 +51,9 @@ func TestProcessNextWorkItem_RetriesStaleReads(t *testing.T) {
 // leaving recovery to the periodic re-list.
 func TestProcessNextWorkItem_DropsStaleReadAfterMaxAttempts(t *testing.T) {
 	var calls int
-	rc := newRetryTestController(func(string) error {
+	rc := newRetryTestController(func(string) (string, error) {
 		calls++
-		return fmt.Errorf("get repository: %w", usinformer.ErrStaleRead)
+		return "", fmt.Errorf("get repository: %w", usinformer.ErrStaleRead)
 	})
 	rc.queue.Add("ns/r")
 
@@ -67,9 +67,9 @@ func TestProcessNextWorkItem_DropsStaleReadAfterMaxAttempts(t *testing.T) {
 // Other errors keep today's behavior: no retry.
 func TestProcessNextWorkItem_DoesNotRetryOtherErrors(t *testing.T) {
 	var calls int
-	rc := newRetryTestController(func(string) error {
+	rc := newRetryTestController(func(string) (string, error) {
 		calls++
-		return errors.New("boom")
+		return "", errors.New("boom")
 	})
 	rc.queue.Add("ns/r")
 
@@ -78,14 +78,15 @@ func TestProcessNextWorkItem_DoesNotRetryOtherErrors(t *testing.T) {
 	assert.Zero(t, rc.queue.Len())
 }
 
-func newConnectionRetryTestController(processFn func(ctx context.Context, item *connectionQueueItem) error) *ConnectionController {
+func newConnectionRetryTestController(processFn func(ctx context.Context, key string) error) *ConnectionController {
 	cc := &ConnectionController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{Name: "test-connection-retry"},
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-connection-retry"},
 		),
 		logger:    logging.DefaultLogger.With("logger", "test"),
 		processed: usinformer.NewProcessedMetrics(nil, "connections", true),
+		triggers:  make(map[string]usinformer.ProcessTrigger),
 	}
 	cc.processFn = processFn
 	return cc
@@ -96,14 +97,14 @@ func newConnectionRetryTestController(processFn func(ctx context.Context, item *
 // beats dropping the event until the next re-list.
 func TestConnectionProcessNextWorkItem_RetriesStaleReads(t *testing.T) {
 	var calls int
-	cc := newConnectionRetryTestController(func(context.Context, *connectionQueueItem) error {
+	cc := newConnectionRetryTestController(func(context.Context, string) error {
 		calls++
 		if calls < connectionMaxAttempts {
 			return fmt.Errorf("get connection: %w", usinformer.ErrStaleRead)
 		}
 		return nil
 	})
-	cc.queue.Add(&connectionQueueItem{key: "ns/c"})
+	cc.queue.Add("ns/c")
 
 	for calls < connectionMaxAttempts {
 		require.True(t, cc.processNextWorkItem(context.Background()))
@@ -115,11 +116,11 @@ func TestConnectionProcessNextWorkItem_RetriesStaleReads(t *testing.T) {
 // Non-transient connection errors are still dropped without retrying.
 func TestConnectionProcessNextWorkItem_DoesNotRetryOtherErrors(t *testing.T) {
 	var calls int
-	cc := newConnectionRetryTestController(func(context.Context, *connectionQueueItem) error {
+	cc := newConnectionRetryTestController(func(context.Context, string) error {
 		calls++
 		return errors.New("boom")
 	})
-	cc.queue.Add(&connectionQueueItem{key: "ns/c"})
+	cc.queue.Add("ns/c")
 
 	require.True(t, cc.processNextWorkItem(context.Background()))
 	assert.Equal(t, 1, calls)

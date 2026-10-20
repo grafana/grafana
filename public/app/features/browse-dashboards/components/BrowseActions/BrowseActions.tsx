@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
@@ -22,6 +22,7 @@ import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../ap
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { type DashboardTreeSelection } from '../../types';
+import { getSelectedUIDs } from '../../utils/dashboards';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -42,6 +43,8 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveFolders] = useMoveMultipleFoldersMutationFacade();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
+  const provisioningEnabled = config.provisioningEnabled;
+
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
     isItemManagedByRepository(folderDTO)
@@ -59,8 +62,8 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onDelete = async () => {
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
+    const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
     await deleteDashboards({ dashboardUIDs: selectedDashboards });
     await deleteFolders({ folderUIDs: selectedFolders });
     trackAction('delete', selectedItems);
@@ -68,8 +71,8 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onMove = async (destinationUID: string) => {
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
+    const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 
     await moveFolders({ folderUIDs: selectedFolders, destinationUID });
     await moveDashboards({ dashboardUIDs: selectedDashboards, destinationUID });
@@ -78,7 +81,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
-    if (hasProvisioned && hasNonProvisioned) {
+    if (provisioningEnabled && hasProvisioned && hasNonProvisioned) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({
@@ -89,7 +92,7 @@ export function BrowseActions({ folderDTO }: Props) {
       return;
     }
 
-    if (hasProvisioned) {
+    if (provisioningEnabled && hasProvisioned) {
       // Only provisioned items
       setShowBulkMoveProvisionedResource(true);
       return;
@@ -108,7 +111,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    if (hasProvisioned && hasNonProvisioned) {
+    if (hasProvisioned && hasNonProvisioned && provisioningEnabled) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({
@@ -116,7 +119,7 @@ export function BrowseActions({ folderDTO }: Props) {
           props: {},
         })
       );
-    } else if (hasProvisioned) {
+    } else if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
       setShowBulkDeleteProvisionedResource(true);
     } else {
@@ -209,8 +212,8 @@ const actionMap = {
 } as const;
 
 function trackAction(action: keyof typeof actionMap, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
-  const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-  const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+  const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
+  const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 
   reportInteraction(actionMap[action], {
     item_counts: {

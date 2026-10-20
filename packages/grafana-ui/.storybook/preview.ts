@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react-webpack5';
+import { Preview } from '@storybook/react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
@@ -19,9 +19,9 @@ import { withTimeZone } from '../src/utils/storybook/withTimeZone';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 // @ts-ignore
-import lightTheme from '../../../public/sass/grafana.light.scss';
+import lightTheme from '../../../public/sass/grafana.light.css';
 // @ts-ignore
-import darkTheme from '../../../public/sass/grafana.dark.scss';
+import darkTheme from '../../../public/sass/grafana.dark.css';
 
 const handleThemeChange = (theme: GrafanaTheme2) => {
   if (theme.colors.mode !== 'light') {

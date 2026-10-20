@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
-import * as React from 'react';
+import { css } from '@emotion/css';
 import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
@@ -10,6 +10,8 @@ import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
 import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
 
 import { TUTORIAL_URL_ALERTING_GET_STARTED } from '../utils/docs';
+
+import { ContentBox } from './ContentBox';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -21,7 +23,7 @@ export default function GettingStarted() {
     <div className={styles.grid}>
       <ContentBox>
         <Stack direction="column" gap={1}>
-          <Text element="h3">
+          <Text element="h3" variant="h4">
             <Trans i18nKey="alerting.getting-started.how-it-works">How it works</Trans>
           </Text>
           <ul className={styles.list}>
@@ -48,7 +50,6 @@ export default function GettingStarted() {
           </ul>
           <div className={styles.svgContainer}>
             <Stack justifyContent={'center'}>
-              {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
               <SVG src={atAGlanceImage} width={undefined} height={undefined} />
             </Stack>
           </div>
@@ -56,7 +57,7 @@ export default function GettingStarted() {
       </ContentBox>
       <ContentBox>
         <Stack direction="column" gap={1}>
-          <Text element="h3">
+          <Text element="h3" variant="h4">
             <Trans i18nKey="alerting.getting-started.get-started">Get started</Trans>
           </Text>
           <ul className={styles.list}>
@@ -104,9 +105,6 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
       gridTemplateColumns: '3fr 2fr',
     },
   }),
-  ctaContainer: css({
-    gridColumn: '1 / span 5',
-  }),
   svgContainer: css({
     '& svg': {
       maxWidth: '900px',
@@ -121,12 +119,12 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function WelcomeHeader({ className }: { className?: string }) {
+export function WelcomeHeader() {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
-    <Stack gap={2} direction="column">
-      <ContentBox className={cx(styles.ctaContainer, className)}>
+    <ContentBox>
+      <Stack direction={{ xs: 'column', lg: 'row' }} gap={4} justifyContent="space-between" wrap="wrap">
         {config.featureToggles.alertingTriage && (
           <>
             <WelcomeCTABox
@@ -170,23 +168,12 @@ export function WelcomeHeader({ className }: { className?: string }) {
           href="/alerting/routes"
           hrefText="Manage notification policies"
         />
-      </ContentBox>
-    </Stack>
+      </Stack>
+    </ContentBox>
   );
 }
 
 const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
-  ctaContainer: css({
-    padding: theme.spacing(2),
-    display: 'flex',
-    gap: theme.spacing(4),
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-
-    [theme.breakpoints.down('lg')]: {
-      flexDirection: 'column',
-    },
-  }),
   separator: css({
     width: '1px',
     backgroundColor: theme.colors.border.medium,
@@ -209,12 +196,16 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
 
   return (
     <div className={styles.container}>
-      <Text element="h2" variant="h3">
+      <Text element="h2" variant="h4">
         {title}
       </Text>
-      <div className={styles.desc}>{description}</div>
+      <div className={styles.desc}>
+        <Text color="secondary">{description}</Text>
+      </div>
       <div className={styles.actionRow}>
-        <TextLink href={href}>{hrefText}</TextLink>
+        <TextLink href={href} data-testid={selectors.pages.Alerting.Home.welcomeCtaLink(href)}>
+          {hrefText}
+        </TextLink>
       </div>
     </div>
   );
@@ -246,19 +237,5 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
     gridColumn: '2 / span 3',
     gridRow: 3,
     maxWidth: '240px',
-  }),
-});
-
-function ContentBox({ children, className }: React.PropsWithChildren<{ className?: string }>) {
-  const styles = useStyles2(getContentBoxStyles);
-
-  return <div className={cx(styles.box, className)}>{children}</div>;
-}
-
-const getContentBoxStyles = (theme: GrafanaTheme2) => ({
-  box: css({
-    padding: theme.spacing(2),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.lg,
   }),
 });

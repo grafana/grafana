@@ -31,7 +31,7 @@ weight: 20
 
 In the panel editor, you can update all the elements of a visualization including the data source, queries, time range, and visualization display options.
 
-![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-v12.4.png)
+![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-2-v12.4.png)
 
 This following sections describe the areas of the Grafana panel editor.
 
@@ -39,8 +39,8 @@ This following sections describe the areas of the Grafana panel editor.
 
 The header section lists the dashboard in which the panel appears and the following controls:
 
-- **Back to dashboard** - Return to the dashboard with changes applied, but not yet saved.
-- **Discard panel changes** - Discard changes you have made to the panel since you last saved the dashboard.
+- **Back** - Return to the dashboard with changes applied, but not yet saved.
+- **Discard** - Discard changes you have made to the panel since you last saved the dashboard.
 - **Save** - Save your changes to the dashboard.
 
 ## Visualization preview
@@ -82,7 +82,7 @@ For more information about individual visualizations, refer to [Visualizations o
 
 While visualization suggestions help you choose _which_ panel type to use, panel styles help you decide _how_ that panel should look. The **Panel styles** section of the panel editor sidebar contains preconfigured options for the currently selected visualization. It appears after you've selected a visualization and the panel has data.
 
-![Panel styles example for time series visualization](/media/docs/grafana/panels-visualizations/visualization-presets-13.png)
+![Panel styles example for time series visualization](/media/docs/grafana/panels-visualizations/screenshot-visualization-presets-v13.0.png)
 
 Each style is displayed as a live preview card that shows how it changes the visualization. Clicking a style applies a combination of display options and field configuration to the panel. For example, changing a style might switch a time series visualization from a line chart with a gradient fill to a stacked bar chart, or update the color scheme and graph mode of a stat visualization.
 
