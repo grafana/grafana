@@ -562,7 +562,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.publishEvent(new NewSceneObjectAddedEvent(openPane), true);
   }
 
-  public closePane(reason: PaneCloseReason = 'explicit') {
+  public closePane(reason: PaneCloseReason = 'programmatic') {
     this.cancelPaneRequest();
     if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);

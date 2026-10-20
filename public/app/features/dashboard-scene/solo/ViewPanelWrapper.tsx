@@ -47,8 +47,8 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
 
   // Remember an explicit close so it is the default for the next panel view. A click-away close
   // (undocked mode) is not a choice about the pane: the pointer was aimed at something else, and
-  // may be about to leave view mode. The close that happens when leaving view mode is programmatic
-  // (viewPanel is cleared first) and does not count either.
+  // may be about to leave view mode. Programmatic closes (the default reason, e.g. a dashboard
+  // rebuild or leaving view mode) are not the user's choice and do not count either.
   useEffect(() => {
     const sub = sidebar.subscribeToEvent(PaneClosedEvent, ({ payload }) => {
       if (payload.pane === viewPanelPane && payload.reason === 'explicit' && dashboard.state.viewPanel) {
@@ -65,7 +65,7 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   useEffect(() => {
     const sub = sidebar.subscribeToEvent(ToggleViewPanePaneEvent, () => {
       if (sidebar.state.openPane === viewPanelPane) {
-        sidebar.closePane();
+        sidebar.closePane('explicit');
       } else {
         store.set(VIEW_PANEL_PANE_CLOSED_KEY, false);
         sidebar.openPane(viewPanelPane);

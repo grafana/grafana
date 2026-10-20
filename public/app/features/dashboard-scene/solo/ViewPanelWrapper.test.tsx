@@ -99,9 +99,19 @@ describe('ViewPanelWrapper', () => {
   it('remembers when the user closes the pane in view mode', async () => {
     const { sidebar } = await setup();
 
-    act(() => sidebar.closePane());
+    act(() => sidebar.closePane('explicit'));
 
     expect(store.getBool(VIEW_PANEL_PANE_CLOSED_KEY, false)).toBe(true);
+  });
+
+  it('does not remember a programmatic close while the panel is still viewed', async () => {
+    const { sidebar } = await setup();
+
+    // e.g. a dashboard rebuild closing whatever pane is open
+    act(() => sidebar.closePane());
+
+    expect(sidebar.state.openPane).toBeUndefined();
+    expect(store.getBool(VIEW_PANEL_PANE_CLOSED_KEY, false)).toBe(false);
   });
 
   it('does not remember a click-away close', async () => {
@@ -124,12 +134,12 @@ describe('ViewPanelWrapper', () => {
     expect(store.getBool(VIEW_PANEL_PANE_CLOSED_KEY, false)).toBe(false);
   });
 
-  it('does not remember the programmatic close that happens when leaving view mode', async () => {
+  it('does not remember a close once view mode has been left, whatever the reason', async () => {
     const { dashboard, sidebar } = await setup();
 
     act(() => {
       dashboard.setState({ viewPanel: undefined });
-      sidebar.closePane();
+      sidebar.closePane('explicit');
     });
 
     expect(store.getBool(VIEW_PANEL_PANE_CLOSED_KEY, false)).toBe(false);

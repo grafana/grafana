@@ -57,10 +57,11 @@ export class ToggleViewPanePaneEvent extends BusEventBase {
 }
 
 /**
- * Why a sidebar pane closed. 'click-away' is an undocked pane closing because the pointer went down
- * somewhere else. Every other close (pane header, sidebar buttons, programmatic callers) is 'explicit'.
+ * Why a sidebar pane closed. 'explicit' is the user closing it on purpose (pane header close button,
+ * sidebar toggle, hide sidebar button). 'click-away' is an undocked pane closing because the pointer
+ * went down somewhere else. Everything else, the default, is 'programmatic'.
  */
-export type PaneCloseReason = 'explicit' | 'click-away';
+export type PaneCloseReason = 'explicit' | 'click-away' | 'programmatic';
 
 export class PaneClosedEvent extends BusEventWithPayload<{ pane: SceneObject; reason: PaneCloseReason }> {
   static type = 'sidebar-pane-closed';
