@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -338,11 +339,12 @@ func configureInProcessManifests(ctx context.Context, cfg *setting.Cfg, searchOp
 	if cfg.ManifestApiServerAddress != "" || cfg.ManifestDiscoveryAddress != "" {
 		cfg.Logger.Warn("manifest_api_server_address and manifest_discovery_url are ignored by in-process storage; search reads the router's discovery manifests in-process")
 	}
-	// The provisioned files are only the starting set: the router fills
-	// /apis/discovery after storage is built, and its manifests replace them
-	// once it lists any.
+	// The router discovers plugin manifests, but not provisioned custom-resource
+	// manifests, so keep provisioning as a lower-priority source on every reload.
+	var manifests []*app.ManifestData
 	if cfg.EnableEmbeddedAPIExtensions {
-		manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
+		var err error
+		manifests, err = loadEmbeddedAppManifests(cfg.ProvisioningPath)
 		if err != nil {
 			cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
 		}
@@ -352,7 +354,7 @@ func configureInProcessManifests(ctx context.Context, cfg *setting.Cfg, searchOp
 	}
 	if discovery != nil && (searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil) {
 		watcherLog := log.New("search-manifest-watcher")
-		watcher := resource.NewLocalManifestWatcher(discovery, reg, searchOptions.ManifestReloader(watcherLog), watcherLog)
+		watcher := resource.NewLocalManifestWatcher(discovery, reg, searchOptions.ManifestReloader(watcherLog, manifests), watcherLog)
 		if err := watcher.StartAsync(ctx); err != nil {
 			return fmt.Errorf("failed to start manifest watcher: %w", err)
 		}
