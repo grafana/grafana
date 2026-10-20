@@ -1522,7 +1522,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     } catch (error) {
       const preview = await loadingPreview;
       if (isFetchError(error) && error.status === 404 && preview && proposesNewDashboard(preview.pending)) {
-        return this.newDashboardPreview(preview);
+        return this.newDashboardPreview(preview, options.route);
       }
       throw error;
     }
@@ -1544,8 +1544,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
    * A new dashboard proposed as pending changes, under a uid no dashboard has yet: an unsaved
    * dashboard showing the proposed spec, which saving creates under that uid.
    */
-  private async newDashboardPreview(preview: PendingChangePreview): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+  private async newDashboardPreview(
+    preview: PendingChangePreview,
+    route: DashboardRoutes
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const created = await buildNewDashboardSaveModelV2();
+    if (route === DashboardRoutes.Embedded) {
+      // Embedded like a saved dashboard in that route: view-only, so it can't be edited or saved there.
+      created.metadata.annotations = { ...created.metadata.annotations, [AnnoKeyEmbedded]: 'embedded' };
+    }
     // Editable unless the proposal says otherwise, so it can be saved.
     const previewRsp = { ...created, spec: { editable: true, ...structuredClone(preview.pending.proposed) } };
     shownPendingChanges.set(previewRsp, preview);

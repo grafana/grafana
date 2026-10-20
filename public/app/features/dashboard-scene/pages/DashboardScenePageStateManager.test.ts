@@ -2368,7 +2368,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         },
       });
 
-      async function loadMissingDashboard(baseGeneration: number) {
+      async function loadMissingDashboard(baseGeneration: number, route = DashboardRoutes.Normal) {
         setTestFlags({ dashboardNewLayouts: false });
         setupV1FailureV2Success();
         const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2383,7 +2383,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         // scene is built from the preview the response carries.
         jest.mocked(getPendingChangePreview).mockReturnValue(undefined);
 
-        await manager.loadDashboard({ uid: 'new-dash', route: DashboardRoutes.Normal, pendingChanges: 'chat-1' });
+        await manager.loadDashboard({ uid: 'new-dash', route, pendingChanges: 'chat-1' });
         jest
           .mocked(getPendingChangePreview)
           .mockImplementation(jest.requireActual('../lifecycle/pendingChangePreview').getPendingChangePreview);
@@ -2402,6 +2402,16 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(scene?.state.title).toBe('Proposed');
         expect(scene?.state.meta.newDashboardUid).toBe('new-dash');
         expect(scene?.state.meta.canSave).toBe(true);
+      });
+
+      // DashboardView embeds it view-only: its banner offers Open to save instead.
+      it('opens view-only where it is embedded', async () => {
+        const { manager } = await loadMissingDashboard(0, DashboardRoutes.Embedded);
+
+        const scene = manager.state.dashboard;
+        expect(scene?.state.title).toBe('Proposed');
+        expect(scene?.state.meta.isEmbedded).toBe(true);
+        expect(scene?.canEditDashboard()).toBe(false);
       });
 
       it('shows the saved dashboard once the proposed one exists', async () => {
