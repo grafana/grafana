@@ -116,6 +116,9 @@ func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsEx
 }
 
 func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decodedResults, error) {
+	// The search server reads manifests at runtime, so it can name kinds this
+	// process does not know. An older server sends none.
+	kind.reportedKinds = res.GetKinds()
 	switch res.GetResultFormat() {
 	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
 		return decodeTableResults(res.GetResults(), kind)
@@ -207,7 +210,10 @@ func resultItem(kind kindRef, key *resourcepb.ResourceKey) searchv0.ResultItem {
 		group, resourceName = key.GetGroup(), key.GetResource()
 		// An unknown pair leaves the kind empty rather than borrowing another
 		// result's: the group and resource still identify the object.
-		kindName = kind.kinds[schema.GroupResource{Group: group, Resource: resourceName}]
+		var ok bool
+		if kindName, ok = kind.reportedKinds[group+"/"+resourceName]; !ok {
+			kindName = kind.kinds[schema.GroupResource{Group: group, Resource: resourceName}]
+		}
 	}
 	return searchv0.ResultItem{
 		Resource: searchv0.ResourceRef{

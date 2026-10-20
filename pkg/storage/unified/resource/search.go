@@ -949,16 +949,24 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
-	// Read once, so the types checked are the types searched even if the coverage
-	// changes meanwhile.
-	sources := s.indexSources(nsr)
+	// Read once, so the types checked are the types searched, and the kinds
+	// reported are theirs, even if the coverage changes meanwhile.
+	// Kept, because the federated lookup below reuses nsr for other keys.
+	global := nsr.IsGlobal()
+	sources := []NamespacedResource{nsr}
+	var kinds map[schema.GroupResource]string
+	if global {
+		var types []schema.GroupResource
+		types, kinds = s.globalCoverage.Snapshot()
+		sources = globalSources(nsr.Namespace, types)
+	}
 	excluded, err := s.checkSearchServicePermissions(ctx, req, sources)
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
 	}
-	if nsr.IsGlobal() {
+	if global {
 		// Named rather than the excluded ones left out, so the index also hides a
 		// type it still holds documents of after the coverage dropped it.
 		searched := make([]string, 0, len(sources))
@@ -981,7 +989,7 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	}
 	// Unavailable rather than failed: the API that serves this search is enabled
 	// separately, and may be on before this server builds the index.
-	if nsr.IsGlobal() && !s.globalIndexEnabled {
+	if global && !s.globalIndexEnabled {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
 		}, nil
@@ -1012,6 +1020,12 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	rsp, err := idx.Search(ctx, s.access, req, federate, stats)
 	if rsp != nil && len(excluded) > 0 {
 		rsp.SkippedTypes = excluded
+	}
+	if rsp != nil && global {
+		rsp.Kinds = make(map[string]string, len(kinds))
+		for gr, kind := range kinds {
+			rsp.Kinds[gr.Group+"/"+gr.Resource] = kind
+		}
 	}
 	return rsp, err
 }
