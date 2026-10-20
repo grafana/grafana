@@ -41,6 +41,10 @@ The filter and group by feature lets you add label/value filter pairs that are a
 Unlike variables, you don't use these filters in queries.
 Instead, you use them to write filters for existing queries.
 
+To try filter and group by controls with a Prometheus data source, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Filter variables" url="https://play.grafana.org/d/canvvlh/" >}}
+
 The following data sources support filters.
 Data sources with an asterisk also support the group by function:
 

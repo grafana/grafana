@@ -62,7 +62,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 }
 
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, route definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
-	tree := v1.RouteToModel(&route)
+	tree := notifier.RouteFromAPI(&route)
 	err := tree.Validate()
 	if err != nil {
 		return definitions.Route{}, "", models.MakeErrRouteInvalidFormat(err)

@@ -3,7 +3,7 @@ import {
   type CodeMirrorCompletionContext,
   type CodeMirrorCompletionResult,
   createVariableCompletionSource,
-} from '@grafana/ui';
+} from '@grafana/ui/unstable';
 
 /**
  * Autocompletion source for template and field variables, triggered by `$`.

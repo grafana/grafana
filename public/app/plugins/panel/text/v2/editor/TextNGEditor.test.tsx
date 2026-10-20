@@ -27,8 +27,7 @@ afterAll(() => {
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
+jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
   // The stubbed editor never runs completions; the source itself is covered by
   // variableCompletion.test.ts.
