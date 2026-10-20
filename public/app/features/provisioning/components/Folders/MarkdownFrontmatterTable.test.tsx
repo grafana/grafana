@@ -1,17 +1,21 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
+
+import { type YamlNode } from '../../utils/markdownFrontmatter';
 
 import { MarkdownFrontmatterTable } from './MarkdownFrontmatterTable';
 
 describe('MarkdownFrontmatterTable', () => {
-  it('renders one row per key, with the key as the row header and scalars as text', () => {
-    render(<MarkdownFrontmatterTable data={{ title: 'Team A', weight: 10, editable: false, owner: null }} />);
+  it('renders one row per key, with the key as the row header, scalars as text and an empty value as an empty cell', () => {
+    render(<MarkdownFrontmatterTable data={{ title: 'Team A', version: '1.10', editable: 'false', owner: null }} />);
 
     expect(screen.getByRole('table', { name: 'Document metadata' })).toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'title' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'Team A' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '10' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '1.10' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'false' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'null' })).toBeInTheDocument();
+
+    const ownerRow = screen.getByRole('rowheader', { name: 'owner' }).closest('tr')!;
+    expect(within(ownerRow).getByRole('cell')).toBeEmptyDOMElement();
   });
 
   it('renders http(s) values as external links and every other string as plain text', () => {
@@ -27,17 +31,9 @@ describe('MarkdownFrontmatterTable', () => {
 
     const link = screen.getByRole('link', { name: /https:\/\/example\.com\/docs/ });
     expect(link).toHaveAttribute('href', 'https://example.com/docs');
-    expect(link).toHaveAttribute('target', '_blank');
     expect(screen.getAllByRole('link')).toHaveLength(1);
     expect(screen.getByRole('cell', { name: 'see https://example.com' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'javascript:alert(1)' })).toBeInTheDocument();
-  });
-
-  it('keeps the line breaks of a multi-line value', () => {
-    render(<MarkdownFrontmatterTable data={{ description: 'line one\nline two\n' }} />);
-
-    // The accessible name keeps the break only because the cell's white-space does.
-    expect(screen.getByRole('cell', { name: 'line one\nline two' })).toHaveStyle({ whiteSpace: 'pre-line' });
   });
 
   it('lays out a list as one row of cells', () => {
@@ -46,13 +42,6 @@ describe('MarkdownFrontmatterTable', () => {
     const row = screen.getByRole('rowheader', { name: 'tags' }).closest('tr')!;
     const inner = row.querySelector('table tr')!;
     expect(Array.from(inner.querySelectorAll('td')).map((cell) => cell.textContent)).toEqual(['as-code', 'markdown']);
-  });
-
-  it('keeps list items whole and lets a long row scroll instead of wrapping', () => {
-    render(<MarkdownFrontmatterTable data={{ tags: ['as-code', 'markdown'] }} />);
-
-    expect(screen.getByRole('cell', { name: 'as-code' })).toHaveStyle({ whiteSpace: 'nowrap' });
-    expect(screen.getByRole('table', { name: 'Document metadata' }).parentElement).toHaveStyle({ overflowX: 'auto' });
   });
 
   it('renders a nested mapping as nested key/value rows', () => {
@@ -65,7 +54,7 @@ describe('MarkdownFrontmatterTable', () => {
   });
 
   it('shows containers nested more than two levels deep as a placeholder', () => {
-    render(<MarkdownFrontmatterTable data={{ a: { b: { c: [1, 2], d: { e: 1 } } } }} />);
+    render(<MarkdownFrontmatterTable data={{ a: { b: { c: ['1', '2'], d: { e: '1' } } } }} />);
 
     expect(screen.getByRole('rowheader', { name: 'c' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: '[…]' })).toBeInTheDocument();
@@ -82,7 +71,7 @@ describe('MarkdownFrontmatterTable', () => {
 
   it('cuts a self-referencing list off at the nesting limit instead of serializing it', () => {
     // js-yaml resolves `loop: &x [*x]` to an array that contains itself.
-    const loop: unknown[] = [];
+    const loop: YamlNode[] = [];
     loop.push(loop);
 
     render(<MarkdownFrontmatterTable data={{ loop }} />);

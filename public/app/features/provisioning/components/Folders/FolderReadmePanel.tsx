@@ -233,18 +233,22 @@ function RenderedMarkdown({
   const repositoryName = repository.name;
   const repositoryPath = repository.path;
 
-  // Front matter isn't markdown: left in, marked turns the `---` fences into an
-  // <hr> and a heading. Show it as a metadata table instead, like GitHub does.
-  const { frontmatter, body } = useMemo(() => splitFrontmatter(markdown), [markdown]);
+  // The parent re-renders on every intersection change; keep marked and the
+  // sanitizer off the scroll path.
+  const { frontmatter, safe } = useMemo(() => {
+    // Front matter isn't markdown: left in, marked turns the `---` fences into an
+    // <hr> and a heading. Show it as a metadata table instead, like GitHub does.
+    const { frontmatter, body } = splitFrontmatter(markdown);
 
-  // renderMarkdown's default sanitizer strips the href of bare relative links
-  // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
-  // the app root — so folder/dashboard links can't be rewritten or resolved.
-  // Render without it and rely on textUtil.sanitize below (the XSS boundary),
-  // which preserves relative links.
-  const html = renderMarkdown(body, { noSanitize: true });
-  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
-  const safe = textUtil.sanitize(rewritten);
+    // renderMarkdown's default sanitizer strips the href of bare relative links
+    // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
+    // the app root — so folder/dashboard links can't be rewritten or resolved.
+    // Render without it and rely on textUtil.sanitize (the XSS boundary), which
+    // preserves relative links.
+    const html = renderMarkdown(body, { noSanitize: true });
+    const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
+    return { frontmatter, safe: textUtil.sanitize(rewritten) };
+  }, [markdown, repository, baseDirInRepo]);
   const containerRef = useRef<HTMLDivElement>(null);
   // Only the latest async (first-click) resolution navigates, so overlapping
   // clicks can't race and push an earlier link's destination after a later one.

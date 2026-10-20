@@ -3,11 +3,12 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextLink, useStyles2 } from '@grafana/ui';
+import { isHttpUrl } from 'app/core/utils/url';
 
-import { type Frontmatter, isYamlMapping } from '../../utils/markdownFrontmatter';
+import { type YamlMapping, type YamlNode } from '../../utils/markdownFrontmatter';
 
 interface Props {
-  data: Frontmatter;
+  data: YamlMapping;
 }
 
 // Lists and mappings render as inner tables down to this depth; anything deeper
@@ -37,7 +38,7 @@ export function MarkdownFrontmatterTable({ data }: Props) {
   );
 }
 
-function MappingRows({ entries, depth }: { entries: Array<[string, unknown]>; depth: number }) {
+function MappingRows({ entries, depth }: { entries: Array<[string, YamlNode]>; depth: number }) {
   return (
     <tbody>
       {entries.map(([key, value]) => (
@@ -53,7 +54,7 @@ function MappingRows({ entries, depth }: { entries: Array<[string, unknown]>; de
 }
 
 // A list is one row of cells, like GitHub lays it out.
-function ListRow({ items, depth }: { items: unknown[]; depth: number }) {
+function ListRow({ items, depth }: { items: YamlNode[]; depth: number }) {
   const styles = useStyles2(getStyles);
   return (
     <table className={styles.list}>
@@ -70,7 +71,7 @@ function ListRow({ items, depth }: { items: unknown[]; depth: number }) {
   );
 }
 
-function FrontmatterValue({ value, depth }: { value: unknown; depth: number }) {
+function FrontmatterValue({ value, depth }: { value: YamlNode; depth: number }) {
   if (typeof value === 'string') {
     return isHttpUrl(value) ? (
       <TextLink href={value} external>
@@ -81,10 +82,12 @@ function FrontmatterValue({ value, depth }: { value: unknown; depth: number }) {
     );
   }
 
-  const isList = Array.isArray(value);
-  if (!isList && !isYamlMapping(value)) {
-    return <>{String(value)}</>;
+  // A key with no value (`owner:`) gets an empty cell, like GitHub shows it.
+  if (value === null) {
+    return null;
   }
+
+  const isList = Array.isArray(value);
 
   // Never serialize the parsed YAML: anchors can make it cyclic (JSON.stringify
   // throws) or expand a few aliased lines into megabytes. Containers we don't
@@ -103,15 +106,6 @@ function FrontmatterValue({ value, depth }: { value: unknown; depth: number }) {
       <MappingRows entries={Object.entries(value)} depth={depth + 1} />
     </table>
   );
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const { protocol } = new URL(value);
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

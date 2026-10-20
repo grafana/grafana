@@ -54,10 +54,11 @@ describe('splitFrontmatter', () => {
     expect(splitFrontmatter(`---\na: 1\n---\n${body}`).body).toBe(body);
   });
 
-  it('resolves booleans, numbers and null like YAML does', () => {
-    expect(splitFrontmatter('---\neditable: false\nweight: 10\nowner:\n---\n').frontmatter).toEqual({
-      editable: false,
-      weight: 10,
+  it('keeps scalars as the text the author wrote and an empty value as null', () => {
+    expect(splitFrontmatter('---\neditable: false\nweight: 1.10\nzip: 01234\nowner:\n---\n').frontmatter).toEqual({
+      editable: 'false',
+      weight: '1.10',
+      zip: '01234',
       owner: null,
     });
   });
@@ -91,6 +92,7 @@ describe('splitFrontmatter', () => {
     { desc: 'a blank line precedes the fence', markdown: '\n---\ntitle: Team A\n---\n' },
     { desc: 'the opening fence is never closed', markdown: '---\ntitle: Team A\n\n# Hello' },
     { desc: 'the YAML is invalid', markdown: '---\ntitle: [unclosed\n---\n# Hello' },
+    { desc: 'the YAML uses an explicit non-string tag', markdown: '---\nweight: !!int 5\n---\n# Hello' },
     { desc: 'the YAML is a list', markdown: '---\n- a\n- b\n---\n# Hello' },
     { desc: 'the YAML is a scalar', markdown: '---\njust text\n---\n# Hello' },
   ])('returns the document unchanged with no front matter when $desc', ({ markdown }) => {
