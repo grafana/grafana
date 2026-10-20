@@ -404,3 +404,53 @@ func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 	// already identify it, and reports no kind rather than another type's.
 	assert.Equal(t, searchv0.ResourceRef{Group: "other.grafana.app", Resource: "others", Kind: "", Name: "other-a"}, out.Items[2].Resource)
 }
+
+// The search server names the kinds it takes from manifests read at runtime,
+// which this process may not know, and its names win over this process's.
+func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
+	row := func(group, resourceName, name string) *resourcepb.ResourceTableRow {
+		return &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{Namespace: "default", Group: group, Resource: resourceName, Name: name},
+			Cells: [][]byte{[]byte(name)},
+		}
+	}
+	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				row("dashboard.grafana.app", "dashboards", "dash-a"),
+				row("x.ext.grafana.app", "pages", "page-a"),
+			},
+		},
+		TotalHits:      3,
+		TotalHitsExact: true,
+		Kinds: map[string]string{
+			"x.ext.grafana.app/pages":    "Page",
+			"folder.grafana.app/folders": "Directory",
+		},
+	}}
+	client.resp.Results.Rows = append(client.resp.Results.Rows, row("folder.grafana.app", "folders", "folder-a"))
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	kinds := func() []string {
+		t.Helper()
+		w := doGlobalRequest(t, h, globalQuery(""))
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var out searchv0.GlobalSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+		got := make([]string, 0, len(out.Items))
+		for _, item := range out.Items {
+			got = append(got, item.Resource.Kind)
+		}
+		return got
+	}
+	assert.Equal(t, []string{"Dashboard", "Page", "Directory"}, kinds(),
+		"a kind the server does not name comes from this process; one it names wins")
+
+	// An older server names none; the next response uses this process's kinds,
+	// untouched by the previous one.
+	client.resp.Kinds = nil
+	assert.Equal(t, []string{"Dashboard", "", "Folder"}, kinds())
+}
