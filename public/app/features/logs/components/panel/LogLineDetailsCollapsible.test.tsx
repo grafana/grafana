@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LogLineDetailsCollapsible } from './LogLineDetailsCollapsible';
-import { LogListContext, defaultValue } from './LogListContext';
+import { LogListContext } from './LogListContext';
+import { defaultValue } from './__mocks__/LogListContext';
 
 jest.mock('./LogListContext');
 
