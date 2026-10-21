@@ -1888,8 +1888,11 @@ func TestUnownedIndexIdleTimeout(t *testing.T) {
 			idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
-			now := time.Now().Truncate(time.Millisecond)
-			require.NotNil(t, backend.getCachedIndex(key, now))
+			beforeUse := time.Now().Truncate(time.Millisecond)
+			require.NotNil(t, backend.getCachedIndex(key, beforeUse.Add(-tc.timeout)))
+			require.Same(t, idx, backend.GetIndex(key))
+			now := time.UnixMilli(backend.peekCachedIndex(key).lastFetchedFromCache.Load())
+			require.GreaterOrEqual(t, now.UnixMilli(), beforeUse.UnixMilli())
 			accessedAt := now.Add(tc.timeout / 2)
 			backend.runEvictExpiredOrUnownedIndexes(accessedAt)
 			require.NotNil(t, backend.getCachedIndex(key, accessedAt))
@@ -1902,6 +1905,70 @@ func TestUnownedIndexIdleTimeout(t *testing.T) {
 
 			backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
 			require.Nil(t, backend.peekCachedIndex(key))
+			_, err = idx.DocCount(t.Context(), "", nil)
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+			checkOpenIndexes(t, reg, 0, 0)
+		})
+	}
+}
+
+func TestNewUnownedIndexIdleTimeout(t *testing.T) {
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
+		return false, nil
+	}))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	beforeBuild := time.Now().UnixMilli()
+	idx, err := backend.BuildIndex(t.Context(), key, defaultFileThreshold, "test", indexTestDocs(key, defaultFileThreshold, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	cached := backend.peekCachedIndex(key)
+	require.GreaterOrEqual(t, cached.lastFetchedFromCache.Load(), beforeBuild)
+
+	deadline := time.UnixMilli(cached.lastFetchedFromCache.Load()).Add(unownedIndexIdleTimeout)
+	backend.runEvictExpiredOrUnownedIndexes(deadline)
+	require.Same(t, idx, backend.PeekIndex(key))
+	backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
+func TestBackgroundInspectionDoesNotPreventUnownedIndexEviction(t *testing.T) {
+	for _, scan := range []struct {
+		name string
+		run  func(*testing.T, *bleveBackend, resource.NamespacedResource)
+	}{
+		{
+			name: "cached lookup",
+			run: func(t *testing.T, backend *bleveBackend, key resource.NamespacedResource) {
+				require.NotNil(t, backend.PeekIndex(key))
+			},
+		},
+		{
+			name: "document counts",
+			run: func(t *testing.T, backend *bleveBackend, _ resource.NamespacedResource) {
+				require.Equal(t, int64(defaultFileThreshold), backend.TotalDocs())
+			},
+		},
+	} {
+		t.Run(scan.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
+				return false, nil
+			}))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			idx, err := backend.BuildIndex(t.Context(), key, defaultFileThreshold, "test", indexTestDocs(key, defaultFileThreshold, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			lastAccess := time.Now().Add(-time.Minute).Truncate(time.Millisecond)
+			cached := backend.getCachedIndex(key, lastAccess)
+			require.Equal(t, indexStorageFile, cached.indexStorage)
+
+			for i := range 3 {
+				scan.run(t, backend, key)
+				require.Equal(t, lastAccess.UnixMilli(), cached.lastFetchedFromCache.Load())
+				backend.runEvictExpiredOrUnownedIndexes(lastAccess.Add(time.Duration(i) * 5 * time.Minute))
+				require.Same(t, idx, backend.PeekIndex(key))
+			}
+
+			backend.runEvictExpiredOrUnownedIndexes(lastAccess.Add(unownedIndexIdleTimeout + time.Millisecond))
+			require.Nil(t, backend.PeekIndex(key), "idle unowned file index must be evicted despite repeated scans")
 			_, err = idx.DocCount(t.Context(), "", nil)
 			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 			checkOpenIndexes(t, reg, 0, 0)

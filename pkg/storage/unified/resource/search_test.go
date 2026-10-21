@@ -388,6 +388,7 @@ type mockSearchBackend struct {
 	buildIndexCalls   []buildIndexCall
 	cache             map[NamespacedResource]ResourceIndex
 	stopCalls         atomic.Int32
+	getIndexCalls     int
 	snapshotThreshold int64
 	// Updater from the most recent BuildIndex, so a test can drive it.
 	lastUpdater UpdateFn
@@ -476,6 +477,13 @@ func (m *mockSearchBackend) WriteOpenIndexStats(_ time.Time) error {
 }
 
 func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.getIndexCalls++
+	return m.cache[key]
+}
+
+func (m *mockSearchBackend) PeekIndex(key NamespacedResource) ResourceIndex {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.cache[key]
@@ -2161,8 +2169,10 @@ func TestScanForIndexesToRebuildReadsImportTimesOnce(t *testing.T) {
 			}
 
 			server.scanForIndexesToRebuild(t.Context(), true)
+			server.scanForIndexesToRebuild(t.Context(), true)
 
-			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, search.getIndexCalls, "background scans must not refresh index idle timestamps")
+			require.Equal(t, 2, storage.listCalls)
 			require.Zero(t, storage.singleCalls)
 			queued := server.rebuildQueue.Elements()
 			if namespaces == 0 {
@@ -2269,7 +2279,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"},
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
-			// to GetOpenIndexes and the call to GetIndex.
+			// to GetOpenIndexes and the call to PeekIndex.
 			{Namespace: "ns", Group: "group", Resource: "missing"},
 		},
 
@@ -2362,6 +2372,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
 	support.findIndexesToRebuild(importTimes, nil, now5m, false)
+	require.Zero(t, search.getIndexCalls, "rebuild inspection must not refresh index idle timestamps")
 	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
