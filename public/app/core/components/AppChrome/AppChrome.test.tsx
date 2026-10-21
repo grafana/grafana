@@ -9,6 +9,7 @@ import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
@@ -606,6 +607,29 @@ describe('AppChrome', () => {
       // The floating sidebar overlays the page, so the page keeps its full size.
       expect(stylesFor(mainContent)).not.toContain('padding-bottom');
       expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
+    });
+
+    it('floats above drawers but below modals, and leaves the docked sidebar under drawers', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(stylesFor(container)).toContain('z-index: 1001');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      // Drawers and their mask sit at modalBackdrop (1050), modal dialogs at modal (1060).
+      expect(stylesFor(container)).toContain('z-index: 1051');
+    });
+
+    it('marks only the floating sidebar as inside open drawers', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(container).not.toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(container).toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

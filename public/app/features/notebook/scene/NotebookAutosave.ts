@@ -159,6 +159,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
+    this.stopped = false;
     if (this.baseline === undefined) {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
@@ -294,6 +295,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
     this.cellTimeRangesEdited.clear();
+  }
+
+  public markVisualizationEdited(elementName: string, wasEditing = this.scene.state.isEditing): void {
+    if (!wasEditing || this.scene.state.isDraft) {
+      return;
+    }
+    this.vizConfigsEdited.add(elementName);
+    const somethingToWrite = this.hasSomethingToWrite();
+    if (somethingToWrite) {
+      this.editedByWriter = true;
+    }
+    this.schedule(somethingToWrite);
+    if (this.stopped) {
+      this.flush();
+    }
   }
 
   /**
@@ -572,6 +588,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   public retry(): void {
     this.schedule();
     this.flush();
+  }
+
+  /**
+   * The Retry button's own entry, so the press is counted and an overwrite, which also calls `retry`,
+   * is not: that one is already reported as the answer to the conflict prompt.
+   */
+  public retryFromButton(): void {
+    NotebookAnalytics.autosaveRetried(this.scene.state.uid ?? '', this.failedAttempts);
+    this.retry();
   }
 
   /**

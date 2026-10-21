@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/log
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/go-kit/log v0.2.1
