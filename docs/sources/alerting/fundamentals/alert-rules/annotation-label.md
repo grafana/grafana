@@ -122,15 +122,15 @@ Annotations are displayed in Grafana and are included by default in notification
 
 {{< /shared >}}
 
-Notification policies and silences match labels, not annotations. A value such as `team` that appears only in an annotation does not select a notification policy that matches that label. If no more specific policy matches, the [Default notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) handles the alert.
+Unlike labels, annotations do not affect [notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) or [silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/). For example, if `team=backend` exists only in an annotation, a child policy that matches `team=backend` does not receive the alert; the [Default notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) handles it instead.
 
-For example, you can edit the annotation `summary` to explain why the alert was triggered:
+You can edit annotations such as `summary` to explain why the alert was triggered:
 
 ```
 CPU usage has exceeded 80% for the last 5 minutes.
 ```
 
-And edit the `description` annotation to provide more context and how to respond:
+Edit the `description` annotation to provide more context and how to respond:
 
 ```
 The web server's CPU has exceeded 80% for more than 5 minutes.

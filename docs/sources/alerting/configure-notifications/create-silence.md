@@ -112,11 +112,7 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 
 [//]: <> ({{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
-Any matching alerts (in the firing state only) display under **Affected alert instances**.
-
-{{< admonition type="note" >}}
-Silences match the current labels of an alert instance. If a label value changes, that change creates a different alert instance. A silence that matched the previous value does not match the new instance. For how labels identify an alert instance, refer to [Labels and annotations](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/).
-{{< /admonition >}}
+Any matching alerts (in the firing state only) display under **Affected alert instances**. Grafana evaluates the silence against each instance's current [labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels), so if a label value changes, that instance is treated as a new one and might no longer match.
 
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.

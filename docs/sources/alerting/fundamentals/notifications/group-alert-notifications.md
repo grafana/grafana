@@ -25,11 +25,7 @@ For a practical example of grouping, refer to our [Getting Started with Grouping
 
 ## Group notifications
 
-Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
-
-{{< admonition type="note" >}}
-In Grafana Alerting, an **alert group** is a temporary batch of alert instances that share one notification. Grafana IRM uses the same name for a lasting object with a status, responders, and an escalation chain. For the IRM meaning, refer to [Respond to alerts in Grafana IRM](/docs/grafana-cloud/alerting-and-irm/irm/use/respond-to-alerts/).
-{{< /admonition >}}
+Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise. In Grafana Alerting, that batched set is an **alert group**: firing instances that share one notification for a period. The same term in [Grafana IRM](/docs/grafana-cloud/alerting-and-irm/irm/use/respond-to-alerts/) refers to a lasting incident with status, responders, and an escalation chain.
 
 In the [notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/), you can configure how to group multiple alerts into a single notification:
 
