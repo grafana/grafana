@@ -2,12 +2,14 @@ import { useSyncExternalStore } from 'react';
 
 import { Text } from '@grafana/ui';
 import { STPodHealthPoller } from 'app/core/navigation/STPodHealthPoller';
+import { useIsUrlAllowed } from 'app/core/navigation/mtFallback';
 import { getStPodStatus, StPodStatus, subscribeToStPodStatus } from 'app/core/navigation/stPodReadiness';
 
-export const StPodPendingEllipsis = () => {
+export const StPodPendingEllipsis = ({ url }: { url: string }) => {
+  const isUrlAllowed = useIsUrlAllowed({ pathname: url.split(/[?#]/)[0] });
   const status = useSyncExternalStore(subscribeToStPodStatus, getStPodStatus);
 
-  if (status === StPodStatus.Ready || status === StPodStatus.Timeout) {
+  if (isUrlAllowed || status === StPodStatus.Ready || status === StPodStatus.Timeout) {
     return null;
   }
 

@@ -12,7 +12,6 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useIsUrlAllowed } from 'app/core/navigation/mtFallback';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
@@ -92,7 +91,6 @@ export function MegaMenuItem({
   const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
-  const isUrlAllowed = useIsUrlAllowed({ ...location, pathname: link.url?.split(/[?#]/)[0] ?? '' });
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
@@ -245,7 +243,7 @@ export function MegaMenuItem({
                   2. If it is not, show the component till the st pod is ready
                   3. If it is, do nothing
               */}
-              {!isUrlAllowed && <StPodPendingEllipsis />}
+              <StPodPendingEllipsis url={link.url} />
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>
