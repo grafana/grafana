@@ -29,7 +29,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const hasRouteSettings =
     watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
     watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
-    watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length > 0;
+    (watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length ?? 0) > 0;
 
   return (
     <Stack direction="column">
