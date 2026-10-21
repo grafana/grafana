@@ -1452,7 +1452,7 @@ type HybridSearchResult struct {
 	// or array elements omitted. Empty values are omitted.
 	// Absent for semantic-only hits, external collections, and legacy table responses.
 	Lexical map[string]*structpb.Value `protobuf:"bytes,9,rep,name=lexical,proto3" json:"lexical,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Tags from the lexical index or the best matching semantic chunk.
+	// Tags from the lexical index. Omitted when unavailable.
 	Tags          []string `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

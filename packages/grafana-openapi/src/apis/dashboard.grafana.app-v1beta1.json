@@ -1196,7 +1196,7 @@
             "default": 0
           },
           "tags": {
-            "description": "Tags come from the lexical index or the best matching semantic chunk.",
+            "description": "Tags from the lexical index. Omitted when unavailable.",
             "type": "array",
             "items": {
               "type": "string"

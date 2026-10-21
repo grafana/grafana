@@ -486,7 +486,7 @@ message HybridSearchResult {
   // Absent for semantic-only hits, external collections, and legacy table responses.
   map<string, google.protobuf.Value> lexical = 9;
 
-  // Tags from the lexical index or the best matching semantic chunk.
+  // Tags from the lexical index. Omitted when unavailable.
   repeated string tags = 10;
 }
 

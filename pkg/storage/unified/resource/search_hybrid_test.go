@@ -96,7 +96,7 @@ func TestFuseRRF_Tags(t *testing.T) {
 		content string
 		want    []string
 	}{
-		{name: "semantic tags", content: "Dashboard → CPU\nTags: team-a, prod, , staging \nrate(cpu[5m])", want: []string{"team-a", "prod", "staging"}},
+		{name: "semantic content does not supply tags", content: "Dashboard → CPU\nTags: team-a, prod, , staging \nrate(cpu[5m])"},
 		{name: "no tags line", content: "Dashboard → CPU"},
 		{name: "empty tags line", content: "Dashboard → CPU\nTags: "},
 		{name: "indexed tags take precedence", lex: []lexicalHit{{uid: "a", tags: []string{"prod"}}}, content: "Dashboard → CPU\nTags: stale", want: []string{"prod"}},
@@ -781,7 +781,7 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 			assert.Equal(t, "Lex Only", r.Chunks[0].Content)
 		}
 		if r.Key.Name == "semonly" {
-			assert.Equal(t, []string{"semantic-tag"}, r.Tags)
+			assert.Empty(t, r.Tags)
 		}
 	}
 
@@ -1446,11 +1446,16 @@ func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
 	lexResp := lexTableResponse([3]string{"lexonly", "Lex Only", "f1"})
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{
-			{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1", Score: 0.1},
+			{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "Description: Tags: fake\nTags: fake", Score: 0.1},
 		},
 	}
 	s, idx, _ := newHybridTestServer(lexResp, backend)
 	idx.managedByResp = managerFieldValueResponse([3]string{"semonly", "repo", "m1"})
+	idx.managedByResp.Fields = append(idx.managedByResp.Fields, &resourcepb.ResourceSearchField{
+		Name: SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING, IsArray: true,
+	})
+	idx.managedByResp.Rows[0].Values = append(idx.managedByResp.Rows[0].Values,
+		&resourcepb.ResourceSearchValue{FieldIndex: 2, StringValues: []string{"team,a"}})
 
 	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: validKey(), Query: "q",
@@ -1464,12 +1469,17 @@ func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
 	}
 	assert.Equal(t, [2]string{"", ""}, managed["lexonly"])
 	assert.Equal(t, [2]string{"repo", "m1"}, managed["semonly"])
+	for _, r := range resp.Results {
+		if r.Key.Name == "semonly" {
+			assert.Equal(t, []string{"team,a"}, r.Tags)
+		}
+	}
 
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 	require.NotNil(t, idx.gotManagedByReq)
 	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotManagedByReq.ResultFormat)
-	assert.Equal(t, []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, idx.gotManagedByReq.Fields)
+	assert.Equal(t, []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS}, idx.gotManagedByReq.Fields)
 	require.Len(t, idx.gotManagedByReq.Options.Fields, 1)
 	assert.Equal(t, []string{"semonly"}, idx.gotManagedByReq.Options.Fields[0].Values, "only the semantic-only uid is looked up")
 	assert.Equal(t, "q", idx.gotReq.Query, "lexical-leg request assertions stay untouched by the managed-by lookup")
@@ -1489,6 +1499,36 @@ func TestHybridSearch_SkipsManagedByLookupWhenNoSemanticOnlyHits(t *testing.T) {
 	assert.Nil(t, idx.gotManagedByReq, "no semantic-only hits: nothing to resolve")
 }
 
+func TestHybridSearch_SemanticOnlyHitDoesNotUseSnippetTagsWhenIndexHasNone(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		withEmptyTagsField bool
+	}{
+		{name: "missing tags field"},
+		{name: "empty tags field", withEmptyTagsField: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{
+				UID: "semonly", Title: "Sem Only", Content: "Tags: fake", Score: 0.1,
+			}}}
+			s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+			idx.managedByResp = managerFieldValueResponse([3]string{"semonly", "repo", "m1"})
+			if tc.withEmptyTagsField {
+				idx.managedByResp.Fields = append(idx.managedByResp.Fields, &resourcepb.ResourceSearchField{
+					Name: SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING, IsArray: true,
+				})
+				idx.managedByResp.Rows[0].Values = append(idx.managedByResp.Rows[0].Values,
+					&resourcepb.ResourceSearchValue{FieldIndex: 2, StringValues: []string{}})
+			}
+
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Key: validKey(), Query: "q"})
+			require.NoError(t, err)
+			require.Len(t, resp.Results, 1)
+			assert.Empty(t, resp.Results[0].Tags)
+		})
+	}
+}
+
 func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 	for name, setup := range map[string]func(*hybridFakeIndex){
 		"transport error": func(idx *hybridFakeIndex) {
@@ -1506,7 +1546,7 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			backend := &fakeVectorBackend{
 				results: []vector.VectorSearchResult{
-					{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1", Score: 0.1},
+					{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "Description: Tags: fake\nTags: fake", Score: 0.1},
 				},
 			}
 			s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
@@ -1519,6 +1559,7 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 			require.Len(t, resp.Results, 1)
 			assert.Empty(t, resp.Results[0].ManagedByKind)
 			assert.Empty(t, resp.Results[0].ManagedById)
+			assert.Empty(t, resp.Results[0].Tags)
 		})
 	}
 }
@@ -1680,7 +1721,7 @@ func externalBackend(results ...vector.VectorSearchResult) *fakeVectorBackend {
 func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	backend := externalBackend(
 		vector.VectorSearchResult{UID: "both", Title: "Both Legs", Subresource: "chunk/1", Content: "b1", Score: 0.1},
-		vector.VectorSearchResult{UID: "semonly", Title: "Sem Only", Subresource: "chunk/0", Content: "s0", Score: 0.2},
+		vector.VectorSearchResult{UID: "semonly", Title: "Sem Only", Subresource: "chunk/0", Content: "Tags: fake", Score: 0.2},
 	)
 	lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{
 		{UID: "both", Title: "Both Legs", Subresource: "chunk/1", Content: "b1"},
@@ -1700,6 +1741,9 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 
 	// Lexical-only hits carry their stored chunk, not a synthesized title.
 	for _, r := range resp.Results {
+		if r.Key.Name == "semonly" {
+			assert.Empty(t, r.Tags)
+		}
 		if r.Key.Name == "lexonly" {
 			require.Len(t, r.Chunks, 1)
 			assert.Equal(t, "chunk/2", r.Chunks[0].Subresource)

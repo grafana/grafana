@@ -536,7 +536,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchResultItem(ref common.Reference
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Tags come from the lexical index or the best matching semantic chunk.",
+							Description: "Tags from the lexical index. Omitted when unavailable.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

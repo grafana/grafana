@@ -325,11 +325,11 @@ func lexicalUIDSet(lex []lexicalHit) map[string]struct{} {
 	return uids
 }
 
-// resolveManagedBy fills ManagedByKind/ManagedById on semantic-only hits
+// resolveSemanticMetadata fills manager fields and tags on semantic-only hits
 // (absent from lexUIDs) with one batched lookup; other hits already carry
 // these fields off the lexical leg's own document. Best-effort, like
 // resolveFolderTitles.
-func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.ResourceKey, lexUIDs map[string]struct{}, results []*resourcepb.HybridSearchResult) {
+func (s *searchServer) resolveSemanticMetadata(ctx context.Context, key *resourcepb.ResourceKey, lexUIDs map[string]struct{}, results []*resourcepb.HybridSearchResult) {
 	uids := make([]string, 0, len(results))
 	for _, r := range results {
 		if _, ok := lexUIDs[r.Key.Name]; !ok {
@@ -348,29 +348,29 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 			},
 		},
 		Limit:        int64(len(uids)),
-		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
+		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := searchCallError(resp, err); err != nil {
-		s.log.Warn("hybrid search: managed-by resolution failed", "err", err)
+		s.log.Warn("hybrid search: semantic metadata resolution failed", "err", err)
 		return
 	}
 
 	hits, err := lexicalHitsFromResponse(resp)
 	if err != nil {
-		s.log.Warn("hybrid search: managed-by response decoding failed", "err", err)
+		s.log.Warn("hybrid search: semantic metadata response decoding failed", "err", err)
 		return
 	}
 
-	type managedBy struct{ kind, id string }
-	managed := make(map[string]managedBy, len(uids))
+	metadata := make(map[string]lexicalHit, len(uids))
 	for _, hit := range hits {
-		managed[hit.uid] = managedBy{kind: hit.managerKind, id: hit.managerID}
+		metadata[hit.uid] = hit
 	}
 	for _, r := range results {
-		if m, ok := managed[r.Key.Name]; ok {
-			r.ManagedByKind = m.kind
-			r.ManagedById = m.id
+		if hit, ok := metadata[r.Key.Name]; ok {
+			r.ManagedByKind = hit.managerKind
+			r.ManagedById = hit.managerID
+			r.Tags = hit.tags
 		}
 	}
 }
@@ -658,11 +658,10 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			seen[v.UID] = struct{}{}
 			rank++
 			r.Score += 1.0 / float64(rrfK+rank)
-			// Only fill in the title, folder, and tags when the resource wasn't found by lexical search.
+			// Only fill in the title and folder when the resource wasn't found by lexical search.
 			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = titleFromChunkMetadata(v.Metadata, v.Title)
 				r.Folder = v.Folder
-				r.Tags = parseSnippetTags(v.Content)
 			}
 		}
 		if len(r.Chunks) < maxChunksPerHybridResult {
@@ -725,23 +724,6 @@ func titleFromChunkMetadata(meta []byte, fallback string) string {
 		return fallback
 	}
 	return m.DashboardTitle
-}
-
-func parseSnippetTags(content string) []string {
-	for _, line := range strings.Split(content, "\n") {
-		value, ok := strings.CutPrefix(line, "Tags: ")
-		if !ok {
-			continue
-		}
-		var tags []string
-		for _, tag := range strings.Split(value, ",") {
-			if tag = strings.TrimSpace(tag); tag != "" {
-				tags = append(tags, tag)
-			}
-		}
-		return tags
-	}
-	return nil
 }
 
 // lexicalHitsFromResponse decodes search rows into rank-ordered hits. Missing
