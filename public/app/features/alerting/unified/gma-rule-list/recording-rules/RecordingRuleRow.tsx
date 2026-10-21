@@ -2,6 +2,7 @@ import { useId } from 'react';
 
 import { TextLink } from '@grafana/ui';
 
+import { createReturnTo } from '../../hooks/useReturnTo';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleListItem } from '../rule-row/RuleListItem';
@@ -18,13 +19,15 @@ interface RecordingRuleRowProps {
 /** Presentation-only; missing health renders "unavailable", never recording. */
 export function RecordingRuleRow({ hit, folderPath }: RecordingRuleRowProps) {
   const titleId = useId();
+  const returnTo = createReturnTo();
+  const href = `${grafanaRulesNav.viewLink(hit.uid)}?returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
     <RuleListItem
       aria-labelledby={titleId}
       icon={<RuleStatusIcon kind="recording" health={hit.health} paused={hit.paused} />}
       title={
-        <TextLink id={titleId} href={grafanaRulesNav.viewLink(hit.uid)} color="primary" inline={false}>
+        <TextLink id={titleId} href={href} color="primary" inline={false}>
           {hit.title}
         </TextLink>
       }

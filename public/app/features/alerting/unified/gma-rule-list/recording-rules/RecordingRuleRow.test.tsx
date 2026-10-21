@@ -21,7 +21,7 @@ describe('RecordingRuleRow', () => {
 
     expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toHaveAttribute(
       'href',
-      '/alerting/grafana/rule-1/view'
+      expect.stringContaining('/alerting/grafana/rule-1/view')
     );
     expect(screen.getByRole('listitem', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
   });
