@@ -109,7 +109,7 @@ On Grafana Cloud, the Tempo plugin is managed by Grafana and updates automatical
 
 - [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/)
 - [Best practices for traces](https://grafana.com/docs/tempo/<TEMPO_VERSION>/set-up-for-tracing/instrument-send/best-practices/): Guidance on planning spans, attributes, and trace structure for effective tracing data.
-- [TraceQL query examples](query-editor/traceql-query-examples/)
+- [TraceQL query examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-query-examples/)
 - [TraceQL query language reference](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/)
   If you encounter issues with the Tempo data source, refer to [Troubleshoot Tempo data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/).
 
