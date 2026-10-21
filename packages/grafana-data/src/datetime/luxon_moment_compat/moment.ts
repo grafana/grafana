@@ -468,6 +468,23 @@ const formatParserCache = new Map<string, TokenParser>();
 // and parse formats are highly repetitive, so cache the compiled parser. The parser is
 // locale-bound (fromFormatParser rejects a locale mismatch), so the locale is part of the key.
 function parseFromCachedFormat(value: string, fmt: string, options?: MomentOptions): DateTime {
+  if (fmt.includes('o')) {
+    const { result, zone, matches, invalidReason } = DateTime.fromFormatExplain(value, fmt, options);
+    if (!invalidReason && result?.ordinal !== undefined) {
+      // Moment's day-of-year overrides calendar fields, including the month derived from Q.
+      const fields = { ...result };
+      delete fields.month;
+      delete fields.day;
+      delete fields.quarter;
+      const parseOptions = {
+        ...options,
+        zone: zone ?? options?.zone,
+        specificOffset: typeof matches?.Z === 'number' ? matches.Z : undefined,
+      };
+      return resolveParsedZone(DateTime.fromObject(fields, parseOptions), options);
+    }
+  }
+
   const key = `${options?.locale ?? ''}|${fmt}`;
   let parser = formatParserCache.get(key);
 

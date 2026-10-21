@@ -131,6 +131,16 @@ describe('startOf and endOf', () => {
 });
 
 describe('format', () => {
+  it.each([
+    ['2024-01-01', '[Q]Q YYYY DDD DDDD', 'Q1 2024 1 001'],
+    ['2024-02-29', 'Q DDD DDDD', '1 60 060'],
+    ['2024-11-05', '[Q]Q YYYY-DDD', 'Q4 2024-310'],
+    ['2024-12-31', 'DDD DDDD', '366 366'],
+    ['2024-11-05', 'QQ QQQ [Q DDD DDDD]', '44 444 Q DDD DDDD'],
+  ])('formats quarter and day-of-year tokens in %s with %s', (input, format, expected) => {
+    expect(moment.utc(input).format(format)).toBe(expected);
+  });
+
   it('uses Z for UTC in the default format', () => {
     expect(moment.utc('2024-05-08T10:30:45Z').format()).toBe('2024-05-08T10:30:45Z');
   });
@@ -190,6 +200,35 @@ describe('format', () => {
 });
 
 describe('formatted string parsing', () => {
+  it.each([
+    ['2024 Q4', 'YYYY [Q]Q', '2024-10-01T00:00:00.000Z'],
+    ['2024-310', 'YYYY-DDD', '2024-11-05T00:00:00.000Z'],
+    ['2024-001', 'YYYY-DDDD', '2024-01-01T00:00:00.000Z'],
+    ['2024-11-05 310', 'YYYY-MM-DD DDD', '2024-11-05T00:00:00.000Z'],
+    ['2024-01-02 310', 'YYYY-MM-DD DDD', '2024-11-05T00:00:00.000Z'],
+    ['2024-310 1', 'YYYY-DDD Q', '2024-11-05T00:00:00.000Z'],
+    ['310 2024-01-02', 'DDD YYYY-MM-DD', '2024-11-05T00:00:00.000Z'],
+    ['2024-01-02 060', 'YYYY-MM-DD DDDD', '2024-02-29T00:00:00.000Z'],
+    ['2024-01-02 366', 'YYYY-MM-DD DDD', '2024-12-31T00:00:00.000Z'],
+    ['2024-01-02 310 08:05:09 +02:00', 'YYYY-MM-DD DDD HH:mm:ss Z', '2024-11-05T06:05:09.000Z'],
+  ])('parses quarter and day-of-year input %s with %s', (input, format, expected) => {
+    expect(moment.utc(input, format).toISOString()).toBe(expected);
+  });
+
+  it.each(['2023-01-02 366', '2024-01-02 367', '2024-01-02 000'])(
+    'rejects out-of-range day-of-year in %s despite calendar fields',
+    (input) => {
+      expect(moment.utc(input, 'YYYY-MM-DD DDD').isValid()).toBe(false);
+    }
+  );
+
+  it('preserves the named zone when day-of-year overrides calendar fields', () => {
+    const parsed = moment.tz('2024-01-02 310 08:05', 'YYYY-MM-DD DDD HH:mm', 'America/New_York');
+
+    expect(parsed.toISOString()).toBe('2024-11-05T13:05:00.000Z');
+    expect(parsed.format('YYYY-MM-DD HH:mm Z')).toBe('2024-11-05 08:05 -05:00');
+  });
+
   it('treats single quotes as literal characters in the format', () => {
     expect(moment.utc("May'24", "MMM'YY").toISOString()).toBe('2024-05-01T00:00:00.000Z');
   });
