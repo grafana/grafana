@@ -1,4 +1,4 @@
-import { type SearchQuery } from './searchQueryLeaves';
+import { type SearchQuery } from '../rule-search/searchQueryLeaves';
 
 /** Test-only mirror of the per-kind rule search validation: a message per rejection. */
 export function getRuleSearchQueryViolations(query: SearchQuery, kind: 'alert' | 'recording'): string[] {

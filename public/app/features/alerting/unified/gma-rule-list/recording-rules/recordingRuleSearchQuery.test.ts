@@ -1,5 +1,5 @@
+import { getRuleSearchQueryViolations } from '../mocks/ruleSearchQueryContract';
 import { type Criteria, type HealthValue, createEmptyCriteria } from '../rule-search/criteria';
-import { getRuleSearchQueryViolations } from '../rule-search/ruleSearchQueryContract';
 
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 

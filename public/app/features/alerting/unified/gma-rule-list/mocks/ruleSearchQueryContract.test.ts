@@ -1,5 +1,6 @@
+import { type SearchQuery } from '../rule-search/searchQueryLeaves';
+
 import { getRuleSearchQueryViolations } from './ruleSearchQueryContract';
-import { type SearchQuery } from './searchQueryLeaves';
 
 function queryWith(where: SearchQuery['where']): SearchQuery {
   return {

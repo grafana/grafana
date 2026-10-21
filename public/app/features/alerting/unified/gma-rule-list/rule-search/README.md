@@ -85,5 +85,5 @@ builders send the API's own values: `state:normal` and `state:inactive` both sen
 `state In [Healthy, Inactive]`, and `health:ok` sends `OK` on Alert rules and `Recording` on
 Recording rules. A rule with no stored status matches none of them.
 
-`ruleSearchQueryContract.ts` mirrors what the per-kind rule search accepts, including these values,
+`mocks/ruleSearchQueryContract.ts` mirrors what the per-kind rule search accepts, including these values,
 so builder tests can assert every request stays inside it.
