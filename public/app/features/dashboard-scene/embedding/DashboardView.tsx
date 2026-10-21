@@ -26,7 +26,7 @@ export interface DashboardViewProps {
 }
 
 /**
- * EXPOSED COMPONENT (stable): `grafana/dashboard-view/v1`
+ * EXPOSED COMPONENT (experimental, behind `assistant.dashboard.artifacts`): `grafana/dashboard-view/v1`
  *
  * A saved dashboard rendered outside the dashboard route, with its pending changes
  * banner, for a host such as the Grafana Assistant Workspace canvas. Viewing only:

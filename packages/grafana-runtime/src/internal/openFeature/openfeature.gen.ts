@@ -64,6 +64,8 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them */
+  AssistantDashboardArtifacts: "assistant.dashboard.artifacts",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -663,6 +665,17 @@ export const useFlagAlertingUIUseFullyCompatBackendFilters = (options?: ReactFla
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboard.artifacts`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardArtifacts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboard.artifacts", false, options).value;
 };
 
 /**

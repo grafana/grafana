@@ -1,4 +1,5 @@
 import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
@@ -30,8 +31,22 @@ function registerLoaders(...loaders: unknown[]) {
   } as unknown as Awaited<ReturnType<typeof getPluginExtensionRegistries>>);
 }
 
+// Plugin-provided pending changes are behind Grafana Assistant's flag; the tests below need it on.
+beforeEach(() => setTestFlags({ 'assistant.dashboard.artifacts': true }));
+afterEach(() => setTestFlags({}));
+
 describe('loadPendingChangePreview', () => {
   afterEach(() => jest.useRealTimers());
+
+  it('asks no plugin while plugin-provided pending changes are off', async () => {
+    setTestFlags({});
+    const load = jest.fn();
+    registerLoaders(load);
+
+    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toBeUndefined();
+    expect(load).not.toHaveBeenCalled();
+    expect(getExtensionPointPluginDependencies).not.toHaveBeenCalled();
+  });
 
   it('previews the pending changes a plugin returns', async () => {
     registerLoaders(async () => pending);

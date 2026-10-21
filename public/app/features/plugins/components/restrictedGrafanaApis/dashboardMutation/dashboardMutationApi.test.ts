@@ -108,6 +108,15 @@ describe('dashboardMutationApi', () => {
       expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeDefined();
     });
 
+    // Grafana Assistant reads this schema to tell whether this build previews its pending changes.
+    it('answers for RELOAD_FROM_SERVER only with plugin-provided pending changes on', () => {
+      expect(dashboardMutationApi.getPayloadSchema('RELOAD_FROM_SERVER')).toBeNull();
+
+      setTestFlags({ 'assistant.dashboard.artifacts': true });
+
+      expect(dashboardMutationApi.getPayloadSchema('RELOAD_FROM_SERVER')).toBeDefined();
+    });
+
     it('is case-insensitive', () => {
       for (const cmd of allMutationCommands()) {
         const lower = dashboardMutationApi.getPayloadSchema(cmd.name.toLowerCase());

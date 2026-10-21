@@ -5,6 +5,8 @@ import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/fe
 import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { isPendingChangesEnabled } from './pendingChangesFlag';
+
 /**
  * Pending changes preview. Grafana doesn't store pending changes: the plugin that proposed
  * them (Grafana Assistant) keeps them and registers a loader at
@@ -209,9 +211,8 @@ export async function loadPendingChangePreview(
     return undefined;
   }
   previews.delete(previewKey(view, uid));
-  // No flag here: nothing happens without an id in the URL and a plugin that returns
-  // changes for it, and the plugin decides whether it does.
-  if (!id) {
+  // With the flag off, a ?pendingChanges link opens the saved dashboard, and no plugin is loaded.
+  if (!id || !isPendingChangesEnabled()) {
     return undefined;
   }
   let loaders: DashboardPendingChangesLoader[];

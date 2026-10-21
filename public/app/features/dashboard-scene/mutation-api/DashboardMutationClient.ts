@@ -9,6 +9,7 @@ import { isEqual } from 'lodash';
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
+import { PENDING_CHANGES_COMMANDS, isPendingChangesEnabled } from '../lifecycle/pendingChangesFlag';
 import type { DashboardScene } from '../scene/DashboardScene';
 import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
 
@@ -44,7 +45,11 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
         ]
       : [];
 
-    super(scene, [...LAZY_DASHBOARD_COMMANDS, ...notebookCommands]);
+    // Pending changes commands exist only with the pending changes flag on, like their schemas.
+    const dashboardCommands = isPendingChangesEnabled()
+      ? LAZY_DASHBOARD_COMMANDS
+      : LAZY_DASHBOARD_COMMANDS.filter((command) => !PENDING_CHANGES_COMMANDS.has(command.name));
+    super(scene, [...dashboardCommands, ...notebookCommands]);
   }
 
   /**

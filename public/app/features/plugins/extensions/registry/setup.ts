@@ -91,13 +91,18 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
             },
           ]
         : []),
-      {
-        id: PluginExtensionExposedComponents.DashboardViewV1,
-        title: 'Dashboard',
-        description:
-          'A saved dashboard with its pending changes banner, for a host rendering one outside the dashboard route',
-        component: DashboardViewLazy,
-      },
+      // Only with plugin-provided pending changes on (`assistant.dashboard.artifacts`).
+      ...(getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardArtifacts, false)
+        ? [
+            {
+              id: PluginExtensionExposedComponents.DashboardViewV1,
+              title: 'Dashboard',
+              description:
+                'A saved dashboard with its pending changes banner, for a host rendering one outside the dashboard route',
+              component: DashboardViewLazy,
+            },
+          ]
+        : []),
     ],
   });
 }
