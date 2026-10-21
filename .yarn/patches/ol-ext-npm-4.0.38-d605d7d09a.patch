@@ -1,0 +1,85 @@
+diff --git a/style/Photo.js b/style/Photo.js
+index 17d4c205d52d76cb28b058394fe86a3d763e7cfd..f8c5bb6000679690588c4f5ca41c2ff124faa42a 100644
+--- a/style/Photo.js
++++ b/style/Photo.js
+@@ -101,6 +101,10 @@ var ol_style_Photo = class olstylePhoto extends ol_style_RegularShape {
+       this.setRotation(options.rotation)
+     }
+ 
++    // Load the photo once: with ol >= 10.8 the canvas is shared in a cache and may be
++    // replaced by an ImageBitmap, so draw_ can't wait for the photo to load
++    this.loadPhoto_()
++
+     // Calculate image
+     this.render();
+     this.getImage()
+@@ -240,7 +244,6 @@ var ol_style_Photo = class olstylePhoto extends ol_style_RegularShape {
+     this._gethit = false
+ 
+     if (canvas && canvas.getContext) {
+-      this._loaded = false;
+       this.draw_(this.createRenderOptions(), canvas.getContext('2d'), pixelratio)
+     }
+     return canvas;
+@@ -276,28 +279,9 @@ var ol_style_Photo = class olstylePhoto extends ol_style_RegularShape {
+     context.fill()
+     context.restore()
+ 
+-    var self = this
+-    var img = this.img_ = new Image()
+-    if (this._crossOrigin) img.crossOrigin = this._crossOrigin
+-    img.src = this._src
+-
+     // Draw image
+-    if (img.width) {
+-      self.drawImage_(canvas, img, pixelratio)
+-    } else {
+-      img.onload = function () {
+-        self._loaded = true;
+-        self.renderOptions_ = self.createRenderOptions();
+-        self.drawImage_(canvas, img, pixelratio)
+-        // Force change (?!)
+-        // self.setScale(1);
+-        if (self._onload) self._onload()
+-      }
+-      if (self._onerror) {
+-        img.onerror = function () {
+-          self._onerror()
+-        }
+-      }
++    if (this._loaded) {
++      this.drawImage_(canvas, this.img_, pixelratio)
+     }
+ 
+     // Set anchor (ol < 6)
+@@ -313,6 +297,30 @@ var ol_style_Photo = class olstylePhoto extends ol_style_RegularShape {
+ 
+     return canvas
+   }
++  /** Load the photo image and redraw the style when loaded
++   * @private
++   */
++  loadPhoto_() {
++    var self = this
++    var img = this.img_ = new Image()
++    this._loaded = false
++    if (this._crossOrigin) img.crossOrigin = this._crossOrigin
++    img.onload = function () {
++      if (self._loaded) return
++      self._loaded = true
++      // The loaded state is part of the cache key: force a new image with the photo
++      self.renderOptions_ = self.createRenderOptions()
++      var pixelratio = self._currentRatio
++      self._currentRatio = null
++      self.getImage(pixelratio)
++      if (self._onload) self._onload()
++    }
++    img.onerror = function () {
++      if (self._onerror) self._onerror()
++    }
++    img.src = this._src
++    if (img.complete && img.naturalWidth) this._loaded = true
++  }
+   /** Returns the photo image
+    * @returns {HTMLImageElement}
+    */
