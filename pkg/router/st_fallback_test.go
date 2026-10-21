@@ -237,21 +237,6 @@ func TestSingleTenantFallbackServeHTTP(t *testing.T) {
 	}
 }
 
-func TestSingleTenantFallbackRefusesAggregatorRequests(t *testing.T) {
-	// Any stack lookup fails the test, and every path looks up the stack
-	// before it forwards or touches a breaker.
-	st := newTestSingleTenantFallback(t)
-	for _, path := range []string{"/apis/example/v1/namespaces/stacks-123/widgets", "/apis/example/v1", "/openapi/v3/apis/example/v1"} {
-		req := requestWithNamespace(http.MethodGet, path, "stacks-123")
-		req.Header.Set(aggregatorOriginHeader, "true")
-		recorder := httptest.NewRecorder()
-		st.ServeHTTP(recorder, req)
-		require.Equal(t, http.StatusLoopDetected, recorder.Code, path)
-		require.Equal(t, "private", recorder.Header().Get("Cache-Control"), path)
-	}
-	require.EqualValues(t, 3, st.fallbackRefused.Load())
-}
-
 func TestSingleTenantFallbackConcurrentLookups(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		st := newTestSingleTenantFallback(t)
@@ -809,5 +794,66 @@ func TestSingleTenantDiscoveryIsNeverSharedCacheable(t *testing.T) {
 		st.ServeHTTP(recorder, requestWithNamespace(http.MethodGet, tc.path, tc.namespace))
 		require.Equal(t, http.StatusOK, recorder.Code, tc.path)
 		require.Equal(t, tc.want, recorder.Header().Get("Cache-Control"), "%s as %s", tc.path, tc.namespace)
+	}
+}
+
+func TestSingleTenantFallbackClusterScoped(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		namespace string // "" sends no requester
+		method    string
+		path      string
+		status    int
+		forwarded bool
+		other     bool // not a cluster-scoped path, so not answered for the caller
+	}{
+		{name: "stack", namespace: "stacks-123", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusAccepted, forwarded: true},
+		{name: "subresource", namespace: "stacks-123", method: http.MethodGet, path: "/apis/example.grafana.app/v1/widgets/a/status", status: http.StatusAccepted, forwarded: true},
+		{name: "write", namespace: "stacks-123", method: http.MethodPost, path: "/apis/example.grafana.app/v1/widgets", status: http.StatusAccepted, forwarded: true},
+		{name: "wildcard", namespace: "*", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "not a stack", namespace: "default", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "unknown stack", namespace: "stacks-404", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "no requester", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "lookup failure", namespace: "stacks-500", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusServiceUnavailable},
+		{name: "namespaces without a name", namespace: "stacks-123", method: http.MethodGet, path: "/apis/example.grafana.app/v1/namespaces", status: http.StatusNotFound, other: true},
+		{name: "empty resource", namespace: "stacks-123", method: http.MethodGet, path: "/apis/example.grafana.app/v1//widgets", status: http.StatusNotFound, other: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st := newTestSingleTenantFallback(t)
+			st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+				switch stackID {
+				case 123:
+					return singleTenantStack{URL: "https://stack.example.com"}, nil
+				case 500:
+					return singleTenantStack{}, errors.New("gcom unavailable")
+				}
+				return singleTenantStack{}, nil
+			}
+			var forwardedTo []string
+			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+				forwardedTo = append(forwardedTo, req.URL.Host+req.URL.Path)
+				require.Equal(t, tc.method, req.Method)
+				return &http.Response{StatusCode: http.StatusAccepted, Header: http.Header{"Cache-Control": {"public, max-age=60"}}, Body: io.NopCloser(strings.NewReader("forwarded"))}, nil
+			})
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			if tc.namespace != "" {
+				req = requestWithNamespace(tc.method, tc.path, tc.namespace)
+			}
+			recorder := httptest.NewRecorder()
+			st.ServeHTTP(recorder, req)
+
+			require.Equal(t, tc.status, recorder.Code)
+			if !tc.forwarded {
+				require.Empty(t, forwardedTo)
+				if tc.namespace != "" && !tc.other {
+					// The answer depends on the caller, not the URL.
+					require.Equal(t, "private", recorder.Header().Get("Cache-Control"))
+				}
+				return
+			}
+			require.Equal(t, []string{"stack.example.com" + tc.path}, forwardedTo)
+			require.Equal(t, "forwarded", recorder.Body.String())
+			require.Equal(t, "max-age=60, private", recorder.Header().Get("Cache-Control"))
+		})
 	}
 }

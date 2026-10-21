@@ -47,7 +47,7 @@ They're always interpolated as epoch milliseconds by default, but you can contro
 
 The syntax above also works with `${__to}`.
 
-You can use this variable in URLs, as well. For example, you can send a user to a dashboard that shows a time range from six hours ago until the current time: `https://play.grafana.org/d/000000012/grafana-play-home?viewPanel=2&orgId=1?from=now-6h&to=now`
+You can use this variable in URLs, as well. For example, you can send a user to a dashboard that shows a time range from six hours ago until the current time: `https://play.grafana.org/d/000000016/time-series-graphs?orgId=1&from=now-6h&to=now`
 
 ## `$__interval`
 

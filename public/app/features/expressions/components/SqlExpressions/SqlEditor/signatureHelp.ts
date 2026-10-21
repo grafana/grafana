@@ -1,4 +1,4 @@
-import { type SignatureHelp, type SignatureHelpProvider } from '@grafana/ui';
+import { type SignatureHelp, type SignatureHelpProvider } from '@grafana/ui/unstable';
 
 import { getEnclosingFunctionCall } from './completionSituation';
 

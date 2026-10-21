@@ -69,6 +69,15 @@ describe('panelMenuBehavior', () => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
   });
 
+  // The exact item counts asserted below assume the menu has no Time settings item.
+  beforeEach(() => {
+    setTestFlags({ panelTimeSettings: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('Given standard panel', async () => {
     const { menu, panel } = await buildTestScene({});
 
@@ -101,6 +110,24 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+  });
+
+  it('adds a Time settings item after Inspect when panelTimeSettings is on', async () => {
+    setTestFlags({ panelTimeSettings: true });
+    const { menu, panel } = await buildTestScene({});
+
+    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+    mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+    mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+    menu.activate();
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    expect(menu.state.items?.length).toBe(7);
+    expect(menu.state.items?.[4].text).toBe('Inspect');
+    expect(menu.state.items?.[5].text).toBe('Time settings');
   });
 
   it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {

@@ -135,7 +135,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
               false
             ),
             supportsMultiValueOperators: false,
-            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
+            enableGroupBy: v.enableGroupBy ?? false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
           applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
@@ -234,12 +234,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
-      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       supportsMultiValueOperators: false,
-      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-        ? (variable.enableGroupBy ?? false)
-        : false,
+      enableGroupBy: variable.enableGroupBy ?? false,
       $behaviors: [new ReportInteractionBehavior({})],
     });
     applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
@@ -371,7 +369,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
       applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:
