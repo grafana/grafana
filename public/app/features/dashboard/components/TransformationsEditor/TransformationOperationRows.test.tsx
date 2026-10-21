@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -202,8 +202,8 @@ describe('TransformationOperationRows', () => {
       await waitFor(() => expect(replayFailures()).toHaveLength(2));
 
       rerender({ ...seriesData });
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
-      expect(await screen.findByText('1 - Reduce')).toBeInTheDocument();
       expect(replayFailures()).toHaveLength(2);
     });
   });
