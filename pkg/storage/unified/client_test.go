@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
@@ -354,6 +356,7 @@ func createTestGrpcServer(t *testing.T, address string) *testServer {
 	s := grpc.NewServer(
 		grpc.UnknownServiceHandler(testServer.handler),
 	)
+	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
 
 	go func() {
 		_ = s.Serve(listener)
