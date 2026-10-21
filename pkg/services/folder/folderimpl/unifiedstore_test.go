@@ -1689,6 +1689,7 @@ type folderIndexSearchClient struct {
 	index              resource.ResourceIndex
 	access             *folderSearchAccessClient
 	ignoreExactTotal   bool
+	ignoreUIDFilter    bool
 	allFields          bool
 	resultFormat       resourcepb.ResourceSearchRequest_ResultFormat
 	lastFields         []string
@@ -1696,12 +1697,18 @@ type folderIndexSearchClient struct {
 	firstPageRows      int
 	firstTotalExact    bool
 	firstResponseBytes int
+	afterSearch        func(int)
 }
 
 func (c *folderIndexSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	c.calls++
 	c.lastFields = req.Fields
 	req.Options.Key = &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
+	if c.ignoreUIDFilter {
+		// Reproduce the full-tree lookup without changing path construction.
+		req.Options.Fields = nil
+		req.Limit = searchPageSize
+	}
 	if c.allFields {
 		// Keep the previous request shape for the field-selection comparison.
 		req.Fields = nil
@@ -1720,12 +1727,16 @@ func (c *folderIndexSearchClient) Search(ctx context.Context, _ int64, req *reso
 			c.firstResponseBytes = proto.Size(response)
 		}
 	}
+	if c.afterSearch != nil {
+		c.afterSearch(c.calls)
+	}
 	return response, err
 }
 
 type folderSearchAccessClient struct {
 	claims.AccessClient
 	allowedFolders map[string]bool
+	deniedUIDs     []string
 	checked        int
 }
 
@@ -1733,12 +1744,12 @@ func (c *folderSearchAccessClient) BatchCheck(_ context.Context, _ claims.AuthIn
 	c.checked += len(req.Checks)
 	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
 	for _, check := range req.Checks {
-		results[check.CorrelationID] = claims.BatchCheckResult{Allowed: c.allowedFolders == nil || c.allowedFolders[check.Folder]}
+		results[check.CorrelationID] = claims.BatchCheckResult{Allowed: (c.allowedFolders == nil || c.allowedFolders[check.Folder]) && !slices.Contains(c.deniedUIDs, check.Name)}
 	}
 	return claims.BatchCheckResponse{Results: results}, nil
 }
 
-func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
+func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig, parents ...string) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:                 t.TempDir(),
@@ -1758,6 +1769,9 @@ func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthz
 			parent := "allowed"
 			if i%2 == 1 {
 				parent = "denied"
+			}
+			if i < len(parents) {
+				parent = parents[i]
 			}
 			items[i] = &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
@@ -2027,6 +2041,240 @@ func TestFolderSearchPagination(t *testing.T) {
 	}
 }
 
+func TestGetFoldersMetadataAncestorErrors(t *testing.T) {
+	for _, tc := range folderStorageFailures(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			child := buildFolderSearchResponse(folderResult{uid: "child", parentUID: "parent"})
+			child.TotalHitsExact = true
+			for _, uid := range []string{"child", "parent"} {
+				call := cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+					return len(req.Options.Fields) == 1 && slices.Equal(req.Options.Fields[0].Values, []string{uid})
+				}))
+				if uid == "child" {
+					call.Return(child, nil).Once()
+				} else {
+					call.Return(tc.searchResponse(), tc.err).Once()
+				}
+			}
+			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+			got, err := store.GetFolders(t.Context(), folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+				OrgID: 1, UIDs: []string{"child"}, MetadataOnly: true, WithFullpath: true,
+			}})
+			require.Empty(t, got)
+			requireFolderStorageError(t, tc.want, err)
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetFoldersMetadataConcurrentChanges(t *testing.T) {
+	for _, change := range []string{"rename", "move", "delete", "permissions"} {
+		t.Run(change, func(t *testing.T) {
+			store, cli := newFolderIndexSearchStore(t, 5, search.PostRankAuthzConfig{}, "general", "folder-00000", "folder-00001", "general", "general")
+			cli.afterSearch = func(call int) {
+				if call != 1 {
+					return
+				}
+				doc := &resource.IndexableDocument{
+					Key:  &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-00001"},
+					Name: "folder-00001", Title: "folder-00001", Folder: "folder-00000", RV: 2,
+				}
+				action := resource.ActionIndex
+				switch change {
+				case "rename":
+					doc.Title = "renamed"
+				case "move":
+					doc.Folder = "folder-00004"
+				case "delete":
+					action = resource.ActionDelete
+				case "permissions":
+					cli.access.deniedUIDs = []string{doc.Name}
+				}
+				require.NoError(t, cli.index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{Action: action, Key: doc.Key, Doc: doc}}, ResourceVersion: 2}))
+			}
+			ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+			got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+				OrgID: 1, UIDs: []string{"folder-00002"}, MetadataOnly: true, WithFullpath: true,
+			}})
+			require.NoError(t, err)
+			require.Len(t, got, 1)
+			want := "folder-00002"
+			switch change {
+			case "rename":
+				want = "folder-00000/renamed/folder-00002"
+			case "move":
+				want = "folder-00004/folder-00001/folder-00002"
+			}
+			require.Equal(t, want, got[0].Fullpath)
+		})
+	}
+}
+
+func TestGetFoldersMetadataLargeSelection(t *testing.T) {
+	const count = maxFolderUIDFilterSize + 1
+	parents := make([]string, count)
+	uids := make([]string, count)
+	for i := range count {
+		parents[i] = "missing"
+		uids[i] = fmt.Sprintf("folder-%05d", i)
+	}
+	store, cli := newFolderIndexSearchStore(t, count, search.PostRankAuthzConfig{}, parents...)
+	ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+	got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+		OrgID: 1, UIDs: uids, MetadataOnly: true, WithFullpath: true,
+	}})
+	require.NoError(t, err)
+	require.Len(t, got, count)
+	require.Equal(t, 1, cli.calls)
+	require.Equal(t, count, cli.access.checked)
+}
+
+// This measures index and caller work, not transport. Use searches/op with the
+// deployed round-trip cost before interpreting full-path latency savings.
+func BenchmarkGetFoldersMetadata(b *testing.B) {
+	const count = 1774
+	parents := make([]string, count)
+	allUIDs := make([]string, count)
+	for i := range count {
+		allUIDs[i] = fmt.Sprintf("folder-%05d", i)
+		switch {
+		case i < 2 || i >= 210:
+			parents[i] = "general"
+		case i < 30:
+			parents[i] = fmt.Sprintf("folder-%05d", i%2)
+		default:
+			parents[i] = fmt.Sprintf("folder-%05d", 2+(i-30)%28)
+		}
+	}
+	for offset := range 3 {
+		i := 211 + offset
+		parents[i] = allUIDs[i-1]
+	}
+	denied := make([]string, 90)
+	for i := range denied {
+		denied[i] = allUIDs[31+i*2]
+	}
+	for _, tc := range []struct {
+		name   string
+		uids   []string
+		paths  bool
+		denied []string
+		want   int
+	}{
+		{name: "single", uids: allUIDs[213:214]},
+		{name: "single-path", uids: allUIDs[213:214], paths: true},
+		{name: "180-paths", uids: allUIDs[30:210], paths: true},
+		{name: "180-paths-restricted", uids: allUIDs[30:210], paths: true, denied: denied, want: 90},
+		{name: "500-selected", uids: allUIDs[:500], paths: true},
+		{name: "1000-selected", uids: allUIDs[:1000], paths: true},
+		{name: "all-selected", uids: allUIDs, paths: true},
+		{name: "unfiltered", paths: true},
+	} {
+		for _, fullTree := range []bool{true, false} {
+			b.Run(fmt.Sprintf("%s/fullTree=%t", tc.name, fullTree), func(b *testing.B) {
+				store, cli := newFolderIndexSearchStore(b, count, search.PostRankAuthzConfig{}, parents...)
+				cli.ignoreUIDFilter = fullTree
+				cli.access.deniedUIDs = tc.denied
+				ctx := claims.WithAuthInfo(b.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+				q := folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+					OrgID: 1, UIDs: tc.uids, MetadataOnly: true, WithFullpath: tc.paths, WithFullpathUIDs: tc.paths,
+				}}
+				want := len(tc.uids)
+				if want == 0 {
+					want = count
+				}
+				if tc.want > 0 {
+					want = tc.want
+				}
+				b.ReportAllocs()
+				for b.Loop() {
+					folders, err := store.GetFolders(ctx, q)
+					if err != nil {
+						b.Fatal(err)
+					}
+					if len(folders) != want {
+						b.Fatalf("got %d folders, want %d", len(folders), want)
+					}
+				}
+				b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
+				b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+			})
+		}
+	}
+}
+
+func TestGetFoldersMetadataTargeted(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		uids      []string
+		paths     bool
+		uidPaths  bool
+		denied    []string
+		cfg       search.PostRankAuthzConfig
+		legacy    bool
+		want      []string
+		wantPaths []string
+		calls     int
+		checked   int
+		cycle     bool
+	}{
+		{name: "one folder", uids: []string{"folder-00002"}, want: []string{"folder-00002"}, calls: 1, checked: 1},
+		{name: "parents", uids: []string{"folder-00002"}, paths: true, want: []string{"folder-00002"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002"}, calls: 3, checked: 3},
+		{name: "UID paths", uids: []string{"folder-00002"}, uidPaths: true, want: []string{"folder-00002"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002"}, calls: 3, checked: 3},
+		{name: "shared parents", uids: []string{"folder-00003", "folder-00002"}, paths: true, want: []string{"folder-00002", "folder-00003"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002", "folder-00000/folder-00001/folder-00003"}, calls: 3, checked: 4},
+		{name: "requested parent", uids: []string{"folder-00001", "folder-00002"}, paths: true, want: []string{"folder-00001", "folder-00002"}, wantPaths: []string{"folder-00000/folder-00001", "folder-00000/folder-00001/folder-00002"}, calls: 2, checked: 3},
+		{name: "duplicates and empty UID", uids: []string{"folder-00002", "folder-00002", ""}, want: []string{"folder-00002"}, calls: 1, checked: 1},
+		{name: "empty UID", uids: []string{""}},
+		{name: "root UIDs", uids: []string{"", "general"}, paths: true, calls: 1},
+		{name: "literal wildcard", uids: []string{"*"}, paths: true, calls: 1},
+		{name: "invalid UID", uids: []string{"folder-00006 "}, paths: true, calls: 1, checked: 1},
+		{name: "missing folder", uids: []string{"missing"}, paths: true, calls: 1},
+		{name: "denied folder", uids: []string{"folder-00002"}, paths: true, denied: []string{"folder-00002"}, calls: 1, checked: 1},
+		{name: "hidden parent", uids: []string{"folder-00002"}, paths: true, denied: []string{"folder-00001"}, want: []string{"folder-00002"}, wantPaths: []string{"folder-00002"}, calls: 2, checked: 2},
+		{name: "shared hidden parent", uids: []string{"folder-00002", "folder-00003"}, paths: true, denied: []string{"folder-00001"}, want: []string{"folder-00002", "folder-00003"}, wantPaths: []string{"folder-00002", "folder-00003"}, calls: 2, checked: 3},
+		{name: "requested hidden parent", uids: []string{"folder-00001", "folder-00002"}, paths: true, denied: []string{"folder-00001"}, want: []string{"folder-00002"}, wantPaths: []string{"folder-00002"}, calls: 1, checked: 2},
+		{name: "missing parent", uids: []string{"folder-00005"}, paths: true, want: []string{"folder-00005"}, wantPaths: []string{"folder-00005"}, calls: 2, checked: 1},
+		{name: "shared missing parent", uids: []string{"folder-00004", "folder-00005"}, paths: true, want: []string{"folder-00004", "folder-00005"}, wantPaths: []string{"folder-00004", "folder-00005"}, calls: 2, checked: 2},
+		{name: "cycle", uids: []string{"folder-00006"}, paths: true, cycle: true, calls: 2, checked: 2},
+		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 3, checked: 12},
+		{name: "older server", uids: []string{"folder-00002"}, paths: true, legacy: true, want: []string{"folder-00002"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002"}, calls: 6, checked: 6},
+		{name: "unfiltered", want: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005", "folder-00006", "folder-00007"}, calls: 1, checked: 8},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			parents := []string{"general", "folder-00000", "folder-00001", "folder-00001", "missing", "missing", "folder-00007", "folder-00006"}
+			store, cli := newFolderIndexSearchStore(t, len(parents), tc.cfg, parents...)
+			store.maxDepth = 1
+			originalUIDs := slices.Clone(tc.uids)
+			cli.access.deniedUIDs = tc.denied
+			if tc.legacy {
+				cli.ignoreExactTotal = true
+				cli.resultFormat = resourcepb.ResourceSearchRequest_RESOURCE_TABLE
+			}
+			ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+			got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+				OrgID: 1, UIDs: tc.uids, MetadataOnly: true, WithFullpath: tc.paths, WithFullpathUIDs: tc.uidPaths,
+			}})
+			if tc.cycle {
+				require.ErrorIs(t, err, folder.ErrCircularReference)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, got, len(tc.want))
+				for i, f := range got {
+					require.Equal(t, tc.want[i], f.UID)
+					if len(tc.wantPaths) > 0 {
+						require.Equal(t, tc.wantPaths[i], f.Fullpath)
+						require.Equal(t, tc.wantPaths[i], f.FullpathUIDs)
+					}
+				}
+			}
+			require.Equal(t, tc.calls, cli.calls)
+			require.Equal(t, tc.checked, cli.access.checked)
+			require.Equal(t, originalUIDs, tc.uids)
+		})
+	}
+}
+
 func TestGetFoldersMetadata(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersMetadata")
 	orgID := int64(1)
@@ -2103,7 +2351,19 @@ func TestGetFoldersMetadata(t *testing.T) {
 
 	t.Run("UID filter returns only requested folders but full paths use all ancestors", func(t *testing.T) {
 		store, mockCli := newStore(t)
-		expectSearchAll(mockCli)
+		for i := range 3 {
+			row := searchResponse.Results.Rows[2-i]
+			mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+				Fields: folderReferenceFields,
+				Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+					Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.In), Values: []string{row.Key.Name},
+				}}},
+				Limit: 2, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			}).Return(&resourcepb.ResourceSearchResponse{
+				Results:   &resourcepb.ResourceTable{Columns: searchResponse.Results.Columns, Rows: []*resourcepb.ResourceTableRow{row}},
+				TotalHits: 1, TotalHitsExact: true,
+			}, nil).Once()
+		}
 
 		got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{
 			GetFoldersQuery: folder.GetFoldersQuery{
