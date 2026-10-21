@@ -322,6 +322,38 @@ describe('QueryCoauthoring', () => {
     expect(mockGenerate.mock.calls[0][0].prompt).toBe('Use pending_requests_total');
   });
 
+  it.each([
+    { view: 'Modify', suffix: ' and job', value: 'Group by origin and job', caret: 15 },
+    { view: 'Modify', suffix: 'and job', value: 'Group by origin and job', caret: 16 },
+    { view: 'Explain', suffix: ' and job', value: 'Group by origin and job', caret: 15 },
+    { view: 'Explain', suffix: 'and job', value: 'Group by origin and job', caret: 16 },
+  ])(
+    'inserts a mention before "$suffix" in $view and restores the caret to $caret',
+    async ({ view, suffix, value, caret }) => {
+      const { user } = await setup(0, true, {
+        ...mentionContext,
+        metadata: [...mentionContext.metadata, { kind: 'metric', name: 'up' }],
+      });
+      if (view === 'Explain') {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+      }
+      const input = screen.getByRole<HTMLTextAreaElement>('textbox');
+      await user.type(input, `Group by @ori${suffix}`);
+      fireEvent.select(input, { target: { selectionStart: 13, selectionEnd: 13 } });
+      expect(await screen.findByRole('option', { name: 'origin (Label)' })).toBeInTheDocument();
+
+      await user.keyboard('{Enter}');
+
+      expect(input).toHaveValue(value);
+      expect(input).toHaveFocus();
+      expect(input.selectionStart).toBe(caret);
+      expect(input.selectionEnd).toBe(caret);
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(mockGenerate).toHaveBeenCalledTimes(view === 'Explain' ? 1 : 0);
+    }
+  );
+
   it('clicks a portal mention item without dismissing an untouched prompt and reports only its kind', async () => {
     const { user, dismissInvocation } = await setup(0, true, mentionContext);
     const input = screen.getByRole('textbox');

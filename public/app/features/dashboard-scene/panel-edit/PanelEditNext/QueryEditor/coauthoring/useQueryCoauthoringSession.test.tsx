@@ -454,6 +454,37 @@ describe('useQueryCoauthoringSession', () => {
     expect(initial.onBaseline).not.toHaveBeenCalled();
   });
 
+  it('shows a context error when the baseline becomes stale during loading and recovers on Retry', async () => {
+    const initial = await setup();
+    initial.unmount();
+    initial.onBaseline.mockClear();
+    initial.readInvocation.mockClear();
+    const invocation = deferred<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>();
+    initial.readInvocation.mockReturnValueOnce(invocation.promise);
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    await initial.user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    initial.onBaseline.mockReturnValueOnce(false);
+
+    await act(async () => invocation.resolve({ baseline: initial.baseline, context: initial.context }));
+
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    expect(initial.onBaseline).toHaveBeenCalledWith(initial.baseline);
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(initial.onPreview).not.toHaveBeenCalled();
+
+    await initial.user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
+    expect(initial.readInvocation).toHaveBeenCalledTimes(2);
+    expect(initial.readInvocation).toHaveBeenNthCalledWith(2, '1');
+    expect(initial.onBaseline).toHaveBeenCalledTimes(2);
+    await initial.user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+    expect(mockGenerate.mock.calls[0][0].prompt).toBe('Use increase');
+  });
+
   it('does not synchronize a baseline from a different invocation revision', async () => {
     const initial = await setup(0, false);
     initial.unmount();
