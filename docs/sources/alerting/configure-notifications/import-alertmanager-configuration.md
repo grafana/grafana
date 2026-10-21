@@ -134,7 +134,7 @@ Organization administrators have these permissions by default. You can also gran
 
 Grafana names the import, and the notification policy tree it creates, after the data source, for example `mimir-prod` for a data source called **Mimir Prod**. If another policy tree already uses that name, Grafana adds a number, such as `mimir-prod-2`. The name doesn't change if you rename the data source later. Configurations that started syncing before this naming use the data source UID instead. The imported resources remain read-only while staged. To send notifications through the imported policy tree, route your Grafana-managed alert rules to that tree.
 
-Once auto-sync is enabled, the **Import notification configuration** step shows the data source, the sync status, and any errors from the last sync attempt in one card, together with the resources the sync staged. If Grafana can't fetch or validate an update, it keeps the configuration from the last successful sync.
+After auto-sync is enabled, the **Import notification configuration** step shows the data source, the sync status, and any errors from the last sync attempt in one card, together with the resources the sync staged. If Grafana can't fetch or validate an update, it keeps the configuration from the last successful sync.
 
 While auto-sync is enabled, you can't select a different data source. To sync from another data source, disable auto-sync, promote or revert the staged configuration, and then select the new data source.
 
