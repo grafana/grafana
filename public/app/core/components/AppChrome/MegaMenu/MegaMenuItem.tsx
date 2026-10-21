@@ -13,12 +13,14 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useIsUrlAllowed } from 'app/core/navigation/mtFallback';
+import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
-import { StPodPendingEllipsis } from './StPodPendingEllipsis';
+import { StPodPendingDots } from './StPodPendingDots';
+import { StPodPendingTooltip } from './StPodPendingTooltip';
 import { getDragHandleStyles } from './styles';
 import { hasChildMatch } from './utils';
 
@@ -93,6 +95,7 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isUrlAllowed = useIsUrlAllowed({ ...location, pathname: link.url?.split(/[?#]/)[0] ?? '' });
+  const isStPodLoading = useIsStPodLoading(!isUrlAllowed);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
@@ -179,7 +182,7 @@ export function MegaMenuItem({
 
   return (
     <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
-      <div className={styles.menuItem}>
+      <StPodPendingTooltip className={styles.menuItem} itemName={link.text} show={isStPodLoading && !isActive}>
         {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
             the content columns line up between top-level sections and their children. */}
         {editMode && (
@@ -199,7 +202,7 @@ export function MegaMenuItem({
         )}
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
-        <div className={styles.collapsibleSectionWrapper}>
+        <div className={cx(styles.collapsibleSectionWrapper, isStPodLoading && !isActive && styles.stPodHoverScope)}>
           <MegaMenuItemText
             isActive={isActive}
             onClick={() => {
@@ -240,7 +243,7 @@ export function MegaMenuItem({
                   2. If it is not, show the component till the st pod is ready
                   3. If it is, do nothing
               */}
-              {!isUrlAllowed && <StPodPendingEllipsis />}
+              {isStPodLoading && <StPodPendingDots />}
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>
@@ -268,7 +271,7 @@ export function MegaMenuItem({
             />
           )}
         </div>
-      </div>
+      </StPodPendingTooltip>
       {childrenVisible && (
         <ul className={styles.children}>
           {linkHasChildren(link) ? (
@@ -373,6 +376,12 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     flex: 1,
     height: '100%',
     minWidth: 0,
+  }),
+  // Hover scope is the link and its controls only, not the chevron column.
+  stPodHoverScope: css({
+    '&:hover .st-pod-dots, &:focus-within .st-pod-dots': {
+      opacity: 1,
+    },
   }),
   labelWrapper: css({
     display: 'flex',
