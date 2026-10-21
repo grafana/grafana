@@ -1676,13 +1676,23 @@
         "provisioned-tooltip-manager": "Provisioned by {{manager}}",
         "refresh-error": "Failed to refresh results",
         "retry": "Retry",
-        "status-unavailable": "Status unavailable",
         "totals-error": "{{total}} error",
         "totals-firing": "{{total}} firing",
         "totals-healthy": "{{total}} healthy",
         "totals-no-data": "{{total}} no data",
         "totals-pending": "{{total}} pending",
         "totals-recovering": "{{total}} recovering"
+      },
+      "status": {
+        "error": "Failed to evaluate rule",
+        "firing": "Firing",
+        "no-data": "Insufficient data",
+        "normal": "Normal",
+        "paused": "Paused",
+        "pending": "Pending",
+        "recording": "Recording",
+        "recovering": "Recovering",
+        "unavailable": "Status unavailable"
       },
       "tab-recently-deleted": "Recently deleted"
     },

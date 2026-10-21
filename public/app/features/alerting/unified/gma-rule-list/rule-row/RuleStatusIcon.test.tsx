@@ -2,83 +2,70 @@ import { render, screen } from 'test/test-utils';
 
 import { RuleStatusIcon } from './RuleStatusIcon';
 
+type Props = Parameters<typeof RuleStatusIcon>[0];
+
 describe('RuleStatusIcon', () => {
-  it.each([
-    { state: 'Firing', label: 'Firing' },
-    { state: 'Pending', label: 'Pending' },
-    { state: 'Recovering', label: 'Recovering' },
-    { state: 'Healthy', label: 'Normal' },
-    { state: 'Inactive', label: 'Normal' },
-  ])('maps alert state $state to the $label icon', ({ state, label }) => {
-    render(<RuleStatusIcon kind="alert" state={state} health="OK" />);
+  it.each<{ name: string; props: Props; label: string }>([
+    { name: 'state Firing', props: { kind: 'alert', state: 'Firing', health: 'OK' }, label: 'Firing' },
+    { name: 'state Pending', props: { kind: 'alert', state: 'Pending', health: 'OK' }, label: 'Pending' },
+    { name: 'state Recovering', props: { kind: 'alert', state: 'Recovering', health: 'OK' }, label: 'Recovering' },
+    { name: 'state Healthy', props: { kind: 'alert', state: 'Healthy', health: 'OK' }, label: 'Normal' },
+    { name: 'state Inactive', props: { kind: 'alert', state: 'Inactive', health: 'OK' }, label: 'Normal' },
+    { name: 'state in another case', props: { kind: 'alert', state: 'FIRING' }, label: 'Firing' },
+    {
+      name: 'health Error over state Firing',
+      props: { kind: 'alert', state: 'Firing', health: 'Error' },
+      label: 'Failed to evaluate rule',
+    },
+    {
+      name: 'health NoData over state Firing',
+      props: { kind: 'alert', state: 'Firing', health: 'NoData' },
+      label: 'Insufficient data',
+    },
+    {
+      name: 'paused over state Firing',
+      props: { kind: 'alert', state: 'Firing', health: 'OK', paused: true },
+      label: 'Paused',
+    },
+    { name: 'paused over health Unknown', props: { kind: 'alert', health: 'Unknown', paused: true }, label: 'Paused' },
+    {
+      name: 'stale health Paused with paused=false',
+      props: { kind: 'alert', state: 'Healthy', health: 'Paused', paused: false },
+      label: 'Normal',
+    },
+    {
+      name: 'stale health Paused with paused unset',
+      props: { kind: 'alert', state: 'Healthy', health: 'Paused' },
+      label: 'Normal',
+    },
+    { name: 'recording health Recording', props: { kind: 'recording', health: 'Recording' }, label: 'Recording' },
+    { name: 'recording health Error', props: { kind: 'recording', health: 'Error' }, label: 'Failed to evaluate rule' },
+    { name: 'no status at all', props: { kind: 'alert' }, label: 'Status unavailable' },
+    { name: 'health OK without a state', props: { kind: 'alert', health: 'OK' }, label: 'Status unavailable' },
+    {
+      name: 'health Unknown without a state',
+      props: { kind: 'alert', health: 'Unknown' },
+      label: 'Status unavailable',
+    },
+    {
+      name: 'an unmapped state with health Unknown',
+      props: { kind: 'alert', state: 'Mystery', health: 'Unknown' },
+      label: 'Status unavailable',
+    },
+    { name: 'recording without health', props: { kind: 'recording' }, label: 'Status unavailable' },
+  ])('shows the "$label" icon for $name', ({ props, label }) => {
+    render(<RuleStatusIcon {...props} />);
+
     expect(screen.getByLabelText(label)).toBeInTheDocument();
   });
 
-  it.each([
-    { health: 'Error', label: 'Failed to evaluate rule' },
-    { health: 'NoData', label: 'Insufficient data' },
-  ])('health $health overrides the alert state with "$label"', ({ health, label }) => {
-    render(<RuleStatusIcon kind="alert" state="Firing" health={health} />);
-    expect(screen.getByLabelText(label)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Firing')).not.toBeInTheDocument();
-  });
+  it.each<{ name: string; props: Props; shape: string }>([
+    { name: 'Firing', props: { kind: 'alert', state: 'Firing' }, shape: 'icon-fire' },
+    { name: 'Pending', props: { kind: 'alert', state: 'Pending' }, shape: 'icon-hourglass' },
+    { name: 'Paused', props: { kind: 'alert', state: 'Firing', paused: true }, shape: 'icon-pause' },
+  ])('draws $name as $shape, not as a circle', ({ name, props, shape }) => {
+    render(<RuleStatusIcon {...props} />);
 
-  it('shows Paused when spec.paused is set, regardless of state', () => {
-    render(<RuleStatusIcon kind="alert" state="Firing" health="OK" paused />);
-    expect(screen.getByLabelText('Paused')).toBeInTheDocument();
-  });
-
-  it.each([{ paused: false }, { paused: undefined }])(
-    'ignores a stale health Paused when spec.paused is $paused',
-    ({ paused }) => {
-      render(<RuleStatusIcon kind="alert" state="Healthy" health="Paused" paused={paused} />);
-      expect(screen.getByLabelText('Normal')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Paused')).not.toBeInTheDocument();
-    }
-  );
-
-  it('shows the Recording icon for a recording rule with health Recording', () => {
-    render(<RuleStatusIcon kind="recording" health="Recording" />);
-    expect(screen.getByLabelText('Recording')).toBeInTheDocument();
-  });
-
-  it('shows the failed icon for a recording rule with health Error', () => {
-    render(<RuleStatusIcon kind="recording" health="Error" />);
-    expect(screen.getByLabelText('Failed to evaluate rule')).toBeInTheDocument();
-  });
-
-  it('matches values case-insensitively', () => {
-    render(<RuleStatusIcon kind="alert" state="FIRING" />);
-    expect(screen.getByLabelText('Firing')).toBeInTheDocument();
-  });
-
-  it.each([
-    { name: 'no status at all', props: {} },
-    { name: 'health Unknown without a state', props: { health: 'Unknown' } },
-  ])('renders "Status unavailable" instead of the unknown state icon for $name', ({ props }) => {
-    render(<RuleStatusIcon kind="alert" {...props} />);
-    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Unknown')).not.toBeInTheDocument();
-  });
-
-  it('VIS-1: renders "Status unavailable" for an Alert rule with health OK but no state', () => {
-    render(<RuleStatusIcon kind="alert" health="OK" />);
-    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
-    expect(screen.queryByLabelText('unknown')).not.toBeInTheDocument();
-  });
-
-  it('renders "Status unavailable" for an Alert rule with an unmapped state and health Unknown', () => {
-    render(<RuleStatusIcon kind="alert" state="Mystery" health="Unknown" />);
-    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
-  });
-
-  it('lets paused win over health Unknown and an absent status', () => {
-    render(<RuleStatusIcon kind="alert" health="Unknown" paused />);
-    expect(screen.getByLabelText('Paused')).toBeInTheDocument();
-  });
-
-  it('VIS-1: renders "Status unavailable" for a recording rule without health', () => {
-    render(<RuleStatusIcon kind="recording" />);
-    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
+    expect(screen.getByLabelText(name)).toHaveAttribute('data-testid', shape);
   });
 });

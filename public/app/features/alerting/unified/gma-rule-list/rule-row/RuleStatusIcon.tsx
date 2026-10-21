@@ -1,9 +1,7 @@
-import { StateIcon } from '@grafana/alerting/unstable';
-import { t } from '@grafana/i18n';
-import { Icon, Text, Tooltip } from '@grafana/ui';
+import { type ComponentProps } from 'react';
 
-type AlertingState = 'normal' | 'firing' | 'pending' | 'recovering';
-type StateIconHealth = 'ok' | 'nodata' | 'error';
+import { t } from '@grafana/i18n';
+import { Icon, type IconName, Text, Tooltip } from '@grafana/ui';
 
 interface RuleStatusIconProps {
   kind: 'alert' | 'recording';
@@ -13,58 +11,88 @@ interface RuleStatusIconProps {
   paused?: boolean;
 }
 
-const STATE_MAP: Record<string, AlertingState> = {
-  firing: 'firing',
-  pending: 'pending',
-  recovering: 'recovering',
-  healthy: 'normal',
-  inactive: 'normal',
-  normal: 'normal',
-};
-
-const HEALTH_MAP: Record<string, StateIconHealth> = {
-  error: 'error',
-  nodata: 'nodata',
-  ok: 'ok',
-  recording: 'ok',
-};
-
-/** Unknown status gets a neutral circle, since StateIcon's default tooltip says "unknown". */
+/**
+ * The status icon of the new list. It keeps the old list's colours and tooltips but gives firing, pending and paused
+ * their own shapes, because their circles were confused at row size. The old list keeps StateIcon unchanged.
+ */
 export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconProps) {
-  const normalizedHealth = health?.toLowerCase();
-  const normalizedState = state?.toLowerCase();
+  const status = resolveStatus(kind, state?.toLowerCase(), health?.toLowerCase(), Boolean(paused));
+
+  return (
+    <Tooltip content={status.label} placement="right">
+      <div>
+        <Text color={status.color}>
+          <Icon name={status.icon} width={ICON_SIZE} height={ICON_SIZE} aria-label={status.label} />
+        </Text>
+      </div>
+    </Tooltip>
+  );
+}
+
+const ICON_SIZE = 15;
+
+interface Status {
+  icon: IconName;
+  color: ComponentProps<typeof Text>['color'];
+  label: string;
+}
+
+function resolveStatus(kind: 'alert' | 'recording', state?: string, health?: string, paused = false): Status {
   // The spec decides: status health stays Paused until the next sync after a resume.
-  const isPaused = Boolean(paused);
-  const mappedHealth = normalizedHealth ? HEALTH_MAP[normalizedHealth] : undefined;
-  const mappedState = normalizedState ? STATE_MAP[normalizedState] : undefined;
-
-  // Alerts need a state or a failing health: health `ok` alone leaves StateIcon showing "unknown".
-  const hasStatus =
-    isPaused ||
-    (kind === 'recording'
-      ? mappedHealth !== undefined
-      : mappedState !== undefined || mappedHealth === 'error' || mappedHealth === 'nodata');
-
-  if (!hasStatus) {
-    return (
-      <Tooltip content={t('alerting.gma-rule-list.shared.status-unavailable', 'Status unavailable')} placement="right">
-        <div>
-          <Text color="secondary">
-            <Icon
-              name="circle"
-              width={15}
-              height={15}
-              aria-label={t('alerting.gma-rule-list.shared.status-unavailable', 'Status unavailable')}
-            />
-          </Text>
-        </div>
-      </Tooltip>
-    );
+  if (paused) {
+    return { icon: 'pause', color: 'warning', label: t('alerting.gma-rule-list.status.paused', 'Paused') };
+  }
+  if (health === 'error') {
+    return {
+      icon: 'times-circle',
+      color: 'error',
+      label: t('alerting.gma-rule-list.status.error', 'Failed to evaluate rule'),
+    };
+  }
+  if (health === 'nodata') {
+    return {
+      icon: 'exclamation-triangle',
+      color: 'warning',
+      label: t('alerting.gma-rule-list.status.no-data', 'Insufficient data'),
+    };
   }
 
   if (kind === 'recording') {
-    return <StateIcon type="recording" health={mappedHealth} isPaused={isPaused} distinctShapes />;
+    if (health === 'ok' || health === 'recording') {
+      return {
+        icon: 'square-shape',
+        color: 'success',
+        label: t('alerting.gma-rule-list.status.recording', 'Recording'),
+      };
+    }
+    return statusUnavailable();
   }
 
-  return <StateIcon state={mappedState} health={mappedHealth} isPaused={isPaused} distinctShapes />;
+  switch (state) {
+    case 'firing':
+      return { icon: 'fire', color: 'error', label: t('alerting.gma-rule-list.status.firing', 'Firing') };
+    case 'pending':
+      return { icon: 'hourglass', color: 'warning', label: t('alerting.gma-rule-list.status.pending', 'Pending') };
+    case 'recovering':
+      return {
+        icon: 'exclamation-circle',
+        color: 'warning',
+        label: t('alerting.gma-rule-list.status.recovering', 'Recovering'),
+      };
+    case 'healthy':
+    case 'inactive':
+    case 'normal':
+      return { icon: 'check-circle', color: 'success', label: t('alerting.gma-rule-list.status.normal', 'Normal') };
+    default:
+      // Health OK alone says nothing about whether the alert fires.
+      return statusUnavailable();
+  }
+}
+
+function statusUnavailable(): Status {
+  return {
+    icon: 'circle',
+    color: 'secondary',
+    label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
+  };
 }

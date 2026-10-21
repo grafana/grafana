@@ -79,29 +79,4 @@ describe('StateIcon', () => {
     await user.hover(icon);
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Failed to evaluate rule');
   });
-
-  describe('distinctShapes', () => {
-    it.each([
-      { props: { state: 'firing' as const }, label: 'Firing', shape: 'icon-fire' },
-      { props: { state: 'pending' as const }, label: 'Pending', shape: 'icon-hourglass' },
-      { props: { state: 'normal' as const, isPaused: true }, label: 'Paused', shape: 'icon-pause' },
-    ])('draws $label as $shape and keeps its label', ({ props, label, shape }) => {
-      render(<StateIcon {...props} distinctShapes />);
-      expect(screen.getByLabelText(label)).toHaveAttribute('data-testid', shape);
-    });
-
-    it.each([
-      { props: { state: 'firing' as const }, shape: 'icon-exclamation-circle' },
-      { props: { state: 'pending' as const }, shape: 'icon-circle' },
-      { props: { state: 'normal' as const, isPaused: true }, shape: 'icon-pause-circle' },
-    ])('keeps the shared shape $shape by default', ({ props, shape }) => {
-      render(<StateIcon {...props} />);
-      expect(screen.getByTestId(shape)).toBeInTheDocument();
-    });
-
-    it('leaves the other states unchanged', () => {
-      render(<StateIcon state="normal" distinctShapes />);
-      expect(screen.getByLabelText('Normal')).toHaveAttribute('data-testid', 'icon-check-circle');
-    });
-  });
 });

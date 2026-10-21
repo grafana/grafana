@@ -198,6 +198,12 @@ const gmaRuleListBasePatterns = [
       'makeFolderAlertsLink belongs to the legacy list; use makeFolderRulesLink from gma-rule-list/folder-browsing instead.',
   },
   {
+    group: ['@grafana/alerting', '@grafana/alerting/*'],
+    importNames: ['StateIcon'],
+    message:
+      'The GMA-only rule list draws its own status shapes, which the legacy list must not get; use RuleStatusIcon from gma-rule-list/rule-row instead.',
+  },
+  {
     group: ['@grafana/api-clients/rtkq/rules.alerting*'],
     importNamePattern: '^(?:use)?(?:Lazy)?CreateSearchRules',
     message:
