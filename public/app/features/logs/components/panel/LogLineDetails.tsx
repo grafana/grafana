@@ -343,7 +343,7 @@ const getStyles = (
     marginRight: 1,
   }),
   inlineContainer: css({
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
     display: 'flex',
