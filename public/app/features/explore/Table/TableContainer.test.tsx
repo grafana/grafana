@@ -132,7 +132,7 @@ describe('TableContainer', () => {
       expect(screen.getByText('0 series returned')).toBeInTheDocument();
     });
 
-    it('gives the no-data message normal panel padding, not the table panel\'s noPadding', async () => {
+    it("gives the no-data message normal panel padding, not the table panel's noPadding", async () => {
       mockImportPanelPlugin.mockResolvedValue({ noPadding: true });
       const emptyFrames: DataFrame[] = [
         {
