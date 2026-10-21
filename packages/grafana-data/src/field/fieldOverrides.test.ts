@@ -672,7 +672,29 @@ describe('applyFieldOverrides', () => {
       expect(config.varMappings).toBeUndefined();
     });
 
-    it('lets an override rule that only sets varMappings.max leave an earlier rule’s varMappings.min mapping intact', () => {
+    it('uses a plain override value over an expression from the defaults', () => {
+      const data = applyFieldOverrides({
+        data: [numField],
+        fieldConfig: {
+          defaults: { min: 0, max: 100, varMappings: { min: '$t', max: '$t' } },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.numeric },
+              properties: [{ id: 'min', value: 5 }],
+            },
+          ],
+        },
+        replaceVariables: makeReplaceVariables({ t: '99' }),
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      const config = data.fields[0].config;
+      expect(config.min).toEqual(5);
+      expect(config.max).toEqual(99);
+    });
+
+    it('applies an override expression only to the property set in the same rule', () => {
       const replaceVariables = makeReplaceVariables({ rMin: '2', rMax: '3' });
 
       const data = applyFieldOverrides({
@@ -700,10 +722,7 @@ describe('applyFieldOverrides', () => {
       })[0];
 
       const config = data.fields[0].config;
-      // rule 2 sets 'min' directly but never touches varMappings.min - the mapping the first rule
-      // wrote into the shared per-field context.varMappings map is still there when 'min' is processed
-      expect(config.min).toEqual(2);
-      // rule 2's own varMappings.max entry resolves independently
+      expect(config.min).toEqual(20);
       expect(config.max).toEqual(3);
     });
 

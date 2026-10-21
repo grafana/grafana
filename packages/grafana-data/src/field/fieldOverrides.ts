@@ -206,13 +206,18 @@ export function applyFieldOverrides(
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
-          // A rule that sets thresholds replaces the steps, so step mappings collected so far
-          // address different steps
-          if (rule.properties.some((prop) => prop.id === FieldConfigProperty.Thresholds)) {
-            for (const key of Object.keys(context.varMappings)) {
-              if (isThresholdStepVarMappingKey(key)) {
-                delete context.varMappings[key];
+          // A property set by this rule only takes expressions from this rule: a plain value
+          // replaces earlier expressions, and new threshold steps aren't the ones earlier step
+          // keys address
+          for (const prop of rule.properties) {
+            if (prop.id === FieldConfigProperty.Thresholds) {
+              for (const key of Object.keys(context.varMappings)) {
+                if (isThresholdStepVarMappingKey(key)) {
+                  delete context.varMappings[key];
+                }
               }
+            } else if (!isVarMappingProp(prop)) {
+              delete context.varMappings[prop.id];
             }
           }
           // Collect expressions first so a varMappings.<id> entry applies regardless of whether
