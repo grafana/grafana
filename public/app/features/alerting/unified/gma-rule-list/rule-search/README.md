@@ -57,8 +57,14 @@ a filter a page supports; the parser applies a token when a definition accepts i
 - `serializer.ts` — `serialize(filter)`: canonical string form. `parse(serialize(filter))`
   round-trips for any `RuleSearchFilter` populated only from fields the given filters define.
 - `filterIssues.ts` — `getFilterIssues(filter, kind)`: problems (an unsupported token, a
-  `panelId` with no `dashboardUid`, `policy:default`, `paused:false`, a value the rule search
-  rejects such as a wildcard) the page must act on before issuing a request.
+  `panelId` with no `dashboardUid`, `contactPoint` next to `policy`, `policy:default`,
+  `paused:false`, a value the rule search rejects such as a wildcard) the page must act on before
+  issuing a request.
+- `useRuleListSearchState.ts` — the page's applied filter and its issues, read from and written to
+  the `search` URL parameter.
+- `searchQueryLeaves.ts` — the rule search request types and the leaves shared by both kinds;
+  `alert-rules/alertRuleSearchQuery.ts` builds the Alert request body from `RuleSearchFilter`, and
+  `alert-rules/alertRuleSearch.ts` sends it.
 
 ## New filters (no legacy equivalent)
 
@@ -85,3 +91,6 @@ spellings `inactive` and `err` are not accepted. `ruleSearchFilter.ts` maps each
 values it matches, typed by the generated client: `state:normal` sends `state In [Healthy, Inactive]`,
 and `health:ok` sends `OK` on Alert rules and `Recording` on Recording rules. A rule with no stored
 status matches none of them.
+
+`mocks/ruleSearchQueryContract.ts` mirrors what the per-kind rule search accepts, including these
+values, so builder tests can assert every request stays inside it.
