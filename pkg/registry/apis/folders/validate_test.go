@@ -485,7 +485,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newCreateParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -531,7 +531,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 					Spec:       folders.FolderSpec{Title: "new"},
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
-				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage, 5), 5, dryRun)
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage), 5, dryRun)
 				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return

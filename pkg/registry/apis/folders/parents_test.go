@@ -30,7 +30,6 @@ func TestParents(t *testing.T) {
 		setupFn     func(*grafanarest.MockStorage) // called after the getter is registered
 		expected    *folders.FolderInfoList
 		expectedErr string
-		maxDepth    int // defaults to 5 unless set
 	}{
 		{
 			name: "no parents",
@@ -144,12 +143,7 @@ func TestParents(t *testing.T) {
 				}
 			}
 
-			maxDepth := tt.maxDepth
-			if maxDepth == 0 {
-				maxDepth = 5
-			}
-
-			getter := newParentsGetter(m, maxDepth)
+			getter := newParentsGetter(m)
 			parents, err := getter(context.TODO(), &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.request.name,
