@@ -31,12 +31,8 @@ import { createData, createProps, renderPanel } from './test-utils';
 mockComboboxRect();
 jest.mock('./SandboxFrame');
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
-});
-
-afterAll(() => {
-  setTestFlags({});
 });
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.

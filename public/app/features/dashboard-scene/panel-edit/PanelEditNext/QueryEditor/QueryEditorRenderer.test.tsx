@@ -106,10 +106,6 @@ describe('QueryEditorRenderer', () => {
     setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false });
   });
 
-  afterAll(() => {
-    setTestFlags({});
-  });
-
   it('renders nothing when no query is selected', () => {
     renderRenderer(null);
     expect(screen.queryByTestId('query-editor-legend')).not.toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor, act } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -109,11 +109,8 @@ describe('NotebooksListPage (integration)', () => {
     };
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     contextSrv.user.permissions = originalPermissions;
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('resolves author display names through the real iam client', async () => {

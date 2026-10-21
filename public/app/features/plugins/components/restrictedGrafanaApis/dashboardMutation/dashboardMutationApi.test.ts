@@ -30,7 +30,6 @@ function createMockClient(): MutationClient {
 describe('dashboardMutationApi', () => {
   afterEach(() => {
     setDashboardMutationClientForTests(null);
-    setTestFlags({});
   });
 
   describe('execute', () => {

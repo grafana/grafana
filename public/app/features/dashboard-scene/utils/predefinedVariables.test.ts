@@ -43,10 +43,6 @@ describe('fetchPredefinedVariables', () => {
     setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('returns an empty list without fetching when the feature toggle is off', async () => {
     setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: false });
 

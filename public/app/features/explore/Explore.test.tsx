@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -247,12 +247,6 @@ describe('Explore', () => {
   });
 
   describe('Content Outline', () => {
-    afterEach(() => {
-      act(() => {
-        setTestFlags({});
-      });
-    });
-
     it('should retrieve the last visible state from local storage', async () => {
       const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
       setup();

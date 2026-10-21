@@ -27,10 +27,6 @@ describe('GET_NOTEBOOK_SPEC', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('returns the whole notebook, narrative cells included', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);

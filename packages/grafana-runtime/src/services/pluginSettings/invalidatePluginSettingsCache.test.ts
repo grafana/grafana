@@ -53,12 +53,8 @@ describe('invalidatePluginSettingsCache', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ 'plugins.useMTPluginSettings': true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {
@@ -98,12 +94,8 @@ describe('invalidatePluginSettingsCache', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is disabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ 'plugins.useMTPluginSettings': false });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {

@@ -71,10 +71,6 @@ const itemOverrideLayout: DashboardV2Spec['layout'] = {
   },
 };
 
-afterEach(() => {
-  setTestFlags({});
-});
-
 describe('deserialization', () => {
   it('resolves custom min/max height modes and content-fit flags', () => {
     const manager = deserializeAutoGridLayout(minMaxBoundsLayout, elements, false);

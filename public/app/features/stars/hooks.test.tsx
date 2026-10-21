@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -201,12 +201,6 @@ describe('useSyncStarredItemsInNav', () => {
       ];
     });
 
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
     it('syncs both a starred dashboard and folder, each with its per-kind icon', async () => {
       const dashUid = dashbdD.item.uid;
       const folderUid = folderA.item.uid;
@@ -369,12 +363,6 @@ describe('useStarItem', () => {
         { id: 'home', text: 'Home', url: '/' },
         { id: 'starred', text: 'Starred', children: [] },
       ];
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
     });
 
     it('leaves the nav starred section untouched when the server rejects the star', async () => {

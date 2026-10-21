@@ -252,10 +252,6 @@ describe('Unified Storage Searcher', () => {
       setStore(store as unknown as Store);
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('searches for starred folders alongside dashboards when starred folders are enabled', async () => {
       server.use(starsHandler(bothStarredResources), captureSearchHandler(starredHits));
 

@@ -104,15 +104,6 @@ describe('SqlExpr', () => {
     jest.mocked(reportInteraction).mockClear();
   });
 
-  afterEach(async () => {
-    // Reset flag state so the editor selection can't leak between tests. Wrap in act()
-    // because setTestFlags fires OpenFeature events that re-render the still-mounted
-    // component (RTL cleanup runs in a later afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('initializes new expressions with default query', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];

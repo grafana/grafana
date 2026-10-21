@@ -1,4 +1,3 @@
-import { act } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -100,25 +99,9 @@ describe('SaveDashboard (toolbar)', () => {
     jest.clearAllMocks();
   });
 
-  afterAll(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   describe('Template edit flow', () => {
-    beforeEach(async () => {
-      // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-      // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': true });
-      });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
+    beforeEach(() => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
     });
 
     it('renders a single Save button without the More options dropdown', async () => {
@@ -148,16 +131,8 @@ describe('SaveDashboard (toolbar)', () => {
   });
 
   describe('Save as template menu item', () => {
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
     it('is hidden when the feature flag is off', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': false });
-      });
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
       const scene = buildTestScene({ canSave: true });
       const { user } = render(<SaveDashboard dashboard={scene} />);
 
@@ -166,9 +141,7 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it('is hidden when the flag is on but no extension form is registered', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': true });
-      });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       const scene = buildTestScene({ canSave: true });
       const { user } = render(<SaveDashboard dashboard={scene} />);
 
@@ -177,9 +150,7 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it('is hidden without dashboardtemplates:write', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': true });
-      });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       registerSaveAsTemplateForm(() => null);
       contextSrv.user.permissions = {};
 
@@ -191,9 +162,7 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it('is visible with dashboardtemplates:write', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': true });
-      });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       registerSaveAsTemplateForm(() => null);
       contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesWrite]: true };
 
@@ -205,9 +174,7 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it('is visible and triggers openSaveDrawer when flag is on, canSave is true, and an extension form is registered', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': true });
-      });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       registerSaveAsTemplateForm(() => null);
 
       const scene = buildTestScene({ canSave: true });
@@ -221,9 +188,7 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it('fires save_as_opened analytics when the menu item is clicked', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.customDashboardTemplates': true });
-      });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       registerSaveAsTemplateForm(() => null);
 
       const scene = buildTestScene({ canSave: true, uid: 'my-dash' });

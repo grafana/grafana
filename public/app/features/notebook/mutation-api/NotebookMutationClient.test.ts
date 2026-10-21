@@ -13,10 +13,6 @@ describe('NotebookMutationClient', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('exposes exactly the notebook commands', () => {
     const client = new NotebookMutationClient(notebookScene());
 

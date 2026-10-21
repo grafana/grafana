@@ -37,6 +37,10 @@
       "import": "./src/handlers/index.ts",
       "require": "./src/handlers/index.ts"
     },
+    "./feature-flags": {
+      "import": "./src/utilities/featureFlags.ts",
+      "require": "./src/utilities/featureFlags.ts"
+    },
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"

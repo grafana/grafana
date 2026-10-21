@@ -38,7 +38,6 @@ describe('Default scope', () => {
   });
 
   afterEach(async () => {
-    setTestFlags({});
     locationService.replace('');
     window.localStorage.clear();
     await resetScenes();

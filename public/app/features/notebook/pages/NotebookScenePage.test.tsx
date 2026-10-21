@@ -33,13 +33,11 @@ describe('NotebookScenePage', () => {
   });
 
   afterEach(async () => {
-    // Wrap in act() because both of these publish state while a component is still mounted:
-    // setTestFlags fires OpenFeature events, and clearing the state manager drops its scene. The
-    // manager is a module-level singleton, so a scene seeded by one test would otherwise still be
-    // there for the next one.
+    // Wrap in act() because clearing the state manager drops its scene while a component is still
+    // mounted. The manager is a module-level singleton, so a scene seeded by one test would
+    // otherwise still be there for the next one.
     await act(async () => {
       getNotebookPageStateManager().clearState();
-      setTestFlags({});
     });
   });
 
