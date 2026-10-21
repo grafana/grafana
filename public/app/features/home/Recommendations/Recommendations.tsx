@@ -116,8 +116,7 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
     synthetics: forSolution('synthetics'),
   };
 
-  // An unknown signal or an unreliable plugin list is transient (the probe TTL re-resolves it), so an empty
-  // verdict built on either says nothing about the stack.
+  // Unknown signals and an unreliable plugin list are transient, so an empty verdict built on them says nothing.
   const conclusive = selection.baseRow !== 'unknown' && listReady;
   return { selection, recommendations, recommendationsBySolution, conclusive };
 }
@@ -147,13 +146,10 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
     return selectRecommendationState(inventory, state, guideEnabled);
   }, [selectionEnabled, signals]);
 
-  // The region renders once the selection settles; recommendations only decide the right column.
-  // Collapsed (gated-off) renders immediately as just the header row. While the selection runs, the region
-  // holds its space unless the last conclusive verdict in this browser was empty: for a stack with nothing left
-  // to recommend that verdict rarely changes, and reserving space only to collapse it moves the whole page.
-  // A verdict that does flip to non-empty mounts the region late, once. The verdict is per browser, not per
-  // org, so switching orgs on one instance can cost that late mount once. Read once per mount: the store
-  // notifies on other tabs' writes, and a verdict landing there must not swap this visit's reservation mid-load.
+  // While the selection runs, the region holds its space unless this browser's last conclusive verdict was empty:
+  // a stack with nothing left to recommend rarely changes, and reserving space only to collapse it moves the page.
+  // A verdict that flips to non-empty mounts the region late, once (also after an org switch: the hint is per
+  // browser). Read once per mount, so another tab's verdict cannot swap this visit's reservation mid-load.
   const [knownEmpty] = useState(() => store.getBool(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false));
   const state = selected.value;
   useEffect(() => {
@@ -165,10 +161,9 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
     if (!state) {
       return knownEmpty ? null : <RecommendationsSkeleton />;
     }
-    // All-or-nothing: the region never renders one column alone. An empty right column —
-    // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
-    // or every card failing closed — hides the whole region. The collapsed-gated render
-    // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
+    // All-or-nothing: the region never renders one column alone, so an empty right column (inconclusive detection,
+    // nothing left to recommend, every card failing closed) hides it. The collapsed render keeps its header row:
+    // without selection, emptiness is unknowable.
     if (state.recommendations.length === 0) {
       return null;
     }

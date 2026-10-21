@@ -22,14 +22,12 @@ import { homepageViewed } from './analytics/main';
 import { useHomepageSolutions } from './useHomepageSolutions';
 
 /**
- * Every section owns its loading state, so the page shell paints at once and nothing waits for the plugin
- * extensions: the Assistant slot holds its height until its component lands, and the setup-guide sections
- * come last, so arriving late moves nothing above them.
+ * Each section owns its loading state, so the shell paints at once. The setup-guide sections come last: arriving
+ * late moves nothing above them.
  */
 export function RedesignedHomePage() {
   const solutions = useHomepageSolutions();
-  // Recommendations and the stack overview are onboarding for org members; anonymous or
-  // no-org users can't act on any of it, so skip the sections and their placement probes.
+  // Onboarding for org members; anonymous or no-org users can't act on it, so skip the sections and their probes.
   const showSolutions = contextSrv.isSignedIn && contextSrv.user.orgRole !== OrgRole.None;
 
   const { components: extraComponents } = usePluginComponents({
@@ -43,9 +41,7 @@ export function RedesignedHomePage() {
   const incidentsData = useIncidents(incidentsFilter);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
-  // The impression counts the rendered shell; the ref keeps it once per mount under StrictMode's replayed
-  // effects. HomeRoute only mounts the homepage when the unified homepage actually renders (redirect /
-  // home-dashboard branches never reach here).
+  // Once per mount, StrictMode replays included. HomeRoute mounts this only when the unified homepage renders.
   const hasTrackedView = useRef(false);
   useEffect(() => {
     if (!hasTrackedView.current) {

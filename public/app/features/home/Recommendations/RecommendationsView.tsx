@@ -260,9 +260,8 @@ function RecommendedCardSkeleton() {
 }
 
 /**
- * Stands in for the whole region while the plugin list and data probes resolve: the heading row at the height
- * of its small Hide button (theme.components.height.sm), and the same two column skeletons the view itself shows
- * while its facts settle, inside the same card shell. The region therefore keeps one height from skeleton to content.
+ * Stands in for the whole region while the plugin list and probes resolve, built from the same card shell and
+ * column skeletons the view shows while its facts settle, so the region keeps one height from skeleton to content.
  */
 export function RecommendationsSkeleton() {
   const styles = useStyles2(getStyles);

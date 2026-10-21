@@ -21,10 +21,7 @@ import { HomeSection } from './HomeSection';
 import { LegacyHomePageSkeleton } from './LegacyHomePageSkeleton';
 import { homepageViewed } from './analytics/main';
 
-/**
- * Renders nothing; reports a view on mount. Inside a Suspense boundary, React defers
- * the effect until the content is revealed.
- */
+/** Reports a view on mount; inside a Suspense boundary React defers the effect until the content is revealed. */
 function HomepageViewTracker({ onView }: { onView: () => void }) {
   useEffect(() => {
     onView();
@@ -33,10 +30,7 @@ function HomepageViewTracker({ onView }: { onView: () => void }) {
   return null;
 }
 
-/**
- * Frames a setup-guide section; the frame hides when the section renders nothing. Module-level so the component
- * type is stable across renders: an inline wrapper would remount the section on every render.
- */
+/** Frames a setup-guide section, hidden while empty. Module-level so an inline wrapper doesn't remount it every render. */
 function PluginSectionFrame({ children }: { children: ReactNode }) {
   return (
     <div className={styles.extra}>
@@ -66,11 +60,9 @@ export function LegacyHomePage() {
   const alertsData = useFiringAlerts(alertsFilter);
   const incidentsData = useIncidents(incidentsFilter);
 
-  // The impression counts a rendered homepage, never the skeleton: the tracker mounts inside the Suspense
-  // boundary below, so a suspended lazy extension defers it until reveal. The ref keeps it once per mount
-  // (extension loading can flip and remount the boundary's children; StrictMode replays effects). HomeRoute
-  // only mounts the homepage when the unified homepage actually renders (redirect / home-dashboard branches
-  // never reach here).
+  // Counts a rendered homepage, never the skeleton: the tracker mounts inside the Suspense boundary, so a suspended
+  // extension defers it until reveal. The ref keeps it once per mount across boundary remounts and StrictMode
+  // replays. HomeRoute mounts this only when the unified homepage renders.
   const hasTrackedView = useRef(false);
   const trackView = useCallback(() => {
     if (!hasTrackedView.current) {

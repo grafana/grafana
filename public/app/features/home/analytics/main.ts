@@ -38,8 +38,5 @@ export const ctaClicked = createHomepageEvent<CtaClicked>('cta_clicked');
 /** Fired when the user saves or clears a solution card's scope in its filter dialog. */
 export const solutionFilterChanged = createHomepageEvent<SolutionFilterChanged>('solution_filter_changed');
 
-/**
- * Fired once per homepage mount. The legacy layout fires it when its content replaces the whole-page skeleton;
- * the redesign fires it when the page shell paints, while its sections still load behind their own skeletons.
- */
+/** Fired once per homepage mount: when the legacy layout replaces its skeleton, or when the redesign's shell paints. */
 export const homepageViewed = createHomepageEvent('viewed');

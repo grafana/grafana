@@ -8,18 +8,14 @@ import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { HomeSection } from './HomeSection';
 
-/** The Assistant's prompt input as the plugin builds it: a 48px input inside a 2px border. Off by a few px at worst. */
+/** The plugin's prompt input: a 48px input inside a 2px border. */
 const ASSISTANT_INPUT_HEIGHT = 52;
 
 /**
- * Holds the Assistant's prompt input slot on the redesigned homepage at the input's height from first paint until
- * the input lands, so the sections below never move: a skeleton while the registry loads the plugin and while the
- * component's chunk loads, then a bare reserved area while the plugin's component settles. That last reservation
- * compensates for the plugin: its own Suspense boundary has no fallback, so the component paints nothing while its
- * availability check resolves, and the host cannot tell "still resolving" from "settled on nothing". A plugin that
- * settles on nothing (OSS without accepted terms) therefore leaves an empty slot; the fix for that belongs in the
- * plugin. The slot is dropped only when the registry settles without an Assistant component: an instance without
- * the Assistant.
+ * Holds the input's height from first paint so the sections below never move: a skeleton while the registry and
+ * the component's chunk load, then a reserved area while the plugin resolves availability without painting. The
+ * host cannot tell resolving from settled-on-nothing, so an unavailable Assistant (OSS without accepted terms)
+ * keeps an empty slot; only an instance with no Assistant registered drops it.
  */
 export function AssistantInputSlot() {
   const { components, isLoading } = usePluginComponents({ extensionPointId: PluginExtensionPoints.HomepageAssistant });
