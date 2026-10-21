@@ -151,6 +151,7 @@ describe('ExemplarsPlugin', () => {
   });
 
   const runPlotHooks = (plot: uPlot) => {
+    Object.assign(plot, { hooks });
     act(() => {
       hooks.init?.forEach((h) => {
         h(plot);
@@ -528,6 +529,23 @@ describe('ExemplarsPlugin', () => {
     } finally {
       valToPos.mockImplementation((_value, scaleKey) => (scaleKey === 'x' ? 100 : 50));
     }
+  });
+
+  it('removes only its draw subscription when the overlay unmounts', () => {
+    const result = setUp();
+    expect(getMarker()).toBeVisible();
+    const otherDrawHook = jest.fn();
+    hooks.draw.push(otherDrawHook);
+
+    result.rerenderExemplars([]);
+    expect(hooks.draw).toEqual([otherDrawHook]);
+
+    result.rerenderExemplars([defaultExemplarFrame]);
+    expect(getMarker()).toBeVisible();
+    expect(hooks.draw).toHaveLength(2);
+
+    result.unmount();
+    expect(hooks.draw).toEqual([otherDrawHook]);
   });
 
   it.each([

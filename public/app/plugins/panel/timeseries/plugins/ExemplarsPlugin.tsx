@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type uPlot from 'uplot';
 
 import {
@@ -27,10 +27,7 @@ interface ExemplarsPluginProps {
 export const ExemplarsPlugin = (props: ExemplarsPluginProps) => {
   const { config, exemplars } = props;
   const hasRows = exemplars.some((frame) => frame.length > 0);
-  const hasRowsRef = useRef(hasRows);
-  hasRowsRef.current = hasRows;
   const [initialized, setInitialized] = useState<{ config: UPlotConfigBuilder; plot: uPlot }>();
-  const [drawCount, setDrawCount] = useState(0);
 
   // uPlot fires init once, so capture the instance even before exemplar data arrives.
   useLayoutEffect(() => {
@@ -38,11 +35,6 @@ export const ExemplarsPlugin = (props: ExemplarsPluginProps) => {
     config.addHook('init', (plot) => {
       if (mounted) {
         setInitialized({ config, plot });
-      }
-    });
-    config.addHook('draw', () => {
-      if (mounted && hasRowsRef.current) {
-        setDrawCount((count) => count + 1);
       }
     });
     return () => {
@@ -54,13 +46,7 @@ export const ExemplarsPlugin = (props: ExemplarsPluginProps) => {
     return null;
   }
 
-  return (
-    <ExemplarsPluginInternal
-      {...props}
-      plot={initialized?.config === config ? initialized.plot : undefined}
-      drawCount={drawCount}
-    />
-  );
+  return <ExemplarsPluginInternal {...props} plot={initialized?.config === config ? initialized.plot : undefined} />;
 };
 
 const ExemplarsPluginInternal = ({
@@ -72,8 +58,24 @@ const ExemplarsPluginInternal = ({
   maxHeight,
   maxWidth,
   plot,
-  drawCount,
-}: ExemplarsPluginProps & { plot: uPlot | undefined; drawCount: number }) => {
+}: ExemplarsPluginProps & { plot: uPlot | undefined }) => {
+  const [drawCount, setDrawCount] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!plot) {
+      return;
+    }
+    const onDraw = () => setDrawCount((count) => count + 1);
+    const drawHooks = (plot.hooks.draw ??= []);
+    drawHooks.push(onDraw);
+    return () => {
+      const index = drawHooks.indexOf(onDraw);
+      if (index !== -1) {
+        drawHooks.splice(index, 1);
+      }
+    };
+  }, [plot]);
+
   const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
   const currentLockedExemplar = useMemo(
     () => findExemplarSelection(exemplars, lockedExemplar),
