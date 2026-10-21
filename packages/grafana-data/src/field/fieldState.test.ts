@@ -183,6 +183,7 @@ describe('getFrameDisplayName', () => {
   it.each([
     { refId: 'A', index: undefined, expected: 'Series (A)' },
     { refId: undefined, index: 2, expected: 'Series (2)' },
+    { refId: undefined, index: undefined, expected: 'Series' },
   ])('returns $expected for a frame containing only time fields', ({ refId, index, expected }) => {
     const frame = toDataFrame({
       refId,
