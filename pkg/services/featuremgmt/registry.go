@@ -681,7 +681,7 @@ var (
 		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
@@ -958,15 +958,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:         "dashboardUnifiedDrilldownControls",
-			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "true",
-		},
-		{
 			Name:        "grafana.filterablePanels",
 			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1161,7 +1152,7 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "pluginProxyPreserveTrailingSlash",
@@ -1245,7 +1236,7 @@ var (
 		{
 			Name:            "reloadDashboardsOnParamsChange",
 			Description:     "Enables reload of dashboards on scopes, time range and variables changes",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:        Generate{LegacyFrontend: true, React: true},
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
@@ -1894,7 +1885,7 @@ var (
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "newInfluxDSConfigPageDesign",
@@ -1945,15 +1936,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "restrictedPluginApis",
-			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "true",
 		},
 		{
 			Name:        "favoriteDatasources",
@@ -2221,6 +2203,14 @@ var (
 		{
 			Name:        "grafana.dashboardGlobalVariables",
 			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardVariablesMigration",
+			Description: "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
@@ -2742,6 +2732,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.gmaOnlyListView",
+			Description:  "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:        "alerting.notificationsAPIV1Beta1",

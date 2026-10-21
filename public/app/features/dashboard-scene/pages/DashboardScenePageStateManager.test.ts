@@ -57,7 +57,6 @@ jest.mock('@grafana/runtime', () => {
       ...original.config,
       featureToggles: {
         ...original.config.featureToggles,
-        reloadDashboardsOnParamsChange: false,
       },
       datasources: {
         'gdev-testdata': {
@@ -219,13 +218,12 @@ const mockTimeAndLocation = (mockNow: Date, queryParams: Record<string, string>)
 };
 
 const withFeatureToggle = (enabled: boolean, testFn: () => Promise<void>) => async () => {
-  const originalValue = config.featureToggles.reloadDashboardsOnParamsChange;
-  config.featureToggles.reloadDashboardsOnParamsChange = enabled;
+  setTestFlags({ reloadDashboardsOnParamsChange: enabled });
 
   try {
     await testFn();
   } finally {
-    config.featureToggles.reloadDashboardsOnParamsChange = originalValue;
+    setTestFlags({});
   }
 };
 

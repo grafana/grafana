@@ -14,6 +14,7 @@ import { useLogListContext } from './LogListContext';
 import { getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsErrorProps {
+  className?: string;
   fields: FieldDef[];
   labels: LabelWithLinks[];
 }
@@ -23,7 +24,7 @@ interface ErrorDisplayItem {
   value: string;
 }
 
-export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps) => {
+export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetailsErrorProps) => {
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
 
@@ -48,7 +49,7 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${className ? className : ''}`}>
       <div className={styles.header}>
         <Icon name="exclamation-circle" className={styles.icon} />
         <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
@@ -147,10 +148,10 @@ type ErrorAttributeVariant = 'message' | 'stacktrace' | 'other';
 
 const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   container: css({
-    background: theme.colors.background.secondary,
-    borderLeft: `2px solid ${theme.colors.error.border}`,
+    background: `linear-gradient(${theme.colors.error.main}, ${theme.colors.error.main}) left 0 top 0 / 6px 100% no-repeat, ${theme.colors.background.secondary}`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
+    paddingLeft: `calc(6px + ${theme.spacing(1)})`,
   }),
   header: css({
     alignItems: 'center',

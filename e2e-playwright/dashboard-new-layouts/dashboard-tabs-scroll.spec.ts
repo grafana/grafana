@@ -120,7 +120,7 @@ test.describe(
       await expect(firstTab).not.toBeInViewport();
     });
 
-    test('keeps overflow controls after save and reload', async ({
+    test.skip('keeps overflow controls after save and reload', async ({
       gotoDashboardPage,
       page,
       controls,

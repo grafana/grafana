@@ -49,6 +49,9 @@ const (
 	indexStorageFile        = "file"
 	boltTimeout             = "1s"
 	unownedIndexIdleTimeout = 10 * time.Minute
+
+	// How often an index persists the RV of updates that changed no documents.
+	rvPersistInterval = 5 * time.Minute
 )
 
 // Keys used to store internal data in index.
@@ -138,8 +141,8 @@ type BleveOptions struct {
 	DiskCleanupUnopenedGracePeriod time.Duration
 
 	// EnforceSortCapability rejects a sort on a field that does not declare the
-	// sort capability. When false the violation is only counted, so an operator
-	// can see what real traffic would break before turning this on.
+	// sort capability. When false the violation is only counted and logged, as an
+	// escape hatch for an instance that still depends on such sorts.
 	EnforceSortCapability bool
 
 	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
@@ -411,6 +414,15 @@ func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.Resour
 	return idx
 }
 
+func (b *bleveBackend) PeekIndex(key resource.NamespacedResource) resource.ResourceIndex {
+	idx := b.peekCachedIndex(key)
+	// Avoid returning typed nils.
+	if idx == nil {
+		return nil
+	}
+	return idx
+}
+
 func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
 	b.cacheMx.RLock()
 	defer b.cacheMx.RUnlock()
@@ -423,7 +435,10 @@ func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
 }
 
 func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource, now time.Time) *bleveIndex {
-	idx := b.peekCachedIndex(key)
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	idx := b.cache[key]
 	if idx == nil {
 		return nil
 	}
@@ -1064,6 +1079,8 @@ func (b *bleveBackend) BuildIndex(
 	closeIndex = false
 
 	b.cacheMx.Lock()
+	// A request can use a newly built index without fetching it from the cache.
+	idx.lastFetchedFromCache.Store(time.Now().UnixMilli())
 	prev := b.cache[key]
 	b.cache[key] = idx
 	b.cacheMx.Unlock()
@@ -1689,12 +1706,9 @@ func (b *bleveBackend) SnapshotCountThreshold() int64 {
 
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
-	// We iterate over keys and call getCachedIndex for each index individually.
-	// We do this to avoid keeping a lock for the entire TotalDocs function, since DocCount may be slow (due to disk access).
-
-	now := time.Now()
+	// DocCount may access disk, so don't hold the cache lock while counting.
 	for _, key := range b.GetOpenIndexes() {
-		idx := b.getCachedIndex(key, now)
+		idx := b.peekCachedIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -1842,6 +1856,10 @@ type bleveIndex struct {
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
 
+	// Owned by the updater goroutine.
+	rvPersistInterval time.Duration
+	rvPersistedAt     time.Time
+
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
 	updaterShutdown bool               // When set to true, index is getting closed and updater is no longer going to update index.
@@ -1904,6 +1922,8 @@ func (b *bleveBackend) newBleveIndex(
 		logger:                 logger,
 		updaterFn:              updaterFn,
 		minUpdateInterval:      b.opts.IndexMinUpdateInterval,
+		rvPersistInterval:      rvPersistInterval,
+		rvPersistedAt:          time.Now(),
 		indexMetrics:           b.indexMetrics,
 		enforceSortCapability:  b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,
@@ -2077,8 +2097,21 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	}
 
 	b.resourceVersion.Store(rv)
+	b.rvPersistedAt = time.Now()
 
 	return nil
+}
+
+// advanceResourceVersion moves the index to rv after an incremental update that changed docs documents.
+// Persisting the RV of an update that changed nothing only shortens replay after a reopen, but each write
+// costs a scorch epoch and two bolt fsyncs. So such RVs are persisted at most once per rvPersistInterval.
+// The persisted RV can lag behind the index contents this way, but never get ahead of them.
+func (b *bleveIndex) advanceResourceVersion(rv int64, docs int) error {
+	if docs == 0 && b.rvPersistInterval > 0 && time.Since(b.rvPersistedAt) < b.rvPersistInterval {
+		b.resourceVersion.Store(rv)
+		return nil
+	}
+	return b.updateResourceVersion(rv)
 }
 
 func setRV(index bleve.Index, rv int64) error {
@@ -3944,7 +3977,7 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
 	if err == nil && listRV > 0 && listRV != sinceRV {
-		err = b.updateResourceVersion(listRV) // updates b.resourceVersion
+		err = b.advanceResourceVersion(listRV, docs) // updates b.resourceVersion
 	}
 
 	elapsed := time.Since(startTime)

@@ -21,7 +21,7 @@ require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/getkin/kin-openapi v0.149.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect
@@ -40,8 +40,8 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // indirect
+	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
+	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.60.15 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect

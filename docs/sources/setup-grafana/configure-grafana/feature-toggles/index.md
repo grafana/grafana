@@ -83,6 +83,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
+| `dashboard.notebooks`              | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |

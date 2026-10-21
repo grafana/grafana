@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 
 import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import {
   SceneCanvasText,
@@ -154,15 +154,15 @@ describe('LibraryPanelBehavior', () => {
   });
 
   it('should set the title to the library panel title if the feature toggle is enabled', async () => {
-    config.featureToggles.preferLibraryPanelTitle = true;
+    setTestFlags({ [FlagKeys.PreferLibraryPanelTitle]: true });
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
     expect(gridItem.state.body.state.title).toBe('LibraryPanel A title');
-    config.featureToggles.preferLibraryPanelTitle = false;
+    setTestFlags({});
   });
 
   it('should set the title to the panel title if the feature toggle is disabled', async () => {
-    config.featureToggles.preferLibraryPanelTitle = false;
+    setTestFlags({ [FlagKeys.PreferLibraryPanelTitle]: false });
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
     expect(gridItem.state.body.state.title).toBe('Panel A');
