@@ -11250,9 +11250,9 @@
       "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
-      "empty": "You have no firing alerts.",
-      "empty-selected-label": "No firing alerts with {{label}}.",
-      "empty-teams": "No firing alerts for your teams.",
+      "empty": "All clear! No alerts are firing.",
+      "empty-selected-label": "All clear! No alerts are firing with {{label}}.",
+      "empty-teams": "All clear! No alerts are firing for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
@@ -11286,8 +11286,8 @@
     },
     "incidents-card": {
       "declare": "Declare an incident",
-      "empty": "No active incidents.",
-      "empty-selected-team": "No active incidents for {{team}}.",
+      "empty": "All quiet! No active incidents.",
+      "empty-selected-team": "All quiet! No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"
