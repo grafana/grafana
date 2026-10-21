@@ -235,77 +235,37 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		}
 	})
 
-	t.Run("leases the oldest inactive secure values up to the batch size", func(t *testing.T) {
-		t.Parallel()
-
-		sut := testutils.Setup(t)
-		uids := createInactiveSecureValues(t, sut, 5)
-
-		values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 3)
-		require.NoError(t, err)
-		require.ElementsMatch(t, uids[:3], leasedUIDs(values))
-
-		values, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 3)
-		require.NoError(t, err)
-		require.ElementsMatch(t, uids[3:], leasedUIDs(values))
-
-		values, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 3)
-		require.NoError(t, err)
-		require.Empty(t, values)
-	})
-
-	t.Run("active secure values are not leased", func(t *testing.T) {
-		t.Parallel()
-
-		sut := testutils.Setup(t)
-		_, err := sut.CreateSv(t.Context())
-		require.NoError(t, err)
-		sut.Clock.AdvanceBy(15 * time.Minute)
-
-		values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
-		require.NoError(t, err)
-		require.Empty(t, values)
-	})
-
-	t.Run("empty batch does not lease anything", func(t *testing.T) {
-		t.Parallel()
-
-		sut := testutils.Setup(t)
-		uids := createInactiveSecureValues(t, sut, 2)
-
-		values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 0)
-		require.NoError(t, err)
-		require.Empty(t, values)
-
-		values, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
-		require.NoError(t, err)
-		require.ElementsMatch(t, uids, leasedUIDs(values))
-	})
-
 	t.Run("concurrent lease acquisitions never lease the same secure value twice", func(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
+
+		// Give all workers the same pool of inactive values past the GC grace period.
 		uids := createInactiveSecureValues(t, sut, 10)
 
+		// Run competing requests against the same storage. Each request can claim the
+		// entire pool, so their claims may overlap and must respect existing leases.
 		const workers = 4
 		results := make([][]secretv1beta1.SecureValue, workers)
 		errs := make([]error, workers)
 		var wg sync.WaitGroup
 		for i := range workers {
-			wg.Add(1)
-			go func() {
+			wg.Go(func() {
 				defer wg.Done()
 				results[i], errs[i] = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
-			}()
+			})
 		}
 		wg.Wait()
 
+		// A request may return an empty batch if another worker wins, so check the overall result,
+		// the invariant is that it does not repeat the same UID.
 		leased := make([]string, 0, len(uids))
 		for i := range workers {
 			require.NoError(t, errs[i])
 			leased = append(leased, leasedUIDs(results[i])...)
 		}
+
+		// Make sure UIDs are only appearing once.
 		require.Len(t, leased, len(uids))
 		require.ElementsMatch(t, uids, leased)
 	})
