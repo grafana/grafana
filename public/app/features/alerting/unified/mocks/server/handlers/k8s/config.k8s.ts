@@ -52,6 +52,8 @@ interface AutoSyncConfigOptions {
   specUid?: string;
   /** status.externalAlertmanagerSync — the last attempt, which lags spec. */
   statusUid?: string;
+  /** status.externalAlertmanagerSync.identifier — the name the worker recorded for statusUid. */
+  statusIdentifier?: string;
   /** 'ini' marks the org as operator-managed: the grafana.ini key wins and spec is dormant. */
   origin?: 'api' | 'ini';
   /**
@@ -62,14 +64,22 @@ interface AutoSyncConfigOptions {
 }
 
 function buildAutoSyncConfig(name: string, options: AutoSyncConfigOptions = {}): Config {
-  const { specUid, statusUid, origin = 'api', condition } = options;
+  const { specUid, statusUid, statusIdentifier, origin = 'api', condition } = options;
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Config',
     metadata: { name, namespace: 'default', resourceVersion: '1' },
     spec: specUid ? { externalAlertmanagerSync: { datasourceUid: specUid } } : {},
     status: {
-      ...(statusUid ? { externalAlertmanagerSync: { datasourceUid: statusUid, origin } } : {}),
+      ...(statusUid
+        ? {
+            externalAlertmanagerSync: {
+              datasourceUid: statusUid,
+              origin,
+              ...(statusIdentifier ? { identifier: statusIdentifier } : {}),
+            },
+          }
+        : {}),
       ...(condition
         ? {
             conditions: [

@@ -20,13 +20,23 @@ interface NextButtonProps {
   disabled?: boolean;
   /** Tooltip shown while the button is disabled, explaining why the user can't continue */
   disabledTooltip?: string;
+  /** Replaces the default label, for a next button that doesn't just continue */
+  label?: string;
 }
 
 /**
  * NextButton - navigation button to proceed to the next step
  * Shows the next step name or "Submit" on the last step
  */
-export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disabledTooltip }: NextButtonProps) => {
+export const NextButton = ({
+  onNext,
+  canSkip,
+  skipLabel,
+  onSkip,
+  disabled,
+  disabledTooltip,
+  label,
+}: NextButtonProps) => {
   const { activeStep, setActiveStep } = useStepperState();
   const nextStep = getNextStep(activeStep);
   const isLast = isLastStep(activeStep);
@@ -65,14 +75,18 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
         </Button>
       )}
       <Button
-        variant="primary"
+        // A relabelled next button skips rather than continues, so it doesn't get the primary look.
+        variant={label ? 'secondary' : 'primary'}
         icon={isPending ? 'spinner' : 'arrow-right'}
         onClick={handleClick}
         disabled={disabled || isPending}
         tooltip={disabled && disabledTooltip ? disabledTooltip : undefined}
         data-testid={selectors.pages.Alerting.ImportToGMA.nextButton}
       >
-        {nextStep.name}
+        {label ??
+          (isLastStep(nextStep.id)
+            ? t('alerting.import-to-gma.wizard.review', 'Review')
+            : t('alerting.import-to-gma.wizard.continue', 'Continue'))}
       </Button>
     </Stack>
   );

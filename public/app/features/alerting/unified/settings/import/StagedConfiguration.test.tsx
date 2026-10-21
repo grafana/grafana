@@ -69,7 +69,7 @@ const ui = {
   syncManagedNote: byText(/kept up to date by auto-sync/i),
   parseError: byText(/couldn't read the staged configuration/i),
   revertButton: byRole('button', { name: /^revert$/i }),
-  promoteButton: byRole('button', { name: /promote to live config/i }),
+  promoteButton: byRole('button', { name: /^promote$/i }),
   promoteModalTitle: byRole('heading', { name: /promote this configuration/i }),
   revertModalTitle: byRole('heading', { name: /revert this staged configuration/i }),
   noPermissionTooltip: byText(/don't have permission to modify/i),

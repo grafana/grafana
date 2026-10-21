@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
@@ -97,6 +97,7 @@ const ui = {
   picker: byLabelText(/^datasource$/i),
   // Anchored so it cannot also match the save-disabled tooltip, which shares its opening words.
   pickerPlaceholder: byText(/^Select a Mimir or Cortex Alertmanager datasource…$/),
+  pickerLockedHint: byText(/disable sync to choose a different datasource/i),
   confirmDialog: byRole('dialog', { name: /disable mimir alertmanager auto-sync/i }),
   confirmDialogDisableButton: byRole('button', { name: /^disable sync$/i }),
 };
@@ -113,6 +114,46 @@ const edgeUi = {
   stagedConflictWarning: byText(/currently occupies that slot/i),
   stagedConflictActiveTitle: byText(/auto-sync is not running/i),
 };
+
+describe('AutoSyncConfiguration — datasource picker', () => {
+  it('lists every Alertmanager like the import wizard, badging the ones auto-sync can mirror', async () => {
+    setupAutoSyncConfig(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    setupDataSources(
+      mockDataSource<AlertManagerDataSourceJsonData>(
+        {
+          uid: MIMIR_DS_UID,
+          name: MIMIR_DS_NAME,
+          type: DataSourceType.Alertmanager,
+          jsonData: { implementation: AlertManagerImplementation.mimir },
+        },
+        { alerting: true }
+      ),
+      mockDataSource<AlertManagerDataSourceJsonData>(
+        {
+          uid: 'prometheus-am',
+          name: 'Prometheus Alertmanager',
+          type: DataSourceType.Alertmanager,
+          jsonData: { implementation: AlertManagerImplementation.prometheus },
+        },
+        { alerting: true }
+      )
+    );
+
+    const { user } = render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    await user.click(ui.picker.get());
+
+    const mimirOption = await screen.findByRole('option', { name: new RegExp(MIMIR_DS_NAME) });
+    expect(within(mimirOption).getByText(/^auto-sync$/i)).toBeInTheDocument();
+    // Listed so it's clear why it can't be picked, but not selectable.
+    const prometheusOption = screen.getByRole('option', { name: /prometheus alertmanager/i });
+    expect(within(prometheusOption).queryByText(/^auto-sync$/i)).not.toBeInTheDocument();
+    await user.click(prometheusOption);
+    expect(ui.pickerPlaceholder.get()).toBeInTheDocument();
+  });
+});
 
 describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
   it('case 1: unconfigured — renders "Not configured" badge and disables Save until a selection is made', async () => {
@@ -158,6 +199,9 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     expect(await ui.activeBadge.find()).toBeInTheDocument();
     // Save is hidden while sync is active — admin must Disable first, then re-select + Save.
     expect(ui.saveButton.query()).not.toBeInTheDocument();
+    // The picker is locked too, so it doesn't offer a change that nothing can save.
+    expect(ui.picker.get()).toBeDisabled();
+    expect(ui.pickerLockedHint.get()).toBeInTheDocument();
 
     await user.click(ui.disableSyncButton.get());
 
@@ -245,6 +289,8 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(ui.disableSyncButton.get()).toBeInTheDocument();
     // Save stays visible in orphan-uid so the admin can recover by picking a real datasource.
     expect(ui.saveButton.get()).toBeInTheDocument();
+    expect(ui.picker.get()).toBeEnabled();
+    expect(ui.pickerLockedHint.query()).not.toBeInTheDocument();
   });
 
   it('case 9: sync failing — badge reports the failure and the reason is shown outside the tooltip', async () => {
@@ -409,6 +455,25 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
     // Disabling must stay reachable — never trap the user in the broken state.
     expect(ui.disableSyncButton.get()).toBeEnabled();
     expect(ui.picker.get()).toBeDisabled();
+  });
+
+  // The worker names the import after the datasource and records that name on the status, so its own
+  // staged copy is not a foreign import even though its identifier is not the datasource UID.
+  it('does not report a conflict for the staged copy of the running sync', async () => {
+    setupAutoSyncConfig(server, {
+      specUid: MIMIR_DS_UID,
+      statusUid: MIMIR_DS_UID,
+      statusIdentifier: 'devenv-mimir',
+      condition: SYNC_SUCCEEDED_CONDITION,
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration stagedConfigIdentifier="devenv-mimir" />);
+
+    expect(await ui.activeBadge.find()).toBeInTheDocument();
+    expect(edgeUi.stagedConflictActiveTitle.query()).not.toBeInTheDocument();
+    expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
   });
 
   it('locks the datasource picker even when the staged identifier matches an available datasource', async () => {

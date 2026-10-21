@@ -1,8 +1,9 @@
+import { renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { getWrapper, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -14,6 +15,7 @@ import {
   setupAutoSyncConfig,
   setupAutoSyncConfigAbsent,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
+import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -24,7 +26,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues } from '../ImportToGMA';
 
-import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
+import { Step1Content, usePredictedAutoSyncIdentifier, useStep1Validation } from './Step1AlertmanagerResources';
 
 const server = setupMswServer();
 
@@ -89,6 +91,18 @@ const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
   },
 });
 
+// A Mimir Alertmanager shares its configuration, so the picker lets it be selected. A plain Prometheus
+// one (alertmanagerDataSource above) is listed but disabled.
+const selectableAlertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+  name: 'Alertmanager',
+  uid: 'alertmanager-uid',
+  type: 'alertmanager' as SupportedRulesSourceType,
+  jsonData: {
+    implementation: AlertManagerImplementation.mimir,
+    handleGrafanaManagedAlerts: true,
+  },
+});
+
 const defaultStep1Props = {
   canImport: true,
   dryRunState: 'idle' as const,
@@ -122,7 +136,7 @@ describe('Step1AlertmanagerResources', () => {
       // The YAML source mounts a lazy template dropzone even without import permission.
       expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
-      expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
+      expect(screen.getByText(/you do not have permission to import notification configuration/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
     });
 
@@ -169,7 +183,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
     });
 
-    it('accepts a YAML file upload and displays it as a removable row', async () => {
+    it('swaps the drop zone for the uploaded file, and brings it back once the file is removed', async () => {
       const { user } = render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -180,8 +194,12 @@ describe('Step1AlertmanagerResources', () => {
       await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
 
       expect(await screen.findByText('am.yaml')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /remove am\.yaml/i })).toBeInTheDocument();
-      // The dropzone itself stays put, so a new drop can still replace the file.
+      // Only one config file can be imported, so the drop zone makes way for it.
+      expect(screen.queryByText(/drop yaml file here or click to upload/i)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove am\.yaml/i }));
+
+      expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
       expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
     });
 
@@ -557,10 +575,98 @@ describe('Step1AlertmanagerResources', () => {
       // No waitFor: this must already be true on the very next render, with no async settling.
       expect(screen.getByTestId('step1-valid')).toHaveTextContent('true');
     });
+
+    it('shows the check result in the import source card, before a policy tree name is entered', () => {
+      render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            policyTreeName: '',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }),
+          }}
+        >
+          <Step1Content
+            {...defaultStep1Props}
+            dryRunState="error"
+            dryRunResult={{
+              valid: false,
+              error: 'Imported contact point [oncall] is invalid',
+              renamedReceivers: [],
+              renamedTimeIntervals: [],
+            }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/imported contact point \[oncall\] is invalid/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('policy tree name check', () => {
+    it('flags a name a policy tree already uses', async () => {
+      server.use(
+        http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, ({ params }) =>
+          params.name === 'prometheus-prod'
+            ? HttpResponse.json({ metadata: { name: 'prometheus-prod' }, spec: { defaults: {}, routes: [] } })
+            : HttpResponse.json({ message: 'NotFound' }, { status: 404 })
+        )
+      );
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml', policyTreeName: '' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      await user.type(screen.getByPlaceholderText(/prometheus-prod/i), 'prometheus-prod');
+      await user.tab();
+
+      expect(await screen.findByText(/a policy tree with this name already exists/i)).toBeInTheDocument();
+    });
+
+    it('accepts a name no policy tree uses', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml', policyTreeName: '' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      await user.type(screen.getByPlaceholderText(/prometheus-prod/i), 'brand-new-tree');
+      await user.tab();
+
+      await waitFor(() =>
+        expect(screen.getByPlaceholderText(/prometheus-prod/i)).not.toHaveAttribute('aria-invalid', 'true')
+      );
+      expect(screen.queryByText(/a policy tree with this name already exists/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('AlertmanagerDataSourceSelect', () => {
+    // It only shares its configuration with every credential replaced by "<secret>".
+    it('disables a plain Prometheus Alertmanager and suggests uploading its YAML file instead', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      await user.click(screen.getByRole('combobox'));
+      expect(
+        screen.getByText(/doesn't share its full configuration\. upload its yaml file instead/i)
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByText('Alertmanager'));
+
+      // Nothing was picked, so the name isn't filled in from it.
+      expect(screen.getByPlaceholderText(/prometheus-prod/i)).toHaveValue('');
+    });
   });
 
   describe('AlertmanagerDataSourceSelect auto-population', () => {
     it('should auto-populate policyTreeName when datasource is selected and field is empty', async () => {
+      setupDataSources(selectableAlertmanagerDataSource);
       const user = userEvent.setup();
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
@@ -579,6 +685,7 @@ describe('Step1AlertmanagerResources', () => {
     });
 
     it('should NOT overwrite policyTreeName when datasource is selected and field has a value', async () => {
+      setupDataSources(selectableAlertmanagerDataSource);
       const user = userEvent.setup();
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: 'my-custom-name' }}>
@@ -603,7 +710,7 @@ describe('Step1AlertmanagerResources', () => {
           uid: 'am-prod-uid',
           type: 'alertmanager' as SupportedRulesSourceType,
           jsonData: {
-            implementation: AlertManagerImplementation.prometheus,
+            implementation: AlertManagerImplementation.mimir,
             handleGrafanaManagedAlerts: true,
           },
         })
@@ -693,6 +800,45 @@ describe('Step1AlertmanagerResources', () => {
         // by default for the whole block rather than per test.
         setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
+      });
+
+      describe('the name auto-sync will use', () => {
+        function renderPrediction(autoSyncActive = true) {
+          return renderHook(() => usePredictedAutoSyncIdentifier(autoSyncActive, MIMIR_DS.uid, MIMIR_DS.name), {
+            wrapper: getWrapper({}),
+          });
+        }
+
+        it('names the policy tree after the datasource', async () => {
+          grantUserRole('Admin');
+          const { result } = renderPrediction();
+
+          await waitFor(() => expect(result.current).toBe('mimir-alertmanager'));
+        });
+
+        it('adds a suffix when a policy tree already uses that name, like the sync does', async () => {
+          grantUserRole('Admin');
+          server.use(
+            http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, () =>
+              HttpResponse.json({
+                kind: 'RoutingTree',
+                metadata: {},
+                items: [
+                  { metadata: { name: 'mimir-alertmanager' }, spec: { defaults: { receiver: 'x' }, routes: [] } },
+                ],
+              })
+            )
+          );
+          const { result } = renderPrediction();
+
+          await waitFor(() => expect(result.current).toBe('mimir-alertmanager-2'));
+        });
+
+        it('has no name while auto-sync is not selected', () => {
+          const { result } = renderPrediction(false);
+
+          expect(result.current).toBeUndefined();
+        });
       });
 
       it('is not rendered for non-admins', () => {
@@ -881,27 +1027,6 @@ describe('Step1AlertmanagerResources', () => {
         );
 
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
-      });
-
-      it('unchecks and disables auto-sync when switching to a datasource that does not support it', async () => {
-        grantUserRole('Admin');
-        const user = userEvent.setup();
-
-        render(
-          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
-            <Step1Content {...defaultStep1Props} />
-          </TestWrapper>
-        );
-
-        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
-        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
-        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
-
-        await user.click(screen.getByRole('combobox'));
-        await user.click(screen.getByText('Alertmanager'));
-
-        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).not.toBeChecked());
-        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
       });
 
       it('keeps auto-sync checked when switching between two Mimir/Cortex datasources', async () => {

@@ -1,3 +1,5 @@
+import { act } from '@testing-library/react';
+
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -21,8 +23,11 @@ export function setupPrometheusAlertingPlugin() {
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
   });
 
-  afterEach(() => {
+  // The flag reset fires OpenFeature events while components are still mounted, so it needs act.
+  afterEach(async () => {
     config.unifiedAlertingEnabled = unifiedAlertingEnabled;
-    setTestFlags();
+    await act(async () => {
+      setTestFlags();
+    });
   });
 }

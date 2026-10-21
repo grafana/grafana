@@ -1,12 +1,19 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { describeSyncHealth, hasAutoSyncSource, isOperatorManaged } from '../../utils/autoSync';
+import {
+  type AutoSyncHealth,
+  type AutoSyncState,
+  describeSyncHealth,
+  hasAutoSyncSource,
+  isOperatorManaged,
+} from '../../utils/autoSync';
 
+import { AlertmanagerDataSourceOption, useAlertmanagerDataSourceOptions } from './AlertmanagerDataSourceOptions';
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
 import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
@@ -23,6 +30,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
     autoSyncEligibleAlertmanagers,
     selectedUid,
     setSelectedUid,
+    getSyncIdentifier,
     save,
     disableSync,
     isPending,
@@ -30,41 +38,26 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
     notReadyMessage,
   } = useAutoSyncConfiguration();
 
-  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
-
-  const options = useMemo<Array<SelectableValue<string>>>(
-    () =>
-      autoSyncEligibleAlertmanagers.map((ds) => ({
-        value: ds.uid,
-        label: ds.name,
-        imgUrl: ds.typeLogoUrl,
-      })),
-    [autoSyncEligibleAlertmanagers]
-  );
+  const options = useDatasourceOptions(autoSyncEligibleAlertmanagers);
 
   const operatorManaged = isOperatorManaged(state);
-  // Health only means something once a UID is configured — including an operator-managed one: the
-  // admin cannot change that UID from here, but a stopped or failing sync is still theirs to know
-  // about, and the badge is spent on saying who owns the setting.
-  const showsSyncHealth = hasAutoSyncSource(state);
   const showDisableSync = state.kind === 'configured' || state.kind === 'orphan-uid';
+  // Only one datasource can sync at a time, and the running sync's import keeps its slot, so switching
+  // means disabling sync first. A missing datasource (orphan-uid) stays pickable so it can be replaced.
+  const isSyncRunning = state.kind === 'configured';
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
   const savedUid = hasAutoSyncSource(state) ? state.uid : '';
 
-  // A sync tick writes its datasource UID into the single extra_config slot without replacing what is
-  // already there, so it fails server-side unless the slot is empty or holds that same UID.
-  const slotBlocksSyncFrom = (uid: string) => Boolean(stagedConfigIdentifier) && stagedConfigIdentifier !== uid;
+  // A sync tick writes into the single extra_config slot under its identifier without replacing what is
+  // already there, so it fails server-side unless the slot is empty or holds that same identifier.
+  const slotBlocksSyncFrom = (uid: string) =>
+    Boolean(stagedConfigIdentifier) && stagedConfigIdentifier !== getSyncIdentifier(uid);
 
   const savingWouldBreakSync = slotBlocksSyncFrom(selectedUid);
   const runningSyncIsBroken = Boolean(savedUid) && slotBlocksSyncFrom(savedUid);
   const hasStagedConflict = runningSyncIsBroken || (showSave && savingWouldBreakSync);
 
   const saveDisabledReason = getSaveDisabledReason({ notReadyMessage, selectedUid, savedUid, savingWouldBreakSync });
-
-  const handleDisableConfirm = async () => {
-    setShowDisableConfirm(false);
-    await disableSync();
-  };
 
   return (
     <Card
@@ -86,59 +79,27 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
       </Card.Description>
       <Card.Meta>
         <div className={styles.formColumn}>
-          {state.kind === 'orphan-uid' && (
-            <Alert
-              severity="warning"
-              title={t('alerting.settings.auto-sync.orphan-warning-title', 'Configured datasource not found')}
-            >
-              <Trans i18nKey="alerting.settings.auto-sync.orphan-warning" values={{ uid: state.uid }}>
-                The configured datasource UID {'{{uid}}'} is not available. Disable sync or restore the datasource to
-                continue.
-              </Trans>
-            </Alert>
-          )}
-          {/* The badge only summarises the failure; the reason itself must not live in a hover-only
-              tooltip, so it gets the same callout treatment as a missing datasource. */}
-          {showsSyncHealth && syncHealth.kind === 'failing' && (
-            <Alert
-              severity="error"
-              title={t('alerting.settings.auto-sync.sync-failed-title', 'Last sync attempt failed')}
-            >
-              {describeSyncHealth(syncHealth)}
-            </Alert>
-          )}
-          {/* The merge is terminal and the badge only labels it, so the explanation of why nothing is
-              syncing any more gets its own callout rather than a hover-only tooltip. */}
-          {showsSyncHealth && syncHealth.kind === 'merge-committed' && (
-            <Alert
-              severity="info"
-              title={t('alerting.settings.auto-sync.merge-committed-title', 'Configuration merged into Grafana')}
-            >
-              <Trans i18nKey="alerting.settings.auto-sync.merge-committed-info">
-                The external Alertmanager configuration has been merged into Grafana. Automatic sync from this
-                datasource has stopped.
-              </Trans>
-            </Alert>
-          )}
-          {operatorManaged && (
-            <Alert
-              severity="info"
-              title={t('alerting.settings.auto-sync.operator-managed-title', 'Managed by operator')}
-            >
-              <Trans i18nKey="alerting.settings.auto-sync.operator-managed-info">
-                This value is set by the <code>[unified_alerting] external_alertmanager_uid</code> key in grafana.ini
-                and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to
-                manage sync from here.
-              </Trans>
-            </Alert>
-          )}
-          {hasStagedConflict && (
-            <StagedConflictAlert identifier={stagedConfigIdentifier} isRunningSyncBroken={runningSyncIsBroken} />
-          )}
+          <AutoSyncNotices
+            state={state}
+            syncHealth={syncHealth}
+            conflict={
+              hasStagedConflict
+                ? { identifier: stagedConfigIdentifier, isRunningSyncBroken: runningSyncIsBroken }
+                : undefined
+            }
+          />
           <div className={styles.formRow}>
             <Field
               noMargin
               label={t('alerting.settings.auto-sync.picker-label', 'Datasource')}
+              description={
+                isSyncRunning
+                  ? t(
+                      'alerting.settings.auto-sync.picker-locked-description',
+                      'Disable sync to choose a different datasource.'
+                    )
+                  : undefined
+              }
               className={styles.field}
               htmlFor="auto-sync-datasource-picker"
             >
@@ -161,13 +122,14 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
               ) : (
                 <Select
                   inputId="auto-sync-datasource-picker"
+                  components={{ Option: AlertmanagerDataSourceOption }}
                   aria-label={t('alerting.settings.auto-sync.picker-label', 'Datasource')}
                   options={options}
                   value={selectedUid || null}
                   onChange={(option) => option?.value && setSelectedUid(option.value)}
                   // Locked during a conflict too: resolving it means promoting or reverting the staged
                   // config below, not repointing the slot from here.
-                  disabled={operatorManaged || isLoading || hasStagedConflict}
+                  disabled={operatorManaged || isLoading || hasStagedConflict || isSyncRunning}
                   isLoading={isLoading}
                   width={50}
                   placeholder={t(
@@ -183,17 +145,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
             </Field>
             {state.kind !== 'no-datasources' && (
               <Stack direction="row" gap={1} alignItems="flex-end">
-                {showDisableSync && (
-                  <Button
-                    variant="destructive"
-                    fill="outline"
-                    onClick={() => setShowDisableConfirm(true)}
-                    disabled={isPending}
-                    icon="times"
-                  >
-                    <Trans i18nKey="alerting.settings.auto-sync.action-disable">Disable sync</Trans>
-                  </Button>
-                )}
+                {showDisableSync && <DisableSyncButton state={state} disableSync={disableSync} isPending={isPending} />}
                 {showSave && (
                   <Tooltip content={saveDisabledReason ?? ''} show={saveDisabledReason ? undefined : false}>
                     <span className={styles.tooltipTarget}>
@@ -212,6 +164,102 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
           </div>
         </div>
       </Card.Meta>
+    </Card>
+  );
+}
+
+/**
+ * Picker options for the auto-sync setting: every Alertmanager datasource, like the import wizard's
+ * picker, with the ones auto-sync can't mirror greyed out so it's clear why they can't be picked.
+ */
+export function useDatasourceOptions(
+  datasources: ReturnType<typeof useAutoSyncConfiguration>['autoSyncEligibleAlertmanagers']
+): Array<SelectableValue<string>> {
+  return useAlertmanagerDataSourceOptions(datasources, { annotateAutoSync: true, disableIneligible: true });
+}
+
+interface AutoSyncNoticesProps {
+  state: AutoSyncState;
+  syncHealth: AutoSyncHealth;
+  /** Set when another staged import occupies the slot auto-sync writes into. */
+  conflict?: StagedConflictAlertProps;
+}
+
+/** The auto-sync callouts: what is wrong with the sync, or why it can't be changed from here. */
+export function AutoSyncNotices({ state, syncHealth, conflict }: AutoSyncNoticesProps) {
+  const operatorManaged = isOperatorManaged(state);
+  // Health only means something once a UID is configured — including an operator-managed one: the
+  // admin cannot change that UID from here, but a stopped or failing sync is still theirs to know
+  // about, and the badge is spent on saying who owns the setting.
+  const showsSyncHealth = hasAutoSyncSource(state);
+
+  return (
+    <>
+      {state.kind === 'orphan-uid' && (
+        <Alert
+          severity="warning"
+          title={t('alerting.settings.auto-sync.orphan-warning-title', 'Configured datasource not found')}
+        >
+          <Trans i18nKey="alerting.settings.auto-sync.orphan-warning" values={{ uid: state.uid }}>
+            The configured datasource UID {'{{uid}}'} is not available. Disable sync or restore the datasource to
+            continue.
+          </Trans>
+        </Alert>
+      )}
+      {/* The badge only summarises the failure; the reason itself must not live in a hover-only
+        tooltip, so it gets the same callout treatment as a missing datasource. */}
+      {showsSyncHealth && syncHealth.kind === 'failing' && (
+        <Alert severity="error" title={t('alerting.settings.auto-sync.sync-failed-title', 'Last sync attempt failed')}>
+          {describeSyncHealth(syncHealth)}
+        </Alert>
+      )}
+      {/* The merge is terminal and the badge only labels it, so the explanation of why nothing is
+        syncing any more gets its own callout rather than a hover-only tooltip. */}
+      {showsSyncHealth && syncHealth.kind === 'merge-committed' && (
+        <Alert
+          severity="info"
+          title={t('alerting.settings.auto-sync.merge-committed-title', 'Configuration merged into Grafana')}
+        >
+          <Trans i18nKey="alerting.settings.auto-sync.merge-committed-info">
+            The external Alertmanager configuration has been merged into Grafana. Automatic sync from this datasource
+            has stopped.
+          </Trans>
+        </Alert>
+      )}
+      {operatorManaged && (
+        <Alert severity="info" title={t('alerting.settings.auto-sync.operator-managed-title', 'Managed by operator')}>
+          <Trans i18nKey="alerting.settings.auto-sync.operator-managed-info">
+            This value is set by the <code>[unified_alerting] external_alertmanager_uid</code> key in grafana.ini and
+            cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage
+            sync from here.
+          </Trans>
+        </Alert>
+      )}
+      {conflict && <StagedConflictAlert {...conflict} />}
+    </>
+  );
+}
+
+interface DisableSyncButtonProps {
+  state: AutoSyncState;
+  disableSync: () => Promise<boolean>;
+  isPending: boolean;
+}
+
+/** Stops auto-sync after a confirmation. The staged copy stays behind, to promote or revert. */
+export function DisableSyncButton({ state, disableSync, isPending }: DisableSyncButtonProps) {
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+
+  const handleDisableConfirm = async () => {
+    setShowDisableConfirm(false);
+    await disableSync();
+  };
+
+  return (
+    <>
+      <Button variant="destructive" fill="outline" onClick={() => setShowDisableConfirm(true)} disabled={isPending}>
+        <Trans i18nKey="alerting.settings.auto-sync.action-disable">Disable sync</Trans>
+      </Button>
       <ConfirmModal
         isOpen={showDisableConfirm}
         title={t('alerting.settings.auto-sync.disable-confirm-title', 'Disable Mimir Alertmanager auto-sync?')}
@@ -231,7 +279,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
         onConfirm={handleDisableConfirm}
         onDismiss={() => setShowDisableConfirm(false)}
       />
-    </Card>
+    </>
   );
 }
 
@@ -262,7 +310,7 @@ function StagedConflictAlert({ identifier, isRunningSyncBroken }: StagedConflict
   );
 }
 
-function getSaveDisabledReason({
+export function getSaveDisabledReason({
   notReadyMessage,
   selectedUid,
   savedUid,

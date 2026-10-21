@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FieldSet, Stack, useStyles2 } from '@grafana/ui';
 
-import { CancelButton } from './CancelButton';
 import { NextButton } from './NextButton';
 import { PreviousButton } from './PreviousButton';
 import { useStepperState } from './StepperState';
@@ -33,8 +33,8 @@ interface WizardStepProps {
   disableNext?: boolean;
   /** Tooltip shown on the next button while it is disabled, explaining why */
   disabledNextTooltip?: string;
-  /** Handler called when the wizard is cancelled */
-  onCancel?: () => void;
+  /** Make Next skip the step (and say so), for a step left empty where there is nothing to complete */
+  nextSkips?: boolean;
 }
 
 /**
@@ -58,7 +58,7 @@ export const WizardStep = ({
   onBack,
   disableNext = false,
   disabledNextTooltip,
-  onCancel,
+  nextSkips = false,
 }: WizardStepProps) => {
   const styles = useStyles2(getStyles);
   const { setVisitedStep, setStepCompleted, setStepSkipped } = useStepperState();
@@ -101,15 +101,22 @@ export const WizardStep = ({
         <Stack direction="row" gap={1}>
           <PreviousButton onBack={handleBack} />
           <NextButton
-            onNext={handleNext}
+            onNext={
+              nextSkips
+                ? () => {
+                    handleSkip();
+                    return true;
+                  }
+                : handleNext
+            }
             canSkip={canSkip}
             skipLabel={skipLabel}
             onSkip={handleSkip}
             disabled={disableNext}
             disabledTooltip={disabledNextTooltip}
+            label={nextSkips ? (skipLabel ?? t('alerting.import-to-gma.wizard.skip', 'Skip')) : undefined}
           />
         </Stack>
-        <CancelButton onCancel={onCancel} />
       </div>
     </FieldSet>
   );

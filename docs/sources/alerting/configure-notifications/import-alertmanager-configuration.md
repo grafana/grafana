@@ -88,30 +88,30 @@ Grafana stores one imported configuration per organization. Before you stage ano
 
 ## Import with the Grafana Alerting user interface
 
-The Grafana Alerting user interface imports notification resources and alert rules in one flow. It requires both the `alertingImportAlertmanagerAPI` and `alertingMigrationWizardUI` [feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+The Grafana Alerting user interface imports notification configuration and rules in one flow. It requires the `alertingMigrationWizardUI` [feature toggle](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/). Importing notification configuration also requires the `alertingImportAlertmanagerAPI` feature toggle. Without it, the notification configuration step is unavailable, and you can only import rules.
 
-1. Go to **Alerting** > **Alert rules**.
-1. In the **More** menu, click **Import to Grafana Alerting**.
-1. Choose how the resources are added:
-   - **Stage** brings the configuration in as a read-only, reversible copy.
-   - **Promote** merges the configuration into your live configuration immediately. This can't be undone. To reverse it, you have to delete each resulting resource by hand.
-1. Click **Next**.
-1. On the **Import notification resources** step, choose the **Import source**:
-   - **Alertmanager config YAML** uploads a configuration file. Optionally, upload the template files the configuration references. Each file is imported as a template named after the file.
-   - **Alertmanager data source** reads the configuration from a configured Alertmanager data source.
+The import wizard is on the **Import** tab of the Grafana Alerting settings, which requires the Organization administrator role.
+
+1. Go to **Alerting** > **Settings**.
+1. Click the **Import** tab.
+1. On the **Import notification configuration** step, choose the **Import source**:
+   - **YAML file** uploads a configuration file. Optionally, upload the template files the configuration references. Each file is imported as a template named after the file.
+   - **Data source** reads the configuration from a configured Alertmanager data source.
 1. Enter a **Policy tree name**.
 
    Grafana validates the configuration as you fill in the form and reports any conflicts. The form lists the resources that Grafana renames before you import.
 
-1. Click **Next**, and either configure the [alert rules import](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) or skip the step.
+1. Click **Continue**. On the **Rules** step, either configure the [rules import](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) or click **Skip**.
 1. Review the summary, then click **Start import**.
+
+If a configuration is already staged, the **Import notification configuration** step shows it instead of the import form. [Promote or revert it](#review-promote-or-revert-a-staged-configuration) before you import another one, or click **Continue** to import rules only.
 
 ## Auto-sync an Alertmanager configuration
 
 Auto-sync keeps a staged notification configuration up to date with a Mimir or Cortex Alertmanager data source. Grafana periodically reads the source configuration and applies changes to the staged resources without writing back to the source. Auto-sync doesn't import or synchronize alert rules.
 
 {{< admonition type="note" >}}
-Auto-sync is in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). The `alerting.syncExternalAlertmanager` feature toggle is disabled by default and requires a Grafana restart when enabled. To access **Settings** > **Import**, also enable `alertingMigrationWizardUI`. In Grafana Cloud, contact Support to request access.
+Auto-sync is in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). The `alerting.syncExternalAlertmanager` feature toggle is disabled by default and requires a Grafana restart when enabled. To access **Settings** > **Import**, also enable `alertingMigrationWizardUI` and `alertingImportAlertmanagerAPI`. In Grafana Cloud, contact Support to request access.
 {{< /admonition >}}
 
 ### Enable auto-sync
@@ -127,22 +127,26 @@ Organization administrators have these permissions by default. You can also gran
 
 1. Go to **Alerting** > **Settings**.
 1. Click the **Import** tab.
-1. In **Auto-sync configuration**, select the Alertmanager data source.
-1. Click **Save**.
+1. On the **Import notification configuration** step, select **Data source** as the **Import source**, and then select the Alertmanager data source.
+1. Select **Auto-sync**.
+1. Click **Continue**. Configure the rules import or click **Skip**.
+1. Review the summary, then click **Enable auto-sync**.
 
-Grafana uses the data source UID as the import identifier and notification policy tree name. The imported resources remain read-only while staged. To send notifications through the imported policy tree, route your Grafana-managed alert rules to that tree. Use the data source UID as the routing tree name.
+Grafana names the import, and the notification policy tree it creates, after the data source, for example `mimir-prod` for a data source called **Mimir Prod**. If another policy tree already uses that name, Grafana adds a number, such as `mimir-prod-2`. The name doesn't change if you rename the data source later. Configurations that started syncing before this naming use the data source UID instead. The imported resources remain read-only while staged. To send notifications through the imported policy tree, route your Grafana-managed alert rules to that tree.
 
-The **Auto-sync configuration** section shows the sync status and any errors from the last sync attempt. If Grafana can't fetch or validate an update, it keeps the configuration from the last successful sync.
+Once auto-sync is enabled, the **Import notification configuration** step shows the data source, the sync status, and any errors from the last sync attempt in one card, together with the resources the sync staged. If Grafana can't fetch or validate an update, it keeps the configuration from the last successful sync.
+
+While auto-sync is enabled, you can't select a different data source. To sync from another data source, disable auto-sync, promote or revert the staged configuration, and then select the new data source.
 
 ### Stop auto-sync or promote the configuration
 
-While auto-sync is configured, you can't manually import another notification configuration, and the user interface hides **Revert** for the sync-managed configuration. You can still import alert rules separately.
+While auto-sync is configured, you can't manually import another notification configuration, and the user interface hides **Revert** for the sync-managed configuration. You can still import rules. The **Import notification configuration** step shows the synced configuration and its sync status. Click **Continue** to go to the rules import.
 
-To stop synchronization, click **Disable sync** in **Auto-sync configuration** and confirm. Disabling sync doesn't delete the staged configuration. You can then [review, promote, or revert it](#review-promote-or-revert-a-staged-configuration).
+To stop synchronization, click **Disable sync** on the staged configuration and confirm. Disabling sync doesn't delete the staged configuration. You can then [review, promote, or revert it](#review-promote-or-revert-a-staged-configuration).
 
 [Promoting the sync-managed configuration](#promote-a-staged-configuration) stops synchronization from that data source.
 
-If **Auto-sync configuration** shows **Managed by operator**, you can't change the setting through the user interface. In Grafana Cloud, contact Support to change or disable auto-sync.
+If the staged configuration shows **Managed by operator**, you can't change the setting through the user interface. In Grafana Cloud, contact Support to change or disable auto-sync.
 
 ## Import with the API
 
@@ -299,7 +303,7 @@ Staged configurations are managed in Grafana Alerting settings.
 1. Go to **Alerting** > **Settings**.
 1. Click the **Import** tab.
 
-The **Staged configuration** section lists the contact points, notification policies, templates, time intervals, and inhibition rules the import contains, and links to each resource so you can inspect it before promoting.
+On the **Import notification configuration** step, the **Staged configuration** section lists the contact points, notification policies, templates, time intervals, and inhibition rules the import contains, and links to each resource so you can inspect it before promoting.
 
 To discard the import and everything it added, click **Revert**. Your Grafana configuration is unaffected. For a configuration managed by [auto-sync](#auto-sync-an-alertmanager-configuration), disable auto-sync before reverting. The user interface hides **Revert** while auto-sync is active. Deleting the staged configuration through the API doesn't disable auto-sync: Grafana can import it again when the source configuration changes or Grafana restarts.
 

@@ -1626,20 +1626,17 @@
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "autosync-active-block": {
-        "description": "Grafana is continuously syncing alert configuration from a data source, so notification resources are a read-only mirror and cannot be imported into. You can still import alert rules.",
-        "disable-sync": "To import notification resources, disable auto-sync in Alerting settings first.",
-        "go-to-settings": "Go to Alerting settings",
-        "import-rules": "Import alert rules",
+        "description": "Grafana is continuously syncing alert configuration from a data source, so notification configuration is a read-only mirror and cannot be imported into. Disable sync below to import notification configuration, or continue to import rules.",
         "title": "Auto-sync is enabled"
       },
       "confirm": {
         "autosync-body": "Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data source until you turn it off in Alerting settings.",
         "autosync-confirm": "Enable auto-sync",
-        "autosync-error-body": "Failed to enable Auto-sync. Please check the error details and try again.",
+        "autosync-error-body": "Failed to enable Auto-sync. Please try again.",
         "autosync-error-title": "Auto-sync Failed",
         "autosync-importing-body": "Enabling Auto-sync. Please wait...",
         "autosync-importing-title": "Enabling auto-sync...",
-        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.",
+        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Check the error details below and try again.",
         "autosync-rules-error-title": "Rules Import Failed",
         "autosync-rules-imported-note": "Your selected alert rules were also imported.",
         "autosync-rules-note": "Your selected alert rules will also be imported.",
@@ -1648,7 +1645,8 @@
         "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
-        "error-body": "Failed to import resources. Please check the error details and try again.",
+        "error-body": "Failed to import resources. Check the error details below and try again.",
+        "error-details": "Error details",
         "error-title": "Import Failed",
         "importing-body": "Importing resources to Grafana Alerting. Please wait...",
         "importing-title": "Importing...",
@@ -1687,10 +1685,13 @@
         "description": "Type to search for an existing group",
         "label": "Group"
       },
+      "import-api-disabled": {
+        "description": "Importing notification configuration is not enabled on this Grafana instance. Continue to import rules.",
+        "title": "Notification configuration import is unavailable"
+      },
       "import-location-and-filters": "Import location and filters",
       "import-source": "Import source",
-      "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
-      "info-title": "Import wizard",
+      "info-description": "This wizard helps you import alert rules and notification configuration from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "loading": "Loading…",
       "namespace": {
         "description": "Type to search for an existing namespace",
@@ -1720,16 +1721,16 @@
       "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
         "autosync-badge": "Will sync continuously",
-        "back": "Alert rules",
+        "back": "Rules",
         "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
-        "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
-        "notifications-skipped": "Notification resources will not be imported.",
-        "notifications-title": "Notification Resources",
+        "nothing-desc": "Neither notification configuration nor alert rules are set to be imported. Go back and configure at least one import source.",
+        "notifications-skipped": "Notification configuration will not be imported.",
+        "notifications-title": "Notification Configuration",
         "pause": "Pause rules",
         "pause-alerting": "Alert rules paused",
         "pause-all": "All rules paused",
@@ -1743,7 +1744,7 @@
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
         "rules-skipped": "Alert rules will not be imported.",
-        "rules-title": "Alert Rules",
+        "rules-title": "Rules",
         "skipped": "Skipped",
         "source": "Source",
         "start": "Start import",
@@ -1763,34 +1764,42 @@
         "yaml": "Prometheus YAML file",
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
+      "staged-block": {
+        "description": "Promote or revert the staged configuration below before importing another one, or continue to import rules.",
+        "title": "A configuration is already staged"
+      },
       "step1": {
         "autosync-label": "Auto-sync",
         "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
         "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",
         "datasource-autosync-badge": "Auto-sync",
-        "heading": "Import Notification Resources",
+        "datasource-prometheus-unsupported": "Doesn't share its full configuration. Upload its YAML file instead.",
+        "heading": "Import notification configuration",
         "next-disabled-tooltip": "Complete the required fields before continuing.",
         "no-datasources": "No Alertmanager data sources found",
-        "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
+        "no-permission-desc": "You do not have permission to import notification configuration. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
-        "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
+        "policy-tree-autosync-disabled": "Not needed. Auto-sync names the policy tree after the data source.",
+        "policy-tree-autosync-name": "Auto-sync names the policy tree after the data source: {{name}}",
         "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
         "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
         "policy-tree-help-title": "About policy tree names",
         "policy-tree-name": "Policy tree name",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "e.g. prometheus-prod",
         "policy-tree-required": "Policy tree name is required",
+        "policy-tree-reserved": "This name is reserved for the default policy",
+        "policy-tree-taken": "A policy tree with this name already exists",
         "policy-tree-title": "Policy Tree Name",
         "select-datasource": "Select data source",
-        "skip": "Skip this step",
+        "skip": "Skip",
         "source": {
           "datasource": "Data source",
           "datasource-desc": "Import from an Alertmanager data source",
           "yaml": "YAML file",
           "yaml-desc": "Import from an Alertmanager configuration YAML file"
         },
-        "source-title": "Import Source",
+        "source-title": "Import source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
         "templates-added-title_one": "Template file added",
         "templates-added-title_other": "Template files added",
@@ -1799,7 +1808,6 @@
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
         "templates-label": "Notification templates",
         "templates-remove": "Remove {{name}}",
-        "upload": "Drop YAML file here or click to upload",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
         "validation-error-desc": "Failed to validate the configuration.",
@@ -1807,17 +1815,14 @@
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
         "yaml-added-title": "Configuration file uploaded",
-        "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
-        "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
-        "yaml-parse-error": "Your YAML has a syntax error: {{message}}",
-        "yaml-remove": "Remove {{name}}"
+        "yaml-parse-error": "Your YAML has a syntax error: {{message}}"
       },
       "step2": {
         "datasource": "Data source",
         "group": "Group",
         "group-desc": "Filter by group (optional)",
-        "heading": "Import Alert Rules",
+        "heading": "Import rules",
         "namespace": "Namespace",
         "namespace-desc": "Filter by namespace (optional)",
         "no-permission-desc": "You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and <strong>alerting.provisioning:write</strong> permissions. You can skip this step.",
@@ -1830,30 +1835,27 @@
         "plugin-rules-warning-body": "Rules managed by plugins, integrations, or Synthetic Monitoring have been detected and will not be imported.",
         "plugin-rules-warning-title": "Some rules are excluded from import",
         "policy-desc": "Choose how imported alerts should be routed to contact points.",
-        "policy-title": "Notification Routing",
+        "policy-title": "Notification routing",
         "policy-tree": "Policy tree",
         "policy-tree-desc": "Select a notification policy tree to route the imported alerts",
         "select-group": "All groups",
         "select-namespace": "All namespaces",
         "select-policy": "Select a policy tree",
-        "settings-title": "Additional Settings",
-        "skip": "Skip this step",
-        "skipped-step1": "Step 1 was skipped",
-        "skipped-step1-desc": "You skipped importing Alertmanager resources. You can still import rules and route them using the default Grafana policy or a custom label.",
+        "settings-title": "Additional settings",
+        "skip": "Skip",
         "source": {
           "datasource": "Data source",
           "datasource-desc": "Import from a Prometheus, Mimir, or Loki data source",
           "yaml": "YAML file",
           "yaml-desc": "Import from a Prometheus rules YAML file"
         },
-        "source-title": "Import Source",
+        "source-title": "Import source",
         "subtitle": "Import alert rules and recording rules from an external source.",
         "target-datasource": "Target data source",
         "target-datasource-desc": "The Prometheus data source to store recording rules in",
         "target-datasource-required": "Please select a target data source",
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
-        "upload": "Upload YAML file",
         "yaml-error": "Failed to parse YAML file: {{error}}",
         "yaml-file": "Rules YAML file",
         "yaml-required": "Please select a file"
@@ -1868,17 +1870,14 @@
         "duplicate-file-name": "Duplicate template file name: \"{{name}}\""
       },
       "wizard": {
-        "cancel": "Cancel",
-        "cancel-confirm-body": "Are you sure you want to cancel? All your progress will be lost.",
-        "cancel-confirm-no": "Dismiss",
-        "cancel-confirm-title": "Cancel import?",
-        "cancel-confirm-yes": "Discard changes",
+        "continue": "Continue",
+        "review": "Review",
         "skip": "Skip",
-        "step-notifications": "Notification resources",
+        "step-notifications": "Notification configuration",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
-        "step-rules": "Alert rules",
+        "step-rules": "Rules",
         "step-rules-desc": "Alert and recording rules"
       },
       "yaml": {
@@ -1889,15 +1888,19 @@
         "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
         "target-datasource-required": "Please select a target data source"
       },
-      "yaml-error": "Failed to parse YAML file: {{error}}"
+      "yaml-error": "Failed to parse YAML file: {{error}}",
+      "yaml-file": {
+        "description": "Accepted file types: {{extensions}}",
+        "invalid-type": "File must be a YAML file ({{extensions}})",
+        "remove": "Remove {{name}}",
+        "remove-button": "Remove",
+        "upload": "Drop YAML file here or click to upload"
+      }
     },
     "import-to-gma-banner": {
       "description": "Bring your external Alertmanager configuration into Grafana-managed alerting using the import wizard.",
       "open-button": "Import to Grafana Alerting",
       "title": "Import your external Alertmanager into Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Import to Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
@@ -2523,6 +2526,10 @@
       },
       "filter-description": "Filter routes by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
+      "manage-import": {
+        "label": "Manage in Import settings",
+        "return-title": "Notification policies"
+      },
       "matchers": "Matchers",
       "metadata": {
         "active-time": "Active when",
@@ -3061,8 +3068,7 @@
       "expand-all": "Expand all"
     },
     "rule-list-v2": {
-      "import-to-gma": "Import alert rules",
-      "import-to-gma-tool": "Import to Grafana Alerting"
+      "import-to-gma": "Import alert rules"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
@@ -3288,6 +3294,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Disable sync",
+        "action-enable": "Enable sync",
         "add-datasource-link": "Add Mimir datasource",
         "badge-active": "Active",
         "badge-failing": "Sync failing",
@@ -3311,6 +3318,7 @@
         "orphan-warning-title": "Configured datasource not found",
         "picker-empty": "No Mimir or Cortex datasources available",
         "picker-label": "Datasource",
+        "picker-locked-description": "Disable sync to choose a different datasource.",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
         "read-error-message": "Could not load the auto-sync configuration: {{-error}}",
         "read-error-title": "Could not load the auto-sync configuration",
@@ -3321,16 +3329,14 @@
         "staged-conflict-active-title": "Auto-sync is not running",
         "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Promote or revert it below to free auto-sync.",
         "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
+        "stopped-description": "Auto-sync is off. This is the last configuration it synced, and it no longer changes. Enable sync to keep it up to date again, or promote or revert it.",
         "sync-failed-title": "Last sync attempt failed",
-        "title": "Auto-sync configuration"
+        "title": "Auto-sync configuration",
+        "waiting-first-sync": "Waiting for the first sync. This usually takes a minute or two."
       },
       "import": {
         "any": "any",
         "collapse-all": "Collapse all",
-        "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
-        "empty-cta": "Import Alertmanager configuration",
-        "empty-learn-more": "Learn more about importing configurations",
-        "empty-title": "No configuration imported yet",
         "error-body": "The request to the Alerting API failed. Check your connection and try again.",
         "error-retry": "Retry",
         "error-title": "Couldn't load imported configurations",
@@ -3369,15 +3375,15 @@
           "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
           "success-body": "The imported resources were merged into your live config.",
           "success-title": "Configuration promoted",
-          "sync-ini-managed-body": "Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification resources again.",
+          "sync-ini-managed-body": "Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification configuration again.",
           "sync-ini-managed-title": "Configuration promoted, but auto-sync is still active",
-          "sync-not-cleared-body": "The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification resources again.",
+          "sync-not-cleared-body": "The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification configuration again.",
           "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
           "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
           "sync-stops-title": "This will stop auto-sync",
           "title": "Promote this configuration?"
         },
-        "promote-button": "Promote to live config",
+        "promote-button": "Promote",
         "resources": "Resources",
         "revert": {
           "body": "This removes the staged copy of the imported configuration from Grafana.",
@@ -3950,11 +3956,9 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Auto-sync was enabled, but importing alert rules failed.",
       "autosync-rules-imported-note": "Your alert rules were also imported.",
       "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
       "autosync-success-title": "Auto-sync enabled",
-      "error": "Failed to import resources",
       "staged-success-body": "Your imported config is now staged in the Import tab.",
       "staged-success-title": "Configuration staged",
       "success": "Successfully imported resources to Grafana Alerting."

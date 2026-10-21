@@ -120,7 +120,10 @@ export function mergeTemplateFiles(
  * Resolve the alertmanager config and template files from a YAML file or datasource.
  * Shared between import, dry-run, and interactive validation flows.
  */
-export async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<ParsedAlertmanagerYaml> {
+// The name isn't needed to read the configuration, so the dry run can call this before one is entered.
+export async function resolveAlertmanagerConfig(
+  params: Omit<NotificationsSourceParams, 'configIdentifier'> & { configIdentifier?: string }
+): Promise<ParsedAlertmanagerYaml> {
   const { source, datasourceName, yamlFile, templateFiles } = params;
 
   if (source === 'yaml' && yamlFile) {
