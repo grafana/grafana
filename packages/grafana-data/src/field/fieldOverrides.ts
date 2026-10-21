@@ -9,7 +9,12 @@ import { compareArrayValues, compareDataFrameStructures } from '../dataframe/fra
 import { guessFieldTypeForField } from '../dataframe/guessFieldType';
 import { createDataFrame } from '../dataframe/processDataFrame';
 import { type PanelPlugin } from '../panel/PanelPlugin';
-import { isVarMappingProp, unwrapVarMappingPropId } from '../panel/getPanelOptionsWithDefaults';
+import {
+  isThresholdStepVarMappingKey,
+  isVarMappingProp,
+  thresholdStepVarMappingKey,
+  unwrapVarMappingPropId,
+} from '../panel/getPanelOptionsWithDefaults';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { fieldMatchers } from '../transformations/matchers';
@@ -28,12 +33,14 @@ import { FieldColorModeId } from '../types/fieldColor';
 import {
   type DynamicConfigValue,
   type ApplyFieldOverrideOptions,
+  FieldConfigProperty,
   type FieldOverrideContext,
   type FieldConfigPropertyItem,
   type DataLinkPostProcessor,
   type FieldConfigSource,
 } from '../types/fieldOverrides';
 import { type InterpolateFunction, type PanelData } from '../types/panel';
+import { type ThresholdsConfig } from '../types/thresholds';
 import { type TimeZone } from '../types/time';
 import { type FieldMatcher } from '../types/transformations';
 import { anyToNumber } from '../utils/anyToNumber';
@@ -42,9 +49,10 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { isVarMappingEligible, resolveVarMapping } from './overrides/processors';
+import { isVarMappingEligible, resolveVarMapping, thresholdsOverrideProcessor } from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { sortThresholds } from './thresholds';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -198,6 +206,15 @@ export function applyFieldOverrides(
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
+          // A rule that sets thresholds replaces the steps, so step mappings collected so far
+          // address different steps
+          if (rule.properties.some((prop) => prop.id === FieldConfigProperty.Thresholds)) {
+            for (const key of Object.keys(context.varMappings)) {
+              if (isThresholdStepVarMappingKey(key)) {
+                delete context.varMappings[key];
+              }
+            }
+          }
           // Collect expressions first so a varMappings.<id> entry applies regardless of whether
           // it comes before or after the property it maps.
           for (const prop of rule.properties) {
@@ -415,6 +432,10 @@ function resolveVarMappingInput(
   rawValue: unknown,
   context: FieldOverrideEnv
 ): unknown {
+  if (item.process === thresholdsOverrideProcessor) {
+    return resolveThresholdStepMappings(rawValue, context);
+  }
+
   if (!isVarMappingEligible(item)) {
     return rawValue;
   }
@@ -426,6 +447,42 @@ function resolveVarMappingInput(
 
   const resolved = resolveVarMapping(expr, context);
   return resolved !== undefined ? resolved : rawValue;
+}
+
+function hasThresholdSteps(value: unknown): value is ThresholdsConfig {
+  return typeof value === 'object' && value !== null && 'steps' in value && Array.isArray(value.steps);
+}
+
+/**
+ * Replaces the value of each threshold step that has a mapping. A mapping wins over the step's
+ * `valueExpr`, even when it doesn't resolve. The base step can't be mapped.
+ */
+function resolveThresholdStepMappings(rawValue: unknown, context: FieldOverrideEnv): unknown {
+  if (!context.varMappings || !hasThresholdSteps(rawValue) || rawValue.steps.length < 2) {
+    return rawValue;
+  }
+
+  const varMappings = context.varMappings;
+  let mapped = false;
+  const [base, ...rest] = rawValue.steps.map((step, index) => {
+    const expr = index > 0 ? varMappings[thresholdStepVarMappingKey(index)] : undefined;
+    if (typeof expr !== 'string') {
+      return step;
+    }
+
+    mapped = true;
+    const { valueExpr, ...withoutExpr } = step;
+    const resolved = resolveVarMapping(expr, context);
+    return resolved !== undefined ? { ...withoutExpr, value: resolved } : withoutExpr;
+  });
+
+  if (!mapped) {
+    return rawValue;
+  }
+
+  // Edit-time sorting can't know variable values
+  sortThresholds(rest);
+  return { ...rawValue, steps: [base, ...rest] };
 }
 
 export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {

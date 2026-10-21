@@ -378,6 +378,33 @@ describe('getPanelOptionsWithDefaults', () => {
       ]);
     });
 
+    it('keeps a varMappings.thresholds.steps.<i> override entry when thresholds is registered', () => {
+      const thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+        ],
+      };
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'thresholds', value: thresholds },
+              { id: 'varMappings.thresholds.steps.1', value: '$expr' },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([
+        { id: 'thresholds', value: thresholds },
+        { id: 'varMappings.thresholds.steps.1', value: '$expr' },
+      ]);
+    });
+
     it('drops a varMappings.<id> override entry when the wrapped property id no longer exists in the registry', () => {
       const result = runScenario({
         defaults: {},

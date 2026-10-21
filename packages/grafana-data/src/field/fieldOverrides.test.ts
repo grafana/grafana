@@ -728,6 +728,142 @@ describe('applyFieldOverrides', () => {
       expect(custom.number).toEqual(9);
       expect(custom.boolean).toEqual(false);
     });
+
+    describe('thresholds', () => {
+      const steps = [
+        { value: -Infinity, color: 'green' },
+        { value: 50, color: 'orange' },
+        { value: 80, color: 'red' },
+      ];
+
+      function applyThresholds(fieldConfig: FieldConfigSource, variables: Record<string, unknown>) {
+        return applyFieldOverrides({
+          data: [numField],
+          fieldConfig,
+          replaceVariables: makeReplaceVariables(variables),
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })[0].fields[0].config;
+      }
+
+      it('resolves mapped steps from defaults, re-sorts them and keeps the base step first', () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: { mode: ThresholdsMode.Absolute, steps },
+              varMappings: { 'thresholds.steps.0': '$low', 'thresholds.steps.1': '$high' },
+            },
+            overrides: [],
+          },
+          { low: '5', high: '95' }
+        );
+
+        expect(config.thresholds).toEqual({
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 80, color: 'red' },
+            { value: 95, color: 'orange' },
+          ],
+        });
+        expect(config.varMappings).toBeUndefined();
+      });
+
+      it('falls back to the stored value when a mapping does not resolve', () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: { mode: ThresholdsMode.Absolute, steps },
+              varMappings: { 'thresholds.steps.1': '$multi', 'thresholds.steps.2': '$missing' },
+            },
+            overrides: [],
+          },
+          { multi: ['1', '2'] }
+        );
+
+        expect(config.thresholds?.steps).toEqual(steps);
+      });
+
+      it('prefers a mapping over valueExpr, even when the mapping does not resolve', () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 50, valueExpr: '$fromExpr', color: 'orange' },
+                  { value: 80, valueExpr: '$fromExpr', color: 'red' },
+                ],
+              },
+              varMappings: { 'thresholds.steps.1': '$fromMapping', 'thresholds.steps.2': '$missing' },
+            },
+            overrides: [],
+          },
+          { fromExpr: '10', fromMapping: '90' }
+        );
+
+        expect(config.thresholds?.steps).toEqual([
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+          { value: 90, color: 'orange' },
+        ]);
+      });
+
+      it("uses an override rule's own step mappings for its thresholds, not the defaults mappings", () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: { mode: ThresholdsMode.Absolute, steps },
+              varMappings: { 'thresholds.steps.1': '$fromDefaults' },
+            },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [
+                  {
+                    id: 'thresholds',
+                    value: {
+                      mode: ThresholdsMode.Absolute,
+                      steps: [
+                        { value: -Infinity, color: 'blue' },
+                        { value: 10, color: 'purple' },
+                        { value: 20, color: 'yellow' },
+                      ],
+                    },
+                  },
+                  { id: 'varMappings.thresholds.steps.2', value: '$fromOverride' },
+                ],
+              },
+            ],
+          },
+          { fromDefaults: '99', fromOverride: '5' }
+        );
+
+        expect(config.thresholds?.steps).toEqual([
+          { value: -Infinity, color: 'blue' },
+          { value: 5, color: 'yellow' },
+          { value: 10, color: 'purple' },
+        ]);
+      });
+
+      it('ignores override step mappings in a rule that does not set thresholds', () => {
+        const config = applyThresholds(
+          {
+            defaults: { thresholds: { mode: ThresholdsMode.Absolute, steps } },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [{ id: 'varMappings.thresholds.steps.1', value: '$v' }],
+              },
+            ],
+          },
+          { v: '99' }
+        );
+
+        expect(config.thresholds?.steps).toEqual(steps);
+      });
+    });
   });
 
   it('should skip overrides with unknown matcher ids', () => {

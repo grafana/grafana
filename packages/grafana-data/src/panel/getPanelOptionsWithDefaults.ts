@@ -79,7 +79,7 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   // entries are not registered themselves, so check the property they map.
   result.overrides = filterFieldConfigOverrides(result.overrides, (prop) => {
     if (isVarMappingProp(prop)) {
-      return plugin.fieldConfigRegistry.getIfExists(unwrapVarMappingPropId(prop.id)) !== undefined;
+      return plugin.fieldConfigRegistry.getIfExists(varMappingTargetId(unwrapVarMappingPropId(prop.id))) !== undefined;
     }
     return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
   });
@@ -281,4 +281,28 @@ export function unwrapVarMappingPropId(id: string): string {
  */
 export function wrapVarMappingPropId(id: string): string {
   return `${VAR_MAPPING_PROP_PREFIX}${id}`;
+}
+
+const THRESHOLD_STEP_KEY_PREFIX = 'thresholds.steps.';
+
+/**
+ * The `varMappings` key for the threshold step at `index` in the stored steps array. Steps have
+ * no stable id, so the index is the only address that leaves the schema unchanged.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function thresholdStepVarMappingKey(index: number): string {
+  return `${THRESHOLD_STEP_KEY_PREFIX}${index}`;
+}
+
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function isThresholdStepVarMappingKey(key: string): boolean {
+  return key.startsWith(THRESHOLD_STEP_KEY_PREFIX);
+}
+
+function varMappingTargetId(key: string): string {
+  return isThresholdStepVarMappingKey(key) ? 'thresholds' : key;
 }

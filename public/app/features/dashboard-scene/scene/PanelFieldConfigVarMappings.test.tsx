@@ -4,6 +4,7 @@ import {
   FieldType,
   LoadingState,
   type PanelData,
+  ThresholdsMode,
   getDefaultTimeRange,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -114,6 +115,39 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
 
     const reprocessed = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!);
     expect(reprocessed.series[0].fields[0].config.min).toEqual(75);
+
+    deactivate();
+  });
+
+  it('resolves a mapped threshold step and updates it on variable change', async () => {
+    const variable = new CustomVariable({ name: 'warn', query: '30,90', value: '30', text: '30' });
+    const panel = buildPanel({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange' },
+          { value: 80, color: 'red' },
+        ],
+      },
+      varMappings: { 'thresholds.steps.1': '$warn' },
+    });
+    const scene = buildScene(panel, new SceneVariableSet({ variables: [variable] }));
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+
+    const stepValues = () =>
+      panel
+        .applyFieldConfig(sceneGraph.getData(panel).state.data!)
+        .series[0].fields[0].config.thresholds?.steps.map((step) => step.value);
+
+    expect(stepValues()).toEqual([-Infinity, 30, 80]);
+
+    variable.changeValueTo('90', '90');
+    await tick();
+
+    expect(stepValues()).toEqual([-Infinity, 80, 90]);
 
     deactivate();
   });
