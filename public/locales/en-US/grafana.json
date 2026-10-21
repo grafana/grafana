@@ -7741,6 +7741,7 @@
       "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-errors": {
+      "forbidden": "Ask your Grafana administrator for access.",
       "unexpected": "An unexpected error occurred while saving."
     },
     "save-library-viz-panel-modal": {

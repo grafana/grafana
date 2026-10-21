@@ -56,6 +56,33 @@ describe('getSaveDashboardErrorInfo', () => {
       expect(info?.message).toBe('dashboards.dashboard.grafana.app is forbidden');
     });
 
+    // Unified storage rejects a write the user may not make with a 403 that carries no reason.
+    it('classifies a 403 Status without a reason as forbidden and keeps the server message', () => {
+      const info = getSaveDashboardErrorInfo(
+        k8sError({ reason: undefined, message: 'not allowed to create resource in the destination folder' }, 403)
+      );
+
+      expect(info?.kind).toBe('forbidden');
+      expect(info?.message).toBe('not allowed to create resource in the destination folder');
+    });
+
+    // The create check in unified storage sends neither a reason nor a message, and over HTTP/2 the
+    // response has no statusText either.
+    it.each(['', 'Forbidden'])(
+      'tells the user to ask for access when a 403 Status carries no message (statusText "%s")',
+      (statusText) => {
+        const error: FetchError<MetaStatus> = {
+          ...k8sError({ reason: undefined, message: undefined }, 403),
+          statusText,
+        };
+
+        const info = getSaveDashboardErrorInfo(error);
+
+        expect(info?.kind).toBe('forbidden');
+        expect(info?.message).toBe('Ask your Grafana administrator for access.');
+      }
+    );
+
     it('lists each Invalid cause as "field: message"', () => {
       const info = getSaveDashboardErrorInfo(
         k8sError(
