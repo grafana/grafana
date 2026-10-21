@@ -2,7 +2,9 @@ package metadata_test
 
 import (
 	"context"
+	"fmt"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -230,6 +232,112 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.Equal(t, pair.expectedLeaseDuration, duration)
 			require.NoError(t, rows.Close())
 		}
+	})
+}
+
+func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []string {
+	t.Helper()
+
+	uids := make([]string, 0, n)
+	for i := range n {
+		sv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = fmt.Sprintf("sv-%d", i)
+		})
+		require.NoError(t, err)
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		uids = append(uids, string(sv.UID))
+		sut.Clock.AdvanceBy(time.Second)
+	}
+	sut.Clock.AdvanceBy(15 * time.Minute)
+
+	return uids
+}
+
+func leasedUIDs(svs []secretv1beta1.SecureValue) []string {
+	uids := make([]string, 0, len(svs))
+	for _, sv := range svs {
+		uids = append(uids, string(sv.UID))
+	}
+	return uids
+}
+
+func TestLeaseInactiveSecureValuesBatching(t *testing.T) {
+	t.Parallel()
+
+	t.Run("leases the oldest inactive secure values up to the batch size", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		uids := createInactiveSecureValues(t, sut, 5)
+
+		values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 3)
+		require.NoError(t, err)
+		require.ElementsMatch(t, uids[:3], leasedUIDs(values))
+
+		values, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 3)
+		require.NoError(t, err)
+		require.ElementsMatch(t, uids[3:], leasedUIDs(values))
+
+		values, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 3)
+		require.NoError(t, err)
+		require.Empty(t, values)
+	})
+
+	t.Run("active secure values are not leased", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		_, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+		sut.Clock.AdvanceBy(15 * time.Minute)
+
+		values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
+		require.NoError(t, err)
+		require.Empty(t, values)
+	})
+
+	t.Run("empty batch does not lease anything", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		uids := createInactiveSecureValues(t, sut, 2)
+
+		values, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 0)
+		require.NoError(t, err)
+		require.Empty(t, values)
+
+		values, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
+		require.NoError(t, err)
+		require.ElementsMatch(t, uids, leasedUIDs(values))
+	})
+
+	t.Run("concurrent lease acquisitions never lease the same secure value twice", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		uids := createInactiveSecureValues(t, sut, 10)
+
+		const workers = 4
+		results := make([][]secretv1beta1.SecureValue, workers)
+		errs := make([]error, workers)
+		var wg sync.WaitGroup
+		for i := range workers {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				results[i], errs[i] = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
+			}()
+		}
+		wg.Wait()
+
+		leased := make([]string, 0)
+		for i := range workers {
+			require.NoError(t, errs[i])
+			leased = append(leased, leasedUIDs(results[i])...)
+		}
+		require.Len(t, leased, len(uids))
+		require.ElementsMatch(t, uids, leased)
 	})
 }
 
