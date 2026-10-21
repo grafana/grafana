@@ -453,7 +453,29 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+	gmaOnlyListView := openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAlertingGmaOnlyListView, false, openfeature.TransactionContext(c.Req.Context()))
+
+	if gmaOnlyListView {
+		// Gated on Grafana-managed read only, unlike the legacy entry which also accepts data source-managed read.
+		if hasAccess(ac.EvalPermission(ac.ActionAlertingRuleRead)) {
+			alertChildNavs = append(alertChildNavs,
+				&navtree.NavLink{
+					Text:     "Alert rules",
+					SubTitle: "Rules that determine whether an alert will fire",
+					Id:       "alert-rules",
+					Url:      s.cfg.AppSubURL + "/alerting/rules/alert",
+					Icon:     "list-ul",
+				},
+				&navtree.NavLink{
+					Text:     "Recording rules",
+					SubTitle: "Rules that pre-compute and record values as new time series",
+					Id:       "recording-rules",
+					Url:      s.cfg.AppSubURL + "/alerting/rules/recording",
+					Icon:     "list-ul",
+				},
+			)
+		}
+	} else if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		navLink := &navtree.NavLink{
 			Text:     "Alert rules",
 			SubTitle: "Rules that determine whether an alert will fire",
@@ -555,9 +577,10 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if c.GetOrgRole() == org.RoleAdmin {
-		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules).
+		// The gmaOnlyListView pages have their own Recently deleted tabs.
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && !gmaOnlyListView {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
