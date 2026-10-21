@@ -20,6 +20,7 @@ import {
   NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION,
   NOTEBOOK_AUTOSAVE_FAILED_REASON,
   NOTEBOOK_ENTRY_POINT,
+  type NotebookEntryPoint,
 } from '../analytics/types';
 import {
   createNotebook,
@@ -152,13 +153,19 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private stopped = false;
   /** Failures in a row since the last save that landed. `autosave_failed` sends this as `attempt`. */
   private failedAttempts = 0;
+  private entryPoint: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST;
 
   public constructor(private scene: NotebookScene) {
     super({ status: 'idle' });
   }
 
+  public setEntryPoint(source: NotebookEntryPoint): void {
+    this.entryPoint = source;
+  }
+
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
+    this.stopped = false;
     if (this.baseline === undefined) {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
@@ -294,6 +301,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
     this.cellTimeRangesEdited.clear();
+  }
+
+  public markVisualizationEdited(elementName: string, wasEditing = this.scene.state.isEditing): void {
+    if (!wasEditing || this.scene.state.isDraft) {
+      return;
+    }
+    this.vizConfigsEdited.add(elementName);
+    const somethingToWrite = this.hasSomethingToWrite();
+    if (somethingToWrite) {
+      this.editedByWriter = true;
+    }
+    this.schedule(somethingToWrite);
+    if (this.stopped) {
+      this.flush();
+    }
   }
 
   /**
@@ -1017,9 +1039,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       } finally {
         this.adoptingUid = false;
       }
-      // Only a blank notebook reaches this create, and the list is the only link to the blank route
-      // today. A second way in has to hand its own source to the autosave.
-      NotebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
+      NotebookAnalytics.created(created, this.entryPoint, spec.layout.spec.cells.length);
       return { generation, resourceVersion };
     });
   }

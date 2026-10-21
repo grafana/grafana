@@ -257,12 +257,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    // Return the chained promise: a detached `.then()` would reject unhandled when the load fails.
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record dashboard impression: ', e);
+      }
       return result;
     });
-
-    return promise;
   }
 
   loadSnapshot(slug: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -270,13 +273,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r));
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record snapshot impression: ', e);
+      }
 
       return result;
     });
-
-    return promise;
   }
 }
 

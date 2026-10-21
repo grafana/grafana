@@ -419,10 +419,6 @@ const (
 	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
 	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
-	// FlagReloadDashboardsOnParamsChange
-	// Enables reload of dashboards on scopes, time range and variables changes
-	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
-
 	// FlagEnableScopesInMetricsExplore
 	// Enables the scopes usage in Metrics Explore
 	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
@@ -737,6 +733,10 @@ const (
 	// FlagGrafanaDashboardGlobalVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGrafanaDashboardGlobalVariables = "grafana.dashboardGlobalVariables"
+
+	// FlagGrafanaDashboardVariablesMigration
+	// Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
+	FlagGrafanaDashboardVariablesMigration = "grafana.dashboardVariablesMigration"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
