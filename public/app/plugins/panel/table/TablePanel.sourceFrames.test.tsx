@@ -120,8 +120,8 @@ it('filters rows locally in panel edit without changing saved transformations', 
 
   await userEvent.click(screen.getByLabelText('Column options for metric'));
   await userEvent.click(await screen.findByText('Filter values'));
-  await userEvent.click(screen.getByRole('checkbox', { name: '10' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'Maximum' }), '10');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
   expect(screen.getAllByRole('link', { name: 'Inspect' })).toHaveLength(1);
   expect(set).not.toHaveBeenCalled();
@@ -145,8 +145,8 @@ it('keeps local filters when a frame gains a column with the new-features flag o
 
   await userEvent.click(screen.getByRole('button', { name: 'Column options for metric' }));
   await userEvent.click(await screen.findByText('Filter values'));
-  await userEvent.click(screen.getByRole('checkbox', { name: '10' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'Maximum' }), '10');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(screen.getAllByRole('link', { name: 'Inspect' })).toHaveLength(1);
 
   const changed = toDataFrame({

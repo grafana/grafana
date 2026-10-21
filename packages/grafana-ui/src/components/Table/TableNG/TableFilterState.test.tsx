@@ -223,37 +223,41 @@ it('interprets a new time range bound in the panel timezone', async () => {
   expect(screen.getAllByRole('row')).toHaveLength(2);
 });
 
-it('keeps time selections editable after the panel timezone changes', async () => {
+it('keeps time range bounds editable after the panel timezone changes', async () => {
   const { props, api } = setup();
+  const first = 1767225600000;
+  const second = 1767312000000;
   const makeFrame = (timeZone: string) =>
     applyFieldOverrides({
-      data: [toDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }] })],
+      data: [toDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [first, second] }] })],
       fieldConfig: { defaults: {}, overrides: [] },
       theme: createTheme(),
       timeZone,
       replaceVariables: (s) => s,
     })[0];
   props.data = makeFrame('UTC');
-  const first = formattedValueToString(props.data.fields[0].display!(props.data.fields[0].values[0]));
   const { rerender } = render(<TableNG {...props} timeZone="UTC" />);
 
   await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
-  await userEvent.click(screen.getByRole('checkbox', { name: first }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 00:00:00.000');
+  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 00:00:00.000');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(screen.getAllByRole('row')).toHaveLength(2);
 
   props.data = makeFrame('Pacific/Auckland');
-  const [firstInNewZone, secondInNewZone] = props.data.fields[0].values.map((value) =>
-    formattedValueToString(props.data.fields[0].display!(value))
-  );
   rerender(<TableNG {...props} timeZone="Pacific/Auckland" />);
   await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
-  expect(screen.getByRole('checkbox', { name: firstInNewZone })).toBeChecked();
-  await userEvent.click(screen.getByRole('checkbox', { name: secondInNewZone }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  expect(screen.getByRole('textbox', { name: 'Start' })).toHaveValue('2026-01-01 13:00:00.000');
+  expect(screen.getByRole('textbox', { name: 'End' })).toHaveValue('2026-01-01 13:00:00.000');
+  await userEvent.clear(screen.getByRole('textbox', { name: 'End' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-02 13:00:00.000');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
   expect(screen.getAllByRole('row')).toHaveLength(3);
-  expect(api.get('table')[0].options.filters[0].config.options.timeZone).toBe('Pacific/Auckland');
+  expect(api.get('table')[0].options.filters[0].config).toMatchObject({
+    id: 'between',
+    options: { from: first, to: second },
+  });
 });
 
 it.each([false, true])(

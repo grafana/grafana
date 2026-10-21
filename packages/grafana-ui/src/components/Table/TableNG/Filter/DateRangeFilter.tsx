@@ -13,6 +13,7 @@ import { rangeValidation, useRangeValues } from './utils';
 
 const rangeSelectors = selectors.components.Panels.Visualization.TableNG.Filters.Range;
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
+type DateDraft = { text: string; timeZone: string };
 
 function calendarBoundary(value: number, timeZone: string, endOfDay: boolean) {
   const date = adjustDateForReactCalendar(new Date(value), timeZone);
@@ -34,13 +35,22 @@ export function DateRangeFilter({
   const minimumRef = useRangeInputFocus();
   const formatInput = (value?: number) =>
     value == null ? '' : dateTimeFormat(value, { format: DATE_FORMAT, timeZone });
-  const [lower, setLower] = useState(() => formatInput(range?.min));
-  const [upper, setUpper] = useState(() => formatInput(range?.max));
+  const [lowerDraft, setLowerDraft] = useState<DateDraft>(() => ({ text: formatInput(range?.min), timeZone }));
+  const [upperDraft, setUpperDraft] = useState<DateDraft>(() => ({ text: formatInput(range?.max), timeZone }));
   const { values, histogram } = useRangeValues(field, rows);
-  const parse = (value: string) =>
-    value.trim() === '' ? undefined : dateTimeParse(value, { timeZone, format: DATE_FORMAT }).valueOf();
-  const min = parse(lower);
-  const max = parse(upper);
+  const parse = ({ text, timeZone }: DateDraft) =>
+    text.trim() === '' ? undefined : dateTimeParse(text, { timeZone, format: DATE_FORMAT }).valueOf();
+  const displayDraft = (draft: DateDraft) => {
+    if (draft.timeZone === timeZone) {
+      return draft.text;
+    }
+    const value = parse(draft);
+    return value == null ? '' : Number.isFinite(value) ? formatInput(value) : draft.text;
+  };
+  const lower = displayDraft(lowerDraft);
+  const upper = displayDraft(upperDraft);
+  const min = parse(lowerDraft);
+  const max = parse(upperDraft);
   const { minimumInvalid, maximumInvalid, boundsReversed, invalid } = rangeValidation(min, max);
 
   return (
@@ -71,7 +81,7 @@ export function DateRangeFilter({
               ? formatInput(histogram.min)
               : t('grafana-ui.table.range.unbounded', 'No limit'),
             testId: rangeSelectors.minimumInput,
-            onChange: setLower,
+            onChange: (text) => setLowerDraft({ text, timeZone }),
             invalid: minimumInvalid || boundsReversed,
             errorId: validationId,
           }}
@@ -82,7 +92,7 @@ export function DateRangeFilter({
               ? formatInput(histogram.max)
               : t('grafana-ui.table.range.unbounded', 'No limit'),
             testId: rangeSelectors.maximumInput,
-            onChange: setUpper,
+            onChange: (text) => setUpperDraft({ text, timeZone }),
             invalid: maximumInvalid || boundsReversed,
             errorId: validationId,
           }}
@@ -99,8 +109,8 @@ export function DateRangeFilter({
               }
             },
             onChange: (from, to) => {
-              setLower(formatInput(from.valueOf()));
-              setUpper(formatInput(to.endOf('day').valueOf()));
+              setLowerDraft({ text: formatInput(from.valueOf()), timeZone });
+              setUpperDraft({ text: formatInput(to.endOf('day').valueOf()), timeZone });
             },
           }}
           calendarDisabled={histogram.finite.length === 0}
