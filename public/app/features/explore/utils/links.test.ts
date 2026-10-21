@@ -660,6 +660,8 @@ describe('explore links utils', () => {
       );
     });
 
+    // Regression test for a field with nothing to link on a wide dataFrame (e.g. a log line with
+    // thousands of structured-metadata fields): this must resolve to no links without erroring.
     it('returns no links and does not scan the dataFrame fields when the field has no links to resolve', () => {
       const dataFrame: DataFrame = toDataFrame({
         fields: [
