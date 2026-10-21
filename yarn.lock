@@ -24734,8 +24734,8 @@ __metadata:
   linkType: hard
 
 "ol@npm:^10.10.0":
-  version: 10.10.0
-  resolution: "ol@npm:10.10.0"
+  version: 10.11.0
+  resolution: "ol@npm:10.11.0"
   dependencies:
     "@types/rbush": "npm:4.0.0"
     earcut: "npm:^3.0.0"
@@ -24743,7 +24743,7 @@ __metadata:
     pbf: "npm:5.1.2"
     rbush: "npm:^4.0.0"
     zarrita: "npm:^0.7.1"
-  checksum: 10/a92725fce8253a00006a02aa4cb2e34586c8bd9edd5127be646352b4c4735be1af8684cc0e82bd218d7fdd03e490f1d85e8b0c292ff9a4a0222169cdd6bb14b2
+  checksum: 10/33cd9e4aa75766417c9f7283890f6324f281eda3fcee9c6ae08d3b5917ab557e9fd02eed15924a1ea381552333690cfd7be287c8f39a3b533c695519b5f201f2
   languageName: node
   linkType: hard
 
