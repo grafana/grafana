@@ -30,7 +30,12 @@ export interface PagedResult<T> {
   retry: () => void;
 }
 
-/** `restartFromFirstPage` drops later pages, for when a continuation token can no longer be used. */
+/**
+ * Derives what a paged list renders from an RTK Query infinite query, which keeps the loaded pages; this
+ * hook keeps no state. It splits a failed first page (`error`) from a failed later request (`failure`),
+ * and routes Retry. `restartFromFirstPage` drops later pages, for when a continuation token can no
+ * longer be used.
+ */
 export function usePagedResult<TPage, T>(
   query: InfiniteQueryResult<TPage>,
   getItems: (page: TPage) => T[],
