@@ -198,7 +198,8 @@ declare module "@openfeature/core" {
     | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
-    | "datasources.gatewayAuditPolicy";
+    | "datasources.gatewayAuditPolicy"
+    | "grafana.geomapProtomapsBasemap";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
