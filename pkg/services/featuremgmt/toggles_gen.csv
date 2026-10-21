@@ -72,6 +72,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2024-10-23,dashboardNewLayouts,GA,@grafana/dashboards-squad,false,false,true
+2026-10-21,grafana.mobileEditDeprecation,preview,@grafana/dashboards-squad,false,false,true
 2026-10-06,dashboards.libraryPanelRepeatFromServerResolution,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-06,dashboards.publicDashboardBadgeFromApi,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-08,dashboards.libraryPanelHorizontalRepeatFullWidth,experimental,@grafana/dashboards-squad,false,false,true
