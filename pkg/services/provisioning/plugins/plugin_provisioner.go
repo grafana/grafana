@@ -67,6 +67,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		})
 		if err != nil {
 			if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+				ap.log.Error("Failed to get existing plugin settings", "type", app.PluginID, "orgId", app.OrgID, "error", err)
 				return fmt.Errorf("%w: %s", err, app.PluginID)
 			}
 		} else {
@@ -83,6 +84,11 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJSONData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}); err != nil {
+			// An oversized config must not stop Grafana from starting.
+			if errors.Is(err, pluginsettings.ErrPluginSettingJSONDataTooLarge) {
+				ap.log.Error("Invalid plugin settings, skipping app", "type", app.PluginID, "orgId", app.OrgID, "error", err)
+				continue
+			}
 			return fmt.Errorf("%w: %s", err, app.PluginID)
 		}
 	}
