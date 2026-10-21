@@ -218,7 +218,7 @@ const gmaRuleListBasePatterns = [
     group: ['@grafana/api-clients/rtkq/rules.alerting*'],
     importNamePattern: '^use(?:Lazy)?List(?:Alert|Recording)RuleSearchRules',
     message:
-      'The generated searchRules operation is a mutation that caches nothing and provides no tags; search through useAlertRuleSearch or useRecordingRuleSearch.',
+      'The generated searchAlertRules and searchRecordingRules operations are mutations that cache nothing and provide no tags; search through useAlertRuleSearch or useRecordingRuleSearch.',
   },
   {
     group: ['@grafana/api-clients/rtkq/folder*', '**/api/clients/folder*'],
@@ -235,8 +235,14 @@ const gmaSearchSeamMessage =
   'Search endpoints belong in the search seam modules (alertRuleSearch.ts, recordingRuleSearch.ts, folderSearch.ts).';
 const gmaSearchEndpointRestrictions = [
   transitionNodeRefRestriction,
-  { selector: 'Literal[value=/(searchRules|(rules|folders).search)$/]', message: gmaSearchSeamMessage },
-  { selector: 'TemplateElement[value.raw=/(searchRules|(rules|folders).search)$/]', message: gmaSearchSeamMessage },
+  {
+    selector: 'Literal[value=/(search(Alert|Recording)Rules|(rules|folders).search)$/]',
+    message: gmaSearchSeamMessage,
+  },
+  {
+    selector: 'TemplateElement[value.raw=/(search(Alert|Recording)Rules|(rules|folders).search)$/]',
+    message: gmaSearchSeamMessage,
+  },
   {
     selector: 'MemberExpression[property.name=/^(createSearchRules|list(Alert|Recording)RuleSearch)/]',
     message: gmaSearchSeamMessage,
