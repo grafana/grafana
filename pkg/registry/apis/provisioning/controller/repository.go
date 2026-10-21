@@ -388,6 +388,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	repoType, err := rc.processFn(key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	rc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.
@@ -946,7 +949,20 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return repoType, errors.New("repository not found")
+		// Nothing to reconcile, so this reconcile is done. The error this used to
+		// return never recovered anything: it is not retryable, so the worker
+		// logged it and dropped the key. All it produced was an ERROR line and a
+		// recorded failure for the expected terminal state of every delete.
+		//
+		// A read that lags the write that woke it is the one case where the
+		// repository is not really gone. It is not separable here -- the object is
+		// absent either way -- and it is not separable by returning an error
+		// either, since that path dropped the key too. It is counted where the
+		// announcement is known, as
+		// grafana_provisioning_reconcile_read_freshness_total{outcome="not_found"},
+		// and recovered by the periodic re-list.
+		logger.Warn("repository not found; nothing to reconcile")
+		return repoType, nil
 	case err != nil:
 		return repoType, err
 	}
