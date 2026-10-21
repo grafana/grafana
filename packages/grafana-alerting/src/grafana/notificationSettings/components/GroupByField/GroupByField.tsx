@@ -1,6 +1,6 @@
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, MultiSelect } from '@grafana/ui';
+import { type ActionMeta, Field, MultiSelect } from '@grafana/ui';
 
 import { REQUIRED_GROUP_BY_LABELS } from '../../constants';
 
@@ -15,10 +15,11 @@ export interface GroupByFieldProps {
   disabled?: boolean;
 }
 
-function withRequiredFields(values: string[]): string[] {
+// Drops the "Disable" sentinel and puts the required labels back.
+function normalize(values: string[]): string[] {
   const result = [...REQUIRED_GROUP_BY_LABELS];
   for (const value of values) {
-    if (!result.includes(value)) {
+    if (value !== DISABLE_GROUPING && !result.includes(value)) {
       result.push(value);
     }
   }
@@ -38,34 +39,18 @@ export function GroupByField({ value, onChange, disabled }: GroupByFieldProps) {
     ...value.filter((v) => !BASE_OPTION_VALUES.has(v)).map((label) => ({ label, value: label })),
   ];
 
-  const handleChange = (selected: Array<SelectableValue<string>>) => {
-    const newValues = selected.map((option) => option.value ?? '');
-    const hadDisable = value.includes(DISABLE_GROUPING);
-    const nowHasDisable = newValues.includes(DISABLE_GROUPING);
-
-    if (nowHasDisable && !hadDisable) {
-      onChange([DISABLE_GROUPING]);
-      return;
-    }
-    if (hadDisable && nowHasDisable && newValues.length > 1) {
-      onChange(withRequiredFields(newValues.filter((v) => v !== DISABLE_GROUPING)));
-      return;
-    }
-    if (hadDisable && !nowHasDisable) {
-      onChange(REQUIRED_GROUP_BY_LABELS);
-      return;
-    }
-    if (!nowHasDisable) {
-      onChange(withRequiredFields(newValues));
-      return;
-    }
-    onChange(newValues);
+  const handleChange = (selected: Array<SelectableValue<string>>, meta: ActionMeta) => {
+    // react-select types `option` as `{}`, so narrow it before reading the picked value.
+    const disablePicked =
+      meta.action === 'select-option' &&
+      meta.option &&
+      'value' in meta.option &&
+      meta.option.value === DISABLE_GROUPING;
+    const values = selected.map((option) => option.value ?? '');
+    onChange(disablePicked ? [DISABLE_GROUPING] : normalize(values));
   };
 
-  const handleCreateOption = (customLabel: string) => {
-    const base = value.includes(DISABLE_GROUPING) ? [] : value;
-    onChange(withRequiredFields([...base, customLabel]));
-  };
+  const handleCreateOption = (customLabel: string) => onChange(normalize([...value, customLabel]));
 
   return (
     <Field

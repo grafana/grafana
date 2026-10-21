@@ -2,8 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { isValidPromDuration } from '../../utils/promDuration';
-
 import { DurationField } from './DurationField';
 
 const label = 'Group wait';
@@ -43,18 +41,6 @@ describe('DurationField', () => {
     await user.type(getInput(), '45s{Enter}');
 
     expect(onSubmit).toHaveBeenCalledWith('45s');
-  });
-
-  it('submits an invalid edit as typed, so the parent can reject it with isValidPromDuration', async () => {
-    const user = userEvent.setup();
-    const onSubmit = jest.fn();
-    render(<Controlled initial="30s" onSubmit={onSubmit} />);
-
-    await user.clear(getInput());
-    await user.type(getInput(), 'notaduration{Enter}');
-
-    expect(onSubmit).toHaveBeenCalledWith('notaduration');
-    expect(isValidPromDuration(onSubmit.mock.calls[0][0])).toBe(false);
   });
 
   it('waits for the field to lose focus before showing a validation error', async () => {

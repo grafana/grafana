@@ -63,4 +63,26 @@ describe('GroupByField', () => {
 
     expect(onChange).toHaveBeenCalledWith(['grafana_folder', 'alertname', 'team']);
   });
+
+  it('pressing Backspace on "Disable (...)" restores the required fields', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<GroupByField value={['...']} onChange={onChange} />);
+
+    await user.click(screen.getByRole('combobox', { name: /group by/i }));
+    await user.keyboard('{Backspace}');
+
+    expect(onChange).toHaveBeenCalledWith(['grafana_folder', 'alertname']);
+  });
+
+  it('picking an existing label while "Disable (...)" is selected drops the sentinel and restores the required fields', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<GroupByField value={['...']} onChange={onChange} />);
+
+    await user.click(screen.getByRole('combobox', { name: /group by/i }));
+    await user.click(await screen.findByText('alertname'));
+
+    expect(onChange).toHaveBeenCalledWith(['grafana_folder', 'alertname']);
+  });
 });
