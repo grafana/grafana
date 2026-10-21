@@ -281,6 +281,47 @@ describe('<EditActionsPopover />', () => {
     });
   });
 
+  describe('when openOnTap is set', () => {
+    function renderOpenOnTap() {
+      return render(
+        <>
+          <div data-testid="outside">outside</div>
+          <EditActionsPopover showOutsideEditMode openOnTap content={<span>popover-actions</span>}>
+            <div data-testid="reference-child">panel</div>
+          </EditActionsPopover>
+        </>
+      );
+    }
+
+    // Browsers don't always send mouseenter for a tap, so this sends only the pointer events and click of a tap.
+    function tap(element: HTMLElement) {
+      fireEvent.pointerDown(element, { pointerType: 'touch' });
+      fireEvent.pointerUp(element, { pointerType: 'touch' });
+      fireEvent.click(element);
+    }
+
+    test('a touch tap on the reference shows the content, and a tap outside hides it', async () => {
+      renderOpenOnTap();
+
+      tap(screen.getByTestId('reference-child'));
+
+      expect(await screen.findByText('popover-actions')).toBeInTheDocument();
+
+      tap(screen.getByTestId('outside'));
+
+      await waitFor(() => expect(screen.queryByText('popover-actions')).not.toBeInTheDocument());
+    });
+
+    test('a mouse click on the reference does not show the content without the pointer resting', async () => {
+      const { user } = renderOpenOnTap();
+
+      await user.click(screen.getByTestId('reference-child'));
+
+      expect(screen.getByText('panel')).toBeInTheDocument();
+      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+    });
+  });
+
   describe('when element selection is toggled off and on', () => {
     test('the child is not remounted, so its transient state is preserved', async () => {
       const tree = (selectionEnabled: boolean) => (

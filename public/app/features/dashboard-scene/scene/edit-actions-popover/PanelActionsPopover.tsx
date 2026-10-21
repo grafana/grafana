@@ -100,6 +100,7 @@ function PanelActionsPopoverWrapper({
           content={<PanelActions panel={panel} dashboard={dashboard} menu={menu} onHoverSlotChange={setHoverSlot} />}
           showOutsideEditMode
           keyboardAccessible
+          openOnTap
           keepOpen={hasOpenOverlay || isGroupByPickerOpen}
           placement="top-end"
           offset={POPOVER_OFFSET}

@@ -9,6 +9,7 @@ import {
   type Placement,
   safePolygon,
   shift,
+  useClick,
   useDismiss,
   useFloating,
   useFocus,
@@ -66,6 +67,11 @@ type EditActionsPopoverProps = {
    * and keeps its content in the tab order after the reference.
    */
   keyboardAccessible?: boolean;
+  /**
+   * Also opens the popover when the reference is tapped on a touch screen. Hover alone only opens it when the browser
+   * happens to send compatibility mouse events for the tap.
+   */
+  openOnTap?: boolean;
   /** Exposes the actions as a labelled toolbar. */
   ariaLabel?: string;
   /** Extra class for the actions container, e.g. to change its spacing. */
@@ -88,6 +94,7 @@ export function EditActionsPopover({
   offset: offsetOptions = 0,
   keepOpen = false,
   keyboardAccessible = false,
+  openOnTap = false,
   ariaLabel,
   actionsClassName,
 }: EditActionsPopoverProps) {
@@ -133,8 +140,9 @@ export function EditActionsPopover({
     restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
   });
   const focus = useFocus(context, { enabled: isEnabled && keyboardAccessible, visibleOnly: true });
-  const dismiss = useDismiss(context, { enabled: isEnabled && keyboardAccessible });
-  const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss]);
+  const tap = useClick(context, { enabled: isEnabled && openOnTap, ignoreMouse: true, toggle: false });
+  const dismiss = useDismiss(context, { enabled: isEnabled && (keyboardAccessible || openOnTap) });
+  const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, tap, dismiss]);
   // Keep a ref already set on the child (e.g. DashboardGridItem.containerRef).
   const mergedRef = useMergeRefs([refs.setReference, children.props.ref]);
 

@@ -70,6 +70,29 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     await expect(page).toHaveURL((url) => !url.searchParams.has('viewPanel'));
   });
 
+  test.describe('on a touch screen', () => {
+    test.use({ hasTouch: true });
+
+    test('tapping the panel header opens the popover, and More actions opens the panel menu', async ({
+      gotoDashboardPage,
+      panels,
+      page,
+    }) => {
+      await gotoDashboardPage({ uid: DASHBOARD_UID });
+
+      const header = panels.getHeader(PANEL_TITLE);
+      const box = await header.boundingBox();
+      // The empty part of the header, next to the title
+      await header.tap({ position: { x: (box?.width ?? 0) - 40, y: (box?.height ?? 0) / 2 } });
+
+      const popover = panels.getActionsPopover();
+      await expect(popover.getByRole('button', { name: 'Expand (v)' })).toBeVisible();
+
+      await popover.getByRole('button', { name: 'More actions' }).tap();
+      await expect(page.getByRole('menu').getByRole('menuitem', { name: 'Inspect' })).toBeVisible();
+    });
+  });
+
   test.describe('on a panel without a title', () => {
     let dashboardUID: string;
 
