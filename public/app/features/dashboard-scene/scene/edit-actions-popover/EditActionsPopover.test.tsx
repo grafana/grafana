@@ -312,6 +312,29 @@ describe('<EditActionsPopover />', () => {
       await waitFor(() => expect(screen.queryByText('popover-actions')).not.toBeInTheDocument());
     });
 
+    test('the keyboard keeps working in controls inside the reference', async () => {
+      const user = userEvent.setup();
+      render(
+        <EditActionsPopover showOutsideEditMode openOnTap content={<span>popover-actions</span>}>
+          <div data-testid="reference-child">
+            <input aria-label="filter" />
+            <input type="checkbox" aria-label="show series" />
+          </div>
+        </EditActionsPopover>
+      );
+
+      await user.tab();
+      await user.keyboard('a b{Enter}');
+
+      expect(screen.getByRole('textbox', { name: 'filter' })).toHaveValue('a b');
+      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+
+      await user.tab();
+      await user.keyboard(' ');
+
+      expect(screen.getByRole('checkbox', { name: 'show series' })).toBeChecked();
+    });
+
     test('a mouse click on the reference does not show the content without the pointer resting', async () => {
       const { user } = renderOpenOnTap();
 

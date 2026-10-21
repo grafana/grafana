@@ -140,7 +140,14 @@ export function EditActionsPopover({
     restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
   });
   const focus = useFocus(context, { enabled: isEnabled && keyboardAccessible, visibleOnly: true });
-  const tap = useClick(context, { enabled: isEnabled && openOnTap, ignoreMouse: true, toggle: false });
+  // Touch only: keyboard opening is handled by useFocus, and the default key handlers would swallow Space and Enter
+  // for every control inside the reference.
+  const tap = useClick(context, {
+    enabled: isEnabled && openOnTap,
+    ignoreMouse: true,
+    toggle: false,
+    keyboardHandlers: false,
+  });
   const dismiss = useDismiss(context, { enabled: isEnabled && (keyboardAccessible || openOnTap) });
   const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, tap, dismiss]);
   // Keep a ref already set on the child (e.g. DashboardGridItem.containerRef).
