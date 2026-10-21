@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, EmptyState, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { FolderListRow } from '../folder-browsing/FolderListRow';
 import { useFolderRecordingRuleCount } from '../folder-browsing/folderLookups';
 import { useFolderPages } from '../folder-browsing/useFolderPages';
+import { RuleListItemSkeletons } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
 import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
@@ -56,11 +57,18 @@ export function FoldersView({ folderUids }: FoldersViewProps) {
   if (folders.length === 0 && !failure) {
     // A folder filter that matches no labelled folder means the folder has no rules of this kind.
     return folderUids.length > 0 ? (
-      <div>
-        {t('alerting.gma-rule-list.recording-rules.no-rules-match-folder', 'No recording rules match this folder')}
-      </div>
+      <EmptyState
+        variant="not-found"
+        message={t(
+          'alerting.gma-rule-list.recording-rules.no-rules-match-folder',
+          'No recording rules match this folder'
+        )}
+      />
     ) : (
-      <div>{t('alerting.gma-rule-list.recording-rules.no-folders', 'No folders found')}</div>
+      <EmptyState
+        variant="not-found"
+        message={t('alerting.gma-rule-list.recording-rules.no-folders', 'No folders found')}
+      />
     );
   }
 
@@ -121,11 +129,7 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
   });
 
   if (isLoading) {
-    return (
-      <li>
-        <LoadingPlaceholder text={t('alerting.gma-rule-list.recording-rules.loading-rules', 'Loading rules...')} />
-      </li>
-    );
+    return <RuleListItemSkeletons />;
   }
 
   if (error !== undefined) {

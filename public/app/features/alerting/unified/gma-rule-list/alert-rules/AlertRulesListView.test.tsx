@@ -69,6 +69,26 @@ describe('AlertRulesListView', () => {
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
   });
 
+  it('shows skeleton rows in a busy list until the first page arrives', async () => {
+    let releasePage: () => void = () => {};
+    const pageGate = new Promise<void>((resolve) => {
+      releasePage = resolve;
+    });
+    server.use(
+      http.post(ruleSearchUrl('alert'), async () => {
+        await pageGate;
+        return HttpResponse.json({ items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')], metadata: {} });
+      })
+    );
+
+    render(<ListView filter={createEmptyFilter()} />);
+
+    expect(await screen.findByRole('list', { name: 'Loading rules' })).toHaveAttribute('aria-busy', 'true');
+    releasePage();
+    expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Loading rules' })).not.toBeInTheDocument();
+  });
+
   it('shows a lower-bound total with a plus sign', async () => {
     mockRuleSearch('alert', () => ({
       items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],

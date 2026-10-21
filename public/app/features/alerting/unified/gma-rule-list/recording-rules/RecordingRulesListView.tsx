@@ -1,7 +1,8 @@
 import { t } from '@grafana/i18n';
-import { LoadingPlaceholder, Stack } from '@grafana/ui';
+import { EmptyState, Stack } from '@grafana/ui';
 
 import { ResultCount } from '../rule-row/ResultCount';
+import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
@@ -22,7 +23,7 @@ export function ListView({ filter }: ListViewProps) {
     return (
       <Stack direction="column" gap={0.5}>
         <ResultCount kind="recording" isLoading />
-        <LoadingPlaceholder text={t('alerting.gma-rule-list.recording-rules.loading-rules', 'Loading rules...')} />
+        <RuleListSkeleton />
       </Stack>
     );
   }
@@ -38,7 +39,12 @@ export function ListView({ filter }: ListViewProps) {
   }
 
   if (items.length === 0 && !failure) {
-    return <div>{t('alerting.gma-rule-list.recording-rules.no-rules', 'No Recording rules found')}</div>;
+    return (
+      <EmptyState
+        variant="not-found"
+        message={t('alerting.gma-rule-list.recording-rules.no-rules', 'No Recording rules found')}
+      />
+    );
   }
 
   return (
