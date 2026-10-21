@@ -231,7 +231,7 @@ func TestParentsLookupRemainsCallerBound(t *testing.T) {
 	parents, err := newParentsGetter(storage, 5)(ctx, ancestryTestFolder("C", "B"))
 	require.NoError(t, err)
 	require.Equal(t, []folders.FolderInfo{
-		{Name: "B", Detached: true, Description: denied.Error()},
+		{Name: "B", Detached: true, Description: "Unable to read parent folder"},
 		{Name: "C", Title: "C", Parent: "B"},
 	}, parents.Items)
 }

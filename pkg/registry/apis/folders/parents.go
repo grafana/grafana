@@ -2,16 +2,13 @@ package folders
 
 import (
 	"context"
-	"net/http"
 	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	foldererrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -20,34 +17,6 @@ import (
 )
 
 type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error)
-
-// Lookup statuses may contain backend diagnostics even when they are already
-// Kubernetes errors. Retain only classification and retry hints at this boundary.
-func createParentLookupStatusError(err error) apierrors.StatusError {
-	mapped := foldererrors.ToFolderStatusError(err)
-	code := int(mapped.ErrStatus.Code)
-	switch {
-	case apierrors.IsNotFound(&mapped):
-		code = http.StatusNotFound
-	case apierrors.IsForbidden(&mapped):
-		code = http.StatusForbidden
-	}
-	if code < 400 || code > 599 {
-		code = http.StatusInternalServerError
-	}
-	retryAfter := 0
-	if details := mapped.ErrStatus.Details; details != nil && details.RetryAfterSeconds > 0 {
-		retryAfter = int(details.RetryAfterSeconds)
-	}
-	public := apierrors.NewGenericServerResponse(code, "", schema.GroupResource{}, "", "", retryAfter, false)
-	if code == 499 {
-		public.ErrStatus.Message = "Request canceled"
-		public.ErrStatus.Reason = "ClientClosedRequest"
-	} else if apierrors.IsAlreadyExists(&mapped) {
-		public.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
-	}
-	return *public
-}
 
 func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 	return newParentsGetterWithPolicy(getter, false)
@@ -114,19 +83,25 @@ func newParentsGetterWithPolicy(getter rest.Getter, forCreate bool) parentsGette
 
 			obj, e2 := getter.Get(lookupCtx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
-				_ = tracing.Error(span, e2)
-				if forCreate {
-					// Classify both transport and embedded statuses before applying the
-					// missing/immediate-unreadable parent exception, including dry runs.
-					public := createParentLookupStatusError(e2)
-					if !apierrors.IsNotFound(&public) && (len(info.Items) != 1 || !apierrors.IsForbidden(&public)) {
+				// Normalize transport and embedded statuses for both log severity and
+				// the creation policy's missing/immediate-unreadable parent exception.
+				public := backendStatusError(e2)
+				logger := backendLogger.FromContext(ctx)
+				args := []any{"operation", "parentLookup", "namespace", folder.Namespace, "folder", folder.Name, "parent", item.Parent, "error", e2}
+				if apierrors.IsNotFound(&public) || (apierrors.IsForbidden(&public) && (!forCreate || len(info.Items) == 1)) {
+					logger.Debug("Unable to read parent folder", args...)
+				} else {
+					_ = tracing.Error(span, e2)
+					if forCreate {
+						logger.Error("Unable to read parent folder", args...)
 						return nil, &public
 					}
+					logger.Warn("Unable to read parent folder", args...)
 				}
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
-					Description: e2.Error(),
+					Description: "Unable to read parent folder",
 				})
 				break
 			}
@@ -134,13 +109,14 @@ func newParentsGetterWithPolicy(getter rest.Getter, forCreate bool) parentsGette
 			parentFolder, ok := obj.(*folders.Folder)
 			if !ok {
 				err := tracing.Errorf(span, "expected folder, found: %T", obj)
+				backendLogger.FromContext(ctx).Error("Unexpected parent folder object", "operation", "parentLookup", "namespace", folder.Namespace, "folder", folder.Name, "parent", item.Parent, "error", err)
 				if forCreate {
 					return nil, folderLegacy.ErrInternal.Errorf("unable to read folder ancestry: %w", err)
 				}
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
-					Description: err.Error(),
+					Description: "Unable to read parent folder",
 				})
 				break
 			}
