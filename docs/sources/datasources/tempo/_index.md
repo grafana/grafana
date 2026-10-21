@@ -79,7 +79,7 @@ After you've connected Grafana to Tempo, you can configure correlations between 
 
 ## Plugin updates
 
-Starting with Grafana v13.2, the Tempo data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
+Starting with Grafana v13.2, the Tempo data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog on each server restart and installs the latest version within the current major version. New major versions aren't installed automatically.
 
 To adjust this behavior:
 
