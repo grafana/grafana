@@ -241,7 +241,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Give all workers the same pool of inactive values past the GC grace period.
-		uids := createInactiveSecureValues(t, sut, 10)
+		uids := leasedUIDs(createInactiveSecureValues(t, sut, 10))
 
 		// Run competing requests against the same storage. Each request can claim the
 		// entire pool, so their claims may overlap and must respect existing leases.
@@ -251,7 +251,6 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		var wg sync.WaitGroup
 		for i := range workers {
 			wg.Go(func() {
-				defer wg.Done()
 				results[i], errs[i] = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
 			})
 		}
@@ -277,7 +276,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 
 		// Start with an eligible candidate, so an empty result cannot be explained
 		// by the value being active or still within the GC grace period.
-		uids := createInactiveSecureValues(t, sut, 1)
+		uids := leasedUIDs(createInactiveSecureValues(t, sut, 1))
 
 		// After SELECT has chosen the candidate, let another request lease it before
 		// this request's UPDATE. This makes the selected candidate stale deterministically.
@@ -304,15 +303,9 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 
 		sut := testutils.Setup(t)
 
-		sv, err := sut.CreateSv(t.Context())
-		require.NoError(t, err)
-
 		// Deletion marks this version inactive; advancing past the grace period makes
 		// it eligible for SELECT before the hook changes its state.
-		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
-		require.NoError(t, err)
-
-		sut.Clock.AdvanceBy(15 * time.Minute)
+		sv := createInactiveSecureValues(t, sut, 1)[0]
 
 		// Reactivate the selected candidate before UPDATE. The claim must use the
 		// current active flag rather than trust the state observed by SELECT.
@@ -353,10 +346,10 @@ func (db *beforeExecDatabase) ExecContext(ctx context.Context, query string, arg
 	return db.Database.ExecContext(ctx, query, args...)
 }
 
-func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []string {
+func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []secretv1beta1.SecureValue {
 	t.Helper()
 
-	uids := make([]string, 0, n)
+	values := make([]secretv1beta1.SecureValue, 0, n)
 	for i := range n {
 		sv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
 			cfg.Sv.Name = fmt.Sprintf("sv-%d", i)
@@ -364,12 +357,12 @@ func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []string
 		require.NoError(t, err)
 		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
 		require.NoError(t, err)
-		uids = append(uids, string(sv.UID))
+		values = append(values, *sv)
 		sut.Clock.AdvanceBy(time.Second)
 	}
 	sut.Clock.AdvanceBy(15 * time.Minute)
 
-	return uids
+	return values
 }
 
 func leasedUIDs(svs []secretv1beta1.SecureValue) []string {
