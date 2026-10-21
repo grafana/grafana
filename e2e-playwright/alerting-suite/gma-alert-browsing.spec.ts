@@ -6,7 +6,7 @@ import { RuleListPage, folderScope } from './pages/RuleListPage';
 // Needs `alerting-corpus-setup`; assertions are scoped to the run marker.
 
 test.describe('Alert rules: Folders and List browsing', () => {
-  test('ALERT-1/2: the dense folder shows its direct Alert count, Load more reveals the rest, and a still-collapsed folder is never fetched', async ({
+  test('the dense folder shows its direct Alert count, Load more reveals the rest, and a still-collapsed folder is never fetched', async ({
     page,
   }) => {
     const manifest = requireCorpusManifest();
@@ -33,7 +33,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
     expect(list.recordedSearches.some((body) => JSON.stringify(body).includes(untouched.uid))).toBe(false);
   });
 
-  test('ALERT-1: a nested folder shows the path of its parents', async ({ page }) => {
+  test('a nested folder shows the path of its parents', async ({ page }) => {
     const manifest = requireCorpusManifest();
     const nested = getCorpusFolder(manifest, manifest.nestedFolderUid);
     const parent = getCorpusFolder(manifest, nested.parentUid!);
@@ -44,7 +44,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await expect(list.folderRow(nested.title)).toContainText(parent.title);
   });
 
-  test('ALERT-1: an empty folder is not listed, and a folder with only Recording rules is, without Alert rules', async ({
+  test('an empty folder is not listed, and a folder with only Recording rules is, without Alert rules', async ({
     page,
   }) => {
     const manifest = requireCorpusManifest();
@@ -60,7 +60,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await expect(page.getByRole('link', { name: empty.title })).toHaveCount(0);
   });
 
-  test('ALERT-3: List mode loads three 40-rule batches for a corpus-scoped filter, and a copied URL restores the filter after reload', async ({
+  test('List mode loads three 40-rule batches for a corpus-scoped filter, and a copied URL restores the filter after reload', async ({
     page,
   }) => {
     const manifest = requireCorpusManifest();
@@ -83,7 +83,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await expect(links).toHaveCount(40);
   });
 
-  test('ALERT-3: every List row shows the full path of its folder', async ({ page }) => {
+  test('every List row shows the full path of its folder', async ({ page }) => {
     const manifest = requireCorpusManifest();
     const nested = getCorpusFolder(manifest, manifest.nestedFolderUid);
     const parent = getCorpusFolder(manifest, nested.parentUid!);

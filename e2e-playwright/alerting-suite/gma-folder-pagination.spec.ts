@@ -83,7 +83,7 @@ async function waitForListedFolders(request: APIRequestContext, namespace: strin
 test.describe('Alert rules: Folders pagination', () => {
   test.use({ ruleKind: 'alert' });
 
-  test('ALERT-1: Previous and Next move between the first 40 folders and the rest, and several folders stay open', async ({
+  test('Previous and Next move between the first 40 folders and the rest, and several folders stay open', async ({
     page,
     pagedFolders,
   }) => {
@@ -113,7 +113,7 @@ test.describe('Alert rules: Folders pagination', () => {
 test.describe('Recording rules: Folders pagination', () => {
   test.use({ ruleKind: 'recording' });
 
-  test('REC-1: Previous and Next move between the first 40 folders and the rest, with Recording-only counts', async ({
+  test('Previous and Next move between the first 40 folders and the rest, with Recording-only counts', async ({
     page,
     pagedFolders,
   }) => {

@@ -145,7 +145,7 @@ const gmaRuleListProjects: Project[] = [
     testMatch: ['corpus-setup.spec.ts'],
     timeout: 180_000,
   }),
-  // Browsing journeys that read the corpus manifest (ALERT-1/2/3, REC-1/2). Teardown depends on
+  // Browsing journeys that read the corpus manifest. Teardown depends on
   // this project, not directly on setup, so running `alerting-corpus-teardown` gives the full
   // setup, tests, teardown chain without seeding a second corpus on top of the first.
   withAuth({

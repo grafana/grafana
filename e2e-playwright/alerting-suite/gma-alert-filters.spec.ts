@@ -16,7 +16,7 @@ function rule(run: string, name: string, extra: Partial<AlertRuleSeed> = {}): Al
 }
 
 test.describe('Alert rules: token filters', () => {
-  test('SEARCH-3: rule: matches rule titles', async ({ page, alertRules }) => {
+  test('rule: matches rule titles', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
     await alertRules.seedRule(rule(run, 'Disk space low'));
@@ -33,7 +33,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-3: free text matches rule titles like rule:', async ({ page, alertRules }) => {
+  test('free text matches rule titles like rule:', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
     await alertRules.seedRule(rule(run, 'Disk space low'));
@@ -50,7 +50,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-3: namespace: limits rules to the folder', async ({ page, folder, alertRules }) => {
+  test('namespace: limits rules to the folder', async ({ page, folder, alertRules }) => {
     const run = newRunMarker();
     const otherFolder = await alertRules.createFolder(`Payments alerts ${run}`);
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
@@ -68,7 +68,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-3: datasource: limits rules to those querying the data source', async ({ page, alertRules }) => {
+  test('datasource: limits rules to those querying the data source', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high', { queryDataSourceUid: testDataSourceUid }));
     await alertRules.seedRule(rule(run, 'Disk space low', { queryDataSourceUid: prometheusDataSourceUid }));
@@ -87,7 +87,7 @@ test.describe('Alert rules: token filters', () => {
   });
 
   for (const { operator, token, leaf, shown, hidden } of labelFilterCases) {
-    test(`SEARCH-3: ${token} finds rules whose team label ${operator}`, async ({ page, alertRules }) => {
+    test(`${token} finds rules whose team label ${operator}`, async ({ page, alertRules }) => {
       const run = newRunMarker();
       await alertRules.seedRule(rule(run, LABEL_RULES.payments, { labels: { team: 'payments' } }));
       await alertRules.seedRule(rule(run, LABEL_RULES.checkout, { labels: { team: 'checkout' } }));
@@ -106,10 +106,7 @@ test.describe('Alert rules: token filters', () => {
     });
   }
 
-  test('SEARCH-3: plugins:hide removes rules owned by a plugin and keeps other origins', async ({
-    page,
-    alertRules,
-  }) => {
+  test('plugins:hide removes rules owned by a plugin and keeps other origins', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
     await alertRules.seedRule(
@@ -130,7 +127,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: dashboard: limits rules to those linked to the dashboard', async ({ page, alertRules }) => {
+  test('dashboard: limits rules to those linked to the dashboard', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const dashboardUid = await alertRules.createDashboard(`Checkout overview ${run}`, [4, 7]);
     await alertRules.seedRule(rule(run, 'Checkout latency high', { panel: { dashboardUid, panelId: 4 } }));
@@ -148,7 +145,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: panelId: narrows a dashboard filter to one panel', async ({ page, alertRules }) => {
+  test('panelId: narrows a dashboard filter to one panel', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const dashboardUid = await alertRules.createDashboard(`Checkout overview ${run}`, [4, 7]);
     await alertRules.seedRule(rule(run, 'Checkout latency high', { panel: { dashboardUid, panelId: 4 } }));
@@ -166,10 +163,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: contactPoint: limits rules to those delivering directly to the contact point', async ({
-    page,
-    alertRules,
-  }) => {
+  test('contactPoint: limits rules to those delivering directly to the contact point', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const contactPointName = `payments-oncall-${run}`;
     await alertRules.createContactPoint(contactPointName);
@@ -188,7 +182,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: policy: limits rules to those routed through the named policy', async ({ page, alertRules }) => {
+  test('policy: limits rules to those routed through the named policy', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const policyName = `payments-policy-${run}`;
     await alertRules.createRoutingTree(policyName);
@@ -207,7 +201,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: paused:true shows only paused rules', async ({ page, alertRules }) => {
+  test('paused:true shows only paused rules', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high', { paused: true }));
     await alertRules.seedRule(rule(run, 'Disk space low', { paused: false }));
@@ -224,7 +218,7 @@ test.describe('Alert rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: paused:false shows only rules that are not paused', async ({ page, alertRules }) => {
+  test('paused:false shows only rules that are not paused', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high', { paused: true }));
     await alertRules.seedRule(rule(run, 'Disk space low', { paused: false }));
@@ -243,7 +237,7 @@ test.describe('Alert rules: token filters', () => {
 });
 
 test.describe('Alert rules: sidebar filters', () => {
-  test('SEARCH-3: Rule name filters by title', async ({ page, alertRules }) => {
+  test('Rule name filters by title', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
     await alertRules.seedRule(rule(run, 'Disk space low'));
@@ -261,7 +255,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Add label filter applies a key and value matcher', async ({ page, alertRules }) => {
+  test('Add label filter applies a key and value matcher', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Payments rule', { labels: { team: 'payments' } }));
     await alertRules.seedRule(rule(run, 'Checkout rule', { labels: { team: 'checkout' } }));
@@ -278,7 +272,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: a label row can switch to the exists operator', async ({ page, alertRules }) => {
+  test('a label row can switch to the exists operator', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Payments rule', { labels: { team: 'payments' } }));
     await alertRules.seedRule(rule(run, 'Unowned rule'));
@@ -294,7 +288,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Folder adds folders one by one and each can be removed', async ({ page, folder, alertRules }) => {
+  test('Folder adds folders one by one and each can be removed', async ({ page, folder, alertRules }) => {
     const run = newRunMarker();
     const otherFolder = await alertRules.createFolder(`Payments alerts ${run}`);
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
@@ -324,10 +318,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Query data source adds data sources one by one and each can be removed', async ({
-    page,
-    alertRules,
-  }) => {
+  test('Query data source adds data sources one by one and each can be removed', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high', { queryDataSourceUid: testDataSourceUid }));
     await alertRules.seedRule(rule(run, 'Disk space low', { queryDataSourceUid: prometheusDataSourceUid }));
@@ -356,7 +347,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Hide plugin rules removes plugin-owned rules', async ({ page, alertRules }) => {
+  test('Hide plugin rules removes plugin-owned rules', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
     await alertRules.seedRule(
@@ -377,7 +368,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Dashboard limits rules to those linked to the picked dashboard', async ({ page, alertRules }) => {
+  test('Dashboard limits rules to those linked to the picked dashboard', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const dashboardTitle = `Checkout overview ${run}`;
     const dashboardUid = await alertRules.createDashboard(dashboardTitle, [4, 7]);
@@ -397,7 +388,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Panel ID narrows the picked dashboard to one panel', async ({ page, alertRules }) => {
+  test('Panel ID narrows the picked dashboard to one panel', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const dashboardUid = await alertRules.createDashboard(`Checkout overview ${run}`, [4, 7]);
     await alertRules.seedRule(rule(run, 'Checkout latency high', { panel: { dashboardUid, panelId: 4 } }));
@@ -416,10 +407,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Contact point limits rules to those delivering to the picked contact point', async ({
-    page,
-    alertRules,
-  }) => {
+  test('Contact point limits rules to those delivering to the picked contact point', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const contactPointName = `payments-oncall-${run}`;
     await alertRules.createContactPoint(contactPointName);
@@ -439,10 +427,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Notification policy limits rules to those routed through the picked policy', async ({
-    page,
-    alertRules,
-  }) => {
+  test('Notification policy limits rules to those routed through the picked policy', async ({ page, alertRules }) => {
     const run = newRunMarker();
     const policyName = `payments-policy-${run}`;
     await alertRules.createRoutingTree(policyName);
@@ -462,7 +447,7 @@ test.describe('Alert rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Paused offers Paused and Not paused', async ({ page, alertRules }) => {
+  test('Paused offers Paused and Not paused', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high', { paused: true }));
     await alertRules.seedRule(rule(run, 'Disk space low', { paused: false }));

@@ -1,14 +1,14 @@
 import { test, expect } from './fixtures';
 
-// Server runs with `alerting.gmaOnlyListView` on, so only the flag-on half of NAV-1 is covered.
+// Server runs with `alerting.gmaOnlyListView` on, so only the flag-on redirect is covered.
 test.describe('Stack gate and old link', () => {
-  test('NAV-1: an untyped old link lands on Alert rules', async ({ page }) => {
+  test('an untyped old link lands on Alert rules', async ({ page }) => {
     await page.goto('/alerting/list');
     await expect(page).toHaveURL(/\/alerting\/rules\/alert(\?.*)?$/);
     await expect(page.getByRole('heading', { name: 'Alert rules' })).toBeVisible();
   });
 
-  test('NAV-3: type:recording with a resolvable folder name lands on Recording rules with the migrated query', async ({
+  test('type:recording with a resolvable folder name lands on Recording rules with the migrated query', async ({
     page,
     folder,
   }) => {
@@ -22,7 +22,7 @@ test.describe('Stack gate and old link', () => {
     await expect(page.getByRole('heading', { name: 'Recording rules' })).toBeVisible();
   });
 
-  test('NAV-4: malformed and unsupported filters are removed, the redirect still completes, and the warning names the filters but not their values', async ({
+  test('malformed and unsupported filters are removed, the redirect still completes, and the warning names the filters but not their values', async ({
     page,
   }) => {
     const legacySearch = 'foo:bar group:infra label:"payments-secret';
@@ -38,9 +38,7 @@ test.describe('Stack gate and old link', () => {
     await expect(page.getByRole('heading', { name: 'Alert rules' })).toBeVisible();
   });
 
-  test('NAV-4: a folder name that matches nothing is removed with a warning that names the filter', async ({
-    page,
-  }) => {
+  test('a folder name that matches nothing is removed with a warning that names the filter', async ({ page }) => {
     const missingName = `No such folder ${crypto.randomUUID().slice(0, 8)}`;
     await page.goto(`/alerting/list?search=${encodeURIComponent(`namespace:"${missingName}"`)}&view=list`);
 
@@ -50,7 +48,7 @@ test.describe('Stack gate and old link', () => {
     await expect(page.getByText(missingName)).toHaveCount(0);
   });
 
-  test('NAV-4: a failing folder lookup still redirects and the warning names the filter', async ({ page, folder }) => {
+  test('a failing folder lookup still redirects and the warning names the filter', async ({ page, folder }) => {
     await page.route('**/folders/search', async (route) => {
       if (route.request().postData()?.includes('"text"')) {
         await route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"lookup failed"}' });
@@ -66,9 +64,7 @@ test.describe('Stack gate and old link', () => {
     await expect(page.getByText('These filters could not be migrated and were removed: namespace')).toBeVisible();
   });
 
-  test('NAV-1/NAV-3: the legacy Recently deleted page redirects to Alert rules’ Recently deleted tab', async ({
-    page,
-  }) => {
+  test('the legacy Recently deleted page redirects to Alert rules’ Recently deleted tab', async ({ page }) => {
     await page.goto('/alerting/recently-deleted/');
     await expect(page).toHaveURL(/\/alerting\/rules\/alert\/deleted(\?.*)?$/);
     await expect(page.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'true');

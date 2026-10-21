@@ -3,9 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 import { expectHref } from './pages/RuleListPage';
 
 test.describe('Navigation', () => {
-  test('NAV-2: Alert rules and Recording rules are separate main-menu entries, each with its own tabs', async ({
-    page,
-  }) => {
+  test('Alert rules and Recording rules are separate main-menu entries, each with its own tabs', async ({ page }) => {
     await page.goto('/alerting/rules/alert');
 
     const nav = page.getByRole('navigation', { name: 'Navigation' });

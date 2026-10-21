@@ -6,7 +6,7 @@ import { RuleListPage, folderScope } from './pages/RuleListPage';
 // Same corpus as gma-alert-browsing.spec.ts.
 
 test.describe('Recording rules: Folders and List browsing', () => {
-  test('REC-1/2: the dense folder shows its direct Recording count, Load more reveals the rest, and searches are Recording-only', async ({
+  test('the dense folder shows its direct Recording count, Load more reveals the rest, and searches are Recording-only', async ({
     page,
   }) => {
     const manifest = requireCorpusManifest();
@@ -35,7 +35,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
     expect(list.recordedSearches.some((body) => JSON.stringify(body).includes(untouched.uid))).toBe(false);
   });
 
-  test('REC-1: a nested folder shows the path of its parents', async ({ page }) => {
+  test('a nested folder shows the path of its parents', async ({ page }) => {
     const manifest = requireCorpusManifest();
     const nested = getCorpusFolder(manifest, manifest.nestedFolderUid);
     const parent = getCorpusFolder(manifest, nested.parentUid!);
@@ -46,7 +46,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
     await expect(list.folderRow(nested.title)).toContainText(parent.title);
   });
 
-  test('REC-1: an empty folder is not listed, and a folder with only Alert rules is, without Recording rules', async ({
+  test('an empty folder is not listed, and a folder with only Alert rules is, without Recording rules', async ({
     page,
   }) => {
     const manifest = requireCorpusManifest();
@@ -62,7 +62,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
     await expect(page.getByRole('link', { name: empty.title })).toHaveCount(0);
   });
 
-  test('REC-2: List mode loads three 40-rule batches for a corpus-scoped filter', async ({ page }) => {
+  test('List mode loads three 40-rule batches for a corpus-scoped filter', async ({ page }) => {
     const manifest = requireCorpusManifest();
 
     const list = new RuleListPage(page, 'recording');
@@ -77,7 +77,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
     await expect(links).toHaveCount(120);
   });
 
-  test('REC-2: every List row shows the full path of its folder', async ({ page }) => {
+  test('every List row shows the full path of its folder', async ({ page }) => {
     const manifest = requireCorpusManifest();
     const nested = getCorpusFolder(manifest, manifest.nestedFolderUid);
     const parent = getCorpusFolder(manifest, nested.parentUid!);

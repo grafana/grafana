@@ -3,7 +3,7 @@ import { deleteRule } from './ruleSeeding';
 
 // No filters here, so a per-run title suffix keeps the row unique against the corpus.
 test.describe('Recording rules: Recently deleted', () => {
-  test('RDEL-3: Review shows metric/target data source and advanced JSON with no server/group data', async ({
+  test('Review shows metric/target data source and advanced JSON with no server/group data', async ({
     page,
     folder,
     recordingRules,
@@ -39,7 +39,7 @@ test.describe('Recording rules: Recently deleted', () => {
     expect(jsonText).toContain(title);
   });
 
-  test('RDEL-1: a deleted Recording rule never appears on the Alert rules deleted tab', async ({
+  test('a deleted Recording rule never appears on the Alert rules deleted tab', async ({
     page,
     recordingRules,
     workerApi,

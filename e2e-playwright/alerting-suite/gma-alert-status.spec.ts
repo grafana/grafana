@@ -62,7 +62,7 @@ const healthCases: Array<{ token: string; apiValues: string[]; matching: AlertRu
 
 test.describe('Alert rules: state and health filters', () => {
   for (const { token, apiValues, matching, other } of stateCases) {
-    test(`SEARCH-5: ${token} shows rules in ${apiValues.join(' or ')} and leaves out other states and rules without status`, async ({
+    test(`${token} shows rules in ${apiValues.join(' or ')} and leaves out other states and rules without status`, async ({
       page,
       request,
       workerApi,
@@ -94,7 +94,7 @@ test.describe('Alert rules: state and health filters', () => {
   }
 
   for (const { token, apiValues, matching, other } of healthCases) {
-    test(`SEARCH-5: ${token} shows rules with ${apiValues.join(' or ')} health and leaves out other health and rules without status`, async ({
+    test(`${token} shows rules with ${apiValues.join(' or ')} health and leaves out other health and rules without status`, async ({
       page,
       request,
       workerApi,
@@ -128,12 +128,7 @@ test.describe('Alert rules: state and health filters', () => {
     });
   }
 
-  test('SEARCH-5: the Alert state select filters by the chosen state', async ({
-    page,
-    request,
-    workerApi,
-    alertRules,
-  }) => {
+  test('the Alert state select filters by the chosen state', async ({ page, request, workerApi, alertRules }) => {
     const run = newRunMarker();
     const firing = { name: 'Rule in Firing', status: { state: 'Firing', health: 'OK' } satisfies RuleStatusSeed };
     const healthy = { name: 'Rule in Healthy', status: { state: 'Healthy', health: 'OK' } satisfies RuleStatusSeed };
@@ -163,7 +158,7 @@ test.describe('Alert rules: state and health filters', () => {
     });
   });
 
-  test('SEARCH-5: the Health select filters by the chosen health', async ({ page, request, workerApi, alertRules }) => {
+  test('the Health select filters by the chosen health', async ({ page, request, workerApi, alertRules }) => {
     const run = newRunMarker();
     const failing = {
       name: 'Rule with Error health',
@@ -201,7 +196,7 @@ test.describe('Alert rules: state and health filters', () => {
 });
 
 test.describe('Alert rules: status icon', () => {
-  test('ALERT-4: each row shows the icon for its seeded status, and Status unavailable when it has none', async ({
+  test('each row shows the icon for its seeded status, and Status unavailable when it has none', async ({
     page,
     request,
     workerApi,
@@ -233,7 +228,7 @@ test.describe('Alert rules: status icon', () => {
 });
 
 test.describe('Alert rules: instance totals', () => {
-  test('ALERT-10: the row shows every seeded instance count, labelled, including a zero', async ({
+  test('the row shows every seeded instance count, labelled, including a zero', async ({
     page,
     request,
     workerApi,
@@ -260,7 +255,7 @@ test.describe('Alert rules: instance totals', () => {
     }
   });
 
-  test('ALERT-10: a total the rule has no value for shows no count, and a rule without status shows none', async ({
+  test('a total the rule has no value for shows no count, and a rule without status shows none', async ({
     page,
     request,
     workerApi,

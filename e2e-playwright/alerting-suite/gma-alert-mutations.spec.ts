@@ -3,7 +3,7 @@ import { RuleListPage, folderScope } from './pages/RuleListPage';
 import { ruleResourceUrl } from './ruleSeeding';
 
 test.describe('Alert rule mutations', () => {
-  test('ALERT-7: Resume then Pause persist spec.paused across a reload', async ({ page, folder, alertRules }) => {
+  test('Resume then Pause persist spec.paused across a reload', async ({ page, folder, alertRules }) => {
     const title = 'High CPU usage';
     await alertRules.seedRule({ title, interval: '1m' });
     const list = new RuleListPage(page, 'alert');
@@ -29,7 +29,7 @@ test.describe('Alert rule mutations', () => {
     await expect(list.statusIcon(title, 'Paused')).toBeVisible();
   });
 
-  test('ALERT-8: Delete removes the rule from the active list after a reload', async ({ page, folder, alertRules }) => {
+  test('Delete removes the rule from the active list after a reload', async ({ page, folder, alertRules }) => {
     const title = 'Disk space low';
     const uid = await alertRules.seedRule({ title, interval: '1m' });
     const list = new RuleListPage(page, 'alert');
@@ -50,7 +50,7 @@ test.describe('Alert rule mutations', () => {
     expect(response.status()).toBe(404);
   });
 
-  test('STATE-3: Resume and Delete refresh the open Folders view in place, without a page load', async ({
+  test('Resume and Delete refresh the open Folders view in place, without a page load', async ({
     page,
     folder,
     alertRules,

@@ -22,7 +22,7 @@ function rule(run: string, name: string, extra: Partial<RecordingRuleSeed> = {})
 }
 
 test.describe('Recording rules: token filters', () => {
-  test('SEARCH-3: rule: matches rule titles', async ({ page, recordingRules }) => {
+  test('rule: matches rule titles', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio'));
@@ -39,7 +39,7 @@ test.describe('Recording rules: token filters', () => {
     });
   });
 
-  test('SEARCH-3: namespace: limits rules to the folder', async ({ page, folder, recordingRules }) => {
+  test('namespace: limits rules to the folder', async ({ page, folder, recordingRules }) => {
     const run = newRunMarker();
     const otherFolder = await recordingRules.createFolder(`Payments rules ${run}`);
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
@@ -57,7 +57,7 @@ test.describe('Recording rules: token filters', () => {
     });
   });
 
-  test('SEARCH-3: datasource: limits rules to those querying the data source', async ({ page, recordingRules }) => {
+  test('datasource: limits rules to those querying the data source', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99', { queryDataSourceUid: testDataSourceUid }));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio', { queryDataSourceUid: prometheusDataSourceUid }));
@@ -76,7 +76,7 @@ test.describe('Recording rules: token filters', () => {
   });
 
   for (const { operator, token, leaf, shown, hidden } of labelFilterCases) {
-    test(`SEARCH-3: ${token} finds rules whose team label ${operator}`, async ({ page, recordingRules }) => {
+    test(`${token} finds rules whose team label ${operator}`, async ({ page, recordingRules }) => {
       const run = newRunMarker();
       await recordingRules.seedRule(rule(run, LABEL_RULES.payments, { labels: { team: 'payments' } }));
       await recordingRules.seedRule(rule(run, LABEL_RULES.checkout, { labels: { team: 'checkout' } }));
@@ -95,10 +95,7 @@ test.describe('Recording rules: token filters', () => {
     });
   }
 
-  test('SEARCH-3: plugins:hide removes rules owned by a plugin and keeps other origins', async ({
-    page,
-    recordingRules,
-  }) => {
+  test('plugins:hide removes rules owned by a plugin and keeps other origins', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
     await recordingRules.seedRule(
@@ -119,7 +116,7 @@ test.describe('Recording rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: metric: limits rules to the exact recorded metric', async ({ page, recordingRules }) => {
+  test('metric: limits rules to the exact recorded metric', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     const metric = recordingMetricFor(run, 'Checkout latency p99');
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
@@ -137,10 +134,7 @@ test.describe('Recording rules: token filters', () => {
     });
   });
 
-  test('SEARCH-4: targetDatasource: limits rules to those writing to the data source', async ({
-    page,
-    recordingRules,
-  }) => {
+  test('targetDatasource: limits rules to those writing to the data source', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99', { targetDataSourceUid: prometheusDataSourceUid }));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio'));
@@ -159,7 +153,7 @@ test.describe('Recording rules: token filters', () => {
 });
 
 test.describe('Recording rules: sidebar filters', () => {
-  test('SEARCH-3: Rule name filters by title', async ({ page, recordingRules }) => {
+  test('Rule name filters by title', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio'));
@@ -177,7 +171,7 @@ test.describe('Recording rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Add label filter applies a key and value matcher', async ({ page, recordingRules }) => {
+  test('Add label filter applies a key and value matcher', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, LABEL_RULES.payments, { labels: { team: 'payments' } }));
     await recordingRules.seedRule(rule(run, LABEL_RULES.checkout, { labels: { team: 'checkout' } }));
@@ -194,7 +188,7 @@ test.describe('Recording rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Folder adds folders one by one and each can be removed', async ({ page, folder, recordingRules }) => {
+  test('Folder adds folders one by one and each can be removed', async ({ page, folder, recordingRules }) => {
     const run = newRunMarker();
     const otherFolder = await recordingRules.createFolder(`Payments rules ${run}`);
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
@@ -224,10 +218,7 @@ test.describe('Recording rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Query data source adds data sources one by one and each can be removed', async ({
-    page,
-    recordingRules,
-  }) => {
+  test('Query data source adds data sources one by one and each can be removed', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99', { queryDataSourceUid: testDataSourceUid }));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio', { queryDataSourceUid: prometheusDataSourceUid }));
@@ -256,7 +247,7 @@ test.describe('Recording rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-3: Hide plugin rules removes plugin-owned rules', async ({ page, recordingRules }) => {
+  test('Hide plugin rules removes plugin-owned rules', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
     await recordingRules.seedRule(
@@ -277,7 +268,7 @@ test.describe('Recording rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Recorded metric limits rules to the exact metric', async ({ page, recordingRules }) => {
+  test('Recorded metric limits rules to the exact metric', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     const metric = recordingMetricFor(run, 'Checkout latency p99');
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
@@ -296,7 +287,7 @@ test.describe('Recording rules: sidebar filters', () => {
     });
   });
 
-  test('SEARCH-4: Target data source limits rules to those writing to the picked data source', async ({
+  test('Target data source limits rules to those writing to the picked data source', async ({
     page,
     recordingRules,
   }) => {

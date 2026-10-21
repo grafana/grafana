@@ -2,7 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { RuleListPage, type RuleListKind, type SearchLeaf, filterLeaf } from './pages/RuleListPage';
 
-// SEARCH-1: the input keeps text exactly as typed after applying.
+// The input keeps text exactly as typed after applying.
 const journeys: Array<{
   kind: RuleListKind;
   typed: string;
@@ -35,9 +35,7 @@ const journeys: Array<{
 
 test.describe('Search input draft text', () => {
   for (const { kind, typed, canonical, leaves } of journeys) {
-    test(`SEARCH-1 (${kind}): Enter applies a multi-token query and the input keeps the typed text`, async ({
-      page,
-    }) => {
+    test(`${kind}: Enter applies a multi-token query and the input keeps the typed text`, async ({ page }) => {
       const list = new RuleListPage(page, kind);
       await list.goto();
       list.forgetRequests();
@@ -52,7 +50,7 @@ test.describe('Search input draft text', () => {
       await expect(list.searchInput).toHaveValue(typed);
     });
 
-    test(`SEARCH-1 (${kind}): typing applies a multi-token query after the debounce and the input keeps the typed text`, async ({
+    test(`${kind}: typing applies a multi-token query after the debounce and the input keeps the typed text`, async ({
       page,
     }) => {
       const list = new RuleListPage(page, kind);
@@ -71,7 +69,7 @@ test.describe('Search input draft text', () => {
   }
 
   for (const kind of ['alert', 'recording'] as const) {
-    test(`SEARCH-2 (${kind}): Clear filters empties the search input and the search in the URL`, async ({ page }) => {
+    test(`${kind}: Clear filters empties the search input and the search in the URL`, async ({ page }) => {
       const list = new RuleListPage(page, kind);
       await list.goto('latency');
       await expect(list.searchInput).toHaveValue('latency');

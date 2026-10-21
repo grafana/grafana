@@ -10,7 +10,6 @@ test.use({
 
 interface ListPageCase {
   kind: RuleListKind;
-  ids: { navigation: string; links: string };
   ruleTitle: string;
   newRuleLabel: string;
   newRulePath: string;
@@ -19,23 +18,21 @@ interface ListPageCase {
 const listPages: ListPageCase[] = [
   {
     kind: 'alert',
-    ids: { navigation: 'ALERT-5', links: 'ALERT-6' },
     ruleTitle: 'High CPU usage',
     newRuleLabel: 'New alert rule',
     newRulePath: '/alerting/new/alerting',
   },
   {
     kind: 'recording',
-    ids: { navigation: 'REC-4', links: 'REC-5' },
     ruleTitle: 'cpu_usage:avg',
     newRuleLabel: 'New recording rule',
     newRulePath: '/alerting/new/grafana-recording',
   },
 ];
 
-for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
+for (const { kind, ruleTitle, newRuleLabel, newRulePath } of listPages) {
   test.describe(`${kind === 'alert' ? 'Alert' : 'Recording'} rule links`, () => {
-    test(`${ids.navigation}: ${newRuleLabel} opens the creation form without returnTo`, async ({ page, folder }) => {
+    test(`${newRuleLabel} opens the creation form without returnTo`, async ({ page, folder }) => {
       const list = new RuleListPage(page, kind);
       await list.goto(folderScope(folder.uid));
 
@@ -44,7 +41,7 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       await expect(page).toHaveURL(new RegExp(`${newRulePath}(\\?.*)?$`));
     });
 
-    test(`${ids.navigation}: the header offers only the actions of ${kind} rules`, async ({ page, folder }) => {
+    test(`the header offers only the actions of ${kind} rules`, async ({ page, folder }) => {
       const list = new RuleListPage(page, kind);
       await list.goto(folderScope(folder.uid));
       await expect(list.newRuleLink).toBeVisible();
@@ -65,7 +62,7 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       }
     });
 
-    test(`NAV-6: a row's View, Edit and Duplicate links carry no returnTo`, async ({
+    test(`a row's View, Edit and Duplicate links carry no returnTo`, async ({
       page,
       folder,
       alertRules,
@@ -90,7 +87,7 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       );
     });
 
-    test(`${ids.links}: Edit opens the editor by UID and Copy link copies the rule's canonical URL`, async ({
+    test(`Edit opens the editor by UID and Copy link copies the rule's canonical URL`, async ({
       page,
       folder,
       alertRules,

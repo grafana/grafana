@@ -3,7 +3,7 @@ import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { RuleListPage, type RuleListKind, folderScope } from './pages/RuleListPage';
 import { markProvisioned, ruleResourceUrl } from './ruleSeeding';
 
-// ALERT-6/REC-5: requires alerting.rulesAPIV2 for ungrouped rules; proves the editor strips identity on save.
+// Requires alerting.rulesAPIV2 for ungrouped rules; proves the editor strips identity on save.
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,
@@ -40,8 +40,8 @@ async function confirmCopyOfProvisionedRule(page: Page, kind: RuleListKind, titl
   await expect(page).toHaveURL(/\/alerting\/new(\/grafana-recording)?\?.*copyFrom=/);
 }
 
-test.describe('Duplicate (ALERT-6/REC-5)', () => {
-  test('ALERT-6: duplicating a normal Alert rule creates an independent copy and leaves the original untouched', async ({
+test.describe('Duplicate', () => {
+  test('duplicating a normal Alert rule creates an independent copy and leaves the original untouched', async ({
     page,
     folder,
     alertRules,
@@ -73,7 +73,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     expect(original.spec.title).toBe(title);
   });
 
-  test('ALERT-6: duplicating a provisioned-looking Alert rule warns first, then creates an unprovisioned copy', async ({
+  test('duplicating a provisioned-looking Alert rule warns first, then creates an unprovisioned copy', async ({
     page,
     folder,
     alertRules,
@@ -99,7 +99,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     expect(original.metadata.annotations?.['grafana.com/provenance']).toBe('api');
   });
 
-  test('REC-5: duplicating a normal Recording rule creates an independent copy and leaves the original untouched', async ({
+  test('duplicating a normal Recording rule creates an independent copy and leaves the original untouched', async ({
     page,
     folder,
     recordingRules,
@@ -129,7 +129,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     expect(original.spec.title).toBe(title);
   });
 
-  test('REC-5: duplicating a provisioned-looking Recording rule warns first, then creates an unprovisioned copy', async ({
+  test('duplicating a provisioned-looking Recording rule warns first, then creates an unprovisioned copy', async ({
     page,
     folder,
     recordingRules,

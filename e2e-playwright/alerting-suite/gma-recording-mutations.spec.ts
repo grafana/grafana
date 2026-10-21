@@ -3,7 +3,7 @@ import { RuleListPage, folderScope } from './pages/RuleListPage';
 import { ruleResourceUrl } from './ruleSeeding';
 
 test.describe('Recording rule mutations', () => {
-  test('REC-6: Resume then Pause persist spec.paused across a reload', async ({ page, folder, recordingRules }) => {
+  test('Resume then Pause persist spec.paused across a reload', async ({ page, folder, recordingRules }) => {
     const title = 'CPU usage average';
     await recordingRules.seedRule({ title, interval: '1m', metric: 'cpu_usage:avg' });
     const list = new RuleListPage(page, 'recording');
@@ -29,11 +29,7 @@ test.describe('Recording rule mutations', () => {
     await expect(list.statusIcon(title, 'Paused')).toBeVisible();
   });
 
-  test('REC-7: Delete removes the rule from the active list after a reload', async ({
-    page,
-    folder,
-    recordingRules,
-  }) => {
+  test('Delete removes the rule from the active list after a reload', async ({ page, folder, recordingRules }) => {
     const title = 'Disk usage forecast';
     const uid = await recordingRules.seedRule({ title, interval: '1m', metric: 'disk_usage:forecast' });
     const list = new RuleListPage(page, 'recording');
@@ -54,7 +50,7 @@ test.describe('Recording rule mutations', () => {
     expect(response.status()).toBe(404);
   });
 
-  test('STATE-3: Resume and Delete refresh the open Folders view in place, without a page load', async ({
+  test('Resume and Delete refresh the open Folders view in place, without a page load', async ({
     page,
     folder,
     recordingRules,

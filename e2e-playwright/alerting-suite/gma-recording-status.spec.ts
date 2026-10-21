@@ -61,7 +61,7 @@ const healthCases: Array<{
 
 test.describe('Recording rules: health filter', () => {
   for (const { token, apiValues, matching, other } of healthCases) {
-    test(`SEARCH-5: ${token} shows rules with ${apiValues.join(' or ')} health and leaves out other health and rules without status`, async ({
+    test(`${token} shows rules with ${apiValues.join(' or ')} health and leaves out other health and rules without status`, async ({
       page,
       request,
       workerApi,
@@ -89,12 +89,7 @@ test.describe('Recording rules: health filter', () => {
     });
   }
 
-  test('SEARCH-5: the Health select filters by the chosen health', async ({
-    page,
-    request,
-    workerApi,
-    recordingRules,
-  }) => {
+  test('the Health select filters by the chosen health', async ({ page, request, workerApi, recordingRules }) => {
     const run = newRunMarker();
     const failing: StatusRule = { name: 'Rule with Error health', health: 'Error' };
     const recording: StatusRule = { name: 'Rule with Recording health', health: 'Recording' };
@@ -126,7 +121,7 @@ test.describe('Recording rules: health filter', () => {
 });
 
 test.describe('Recording rules: status icon', () => {
-  test('REC-3: each row shows the icon for its seeded health, and Status unavailable when it has none', async ({
+  test('each row shows the icon for its seeded health, and Status unavailable when it has none', async ({
     page,
     request,
     workerApi,
