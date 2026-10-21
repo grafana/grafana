@@ -716,7 +716,7 @@ describe('PanelPlugin', () => {
         interactions: [
           {
             id: 0,
-            name: 'toggleColumnVisibility',
+            name: 'organize',
             mutates: 'TRANSFORMATION' as const,
             settings: ['columnName'],
             promotionPath: jest.fn(),

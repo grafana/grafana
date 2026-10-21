@@ -1,4 +1,10 @@
-import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import {
+  identityOverrideProcessor,
+  FieldConfigProperty,
+  type PanelInteraction,
+  PanelPlugin,
+  standardEditorsRegistry,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -9,7 +15,6 @@ import {
 } from '@grafana/schema';
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
@@ -150,37 +155,26 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setSuggestionsSupplier(tableSuggestionsSupplier)
   // Prototype: settings and promotionPath are placeholders until promotion is implemented.
   .setPanelInteractions({
-    transformationsOwner: TABLE_TRANSFORMATIONS_OWNER,
     interactions: [
       {
         id: 0,
-        name: 'toggleColumnVisibility',
-        description: 'Hide or show a column',
+        name: 'organize',
+        description: 'Manipulate columns',
         mutates: 'TRANSFORMATION',
-        settings: ['columnName'],
-        // Will add or edit the organize fields transformation's excludeByName.
-        promotionPath: (panel) => panel,
-      },
-      {
-        id: 1,
-        name: 'reorderColumns',
-        description: 'Reorder columns',
-        mutates: 'TRANSFORMATION',
-        settings: ['columnOrder'],
-        // Will add or edit the organize fields transformation's indexByName.
-        promotionPath: (panel) => panel,
-      },
-      {
-        id: 2,
-        name: 'renameColumn',
-        description: 'Rename a column',
-        mutates: 'TRANSFORMATION',
-        settings: ['columnName', 'newColumnName'],
-        // Will add or edit the organize fields transformation's renameByName.
-        promotionPath: (panel) => panel,
+        // Hidden and reordered columns share one organize fields transformation per frame.
+        settings: ['hiddenColumns', 'reindexedColumns'],
+        // Will append the organize fields transformations to the panel's saved transformations.
+        promotionPath: placeholderPromotion('organize'),
       },
     ],
   });
+
+function placeholderPromotion(name: string): PanelInteraction['promotionPath'] {
+  return (dashboard) => {
+    console.log(`Promoting table interaction: ${name}`);
+    return dashboard;
+  };
+}
 
 // `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
 // rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.

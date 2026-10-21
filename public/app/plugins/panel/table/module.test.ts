@@ -137,4 +137,15 @@ describe('table module', () => {
       expect(showIf('metric')).toBe(true);
     });
   });
+
+  it('declares a single organize interaction for hidden and reordered columns', () => {
+    expect(plugin.panelInteractions?.interactions).toEqual([
+      expect.objectContaining({
+        id: 0,
+        name: 'organize',
+        mutates: 'TRANSFORMATION',
+        settings: ['hiddenColumns', 'reindexedColumns'],
+      }),
+    ]);
+  });
 });

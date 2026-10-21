@@ -7,21 +7,24 @@ import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
+import { AD_HOC_TRANSFORMATIONS_OWNER, canPromoteAdHocChanges, promoteAdHocChanges } from './promoteAdHocChanges';
+
 interface Props {
   panel: VizPanel;
 }
 
 /**
  * Shown when viewer-only interactions (such as hiding a table column) are changing how the panel looks.
- * Users who can save the dashboard get a menu to save the changes.
+ * Users who can save a v2 dashboard get a menu to save the changes.
  */
 export function PanelAdHocChangesAction({ panel }: Props) {
-  const { meta } = getDashboardSceneFor(panel).useState();
+  const dashboard = getDashboardSceneFor(panel);
+  const { meta } = dashboard.useState();
   // Re-render once the plugin has loaded so its declared interactions are available.
   panel.useState();
-  const owner = panel.getPlugin()?.panelInteractions?.transformationsOwner;
-  const hasChanges = useHasRuntimeTransformations(panel, owner);
-  const canSave = Boolean(meta.canSave);
+  const hasInteractions = Boolean(panel.getPlugin()?.panelInteractions);
+  const hasChanges = useHasAdHocTransformations(panel, hasInteractions);
+  const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(dashboard);
 
   if (!hasChanges) {
     return null;
@@ -37,7 +40,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
       data-testid={selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction}
     >
       <Trans i18nKey="panel-adhoc-changes.button">View changes</Trans>
-      {canSave && <Icon name="angle-down" />}
+      {canPromote && <Icon name="angle-down" />}
     </Button>
   );
 
@@ -50,15 +53,15 @@ export function PanelAdHocChangesAction({ panel }: Props) {
       onPointerUp={(ev) => ev.stopPropagation()}
       onClick={(ev) => ev.stopPropagation()}
     >
-      {canSave ? (
+      {canPromote ? (
         <Dropdown
           placement="bottom-end"
           overlay={
             <Menu>
               <Menu.Item
                 label={t('panel-adhoc-changes.save-to-dashboard', 'Save to dashboard')}
-                // Prototype: promotion is not implemented yet.
-                onClick={() => {}}
+                // Prototype: the promoted JSON is not saved yet.
+                onClick={() => promoteAdHocChanges(panel)}
               />
             </Menu>
           }
@@ -72,13 +75,13 @@ export function PanelAdHocChangesAction({ panel }: Props) {
   );
 }
 
-function useHasRuntimeTransformations(panel: VizPanel, owner: string | undefined): boolean {
+function useHasAdHocTransformations(panel: VizPanel, enabled: boolean): boolean {
   const api = panel.getRuntimeTransformations();
   const subscribe = useCallback(
-    (onChange: () => void) => (owner ? api.subscribe(owner, onChange) : () => {}),
-    [api, owner]
+    (onChange: () => void) => (enabled ? api.subscribe(AD_HOC_TRANSFORMATIONS_OWNER, onChange) : () => {}),
+    [api, enabled]
   );
-  const getSnapshot = useCallback(() => Boolean(owner && api.get(owner).length > 0), [api, owner]);
+  const getSnapshot = useCallback(() => enabled && api.get(AD_HOC_TRANSFORMATIONS_OWNER).length > 0, [api, enabled]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }

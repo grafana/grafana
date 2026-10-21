@@ -1,6 +1,8 @@
 import { defaultsDeep, set } from 'lodash';
 import { type ComponentClass, type ComponentType } from 'react';
 
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
@@ -17,7 +19,6 @@ import {
   type PanelMigrationHandler,
   type PanelTypeChangedHandler,
   type PanelPluginDataSupport,
-  type PanelData,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
@@ -189,16 +190,14 @@ export interface PanelInteraction {
   /** What part of the panel the interaction changes when it is promoted. */
   mutates: 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
   settings: unknown[];
-  /** Applies the interaction's settings to the saved panel. */
-  promotionPath: (panel: PanelData, settings: unknown) => PanelData;
+  /** Writes the interaction into the v2 dashboard JSON and returns the updated JSON. */
+  promotionPath: (dashboard: DashboardV2Spec, settings: unknown) => DashboardV2Spec;
 }
 
 /**
  * @alpha
  */
 export interface PanelInteractions {
-  /** Owner key the panel's interactions use when writing runtime transformations. */
-  transformationsOwner?: string;
   interactions: PanelInteraction[];
 }
 
