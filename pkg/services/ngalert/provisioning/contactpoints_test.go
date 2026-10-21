@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -414,6 +415,56 @@ func TestIntegrationContactPointService(t *testing.T) {
 					require.NoError(t, err)
 				}
 				require.Equal(t, tc.want, calls)
+			})
+		}
+	})
+
+	t.Run("update in an existing SQL transaction", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			rename bool
+		}{
+			{name: "rename is rejected", rename: true},
+			{name: "unchanged name is allowed"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				cfg := createEncryptedConfig(t, secretsService)
+				store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+				sut.receiverService = &fakeReceiverService{}
+
+				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+				require.NoError(t, err)
+				if tc.rename {
+					cp.Name = "new-name"
+				}
+
+				saved := false
+				store.UpdateFn = func(context.Context, *models.SaveAlertmanagerConfigurationCmd) error {
+					if tc.rename {
+						t.Fatal("a rename must reject the caller's transaction before writing")
+					}
+					saved = true
+					return nil
+				}
+				sut.resourcePermissions = contactPointPermissionSpy{
+					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
+					copy: func(context.Context) {
+						t.Fatal("a rename must reject the caller's transaction before copying permissions")
+					},
+					refresh: func(context.Context, identity.Requester) {
+						t.Fatal("an update in the caller's transaction must not refresh permissions")
+					},
+				}
+
+				ctx := context.WithValue(context.Background(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
+				err = sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
+				if tc.rename {
+					require.ErrorIs(t, err, models.ErrReceiverUpdateInTransaction)
+					return
+				}
+				require.NoError(t, err)
+				require.True(t, saved)
 			})
 		}
 	})

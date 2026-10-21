@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -366,6 +367,10 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
+	// A rename that copies permissions must own the transaction so the permission refresh runs after commit.
+	if renamed && newReceiverCreated && sqlstore.IsInTransaction(ctx) {
+		return models.ErrReceiverUpdateInTransaction.Errorf("contact point renames cannot run inside an existing SQL transaction")
+	}
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if renamed {
 			if err := ecp.applyReceiverRename(ctx, orgID, revision, oldReceiver, newReceiver, fullRemoval, newReceiverCreated, provenance); err != nil {
