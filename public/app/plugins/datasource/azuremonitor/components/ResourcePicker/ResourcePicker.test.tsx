@@ -5,6 +5,7 @@ import { omit } from 'lodash';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
+import AzureResourceGraphDatasource from '../../azure_resource_graph/azure_resource_graph_datasource';
 import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import createMockDatasource, { createMockLocations, createMockMetricsNamespaces } from '../../mocks/datasource';
@@ -111,6 +112,64 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(
       screen.getByText('Some resources do not have metrics. Select a resource to load its available metrics.')
     ).toBeInTheDocument();
+  });
+
+  it('browses and applies an unlisted metrics resource without querying subscription namespaces', async () => {
+    const settings = createMockInstanceSetttings();
+    const graph = new AzureResourceGraphDatasource(settings);
+    graph.postResource = jest.fn().mockImplementation(async (_path, { query }) => {
+      if (query.includes('join kind=inner')) {
+        return {
+          data: [{ subscriptionId: 'sub2', subscriptionName: 'Second subscription' }],
+        };
+      }
+      if (query.includes('summarize count=count() by resourceGroupName')) {
+        return {
+          data: [{ resourceGroupName: 'test-rg', resourceGroupURI: '/subscriptions/sub2/resourceGroups/test-rg' }],
+        };
+      }
+      return {
+        data: [
+          {
+            id: '/subscriptions/sub2/resourceGroups/test-rg/providers/contoso.monitor/widgets/widget',
+            name: 'widget',
+            type: 'contoso.monitor/widgets',
+            resourceGroup: 'test-rg',
+            location: 'westus3',
+          },
+        ],
+      };
+    });
+    const datasource = createMockDatasource({ azureResourceGraphDatasource: graph });
+    const data = new ResourcePickerData(settings, datasource.azureMonitorDatasource, graph);
+    const onApply = jest.fn();
+    render(
+      <ResourcePicker
+        {...defaultProps}
+        datasource={datasource}
+        resourcePickerData={data}
+        queryType="metrics"
+        selectableEntryTypes={[ResourceRowType.Resource]}
+        onApply={onApply}
+      />
+    );
+
+    await userEvent.click(await screen.findByLabelText('Expand Second subscription'));
+    await userEvent.click(await screen.findByLabelText('Expand test-rg'));
+    await userEvent.click(await screen.findByLabelText('widget'));
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(onApply).toHaveBeenCalledWith([
+      {
+        subscription: 'sub2',
+        resourceGroup: 'test-rg',
+        metricNamespace: 'contoso.monitor/widgets',
+        resourceName: 'widget',
+        region: 'westus3',
+      },
+    ]);
+    expect(graph.postResource).toHaveBeenCalledTimes(3);
+    expect(datasource.azureMonitorDatasource.getMetricNamespaces).not.toHaveBeenCalled();
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resources={[noResourceURI]} />);
