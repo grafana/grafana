@@ -283,10 +283,7 @@ describe('TableDataGrid', () => {
     });
 
     it('gives the first- and last-column header corner masks separate pseudo-elements', () => {
-      // A single-column table's only header cell carries both FIRST_COLUMN_CLASS and
-      // LAST_COLUMN_CLASS (see markEdgeColumns). If both masks targeted the same pseudo-element,
-      // the second rule's inset-inline-end would land on the first rule's box alongside its
-      // inset-inline-start, stretching it to the cell's full width instead of a small corner patch.
+      // A single column's cell has both edge classes; sharing one pseudo-element would collide.
       render(
         <TableDataGrid {...makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] })} />
       );

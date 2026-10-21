@@ -359,11 +359,9 @@ export const getGridStyles = memoize(
           // the gap beside the table, and as whatever the table sits on — makes the corner opaque, so
           // there is nothing left to show through wherever it lands.
           //
-          // A single-column table's only cell carries both edge classes at once (markEdgeColumns tags
-          // index 0 and the last index, which coincide when length === 1). The two masks need separate
-          // pseudo-elements, or the second rule's `inset-inline-end`/background would land on top of
-          // the first's `inset-inline-start`/background on the same ::after — with both insets and an
-          // explicit width set, the box stretches to fill the cell instead of sitting in one corner.
+          // A single column's cell has both edge classes (see markEdgeColumns), so each mask needs its
+          // own pseudo-element — sharing ::after would stretch the box to the cell's full width instead
+          // of a corner.
           [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::after`]: {
             ...headerCornerMask(cornerRadius),
             insetInlineStart: 0,
