@@ -25,7 +25,7 @@ export function RecordingRulesListView() {
   if (error !== undefined) {
     return (
       <InlineRequestError
-        title={t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load rules')}
+        title={t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load recording rules')}
         error={error}
         onRetry={retry}
       />
