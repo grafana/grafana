@@ -1,8 +1,28 @@
 import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { NavID, type NavId } from './constants';
+
+/** Whether to build the nav tree client-side, covering the static sections only. */
+export function isClientNavTreeEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
+}
+
+/** Whether app plugin nav items are fetched and folded in, on top of the client build. */
+function arePluginNavItemsEnabled(): boolean {
+  return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
+}
+
+/**
+ * Whether the app metas are there to be read. The metas endpoint needs a session,
+ * so app.ts skips the fetch without one — and the tree must not then read a cache
+ * nobody filled. Both sites go through this, so they cannot drift apart.
+ */
+export function isPluginNavAvailable(): boolean {
+  return arePluginNavItemsEnabled() && contextSrv.user.orgRole !== '';
+}
 
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
@@ -43,6 +63,9 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 // Top-level sections built unconditionally as attachment targets, pruned when
 // nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
 // RemoveEmptyDrilldownSection, plus Administration once its subsections go.
+//
+// "More apps" is not here: like the server, the client creates that section only
+// once it has an app to put in it, so it is never empty.
 const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
 
 /** Depth-first search of a nav tree by item id */
@@ -52,6 +75,23 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
       return node;
     }
     const found = node.children && findNavById(node.children, id);
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Depth-first search of a nav tree by item url; `match` sees each url as the tree stores it (app sub url
+ * included), so a caller decides what counts as the same destination (exact, by path, ...).
+ */
+export function findNavByUrl(nodes: NavModelItem[], match: (url: string) => boolean): NavModelItem | undefined {
+  for (const node of nodes) {
+    if (node.url !== undefined && match(node.url)) {
+      return node;
+    }
+    const found = node.children && findNavByUrl(node.children, match);
     if (found) {
       return found;
     }
@@ -157,3 +197,6 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
+
+/** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
+export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;

@@ -17,19 +17,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader prefers configured cloud routes (appmanifest apiserver,
-// the two fixed aggregate targets, and/or plugins_url -- see
+// ProvideRoutesLoader prefers configured cloud routes (aggregate targets,
+// plugins_url, core_url and/or st_discovery_url -- see
 // ProvideCloudRoutesLoaderFactory), then local plugins. Dummy groups let the
 // router run when none of those sources are available.
+//
+// In middleware mode the router runs inside a single-tenant Grafana, so the
+// cloud sources are never loaded.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg, deps.PluginDependencies); err != nil || cloud != nil {
-		return cloud, err
+	middleware := deps.Features != nil && deps.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	if !middleware {
+		// The cloud loader is invalid when running in OSS/middleware mode
+		if cloud, err := ProvideCloudRoutesLoaderFactory(cfg, deps.PluginDependencies); err != nil || cloud != nil {
+			return cloud, err
+		}
 	}
 
 	// Plugin sources
 	if deps.PluginSources != nil {
-		//nolint:staticcheck
-		middleware := deps.Features != nil && deps.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 		if middleware {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
 			if err := initLocalPlugins(context.Background(), deps); err != nil {
@@ -69,6 +74,7 @@ func ProvideCloudRoutesLoader(
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,
 		Unified:            clients.Resource,
+		AccessClient:       clients.Access,
 		Decrypter:          decrypter,
 		TokenExchanger:     newClientV3TokenExchanger(cfg),
 		Tracer:             tracer,

@@ -1,15 +1,17 @@
 import { waitFor } from '@testing-library/react';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { NotebookUnavailableError } from '../api/notebookResource';
 import { defaultPanelKind, type PanelElement } from '../types';
 
-import { addPanelToExistingNotebook } from './addPanelToNotebook';
+import { addToExistingNotebook } from './addPanelToNotebook';
+import { withCapturedTimeRange } from './capturedTimeRange';
 import { quickAddPanelToNotebook } from './quickAddPanelToNotebook';
 import { clearRecentNotebook, getRecentNotebook, setRecentNotebook } from './recentNotebook';
 
 jest.mock('./addPanelToNotebook', () => ({
   ...jest.requireActual('./addPanelToNotebook'),
-  addPanelToExistingNotebook: jest.fn(),
+  addToExistingNotebook: jest.fn(),
 }));
 jest.mock('./recentNotebook', () => ({
   getRecentNotebook: jest.fn(),
@@ -19,7 +21,7 @@ jest.mock('./recentNotebook', () => ({
 jest.mock('../analytics/main', () => ({ NotebookAnalytics: { addToNotebookFailed: jest.fn() } }));
 jest.mock('app/store/store', () => ({ dispatch: jest.fn() }));
 
-const addToExisting = jest.mocked(addPanelToExistingNotebook);
+const addToExisting = jest.mocked(addToExistingNotebook);
 const getRecent = jest.mocked(getRecentNotebook);
 const openPicker = jest.fn();
 const panel: PanelElement = defaultPanelKind();
@@ -47,9 +49,51 @@ describe('quickAddPanelToNotebook', () => {
 
     await quickAddPanelToNotebook(buildPanel, 'dashboard_panel', true, openPicker, 'panel-1');
 
-    expect(addToExisting).toHaveBeenCalledWith('nb1', panel, 'dashboard_panel', true);
+    expect(addToExisting).toHaveBeenCalledWith(
+      'nb1',
+      [{ kind: 'panel', panel, isLibraryPanel: true }],
+      'dashboard_panel',
+      'user',
+      false
+    );
     expect(setRecentNotebook).toHaveBeenCalledWith('nb1', 'Renamed investigation');
     expect(openPicker).not.toHaveBeenCalled();
+  });
+
+  it('preserves the captured window and reports a locked panel when quick adding', async () => {
+    const lockedPanel = withCapturedTimeRange(panel, {
+      from: '2026-10-20T09:00:00.000Z',
+      to: '2026-10-20T10:00:00.000Z',
+    });
+
+    await quickAddPanelToNotebook(async () => lockedPanel, 'explore', false, openPicker, 'left');
+
+    expect(addToExisting).toHaveBeenCalledWith(
+      'nb1',
+      [{ kind: 'panel', panel: lockedPanel, isLibraryPanel: false }],
+      'explore',
+      'user',
+      true
+    );
+  });
+
+  it('reports the captured lock state when a quick add fails', async () => {
+    const lockedPanel = withCapturedTimeRange(panel, {
+      from: '2026-10-20T09:00:00.000Z',
+      to: '2026-10-20T10:00:00.000Z',
+    });
+    addToExisting.mockRejectedValueOnce(new NotebookUnavailableError('Forbidden'));
+
+    await quickAddPanelToNotebook(async () => lockedPanel, 'explore', false, openPicker, 'left');
+
+    expect(NotebookAnalytics.addToNotebookFailed).toHaveBeenCalledWith(
+      'nb1',
+      'explore',
+      'existing',
+      'write_failed',
+      true
+    );
+    expect(openPicker).toHaveBeenCalledTimes(1);
   });
 
   it('does not append the same panel twice when quick add is activated again before the write finishes', async () => {

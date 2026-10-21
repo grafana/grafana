@@ -182,7 +182,7 @@ func TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates(t *testing.T) {
 func TestIntegrationGuaranteedUpdateCreateOnUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
+	for _, s := range storageTypes {
 		t.Run(string(s), func(t *testing.T) {
 			t.Run("conditional update on deleted returns conflict", func(t *testing.T) {
 				ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))

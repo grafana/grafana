@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/sony/gobreaker/v2"
 )
@@ -127,9 +129,49 @@ func newGroupBreaker(group string) *groupBreaker {
 
 // newObservedGroupBreaker is newGroupBreaker, calling onChange with the group
 // and its new state on every transition.
+// A group's breaker opens after breakerOpenAfter consecutive failures and
+// lets a trial request through after breakerOpenFor. These are gobreaker's
+// defaults, set explicitly so the status page reports what is in force.
+const (
+	breakerOpenAfter = 6
+	breakerOpenFor   = 60 * time.Second
+)
+
+// breakerView records a group breaker's state as the breaker reports its
+// changes, so the status page and the metrics can read it without changing it.
+// gobreaker's State is not a pure read: once an open breaker's timeout has
+// passed, it moves the breaker to half-open, clears its counts and fires the
+// change callback, which only a request should do.
+type breakerView struct {
+	state    atomic.Int32 // a gobreaker.State; the zero value is closed
+	openedAt atomic.Int64 // Unix nanoseconds when the breaker last opened
+}
+
+func (v *breakerView) record(to gobreaker.State) {
+	if to == gobreaker.StateOpen {
+		v.openedAt.Store(time.Now().UnixNano())
+	}
+	v.state.Store(int32(to))
+}
+
+func (v *breakerView) State() gobreaker.State { return gobreaker.State(v.state.Load()) }
+
+// RetryAt is when an open breaker lets its next request through as a trial.
+// Its state stays open until that request arrives.
+func (v *breakerView) RetryAt() (time.Time, bool) {
+	if v.State() != gobreaker.StateOpen {
+		return time.Time{}, false
+	}
+	return time.Unix(0, v.openedAt.Load()).Add(breakerOpenFor).UTC(), true
+}
+
 func newObservedGroupBreaker(group string, onChange func(group string, to gobreaker.State)) *groupBreaker {
 	settings := gobreaker.Settings{
-		Name: group,
+		Name:    group,
+		Timeout: breakerOpenFor,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			return counts.ConsecutiveFailures >= breakerOpenAfter
+		},
 		IsExcluded: func(err error) bool {
 			return errors.Is(err, errCallerGone)
 		},

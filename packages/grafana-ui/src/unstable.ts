@@ -38,3 +38,6 @@ export type {
 export { getQueryFieldConfig } from './components/QueryFieldConfig/queryFieldConfig';
 export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/QueryFieldConfig/queryFieldConfig';
 export { TableNG } from './components/Table/TableNG/TableNG';
+export { RangeSliderG14 } from './components/Slider/RangeSliderG14';
+export type { RangeSliderG14Props } from './components/Slider/types';
+export { SanitizedSVG } from './components/SanitizedSVG/SanitizedSVG';

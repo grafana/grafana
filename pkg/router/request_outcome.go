@@ -11,7 +11,7 @@ import (
 const (
 	routeBackend   = "backend"   // proxied to, or served by, the group's backend
 	routeFallback  = "fallback"  // sent to the single-tenant fallback
-	routeDiscovery = "discovery" // root discovery (/apis, /openapi/v3), built by the router
+	routeDiscovery = "discovery" // root discovery (/apis, /openapi/v3) and /apis/discovery, built by the router
 	routeNext      = "next"      // not the router's; passed to the next handler
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
 
@@ -37,6 +37,8 @@ type requestOutcome struct {
 	route    string
 	pluginID string
 	failure  string
+	// verb caches requestVerb, which parses the request each time.
+	verb string
 }
 
 func withRequestOutcome(req *http.Request) (*http.Request, *requestOutcome) {

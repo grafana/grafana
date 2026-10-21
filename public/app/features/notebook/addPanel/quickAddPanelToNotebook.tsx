@@ -10,7 +10,7 @@ import { NotebookUnavailableError } from '../api/notebookResource';
 import { type PanelElement } from '../types';
 import { notebookViewHref } from '../urls';
 
-import { addPanelErrorMessage, addPanelFailureReason, addPanelToExistingNotebook } from './addPanelToNotebook';
+import { addPanelErrorMessage, addPanelFailureReason, addToExistingNotebook } from './addPanelToNotebook';
 import { clearRecentNotebook, getRecentNotebook, setRecentNotebook } from './recentNotebook';
 
 const inFlightAdds = new Set<string>();
@@ -66,12 +66,16 @@ export async function quickAddPanelToNotebook(
 
   inFlightAdds.add(inFlightKey);
   let panelWasBuilt = false;
+  let lockTimeRange = false;
 
   try {
     const panel = await buildPanel();
     panelWasBuilt = true;
+    lockTimeRange =
+      panel.kind === 'Panel' &&
+      Boolean(panel.spec.data.spec.queryOptions.timeFrom && panel.spec.data.spec.queryOptions.timeTo);
     const added = await enqueueNotebookWrite(recent.uid, () =>
-      addPanelToExistingNotebook(recent.uid, panel, entryPoint, isLibraryPanel)
+      addToExistingNotebook(recent.uid, [{ kind: 'panel', panel, isLibraryPanel }], entryPoint, 'user', lockTimeRange)
     );
     if (!added) {
       return;
@@ -94,7 +98,8 @@ export async function quickAddPanelToNotebook(
       recent.uid,
       entryPoint,
       NOTEBOOK_ADD_TARGET.EXISTING,
-      addPanelFailureReason(error, panelWasBuilt)
+      addPanelFailureReason(error, panelWasBuilt),
+      lockTimeRange
     );
 
     if (error instanceof NotebookUnavailableError) {

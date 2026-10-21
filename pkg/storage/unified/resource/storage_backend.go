@@ -15,6 +15,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"uuid"
 
@@ -24,6 +25,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -70,6 +73,8 @@ func IsResourceNameMixedCase(req *resourcepb.ReadRequest, res *BackendReadRespon
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	DryRun           bool
+	BlobEnabled      bool
+	BlobDryRun       bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
@@ -100,6 +105,9 @@ type kvStorageBackend struct {
 	historyPruner           Pruner
 	garbageCollection       GarbageCollectionConfig
 	gcGate                  *GCGate
+	blobGC                  *BlobGarbageCollector
+	blobGCMu                sync.Mutex
+	blobGCMetrics           *BlobGCMetrics
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	metrics                 *kvBackendMetrics
@@ -139,6 +147,8 @@ type kvBackendMetrics struct {
 	WatchNotificationsPublished       *prometheus.CounterVec
 	WatchNotificationPublishFailures  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
+	GCCycleDuration                   *prometheus.HistogramVec
+	GCCycleBatches                    *prometheus.HistogramVec
 	ResourceVersionGenerationFailures *prometheus.CounterVec
 	ResourceVersionClockRegression    prometheus.Gauge
 	ResourceVersionOrderingRejections *prometheus.CounterVec
@@ -200,6 +210,24 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
 		}, []string{"group", "resource", "action"}),
+		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
+			Help:    "Elapsed duration of a garbage-collection cycle, including batch waits, by outcome.",
+			Buckets: []float64{1, 5, 30, 60, 300, 900, 1800, 3600, 7200, 14400, 28800, 43200, 86400, 172800},
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"outcome"}),
+		GCCycleBatches: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_storage_server_gc_cycle_batches",
+			Help:    "Number of nonempty scan batches in a garbage-collection cycle, including partially processed batches, by outcome.",
+			Buckets: []float64{1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000},
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"outcome"}),
 		GCGroupResourceDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_group_resource_duration_seconds",
 			Help:    "Duration of a garbage-collection pass over one group/resource.",
@@ -381,6 +409,8 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		GarbageCollection: GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
+			BlobEnabled:      cfg.BlobGarbageCollectionEnabled,
+			BlobDryRun:       cfg.BlobGarbageCollectionDryRun,
 			Interval:         cfg.GarbageCollectionInterval,
 			BatchSize:        cfg.GarbageCollectionBatchSize,
 			BatchWait:        cfg.GarbageCollectionBatchWait,
@@ -478,6 +508,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
+		blobGCMetrics:           NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
 		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disableStorageServices:  opts.DisableStorageServices,
@@ -756,15 +787,88 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	return nil
 }
 
+func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
+	b.blobGCMu.Lock()
+	defer b.blobGCMu.Unlock()
+	// Resource GC defers this call, including when shutdown cancels its context.
+	if ctx.Err() != nil {
+		return
+	}
+	if b.blobGC == nil {
+		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
+	}
+	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
+	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
+	if err != nil && ctx.Err() != nil && onlyCancellationErrors(err) {
+		b.blobGCMetrics.RecordInterrupted(count, dryRun)
+		b.log.Debug("blob garbage collection interrupted", "error", err)
+		return
+	}
+	b.blobGCMetrics.Record(count, dryRun, err)
+	skipped := b.blobGC.SkippedWithoutAge()
+	b.blobGCMetrics.RecordSkippedWithoutAge(skipped, err)
+	if err != nil {
+		b.log.Error("blob garbage collection failed", "error", err)
+		return
+	}
+	logArgs := []any{"blobs", count, "dryRun", dryRun}
+	if skipped > 0 {
+		logArgs = append(logArgs, "skippedWithoutAge", skipped)
+	}
+	b.log.Info("blob garbage collection finished", logArgs...)
+}
+
+// onlyCancellationErrors checks every branch of a joined error so a storage
+// failure collected before cancellation is still reported.
+func onlyCancellationErrors(err error) bool {
+	if err == nil {
+		return false
+	}
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		children := joined.Unwrap()
+		if len(children) == 0 {
+			return false
+		}
+		for _, child := range children {
+			if !onlyCancellationErrors(child) {
+				return false
+			}
+		}
+		return true
+	}
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok && wrapped.Unwrap() != nil {
+		return onlyCancellationErrors(wrapped.Unwrap())
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	return status.Code(err) == codes.Canceled || status.Code(err) == codes.DeadlineExceeded
+}
+
 // runGarbageCollection identifies deleted resources that are safe
 // to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
 	defer span.End()
+	if b.garbageCollection.BlobEnabled {
+		defer b.collectBlobs(ctx)
+	}
+
+	start := time.Now()
+	var batches int
+	outcome := "success"
+	defer func() {
+		if ctx.Err() != nil {
+			outcome = "cancelled"
+		}
+		b.metrics.GCCycleDuration.WithLabelValues(outcome).Observe(time.Since(start).Seconds())
+		b.metrics.GCCycleBatches.WithLabelValues(outcome).Observe(float64(batches))
+	}()
 
 	// get group and resources
 	groupResources, err := b.dataStore.getGroupResources(ctx)
 	if err != nil {
+		outcome = "error"
 		b.log.Error("failed to list group resources for garbage collection", "error", err)
 		return
 	}
@@ -776,8 +880,10 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 
 		// garbageCollectGroupResource will remove all deleted key for resources from a given group+resource
 		// with resource versions older than the cutoff timestamp,
-		err := b.garbageCollectGroupResource(ctx, gr.Group, gr.Resource, resourceCutoff)
+		groupBatches, err := b.garbageCollectGroupResource(ctx, gr.Group, gr.Resource, resourceCutoff)
+		batches += groupBatches
 		if err != nil {
+			outcome = "error"
 			b.log.Error("garbage collection failed",
 				"group", gr.Group,
 				"resource", gr.Resource,
@@ -800,7 +906,7 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 // Revisions newer than that marker are retained, so trash left behind by an object that was
 // deleted and later recreated with the same name is collected, while the recreated revisions
 // (and any deletion still within the retention window) are kept.
-func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) error {
+func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) (int, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.garbageCollectGroupResource")
 	batchSize := b.garbageCollection.BatchSize
 
@@ -811,6 +917,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	start := time.Now()
 	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
+	batches := 0
 	totalDeleted := int64(0)
 	deletedPerNamespace := map[string]int64{}
 
@@ -855,14 +962,17 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		for dataKey, err := range it {
 			if err != nil {
-				return fmt.Errorf("failed to list collection before delete: %s", err)
+				return batches, fmt.Errorf("failed to list collection before delete: %s", err)
 			}
 
+			if keysProcessed == 0 {
+				batches++
+			}
 			keysProcessed++
 
 			dk, err := ParseKey(dataKey)
 			if err != nil {
-				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
+				return batches, fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
 			objectKey := ListRequestKey{
@@ -890,7 +1000,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			if dk.Action == DataActionDeleted {
 				// Every buffered revision is <= this expired marker's RV, so it is all trash.
 				if err := deleteBuffered(); err != nil {
-					return err
+					return batches, err
 				}
 			}
 		}
@@ -902,7 +1012,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return batches, ctx.Err()
 		case <-time.After(b.garbageCollection.BatchWait):
 		}
 	}
@@ -927,7 +1037,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		)
 	}
 
-	return nil
+	return batches, nil
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
@@ -1619,9 +1729,11 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 	}
 	byKey := make(map[string]int, len(pending)*len(actions))
 	candidates := make([]kv.DataKey, 0, len(pending)*len(actions))
+	requested := 0
 	for _, i := range pending {
 		req := requests[i]
 		rv := ToSnowflakeRV(req.ResourceVersion)
+		before := len(candidates)
 		for _, action := range actions {
 			key := kv.DataKey{
 				Group:           req.Key.Group,
@@ -1639,14 +1751,26 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 			byKey[key.String()] = i
 			candidates = append(candidates, key)
 		}
+		if len(candidates) > before {
+			requested++
+		}
 	}
 	if len(candidates) == 0 {
 		return 0, -1, nil
 	}
 
+	// Only one of the actions tried for a request can exist, so the list body
+	// stats count one body request per request rather than one per candidate key,
+	// and stay comparable with store lists.
+	stats := listBodyStatsFromContext(ctx)
+	if stats != nil {
+		stats.bodyKeysRequested += requested
+	}
+	exactCtx := withoutListBodyStats(ctx)
+
 	hits := 0
 	seen := make(map[int]bool, len(pending))
-	for obj, err := range k.dataStore.BatchGet(ctx, candidates) {
+	for obj, err := range k.dataStore.BatchGet(exactCtx, candidates) {
 		if err != nil {
 			return hits, -1, err
 		}
@@ -1656,6 +1780,9 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 			continue
 		}
 		seen[i] = true
+		if stats != nil {
+			stats.bodiesConsumed++
+		}
 		value, err := readAndClose(obj.Value)
 		if err != nil {
 			found(i, &BackendReadResponse{
@@ -1784,6 +1911,11 @@ func (k *kvStorageBackend) ListKeys(ctx context.Context, req *resourcepb.ListReq
 }
 
 func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb.ListRequest) (int64, iter.Seq2[DataKey, error], error) {
+	// Opt in only for KV-backed body lists; other backends cannot provide the
+	// datastore accounting and must not report misleading zero observations.
+	if stats := listBodyStatsFromContext(ctx); stats != nil {
+		stats.supported = !req.KeysOnly
+	}
 	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
