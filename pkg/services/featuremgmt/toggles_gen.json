@@ -2863,11 +2863,14 @@
     {
       "metadata": {
         "name": "grafana.geomapProtomapsBasemap",
-        "resourceVersion": "1792543056514",
-        "creationTimestamp": "2026-10-21T00:37:36Z"
+        "resourceVersion": "1792544486351",
+        "creationTimestamp": "2026-10-21T00:37:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-21 01:01:26.351546 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Adds an experimental Protomaps vector basemap to the geomap panel, served from a Grafana-controlled tile host",
+        "description": "Adds an experimental Protomaps vector basemap to the geomap panel",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

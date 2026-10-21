@@ -10,7 +10,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 // The build is an ODbL Produced Work, so the OpenStreetMap credit must stay visible
 const ATTRIBUTION = `<a href="https://protomaps.com">Protomaps</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`;
 
-/** Where the grafana-maps dev server listens by default; replaced by a real host before this leaves dev */
+/** Where a local Protomaps tile server listens by default; replaced by a real host before this leaves dev */
 export const DEV_SERVER_URL = 'http://localhost:8095/';
 
 /** The source id the Protomaps style generator gives every layer */
@@ -145,7 +145,7 @@ export function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): 
 export const protomaps: MapLayerRegistryItem<ProtomapsConfig> = {
   id: 'protomaps',
   name: 'Protomaps basemap (experimental)',
-  description: 'Vector basemap from a Grafana-hosted Protomaps build',
+  description: 'Vector basemap from a Protomaps build',
   isBaseMap: true,
   requiresAttribution: true,
   defaultOptions: defaultProtomapsConfig,

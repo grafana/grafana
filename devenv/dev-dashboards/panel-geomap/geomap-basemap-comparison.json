@@ -7,7 +7,7 @@
   "spec": {
     "annotations": [],
     "cursorSync": "Off",
-    "description": "CARTO vs the Grafana-hosted Protomaps basemap. Needs the grafana.geomapProtomapsBasemap feature flag and the grafana-maps dev server running on localhost:8095.",
+    "description": "CARTO vs the Protomaps basemap. Needs the grafana.geomapProtomapsBasemap feature flag and a Protomaps tile server running on localhost:8095.",
     "editable": true,
     "elements": {
       "panel-1": {

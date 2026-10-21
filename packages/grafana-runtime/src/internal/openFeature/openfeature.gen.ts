@@ -188,7 +188,7 @@ export const FlagKeys = {
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
-  /** Adds an experimental Protomaps vector basemap to the geomap panel, served from a Grafana-controlled tile host */
+  /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
   /** Offers the reserved Grafana home option in the home dashboard preference */
   GrafanaGlobalHomePreference: "grafana.globalHomePreference",
@@ -1354,7 +1354,7 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
 };
 
 /**
- * Adds an experimental Protomaps vector basemap to the geomap panel, served from a Grafana-controlled tile host
+ * Adds an experimental Protomaps vector basemap to the geomap panel
  *
  * **Details:**
  * - flag key: `grafana.geomapProtomapsBasemap`

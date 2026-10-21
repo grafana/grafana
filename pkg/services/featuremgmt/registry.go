@@ -3440,7 +3440,7 @@ var (
 		},
 		{
 			Name:         "grafana.geomapProtomapsBasemap",
-			Description:  "Adds an experimental Protomaps vector basemap to the geomap panel, served from a Grafana-controlled tile host",
+			Description:  "Adds an experimental Protomaps vector basemap to the geomap panel",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
