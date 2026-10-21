@@ -51,10 +51,15 @@ func ProvideRuleStore(
 		// database" apart from "identity provider" and keep the folder-key read on sess.
 		// legacyDatabaseProvider still supplies bare table names on demand when this is nil.
 	}
-	if err := folderService.RegisterService(&store); err != nil {
+	return &store, nil
+}
+
+func ProvideService(sql *RuleStore, folders folder.Service) (*Service, error) {
+	service := &Service{sql: sql}
+	if err := folders.RegisterService(service); err != nil {
 		return nil, err
 	}
-	return &store, nil
+	return service, nil
 }
 
 // legacyDatabaseProvider falls back to bare table names when LegacyDatabaseProvider is unset, so

@@ -503,7 +503,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	provenanceStore := ngprovenance.ProvideProvenanceStore(features, sqlStore)
 	alertStore, err := ngrules.ProvideRuleStore(cfg, features, sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
-	err = folderSvc.RegisterService(alertStore)
+	_, err = ngrules.ProvideService(alertStore, folderSvc)
 	require.NoError(t, err)
 	service := LibraryElementService{
 		Cfg:                       cfg,
