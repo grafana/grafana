@@ -97,8 +97,8 @@ describe('StackedEditorRenderer', () => {
   it('shows datasource errors in stacked mode', () => {
     renderStackedEditor({}, { dsError: new Error('Failed to load datasource: Prometheus') });
 
-    expect(screen.getByText('Datasource error')).toBeInTheDocument();
-    expect(screen.getByText(/failed to load datasource: prometheus/i)).toBeInTheDocument();
+    const alert = screen.getByRole('alert', { name: 'Datasource error' });
+    expect(alert).toHaveTextContent(/failed to load datasource: prometheus/i);
   });
 
   it('marks the selected query as the current section', () => {
