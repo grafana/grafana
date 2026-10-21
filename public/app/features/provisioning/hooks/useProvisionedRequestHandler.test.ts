@@ -49,7 +49,7 @@ describe('useProvisionedRequestHandler', () => {
       expect(handlers.onDismiss).toHaveBeenCalled();
     });
 
-    it('should call onBranchSuccess when the save targets a non-configured branch', () => {
+    it('should call onBranchSuccess when the response carries a branch ref', () => {
       const { handlers, mockPublish, render } = setup();
       const wrapper = createMockResourceWrapper({
         ref: 'feature-branch',
@@ -59,7 +59,6 @@ describe('useProvisionedRequestHandler', () => {
 
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
-        selectedBranch: 'feature-branch',
         isNewBranch: true,
         resourceType: 'dashboard',
         handlers,
@@ -85,13 +84,12 @@ describe('useProvisionedRequestHandler', () => {
       expect(mockDispatch.mock.calls.some(([action]) => action?.payload?.component)).toBe(false);
     });
 
-    it('should call onBranchSuccess and toast when the save targets an existing non-configured branch', () => {
+    it('should call onBranchSuccess and toast when the commit landed on an existing branch', () => {
       const { handlers, render } = setup();
       const wrapper = createMockResourceWrapper({ ref: 'feature-branch', path: '/path/to/dashboard.json' });
 
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
-        selectedBranch: 'feature-branch',
         isNewBranch: false,
         resourceType: 'dashboard',
         handlers,
@@ -108,7 +106,6 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
-        selectedBranch: 'main',
         resourceType: 'dashboard',
         repository: {
           ...githubRepository,
@@ -135,7 +132,6 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
-        selectedBranch: 'main',
         resourceType: 'dashboard',
         repository: {
           ...githubRepository,
@@ -157,13 +153,12 @@ describe('useProvisionedRequestHandler', () => {
       );
     });
 
-    it('should call onWriteSuccess when the save targets the configured branch', () => {
+    it('should call onWriteSuccess when the response carries no ref', () => {
       const { handlers, render } = setup();
       const wrapper = createMockResourceWrapper();
 
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
-        selectedBranch: 'main',
         resourceType: 'dashboard',
         handlers,
       });
@@ -176,12 +171,11 @@ describe('useProvisionedRequestHandler', () => {
       expect(handlers.onDismiss).toHaveBeenCalled();
     });
 
-    it('should refetch folder children for the configured branch when folderUID is provided', () => {
+    it('should refetch folder children after a direct write when folderUID is provided', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
-        selectedBranch: 'main',
         folderUID: 'folder-1',
         handlers,
       });
@@ -194,17 +188,16 @@ describe('useProvisionedRequestHandler', () => {
 
   describe('overrides', () => {
     it('should merge per-call overrides over hook options', () => {
-      const { handlers, render } = setup();
+      const { handlers, mockPublish, render } = setup();
       const wrapper = createMockResourceWrapper({ ref: 'feature-branch', path: '/dashboard.json' });
 
-      const { result } = render({ resourceType: 'dashboard', handlers });
-      result.current.handleSuccess(wrapper, {
-        selectedBranch: 'feature-branch',
-        repository: { ...githubRepository, branch: 'main' },
-      });
+      const { result } = render({ resourceType: 'dashboard', isNewBranch: false, handlers });
+      result.current.handleSuccess(wrapper, { isNewBranch: true });
 
+      // The override wins: a new branch suppresses the toast the hook options would have shown.
+      expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
+      expect(mockDispatch.mock.calls.some(([action]) => action?.payload?.component)).toBe(false);
       expect(handlers.onBranchSuccess).toHaveBeenCalled();
-      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
     });
 
     it('should allow overriding handlers per call', () => {

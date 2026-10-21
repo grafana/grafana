@@ -16,6 +16,7 @@ import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
@@ -114,12 +115,11 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
 
-    // A new branch only exists after the save creates it; until the selected branch
-    // is a known remote ref, list folders from the configured branch instead of
-    // requesting an unborn ref (which 404s).
-    const selectedBranchExists = Boolean(
-      selectedBranch && branchData?.items?.some((branch) => branch.name === selectedBranch)
-    );
+    // A new branch only exists after the save creates it; until the selected branch is a known
+    // remote ref, list folders from the configured branch instead of requesting an unborn ref
+    // (which 404s).
+    const isNewBranch = useIsNewBranch(repository, selectedBranch);
+    const selectedBranchExists = Boolean(selectedBranch) && isNewBranch === false;
 
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,

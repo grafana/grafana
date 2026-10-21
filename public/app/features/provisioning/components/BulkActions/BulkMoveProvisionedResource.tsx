@@ -22,11 +22,11 @@ import { useSelectedItemParentUIDs } from '../../hooks/useSelectedItemParentUIDs
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getRequestRef, getWorkflowForRef } from '../defaults';
 
 import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
@@ -128,14 +128,15 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       return;
     }
 
+    const workflow = getWorkflowForRef(repository, data.ref);
     reportInteraction('grafana_provisioning_bulk_move_submitted', {
-      workflow: getWorkflowForRef(repository, data.ref),
+      workflow,
       repositoryName: repository.name ?? 'unknown',
       repositoryType: repository.type ?? 'unknown',
       resourceCount: resources.length,
     });
 
-    submittedViaBranchWorkflow.current = getWorkflowForRef(repository, data.ref) === 'branch';
+    submittedViaBranchWorkflow.current = workflow === 'branch';
 
     const jobSpec: MoveJobSpec = {
       action: 'move',

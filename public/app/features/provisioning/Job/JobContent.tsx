@@ -36,7 +36,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
 
     switch (state) {
       case 'success':
-        onStatusChange?.({ status: 'success' });
+        onStatusChange?.({ status: 'success', urls: job?.status?.url });
         break;
       case 'warning': {
         if (!errorSetRef.current) {

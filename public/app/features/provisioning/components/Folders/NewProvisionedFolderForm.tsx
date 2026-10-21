@@ -25,9 +25,9 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { joinPath } from '../utils/path';
@@ -199,7 +199,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
         message,
         body: folderModel,
       }).unwrap();
-      handleSuccess(data, { selectedBranch: ref });
+      handleSuccess(data);
     } catch (err) {
       onError(err);
     }

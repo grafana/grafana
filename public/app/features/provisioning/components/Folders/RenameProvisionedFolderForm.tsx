@@ -22,10 +22,11 @@ import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
+
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
@@ -144,8 +145,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       return;
     }
 
-    const branchRef = getRequestRef(repository, ref);
-
     reportInteraction('grafana_provisioning_folder_rename_submitted', {
       workflow: getWorkflowForRef(repository, ref),
       repositoryName: repoName,
@@ -156,13 +155,13 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       const data = await replaceFile({
         name: repoName,
         path: folderPath,
-        ref: branchRef,
+        ref: getRequestRef(repository, ref),
         message,
         body: {
           spec: { title },
         },
       }).unwrap();
-      handleSuccess(data, { selectedBranch: ref });
+      handleSuccess(data);
     } catch (err) {
       showError(err);
     }

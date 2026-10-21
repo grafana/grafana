@@ -28,8 +28,9 @@ import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import { getCanPushToConfiguredBranch, getDefaultRef, getRequestRef, getWorkflowForRef } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
@@ -234,7 +235,7 @@ function FormContent({
       const data = isDelete
         ? await deleteFile({ name: repoName, path, ref: branchRef, message }).unwrap()
         : await saveFile({ name: repoName, path, ref: branchRef, message, body: body ?? {} }).unwrap();
-      handleSuccess(data, { selectedBranch: ref });
+      handleSuccess(data);
     } catch (err) {
       showError(err);
     }

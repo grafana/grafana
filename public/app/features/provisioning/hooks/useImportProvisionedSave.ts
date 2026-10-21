@@ -15,8 +15,8 @@ import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { getSingleResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from 'app/features/provisioning/utils/redirect';
 
-import { getRequestRef } from '../components/defaults';
 import { getProvisionedRequestError } from '../components/utils/errors';
+import { getRequestRef } from '../utils/workflow';
 
 import { useCreateOrUpdateRepositoryFile } from './useCreateOrUpdateRepositoryFile';
 import { useProvisionedRequestHandler } from './useProvisionedRequestHandler';
@@ -101,7 +101,6 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         handleSuccess(data, {
           isNewBranch: form.isNewBranch,
           folderUID: targetFolderUid,
-          selectedBranch: form.ref,
           handlers: {
             onWriteSuccess: (upsert) => {
               // Sync-disabled repositories can return success without creating a

@@ -5,11 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import {
-  type Job,
-  type RepositoryView,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
@@ -21,16 +17,15 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
-import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
@@ -54,11 +49,11 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 
   // hooks
   const { createBulkJob, isLoading } = useBulkActionJob();
-  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   const navigate = useNavigate();
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
   const ref = watch('ref');
+  const workflow = getWorkflowForRef(repository, ref);
   const isNewBranch = useIsNewBranch(repository, ref);
 
   const templateVars: CommitTemplateVars = {
@@ -95,36 +90,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     );
   };
 
-  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
-    const prUrl = urls?.newPullRequestURL;
-    if (prUrl) {
-      const url = buildResourceBranchRedirectUrl({
-        paramName: 'new_pull_request_url',
-        paramValue: prUrl,
-        repoType: info.repoType,
-        action: 'delete',
-        prTitle,
-      });
-      navigate(url);
-    }
-  };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    isNewBranch,
-    resourceType: 'folder',
-    repository,
-    selectedBranch: ref,
-    successMessage: t(
-      'browse-dashboards.delete-provisioned-folder-form.success-message',
-      'Folder deleted successfully'
-    ),
-    handlers: {
-      onDismiss,
-      onBranchSuccess,
-    },
-  });
-
-  const handleSubmitForm = async ({ repo, path, ref }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
       showError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
@@ -132,29 +98,10 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     }
 
     reportInteraction('grafana_provisioning_folder_delete_submitted', {
-      workflow: getWorkflowForRef(repository, ref),
+      workflow,
       repositoryName: repo,
-      repositoryType: repository?.type ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
     });
-
-    // A new branch goes through /files: its response carries the PR URLs the /dashboards banner needs.
-    // Existing branches, configured or not, run the delete job.
-    if (isNewBranch) {
-      const branchRef = ref;
-
-      try {
-        const data = await deleteRepoFile({
-          name: repo,
-          path,
-          ref: branchRef,
-          message,
-        }).unwrap();
-        handleSuccess(data);
-      } catch (error) {
-        showError(error);
-      }
-      return;
-    }
 
     const jobSpec = {
       action: 'delete' as const,
@@ -190,7 +137,18 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
     if (statusInfo.status === 'success') {
       onDismiss?.();
-      navigate('/dashboards');
+      // A branch commit leaves the folder in place; the list page shows the PR banner for it.
+      navigate(
+        workflow === 'branch'
+          ? buildResourceBranchRedirectUrl({
+              paramName: 'new_pull_request_url',
+              paramValue: statusInfo.urls?.newPullRequestURL,
+              repoType: repository?.type,
+              action: 'delete',
+              prTitle,
+            })
+          : '/dashboards'
+      );
     }
   };
 
@@ -235,12 +193,8 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 <Button variant="secondary" fill="outline" onClick={onDismiss}>
                   <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading || request.isLoading || isNewBranch === undefined}
-                  variant="destructive"
-                >
-                  {isLoading || request.isLoading
+                <Button type="submit" disabled={isLoading} variant="destructive">
+                  {isLoading
                     ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
                 </Button>

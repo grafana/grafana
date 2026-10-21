@@ -4,7 +4,7 @@ import { getWrapper } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -45,11 +45,17 @@ describe('useIsNewBranch', () => {
     await waitFor(() => expect(result.current).toBe(true));
   });
 
-  it('treats a failed refs request as not-new', async () => {
+  it('stays unresolved when the refs request fails', async () => {
     server.use(http.get(`${BASE}/repositories/:name/refs`, () => HttpResponse.json({}, { status: 500 })));
 
-    const { result } = render(repo, 'feature/x');
-    await waitFor(() => expect(result.current).toBe(false));
+    // Observe the query alongside the hook: its own return value is `undefined` both while loading
+    // and after a failure, so only the query's error state proves the failure was reached.
+    const { result } = renderHook(
+      () => ({ isNew: useIsNewBranch(repo, 'feature/x'), refs: useGetRepositoryRefsQuery({ name: repo.name }) }),
+      { wrapper: getWrapper({}) }
+    );
+    await waitFor(() => expect(result.current.refs.isError).toBe(true));
+    expect(result.current.isNew).toBeUndefined();
   });
 
   it('returns false for a non-git repository without hitting the refs query', () => {

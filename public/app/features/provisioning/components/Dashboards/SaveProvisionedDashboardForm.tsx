@@ -40,10 +40,10 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
@@ -130,6 +130,7 @@ export function SaveProvisionedDashboardForm({
     isDirty ||
     Boolean(rawDashboardJSON);
   const ref = watch('ref');
+  const workflow = getWorkflowForRef(repository, ref);
   const isNewBranch = useIsNewBranch(repository, ref);
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
@@ -388,6 +389,7 @@ export function SaveProvisionedDashboardForm({
     folderUID: defaultValues.folder?.uid,
     resourceType: 'dashboard',
     repository,
+    isNewBranch,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource, wrapper) => onBranchSuccess(ref, path, info, resource, wrapper),
       onWriteSuccess,
@@ -395,7 +397,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, ref, copyTags }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, copyTags }: ProvisionedDashboardFormData) => {
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
@@ -429,7 +431,7 @@ export function SaveProvisionedDashboardForm({
     savedSpecRef.current = body.spec as Dashboard | DashboardV2Spec;
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
-      workflow: getWorkflowForRef(repository, ref),
+      workflow,
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
@@ -447,7 +449,7 @@ export function SaveProvisionedDashboardForm({
         body,
         originalPath: isRename ? originalPath : undefined,
       }).unwrap();
-      handleSuccess(data, { selectedBranch: ref, isNewBranch });
+      handleSuccess(data);
     } catch (err) {
       // Release suppression so later live save/conflict events from other sessions
       // aren't hidden while the user retries or abandons the save.
@@ -516,7 +518,7 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
-              {isFolderless && canPushToConfiguredBranch && getWorkflowForRef(repository, ref) === 'write' && (
+              {isFolderless && canPushToConfiguredBranch && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
                     <div>

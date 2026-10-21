@@ -24,6 +24,21 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ),
 }));
 
+type DeleteJobBody = { message?: string; delete?: { ref?: string } };
+
+/** Captures the posted delete job and answers the job watch with `job`. */
+function mockDeleteJob(job = createJob()) {
+  const posted: { body: DeleteJobBody | null } = { body: null };
+  server.use(
+    http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+      posted.body = (await request.json()) as DeleteJobBody;
+      return HttpResponse.json(job);
+    }),
+    http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [job], metadata: { resourceVersion: '1' } }))
+  );
+  return posted;
+}
+
 function setup(props: Partial<Props> = {}) {
   const defaultDashboard = new DashboardScene({
     title: 'Test Dashboard',
@@ -63,6 +78,20 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+function withRef(ref: string): Pick<Props, 'defaultValues'> {
+  return {
+    defaultValues: {
+      repo: 'test-repo',
+      ref,
+      path: 'dashboards/test.json',
+      comment: '',
+      title: 'Test Dashboard',
+      description: 'Test Description',
+      folder: { uid: 'test-folder', title: 'Test Folder' },
+    },
+  };
+}
+
 describe('DeleteProvisionedDashboardForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -91,60 +120,58 @@ describe('DeleteProvisionedDashboardForm', () => {
   });
 
   describe('Form Submission', () => {
-    it('deletes via /files when targeting a new branch', async () => {
-      let capturedRequest: { url: URL } | null = null;
+    it.each([
+      ['the configured branch', 'main', undefined],
+      ['an existing branch', 'develop', 'develop'],
+      ['a new branch', 'feature/delete', 'feature/delete'],
+    ])('runs a delete job targeting %s', async (_label, ref, expectedRef) => {
+      const posted = mockDeleteJob();
+      const { user } = setup(withRef(ref));
 
-      server.use(
-        http.delete(`${BASE}/repositories/:name/files/*`, ({ request }) => {
-          capturedRequest = { url: new URL(request.url) };
-          return HttpResponse.json({
-            ref: 'feature/delete',
-            path: 'dashboards/test.json',
-            urls: { newPullRequestURL: 'https://github.com/test/repo/compare/main...delete-branch' },
-            resource: {
-              upsert: {
-                apiVersion: 'v1',
-                kind: 'Dashboard',
-                metadata: { name: 'test-uid', uid: 'test-uid' },
-                spec: { title: 'Test Dashboard' },
-              },
-            },
-          });
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
+
+      await waitFor(() => expect(posted.body).not.toBeNull());
+      expect(posted.body!.delete?.ref).toBe(expectedRef);
+      expect(posted.body!.message).toBe('Delete dashboard: Test Dashboard');
+    });
+
+    it('redirects to the dashboard list with the PR link once a branch delete job finishes', async () => {
+      mockDeleteJob(
+        createJob({
+          status: {
+            state: 'success',
+            url: { newPullRequestURL: 'https://github.com/test/repo/compare/main...feature/delete' },
+          },
         })
       );
+      const { user } = setup();
 
-      const { user, props } = setup();
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
 
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await waitFor(() => expect(deleteButton).toBeEnabled());
-      await user.click(deleteButton);
-
-      await waitFor(() => {
-        expect(capturedRequest).not.toBeNull();
-      });
-
-      expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/dashboards/test.json');
-      expect(capturedRequest!.url.searchParams.get('ref')).toBe('feature/delete');
-      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
-
-      // Branch success redirects to the dashboard list with the PR link and dismisses the drawer
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith(
-          '/dashboards?new_pull_request_url=https%3A%2F%2Fgithub.com%2Ftest%2Frepo%2Fcompare%2Fmain...delete-branch&repo_type=github&action=delete'
+          '/dashboards?new_pull_request_url=https%3A%2F%2Fgithub.com%2Ftest%2Frepo%2Fcompare%2Fmain...feature%2Fdelete&repo_type=github&action=delete'
         );
       });
-      expect(props.onDismiss).toHaveBeenCalled();
+    });
+
+    it('redirects to the dashboard list once a configured-branch delete job finishes', async () => {
+      mockDeleteJob(createJob({ status: { state: 'success' } }));
+      server.use(
+        // The finished job view links back to the repository, which it looks up by the job's label
+        http.get(`${BASE}/repositories/:name`, ({ params }) =>
+          HttpResponse.json({ metadata: { name: params.name }, spec: { type: 'github', github: {} }, status: {} })
+        )
+      );
+      const { user } = setup(withRef('main'));
+
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
+
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboards'));
     });
 
     it('renders the message from the repo commit template when comment is empty', async () => {
-      let capturedRequest: { url: URL } | null = null;
-      server.use(
-        http.delete(`${BASE}/repositories/:name/files/*`, ({ request }) => {
-          capturedRequest = { url: new URL(request.url) };
-          return HttpResponse.json({ resource: {} });
-        })
-      );
-
+      const posted = mockDeleteJob();
       const { user } = setup({
         repository: {
           name: 'test-repo',
@@ -157,147 +184,37 @@ describe('DeleteProvisionedDashboardForm', () => {
         },
       });
 
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await waitFor(() => expect(deleteButton).toBeEnabled());
-      await user.click(deleteButton);
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
 
-      await waitFor(() => {
-        expect(capturedRequest).not.toBeNull();
-      });
-      expect(capturedRequest!.url.searchParams.get('message')).toBe('chore(dashboards): delete Test Dashboard');
+      await waitFor(() => expect(posted.body).not.toBeNull());
+      expect(posted.body!.message).toBe('chore(dashboards): delete Test Dashboard');
     });
 
     it('should handle missing repository name', async () => {
-      const { user } = setup({
-        defaultValues: {
-          repo: '',
-          ref: 'main',
-          path: 'dashboards/test.json',
-          comment: '',
-          title: 'Test Dashboard',
-          description: 'Test Description',
-          folder: { uid: 'test-folder', title: 'Test Folder' },
-        },
-        repository: undefined,
-      });
+      const { user } = setup({ ...withRef('main'), repository: undefined });
 
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await user.click(deleteButton);
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent('Missing required repository for deletion');
       });
     });
-
-    it('runs a delete job against an existing branch', async () => {
-      let jobBody: { delete?: { ref?: string } } | null = null;
-      let filesDeleteHit = false;
-      server.use(
-        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
-          jobBody = (await request.json()) as { delete?: { ref?: string } };
-          return HttpResponse.json(createJob());
-        }),
-        http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [createJob()], metadata: { resourceVersion: '1' } })),
-        http.delete(`${BASE}/repositories/:name/files/*`, () => {
-          filesDeleteHit = true;
-          return HttpResponse.json({ resource: {} });
-        })
-      );
-
-      const { user } = setup({
-        defaultValues: {
-          repo: 'test-repo',
-          ref: 'develop',
-          path: 'dashboards/test.json',
-          comment: '',
-          title: 'Test Dashboard',
-          description: 'Test Description',
-          folder: { uid: 'test-folder', title: 'Test Folder' },
-        },
-      });
-
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await waitFor(() => expect(deleteButton).toBeEnabled());
-      await user.click(deleteButton);
-
-      await waitFor(() => expect(jobBody).not.toBeNull());
-      expect(jobBody!.delete?.ref).toBe('develop');
-      expect(filesDeleteHit).toBe(false);
-    });
-
-    it('runs a delete job with no ref against the configured branch', async () => {
-      let jobBody: { delete?: { ref?: string } } | null = null;
-      let filesDeleteHit = false;
-      server.use(
-        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
-          jobBody = (await request.json()) as { delete?: { ref?: string } };
-          return HttpResponse.json(createJob());
-        }),
-        http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [createJob()], metadata: { resourceVersion: '1' } })),
-        http.delete(`${BASE}/repositories/:name/files/*`, () => {
-          filesDeleteHit = true;
-          return HttpResponse.json({ resource: {} });
-        })
-      );
-
-      const { user } = setup({
-        defaultValues: {
-          repo: 'test-repo',
-          ref: 'main',
-          path: 'dashboards/test.json',
-          comment: '',
-          title: 'Test Dashboard',
-          description: 'Test Description',
-          folder: { uid: 'test-folder', title: 'Test Folder' },
-        },
-      });
-
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await waitFor(() => expect(deleteButton).toBeEnabled());
-      await user.click(deleteButton);
-
-      await waitFor(() => expect(jobBody).not.toBeNull());
-      expect(jobBody!.delete?.ref).toBeUndefined();
-      expect(filesDeleteHit).toBe(false);
-    });
   });
 
   describe('Error Handling', () => {
-    it('should display error alert when delete request fails', async () => {
+    it('should display error alert when the job cannot be created', async () => {
       server.use(
-        http.delete(`${BASE}/repositories/:name/files/*`, () => {
-          return HttpResponse.json({ message: 'Something went wrong' }, { status: 500 });
-        })
+        http.post(`${BASE}/repositories/:name/jobs`, () =>
+          HttpResponse.json({ message: 'Something went wrong' }, { status: 500 })
+        )
       );
 
       const { user } = setup();
 
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await waitFor(() => expect(deleteButton).toBeEnabled());
-      await user.click(deleteButton);
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('alert')).toBeInTheDocument();
-      });
-    });
-
-    it('should display branch-not-found message for 404 errors', async () => {
-      server.use(
-        http.delete(`${BASE}/repositories/:name/files/*`, () => {
-          return HttpResponse.json({ message: 'file not found' }, { status: 404 });
-        })
-      );
-
-      const { user } = setup();
-
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await waitFor(() => expect(deleteButton).toBeEnabled());
-      await user.click(deleteButton);
-
-      await waitFor(() => {
-        expect(screen.getByRole('alert')).toHaveTextContent(
-          'You have selected a branch that does not contain this resource'
-        );
+        expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong');
       });
     });
   });

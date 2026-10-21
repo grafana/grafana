@@ -299,27 +299,6 @@ describe('useImportProvisionedSave', () => {
       expect(result.current.error).toBeUndefined();
     });
 
-    it('does not navigate when new-branch response is missing the ref', async () => {
-      server.use(
-        http.post(`${BASE}/repositories/:name/files/*`, () =>
-          HttpResponse.json({ path: 'dash.json', resource: { upsert: {} } })
-        )
-      );
-
-      const { result } = renderImportSaveHook(repository);
-
-      await act(async () => {
-        await result.current.save(
-          makeSaveParams({
-            form: { ref: 'feat-branch', path: 'dash.json', isNewBranch: true },
-          })
-        );
-      });
-
-      expect(mockNavigate).not.toHaveBeenCalled();
-      expect(result.current.error).toBeUndefined();
-    });
-
     it('exposes the API error message when the create-file request fails', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, () =>

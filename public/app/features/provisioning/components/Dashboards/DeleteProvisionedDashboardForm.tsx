@@ -5,11 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
-import {
-  type Job,
-  type RepositoryView,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
@@ -18,17 +14,16 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useIsNewBranch } from '../../hooks/useIsNewBranch';
-import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 
 export interface Props {
@@ -64,11 +59,11 @@ export function DeleteProvisionedDashboardForm({
   const navigate = useNavigate();
   const { editPanel: panelEditor } = dashboard.useState();
   const { createBulkJob, isLoading } = useBulkActionJob();
-  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   // Form
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch } = methods;
   const ref = watch('ref');
+  const workflow = getWorkflowForRef(repository, ref);
   const isNewBranch = useIsNewBranch(repository, ref);
 
   const templateVars: CommitTemplateVars = {
@@ -105,35 +100,7 @@ export function DeleteProvisionedDashboardForm({
     );
   };
 
-  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
-  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
-    panelEditor?.onDiscard();
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue: urls?.newPullRequestURL,
-      repoType: info.repoType,
-      action: 'delete',
-      prTitle,
-    });
-    navigate(url);
-  };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    isNewBranch,
-    resourceType: 'dashboard',
-    repository,
-    selectedBranch: ref,
-    successMessage: t(
-      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
-      'Dashboard deleted successfully'
-    ),
-    handlers: {
-      onDismiss,
-      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
-    },
-  });
-
-  const handleSubmitForm = async ({ repo, path, ref }: ProvisionedDashboardFormData) => {
+  const handleSubmitForm = async ({ repo }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
     if (!repo || !repository) {
       showError(
@@ -146,29 +113,10 @@ export function DeleteProvisionedDashboardForm({
     }
 
     reportInteraction('grafana_provisioning_dashboard_delete_submitted', {
-      workflow: getWorkflowForRef(repository, ref),
+      workflow,
       repositoryName: repo,
-      repositoryType: repository?.type ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
     });
-
-    // A new branch goes through /files: its response carries the PR URLs the /dashboards banner needs.
-    // Existing branches, configured or not, run the delete job.
-    if (isNewBranch) {
-      const branchRef = ref;
-
-      try {
-        const data = await deleteRepoFile({
-          name: repo,
-          path,
-          ref: branchRef,
-          message,
-        }).unwrap();
-        handleSuccess(data);
-      } catch (error) {
-        showError(error);
-      }
-      return;
-    }
 
     const jobSpec = {
       action: 'delete' as const,
@@ -205,14 +153,25 @@ export function DeleteProvisionedDashboardForm({
     (statusInfo: StepStatusInfo) => {
       if (statusInfo.status === 'success') {
         panelEditor?.onDiscard();
-        navigate('/dashboards');
+        // A branch commit leaves the dashboard in place; the list page shows the PR banner for it.
+        navigate(
+          workflow === 'branch'
+            ? buildResourceBranchRedirectUrl({
+                paramName: 'new_pull_request_url',
+                paramValue: statusInfo.urls?.newPullRequestURL,
+                repoType: repository?.type,
+                action: 'delete',
+                prTitle,
+              })
+            : '/dashboards'
+        );
       }
 
       if (statusInfo.status === 'error' && statusInfo.error) {
         setJobError(statusInfo.error);
       }
     },
-    [panelEditor, navigate]
+    [panelEditor, navigate, workflow, repository?.type, prTitle]
   );
 
   return (
@@ -224,7 +183,7 @@ export function DeleteProvisionedDashboardForm({
       {hasSubmitted && job ? (
         <>
           <ProvisioningAlert error={jobError} />
-          <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
+          <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />
         </>
       ) : (
         <FormProvider {...methods}>
@@ -252,12 +211,8 @@ export function DeleteProvisionedDashboardForm({
               {submitError && <ProvisioningAlert error={submitError} />}
 
               <Stack gap={2}>
-                <Button
-                  variant="destructive"
-                  type="submit"
-                  disabled={isLoading || request.isLoading || readOnly || isNewBranch === undefined}
-                >
-                  {isLoading || request.isLoading
+                <Button variant="destructive" type="submit" disabled={isLoading || readOnly}>
+                  {isLoading
                     ? t('dashboard-scene.delete-provisioned-dashboard-form.deleting', 'Deleting...')
                     : t('dashboard-scene.delete-provisioned-dashboard-form.delete-action', 'Delete dashboard')}
                 </Button>

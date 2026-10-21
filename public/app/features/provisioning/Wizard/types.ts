@@ -1,4 +1,4 @@
-import { type RepositorySpec, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec, type RepositoryUrLs, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type AlertAction } from '../Shared/ProvisioningAlert';
 import { type RepositoryFormData, type StatusInfo } from '../types';
@@ -52,7 +52,8 @@ export const RepoTypeDisplay: { [key in RepoType]: string } = {
 
 export type StepStatusInfo =
   | { status: 'idle' | 'running' }
-  | { status: 'success'; success?: string | StatusInfo }
+  // `urls` are the finished job's branch/PR links, present when it committed to a branch.
+  | { status: 'success'; success?: string | StatusInfo; urls?: RepositoryUrLs }
   | { status: 'error'; error: string | StatusInfo; warning?: string | StatusInfo; action?: AlertAction }
   | { status: 'warning'; warning: string | StatusInfo; action?: AlertAction };
 

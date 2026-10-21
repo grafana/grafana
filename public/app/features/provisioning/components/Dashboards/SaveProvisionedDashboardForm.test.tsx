@@ -243,10 +243,11 @@ function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | n
   return capturedRequest as { url: URL; body: unknown };
 }
 
-// Minimal ResourceWrapper body the real useProvisionedRequestHandler can consume
-function saveSuccessResponse(name: string, title: string) {
+// Minimal ResourceWrapper body the real useProvisionedRequestHandler can consume. Echoes the request's
+// ref the way the backend does: present for a branch commit, absent for a direct write.
+function saveSuccessResponse(request: Request, name: string, title: string) {
   return HttpResponse.json({
-    ref: 'dashboard/2023-01-01-abcde',
+    ref: new URL(request.url).searchParams.get('ref') ?? undefined,
     path: 'test-dashboard.json',
     resource: {
       upsert: {
@@ -307,7 +308,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'New Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'New Dashboard');
       })
     );
 
@@ -371,7 +372,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -409,7 +410,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -488,7 +489,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -746,7 +747,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -834,7 +835,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1101,7 +1102,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1158,7 +1159,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1364,7 +1365,7 @@ describe('SaveProvisionedDashboardForm', () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
-          return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+          return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
         })
       );
 
@@ -1516,7 +1517,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Raw JSON Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Raw JSON Dashboard');
       })
     );
 
@@ -1660,7 +1661,7 @@ describe('SaveProvisionedDashboardForm', () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         dashboardRequest = { url: new URL(request.url), body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1712,7 +1713,7 @@ describe('SaveProvisionedDashboardForm', () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         dashboardRequest = { url: new URL(request.url), body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1862,7 +1863,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1908,7 +1909,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url: new URL(request.url), body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1964,7 +1965,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -2007,7 +2008,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -2069,7 +2070,7 @@ describe('SaveProvisionedDashboardForm', () => {
           return HttpResponse.json({ resource: { upsert: null } });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 

@@ -13,7 +13,6 @@ import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { type AppDispatch } from 'app/store/configureStore';
 import { useDispatch } from 'app/types/store';
 
-import { getWorkflowForRef } from '../components/defaults';
 import { ensureFolderPathTrailingSlash } from '../components/utils/path';
 import { getRepoFileUrl } from '../utils/git';
 import { type ResourceKindKey } from '../utils/resourceKinds';
@@ -48,9 +47,7 @@ interface ProvisionedHandlerOptions<T> {
   folderUID?: string; // this is used to refetch folder items
   repository?: RepositoryView;
   resourceType?: ResourceType;
-  /** The branch the form targeted; the configured branch (or none) is a direct write. */
-  selectedBranch?: string;
-  /** The commit created `selectedBranch`: the destination page shows the PR banner, so no toast. */
+  /** The commit created the branch: the destination page shows the PR banner, so no toast. */
   isNewBranch?: boolean;
   successMessage?: string;
   handlers?: RequestHandlers<T>;
@@ -59,20 +56,18 @@ interface ProvisionedHandlerOptions<T> {
 function notifySaveSuccess(
   {
     ref,
-    selectedBranch,
     repository,
     urls,
     successMessage,
   }: {
     ref?: string; // ref returned in the response data
-    selectedBranch?: string;
     repository?: RepositoryView;
     urls?: Record<string, string>;
     successMessage?: string;
   },
   dispatch: AppDispatch
 ) {
-  const branch = ref || selectedBranch || repository?.branch;
+  const branch = ref || repository?.branch;
   // Link to the configured path (e.g. /tree/main/dashboards) so users
   // land where their resources live, not the repo root.
   const repoFileUrl = repository?.path
@@ -105,7 +100,7 @@ function notifySaveSuccess(
  *
  * Call the returned function from the submit path; handle failures in the caller's catch:
  *
- *   const { handleSuccess } = useProvisionedRequestHandler({ repository, selectedBranch, isNewBranch, handlers });
+ *   const { handleSuccess } = useProvisionedRequestHandler({ repository, isNewBranch, handlers });
  *   try {
  *     const data = await mutation(args).unwrap();
  *     handleSuccess(data);
@@ -114,14 +109,14 @@ function notifySaveSuccess(
  *   }
  *
  * Per-call `overrides` shallow-merge over the hook options, for values only
- * known at submit time (e.g. the branch entered in the form).
+ * known at submit time (e.g. the folder a new resource was saved into).
  */
 export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptions<T> = {}) {
   const dispatch = useDispatch();
   const { setLastBranch } = useLastBranch();
 
   const handleSuccess = (data: ResourceWrapper, overrides?: Partial<ProvisionedHandlerOptions<T>>) => {
-    const { folderUID, repository, resourceType, selectedBranch, isNewBranch, successMessage, handlers } = {
+    const { folderUID, repository, resourceType, isNewBranch, successMessage, handlers } = {
       ...options,
       ...overrides,
     };
@@ -131,22 +126,22 @@ export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptio
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const resourceData = resource.upsert as Resource<T>;
 
-    // The response carries the ref for a branch commit and nothing for a direct write.
-    const lastBranch = ref || selectedBranch || repository?.branch;
+    // The request only carries a ref for a branch commit, and the response echoes it; a direct
+    // write comes back without one.
+    const lastBranch = ref || repository?.branch;
     if (lastBranch) {
       setLastBranch(repository?.name, lastBranch);
     }
 
     // A new branch lands on a page with its own PR banner, so the toast would be noise.
     if (!isNewBranch) {
-      notifySaveSuccess({ ref, selectedBranch, repository, urls, successMessage }, dispatch);
+      notifySaveSuccess({ ref, repository, urls, successMessage }, dispatch);
     }
 
-    const pushedToBranch = getWorkflowForRef(repository, selectedBranch) === 'branch';
-    if (pushedToBranch && handlers?.onBranchSuccess && ref && path) {
+    if (ref && path && handlers?.onBranchSuccess) {
       handlers.onBranchSuccess({ ref, path, urls }, info, resourceData, data);
     }
-    if (!pushedToBranch && handlers?.onWriteSuccess) {
+    if (!ref && handlers?.onWriteSuccess) {
       if (folderUID) {
         dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE }));
       }

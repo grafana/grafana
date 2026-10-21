@@ -18,9 +18,10 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getRequestRef, getWorkflowForRef } from '../defaults';
+import { getCanPushToConfiguredBranch } from '../defaults';
 
 import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
@@ -71,11 +72,12 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
     setHasSubmitted(true);
 
     const resources = collectSelectedItems(selectedItems);
+    const workflow = getWorkflowForRef(repository, data.ref);
 
     const folderCount = Object.keys(selectedItems.folder || {}).length;
     const dashboardCount = Object.keys(selectedItems.dashboard || {}).length;
     reportInteraction('grafana_provisioning_bulk_delete_submitted', {
-      workflow: getWorkflowForRef(repository, data.ref),
+      workflow,
       repositoryName: repository.name ?? 'unknown',
       repositoryType: repository.type ?? 'unknown',
       resourceCount: resources.length,
@@ -83,7 +85,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       dashboardCount,
     });
 
-    submittedViaBranchWorkflow.current = getWorkflowForRef(repository, data.ref) === 'branch';
+    submittedViaBranchWorkflow.current = workflow === 'branch';
 
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
