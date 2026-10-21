@@ -397,7 +397,10 @@ export function PanelChrome({
   // If you need to cancel streaming / loading panels set a title
   const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
   const hoverSlotDragClass = headerControls?.hideDragHandle ? undefined : dragClass;
-  const hasHoverSlotContent = title || description || titleItems || hoverSlotDragClass || actions;
+  // Without the menu keeping it mounted, the hover slot has to render for the streaming and cancel-query icons alone.
+  const hasStatusIcon =
+    loadingState === LoadingState.Streaming || (loadingState === LoadingState.Loading && Boolean(onCancelQuery));
+  const hasHoverSlotContent = title || description || titleItems || hoverSlotDragClass || actions || hasStatusIcon;
 
   return (
     <div className={styles.container}>
