@@ -1443,7 +1443,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "No alert rules found",
-        "rules-error": "Failed to load rules"
+        "rules-error": "Failed to load rules",
+        "search-issues": "Change the search to see results"
       },
       "interval": "Evaluated every {{interval}}",
       "recording-rules": {
@@ -1474,7 +1475,17 @@
           "state": "Alert state: firing, pending, recovering or normal.",
           "target-datasource": "Data source the recorded metric is written to (canonical value is the UID)."
         },
+        "help-availability": "Availability",
+        "help-available": "Available",
+        "help-expression": "Expression",
+        "help-filter-type": "Filter type",
+        "help-intro": "Search syntax allows you to query rules by the filters below.",
+        "help-title": "Search help",
+        "invalid-tokens": "Some filters could not be applied: {{tokens}}",
+        "invalid-value": "Use one of these values for {{key}}: {{values}}",
+        "label": "Search",
         "not-paused-unavailable": "Filtering by not paused isn't available yet.",
+        "placeholder": "Search by name or enter filter query...",
         "property": {
           "contact-point": "Contact point",
           "dashboard": "Dashboard",
@@ -1490,7 +1501,13 @@
           "rule-name": "Rule name",
           "state": "Alert state",
           "target-datasource": "Target data source"
-        }
+        },
+        "rejected-filter": "{{key}} was rejected: {{message}}",
+        "rejected-search": "The search was rejected: {{message}}",
+        "renamed-value": "Use {{to}} instead of {{from}}.",
+        "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
+        "unclosed-quote": "A quote in the search is not closed.",
+        "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
         "load-more": "Load more",

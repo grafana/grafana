@@ -24,7 +24,9 @@ import { tokenize } from './tokenizer';
 export type FilterIssue =
   | { key: string; reason: 'invalid' | 'unavailable' }
   | { key: string; reason: 'renamed'; from: string; to: string }
-  | { key: null; reason: 'wildcardInText' | 'unclosedQuote' };
+  | { key: null; reason: 'wildcardInText' | 'unclosedQuote' }
+  /** The rule search refused the request; `key` is null when the refusal names no filter, or the search text. */
+  | { key: string | null; reason: 'rejected'; message: string };
 
 export interface ParsedSearch {
   filter: RuleSearchFilter;
@@ -270,7 +272,8 @@ function isQueryDatasourceUid(uid: string): boolean {
 
 function isRejectedLabel({ key, operator, value }: SearchLabelMatcher): boolean {
   if (operator === 'regex' || operator === 'notRegex') {
-    // Regex values are patterns, so a literal asterisk is meaningful there.
+    // Regex values are patterns, so a literal asterisk is meaningful there. The rule search validates the
+    // pattern itself, and a pattern it refuses comes back as a rejection.
     return false;
   }
   const term = operator === 'equal' || operator === 'notEqual' ? `${key}=${value}` : key;

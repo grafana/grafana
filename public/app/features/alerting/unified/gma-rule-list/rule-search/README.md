@@ -31,7 +31,7 @@ files without adding anything.
 | `label:team=~api.*` | matches the regex       |
 | `label:team!~api.*` | doesn't match the regex |
 
-An empty value matches any value: `label:team=` is `label:team`, and `label:team!=` is `label:!team`.
+An empty value matches any value, so `label:team=` is `label:team`. As in Prometheus, `label:team!=` matches a non-empty value.
 
 ## Invalid filters
 
@@ -48,6 +48,11 @@ An empty value matches any value: `label:team=` is `label:team`, and `label:team
 So `state:bogus` is a parse rejection and `folder:f*` is feedback. The page sends no request while
 there are issues.
 
+The rule search validates the rest itself, such as label regexes. When it refuses a search (422), each
+cause names its place in the request (`where.and[1].regex.pattern`), and `searchRejection.ts` maps it
+back to the filter that built that leaf. The input shows it as `label was rejected: <reason>`, with no
+Retry, since the same search would be refused again.
+
 ## Modules
 
 A _token_ is a piece of the typed query. A _filter definition_ describes a filter a page supports; the
@@ -61,6 +66,11 @@ parser applies a token when one of the page's definitions accepts it.
 - `parser.ts`: `parse(query, kind)`, the parsing and feedback steps above. Label matchers reuse
   `parseMatcher` from `utils/matchers.ts`, as RuleList.v2 does.
 - `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and its filter.
+- `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
+- `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
+- `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts`
+  builds the Alert request from them. The builder tests assert the exact `where` clause per query,
+  typed by the generated request type; whether the server accepts it is the server's job.
 
 ## New filters
 
