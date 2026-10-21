@@ -87,7 +87,7 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 //   - EnableFolderSupport=false: the resource does not live in the folder tree
 //     at all; reject any write that sets the folder annotation.
 //   - EnableFolderSupport=true and RequireFolder=false: any folder value is
-//     accepted (including empty / root).
+//     accepted; an empty value is stored as "general".
 //   - EnableFolderSupport=true and RequireFolder=true: the folder annotation
 //     must be present and non-root; resources of this kind must live in a real
 //     folder.
@@ -95,7 +95,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 	folderUID := obj.GetFolder()
 	if !s.opts.EnableFolderSupport {
 		if folderUID == "" {
-			return nil
+			return nil // OK, there is no folder
 		}
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),
@@ -109,8 +109,28 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 		)
 	}
 	if !s.opts.RequireFolder {
-		return nil
+		if folderUID != "" {
+			return nil // OK
+		}
+
+		// Explicitly empty string is not valid
+		if _, found := obj.GetAnnotations()[utils.AnnoKeyFolder]; found {
+			return apierrors.NewInvalid(
+				obj.GetGroupVersionKind().GroupKind(),
+				obj.GetName(),
+				field.ErrorList{
+					field.Required(
+						field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+						fmt.Sprintf("non-empty folder is required for %s", s.gr.String()),
+					),
+				},
+			)
+		}
+		// TODO? we COULD fill in a default folder automatically here
+		// We should avoid defaulting to the root folder if possible
+		// Fall though to the logic that validates explicit folders
 	}
+
 	if folderUID == "" {
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),
@@ -328,11 +348,16 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 
-	// Check if we should bump the generation
-	if obj.GetFolder() != previous.GetFolder() {
+	// Empty and general identify the same parent; normalization alone is not a move.
+	folderChanged := toLegacyFolderUID(obj.GetFolder()) != toLegacyFolderUID(previous.GetFolder())
+	if obj.GetFolder() != previous.GetFolder() || (s.opts.EnableFolderSupport && !s.opts.RequireFolder) {
 		if err = s.verifyFolder(obj); err != nil {
 			return v, err
 		}
+	}
+
+	// Check if we should bump the generation
+	if folderChanged {
 		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 			return v, err
 		}
@@ -356,7 +381,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// If staying in the same folder but manager properties changed, re-validate
 	// consistency with the parent folder. Without this, removing or changing
 	// manager annotations would leave unmanaged resources in a repo-managed folder.
-	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
+	if !folderChanged {
 		newMgr, newOk := obj.GetManagerProperties()
 		oldMgr, oldOk := previous.GetManagerProperties()
 		if newOk != oldOk || newMgr != oldMgr {
@@ -507,8 +532,18 @@ func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {
 	return obj.GetObjectKind().GroupVersionKind().GroupVersion()
 }
 
-// isRootFolderUID matches folder.IsRootFolderUID ("" is the legacy root, "general" the canonical
-// one). apistore cannot import pkg/services/folder, which is in the core module.
+// generalFolderUID, isRootFolderUID and toLegacyFolderUID mirror their pkg/services/folder
+// counterparts ("" is the legacy root, "general" the canonical one). apistore cannot import
+// pkg/services/folder, which is in the core module.
+const generalFolderUID = "general"
+
 func isRootFolderUID(uid string) bool {
-	return uid == "" || uid == "general"
+	return uid == "" || uid == generalFolderUID
+}
+
+func toLegacyFolderUID(uid string) string {
+	if uid == generalFolderUID {
+		return ""
+	}
+	return uid
 }

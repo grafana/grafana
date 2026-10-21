@@ -720,14 +720,24 @@ func TestVerifyFolder(t *testing.T) {
 		return acc
 	}
 
-	t.Run("support enabled, empty folder passes", func(t *testing.T) {
+	t.Run("support enabled, missing folder is left unset", func(t *testing.T) {
 		s := &Storage{
 			gr:   dashv1.DashboardResourceInfo.GroupResource(),
 			opts: StorageOptions{EnableFolderSupport: true},
 		}
 		obj := makeDash(t, "")
 		require.NoError(t, s.verifyFolder(obj))
-		require.Empty(t, obj.GetFolder())
+		require.NotContains(t, obj.GetAnnotations(), utils.AnnoKeyFolder)
+	})
+
+	t.Run("support enabled, explicit empty folder is rejected", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: true},
+		}
+		obj := makeDash(t, "")
+		obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: ""})
+		require.True(t, apierrors.IsInvalid(s.verifyFolder(obj)))
 	})
 
 	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {
@@ -1243,5 +1253,65 @@ func TestCheckGVK(t *testing.T) {
 		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, group+"/v2", out.GetAPIVersion())
 		require.Equal(t, "Widget", out.GetKind())
+	})
+}
+
+func TestFolderNormalizationOnSave(t *testing.T) {
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser})
+	s := &Storage{serializer: JSONSerializer(), opts: StorageOptions{EnableFolderSupport: true}}
+	// "" stands for a missing annotation; an explicit "" is rejected (see below).
+	annotations := func(folder string) map[string]string {
+		if folder == "" {
+			return nil
+		}
+		return map[string]string{utils.AnnoKeyFolder: folder}
+	}
+	for _, previousFolder := range []string{"", generalFolderUID, "parent"} {
+		for _, nextFolder := range []string{"", generalFolderUID, "parent"} {
+			t.Run(fmt.Sprintf("%q to %q", previousFolder, nextFolder), func(t *testing.T) {
+				previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", UID: "uid", Generation: 3, Annotations: annotations(previousFolder)}}
+				next := previous.DeepCopy()
+				next.Annotations = annotations(nextFolder)
+				saved, err := s.prepareObjectForUpdate(ctx, next, previous)
+				require.NoError(t, err)
+				decoded, err := s.serializer.Decode(ctx, saved.raw, &dashv1.Dashboard{})
+				require.NoError(t, err)
+				meta, err := utils.MetaAccessor(decoded)
+				require.NoError(t, err)
+				require.Equal(t, nextFolder, meta.GetFolder())
+				generation := int64(3)
+				if toLegacyFolderUID(previousFolder) != toLegacyFolderUID(nextFolder) {
+					generation++
+				}
+				require.Equal(t, generation, meta.GetGeneration())
+				require.Equal(t, previousFolder, previous.Annotations[utils.AnnoKeyFolder])
+			})
+		}
+	}
+	t.Run("create does not write a missing folder", func(t *testing.T) {
+		saved, err := s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}})
+		require.NoError(t, err)
+		var obj dashv1.Dashboard
+		require.NoError(t, json.Unmarshal(saved.raw, &obj))
+		require.NotContains(t, obj.Annotations, utils.AnnoKeyFolder)
+	})
+	t.Run("explicit empty folder is rejected", func(t *testing.T) {
+		explicit := map[string]string{utils.AnnoKeyFolder: ""}
+		_, err := s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", Annotations: explicit}})
+		require.True(t, apierrors.IsInvalid(err))
+
+		previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", UID: "uid", Annotations: annotations("parent")}}
+		next := previous.DeepCopy()
+		next.Annotations = explicit
+		_, err = s.prepareObjectForUpdate(ctx, next, previous)
+		require.True(t, apierrors.IsInvalid(err))
+	})
+	t.Run("required folder rejects root", func(t *testing.T) {
+		required := &Storage{opts: StorageOptions{EnableFolderSupport: true, RequireFolder: true}}
+		for _, parent := range []string{"", generalFolderUID} {
+			obj, err := utils.MetaAccessor(&dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Annotations: map[string]string{utils.AnnoKeyFolder: parent}}})
+			require.NoError(t, err)
+			require.True(t, apierrors.IsInvalid(required.verifyFolder(obj)))
+		}
 	})
 }

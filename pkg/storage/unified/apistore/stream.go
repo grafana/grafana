@@ -20,31 +20,33 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type objectDecoder func(context.Context, []byte, runtime.Object) (runtime.Object, error)
+
 type streamDecoder struct {
-	client      resourcepb.ResourceStore_WatchClient
-	newFunc     func() runtime.Object
-	predicate   storage.SelectionPredicate
-	serializer  Serializer
-	cancelWatch context.CancelFunc
-	done        sync.WaitGroup
+	client       resourcepb.ResourceStore_WatchClient
+	newFunc      func() runtime.Object
+	predicate    storage.SelectionPredicate
+	decodeObject objectDecoder
+	cancelWatch  context.CancelFunc
+	done         sync.WaitGroup
 
 	sendInitialEvents   bool
 	initialBookmarkSent bool
 	expiredSent         bool
 }
 
-func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, serializer Serializer, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
+func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, decoder objectDecoder, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
 	return &streamDecoder{
 		client:            client,
 		newFunc:           newFunc,
 		predicate:         predicate,
-		serializer:        serializer,
+		decodeObject:      decoder,
 		cancelWatch:       cancelWatch,
 		sendInitialEvents: sendInitialEvents,
 	}
 }
 func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Object, error) {
-	obj, err := d.serializer.Decode(d.client.Context(), w.Value, d.newFunc())
+	obj, err := d.decodeObject(d.client.Context(), w.Value, d.newFunc())
 	if err == nil {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
