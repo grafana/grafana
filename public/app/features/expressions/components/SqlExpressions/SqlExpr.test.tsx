@@ -920,11 +920,57 @@ describe('Schema Inspector feature toggle', () => {
         });
       });
 
+      it('matches schema tables case-insensitively like the SQL expression backend', async () => {
+        mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+
+        render(<SqlExpr {...defaultProps} queries={[{ refId: 'A' }]} />);
+
+        await waitFor(async () => {
+          await expect(getLatestColumns('a')).resolves.toEqual([
+            { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
+          ]);
+        });
+      });
+
+      it.each([
+        { desc: 'is in flight', setup: () => mockBackendSrv.post.mockReturnValue(new Promise(() => {})) },
+        { desc: 'fails', setup: () => mockBackendSrv.post.mockRejectedValue(new Error('boom')) },
+      ])('drops previously loaded schema columns while a schema refetch $desc', async ({ setup }) => {
+        mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+        const queries = [{ refId: 'A' }];
+
+        const { rerender } = render(<SqlExpr {...defaultProps} queries={queries} />);
+
+        await waitFor(async () => {
+          await expect(getLatestColumns('A')).resolves.toEqual([
+            { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
+          ]);
+        });
+
+        setup();
+        // New interpolation context triggers a schema refetch.
+        rerender(
+          <SqlExpr
+            {...defaultProps}
+            queries={queries}
+            metadata={mockMetadata({ scopedVars: { job: { text: 'api', value: 'api' } } })}
+          />
+        );
+
+        await waitFor(() => expect(mockBackendSrv.post).toHaveBeenCalledTimes(2));
+        await waitFor(async () => {
+          await expect(getLatestColumns('A')).resolves.toEqual([]);
+        });
+      });
+
       it.each([
         { desc: 'the schema has no entry for the table', setup: () => mockSchemas({}) },
         {
           desc: 'the table schema has an error',
-          setup: () => mockSchemas({ A: { columns: null, sampleRows: null, error: 'conversion failed' } }),
+          setup: () =>
+            mockSchemas({
+              A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [], error: 'conversion failed' },
+            }),
         },
         { desc: 'the schema request fails', setup: () => mockBackendSrv.post.mockRejectedValue(new Error('boom')) },
       ])('suggests no columns and skips the metadata query when $desc', async ({ setup }) => {

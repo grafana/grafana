@@ -25,7 +25,7 @@ import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useFunctionSignatures } from './hooks/useFunctionSignatures';
-import { type SQLSchemaField, useSQLSchemas } from './hooks/useSQLSchemas';
+import { type SQLSchemaField, type SQLSchemas, useSQLSchemas } from './hooks/useSQLSchemas';
 
 const SQLEditor = lazy(() =>
   import('@grafana/plugin-ui').then((module) => ({
@@ -94,8 +94,13 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         }
 
         // Share Schema Inspector's source of truth: it reflects SQL-converted columns and includes hidden queries.
+        // Mirror its loading/error states too, since the hook keeps the previous schemas during a refetch.
         if (isSchemasFeatureEnabled) {
-          return toSchemaColumnCompletions(table ? schemas?.sqlSchemas[table]?.columns : null);
+          if (schemasLoading || schemasError || !table || !schemas) {
+            return [];
+          }
+          const tableSchema = findTableSchema(schemas.sqlSchemas, table);
+          return tableSchema?.error ? [] : toSchemaColumnCompletions(tableSchema?.columns);
         }
 
         try {
@@ -124,6 +129,8 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
       queries,
       refIds,
       schemas,
+      schemasError,
+      schemasLoading,
     ]
   );
 
@@ -381,6 +388,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
   }),
 });
+
+// SQL expression tables resolve case-insensitively on the backend, so `FROM a` reads refId `A`.
+function findTableSchema(sqlSchemas: SQLSchemas, table: string) {
+  const refId = Object.keys(sqlSchemas).find((key) => key.toLowerCase() === table.toLowerCase());
+  return refId === undefined ? undefined : sqlSchemas[refId];
+}
 
 function toSchemaColumnCompletions(columns: SQLSchemaField[] | null | undefined) {
   return (columns ?? []).map(({ name }) => ({
