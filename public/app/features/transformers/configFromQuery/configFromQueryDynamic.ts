@@ -102,7 +102,7 @@ export function extractConfigFromQueryDynamic(
   if (data.length === 1) {
     // there is only 1 frame: the config one
     // This cannot be supported, since the config frame cannot be self referential
-    return data
+    return data;
   }
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- we know options is a string, since we know applyTo is the dynamic field name

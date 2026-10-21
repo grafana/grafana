@@ -1,13 +1,14 @@
 import { toDataFrame, FieldType, DataTransformerID, transformDataFrame, getFieldDisplayName } from '@grafana/data';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
 
+import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
+
 import {
   CustomCFQMatchers,
   getConfigFromDataTransformer,
   type ConfigFromQueryTransformOptions,
 } from './configFromQuery';
 import { extractConfigFromQueryDynamic } from './configFromQueryDynamic';
-import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -67,10 +68,10 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.max).toEqual(10);
   });
 
-  it("Gracefully handles 1 frame inputs", () => {
+  it('Gracefully handles 1 frame inputs', () => {
     const results = extractConfigFromQueryDynamic(options, [config], config, options.mappings);
-    expect(results).toHaveLength(1)
-  })
+    expect(results).toHaveLength(1);
+  });
 });
 
 describe('transformer operator pipeline', () => {
@@ -166,5 +167,5 @@ describe('transformer operator pipeline', () => {
       expect(getFieldDisplayName(result[0].fields[0], result[0], result)).toEqual('The Red');
       expect(getFieldDisplayName(result[0].fields[1], result[0], result)).toEqual('The Green');
     });
-  })
+  });
 });
