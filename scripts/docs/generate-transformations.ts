@@ -192,13 +192,15 @@ To set a static refId:
 
 To go back to the generated refId, clear the field.
 
-When you haven't set a static refId, the row shows the refId the transformation generates, in italics. If the transformation outputs more than one frame, the row shows **(Auto)** instead.
+When you haven't set a static refId, the row shows the refId the transformation generates, in italics. If the transformation doesn't output exactly one frame, the row shows **(Auto)** instead.
 
 A static refId can't:
 
 - Contain a variable, because the refId would then change with the variable's value.
 - Match the static refId of another transformation in the panel.
 - Match a refId that a query or an earlier transformation already uses.
+
+If a name breaks one of these rules, Grafana shows an error and doesn't save it.
 
 ## Delete a transformation
 
