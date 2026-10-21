@@ -188,6 +188,8 @@ export const FlagKeys = {
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant */
+  GrafanaFiltersMigrationAssistantSuggestion: "grafana.filtersMigrationAssistantSuggestion",
   /** Offers the reserved Grafana home option in the home dashboard preference */
   GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
@@ -1349,6 +1351,17 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.filterablePanels", false, options).value;
+};
+
+/**
+ * Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.filtersMigrationAssistantSuggestion`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFiltersMigrationAssistantSuggestion = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.filtersMigrationAssistantSuggestion", false, options).value;
 };
 
 /**
