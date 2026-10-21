@@ -124,6 +124,72 @@ export function describeSyncHealth(
   return health.message ?? health.reason;
 }
 
+/**
+ * The name auto-sync imports a datasource's configuration under, which is also the name of the staged
+ * config and of its policy tree. The worker picks it from the datasource name on the first sync and
+ * records it on the status; syncs that started before that, and datasources that never synced, go by
+ * the UID.
+ */
+export function getSyncIdentifier(configResource: Config | undefined, uid: string): string {
+  const sync = configResource?.status?.externalAlertmanagerSync;
+  if (uid && sync?.datasourceUid === uid && sync.identifier) {
+    return sync.identifier;
+  }
+  return uid;
+}
+
+// Keep these in step with the sync worker, which picks the name on the backend.
+const SYNC_IDENTIFIER_FALLBACK = 'auto-sync';
+const SYNC_IDENTIFIER_MAX_LENGTH = 40;
+
+/**
+ * Turns a datasource name into a policy tree name the same way the sync worker does: anything other than
+ * a lowercase letter or digit becomes a single dash, with no dashes at either end.
+ */
+export function syncIdentifierFromName(name: string): string {
+  const identifier = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return identifier || SYNC_IDENTIFIER_FALLBACK;
+}
+
+/** Adds "-2", "-3", ... to `base` until it isn't one of the `taken` names, like the sync worker does. */
+export function uniqueSyncIdentifier(base: string, taken: Set<string>): string {
+  for (let n = 1; ; n++) {
+    const suffix = n > 1 ? `-${n}` : '';
+    let identifier = base;
+    if (identifier.length + suffix.length > SYNC_IDENTIFIER_MAX_LENGTH) {
+      identifier = identifier.slice(0, SYNC_IDENTIFIER_MAX_LENGTH - suffix.length).replace(/-+$/, '');
+    }
+    identifier += suffix;
+    if (!taken.has(identifier)) {
+      return identifier;
+    }
+  }
+}
+
+/**
+ * The name the first sync of a datasource will import under, so it can be checked before sync is turned
+ * on. `taken` holds the names of existing policy trees and imported configurations.
+ */
+export function predictSyncIdentifier(
+  configResource: Config | undefined,
+  uid: string,
+  datasourceName: string,
+  taken: Set<string>
+): string {
+  const sync = configResource?.status?.externalAlertmanagerSync;
+  if (sync?.datasourceUid === uid && sync.identifier) {
+    return sync.identifier;
+  }
+  // An earlier sync imported under the UID, and the worker keeps using that name.
+  if (taken.has(uid)) {
+    return uid;
+  }
+  return uniqueSyncIdentifier(syncIdentifierFromName(datasourceName), taken);
+}
+
 export function deriveSyncHealth(configResource: Config | undefined, configuredUid: string): AutoSyncHealth {
   const condition = configResource?.status?.conditions?.find((c) => c.type === SYNCED_CONDITION_TYPE);
   const observedUid = configResource?.status?.externalAlertmanagerSync?.datasourceUid ?? '';

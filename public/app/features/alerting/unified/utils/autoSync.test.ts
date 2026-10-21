@@ -12,6 +12,10 @@ import {
   deriveReadiness,
   deriveSyncSource,
   filterMimirCortexDatasources,
+  getSyncIdentifier,
+  predictSyncIdentifier,
+  syncIdentifierFromName,
+  uniqueSyncIdentifier,
 } from './autoSync';
 import { DataSourceType } from './datasource';
 
@@ -251,5 +255,78 @@ describe('deriveReadiness', () => {
     expect(readiness.isReady).toBe(true);
     expect(readiness.notReadyMessage).toBeUndefined();
     expect(readiness.readErrorMessage).toBe('boom');
+  });
+});
+
+describe('getSyncIdentifier', () => {
+  const withStatus = (status: ConfigStatus): Config => ({
+    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+    kind: 'Config',
+    metadata: { name: 'default' },
+    spec: {},
+    status,
+  });
+
+  it('returns the identifier the worker recorded for the datasource', () => {
+    const config = withStatus({ externalAlertmanagerSync: { datasourceUid: 'ds-1', identifier: 'mimir-prod' } });
+    expect(getSyncIdentifier(config, 'ds-1')).toBe('mimir-prod');
+  });
+
+  it('ignores an identifier recorded for a different datasource', () => {
+    const config = withStatus({ externalAlertmanagerSync: { datasourceUid: 'ds-1', identifier: 'mimir-prod' } });
+    expect(getSyncIdentifier(config, 'ds-2')).toBe('ds-2');
+  });
+
+  it('falls back to the UID for syncs that started before identifiers were recorded', () => {
+    const config = withStatus({ externalAlertmanagerSync: { datasourceUid: 'ds-1' } });
+    expect(getSyncIdentifier(config, 'ds-1')).toBe('ds-1');
+    expect(getSyncIdentifier(undefined, 'ds-1')).toBe('ds-1');
+  });
+});
+
+describe('syncIdentifierFromName', () => {
+  it('lowercases the name and turns anything else into single dashes, like the sync worker', () => {
+    expect(syncIdentifierFromName('Mimir Alertmanager')).toBe('mimir-alertmanager');
+    expect(syncIdentifierFromName('  Prod / EU--West (2) ')).toBe('prod-eu-west-2');
+  });
+
+  it('falls back to a fixed name when nothing usable is left', () => {
+    expect(syncIdentifierFromName('***')).toBe('auto-sync');
+  });
+});
+
+describe('uniqueSyncIdentifier', () => {
+  it('keeps the name when it is free and counts up from -2 when it is not', () => {
+    expect(uniqueSyncIdentifier('mimir', new Set())).toBe('mimir');
+    expect(uniqueSyncIdentifier('mimir', new Set(['mimir', 'mimir-2']))).toBe('mimir-3');
+  });
+
+  it('shortens a long name so the suffix still fits in 40 characters', () => {
+    const base = 'a'.repeat(39) + 'b';
+    expect(uniqueSyncIdentifier(base, new Set([base]))).toBe('a'.repeat(38) + '-2');
+  });
+});
+
+describe('predictSyncIdentifier', () => {
+  const withStatus = (status: ConfigStatus): Config => ({
+    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+    kind: 'Config',
+    metadata: { name: 'default' },
+    spec: {},
+    status,
+  });
+
+  it('reuses the name already recorded for the datasource', () => {
+    const config = withStatus({ externalAlertmanagerSync: { datasourceUid: 'ds-1', identifier: 'mimir-prod' } });
+    expect(predictSyncIdentifier(config, 'ds-1', 'Something Else', new Set())).toBe('mimir-prod');
+  });
+
+  it('keeps the UID when an earlier sync imported under it', () => {
+    expect(predictSyncIdentifier(undefined, 'ds-1', 'Mimir', new Set(['ds-1']))).toBe('ds-1');
+  });
+
+  it('derives a free name from the datasource name otherwise', () => {
+    const config = withStatus({ externalAlertmanagerSync: { datasourceUid: 'ds-2', identifier: 'other' } });
+    expect(predictSyncIdentifier(config, 'ds-1', 'Mimir', new Set(['mimir']))).toBe('mimir-2');
   });
 });
