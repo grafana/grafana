@@ -133,8 +133,6 @@ describe('TableContainer', () => {
     });
 
     it('gives the no-data message normal panel padding, not the table panel\'s noPadding', async () => {
-      // This renders MetaInfoText, not the table panel, so it must not inherit the table panel's
-      // noPadding setting (which would flush the message against the panel edge).
       mockImportPanelPlugin.mockResolvedValue({ noPadding: true });
       const emptyFrames: DataFrame[] = [
         {
