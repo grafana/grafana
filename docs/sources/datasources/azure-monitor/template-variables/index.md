@@ -23,7 +23,7 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
-review_date: 2026-08-11
+review_date: 2026-10-21
 ---
 
 # Azure Monitor template variables
@@ -73,6 +73,8 @@ The Azure Monitor data source provides the following query types for template va
 | **Regions**             | Returns Azure regions available for the specified subscription.                                                                        |
 | **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                    |
 | **Metric Names**        | Returns available metric names for a specified resource.                                                                               |
+| **Dimensions**          | Returns the dimension names for a specified metric.                                                                                    |
+| **Dimension Values**    | Returns the values of a specified dimension. Values are queried for the dashboard time range.                                          |
 | **Workspaces**          | Returns Log Analytics workspaces for the specified subscription.                                                                       |
 | **Logs**                | Executes a KQL query and returns the results as variable values. Refer to [Create a Logs variable](#create-a-logs-variable).           |
 | **Custom Namespaces**   | Returns custom metric namespaces for a specified resource.                                                                             |
@@ -108,6 +110,41 @@ Cascading variables (also called dependent or chained variables) allow you to cr
 1. Select the appropriate **Namespace** for your resources (for example, `Microsoft.Compute/virtualMachines`).
 
 Now when you change the subscription, the resource group dropdown updates automatically, and when you change the resource group, the resource name dropdown updates.
+
+## Create dimension variables
+
+Use **Dimensions** and **Dimension Values** to list a metric's dimensions and the values of one dimension, then filter a Metrics query with the selected value.
+
+Both query types require a subscription, resource group, namespace, resource, and metric name. **Custom Namespace** is optional. **Dimension Values** also requires a dimension name.
+
+### Example: filter a metric by a dimension value
+
+**Step 1: Create the resource variables**
+
+Create cascading `subscription`, `resourceGroup`, and `resource` variables as described in [Create cascading variables](#create-cascading-variables).
+
+**Step 2: Create a Metric Names variable**
+
+1. Create a variable named `metric`.
+1. Set **Query Type** to **Metric Names**.
+1. Set **Subscription** to `$subscription`, **Resource Group** to `$resourceGroup`, **Namespace** to the resource type, and **Resource** to `$resource`.
+
+**Step 3: Create a Dimensions variable**
+
+1. Create a variable named `dimension`.
+1. Set **Query Type** to **Dimensions**.
+1. Set **Subscription**, **Resource Group**, **Namespace**, and **Resource** to the same values as the metric variable.
+1. In **Metric Name**, select `$metric`.
+
+**Step 4: Create a Dimension Values variable**
+
+1. Create a variable named `dimensionValue`.
+1. Set **Query Type** to **Dimension Values**.
+1. Set **Subscription**, **Resource Group**, **Namespace**, **Resource**, and **Metric Name** to the same values as the dimensions variable.
+1. In **Dimension Name**, select `$dimension`.
+1. Set **Refresh** to **On time range change**. Dimension values are queried for the dashboard time range.
+
+In the Metrics query, select `$dimension` as the dimension and `$dimensionValue` as the filter value. For the dimension filter operators, refer to [Filter with dimensions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/#filter-with-dimensions).
 
 ## Create a Logs variable
 
