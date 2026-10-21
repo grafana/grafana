@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	legacyv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -49,12 +50,18 @@ const AuthzServiceAudience = "authzService"
 
 // AuthZClients exposes the authorization capabilities that may use different concrete clients.
 type AuthZClients struct {
+	legacyCheckClient     legacyv1.LegacyAuthzServiceClient
 	accessClient          authlib.AccessClient
 	userPermissionsClient authlib.UserPermissionsClient
 }
 
 func newAuthZClients(accessClient authlib.AccessClient, userPermissionsClient authlib.UserPermissionsClient) *AuthZClients {
 	return &AuthZClients{accessClient: accessClient, userPermissionsClient: userPermissionsClient}
+}
+
+// LegacyCheckClient uses the same authenticated connection as the RBAC client.
+func (c *AuthZClients) LegacyCheckClient() legacyv1.LegacyAuthzServiceClient {
+	return c.legacyCheckClient
 }
 
 // ProvideAuthZAccessClient returns the client used for authorization checks.
@@ -114,7 +121,9 @@ func ProvideAuthZClients(
 				return nil, err
 			}
 		}
-		return newAuthZClients(accessClient, rbacClient), nil
+		clients := newAuthZClients(accessClient, rbacClient)
+		clients.legacyCheckClient = rbacClient.legacyCheckClient
+		return clients, nil
 	default:
 		serverCfg := readEmbeddedRBACServerSettings(cfg)
 		if legacyLoader == nil {
@@ -184,6 +193,7 @@ func ProvideAuthZClients(
 			return authInterceptor(inProcessContextWithClientSpan(ctx), req, info, handler)
 		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
+		registerLegacyCheckService(channel, server)
 		rbacClient := authzlib.NewClient(
 			channel,
 			authzlib.WithCacheClientOption(&NoopCache{}),
@@ -200,7 +210,9 @@ func ProvideAuthZClients(
 				return nil, err
 			}
 		}
-		return newAuthZClients(accessClient, rbacClient), nil
+		clients := newAuthZClients(accessClient, rbacClient)
+		clients.legacyCheckClient = legacyv1.NewLegacyAuthzServiceClient(channel)
+		return clients, nil
 	}
 }
 
@@ -286,6 +298,7 @@ func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.Acc
 }
 
 type remoteRBACClient struct {
+	legacyCheckClient legacyv1.LegacyAuthzServiceClient
 	authlib.AccessClient
 	authlib.UserPermissionsClient
 }
@@ -352,6 +365,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}
 
 	return &remoteRBACClient{
+		legacyCheckClient: legacyv1.NewLegacyAuthzServiceClient(conn),
 		AccessClient: authzlib.NewClient(
 			conn,
 			authzlib.WithCacheClientOption(authzCache),
@@ -422,6 +436,7 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
+	registerLegacyCheckService(srv, server)
 }
 
 type NoopCache struct{}
