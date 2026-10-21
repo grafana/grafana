@@ -53,7 +53,7 @@ export async function expectHref(link: Locator, path: string, params: Record<str
 
 type LabelOperator = '=' | '!=' | '=~' | '!~' | 'exists' | 'absent';
 
-/** Records `/searchRules` bodies so journeys can prove the request, not only the rows. */
+/** Records rule search bodies so journeys can prove the request, not only the rows. */
 export class RuleListPage {
   private readonly searchBodies: SearchRequestBody[] = [];
 
@@ -61,7 +61,7 @@ export class RuleListPage {
     private readonly page: Page,
     readonly kind: RuleListKind
   ) {
-    const endpoint = `/${kind === 'alert' ? 'alertrules' : 'recordingrules'}/searchRules`;
+    const endpoint = `/${kind === 'alert' ? 'searchAlertRules' : 'searchRecordingRules'}`;
     page.on('request', (request) => {
       if (request.method() === 'POST' && request.url().includes(endpoint)) {
         this.searchBodies.push(JSON.parse(request.postData() ?? '{}'));

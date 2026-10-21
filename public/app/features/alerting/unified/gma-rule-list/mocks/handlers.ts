@@ -19,7 +19,7 @@ export function rulesUrl(kind: RuleKind) {
 }
 
 export function ruleSearchUrl(kind: RuleKind) {
-  return `${rulesUrl(kind)}/searchRules`;
+  return `${RULES_BASE}/${kind === 'alert' ? 'searchAlertRules' : 'searchRecordingRules'}`;
 }
 
 export function ruleUrl(kind: RuleKind) {

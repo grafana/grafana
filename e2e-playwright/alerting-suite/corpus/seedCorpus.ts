@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect } from '@playwright/test';
 
 import { postWithRetry, recordingTargetDataSource } from '../fixtures';
+import { ruleSearchUrl } from '../ruleSeeding';
 
 import { type CorpusFolder, type CorpusManifest } from './corpusState';
 
@@ -244,20 +245,17 @@ async function waitForMarkerCount(
   expectedCount: number
 ): Promise<void> {
   await expect(async () => {
-    const res = await request.post(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/searchRules`,
-      {
-        data: {
-          apiVersion: 'search.grafana.app/v0alpha1',
-          kind: 'SearchQuery',
-          where: { filter: { field: 'labels', operator: 'In', values: [`e2e-corpus-run=${runMarker}`] } },
-          sort: [{ field: 'title', direction: 'asc' }],
-          fields: ['title'],
-          limit: 1,
-        },
-      }
-    );
-    expect(res.ok(), `POST ${kind}/searchRules -> ${res.status()} ${await res.text()}`).toBeTruthy();
+    const res = await request.post(ruleSearchUrl(namespace, kind), {
+      data: {
+        apiVersion: 'search.grafana.app/v0alpha1',
+        kind: 'SearchQuery',
+        where: { filter: { field: 'labels', operator: 'In', values: [`e2e-corpus-run=${runMarker}`] } },
+        sort: [{ field: 'title', direction: 'asc' }],
+        fields: ['title'],
+        limit: 1,
+      },
+    });
+    expect(res.ok(), `POST ${ruleSearchUrl(namespace, kind)} -> ${res.status()} ${await res.text()}`).toBeTruthy();
     const body = await res.json();
     expect(body.metadata?.totalHits, `expected ${expectedCount} ${kind} for run ${runMarker}`).toBe(expectedCount);
   }).toPass({ intervals: [300, 700, 1500, 3000], timeout: 60_000 });

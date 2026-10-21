@@ -29,7 +29,7 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
       // Results belong to the current page only.
       keepUnusedDataFor: 0,
       query: ({ queryArg, pageParam }) => ({
-        url: '/recordingrules/searchRules',
+        url: '/searchRecordingRules',
         method: 'POST',
         body: buildRecordingRuleSearchQuery(queryArg, { continue: pageParam, limit: DEFAULT_PER_PAGE_PAGINATION }),
       }),

@@ -163,7 +163,7 @@ describe('AlertRulesPage', () => {
     expect(await screen.findByText('No Alert rules found')).toBeInTheDocument();
   });
 
-  it('sends the List search to the per-kind searchRules endpoint with the criteria as the request body', async () => {
+  it('sends the List search to searchAlertRules with the criteria as the request body', async () => {
     let body: unknown;
     mockRuleSearch('alert', (received) => {
       body = received;

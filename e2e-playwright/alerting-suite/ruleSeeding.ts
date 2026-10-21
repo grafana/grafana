@@ -22,6 +22,10 @@ export function rulesApiBase(namespace: string): string {
   return `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}`;
 }
 
+export function ruleSearchUrl(namespace: string, kind: RuleKind): string {
+  return `${rulesApiBase(namespace)}/${kind === 'alertrules' ? 'searchAlertRules' : 'searchRecordingRules'}`;
+}
+
 type RequestOptions = { data?: unknown; headers?: Record<string, string> };
 
 // Retries transient 403/500s from the SQLITE_BUSY race; folder create passes a longer budget.
@@ -104,7 +108,7 @@ export async function waitForRuleStatusVisible(
   timeout = 20_000
 ): Promise<void> {
   await expect(async () => {
-    const response = await request.post(`${rulesApiBase(namespace)}/${kind}/searchRules`, {
+    const response = await request.post(ruleSearchUrl(namespace, kind), {
       data: {
         apiVersion: 'search.grafana.app/v0alpha1',
         kind: 'SearchQuery',
@@ -115,7 +119,10 @@ export async function waitForRuleStatusVisible(
         limit: 40,
       },
     });
-    expect(response.ok(), `POST ${kind}/searchRules -> ${response.status()} ${await response.text()}`).toBeTruthy();
+    expect(
+      response.ok(),
+      `POST ${ruleSearchUrl(namespace, kind)} -> ${response.status()} ${await response.text()}`
+    ).toBeTruthy();
     const body = await response.json();
     const hits = new Map<string, { state?: string; health?: string; totals: Record<string, number | undefined> }>(
       (body.items ?? []).map((item: { resource: { name: string }; fields?: Record<string, string | number> }) => [

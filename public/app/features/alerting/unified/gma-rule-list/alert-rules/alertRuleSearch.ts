@@ -29,7 +29,7 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
       // Results are a view of the current page only; leaving it drops them.
       keepUnusedDataFor: 0,
       query: ({ queryArg, pageParam }) => ({
-        url: '/alertrules/searchRules',
+        url: '/searchAlertRules',
         method: 'POST',
         body: buildAlertRuleSearchQuery(queryArg, { continue: pageParam, limit: DEFAULT_PER_PAGE_PAGINATION }),
       }),

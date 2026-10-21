@@ -14,6 +14,7 @@ import {
   createRoutingTree,
   deleteFolder,
   postWithRetry,
+  ruleSearchUrl,
   rulesApiBase,
 } from './ruleSeeding';
 
@@ -32,7 +33,7 @@ type Folder = {
   title: string;
 };
 
-// Search index lags writes; poll searchRules for one folder until the expected count appears.
+// Search index lags writes; poll the kind's search for one folder until the expected count appears.
 export async function waitForRuleSearchVisible(
   request: APIRequestContext,
   namespace: string,
@@ -42,7 +43,7 @@ export async function waitForRuleSearchVisible(
   timeout = 20_000
 ): Promise<void> {
   await expect(async () => {
-    const res = await request.post(`${rulesApiBase(namespace)}/${kind}/searchRules`, {
+    const res = await request.post(ruleSearchUrl(namespace, kind), {
       data: {
         apiVersion: 'search.grafana.app/v0alpha1',
         kind: 'SearchQuery',
@@ -52,7 +53,7 @@ export async function waitForRuleSearchVisible(
         limit: 1,
       },
     });
-    expect(res.ok(), `POST ${kind}/searchRules -> ${res.status()} ${await res.text()}`).toBeTruthy();
+    expect(res.ok(), `POST ${ruleSearchUrl(namespace, kind)} -> ${res.status()} ${await res.text()}`).toBeTruthy();
     const body = await res.json();
     expect(
       body.metadata?.totalHits,
