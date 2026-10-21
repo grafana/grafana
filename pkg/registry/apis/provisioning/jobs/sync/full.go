@@ -382,6 +382,10 @@ func applyChanges(
 	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
 ) error {
+	if UseConverge {
+		return applyChangesViaConverge(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout)
+	}
+
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",

@@ -30,6 +30,7 @@ use (
 	./apps/shorturl
 	./pkg/apimachinery
 	./pkg/apiserver
+	./pkg/converge
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
 	./pkg/infra/features

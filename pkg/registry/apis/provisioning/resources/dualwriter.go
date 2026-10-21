@@ -362,6 +362,10 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
+	if err := r.preflight(ctx, opts.Path, opts.Ref, safepath.IsDir(opts.Path)); err != nil {
+		return nil, err
+	}
+
 	info := &repository.FileInfo{
 		Data: opts.Data,
 		Path: opts.Path,

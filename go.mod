@@ -31,6 +31,7 @@ replace (
 	// Packages
 	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+	github.com/grafana/grafana/pkg/converge => ./pkg/converge
 	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
 	github.com/grafana/grafana/pkg/infra/log => ./pkg/infra/log
 	github.com/grafana/grafana/pkg/infra/metrics => ./pkg/infra/metrics
