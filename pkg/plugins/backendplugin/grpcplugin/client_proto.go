@@ -114,7 +114,9 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 		return nil, errClientNotAvailable
 	}
 	resp, err := c.DataClient.QueryData(ctx, in, opts...)
-	responsesize.FromContext(ctx).AddQueryDataResponse(resp)
+	if err == nil {
+		responsesize.FromContext(ctx).AddQueryDataResponse(resp)
+	}
 	return resp, err
 }
 
@@ -123,11 +125,7 @@ func (r *protoClient) QueryChunkedData(ctx context.Context, in *pluginv2.QueryCh
 	if !exists {
 		return nil, errClientNotAvailable
 	}
-	stream, err := c.DataClient.QueryChunkedData(ctx, in, opts...)
-	if err != nil {
-		return stream, err
-	}
-	return responsesize.FromContext(ctx).WrapChunkedStream(stream), nil
+	return c.DataClient.QueryChunkedData(ctx, in, opts...)
 }
 
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {

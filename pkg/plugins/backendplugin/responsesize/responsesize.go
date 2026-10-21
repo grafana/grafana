@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"google.golang.org/grpc"
 )
 
 type contextKey struct{}
@@ -68,24 +67,4 @@ func (r *Recorder) AddChunk(chunk *pluginv2.QueryChunkedDataResponse) {
 		return
 	}
 	r.Add(chunk.GetRefId(), int64(len(chunk.GetFrame())))
-}
-
-func (r *Recorder) WrapChunkedStream(stream grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse]) grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse] {
-	if r == nil || stream == nil {
-		return stream
-	}
-	return &recordingStream{ServerStreamingClient: stream, recorder: r}
-}
-
-type recordingStream struct {
-	grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse]
-	recorder *Recorder
-}
-
-func (s *recordingStream) Recv() (*pluginv2.QueryChunkedDataResponse, error) {
-	chunk, err := s.ServerStreamingClient.Recv()
-	if err == nil {
-		s.recorder.AddChunk(chunk)
-	}
-	return chunk, err
 }
