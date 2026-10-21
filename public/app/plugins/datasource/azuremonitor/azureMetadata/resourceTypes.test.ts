@@ -12,6 +12,7 @@ describe('Azure Monitor metric resource types', () => {
     { type: 'microsoft.monitor/pipelinegroups', label: 'Azure Monitor pipeline groups' },
     { type: 'microsoft.network/networksecurityperimeters', label: 'Network security perimeters' },
     { type: 'microsoft.openenergyplatform/energyservices', label: 'Azure OpenEnergy' },
+    { type: 'microsoft.quantum/provideraccounts', label: 'Azure Quantum provider accounts' },
     { type: 'oracle.database/goldengatedeployments', label: 'Oracle GoldenGate deployments' },
   ])('includes $type in fallback discovery with a readable label', ({ type, label }) => {
     expect(resourceTypes).toContain(type);
