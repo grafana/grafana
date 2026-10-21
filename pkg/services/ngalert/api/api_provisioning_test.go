@@ -2282,7 +2282,7 @@ type testEnvironment struct {
 	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	log              log.Logger
 	store            store.DBstore
-	ruleStore        *rulestore.RuleStore
+	ruleStore        rulestore.Store
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
 	xact             provisioning.TransactionManager
@@ -2368,8 +2368,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		folder2,
 		folder3,
 	}
-	// if not one of the two above, return ErrFolderNotFound
-	folderService.ExpectedError = dashboards.ErrFolderNotFound
 	settings := setting.UnifiedAlertingSettings{
 		BaseInterval:         time.Second * 10,
 		DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
@@ -2386,6 +2384,10 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		FeatureToggles: featuremgmt.WithFeatures(),
 		Provenance:     provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore),
 	}
+	ruleService, err := rulestore.ProvideService(ruleStore, folderService)
+	require.NoError(t, err)
+	// if not one of the two above, return ErrFolderNotFound
+	folderService.ExpectedError = dashboards.ErrFolderNotFound
 	err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(raw),
 		ConfigurationVersion:      "v1",
@@ -2410,7 +2412,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		secrets:          secretsService,
 		log:              log,
 		store:            store,
-		ruleStore:        ruleStore,
+		ruleStore:        ruleService,
 		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,

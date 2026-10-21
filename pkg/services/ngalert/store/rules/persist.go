@@ -133,8 +133,9 @@ type MaintenanceStore interface {
 	CleanUpDeletedAlertRules(ctx context.Context) (int64, error)
 }
 
-// Store is the full surface implemented by *RuleStore.
+// Store is the full rule storage surface.
 type Store interface {
+	ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error)
 	// GetFolderUIDsWithMissingFullpath supports legacy-only fullpath maintenance, not app-platform rules.
 	GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error)
 	NamespaceStore
@@ -159,8 +160,7 @@ type Store interface {
 }
 
 var (
-	_ Store = (*RuleStore)(nil)
-	// Value receiver too: ProvideRuleStore registers a RuleStore value with the folder service.
+	_ Store                  = (*RuleStore)(nil)
 	_ Store                  = RuleStore{}
 	_ folder.RegistryService = RuleStore{}
 )
