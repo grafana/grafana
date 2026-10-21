@@ -133,12 +133,17 @@ const VirtualizedComboboxList = <T extends string | number>({
     // down without the virtualizer knowing, and scrolling would stop short of the focus ring.
     paddingStart: MENU_PADDING,
     paddingEnd: MENU_PADDING,
+    // Keep the focus ring inside the viewport when scrolling to an option.
+    scrollPaddingStart: MENU_PADDING,
+    scrollPaddingEnd: MENU_PADDING,
   });
   const { scrollToIndex } = rowVirtualizer;
+  const hasViewport = (rowVirtualizer.scrollRect?.height ?? 0) > 0;
   const previousHighlightedIndex = useRef<number | null>(highlightedIndex === null || highlightedIndex <= 0 ? 0 : null);
 
   useEffect(() => {
-    if (highlightedIndex === null || highlightedIndex < 0) {
+    // The floating menu starts at zero height. Scrolling before it is sized hides the selected row.
+    if (!hasViewport || highlightedIndex === null || highlightedIndex < 0) {
       return;
     }
 
@@ -149,7 +154,7 @@ const VirtualizedComboboxList = <T extends string | number>({
     previousHighlightedIndex.current = highlightedIndex;
 
     scrollToIndex(highlightedIndex, { align: 'auto' });
-  }, [highlightedIndex, scrollToIndex]);
+  }, [hasViewport, highlightedIndex, scrollToIndex]);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
