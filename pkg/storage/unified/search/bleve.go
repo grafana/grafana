@@ -38,6 +38,7 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -1826,8 +1827,7 @@ type bleveIndex struct {
 	// them from the index each time.
 	documentTypes map[schema.GroupResource]struct{}
 
-	// The folder tree of a global index, for searches of a folder and everything
-	// below it.
+	// Kept on the index so a rebuild also replaces its cached hierarchy.
 	folders folderTree
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
@@ -2426,7 +2426,7 @@ func (b *bleveIndex) Search(
 	ctx context.Context,
 	access authlib.AccessClient,
 	req *resourcepb.ResourceSearchRequest,
-	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
+	indexes *resource.SearchIndexes,
 	stats *resource.SearchStats,
 ) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
@@ -2440,7 +2440,22 @@ func (b *bleveIndex) Search(
 		b.observeSearchResultFormat(response)
 	}()
 
-	// Verifies the index federation
+	var federate []resource.ResourceIndex
+	folderIndex := b
+	if !b.key.IsGlobal() && (b.key.Group != folderv1.GROUP || b.key.Resource != folderv1.RESOURCE) {
+		folderIndex = nil
+	}
+	if indexes != nil {
+		federate = indexes.Federated
+		if indexes.Folders != nil && !b.key.IsGlobal() {
+			typed, ok := indexes.Folders.(*bleveIndex)
+			if !ok || typed == nil || typed.key.Namespace != b.key.Namespace || typed.key.Group != folderv1.GROUP || typed.key.Resource != folderv1.RESOURCE {
+				return nil, fmt.Errorf("folder index must hold folders of the searched namespace")
+			}
+			folderIndex = typed
+		}
+	}
+
 	index, err := b.getIndex(ctx, req, federate)
 	if err != nil {
 		return nil, err
@@ -2481,8 +2496,17 @@ func (b *bleveIndex) Search(
 	}
 
 	conversionStarts := time.Now()
-	// convert protobuf request to bleve request
-	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
+	if e := b.validateSearchRequest(req); e != nil {
+		response.Error = e
+		return response, nil
+	}
+	// Cursor fallback converts the request again; keep the same folder set.
+	filters, e := b.filterQueries(ctx, req, folderIndex)
+	if e != nil {
+		response.Error = e
+		return response, nil
+	}
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz, filters)
 	if e != nil {
 		response.Error = e
 		return response, nil
@@ -2515,7 +2539,7 @@ func (b *bleveIndex) Search(
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
 		cursorFallback = true
-		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
+		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz, filters)
 		if e != nil {
 			response.Error = e
 			return response, nil
@@ -3050,20 +3074,22 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool, trashAuthz *resource.TrashAuthorizer) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
+func (b *bleveIndex) validateSearchRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if err := rejectInternalFields(req); err != nil {
+		return err
+	}
+	if err := validateTrashRequest(req); err != nil {
+		return err
+	}
+	return b.rejectUnmappedSelectableFields(req)
+}
+
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool, trashAuthz *resource.TrashAuthorizer, filters []query.Query) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
-	if errResult := rejectInternalFields(req); errResult != nil {
-		return nil, errResult
-	}
-
-	if errResult := validateTrashRequest(req); errResult != nil {
-		return nil, errResult
-	}
-
-	if errResult := b.rejectUnmappedSelectableFields(req); errResult != nil {
-		return nil, errResult
+	if err := b.validateSearchRequest(req); err != nil {
+		return nil, err
 	}
 
 	facets := bleve.FacetsRequest{}
@@ -3136,10 +3162,6 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// Label/field filters are constraints, not relevance signals, so they go into
 	// the boolean Filter clause (scored "none" by bleve) while the free-text query
 	// scores in Must. This keeps ranking driven by text relevance alone.
-	filters, errResult := b.filterQueries(ctx, req)
-	if errResult != nil {
-		return nil, errResult
-	}
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
@@ -3437,6 +3459,11 @@ func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.Err
 	if len(req.Federated) > 0 {
 		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
 	}
+	if req.Options != nil && slices.ContainsFunc(req.Options.Fields, func(field *resourcepb.Requirement) bool {
+		return field.Key == resource.SEARCH_FIELD_FOLDER_TREE
+	}) {
+		return resource.NewBadRequestError("searching deleted resources does not support " + resource.SEARCH_FIELD_FOLDER_TREE)
+	}
 	return nil
 }
 
@@ -3593,7 +3620,7 @@ var declaredTopLevelNames = func() map[string]bool {
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
-func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
+func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest, folderIndex *bleveIndex) ([]query.Query, *resourcepb.ErrorResult) {
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
@@ -3615,7 +3642,7 @@ func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.Resource
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
 			if v.Key == resource.SEARCH_FIELD_FOLDER_TREE {
-				q, err := b.folderTreeQuery(ctx, v)
+				q, err := b.folderTreeQuery(ctx, v, folderIndex)
 				if err != nil {
 					return nil, err
 				}
