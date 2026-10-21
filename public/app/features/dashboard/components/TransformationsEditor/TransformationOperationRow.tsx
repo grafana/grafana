@@ -7,6 +7,7 @@ import {
   type TransformerRegistryItem,
   FrameMatcherID,
   type DataTransformContext,
+  getFrameMatchers,
   transformDataFrame,
   type DataFrame,
   transformerUsesDynamicRefId,
@@ -20,10 +21,7 @@ import {
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import {
-  frameMatcherFor,
-  interpolateConfigs,
-} from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
+import { interpolateConfigs } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
@@ -31,6 +29,9 @@ import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDispl
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationOperationRowHeader } from './TransformationOperationRowHeader';
 import { type TransformationData, type TransformationsEditorTransformation } from './types';
+
+// Keyed on the stored config so re-renders stay quiet, while an edit to the transformation reports afresh.
+const reportedReplayFailures = new WeakSet<DataTransformerConfig>();
 
 interface TransformationOperationRowProps {
   id: string;
@@ -116,7 +117,6 @@ export const TransformationOperationRow = ({
     // transformDataFrame skips variable interpolation under Scenes, so resolve them here as the panel does.
     const resolved = interpolateConfigs(configs.map((t) => t.transformation));
     const config = resolved[index];
-    const matcher = frameMatcherFor(config);
     // we need previous transformation index to get its outputs
     //    to be used in this transforms inputs
     const prevTransformIndex = index - 1;
@@ -136,14 +136,22 @@ export const TransformationOperationRow = ({
       interpolate: (v: string) => getTemplateSrv().replace(v),
     };
 
-    const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
-
-    // A resolved filter can be an invalid regex, which transformDataFrame throws on both while building
-    // its operators and inside the replay; the panel reports that itself, so the row must not crash.
+    // A resolved filter can be an invalid regex, which throws while building the matcher, while
+    // transformDataFrame builds its operators, and inside the replay; the panel reports that itself,
+    // so the row must not crash.
     const subscriptions: Subscription[] = [];
-    const error = (err: unknown) => console.error('Failed to replay transformations for the editor', err);
+    const storedConfig = configs[index].transformation;
+    const error = (err: unknown) => {
+      if (!reportedReplayFailures.has(storedConfig)) {
+        reportedReplayFailures.add(storedConfig);
+        console.error('Failed to replay transformations for the editor', err);
+      }
+    };
 
     try {
+      const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+      const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
+
       subscriptions.push(
         transformDataFrame(inputTransforms, data.series, ctx).subscribe({
           next: (data) => setInput(applyFilter(data)),

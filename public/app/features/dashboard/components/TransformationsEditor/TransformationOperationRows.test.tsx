@@ -48,23 +48,19 @@ standardTransformersRegistry.setInit(getStandardTransformers);
 const setup = (configs: TransformationsEditorTransformation[], transformationData: TransformationData = data) => {
   const onRemove = jest.fn();
   const onChange = jest.fn();
-  render(
+  const rows = (rowData: TransformationData) => (
     <DragDropContext onDragEnd={() => {}}>
       <Droppable droppableId="transformations-list" direction="vertical">
         {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
-            <TransformationOperationRows
-              data={transformationData}
-              configs={configs}
-              onRemove={onRemove}
-              onChange={onChange}
-            />
+            <TransformationOperationRows data={rowData} configs={configs} onRemove={onRemove} onChange={onChange} />
           </div>
         )}
       </Droppable>
     </DragDropContext>
   );
-  return { onRemove, onChange };
+  const view = render(rows(transformationData));
+  return { onRemove, onChange, rerender: (rowData: TransformationData) => view.rerender(rows(rowData)) };
 };
 
 describe('TransformationOperationRows', () => {
@@ -137,6 +133,7 @@ describe('TransformationOperationRows', () => {
 
     afterEach(() => {
       window.__grafanaSceneContext = prevContext;
+      jest.restoreAllMocks();
     });
 
     it('offers a field calculated with a variable to the next transformation', async () => {
@@ -186,22 +183,28 @@ describe('TransformationOperationRows', () => {
       expect(await within(menu).findByText('plus')).toBeInTheDocument();
     });
 
-    it('keeps the rows rendered when a filter variable resolves to an invalid regex', async () => {
+    it('keeps the rows rendered when a filter variable resolves to an invalid regex, logging once per row', async () => {
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const replayFailures = () =>
+        consoleError.mock.calls.filter(([message]) => message === 'Failed to replay transformations for the editor');
       const reduce = { id: DataTransformerID.reduce, options: { reducers: [ReducerID.max] } };
 
-      setup(
+      const { rerender } = setup(
         [
           { id: 'a', transformation: { ...reduce, filter: { id: FrameMatcherID.byName, options: '$brokenRegex' } } },
-          { id: 'b', transformation: reduce },
+          { id: 'b', transformation: { ...reduce } },
         ],
         seriesData
       );
 
       expect(await screen.findByText('1 - Reduce')).toBeInTheDocument();
       expect(screen.getByText('2 - Reduce')).toBeInTheDocument();
-      await waitFor(() => expect(consoleError).toHaveBeenCalled());
-      consoleError.mockRestore();
+      await waitFor(() => expect(replayFailures()).toHaveLength(2));
+
+      rerender({ ...seriesData });
+
+      expect(await screen.findByText('1 - Reduce')).toBeInTheDocument();
+      expect(replayFailures()).toHaveLength(2);
     });
   });
 });
