@@ -80,7 +80,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 	})
 
-	t.Run("Should skip an app with too large jsonData and apply the others", func(t *testing.T) {
+	t.Run("Should return error when jsonData is too large", func(t *testing.T) {
 		cfg := []*pluginsAsConfig{
 			{
 				Apps: []*appFromConfig{
@@ -100,9 +100,9 @@ func TestPluginProvisioner(t *testing.T) {
 			),
 		}
 
-		require.NoError(t, ap.applyChanges(context.Background(), ""))
-		require.Len(t, store.updateRequests, 1)
-		require.Equal(t, "test-plugin-2", store.updateRequests[0].PluginID)
+		err := ap.applyChanges(context.Background(), "")
+		require.ErrorIs(t, err, pluginsettings.ErrPluginSettingJSONDataTooLarge)
+		require.Empty(t, store.updateRequests)
 	})
 
 	t.Run("Should return error trying to disable an auto-enabled plugin", func(t *testing.T) {

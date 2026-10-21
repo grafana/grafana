@@ -84,11 +84,6 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJSONData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}); err != nil {
-			// A jsonData too large for the json_data column must not stop Grafana from starting.
-			if errors.Is(err, pluginsettings.ErrPluginSettingJSONDataTooLarge) {
-				ap.log.Error("Invalid plugin settings, skipping app", "type", app.PluginID, "orgId", app.OrgID, "error", err)
-				continue
-			}
 			return fmt.Errorf("%w: %s", err, app.PluginID)
 		}
 	}
