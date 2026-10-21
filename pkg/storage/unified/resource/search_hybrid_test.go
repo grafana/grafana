@@ -88,6 +88,31 @@ func TestFuseRRF_GroupsChunksPerUID(t *testing.T) {
 	assert.InDelta(t, 1.0/62, out[1].Score, 1e-12)
 }
 
+func TestFuseRRF_Tags(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		lex     []lexicalHit
+		content string
+		want    []string
+	}{
+		{name: "semantic tags", content: "Dashboard → CPU\nTags: team-a, prod, , staging \nrate(cpu[5m])", want: []string{"team-a", "prod", "staging"}},
+		{name: "no tags line", content: "Dashboard → CPU"},
+		{name: "empty tags line", content: "Dashboard → CPU\nTags: "},
+		{name: "indexed tags take precedence", lex: []lexicalHit{{uid: "a", tags: []string{"prod"}}}, content: "Dashboard → CPU\nTags: stale", want: []string{"prod"}},
+		{name: "empty indexed tags take precedence", lex: []lexicalHit{{uid: "a", tags: []string{}}}, content: "Dashboard → CPU\nTags: stale", want: []string{}},
+		{name: "missing indexed tags use semantic tags", lex: []lexicalHit{{uid: "a"}}, content: "Dashboard → CPU\nTags: prod", want: []string{"prod"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out := fuseRRF(hybridKey(), tc.lex, []vector.VectorSearchResult{
+				{UID: "a", Content: tc.content},
+				{UID: "a", Content: "Other panel\nTags: other"},
+			})
+			require.Len(t, out, 1)
+			assert.Equal(t, tc.want, out[0].Tags)
+		})
+	}
+}
+
 func TestFuseRRF_ChunkCap(t *testing.T) {
 	sem := make([]vector.VectorSearchResult, 0, maxChunksPerHybridResult+5)
 	for i := range maxChunksPerHybridResult + 5 {
@@ -346,6 +371,54 @@ func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
 	}
 }
 
+func TestLexicalHitsFromResponse_Tags(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "resource table",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: SEARCH_FIELD_TAGS}},
+				Rows: []*resourcepb.ResourceTableRow{{
+					Key:   &resourcepb.ResourceKey{Name: "dash"},
+					Cells: [][]byte{[]byte(`["prod","team,a"]`)},
+				}},
+			}},
+		},
+		{
+			name: "field values",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       []*resourcepb.ResourceSearchField{{Name: SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING, IsArray: true}},
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key:    &resourcepb.ResourceKey{Name: "dash"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"prod", "team,a"}}},
+				}},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			hits, err := lexicalHitsFromResponse(tc.response)
+			require.NoError(t, err)
+			require.Len(t, hits, 1)
+			assert.Equal(t, []string{"prod", "team,a"}, hits[0].tags)
+		})
+	}
+}
+
+func TestLexicalHitsFromResponseRejectsNonArrayTags(t *testing.T) {
+	_, err := lexicalHitsFromResponse(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:       []*resourcepb.ResourceSearchField{{Name: SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING}},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key:    &resourcepb.ResourceKey{Name: "dash"},
+			Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"prod"}}},
+		}},
+	})
+	require.ErrorContains(t, err, `field "tags": expected string array`)
+}
+
 func TestLexicalHitsFromResponseRejectsMalformedFieldValues(t *testing.T) {
 	_, err := lexicalHitsFromResponse(malformedFieldValueResponse())
 	require.ErrorContains(t, err, `field "title": scalar has 2 values`)
@@ -490,7 +563,7 @@ func TestHybridLexicalRequest(t *testing.T) {
 	assert.Equal(t, int64(40), out.Limit)
 	assert.Same(t, req.Key, out.Options.Key)
 	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, out.ResultFormat)
-	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, out.Fields)
+	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS}, out.Fields)
 
 	require.Len(t, out.Options.Fields, 4)
 	assert.Equal(t, SEARCH_FIELD_NAME, out.Options.Fields[0].Key)
@@ -619,9 +692,15 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 		[3]string{"both", "Both Legs", "f1"},
 		[3]string{"lexonly", "Lex Only", "f2"},
 	)
+	lexResp.Fields = append(lexResp.Fields, &resourcepb.ResourceSearchField{
+		Name: SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING, IsArray: true,
+	})
+	for _, row := range lexResp.Rows {
+		row.Values = append(row.Values, &resourcepb.ResourceSearchValue{FieldIndex: 2, StringValues: []string{"prod", "team-a"}})
+	}
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{
-			{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1", Score: 0.1, Folder: "f3"},
+			{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1\nTags: semantic-tag", Score: 0.1, Folder: "f3"},
 			{UID: "both", Title: "Both Legs", Subresource: "panel/2", Content: "b2", Score: 0.2, Folder: "f1"},
 		},
 	}
@@ -634,6 +713,7 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 	require.Len(t, resp.Results, 3)
 
 	assert.Equal(t, "both", resp.Results[0].Key.Name)
+	assert.Equal(t, []string{"prod", "team-a"}, resp.Results[0].Tags)
 	assert.InDelta(t, 1.0/61+1.0/62, resp.Results[0].Score, 1e-12)
 	require.Len(t, resp.Results[0].Chunks, 1)
 	assert.Equal(t, "panel/2", resp.Results[0].Chunks[0].Subresource)
@@ -641,8 +721,12 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 	// lexical-only hit carries a synthesized title chunk
 	for _, r := range resp.Results {
 		if r.Key.Name == "lexonly" {
+			assert.Equal(t, []string{"prod", "team-a"}, r.Tags)
 			require.Len(t, r.Chunks, 1)
 			assert.Equal(t, "Lex Only", r.Chunks[0].Content)
+		}
+		if r.Key.Name == "semonly" {
+			assert.Equal(t, []string{"semantic-tag"}, r.Tags)
 		}
 	}
 
@@ -650,6 +734,7 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 	assert.Equal(t, "api latency", idx.gotReq.Query)
 	assert.Equal(t, int64(20), idx.gotReq.Limit)
 	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotReq.ResultFormat)
+	assert.Contains(t, idx.gotReq.Fields, SEARCH_FIELD_TAGS)
 	idx.mu.Unlock()
 	assert.Equal(t, 20, backend.gotLimit)
 }

@@ -485,6 +485,9 @@ message HybridSearchResult {
   // or array elements omitted. Empty values are omitted.
   // Absent for semantic-only hits, external collections, and legacy table responses.
   map<string, google.protobuf.Value> lexical = 9;
+
+  // Tags from the lexical index or the best matching semantic chunk.
+  repeated string tags = 10;
 }
 
 message HybridSearchChunk {

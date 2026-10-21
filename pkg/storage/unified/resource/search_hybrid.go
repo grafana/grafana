@@ -589,6 +589,7 @@ type lexicalHit struct {
 	folder           string
 	managerKind      string
 	managerID        string
+	tags             []string
 	lexical          map[string]*structpb.Value
 	lexicalTruncated bool
 
@@ -634,6 +635,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		r.Folder = h.folder
 		r.ManagedByKind = h.managerKind
 		r.ManagedById = h.managerID
+		r.Tags = h.tags
 		r.Lexical = h.lexical
 		if h.chunkContent != "" {
 			if lexChunks == nil {
@@ -660,6 +662,9 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = titleFromChunkMetadata(v.Metadata, v.Title)
 				r.Folder = v.Folder
+			}
+			if r.Tags == nil {
+				r.Tags = parseSnippetTags(v.Content)
 			}
 		}
 		if len(r.Chunks) < maxChunksPerHybridResult {
@@ -724,6 +729,23 @@ func titleFromChunkMetadata(meta []byte, fallback string) string {
 	return m.DashboardTitle
 }
 
+func parseSnippetTags(content string) []string {
+	for _, line := range strings.Split(content, "\n") {
+		value, ok := strings.CutPrefix(line, "Tags: ")
+		if !ok {
+			continue
+		}
+		var tags []string
+		for _, tag := range strings.Split(value, ",") {
+			if tag = strings.TrimSpace(tag); tag != "" {
+				tags = append(tags, tag)
+			}
+		}
+		return tags
+	}
+	return nil
+}
+
 // lexicalHitsFromResponse decodes search rows into rank-ordered hits. Missing
 // fields remain empty; uid always comes from the row key.
 func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
@@ -746,6 +768,7 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 		return nil
 	}
 	titleIdx, folderIdx, managerKindIdx, managerIDIdx := -1, -1, -1, -1
+	tagsIdx := -1
 	for i, column := range table.GetColumns() {
 		switch column.GetName() {
 		case SEARCH_FIELD_TITLE:
@@ -756,6 +779,8 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 			managerKindIdx = i
 		case SEARCH_FIELD_MANAGER_ID:
 			managerIDIdx = i
+		case SEARCH_FIELD_TAGS:
+			tagsIdx = i
 		}
 	}
 	hits := make([]lexicalHit, 0, len(table.GetRows()))
@@ -775,6 +800,9 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 		}
 		if managerIDIdx >= 0 && managerIDIdx < len(row.GetCells()) {
 			hit.managerID = string(row.GetCells()[managerIDIdx])
+		}
+		if tagsIdx >= 0 && tagsIdx < len(row.GetCells()) {
+			_ = json.Unmarshal(row.GetCells()[tagsIdx], &hit.tags)
 		}
 		hits = append(hits, hit)
 	}
@@ -803,6 +831,13 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		}
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
+		}
+		if value, ok := values[SEARCH_FIELD_TAGS]; ok {
+			var valid bool
+			hit.tags, valid = value.([]string)
+			if !valid {
+				return nil, fmt.Errorf("row %d: field %q: expected string array, got %T", i, SEARCH_FIELD_TAGS, value)
+			}
 		}
 		hit.lexical, hit.lexicalTruncated = boundedLexicalFields(values)
 		hits = append(hits, hit)
@@ -962,7 +997,7 @@ func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, key *resourcepb.R
 		Options:      &resourcepb.ListOptions{Key: key},
 		Query:        req.Query,
 		Limit:        int64(depth),
-		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
+		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	add := func(key string, values []string) {

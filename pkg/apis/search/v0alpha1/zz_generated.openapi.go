@@ -529,6 +529,25 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchResultItem(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchManagedBy"),
 						},
 					},
+					"tags": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Tags come from the lexical index or the best matching semantic chunk.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 					"chunks": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
