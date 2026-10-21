@@ -12917,6 +12917,9 @@
     "new-folder": {
       "title": "New folder"
     },
+    "new-notebook": {
+      "title": "New notebook"
+    },
     "notebooks": {
       "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"

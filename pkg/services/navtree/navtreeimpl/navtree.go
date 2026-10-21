@@ -315,7 +315,8 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		return nil
 	}
 
-	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	if !hasAccess(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
 		return nil
 	}
 
@@ -328,7 +329,7 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		return nil
 	}
 
-	return &navtree.NavLink{
+	link := &navtree.NavLink{
 		Text:       "Notebooks",
 		Id:         navtree.NavIDNotebooks,
 		SubTitle:   "Create and manage notebooks to tell a story with your data",
@@ -336,6 +337,14 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		SortWeight: navtree.WeightNotebooks,
 		Url:        s.cfg.AppSubURL + "/notebooks",
 	}
+	if hasAccess(ac.EvalPermission(notebooks.ActionNotebooksCreate)) {
+		link.Children = append(link.Children, &navtree.NavLink{
+			Text: "New notebook", Id: "notebooks/new", Icon: "plus",
+			Url:          s.cfg.AppSubURL + "/notebooks/new?edit=true",
+			HideFromTabs: true, IsCreateAction: true,
+		})
+	}
+	return link
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
