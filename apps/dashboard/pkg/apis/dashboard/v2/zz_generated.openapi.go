@@ -2264,7 +2264,7 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfig(ref common.ReferenceCallb
 					},
 					"filterable": {
 						SchemaProps: spec.SchemaProps{
-							Description: "True if data source field supports ad-hoc filters",
+							Description: "Enables viewers to update dashboard filters by interacting with this field in supported visualizations. Corresponds to the \"Filter from values\" option in the panel editor. Requires data source support for dashboard filters.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
