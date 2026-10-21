@@ -304,5 +304,24 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings) bool {
 	}
 
 	// We should only query Loki if annotations do not exist in the database.
-	return backend == historian.BackendTypeLoki
+	switch backend {
+	case historian.BackendTypeLoki:
+		return true
+	case historian.BackendTypeMultiple:
+		primary, err := historian.ParseBackendType(cfg.MultiPrimary)
+		if err != nil || primary != historian.BackendTypeLoki {
+			return false
+		}
+		// An annotations secondary writes the same transitions to the database, and the
+		// composite store has no deduplication, so every alert annotation would show twice.
+		for _, s := range cfg.MultiSecondaries {
+			secondary, err := historian.ParseBackendType(s)
+			if err != nil || secondary == historian.BackendTypeAnnotations {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
 }
