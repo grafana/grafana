@@ -5,7 +5,6 @@ import {
   BASE_URL as v0alphaBaseURL,
   type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import {
   arrayToDataFrame,
   type DataFrame,
@@ -18,10 +17,9 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { ASSISTANT_PAGES_API_GROUP } from 'app/core/constants';
 import kbn from 'app/core/utils/kbn';
-import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
-import { searchStarredPages, starredPageURL } from 'app/features/stars/pages';
+import { searchStarredResources } from 'app/features/stars/kindSearch';
+import { loadStarredKinds, type StarredKind } from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -41,7 +39,7 @@ import { appendFrame, replaceCurrentFolderQuery } from './utils';
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
-  resource: string; // dashboards | folders | pages
+  resource: string; // dashboards | folders, or a plugin kind's plural
   name: string;
   title: string;
   description?: string;
@@ -53,6 +51,8 @@ export type SearchHit = {
   // calculated in the frontend
   url: string;
   managedBy?: ManagedBy;
+  // Set for hits from a plugin kind's own search, which carry their kind and url; dashboard search hits derive both from `resource`
+  kind?: string;
 };
 
 export type SearchAPIResponse = {
@@ -69,8 +69,8 @@ export type SearchAPIResponse = {
 };
 
 const folderViewSort = 'name_sort';
-// Shared so each starred() call doesn't construct a collator just to order a handful of page rows
-const pageTitleCollator = new Intl.Collator();
+// Shared so each starred() call doesn't construct a collator just to order a handful of plugin-kind rows
+const titleCollator = new Intl.Collator();
 
 export class UnifiedSearcher implements GrafanaSearcher {
   private locationInfo = loadLocationInfo();
@@ -86,36 +86,43 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // get the starred items — dashboards, folders when starred folders are enabled, and Assistant pages
-    const result: { data: ListStarsApiResponse } = await dispatch(
+    // The starred names of every kind: Grafana's own kinds resolve through the dashboard search
+    // below, each plugin kind through its own search endpoint
+    const stars: Promise<{ data: ListStarsApiResponse }> = dispatch(
       generatedAPI.endpoints.listStars.initiate({
         fieldSelector: userStarsFieldSelector(),
       })
     );
-    let starsIds = findStarredNames(result.data, DASHBOARD_API_GROUP, 'Dashboard');
-    if (starredFoldersEnabled()) {
-      starsIds = [...new Set([...starsIds, ...findStarredNames(result.data, FOLDER_API_GROUP, 'Folder')])];
+    const [kinds, result] = await Promise.all([loadStarredKinds(), stars]);
+    const searchNames = new Set<string>();
+    const pluginKindHits: Array<Promise<SearchHit[]>> = [];
+    for (const kind of kinds) {
+      const names = findStarredNames(result.data, kind.group, kind.kind);
+      if (kind.source === 'dashboard-search') {
+        names.forEach((name) => searchNames.add(name));
+      } else {
+        pluginKindHits.push(this.starredKindHits(kind, names, query));
+      }
     }
-    const pageNames = findStarredNames(result.data, ASSISTANT_PAGES_API_GROUP, 'Page');
-    const pageHits = await this.starredPageHits(pageNames, query);
+    const pluginHits = (await Promise.all(pluginKindHits)).flat();
 
-    if (starsIds.length) {
-      return this.doSearchQuery({ ...query, name: starsIds, query: query.query ?? '*' }, pageHits);
+    if (searchNames.size > 0) {
+      return this.doSearchQuery({ ...query, name: [...searchNames], query: query.query ?? '*' }, pluginHits);
     }
-    if (pageHits.length) {
-      return this.toQueryResponse({ hits: [], totalHits: 0 }, query.sort ?? '', pageHits);
+    if (pluginHits.length > 0) {
+      return this.toQueryResponse({ hits: [], totalHits: 0 }, query.sort ?? '', pluginHits);
     }
     // Nothing is starred
     return noDataResponse();
   }
 
   /**
-   * Starred Pages as search hits, resolved through the Assistant's per-kind search endpoint since
-   * Pages are not in the dashboard index. Filters that only dashboards can satisfy yield none.
-   * Sorted by title here: the rows trail the server-sorted dashboard rows, so they can only be
-   * ordered among themselves.
+   * Starred objects of a plugin kind as search hits, resolved through the kind's own search
+   * endpoint since they are not in the dashboard index. Filters that only dashboards can satisfy
+   * yield none. Sorted by title here: the rows trail the server-sorted dashboard rows, so they can
+   * only be ordered among themselves.
    */
-  private async starredPageHits(names: string[], query: SearchQuery): Promise<SearchHit[]> {
+  private async starredKindHits(kind: StarredKind, names: string[], query: SearchQuery): Promise<SearchHit[]> {
     const dashboardOnlyFilter =
       query.panel_type ||
       query.ds_type ||
@@ -123,33 +130,33 @@ export class UnifiedSearcher implements GrafanaSearcher {
       query.createdBy ||
       query.ownerReference?.length ||
       query.deleted;
-    // Pages never live at the root, so a root-folder filter cannot match one
+    // Plugin kinds never live at the root, so a root-folder filter cannot match one
     if (names.length === 0 || dashboardOnlyFilter || query.location === 'general') {
       return [];
     }
     try {
-      const pages = await searchStarredPages(names, {
+      const resources = await searchStarredResources(kind, names, {
         text: query.query,
         tags: query.tags,
         folder: query.location || undefined,
       });
       const descending = toSortParam(query.sort ?? '') === '-title';
-      return pages
-        .sort((a, b) => (descending ? -1 : 1) * pageTitleCollator.compare(a.title, b.title))
+      return resources
+        .sort((a, b) => (descending ? -1 : 1) * titleCollator.compare(a.title, b.title))
         .map(({ name, title, description, folder, tags }) => ({
-          resource: 'pages',
+          resource: kind.searchKind,
+          kind: kind.searchKind,
           name,
           title,
           description,
           folder,
           tags,
           field: {},
-          // Recomputed from the resource and name when the hits become rows
-          url: '',
+          url: kind.url(name),
         }));
     } catch (err) {
-      // A dead Pages API must not blank the Starred view; dashboards still render
-      console.error('Failed to load starred pages', err);
+      // A plugin kind whose API is unavailable must not blank the Starred view; dashboards still render
+      console.error(`Failed to load starred ${kind.group}/${kind.kind}`, err);
       return [];
     }
   }
@@ -533,7 +540,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name, hit.title),
+      // Plugin-kind hits carry their url; dashboard search hits derive it from the resource
+      url: hit.kind ? hit.url : toURL(hit.resource, hit.name, hit.title),
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
@@ -544,7 +552,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
-      kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      kind: hit.kind ?? hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
       managedBy: hit.managedBy,
       ...field,
     };
@@ -600,9 +608,6 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 }
 
 export function toURL(resource: string, name: string, title: string): string {
-  if (resource === 'pages') {
-    return starredPageURL(name);
-  }
   if (resource === 'folders') {
     return `${config.appSubUrl}/dashboards/f/${name}`;
   }

@@ -75,3 +75,17 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
     />
   );
 }
+
+/**
+ * Props are widened because the registry types every exposed component as `ComponentType<{}>`;
+ * the contract is only checked on the consuming side, through `usePluginComponent`'s generic.
+ * A plugin that names no object has nothing to star, so this renders nothing rather than
+ * throwing out of someone else's React tree.
+ */
+export function StarToolbarButtonExposed(props: Partial<Props>) {
+  const { title, group, kind, id } = props;
+  if (!title || !group || !kind || !id) {
+    return null;
+  }
+  return <StarToolbarButton {...props} title={title} group={group} kind={kind} id={id} />;
+}

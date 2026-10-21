@@ -3,7 +3,7 @@ import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
-import { starResourceForKind } from 'app/features/stars/utils';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { type Dashboard } from './DashList';
 import { ListRow } from './ListRow';
@@ -35,8 +35,8 @@ export function DashListItem({
   const css = useStyles2(getStyles);
   const isCompact = density === 'compact';
 
-  // Rows may be dashboards, folders or pages; the star has to target the row's own kind
-  const resource = starResourceForKind(dashboard.kind);
+  // Rows may be dashboards, folders or plugin kinds; the star has to target the row's own kind
+  const resource = findStarredKindBySearchKind(dashboard.kind);
   const starButton = resource ? (
     <StarToolbarButton
       title={dashboard.name}

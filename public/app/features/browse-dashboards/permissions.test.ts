@@ -1,3 +1,7 @@
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { MOCK_STARRED_KIND_APP } from '@grafana/test-utils/unstable';
+import { loadStarredKinds } from 'app/features/stars/kinds';
+
 import { canEditItemType } from './permissions';
 import { type BrowseDashboardsPermissions } from './types';
 
@@ -17,7 +21,15 @@ describe('canEditItemType', () => {
     expect(canEditItemType(kind, permissions)).toBe(expected);
   });
 
-  it('never lets a page be edited, whatever the permissions', () => {
-    expect(canEditItemType('page', { ...dashboardsOnly, canEditFolders: true, canDeleteDashboards: true })).toBe(false);
+  it("never lets a plugin's objects be edited, whatever the permissions", async () => {
+    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
+    await loadStarredKinds();
+    const everything = { ...dashboardsOnly, canEditFolders: true, canDeleteDashboards: true };
+
+    expect(canEditItemType('things.ext.grafana.app/Thing', everything)).toBe(false);
+
+    setAppPluginMetas({});
+    await loadStarredKinds();
+    clearAppPluginMetas();
   });
 });

@@ -2,14 +2,16 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useSelector } from 'app/types/store';
 
 import { StarToolbarButton } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
+import { CollectionsStarsSrv } from './service';
 
 jest.mock('./analytics/main', () => ({
   itemStarred: jest.fn(),
@@ -18,6 +20,9 @@ jest.mock('./analytics/main', () => ({
 const [_, { dashbdD, folderA, folderA_folderB_dashbdB }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
+// Stars go through the runtime service, which refuses signed-out callers
+setStarsSrv(new CollectionsStarsSrv());
+contextSrv.isSignedIn = true;
 setupMockServer();
 locationUtil.initialize({
   config: { appSubUrl: '/foo/bar' } as GrafanaConfig,

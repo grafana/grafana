@@ -13129,10 +13129,7 @@
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
       "loading-aria-label": "Loading {{sectionName}}",
-      "reorder-aria-label": "Reorder {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Folder",
-      "starred-page-icon": "Page"
+      "reorder-aria-label": "Reorder {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -15998,10 +15995,7 @@
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Folder",
-      "type-header": "Type",
-      "type-page": "Page"
+      "type-header": "Type"
     },
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
@@ -16487,6 +16481,10 @@
     "improve-query": "Improve query"
   },
   "stars": {
+    "kinds": {
+      "dashboard": "Dashboard",
+      "folder": "Folder"
+    },
     "mark-as-starred": "Mark as favorite",
     "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
     "unmark-as-starred": "Unmark as favorite",

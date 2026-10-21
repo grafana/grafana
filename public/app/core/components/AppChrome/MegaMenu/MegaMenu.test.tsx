@@ -4,16 +4,20 @@ import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction, setBackendSrv } from '@grafana/runtime';
-import { getPagesSearchHandler } from '@grafana/test-utils/handlers';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { getKindDiscoveryHandlers, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
+  MOCK_STARRED_KIND,
+  MOCK_STARRED_KIND_APP,
+  MOCK_STARRED_KIND_SERVED,
   mockUserPreferences,
   setMockStarredDashboards,
   setMockStarredFolders,
-  setMockStarredPages,
+  setMockStarredPluginKind,
   setMockUserPreferences,
   setTestFlags,
 } from '@grafana/test-utils/unstable';
@@ -617,11 +621,17 @@ describe('MegaMenu', () => {
     });
   });
 
-  it('renders a starred page with the pages icon titled for screen readers, linking to the page', async () => {
-    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+  it('renders a starred plugin object with its kind icon titled for screen readers, linking into the plugin', async () => {
+    const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredDashboards([]);
-    setMockStarredPages([pageUuid]);
-    server.use(getPagesSearchHandler([{ name: pageUuid, title: 'Capacity review', folder: folderB.item.uid }]));
+    setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
+    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
+    server.use(
+      ...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED),
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
+        { name: thingUuid, title: 'Capacity review', folder: folderB.item.uid },
+      ])
+    );
     setupSearcher([]);
 
     const { user } = renderMegaMenu();
@@ -632,11 +642,12 @@ describe('MegaMenu', () => {
     await waitFor(() => {
       expect(starredSection().getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
         'href',
-        `/a/grafana-assistant-app/pages/${pageUuid}`
+        `/a/test-things-app/things/${thingUuid}`
       );
     });
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
-    expect(starredSection().getByTitle('Page')).toBe(starredSection().getByTestId('icon-pages'));
+    expect(starredSection().getByTitle('Thing')).toBe(starredSection().getByTestId('icon-cube'));
+    clearAppPluginMetas();
   });
 });

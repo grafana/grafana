@@ -30,6 +30,3 @@ export const SETUPGUIDE_PLUGIN_ID = 'grafana-setupguide-app';
 export const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 /** Where the Assistant serves Grafana Pages: one page per `${ASSISTANT_PAGES_PATH}/<id>`; the path itself lists them. */
 export const ASSISTANT_PAGES_PATH = `/a/${ASSISTANT_PLUGIN_ID}/pages`;
-/** API group/version of the Assistant's Page kind; a Page's k8s name is the publication UUID in its URL. */
-export const ASSISTANT_PAGES_API_GROUP = 'assistant.ext.grafana.app';
-export const ASSISTANT_PAGES_API_VERSION = 'v0alpha1';

@@ -1,12 +1,21 @@
 import { http, HttpResponse } from 'msw';
 import { render, screen } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, getPagesSearchHandler } from '@grafana/test-utils/handlers';
+import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { getCustomSearchHandler, getKindDiscoveryHandlers, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setMockStarredPages } from '@grafana/test-utils/unstable';
+import {
+  getFolderFixtures,
+  MOCK_STARRED_KIND,
+  MOCK_STARRED_KIND_APP,
+  MOCK_STARRED_KIND_SERVED,
+  setMockStarredPluginKind,
+} from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { getPanelProps } from '../test-utils';
 
@@ -16,6 +25,9 @@ import { type Options } from './panelcfg.gen';
 const [_, { folderA, folderA_dashbdD, dashbdE }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
+// Stars go through the runtime service, which refuses signed-out callers
+setStarsSrv(new CollectionsStarsSrv());
+contextSrv.isSignedIn = true;
 setupMockServer();
 
 const defaultOptions: Options = {
@@ -109,12 +121,16 @@ describe('DashList', () => {
     expect(unmarkButton).toBeInTheDocument();
   });
 
-  it('lists a starred page and un-stars it under the Page kind', async () => {
-    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
-    setMockStarredPages([pageUuid]);
+  it('lists a starred plugin object and un-stars it under its own kind', async () => {
+    const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+    setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
+    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
     const deletedStars: string[] = [];
     server.use(
-      getPagesSearchHandler([{ name: pageUuid, title: 'Capacity review', folder: folderA.item.uid }]),
+      ...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED),
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
+        { name: thingUuid, title: 'Capacity review', folder: folderA.item.uid },
+      ]),
       http.delete(
         '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
         ({ params }) => {
@@ -131,14 +147,15 @@ describe('DashList', () => {
       preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
     });
 
-    const pageLink = await screen.findByRole('link', { name: 'Capacity review' });
-    expect(pageLink).toHaveAttribute('href', `/a/grafana-assistant-app/pages/${pageUuid}`);
+    const thingLink = await screen.findByRole('link', { name: 'Capacity review' });
+    expect(thingLink).toHaveAttribute('href', `/a/test-things-app/things/${thingUuid}`);
 
     await user.click(await findStarButton('Capacity review', true));
 
     // The star targets the row's own kind, not the dashboard kind every row used to get
-    expect(deletedStars).toEqual([`assistant.ext.grafana.app/Page/${pageUuid}`]);
+    expect(deletedStars).toEqual([`${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}/${thingUuid}`]);
     expect(screen.queryByText('Capacity review')).not.toBeInTheDocument();
+    clearAppPluginMetas();
   });
 
   it('shows recently viewed dashboards', async () => {

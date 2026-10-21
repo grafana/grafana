@@ -3,9 +3,10 @@ import { useEffect } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { ASSISTANT_PAGES_PATH, MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { starredKindForUrl } from 'app/features/stars/kinds';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
@@ -61,16 +62,8 @@ export const enrichWithInteractionTracking = (
 
   newItem.onClick = () => {
     const itemIsStarred = newItem?.parentItem?.id === 'starred';
-    let itemKind: 'dashboard' | 'folder' | 'page' | undefined;
-    if (itemIsStarred) {
-      if (newItem.url?.includes('/dashboards/f/')) {
-        itemKind = 'folder';
-      } else if (newItem.url?.includes(ASSISTANT_PAGES_PATH)) {
-        itemKind = 'page';
-      } else {
-        itemKind = 'dashboard';
-      }
-    }
+    // Starred leaves carry only a link, so the kind is read back from it
+    const itemKind = itemIsStarred ? starredKindForUrl(newItem.url ?? '').searchKind : undefined;
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,

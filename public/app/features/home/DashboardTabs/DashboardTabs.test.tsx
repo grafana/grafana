@@ -5,7 +5,7 @@ import { render, screen, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
-import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { config, reportInteraction, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -16,6 +16,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryEntry } from 'app/core/services/pageHistory/types';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { CollectionsStarsSrv } from 'app/features/stars/service';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -45,6 +46,9 @@ jest.mock('app/core/services/pageHistory/pageHistorySrv', () => ({
 }));
 
 setBackendSrv(backendSrv);
+// Stars go through the runtime service, which refuses signed-out callers
+setStarsSrv(new CollectionsStarsSrv());
+contextSrv.isSignedIn = true;
 setupMockServer();
 
 const FILTER_KEY = 'grafana.home.recentActivity.filter';

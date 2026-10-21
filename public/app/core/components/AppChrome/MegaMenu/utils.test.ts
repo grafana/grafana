@@ -2,7 +2,10 @@ import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { MOCK_STARRED_KIND_APP, setTestFlags } from '@grafana/test-utils/unstable';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
+import { loadStarredKinds } from 'app/features/stars/kinds';
 
 import {
   getEnrichedHelpItem,
@@ -151,6 +154,8 @@ describe('enrichWithInteractionTracking', () => {
   });
 
   it('reports a starred folder click with itemKind folder', () => {
+    // A folder can only sit in the Starred section while folders are starrable
+    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     const item: NavModelItem = {
       text: 'Folder 1',
       id: 'starred/f1',
@@ -164,6 +169,7 @@ describe('enrichWithInteractionTracking', () => {
       'grafana_navigation_item_clicked',
       expect.objectContaining({ itemIsStarred: true, itemKind: 'folder' })
     );
+    setTestFlags({});
   });
 
   it('reports a starred dashboard click with itemKind dashboard', () => {
@@ -182,11 +188,13 @@ describe('enrichWithInteractionTracking', () => {
     );
   });
 
-  it('reports a starred page click with itemKind page', () => {
+  it('reports a starred plugin object click with the kind a plugin declared', async () => {
+    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
+    await loadStarredKinds();
     const item: NavModelItem = {
-      text: 'Page 1',
-      id: 'starred/p1',
-      url: '/a/grafana-assistant-app/pages/p1',
+      text: 'Thing 1',
+      id: 'starred/t1',
+      url: '/a/test-things-app/things/t1',
       parentItem: { text: 'Starred', id: 'starred' },
     };
 
@@ -194,8 +202,11 @@ describe('enrichWithInteractionTracking', () => {
 
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'page' })
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'things.ext.grafana.app/Thing' })
     );
+    setAppPluginMetas({});
+    await loadStarredKinds();
+    clearAppPluginMetas();
   });
 
   it('reports non-starred items as not starred and without a kind', () => {

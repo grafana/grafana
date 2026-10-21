@@ -3,15 +3,22 @@ import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import {
   getCustomSearchHandler,
-  getPagesSearchHandler,
-  pagesSearchRoute,
+  getKindDiscoveryHandlers,
+  getKindSearchHandler,
+  kindSearchRoute,
   searchRoute,
   starsRoute,
 } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import {
+  MOCK_STARRED_KIND,
+  MOCK_STARRED_KIND_APP,
+  MOCK_STARRED_KIND_SERVED,
+  setTestFlags,
+} from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setStore } from 'app/store/store';
@@ -248,10 +255,10 @@ describe('Unified Storage Searcher', () => {
         return HttpResponse.json({ totalHits: hits.length, hits: hits.slice(offset, offset + limit) });
       });
 
-    const pagesRequested = jest.fn();
-    const rejectPagesHandler = (status: number) =>
-      http.post(pagesSearchRoute, () => {
-        pagesRequested();
+    const thingsRequested = jest.fn();
+    const rejectThingsHandler = (status: number) =>
+      http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), () => {
+        thingsRequested();
         return new HttpResponse(null, { status });
       });
 
@@ -259,7 +266,7 @@ describe('Unified Storage Searcher', () => {
 
     beforeEach(() => {
       searchRequests = [];
-      pagesRequested.mockClear();
+      thingsRequested.mockClear();
       // One call — putConfiguration replaces the whole flag set, so a second call would drop the first.
       setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
       // starred() reads stars via an RTK Query dispatch on the global store, so wire one up.
@@ -308,46 +315,54 @@ describe('Unified Storage Searcher', () => {
       expect(findStarredSearchRequest()).toBeUndefined();
     });
 
-    describe('with starred pages', () => {
-      const pageResource = { group: 'assistant.ext.grafana.app', kind: 'Page', names: ['p1'] };
-      const starredPage = { name: 'p1', title: 'Page 1', folder: 'f1' };
+    describe('with a plugin-declared starred kind', () => {
+      const thingResource = { group: MOCK_STARRED_KIND.group, kind: MOCK_STARRED_KIND.kind, names: ['t1'] };
+      const starredThing = { name: 't1', title: 'Thing 1', folder: 'f1' };
+      const THING_URL = '/a/test-things-app/things/t1';
 
-      it('appends starred pages after the dashboard and folder rows, linking to the page URL', async () => {
+      beforeEach(() => {
+        setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
+        server.use(...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED));
+      });
+
+      afterEach(() => clearAppPluginMetas());
+
+      it('appends the plugin rows after the dashboard and folder rows, linking into the plugin', async () => {
         server.use(
-          starsHandler([...bothStarredResources, pageResource]),
+          starsHandler([...bothStarredResources, thingResource]),
           captureSearchHandler(starredHits),
-          getPagesSearchHandler([starredPage])
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [starredThing])
         );
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
 
-        // Pages are not in the dashboard index, so the dashboard search is asked about dashboards and folders only
+        // Plugin objects are not in the dashboard index, so that search is asked about dashboards and folders only
         expect(findStarredSearchRequest()?.searchParams.getAll('name')).toEqual(['d1', 'f1']);
 
         expect(response.totalRows).toBe(3);
         expect(response.view.length).toBe(3);
-        const pageRow = response.view.get(2);
-        expect(pageRow.kind).toBe('page');
-        expect(pageRow.name).toBe('Page 1');
-        expect(pageRow.url).toBe('/a/grafana-assistant-app/pages/p1');
-        expect(pageRow.location).toBe('f1');
+        const thingRow = response.view.get(2);
+        expect(thingRow.kind).toBe('things.ext.grafana.app/Thing');
+        expect(thingRow.name).toBe('Thing 1');
+        expect(thingRow.url).toBe(THING_URL);
+        expect(thingRow.location).toBe('f1');
       });
 
-      it('pages through the dashboard rows before appending the page rows', async () => {
+      it('pages through the dashboard rows before appending the plugin rows', async () => {
         server.use(
-          starsHandler([{ group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['d1', 'd2'] }, pageResource]),
+          starsHandler([{ group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['d1', 'd2'] }, thingResource]),
           captureSearchHandler([
             { resource: 'dashboards', name: 'd1', title: 'Dashboard 1', field: {} },
             { resource: 'dashboards', name: 'd2', title: 'Dashboard 2', field: {} },
           ]),
-          getPagesSearchHandler([starredPage])
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [starredThing])
         );
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ limit: 1 });
 
-        // The first page holds one server row; the total still counts the page waiting at the end
+        // The first page holds one server row; the total still counts the plugin row waiting at the end
         expect(response.view.length).toBe(1);
         expect(response.totalRows).toBe(3);
         expect(response.isItemLoaded(2)).toBe(false);
@@ -356,66 +371,85 @@ describe('Unified Storage Searcher', () => {
 
         expect(response.view.length).toBe(3);
         expect(response.view.get(1).uid).toBe('d2');
-        expect(response.view.get(2).uid).toBe('p1');
-        expect(response.view.get(2).kind).toBe('page');
+        expect(response.view.get(2).uid).toBe('t1');
+        expect(response.view.get(2).kind).toBe('things.ext.grafana.app/Thing');
         // The second server page was requested at the offset of the rows already shown
         expect(searchRequests.map((url) => url.searchParams.get('offset')).filter(Boolean)).toEqual(['1']);
       });
 
-      it('orders the page rows Z-A among themselves for a descending title sort', async () => {
+      it('orders the plugin rows Z-A among themselves for a descending title sort', async () => {
         server.use(
-          starsHandler([{ ...pageResource, names: ['p1', 'p2'] }]),
+          starsHandler([{ ...thingResource, names: ['t1', 't2'] }]),
           captureSearchHandler([]),
-          getPagesSearchHandler([starredPage, { name: 'p2', title: 'Zebra page', folder: 'f1' }])
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
+            starredThing,
+            { name: 't2', title: 'Zebra thing', folder: 'f1' },
+          ])
         );
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ sort: '-name_sort' });
 
-        expect([response.view.get(0).name, response.view.get(1).name]).toEqual(['Zebra page', 'Page 1']);
+        expect([response.view.get(0).name, response.view.get(1).name]).toEqual(['Zebra thing', 'Thing 1']);
       });
 
-      it('returns only page rows without a dashboard search when only pages are starred', async () => {
-        server.use(starsHandler([pageResource]), captureSearchHandler([]), getPagesSearchHandler([starredPage]));
+      it('returns only plugin rows without a dashboard search when only plugin objects are starred', async () => {
+        server.use(
+          starsHandler([thingResource]),
+          captureSearchHandler([]),
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [starredThing])
+        );
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
 
         expect(response.totalRows).toBe(1);
-        expect(response.view.get(0).kind).toBe('page');
-        expect(response.view.get(0).name).toBe('Page 1');
+        expect(response.view.get(0).kind).toBe('things.ext.grafana.app/Thing');
+        expect(response.view.get(0).name).toBe('Thing 1');
         expect(findStarredSearchRequest()).toBeUndefined();
+      });
+
+      it('ignores stars of a kind no installed plugin declares', async () => {
+        clearAppPluginMetas();
+        setAppPluginMetas({});
+        server.use(starsHandler([...bothStarredResources, thingResource]), captureSearchHandler(starredHits));
+
+        const searcher = new UnifiedSearcher();
+        const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+        expect(response.totalRows).toBe(2);
+        expect(thingsRequested).not.toHaveBeenCalled();
       });
 
       it.each([
         { desc: 'a panel type filter', query: { panel_type: 'graph' } },
         { desc: 'the root folder location', query: { location: 'general' } },
-      ])('skips the pages lookup for $desc, which no page can match', async ({ query }) => {
+      ])('skips the plugin lookup for $desc, which no plugin object can match', async ({ query }) => {
         server.use(
-          starsHandler([...bothStarredResources, pageResource]),
+          starsHandler([...bothStarredResources, thingResource]),
           captureSearchHandler(starredHits),
-          rejectPagesHandler(500)
+          rejectThingsHandler(500)
         );
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred(query);
 
         expect(response.totalRows).toBe(2);
-        expect(pagesRequested).not.toHaveBeenCalled();
+        expect(thingsRequested).not.toHaveBeenCalled();
       });
 
-      it('still returns the dashboard rows when the pages API fails', async () => {
+      it('still returns the dashboard rows when the plugin kind API fails', async () => {
         server.use(
-          starsHandler([...bothStarredResources, pageResource]),
+          starsHandler([...bothStarredResources, thingResource]),
           captureSearchHandler(starredHits),
-          rejectPagesHandler(500)
+          rejectThingsHandler(500)
         );
         jest.spyOn(console, 'error').mockImplementation(() => {});
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
 
-        expect(pagesRequested).toHaveBeenCalledTimes(1);
+        expect(thingsRequested).toHaveBeenCalledTimes(1);
         expect(response.totalRows).toBe(2);
         expect(response.view.get(0).kind).toBe('dashboard');
         expect(response.view.get(1).kind).toBe('folder');
