@@ -2596,15 +2596,15 @@
     {
       "metadata": {
         "name": "grafana.configFromQueryDynamicName",
-        "resourceVersion": "1792442902254",
+        "resourceVersion": "1792594531964",
         "creationTimestamp": "2026-09-17T22:29:38Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-19 20:48:22.254188842 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-10-21 14:55:31.964131578 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables using the Config From Query Results transformation's Dynamic Field Name option",
-        "stage": "preview",
+        "stage": "experimental",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"

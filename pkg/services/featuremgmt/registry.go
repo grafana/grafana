@@ -3200,7 +3200,7 @@ var (
 		{
 			Name:        "grafana.configFromQueryDynamicName",
 			Description: "Enables using the Config From Query Results transformation's Dynamic Field Name option",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
