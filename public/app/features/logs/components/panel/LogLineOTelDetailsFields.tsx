@@ -6,7 +6,7 @@ import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo
 import { CoreApp, type GrafanaTheme2, type IconName, type LogLabelStatsModel, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Dropdown, Icon, IconButton, Menu, Pagination, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -15,7 +15,7 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
-import { type LinkModelWithIcon, type LabelWithLinks } from './LogLineDetailsFields';
+import { type LinkModelWithIcon, type LabelWithLinks, usePagedItems } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { getIconButtonStyles } from './activeIconButtonStyles';
@@ -31,25 +31,36 @@ export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFi
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(fields);
 
   if (!fields.length) {
     return null;
   }
 
   return (
-    <div className={styles.fieldsTable}>
-      {fields.map((field, i) => (
-        <LogLineOTelDetailsField
-          key={`${field.keys[0]}=${field.values[0]}-${i}`}
-          getLogs={getLogs}
-          fieldIndex={field.fieldIndex}
-          keys={field.keys}
-          links={field.links}
-          log={log}
-          values={field.values}
+    <>
+      <div className={styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineOTelDetailsField
+            key={`${field.keys[0]}=${field.values[0]}-${i}`}
+            getLogs={getLogs}
+            fieldIndex={field.fieldIndex}
+            keys={field.keys}
+            links={field.links}
+            log={log}
+            values={field.values}
+          />
+        ))}
+      </div>
+      <div className={styles.pagination}>
+        <Pagination
+          currentPage={currentPage}
+          numberOfPages={numberOfPages}
+          onNavigate={onNavigate}
+          hideWhenSinglePage
         />
-      ))}
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -63,25 +74,36 @@ export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDeta
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(fields);
 
   if (!fields.length) {
     return null;
   }
 
   return (
-    <div className={styles.fieldsTable}>
-      {fields.map((field, i) => (
-        <LogLineOTelDetailsField
-          key={`${field.key}=${field.value}-${i}`}
-          getLogs={getLogs}
-          isLabel
-          keys={[field.key]}
-          links={field.links}
-          log={log}
-          values={[field.value]}
+    <>
+      <div className={styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineOTelDetailsField
+            key={`${field.key}=${field.value}-${i}`}
+            getLogs={getLogs}
+            isLabel
+            keys={[field.key]}
+            links={field.links}
+            log={log}
+            values={[field.value]}
+          />
+        ))}
+      </div>
+      <div className={styles.pagination}>
+        <Pagination
+          currentPage={currentPage}
+          numberOfPages={numberOfPages}
+          onNavigate={onNavigate}
+          hideWhenSinglePage
         />
-      ))}
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -91,6 +113,11 @@ const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     // Icon buttons are 24px (sm) or 26px (md). This row always has three controls.
     gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(9) : theme.spacing(9.75)} fit-content(30%) 1fr`,
+  }),
+  pagination: css({
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: theme.spacing(1),
   }),
 });
 
