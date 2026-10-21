@@ -180,6 +180,7 @@ export function NotebookCellTimeRangeControl({
             {isEditing && <span className={styles.separator} />}
             {isEditing && (
               <IconButton
+                className={styles.clearButton}
                 name="times"
                 size="sm"
                 tooltip={t('notebook.cell.time-range.remove-lock', 'Remove time lock')}
@@ -250,6 +251,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   trigger: css({
     display: 'inline-flex',
     alignItems: 'center',
+    minWidth: 0,
+    maxWidth: '100%',
   }),
   content: css({
     overflowY: 'auto',
@@ -293,6 +296,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   pill: css({
     display: 'inline-flex',
     alignItems: 'center',
+    minWidth: 0,
     maxWidth: '100%',
     height: theme.spacing(theme.components.height.sm),
     borderRadius: theme.shape.radius.default,
@@ -310,8 +314,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
     fontSize: theme.typography.bodySmall.fontSize,
     minWidth: 0,
+    maxWidth: '100%',
     padding: theme.spacing(0, 1),
     whiteSpace: 'nowrap',
+    '& > svg': { flexShrink: 0 },
     '&:is(button)': { cursor: 'pointer' },
     '&:focus-visible': {
       outline: `2px solid ${theme.colors.primary.main}`,
@@ -322,8 +328,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   }),
+  clearButton: css({
+    flexShrink: 0,
+  }),
   separator: css({
     width: '1px',
+    flexShrink: 0,
     height: theme.spacing(2),
     background: theme.colors.border.weak,
     marginRight: theme.spacing(1),
