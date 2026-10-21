@@ -95,7 +95,7 @@ func TestBackendServerTimeoutRetainsRetryClassification(t *testing.T) {
 					_, err = fs.Create(context.Background(), ancestryTestFolder("child", ""), nil, &metav1.CreateOptions{})
 				} else {
 					store.On("Get", mock.Anything, "new-parent", mock.Anything).Return(nil, original).Once()
-					b := &FolderAPIBuilder{storage: store, parents: newParentsGetter(store, 5), maxNestedFolderDepth: 5}
+					b := &FolderAPIBuilder{storage: store, parents: newParentsGetter(store), maxNestedFolderDepth: 5}
 					old := ancestryTestFolder("child", "")
 					obj := ancestryTestFolder("child", "new-parent")
 					err = b.Validate(ancestryTestContext(t, "org-42", false), admission.NewAttributesRecord(
@@ -152,7 +152,7 @@ func TestBackendStatusReasonAllowlist(t *testing.T) {
 func TestMoveTargetAdmissionHidesBackendDiagnostics(t *testing.T) {
 	store := grafanarest.NewMockStorage(t)
 	store.On("Get", mock.Anything, "new-parent", mock.Anything).Return(nil, apierrors.NewServiceUnavailable(backendDiagnostic)).Once()
-	b := &FolderAPIBuilder{storage: store, parents: newParentsGetter(store, 5), maxNestedFolderDepth: 5}
+	b := &FolderAPIBuilder{storage: store, parents: newParentsGetter(store), maxNestedFolderDepth: 5}
 	old := ancestryTestFolder("child", "")
 	old.Namespace = "org-42"
 	obj := ancestryTestFolder("child", "new-parent")
@@ -245,7 +245,7 @@ func TestExpectedParentFailuresDoNotMarkTraceAsFailed(t *testing.T) {
 			ctx, recorder, _ := newFolderTrace(t)
 			store := grafanarest.NewMockStorage(t)
 			store.On("Get", mock.Anything, "parent", mock.Anything).Return(nil, lookupErr).Once()
-			info, err := newParentsGetter(store, 5)(ctx, ancestryTestFolder("child", "parent"))
+			info, err := newParentsGetter(store)(ctx, ancestryTestFolder("child", "parent"))
 			require.NoError(t, err)
 			require.True(t, info.Items[0].Detached)
 			span := folderSpan(t, recorder, "folders.getParents")
@@ -258,7 +258,7 @@ func TestExpectedParentFailuresDoNotMarkTraceAsFailed(t *testing.T) {
 func TestDetachedParentHidesBackendDiagnostics(t *testing.T) {
 	store := grafanarest.NewMockStorage(t)
 	store.On("Get", mock.Anything, "parent", mock.Anything).Return(nil, errors.New(backendDiagnostic)).Once()
-	info, err := newParentsGetter(store, 5)(context.Background(), ancestryTestFolder("child", "parent"))
+	info, err := newParentsGetter(store)(context.Background(), ancestryTestFolder("child", "parent"))
 	require.NoError(t, err)
 	require.Len(t, info.Items, 2)
 	require.Equal(t, "parent", info.Items[0].Name)

@@ -141,8 +141,8 @@ type BleveOptions struct {
 	DiskCleanupUnopenedGracePeriod time.Duration
 
 	// EnforceSortCapability rejects a sort on a field that does not declare the
-	// sort capability. When false the violation is only counted, so an operator
-	// can see what real traffic would break before turning this on.
+	// sort capability. When false the violation is only counted and logged, as an
+	// escape hatch for an instance that still depends on such sorts.
 	EnforceSortCapability bool
 
 	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization

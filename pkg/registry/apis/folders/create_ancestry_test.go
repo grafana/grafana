@@ -63,7 +63,7 @@ func validateAncestryTestCreate(ctx context.Context, storage grafanarest.Storage
 func validateAncestryTestCreateThroughStorage(ctx context.Context, storage grafanarest.Storage, maxDepth int, dryRun bool, wrapper *folderStorage) error {
 	b := &FolderAPIBuilder{
 		storage:              storage,
-		parents:              newParentsGetter(storage, maxDepth),
+		parents:              newParentsGetter(storage),
 		maxNestedFolderDepth: maxDepth,
 	}
 	obj := ancestryTestFolder("new", "C")
@@ -228,7 +228,7 @@ func TestParentsLookupRemainsCallerBound(t *testing.T) {
 			require.Same(t, caller, id)
 		}).Once()
 
-	parents, err := newParentsGetter(storage, 5)(ctx, ancestryTestFolder("C", "B"))
+	parents, err := newParentsGetter(storage)(ctx, ancestryTestFolder("C", "B"))
 	require.NoError(t, err)
 	require.Equal(t, []folders.FolderInfo{
 		{Name: "B", Detached: true, Description: "Unable to read parent folder"},
@@ -258,7 +258,7 @@ func TestCreateParentsPreservesRequestContext(t *testing.T) {
 			return nil, lookupCtx.Err()
 		}).Once()
 
-	_, err := newCreateParentsGetter(storage, 5)(ctx, ancestryTestFolder("new", "C"))
+	_, err := newCreateParentsGetter(storage)(ctx, ancestryTestFolder("new", "C"))
 	require.Error(t, err)
 	require.Equal(t, int32(499), responsewriters.ErrorToAPIStatus(err).Code)
 }

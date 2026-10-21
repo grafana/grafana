@@ -18,11 +18,11 @@ import (
 
 type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error)
 
-func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
+func newParentsGetter(getter rest.Getter) parentsGetter {
 	return newParentsGetterWithPolicy(getter, false)
 }
 
-func newCreateParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
+func newCreateParentsGetter(getter rest.Getter) parentsGetter {
 	return newParentsGetterWithPolicy(getter, true)
 }
 

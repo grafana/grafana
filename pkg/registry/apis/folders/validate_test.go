@@ -485,7 +485,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newCreateParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -531,7 +531,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 					Spec:       folders.FolderSpec{Title: "new"},
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
-				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage, 5), 5, dryRun)
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage), 5, dryRun)
 				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return
@@ -1279,6 +1279,25 @@ func TestValidateDelete(t *testing.T) {
 						Group:    "library.grafana.app",
 						Resource: "library_elements",
 						Count:    3, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains migrated library panels",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "librarypanels",
+						Count:    3,
 					},
 				},
 			},

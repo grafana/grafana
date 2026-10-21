@@ -618,7 +618,7 @@ func validateOnDelete(ctx context.Context,
 		return publicErr
 	}
 
-	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "folders", "variables"}
+	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
 	for _, v := range resp.Stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
