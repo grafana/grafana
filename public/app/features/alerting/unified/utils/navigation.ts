@@ -8,7 +8,7 @@ import { type RuleFormValues } from '../types/rule-form';
 
 import { ROOT_ROUTE_NAME } from './k8s/constants';
 import { stringifyIdentifier } from './rule-id';
-import { type RelativeUrl, createRelativeUrl } from './url';
+import { type RelativeUrl, createAbsoluteUrl, createRelativeUrl } from './url';
 
 /**
  * Tab values for contact points page - duplicated here to avoid circular dependency
@@ -150,6 +150,21 @@ export const rulesNav = {
       params,
       { skipSubPath: options?.skipSubPath }
     ),
+};
+
+/**
+ * Links to a Grafana-managed rule by its UID alone, for pages that have no rules source or group to encode.
+ */
+export const grafanaRulesNav = {
+  viewLink: (uid: string) => createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
+  /** Absolute and subpath-aware, for copying outside Grafana. */
+  shareLink: (uid: string) => createAbsoluteUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
+  editLink: (uid: string) => createRelativeUrl(`/alerting/${encodeURIComponent(uid)}/edit`),
+  duplicateLink: (uid: string, options: { recording: boolean }) =>
+    createRelativeUrl(options.recording ? '/alerting/new/grafana-recording' : '/alerting/new', { copyFrom: uid }),
+  newAlertRuleLink: () => createRelativeUrl('/alerting/new/alerting'),
+  newRecordingRuleLink: () => createRelativeUrl('/alerting/new/grafana-recording'),
+  exportNewRuleLink: () => createRelativeUrl('/alerting/export-new-rule'),
 };
 
 export const notificationPolicies = {

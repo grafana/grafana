@@ -13,13 +13,13 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
 import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
 import { isActionShown } from '../rule-actions/actionReasons';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
-import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteAlertRule } from '../rule-actions/useDeleteRule';
 import { useAlertRulePauseResume } from '../rule-actions/usePauseResumeRule';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
@@ -91,7 +91,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
         icon="share-alt"
-        onClick={() => copyRuleLink('alert', ruleShareUrl(ruleUid))}
+        onClick={() => copyRuleLink('alert', grafanaRulesNav.shareLink(ruleUid))}
       />
       {canManageEnrichments && (
         <Menu.Item

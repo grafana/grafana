@@ -6,13 +6,13 @@ import { t } from '@grafana/i18n';
 import { Dropdown, Menu } from '@grafana/ui';
 
 import { AnalyzeRuleButton } from '../../components/assistant/AnalizeRuleButton';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
 import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
 import { isActionShown } from '../rule-actions/actionReasons';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
-import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteRecordingRule } from '../rule-actions/useDeleteRule';
 import { useRecordingRulePauseResume } from '../rule-actions/usePauseResumeRule';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
@@ -67,7 +67,7 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRu
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
         icon="share-alt"
-        onClick={() => copyRuleLink('recording', ruleShareUrl(ruleUid))}
+        onClick={() => copyRuleLink('recording', grafanaRulesNav.shareLink(ruleUid))}
       />
       {showDelete && <Menu.Divider />}
       <RuleActionMenuItem

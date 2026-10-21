@@ -6,6 +6,7 @@ import { Stack, TextLink } from '@grafana/ui';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
 import { createContactPointSearchLink } from '../../utils/misc';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { getDisplayLabels, getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
@@ -73,12 +74,7 @@ export function AlertRuleRow({ hit, fullRule, folderPath, actions }: AlertRuleRo
       icon={<RuleStatusIcon kind="alert" state={hit.state} health={hit.health} paused={hit.paused} />}
       title={
         <Stack direction="row" alignItems="center" gap={1} wrap={false}>
-          <TextLink
-            id={titleId}
-            href={`/alerting/grafana/${encodeURIComponent(hit.uid)}/view`}
-            color="primary"
-            inline={false}
-          >
+          <TextLink id={titleId} href={grafanaRulesNav.viewLink(hit.uid)} color="primary" inline={false}>
             {hit.title}
           </TextLink>
           {pluginId === undefined ? (

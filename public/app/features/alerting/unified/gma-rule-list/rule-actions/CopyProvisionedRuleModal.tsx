@@ -3,10 +3,10 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 
+import { grafanaRulesNav } from '../../utils/navigation';
 import { type RuleKind } from '../shared/ruleKind';
 
 import { trackRuleDuplicateStarted } from './analytics';
-import { ruleDuplicateUrl } from './ruleLinks';
 
 interface CopyProvisionedRuleModalProps {
   kind: RuleKind;
@@ -26,7 +26,9 @@ export function CopyProvisionedRuleModal({ kind, uid, isOpen, onDismiss }: CopyP
     onDismiss();
     trackRuleDuplicateStarted(kind);
     // History is mounted at the sub path; strip what the link builder adds.
-    locationService.push(locationUtil.stripBaseFromUrl(ruleDuplicateUrl(kind, uid)));
+    locationService.push(
+      locationUtil.stripBaseFromUrl(grafanaRulesNav.duplicateLink(uid, { recording: kind === 'recording' }))
+    );
   };
 
   return (

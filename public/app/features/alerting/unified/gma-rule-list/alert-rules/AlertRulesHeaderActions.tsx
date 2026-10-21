@@ -5,7 +5,7 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { LogMessages } from '../../Analytics';
-import { createRelativeUrl } from '../../utils/url';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { MoreButton } from '../shared/MoreButton';
 
 /** Import/export-all/bulk/group actions are intentionally absent. */
@@ -17,7 +17,7 @@ export function AlertRulesHeaderActions() {
       {canCreate && (
         <LinkButton
           variant="primary"
-          href={createRelativeUrl('/alerting/new/alerting')}
+          href={grafanaRulesNav.newAlertRuleLink()}
           icon="plus"
           onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
         >
@@ -30,7 +30,7 @@ export function AlertRulesHeaderActions() {
             <Menu.Item
               label={t('alerting.gma-rule-list.actions.design-rule-for-provisioning', 'Design rule for provisioning')}
               icon="download-alt"
-              url={createRelativeUrl('/alerting/export-new-rule')}
+              url={grafanaRulesNav.exportNewRuleLink()}
               onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
             />
           </Menu>

@@ -139,6 +139,7 @@ const gmaAllowedUnifiedModules = [
   'utils/k8s/*',
   'utils/labels',
   'utils/misc',
+  'utils/navigation',
   'utils/url',
 ];
 
@@ -190,12 +191,6 @@ function gmaImportAllowlistPatterns({ tests }) {
 }
 
 const gmaRuleListBasePatterns = [
-  {
-    group: ['**/utils/misc'],
-    importNames: ['makeFolderAlertsLink'],
-    message:
-      'makeFolderAlertsLink belongs to the legacy list; use makeFolderRulesLink from gma-rule-list/folder-browsing instead.',
-  },
   {
     group: ['@grafana/alerting', '@grafana/alerting/*'],
     importNames: ['StateIcon'],

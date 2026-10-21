@@ -6,10 +6,10 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { makeFolderAlertsLink } from '../../utils/misc';
 import { FolderPath } from '../rule-row/FolderPath';
 import { type RuleKind } from '../shared/ruleKind';
 
-import { makeFolderRulesLink } from './folderLinks';
 import { type FolderRuleCount, useFolderPath } from './folderLookups';
 
 interface FolderListRowProps {
@@ -45,7 +45,7 @@ export function FolderListRow({ folderUid, title, kind, count, expanded, onToggl
               onClick={onToggle}
             />
             <Icon name="folder" />
-            <TextLink href={makeFolderRulesLink(folderUid, title)} color="primary" inline={false}>
+            <TextLink href={makeFolderAlertsLink(folderUid, title)} color="primary" inline={false}>
               {title}
             </TextLink>
             {parents.length > 0 && <FolderPath segments={parents} showIcon={false} />}

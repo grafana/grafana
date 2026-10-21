@@ -1,9 +1,10 @@
 import { t } from '@grafana/i18n';
 import { Button, LinkButton } from '@grafana/ui';
 
+import { grafanaRulesNav } from '../../utils/navigation';
+
 import { isActionShown, unavailableActionLabel } from './actionReasons';
 import { type ActionAvailability } from './ruleActionTypes';
-import { ruleEditUrl } from './ruleLinks';
 
 interface EditRuleButtonProps {
   uid: string;
@@ -34,7 +35,7 @@ export function EditRuleButton({ uid, availability }: EditRuleButtonProps) {
   }
 
   return (
-    <LinkButton href={ruleEditUrl(uid)} size="sm" variant="secondary" fill="text">
+    <LinkButton href={grafanaRulesNav.editLink(uid)} size="sm" variant="secondary" fill="text">
       {label}
     </LinkButton>
   );
