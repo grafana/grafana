@@ -13,7 +13,7 @@ import { cloneDeep } from 'lodash';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -355,6 +355,62 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
 
     expect(editedPanelKey(scene)).toBeUndefined();
+  });
+});
+
+describe('APPLY_SPEC with a GroupByVariable', () => {
+  const groupBy = {
+    kind: 'GroupByVariable',
+    group: 'prometheus',
+    datasource: { name: 'prom' },
+    spec: { name: 'groupBy' },
+  } as unknown as VariableKind;
+
+  function withDashboardGroupBy(spec: DashboardV2Spec) {
+    spec.variables = [groupBy];
+  }
+
+  function withRowGroupBy(spec: DashboardV2Spec) {
+    spec.layout = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          { kind: 'RowsLayoutRow', spec: { title: 'Row', collapse: false, variables: [groupBy], layout: spec.layout } },
+        ],
+      },
+    } as DashboardV2Spec['layout'];
+  }
+
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it.each([false, true])(
+    'rejects a dashboard-level one and leaves the dashboard unchanged (validate: %s)',
+    async (validate) => {
+      const scene = buildScene(makeSpec());
+      const before = await readSpec(scene);
+
+      const result = await applySpec(scene, makeSpec(withDashboardGroupBy), validate);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('variables.0.kind: GroupByVariable is no longer supported');
+      expect(result.error).toContain('spec.enableGroupBy: true');
+      expect(await readSpec(scene)).toEqual(before);
+    }
+  );
+
+  it('rejects one in a row section', async () => {
+    const scene = buildScene(makeSpec());
+
+    const result = await applySpec(scene, makeSpec(withRowGroupBy));
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('layout.spec.rows.0.spec.variables.0.kind: GroupByVariable is no longer supported');
   });
 });
 

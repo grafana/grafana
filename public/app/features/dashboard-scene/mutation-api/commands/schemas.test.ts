@@ -55,6 +55,38 @@ describe('variable payloads require a non-empty name', () => {
   });
 });
 
+// Structurally valid: GroupByVariable is still a v2 spec kind, so only the payload rule rejects it.
+function groupByVariable(name: string) {
+  return { kind: 'GroupByVariable', group: 'prometheus', datasource: { name: 'prom' }, spec: { name } };
+}
+
+describe('variable payloads reject the deprecated GroupByVariable kind', () => {
+  it.each([
+    ['ADD_VARIABLE', () => payloads.addVariable.safeParse({ variable: groupByVariable('groupBy') })],
+    [
+      'UPDATE_VARIABLE',
+      () => payloads.updateVariable.safeParse({ name: 'groupBy', variable: groupByVariable('groupBy') }),
+    ],
+    ['ADD_ROW', () => payloads.addRow.safeParse({ row: { spec: { variables: [groupByVariable('groupBy')] } } })],
+    [
+      'UPDATE_ROW',
+      () => payloads.updateRow.safeParse({ path: '/rows/0', spec: { variables: [groupByVariable('groupBy')] } }),
+    ],
+    ['ADD_TAB', () => payloads.addTab.safeParse({ tab: { spec: { variables: [groupByVariable('groupBy')] } } })],
+    [
+      'UPDATE_TAB',
+      () => payloads.updateTab.safeParse({ path: '/tabs/0', spec: { variables: [groupByVariable('groupBy')] } }),
+    ],
+  ])('%s points to enableGroupBy on an AdhocVariable', (_command, parse) => {
+    const result = parse();
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toContainEqual(
+      expect.stringContaining('AdhocVariable with spec.enableGroupBy: true')
+    );
+  });
+});
+
 function updatePanelPayloadWithMatcherId(matcherId: string) {
   return {
     element: { name: 'panel-1' },
