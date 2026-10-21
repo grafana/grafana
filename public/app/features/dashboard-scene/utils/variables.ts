@@ -22,7 +22,7 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
-import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { createSceneVariablesFromVariableKinds } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { applySupportsMultiValueOperators } from './applySupportsMultiValueOperators';
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
@@ -89,16 +89,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  const defaultVariableObjects = defaultVariables
-    .map((v) => {
-      try {
-        return createSceneVariableFromVariableModelV2(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    .filter((v): v is SceneVariable => Boolean(v));
+  const defaultVariableObjects = createSceneVariablesFromVariableKinds(defaultVariables, { migrateUrlState: false });
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {

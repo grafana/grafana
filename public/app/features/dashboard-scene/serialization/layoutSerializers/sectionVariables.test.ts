@@ -118,6 +118,11 @@ describe('serializeSectionVariables', () => {
 });
 
 describe('createSectionVariables', () => {
+  afterEach(() => {
+    locationService.replace('/');
+    jest.restoreAllMocks();
+  });
+
   it.each([
     ['undefined input', undefined],
     ['empty array', []],
@@ -169,8 +174,16 @@ describe('createSectionVariables', () => {
     const adhoc = result!.state.variables[0] as AdHocFiltersVariable;
     expect(adhoc.state.filters).toEqual([expect.objectContaining({ key: 'job', operator: 'groupBy' })]);
     expect(locationService.getSearch().toString()).toBe('var-groupby=region');
+  });
 
-    locationService.replace('/');
+  it('should skip a section variable that cannot be built instead of throwing', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const unsupported = { kind: 'UnsupportedVariable', spec: { name: 'unsupported' } } as unknown as VariableKind;
+
+    const result = deserializeSectionVariables([makeCustomVariableKind(), unsupported]);
+
+    expect(result!.state.variables.map((v) => v.state.name)).toEqual(['env']);
   });
 });
 

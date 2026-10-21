@@ -83,7 +83,7 @@ import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers
 import { getElement } from '../serialization/layoutSerializers/utils';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import {
-  createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
+  createSceneVariablesFromVariableKinds,
   transformSaveModelSchemaV2ToScene,
 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -523,16 +523,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // predefined global/folder variables) are injected elsewhere and must survive.
     const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
     const keptNames = new Set(keptVars.map((v) => v.state.name));
-    const defaultVarObjects = defaultVariables
-      .map((v) => {
-        try {
-          return createSceneVariableFromVariableModelV2(v);
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      })
-      .filter((v): v is SceneVariable => Boolean(v))
+    const defaultVarObjects = createSceneVariablesFromVariableKinds(defaultVariables, { migrateUrlState: false })
       // Nearest scope wins: existing variables shadow incoming defaults of the same name.
       .filter((v) => !keptNames.has(v.state.name));
 
@@ -551,16 +542,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     );
     const keptVars = variableSet.state.variables.filter((v) => !isPredefinedOrigin(v.state.origin));
     const keptNames = new Set(keptVars.map((v) => v.state.name));
-    const predefinedVarObjects = predefinedVariables
-      .map((v) => {
-        try {
-          return createSceneVariableFromVariableModelV2(v);
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      })
-      .filter((v): v is SceneVariable => Boolean(v))
+    const predefinedVarObjects = createSceneVariablesFromVariableKinds(predefinedVariables, { migrateUrlState: false })
       // Nearest scope wins: dashboard-local / datasource defaults shadow predefined names.
       .filter((v) => !keptNames.has(v.state.name))
       .map((v) => {
