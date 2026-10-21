@@ -2862,6 +2862,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.geomapProtomapsBasemap",
+        "resourceVersion": "1792543056514",
+        "creationTimestamp": "2026-10-21T00:37:36Z"
+      },
+      "spec": {
+        "description": "Adds an experimental Protomaps vector basemap to the geomap panel, served from a Grafana-controlled tile host",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.globalHomePreference",
         "resourceVersion": "1791348293298",
         "creationTimestamp": "2026-10-07T14:12:16Z"

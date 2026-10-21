@@ -17837,7 +17837,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.3":
+"fflate@npm:^0.8.2, fflate@npm:^0.8.3":
   version: 0.8.3
   resolution: "fflate@npm:0.8.3"
   checksum: 10/6ebf528dc9c56e78e715eac615b009b25dc33e15c1920b11ebba44e6d76181c647756a81a23e19247907496b93aa99928514c53090579a65109e026ac2824aa7
@@ -18998,6 +18998,7 @@ __metadata:
     ol: "npm:10.7.0"
     ol-ext: "npm:4.0.38"
     ol-mapbox-style: "npm:^13.0.1"
+    ol-pmtiles: "npm:2.0.2"
     open: "npm:^10.2.0"
     ora: "npm:^9.0.0"
     papaparse: "npm:5.5.3"
@@ -24692,6 +24693,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ol-pmtiles@npm:2.0.2":
+  version: 2.0.2
+  resolution: "ol-pmtiles@npm:2.0.2"
+  dependencies:
+    pmtiles: "npm:^4.3.0"
+  peerDependencies:
+    ol: ">=9.0.0"
+  checksum: 10/25889371842209c97fec7ce5845711bd0f45f9a21453cdb9f2fceb9811bb7ca2c12f0ea79a6e0bb872d4842b9352332425bfab9c78c299fc19882a70006e5590
+  languageName: node
+  linkType: hard
+
 "ol@npm:10.7.0, ol@npm:^10.7.0":
   version: 10.7.0
   resolution: "ol@npm:10.7.0"
@@ -25585,6 +25597,15 @@ __metadata:
   version: 8.0.0
   resolution: "pluralize@npm:8.0.0"
   checksum: 10/17877fdfdb7ddb3639ce257ad73a7c51a30a966091e40f56ea9f2f545b5727ce548d4928f8cb3ce38e7dc0c5150407d318af6a4ed0ea5265d378473b4c2c61ec
+  languageName: node
+  linkType: hard
+
+"pmtiles@npm:^4.3.0":
+  version: 4.5.0
+  resolution: "pmtiles@npm:4.5.0"
+  dependencies:
+    fflate: "npm:^0.8.2"
+  checksum: 10/8fc0c2c9719cf3a87494826a25c05dd582423dd6442e1c11ba1e3f1bc79db76b09507cc4bb79638afab43f2a183f7710763653cfcb3f29932cc30de8766e8a47
   languageName: node
   linkType: hard
 
