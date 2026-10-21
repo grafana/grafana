@@ -4,6 +4,10 @@ import { HistoryWrapper, config, locationService, setLocationService } from '@gr
 
 import {
   isNotebookEditUrl,
+  loadSourceForEntryPoint,
+  readNotebookLoadSource,
+  removeNotebookLoadSourceParam,
+  notebookViewUrlFrom,
   notebookRenderUrl,
   notebookEditHref,
   notebookEditUrl,
@@ -58,6 +62,63 @@ describe('notebook urls', () => {
     setHistory(3);
 
     expect(notebookEditHref('nb1')).toBe('/notebooks/nb1?edit=true&orgId=3');
+  });
+
+  describe('the source a link carries', () => {
+    it('adds it to the view and edit links, and to the router-relative one', () => {
+      setHistory(3);
+
+      expect(notebookViewHref('nb1', 'explore')).toBe('/notebooks/nb1?source=explore&orgId=3');
+      expect(notebookEditHref('nb1', 'notebook_list')).toBe('/notebooks/nb1?edit=true&source=notebook_list&orgId=3');
+      expect(notebookViewUrlFrom('nb1', 'notebook_list')).toBe('/notebooks/nb1?source=notebook_list');
+    });
+
+    // The share link is copied out of the app. It must not say which surface it was copied from.
+    it('leaves it off the share url, and off a link whose source is direct', () => {
+      setHistory(3);
+      config.appUrl = 'https://grafana.example.com/';
+
+      expect(notebookShareUrl('nb1')).toBe('https://grafana.example.com/notebooks/nb1?orgId=3');
+      expect(notebookViewHref('nb1', 'direct')).toBe('/notebooks/nb1?orgId=3');
+      expect(notebookViewUrlFrom('nb1', 'direct')).toBe('/notebooks/nb1');
+    });
+
+    it('reads a known source off the url', () => {
+      setHistory(1);
+      locationService.push('/notebooks/nb1?source=dashboard_panel');
+
+      expect(readNotebookLoadSource()).toBe('dashboard_panel');
+    });
+
+    // The param is the user's to edit, and what it holds ends up on an analytics event.
+    it.each(['', '?source=', '?source=%3Cscript%3E', '?source=assistant', '?other=notebook_list'])(
+      'reads %p as a direct visit',
+      (search) => {
+        setHistory(1);
+        locationService.push(`/notebooks/nb1${search}`);
+
+        expect(readNotebookLoadSource()).toBe('direct');
+      }
+    );
+
+    it('takes the param back off the url without touching the rest', () => {
+      setHistory(1);
+      locationService.push('/notebooks/nb1?edit=true&source=notebook_list');
+
+      removeNotebookLoadSourceParam();
+
+      expect(locationService.getLocation().search).toContain('edit=true');
+      expect(locationService.getLocation().search).not.toContain('source');
+    });
+
+    it('maps each entry point to the source its link would carry', () => {
+      expect(loadSourceForEntryPoint('explore')).toBe('explore');
+      expect(loadSourceForEntryPoint('dashboard_panel')).toBe('dashboard_panel');
+      expect(loadSourceForEntryPoint('plugin')).toBe('plugin');
+      expect(loadSourceForEntryPoint('notebook_list')).toBe('notebook_list');
+      expect(loadSourceForEntryPoint('assistant')).toBe('direct');
+      expect(loadSourceForEntryPoint('workspace')).toBe('direct');
+    });
   });
 
   // Router-relative, unlike notebookEditHref: useNavigate applies the base and orgId itself, so

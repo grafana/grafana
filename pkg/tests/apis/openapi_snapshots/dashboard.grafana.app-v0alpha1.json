@@ -3163,6 +3163,10 @@
             "description": "When set to true, the snapshot exists in a remote server",
             "type": "boolean"
           },
+          "externalDeleteUrl": {
+            "description": "The server-provided URL for deleting the external snapshot",
+            "type": "string"
+          },
           "externalUrl": {
             "description": "The external URL where the snapshot can be seen",
             "type": "string"

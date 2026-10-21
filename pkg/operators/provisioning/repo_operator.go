@@ -109,7 +109,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	}
 
 	// The repository delta source and the getter it backs.
-	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics())
+	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,

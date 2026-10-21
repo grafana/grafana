@@ -332,7 +332,8 @@ describe('adding to a notebook that is open', () => {
       'nb-1',
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       1,
-      expect.objectContaining({ isLibraryPanel: false })
+      expect.objectContaining({ isLibraryPanel: false }),
+      false
     );
   });
 

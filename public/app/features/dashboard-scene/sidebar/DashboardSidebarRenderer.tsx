@@ -4,7 +4,6 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   useFlagDashboardUndoRedo,
   useFlagGrafanaViewPanelPane,
@@ -78,7 +77,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebar.closePane();
+      sidebar.closePane('explicit');
       sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
@@ -171,9 +170,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {dashboardNewLayoutsEnabled && config.featureToggles.dashboardUnifiedDrilldownControls && (
-            <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
-          )}
+          {dashboardNewLayoutsEnabled && <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />
