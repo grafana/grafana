@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -14,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
@@ -31,35 +34,37 @@ func TestStorageOptionsReadLargeResponse(t *testing.T) {
 		{name: "configured 100 MiB", args: []string{"--grpc-client-max-recv-msg-size=104857600"}, wantCode: codes.OK},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			payload := bytes.Repeat([]byte("x"), 5<<20)
-			listener := bufconn.Listen(1024 * 1024)
-			t.Cleanup(func() { require.NoError(t, listener.Close()) })
-			server := grpc.NewServer()
-			resourcepb.RegisterResourceStoreServer(server, &largeResponseStorageServer{value: payload})
-			t.Cleanup(server.Stop)
-			go func() { _ = server.Serve(listener) }()
+			synctest.Test(t, func(t *testing.T) {
+				payload := bytes.Repeat([]byte("x"), 5<<20)
+				listener := bufconn.Listen(1024 * 1024)
+				t.Cleanup(func() { require.NoError(t, listener.Close()) })
+				server := grpc.NewServer()
+				resourcepb.RegisterResourceStoreServer(server, &largeResponseStorageServer{value: payload})
+				t.Cleanup(server.Stop)
+				go func() { _ = server.Serve(listener) }()
 
-			storageOpts := NewStorageOptions()
-			flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
-			storageOpts.AddFlags(flags)
-			require.NoError(t, flags.Parse(tc.args))
-			require.Empty(t, storageOpts.Validate())
-			opts := storageOpts.buildGrpcDialOptions()
-			opts = append(opts, grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
-				return listener.DialContext(ctx)
-			}))
-			conn, err := grpc.NewClient("passthrough:///storage", opts...)
-			require.NoError(t, err)
-			t.Cleanup(func() { require.NoError(t, conn.Close()) })
-			ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
-			defer cancel()
-			response, err := resourcepb.NewResourceStoreClient(conn).Read(ctx, &resourcepb.ReadRequest{})
-			require.Equal(t, tc.wantCode, status.Code(err), "%v", err)
-			if tc.wantCode != codes.OK {
-				require.Contains(t, err.Error(), "5242885 vs. 4194304")
-				return
-			}
-			require.Equal(t, payload, response.Value)
+				storageOpts := NewStorageOptions()
+				flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+				storageOpts.AddFlags(flags)
+				require.NoError(t, flags.Parse(tc.args))
+				require.Empty(t, storageOpts.Validate())
+				opts := storageOpts.buildGrpcDialOptions()
+				opts = append(opts, grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+					return listener.DialContext(ctx)
+				}))
+				conn, err := grpc.NewClient("passthrough:///storage", opts...)
+				require.NoError(t, err)
+				t.Cleanup(func() { require.NoError(t, conn.Close()) })
+				ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+				defer cancel()
+				response, err := resourcepb.NewResourceStoreClient(conn).Read(ctx, &resourcepb.ReadRequest{})
+				require.Equal(t, tc.wantCode, status.Code(err), "%v", err)
+				if tc.wantCode != codes.OK {
+					require.Contains(t, err.Error(), "5242885 vs. 4194304")
+					return
+				}
+				require.Equal(t, payload, response.Value)
+			})
 		})
 	}
 }
@@ -99,33 +104,35 @@ func (s *retryTestStorageServer) Update(context.Context, *resourcepb.UpdateReque
 func TestStorageOptionsRetryCodes(t *testing.T) {
 	for _, code := range []codes.Code{codes.Aborted, codes.Unavailable, codes.ResourceExhausted, codes.InvalidArgument} {
 		t.Run(code.String(), func(t *testing.T) {
-			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
-			require.NoError(t, err)
-			srv := &retryTestStorageServer{failure: st.Err()}
-			listener := bufconn.Listen(1024 * 1024)
-			t.Cleanup(func() { require.NoError(t, listener.Close()) })
-			server := grpc.NewServer()
-			resourcepb.RegisterResourceStoreServer(server, srv)
-			t.Cleanup(server.Stop)
-			go func() { _ = server.Serve(listener) }()
-
-			opts := NewStorageOptions().buildGrpcDialOptions()
-			opts = append(opts, grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
-				return listener.DialContext(ctx)
-			}))
-			conn, err := grpc.NewClient("passthrough:///storage", opts...)
-			require.NoError(t, err)
-			t.Cleanup(func() { require.NoError(t, conn.Close()) })
-			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
-			defer cancel()
-			_, err = resourcepb.NewResourceStoreClient(conn).Update(ctx, &resourcepb.UpdateRequest{})
-			if code == codes.Unavailable || code == codes.ResourceExhausted {
+			synctest.Test(t, func(t *testing.T) {
+				st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
 				require.NoError(t, err)
-				require.Equal(t, int32(2), srv.attempts.Load())
-			} else {
-				require.Equal(t, int32(1), srv.attempts.Load())
-				require.Equal(t, st.Proto(), status.Convert(err).Proto())
-			}
+				srv := &retryTestStorageServer{failure: st.Err()}
+				listener := bufconn.Listen(1024 * 1024)
+				t.Cleanup(func() { require.NoError(t, listener.Close()) })
+				server := grpc.NewServer()
+				resourcepb.RegisterResourceStoreServer(server, srv)
+				t.Cleanup(server.Stop)
+				go func() { _ = server.Serve(listener) }()
+
+				opts := NewStorageOptions().buildGrpcDialOptions()
+				opts = append(opts, grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+					return listener.DialContext(ctx)
+				}))
+				conn, err := grpc.NewClient("passthrough:///storage", opts...)
+				require.NoError(t, err)
+				t.Cleanup(func() { require.NoError(t, conn.Close()) })
+				ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+				defer cancel()
+				_, err = resourcepb.NewResourceStoreClient(conn).Update(ctx, &resourcepb.UpdateRequest{})
+				if code == codes.Unavailable || code == codes.ResourceExhausted {
+					require.NoError(t, err)
+					require.Equal(t, int32(2), srv.attempts.Load())
+				} else {
+					require.Equal(t, int32(1), srv.attempts.Load())
+					require.Equal(t, st.Proto(), status.Convert(err).Proto())
+				}
+			})
 		})
 	}
 }
@@ -206,4 +213,68 @@ func TestStorageOptions_Validate(t *testing.T) {
 			assert.Empty(t, errs)
 		})
 	}
+}
+
+func TestStorageOptionsHealthChecking(t *testing.T) {
+	for _, initiallyServing := range []bool{false, true} {
+		name := "initially unhealthy"
+		if initiallyServing {
+			name = "becomes unhealthy"
+		}
+		t.Run(name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				listener := bufconn.Listen(1024 * 1024)
+				t.Cleanup(func() { require.NoError(t, listener.Close()) })
+				server := grpc.NewServer()
+				t.Cleanup(server.Stop)
+				application := &healthTestStorageServer{}
+				resourcepb.RegisterResourceStoreServer(server, application)
+				healthServer := health.NewServer()
+				if !initiallyServing {
+					healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+				}
+				grpc_health_v1.RegisterHealthServer(server, healthServer)
+				go func() { _ = server.Serve(listener) }()
+
+				opts := NewStorageOptions().buildGrpcDialOptions()
+				opts = append(opts, grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+					return listener.DialContext(ctx)
+				}))
+				conn, err := grpc.NewClient("passthrough:///storage", opts...)
+				require.NoError(t, err)
+				t.Cleanup(func() { require.NoError(t, conn.Close()) })
+				client := resourcepb.NewResourceStoreClient(conn)
+				read := func() error {
+					ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+					defer cancel()
+					_, err := client.Read(ctx, &resourcepb.ReadRequest{}, grpc.WaitForReady(true))
+					return err
+				}
+
+				if initiallyServing {
+					require.NoError(t, read())
+					healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+					synctest.Wait()
+				}
+
+				before := application.calls.Load()
+				assert.Equal(t, codes.DeadlineExceeded, status.Code(read()), "requests must wait while the endpoint is NOT_SERVING")
+				require.Equal(t, before, application.calls.Load(), "an unhealthy endpoint must not receive application requests")
+
+				healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+				require.NoError(t, read())
+				require.Equal(t, before+1, application.calls.Load(), "a recovered endpoint must receive requests again")
+			})
+		})
+	}
+}
+
+type healthTestStorageServer struct {
+	resourcepb.UnimplementedResourceStoreServer
+	calls atomic.Int32
+}
+
+func (s *healthTestStorageServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	s.calls.Add(1)
+	return &resourcepb.ReadResponse{}, nil
 }

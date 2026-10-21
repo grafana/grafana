@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/klog/v2"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -68,7 +70,7 @@ func (n *storageWrapper) ConvertToTable(ctx context.Context, object runtime.Obje
 	return n.inner.(rest.TableConvertor).ConvertToTable(ctx, object, tableOptions)
 }
 func (n *storageWrapper) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	obj, err := n.inner.(rest.Getter).Get(ctx, name, options)
+	obj, err := getPublicSnapshot(ctx, n.inner.(rest.Getter), name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +141,19 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 	if err := authorizeSnapshotDelete(ctx, snap, n.accessControl, n.blobs); err != nil {
 		return nil, false, err
 	}
+	if options.Preconditions != nil {
+		if uid := options.Preconditions.UID; uid != nil && *uid != snap.UID {
+			return nil, false, apierrors.NewConflict(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("UID precondition failed"))
+		}
+		if rv := options.Preconditions.ResourceVersion; rv != nil && *rv != snap.ResourceVersion {
+			return nil, false, apierrors.NewConflict(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("resourceVersion precondition failed"))
+		}
+	}
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, snap); err != nil {
+			return nil, false, err
+		}
+	}
 
 	// Unified deletion reads the object again internally. Revalidate that object as
 	// the caller, while keeping storage reads independent of snapshots:read.
@@ -155,33 +170,86 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 		}
 		return nil
 	}
+	// A dry-run must never contact the external host.
+	if !dryrun.IsDryRun(options.DryRun) {
+		// Delete remotely first so failures retain the local delete key for retries.
+		deleteURL, err := deleteSnapshotFromExternalHost(ctx, snap, n.options)
+		if err != nil {
+			return nil, false, err
+		}
+		if deleteURL != "" {
+			lookupCtx = context.WithValue(lookupCtx, externalSnapshotDeleteURLKey{}, deleteURL)
+		}
+	}
+
 	result, deleted, err := n.inner.(rest.GracefulDeleter).Delete(lookupCtx, name, validate, options)
 	if err != nil {
 		return nil, false, err
 	}
-
-	// If external, send a DELETE to the external server. The endpoint is gated on
-	// externalSnapshotsK8SAPIPush: when on, use the K8s delete subresource; when
-	// off, use the legacy GET /api/snapshots-delete/{key} endpoint.
-	if snap.Spec.External != nil && *snap.Spec.External &&
-		snap.Spec.DeleteKey != nil && n.options.ExternalSnapshotURL != "" {
-		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
-			prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
-			deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") +
-				"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
-				prefix + "/delete/" + *snap.Spec.DeleteKey
-			if err := deleteExternalSnapshot(deleteURL, n.options.ExternalSnapshotToken); err != nil {
-				return nil, false, err
-			}
-		} else {
-			deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") + "/api/snapshots-delete/" + *snap.Spec.DeleteKey
-			if err := deleteExternalSnapshotLegacy(deleteURL); err != nil {
-				return nil, false, err
-			}
-		}
-	}
-
 	return result, deleted, nil
+}
+
+type externalSnapshotDeleteURLKey struct{}
+
+func externalSnapshotDeleteEndpoint(externalURL, deleteKey string, kubernetes bool) (string, error) {
+	parsed, err := url.Parse(externalURL)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return "", fmt.Errorf("invalid external delete URL %q", externalURL)
+	}
+	legacyPath := "/api/snapshots-delete/"
+	kubernetesPath := "/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
+		dashv0.SnapshotResourceInfo.GroupResource().Resource + "/delete/"
+	targetPath, sourcePath := legacyPath, kubernetesPath
+	if kubernetes {
+		targetPath, sourcePath = kubernetesPath, legacyPath
+	}
+	if strings.Contains(parsed.Path, targetPath) {
+		return externalURL, nil
+	}
+	index := strings.LastIndex(parsed.Path, sourcePath)
+	if index < 0 {
+		// Custom endpoints are authoritative and cannot be translated between API versions.
+		return externalURL, nil
+	}
+	basePath := parsed.Path[:index]
+	parsed.Path = strings.TrimRight(basePath, "/") + targetPath + deleteKey
+	parsed.RawPath = ""
+	parsed.RawQuery = ""
+	parsed.ForceQuery = false
+	parsed.Fragment = ""
+	return parsed.String(), nil
+}
+
+func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, options dashv0.SnapshotSharingOptions) (string, error) {
+	if snap.Spec.External == nil || !*snap.Spec.External {
+		return "", nil
+	}
+	if snap.Spec.DeleteKey == nil || *snap.Spec.DeleteKey == "" {
+		return "", dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("external snapshot delete key is unavailable")
+	}
+	kubernetesPush := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx))
+	deleteURL := snap.GetExternalDeleteURL()
+	var err error
+	if deleteURL != "" {
+		deleteURL, err = externalSnapshotDeleteEndpoint(deleteURL, *snap.Spec.DeleteKey, kubernetesPush)
+	} else if options.ExternalSnapshotURL != "" {
+		deleteURL = strings.TrimRight(options.ExternalSnapshotURL, "/")
+		if kubernetesPush {
+			deleteURL += "/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
+				dashv0.SnapshotResourceInfo.GroupResource().Resource + "/delete/" + *snap.Spec.DeleteKey
+		} else {
+			deleteURL += "/api/snapshots-delete/" + *snap.Spec.DeleteKey
+		}
+	} else {
+		return "", dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("external snapshot delete URL is unavailable")
+	}
+	if err != nil {
+		return "", err
+	}
+	if kubernetesPush {
+		return deleteURL, deleteExternalSnapshot(deleteURL, options.ExternalSnapshotToken)
+	}
+	return deleteURL, deleteExternalSnapshotLegacy(deleteURL)
 }
 
 // stripSensitiveFields returns a copy of the Snapshot with deleteKey and dashboard removed from the spec.
@@ -194,6 +262,7 @@ func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	}
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
+	out.Spec.ExternalDeleteUrl = nil
 	out.Spec.Dashboard = nil
 	return out, nil
 }
@@ -210,6 +279,7 @@ func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, err
 	out := list.DeepCopy()
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
+		out.Items[i].Spec.ExternalDeleteUrl = nil
 		out.Items[i].Spec.Dashboard = nil
 	}
 	return out, nil
@@ -261,13 +331,16 @@ func deleteExternalSnapshotLegacy(externalURL string) error {
 	if !strings.Contains(externalURL, "/api/snapshots-delete/") {
 		parsed, err := url.Parse(externalURL)
 		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-			return fmt.Errorf("invalid external delete URL %q: %w", externalURL, err)
+			return fmt.Errorf("invalid external delete URL %q", externalURL)
 		}
 		deleteKey := path.Base(strings.TrimRight(parsed.Path, "/"))
 		if deleteKey == "" || deleteKey == "." || deleteKey == "/" {
 			return fmt.Errorf("could not extract delete key from URL %q", externalURL)
 		}
-		requestURL = parsed.Scheme + "://" + parsed.Host + "/api/snapshots-delete/" + deleteKey
+		requestURL, err = externalSnapshotDeleteEndpoint(externalURL, deleteKey, false)
+		if err != nil {
+			return err
+		}
 	}
 
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)

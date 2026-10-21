@@ -1473,7 +1473,7 @@ spec:
             - lte
             type: string
       paths:
-        /namespaces/{namespace}/alertrules/searchRules:
+        /namespaces/{namespace}/searchAlertRules:
           parameters:
           - in: path
             name: namespace
@@ -1562,7 +1562,7 @@ spec:
                       - kind
                       type: object
                 description: Default OK response
-        /namespaces/{namespace}/recordingrules/searchRules:
+        /namespaces/{namespace}/searchRecordingRules:
           parameters:
           - in: path
             name: namespace
@@ -1652,7 +1652,7 @@ spec:
                 description: Default OK response
     routes:
       namespaced:
-        /alertrules/searchRules:
+        /searchAlertRules:
           post:
             operationId: listAlertRuleSearchRulesV0alpha1
             requestBody:
@@ -1735,7 +1735,7 @@ spec:
                       - kind
                       type: object
                 description: Default OK response
-        /recordingrules/searchRules:
+        /searchRecordingRules:
           post:
             operationId: listRecordingRuleSearchRulesV0alpha1
             requestBody:

@@ -81,9 +81,18 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	defer p.mutex.Unlock()
 
 	p.state = pluginStateStartInit
-	// A failed start's process must not keep a working access policy token.
+	// A failed start must not leave a half-started process running, keep its
+	// client, or keep a working access policy token. go-plugin never marks a
+	// client exited when the process fails to launch, so with the client kept,
+	// Exited would stay false and the plugin would never be restarted.
 	defer func() {
 		if p.state == pluginStateStartFail {
+			if p.client != nil {
+				p.client.Kill()
+			}
+			p.client = nil
+			p.pluginClient = nil
+			p.clientV3 = nil
 			p.revokeAccessPolicyToken()
 		}
 	}()

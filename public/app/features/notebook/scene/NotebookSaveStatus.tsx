@@ -81,7 +81,7 @@ export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave })
       {/* Retrying a conflict would just resend the same revision and fail the same way again; the
           confirm modal autosave already raised is where that case gets resolved, not this button. */}
       {shown === 'error' && !isConflict ? (
-        <Button variant="secondary" fill="text" size="sm" onClick={() => autosave.retry()}>
+        <Button variant="secondary" fill="text" size="sm" onClick={() => autosave.retryFromButton()}>
           {t('notebooks.save-status.retry', 'Retry')}
         </Button>
       ) : null}

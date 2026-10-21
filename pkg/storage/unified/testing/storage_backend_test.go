@@ -292,6 +292,8 @@ func newRemoteClientWithErrorConversion(t *testing.T, backend resource.KVBackend
 	)
 	require.NoError(t, err)
 
+	grpcService.Health.Register(svc, resourcepb.ResourceStore_ServiceDesc.ServiceName)
+
 	ctx := t.Context()
 	require.NoError(t, services.StartAndAwaitRunning(ctx, grpcService))
 	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))

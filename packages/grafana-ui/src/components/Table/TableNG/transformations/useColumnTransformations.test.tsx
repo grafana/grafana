@@ -67,6 +67,7 @@ it('does not reset viewer order when ad-hoc visibility changes its own output', 
   const source = [sourceFrame(['A', 'B', 'C'])];
   const { result, rerender, getConfigs } = renderColumnState(source, [orderedConfig]);
 
+  // Unlike an upstream override, ad-hoc hiding keeps A in the source catalog and in its saved position.
   act(() => result.current?.onHiddenColumnsChange(new Set(['A'])));
   rerender({ source: [sourceFrame(['A', 'B', 'C'])], index: 0 });
 

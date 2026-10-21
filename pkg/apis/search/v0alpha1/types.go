@@ -16,6 +16,7 @@ const (
 	// rejects the others.
 	KindSearchQuery         = "SearchQuery"
 	KindSearchResults       = "SearchResults"
+	KindGlobalSearchResults = "GlobalSearchResults"
 	KindTrashQuery          = "TrashQuery"
 	KindTrashResults        = "TrashResults"
 	KindHybridSearchQuery   = "HybridSearchQuery"
@@ -191,9 +192,7 @@ type TrashQuery struct {
 	Continue string `json:"continue,omitempty"`
 }
 
-// SearchResults is the response body for POST .../{resource}/search and POST
-// .../namespaces/{namespace}/global/search. On the global search, each item
-// names its own resource type.
+// SearchResults is the response body for POST .../{resource}/search.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -206,6 +205,37 @@ type SearchResults struct {
 	// Facets holds term counts per requested facet field. Counts are computed
 	// over a bounded sample window, so they are best-effort/approximate.
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalSearchResults is the response body for POST
+// .../namespaces/{namespace}/global/search. Each item names its own resource
+// type.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Metadata GlobalResultsMetadata `json:"metadata"`
+	Items    []ResultItem          `json:"items"`
+
+	// Facets holds term counts per requested facet field. Counts are computed
+	// over a bounded sample window, so they are best-effort/approximate.
+	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalResultsMetadata carries the pagination token, the total hit count, and
+// the types the search left out.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultsMetadata struct {
+	ResultsMetadata `json:",inline"`
+
+	// SkippedTypes lists the types, as {group}/{resource}, that the search left
+	// out, so the results are incomplete. A type is left out when the calling
+	// service may not search it on the user's behalf, or when this deployment
+	// does not check its results against the user. Both are deployment problems.
+	SkippedTypes []string `json:"skippedTypes,omitempty"`
 }
 
 // TrashResults is the response body for POST .../{resource}/trash. It has the

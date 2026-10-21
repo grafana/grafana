@@ -92,6 +92,10 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	count, err := getter.CountRepositories(context.Background(), testNamespace)
 	require.NoError(t, err)
 	assert.Equal(t, 2, count, "scoped to the namespace, and a repository awaiting its finalizers still counts")
+
+	confirmed, err := getter.ConfirmRepositoryCount(context.Background(), testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, count, confirmed, "the apiserver watch reaches every replica, so the lister already is the confirmation")
 }
 
 // The client getter reads the reconcile's object fresh from the API.
@@ -125,6 +129,20 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
 }
 
+// The confirmed count reads the API, not the store.
+func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
+	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
+
+	cached, err := g.CountRepositories(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Zero(t, cached, "the store has seen none of them")
+
+	confirmed, err := g.ConfirmRepositoryCount(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Equal(t, 2, confirmed, "scoped to the namespace")
+}
+
 // The count reads only the requested namespace out of the cluster-wide store, and
 // it agrees with the cached getter: a repository awaiting its finalizers counts,
 // which is what lets the store hold identities alone.
@@ -143,14 +161,14 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil)
+		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil, nil)
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
 
 	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil)
+		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
 		_, err := getter.Get(context.Background(), testNamespace, "r")

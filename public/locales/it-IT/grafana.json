@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Impossibile caricare il contenuto: {{error}}",
+        "hide-secrets": "",
         "loading": "Caricamento del contenuto in corso...",
         "notifications-title": "Anteprima della configurazione delle notifiche",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Anteprima delle regole di avviso"
       },
       "recording-rules": "Regole di registrazione",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "L'origine dei dati di Prometheus in cui archiviare le regole di registrazione",
       "label-target-data-source": "Origine dati di destinazione",
-      "target-data-source-required": "Seleziona un'origine dei dati di destinazione"
+      "target-data-source-required": "Seleziona un'origine dei dati di destinazione",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Seleziona lo Spazio dei nomi e il Gruppo per la regola di registrazione.",
@@ -6037,6 +6042,24 @@
       "tooltip-next": "Avanti",
       "tooltip-previous": "Precedente"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Modifica dello schema di Assistant"
@@ -6155,6 +6178,9 @@
           "no-template-variables-found": "Nessuna variabile del modello trovata"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Annulla",
@@ -7598,6 +7624,33 @@
       "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
       "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
       "title-restore-version": "Ripristina versione"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Salva",
@@ -10089,6 +10142,7 @@
             "name-humidity": "Umidità (%H)",
             "name-locale": "Formato locale",
             "name-number": "Numero",
+            "name-ordinal": "",
             "name-percent-1": "Percentuale (0,0-1,0)",
             "name-percent-100": "Percentuale (0-100)",
             "name-pixels": "Pixel",
@@ -10214,7 +10268,9 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13225,6 +13281,7 @@
       "created-by-me": "Creato da me",
       "error-conflict": "Questo blocco appunti è stato modificato mentre stavi effettuando un'aggiunta. Riprova ad aggiungere il pannello alla versione più recente.",
       "error-generic": "Impossibile aggiungere il pannello al blocco appunti",
+      "error-open-conflict": "",
       "list-error": "Impossibile caricare i blocchi appunti",
       "list-error-body": "Si è verificato un errore durante il caricamento dei tuoi blocchi appunti. Riprova o creane uno nuovo.",
       "list-no-matches": "Nessun blocco appunti corrisponde a questi filtri.",
@@ -13233,6 +13290,8 @@
       "list-truncated": "Non vengono mostrati tutti i blocchi appunti. Restringi la ricerca per trovarne altri.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Cerca per titolo",
       "sort-alphabetical": "In ordine alfabetico (A-Z)",
       "sort-label": "Ordina blocchi appunti",
@@ -13240,13 +13299,15 @@
       "sort-updated": "Aggiornati di recente",
       "submit": "Aggiungi al blocco appunti",
       "success": "Pannello aggiunto a {{title}}",
+      "success-cells": "",
       "success-link": "Visualizza blocco appunti",
       "tag-placeholder": "Filtra per tag",
       "target-description": "Scegli dove aggiungere il pannello.",
       "target-existing": "Blocco appunti esistente",
       "target-label": "Blocco appunti di destinazione",
       "target-new": "Nuovo blocco appunti",
-      "title": "Aggiungi pannello al blocco appunti"
+      "title": "Aggiungi pannello al blocco appunti",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16620,6 +16681,7 @@
     "name-page-size": "Dimensione della pagina",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stile dal campo",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",

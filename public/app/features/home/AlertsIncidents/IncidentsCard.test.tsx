@@ -111,8 +111,8 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCardWithData filter="squad:Frontend" />);
 
-    expect(await screen.findByText('No active incidents for Frontend.')).toBeInTheDocument();
-    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(await screen.findByText('All quiet! No active incidents for Frontend.')).toBeInTheDocument();
+    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
     expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]);
   });
 
@@ -132,7 +132,7 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
   });
 
   it('renders incident titles as plain text when the user cannot access the incidents page', async () => {
@@ -238,7 +238,7 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCardWithData />);
 
-    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(await screen.findByText('All quiet! No active incidents.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 

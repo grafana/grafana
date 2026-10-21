@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Falha ao carregar o conteúdo: {{error}}",
+        "hide-secrets": "",
         "loading": "A carregar conteúdo...",
         "notifications-title": "Pré-visualização da configuração de notificações",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Pré-visualização das regras de alertas"
       },
       "recording-rules": "Regras de gravação",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "A origem de dados do Prometheus para armazenar regras de gravação em",
       "label-target-data-source": "Origem de dados de destino",
-      "target-data-source-required": "Selecione uma origem de dados de destino"
+      "target-data-source-required": "Selecione uma origem de dados de destino",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Selecione o espaço de nome e o grupo para a sua regra de gravação.",
@@ -6037,6 +6042,24 @@
       "tooltip-next": "Seguinte",
       "tooltip-previous": "Anterior"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Edição do esquema do Assistente"
@@ -6155,6 +6178,9 @@
           "no-template-variables-found": "Nenhuma variável de modelo encontrada"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Cancelar",
@@ -7598,6 +7624,33 @@
       "body-restore-version": "Tem a certeza de que pretende restaurar o painel de controlo para a versão {{version}}? Todas as alterações não guardadas serão perdidas.",
       "confirmText-restore-version": "Sim, restaurar para a versão {{version}}",
       "title-restore-version": "Restaurar versão"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Guardar",
@@ -10089,6 +10142,7 @@
             "name-humidity": "Humidade (%H)",
             "name-locale": "Formato local",
             "name-number": "Número",
+            "name-ordinal": "",
             "name-percent-1": "Percentagem (0,0-1,0)",
             "name-percent-100": "Percentagem (0-100)",
             "name-pixels": "Pixels",
@@ -10214,7 +10268,9 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13225,6 +13281,7 @@
       "created-by-me": "Criado por mim",
       "error-conflict": "Este bloco de notas foi alterado enquanto estava a adicionar-lhe algo. Tente novamente adicionar o painel à versão mais recente.",
       "error-generic": "Falha ao adicionar o painel ao bloco de notas",
+      "error-open-conflict": "",
       "list-error": "Falha ao carregar os blocos de notas",
       "list-error-body": "Ocorreu um erro ao carregar os seus blocos de notas. Tente novamente ou crie um novo.",
       "list-no-matches": "Nenhum bloco de notas corresponde a estes filtros.",
@@ -13233,6 +13290,8 @@
       "list-truncated": "Nem todos os blocos de notas são mostrados. Restrinja a pesquisa para encontrar outros.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Pesquisar por título",
       "sort-alphabetical": "Por ordem alfabética (A–Z)",
       "sort-label": "Ordenar blocos de notas",
@@ -13240,13 +13299,15 @@
       "sort-updated": "Atualizado recentemente",
       "submit": "Adicionar ao bloco de notas",
       "success": "Painel adicionado a {{title}}",
+      "success-cells": "",
       "success-link": "Ver bloco de notas",
       "tag-placeholder": "Filtrar por etiqueta",
       "target-description": "Escolha onde adicionar o painel.",
       "target-existing": "Bloco de notas existente",
       "target-label": "Bloco de notas de destino",
       "target-new": "Novo bloco de notas",
-      "title": "Adicionar painel ao bloco de notas"
+      "title": "Adicionar painel ao bloco de notas",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16620,6 +16681,7 @@
     "name-page-size": "Tamanho da página",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Estilo do campo",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
