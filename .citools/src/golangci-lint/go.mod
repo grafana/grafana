@@ -180,7 +180,7 @@ require (
 	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tetafro/godot v1.5.6 // indirect
-	github.com/timakin/bodyclose v0.0.0-20260723120731-857993a2939c // indirect
+	github.com/timakin/bodyclose v0.0.0-20260923065923-98ded9ab4ef2 // indirect
 	github.com/timonwong/loggercheck v0.12.0 // indirect
 	github.com/tomarrell/wrapcheck/v2 v2.12.0 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
