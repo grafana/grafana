@@ -32,12 +32,22 @@ Use notebooks to work through a question and keep the queries, findings, and rea
 For example, you can compare signals from several data sources, explain why a particular result matters, and share the notebook with someone continuing the investigation.
 Grafana Assistant can also create a notebook from its findings in Workspace, which you can then continue editing yourself.
 
+## Before you begin
+
+To use notebooks, you need the following:
+
+- **Feature access:** Enable notebooks as described in the public preview notice above.
+- **Notebook permissions:** You need permission to view notebooks. Creating, editing, and deleting notebooks require additional permissions.
+- **Data source access:** You need permission to query the data sources used by the notebook's visualizations.
+
+Grafana Assistant and Grafana IRM are optional integrations, not prerequisites for creating a notebook.
+
 ## Manage notebooks
 
-The **Notebooks** page lists all of the notebooks in your organization, along with the following details for each notebook:
+The **Notebooks** page lists the notebooks you can access, along with the following details for each notebook:
 
 - Title
-- Author username
+- Author
 - Tags
 - Creation date
 - Date of last update
@@ -54,7 +64,7 @@ Depending on your permissions, each notebook row includes an **Edit** button and
 - Export as a PDF, when a compatible image renderer is available
 - Delete
 
-You can also access all of these options inside a notebook in the toolbar:
+Inside a notebook, use **Copy link** to share its URL or **More actions** to export or delete it:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-toolbar-v13.3.png" max-width="600px" alt="The toolbar in a notebook with the actions menu open" >}}
 
@@ -114,7 +124,7 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 You can also create a notebook from Grafana's **New** menu or by searching for **New notebook** in the command palette.
 
-Notebooks save your changes automatically.
+Notebooks save your changes automatically. For save status and reverting edits, refer to [Save and undo changes](#save-and-undo-changes).
 
 ## Edit notebooks
 
@@ -124,6 +134,15 @@ To update an existing notebook, follow these steps:
 1. Click **Edit** on the row of the notebook you want to update, or open the notebook and click **Edit** in its toolbar.
 1. Update the text, code, or visualizations as needed.
 1. Click **View** to leave edit mode.
+
+### Save and undo changes
+
+Notebooks save your edits automatically, including changes made with undo and redo.
+The save status shows **Unsaved changes**, **Saving…**, **Saved**, or **Save failed** as needed.
+If a save fails, check the error and use **Retry** when it's available before leaving the page.
+
+Use the notebook's undo and redo controls in edit mode to revert or reinstate changes to text, blocks, titles, tags, queries, visualizations, and panel time locks.
+Undo and redo aren't a saved version history and can't restore a deleted notebook.
 
 ## Work with visualizations
 
@@ -180,8 +199,6 @@ Click **Open in Explore** to open the panel's queries and time range in a new ta
 This option is also available in view mode for panels that support Explore.
 Changes you make in Explore don't update the notebook automatically.
 
-Use the notebook's undo and redo controls to revert or reinstate panel title, query, visualization, and time-lock changes.
-
 ## Add panels from dashboards or Explore
 
 You can bring an existing dashboard panel or an Explore query into a notebook without recreating it.
@@ -197,8 +214,8 @@ Adding a dashboard panel to a notebook doesn't change the source dashboard.
 
 In Grafana Assistant Workspace, you can turn investigation findings into a notebook to continue editing and share with your team.
 
-While you investigate in Workspace, the canvas assembles the work as a temporary collection of questions, panels, and findings.
-The Assistant builds the canvas autonomously in **Investigation** mode, or by way of your chat.
+While you investigate in Workspace, the canvas brings together questions, panels, and findings.
+The Assistant builds the canvas in **Investigation** mode or through your chat.
 
 As you work, you can add the content of a message, such as text or a visualization, from your Assistant conversation to a notebook by clicking the **Add to notebook** icon.
 To create a notebook from the entire canvas, ask Assistant to create one or click **Create notebook**:
@@ -208,7 +225,14 @@ To create a notebook from the entire canvas, ask Assistant to create one or clic
 ## Notebooks and incidents
 
 Notebooks can provide context for incident response, even if you started investigating before declaring an incident.
-With Grafana IRM available, you can attach a notebook to an existing incident or declare an incident based on your notebook.
+You can attach a notebook to an existing incident or declare an incident from the notebook.
+
+These actions require Grafana IRM to be enabled on your stack, with its notebook integration available.
+You also need permission to perform the incident action.
+If the integration isn't available, the notebook's **More actions** menu doesn't include **IRM**.
+
+Both actions add a link to the notebook as incident context, not a copy of its contents or a snapshot of its data.
+People opening the link still need permission to view the notebook and query its data sources.
 
 ### Attach notebooks to incidents
 
@@ -216,11 +240,13 @@ To attach a notebook to an existing incident, follow these steps:
 
 1. Navigate to **Notebooks**.
 1. Open the notebook you want to attach.
-1. Click the menu in the toolbar.
+1. Click **More actions** in the notebook toolbar.
 1. Select **IRM > Attach to incident**.
 1. In the dialog box that opens, select the incident to which you want to attach the notebook.
-1. (Optional) Add a caption to provide context.
+1. (Optional) Update the caption, which starts with the notebook's title.
 1. Click **Attach**.
+
+The notebook link is added to the incident's context.
 
 ### Declare incidents from notebooks
 
@@ -228,11 +254,18 @@ To declare an incident from a notebook, follow these steps:
 
 1. Navigate to **Notebooks**.
 1. Open the notebook you want to use.
-1. Click the menu in the toolbar.
+1. Click **More actions** in the notebook toolbar.
 1. Select **IRM > Declare incident**.
-1. In the dialog box that opens, complete the incident form.
+1. Review the prefilled **Incident title**. The title starts with the notebook's title, but you can change it.
+1. Complete the fields required by your organization. Add an **Initial update**, select a **Severity**, or add **Labels** as needed.
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-declare-incident-v13.3.png" max-width="750px" alt="Declare incident dialog opened from a notebook with the incident title prefilled from the notebook title" >}}
+
 1. Click **Declare incident**.
 
    This opens the incident you've just created in **IRM > Incidents**.
 
 1. Add any other needed context to the incident.
+
+Declaring an incident can trigger your configured incident response actions, such as notifying responders.
+For details about incident fields and response workflows, refer to [Declare an incident in Grafana IRM](https://grafana.com/docs/grafana-cloud/observe-and-act/respond-to-incidents/manage-incidents/declare-incident/).
