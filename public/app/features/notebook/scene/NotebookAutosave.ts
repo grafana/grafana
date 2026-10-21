@@ -1115,16 +1115,12 @@ function isVizPanelState(state: SceneObjectState): state is VizPanel['state'] {
 /**
  * Whether a state change was a change to the notebook's time settings.
  *
- * `buildTimeSettingsSpec` reads them from these four places, so all four have to be named here: one left
+ * `buildTimeSettingsSpec` reads them from these three places, so all three have to be named here: one left
  * out is one whose edits get thrown away as if a reader had made them.
  */
 export function changesTimeSettings(payload: SceneObjectStateChangedPayload, scene: NotebookScene): boolean {
-  const { changedObject, partialUpdate } = payload;
+  const { changedObject } = payload;
   const { $timeRange, timePicker, refreshPicker } = scene.state;
-
-  if (changedObject === scene) {
-    return 'hideTimeControls' in partialUpdate;
-  }
 
   return changedObject === $timeRange || changedObject === timePicker || changedObject === refreshPicker;
 }
