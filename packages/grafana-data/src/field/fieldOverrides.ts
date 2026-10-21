@@ -404,6 +404,8 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
 
 export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
+  /** Property id -> variable expression, from defaults and matching `varMappings.<id>` overrides */
+  varMappings?: Record<string, string>;
 }
 
 /**

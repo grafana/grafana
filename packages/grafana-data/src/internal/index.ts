@@ -10,7 +10,8 @@
  *
  */
 
-export { actionsOverrideProcessor } from '../field/overrides/processors';
+export { actionsOverrideProcessor, isVarMappingEligible } from '../field/overrides/processors';
+export { isVarMappingProp, wrapVarMappingPropId } from '../panel/getPanelOptionsWithDefaults';
 export { nullToUndefThreshold } from '../transformations/transformers/nulls/nullToUndefThreshold';
 export { applyNullInsertThreshold } from '../transformations/transformers/nulls/nullInsertThreshold';
 export {

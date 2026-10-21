@@ -5,9 +5,6 @@ import {
   type FieldConfigOptionsRegistry,
   type SelectableValue,
   isSystemOverride as isSystemOverrideGuard,
-  isVarMappingEligible,
-  isVarMappingProp,
-  wrapVarMappingPropId,
   type VariableSuggestionsScope,
   type DynamicConfigValue,
   type ConfigOverrideRule,
@@ -17,6 +14,7 @@ import {
   type StandardEditorContext,
   FieldType,
 } from '@grafana/data';
+import { isVarMappingEligible, isVarMappingProp, wrapVarMappingPropId } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {

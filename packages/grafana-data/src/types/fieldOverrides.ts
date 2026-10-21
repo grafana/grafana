@@ -66,13 +66,6 @@ export interface FieldConfigSource<TOptions = any> {
 export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
-  /**
-   * Per-field working map of field-config property id -> variable expression, seeded from
-   * `defaults.varMappings` and augmented with synthetic `varMappings.<id>` override entries as
-   * the override-rule loop runs. Consulted by the resolution pre-pass in `fieldOverrides.ts`
-   * before a `numberOverrideProcessor`-backed property is processed.
-   */
-  varMappings?: Record<string, string>;
 }
 
 /** @deprecated Use StandardEditorProps instead */

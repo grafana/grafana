@@ -4,7 +4,6 @@ import {
   type EventBus,
   type InterpolateFunction,
   isNestedPanelOptions,
-  isVarMappingEligible,
   type NestedValueAccess,
   type PanelData,
   type PanelPlugin,
@@ -15,6 +14,7 @@ import {
   type FieldConfigPropertyItem,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
+import { isVarMappingEligible } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
