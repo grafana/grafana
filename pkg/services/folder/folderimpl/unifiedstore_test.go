@@ -13,8 +13,10 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -385,6 +387,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should be able to find children folders, and set defaults for pages", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
@@ -448,6 +451,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should return an error if the folder is not found", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
@@ -494,6 +498,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("pages should be able to be set, general folder should be turned to empty string, and folder uids should be passed in", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
@@ -628,6 +633,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
@@ -1680,25 +1686,38 @@ func searchRow(uid, title, parentUID string) *resourcepb.ResourceTableRow {
 
 type folderIndexSearchClient struct {
 	client.K8sHandler
-	index            resource.ResourceIndex
-	access           *folderSearchAccessClient
-	ignoreExactTotal bool
-	calls            int
-	firstPageRows    int
-	firstTotalExact  bool
+	index              resource.ResourceIndex
+	access             *folderSearchAccessClient
+	ignoreExactTotal   bool
+	allFields          bool
+	resultFormat       resourcepb.ResourceSearchRequest_ResultFormat
+	lastFields         []string
+	calls              int
+	firstPageRows      int
+	firstTotalExact    bool
+	firstResponseBytes int
 }
 
 func (c *folderIndexSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	c.calls++
+	c.lastFields = req.Fields
 	req.Options.Key = &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
+	if c.allFields {
+		// Keep the previous request shape for the field-selection comparison.
+		req.Fields = nil
+	}
+	if c.resultFormat != resourcepb.ResourceSearchRequest_UNSPECIFIED {
+		req.ResultFormat = c.resultFormat
+	}
 	response, err := c.index.Search(ctx, c.access, req, nil, nil)
 	if err == nil && response != nil {
-		if c.calls == 1 {
-			c.firstPageRows, c.firstTotalExact = len(response.Rows), response.TotalHitsExact
-		}
 		if c.ignoreExactTotal {
 			// Reproduce the previous pagination for the benchmark comparison.
 			response.TotalHitsExact = false
+		}
+		if c.calls == 1 {
+			c.firstPageRows, c.firstTotalExact = len(response.Rows), response.TotalHitsExact
+			c.firstResponseBytes = proto.Size(response)
 		}
 	}
 	return response, err
@@ -1747,6 +1766,16 @@ func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthz
 						Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: name,
 					},
 					Name: name, Title: name, Folder: parent, RV: 1,
+					Description: "A folder for service dashboards and alert rules.",
+					Created:     1700000000000,
+					Updated:     1700000001000,
+					CreatedBy:   "user:creator",
+					UpdatedBy:   "user:editor",
+					Labels: map[string]string{
+						utils.LabelKeyDeprecatedInternalID: fmt.Sprint(i + 1), //nolint:staticcheck // Exercise legacy field compatibility.
+						"team":                             "observability",
+					},
+					Manager: &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repository"},
 				},
 			}
 		}
@@ -1794,6 +1823,8 @@ func TestFolderSearchPostRankAuthz(t *testing.T) {
 						n *= 2
 					}
 					require.Equal(t, fmt.Sprintf("folder-%05d", n), hit.UID)
+					require.Equal(t, int64(n+1), hit.ID) //nolint:staticcheck // Exercise legacy field compatibility.
+					require.Equal(t, utils.ManagerKindRepo, hit.ManagedBy)
 				}
 				if tc.cfg.MaxCandidates > 0 {
 					require.Greater(t, cli.calls, 1)
@@ -1810,12 +1841,83 @@ func TestFolderSearchPostRankAuthz(t *testing.T) {
 	}
 }
 
+func TestFolderSearchFields(t *testing.T) {
+	store, cli := newFolderIndexSearchStore(t, 3, search.PostRankAuthzConfig{})
+	ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+	items := make([]*resource.BulkIndexItem, 3)
+	for i, title := range []string{"A/B", "Child", "Nested"} {
+		name := fmt.Sprintf("folder-%05d", i)
+		parent := "general"
+		if i > 0 {
+			parent = fmt.Sprintf("folder-%05d", i-1)
+		}
+		doc := &resource.IndexableDocument{
+			Key:  &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: name},
+			Name: name, Title: title, Folder: parent, RV: 2,
+		}
+		if i == 1 {
+			doc.Labels = map[string]string{utils.LabelKeyDeprecatedInternalID: "9007199254740993"} //nolint:staticcheck // Exercise legacy field compatibility.
+			doc.Manager = &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repository"}
+		}
+		items[i] = &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc}
+	}
+	require.NoError(t, cli.index.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 2}))
+
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			cli.resultFormat = format
+			cli.allFields = true
+			want, err := store.searchAllFolders(ctx, 1)
+			require.NoError(t, err)
+			require.Len(t, want, 3)
+
+			cli.allFields = false
+			got, err := store.searchAllFolders(ctx, 1)
+
+			require.NoError(t, err)
+			require.Equal(t, want, got)
+			require.Equal(t, []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_MANAGER_KIND,
+				resource.SEARCH_FIELD_LEGACY_ID,
+				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+			}, cli.lastFields)
+			require.Equal(t, []*folder.FolderReference{
+				{UID: "folder-00000", Title: "A/B"},
+				{UID: "folder-00001", Title: "Child", ParentUID: "folder-00000", ManagedBy: utils.ManagerKindRepo,
+					ID: 9007199254740993}, //nolint:staticcheck // Exercise legacy field compatibility.
+				{UID: "folder-00002", Title: "Nested", ParentUID: "folder-00001"},
+			}, got)
+
+			folders, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+				OrgID: 1, UIDs: []string{"folder-00002"}, MetadataOnly: true, WithFullpath: true, WithFullpathUIDs: true,
+			}})
+			require.NoError(t, err)
+			require.Len(t, folders, 1)
+			require.Equal(t, "A\\/B/Child/Nested", folders[0].Fullpath)
+			require.Equal(t, "folder-00000/folder-00001/folder-00002", folders[0].FullpathUIDs)
+		})
+	}
+}
+
 func BenchmarkSearchAllFolders(b *testing.B) {
 	for _, restricted := range []bool{false, true} {
-		for _, ignoreExactTotal := range []bool{true, false} {
-			b.Run(fmt.Sprintf("restricted=%t/ignoreExactTotal=%t", restricted, ignoreExactTotal), func(b *testing.B) {
+		for _, tc := range []struct {
+			name             string
+			ignoreExactTotal bool
+			allFields        bool
+		}{
+			{name: "legacy-pagination", ignoreExactTotal: true, allFields: true},
+			{name: "all-fields", allFields: true},
+			{name: "selected-fields"},
+		} {
+			b.Run(fmt.Sprintf("restricted=%t/%s", restricted, tc.name), func(b *testing.B) {
 				store, cli := newFolderIndexSearchStore(b, 1771, search.PostRankAuthzConfig{})
-				cli.ignoreExactTotal = ignoreExactTotal
+				cli.ignoreExactTotal, cli.allFields = tc.ignoreExactTotal, tc.allFields
 				want := 1771
 				if restricted {
 					cli.access.allowedFolders = map[string]bool{"allowed": true}
@@ -1834,6 +1936,7 @@ func BenchmarkSearchAllFolders(b *testing.B) {
 				}
 				b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
 				b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+				b.ReportMetric(float64(cli.firstResponseBytes), "first-response-bytes")
 			})
 		}
 	}
@@ -1895,6 +1998,7 @@ func TestFolderSearchPagination(t *testing.T) {
 						}}
 					}
 					cli.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+						Fields:       folderReferenceFields,
 						Options:      options,
 						Limit:        searchPageSize,
 						Offset:       offset,
@@ -1958,6 +2062,7 @@ func TestGetFoldersMetadata(t *testing.T) {
 
 	expectSearchAll := func(mockCli *client.MockK8sHandler) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options:      &resourcepb.ListOptions{},
 			Limit:        searchPageSize,

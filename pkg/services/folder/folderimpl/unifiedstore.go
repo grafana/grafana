@@ -31,6 +31,15 @@ import (
 
 const tracePrefix = "folder.unifiedstore."
 
+var folderReferenceFields = []string{
+	resource.SEARCH_FIELD_TITLE,
+	resource.SEARCH_FIELD_FOLDER,
+	resource.SEARCH_FIELD_MANAGER_KIND,
+	resource.SEARCH_FIELD_LEGACY_ID,
+	// The numeric legacy ID is derived from this stored label.
+	resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+}
+
 type FolderUnifiedStoreImpl struct {
 	log         log.Logger
 	k8sclient   client.K8sHandler
@@ -282,6 +291,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 // index and reports whether pagination is complete. A short page alone is not
 // enough: authorization can stop at its candidate budget with more hits remaining.
 func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, bool, error) {
+	req.Fields = folderReferenceFields
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
 	if err := resource.ErrorFromResponse(out.GetError(), err); err != nil {
 		return nil, false, err
