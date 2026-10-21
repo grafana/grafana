@@ -358,3 +358,16 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestVerbIsParsedOncePerRequest(t *testing.T) {
+	req, outcome := withRequestOutcome(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things?watch=true", nil))
+	require.Equal(t, "watch", requestVerb(req))
+	require.Equal(t, "watch", outcome.verb)
+
+	// A later call reads the recorded verb instead of parsing the request.
+	outcome.verb = "recorded"
+	require.Equal(t, "recorded", requestVerb(req))
+
+	// Without an outcome, as for the router's own sub-requests, it parses.
+	require.Equal(t, "list", requestVerb(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things", nil)))
+}

@@ -145,6 +145,7 @@ declare module "@openfeature/core" {
     | "enableColorblindSafePanelOptions"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "reporting.anyPageReporting"
+    | "alerting.gmaOnlyListView"
     | "assistant.frontend.tools.dashboardTemplates"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"

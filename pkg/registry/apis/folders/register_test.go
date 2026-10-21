@@ -10,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -144,7 +145,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				storage:              us,
-				parents:              newParentsGetter(us, 2),
+				parents:              newParentsGetter(us),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
 			}
 
@@ -155,7 +156,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				tt.setupFn(us)
 			}
 
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			err := b.Validate(request.WithNamespace(context.Background(), "stacks-123"), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -180,34 +181,52 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
-	for _, dryRun := range []bool{false, true} {
-		t.Run(fmt.Sprintf("dryRun=%t", dryRun), func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
-			storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
-				Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
-			b := &FolderAPIBuilder{
-				storage:              storage,
-				parents:              newParentsGetter(storage, 5),
-				maxNestedFolderDepth: 5,
-			}
-			obj := &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "child",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
-				},
-				Spec: folders.FolderSpec{Title: "child"},
-			}
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
-				obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
-				folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
-				nil, dryRun, &user.SignedInUser{},
-			), nil)
-			if dryRun {
-				require.NoError(t, err)
-			} else {
-				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
-			}
-		})
+	for _, tc := range []struct {
+		name               string
+		parentName         string
+		missingGrandparent bool
+	}{
+		{name: "immediate parent missing", parentName: "missing"},
+		{name: "grandparent missing", parentName: "parent", missingGrandparent: true},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
+				storage := grafanarest.NewMockStorage(t)
+				if tc.missingGrandparent {
+					storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "parent",
+							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
+						},
+						Spec: folders.FolderSpec{Title: "parent"},
+					}, nil).Once()
+				}
+				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
+					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
+				b := &FolderAPIBuilder{
+					storage:              storage,
+					parents:              newParentsGetter(storage),
+					maxNestedFolderDepth: 5,
+				}
+				obj := &folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: tc.parentName},
+					},
+					Spec: folders.FolderSpec{Title: "child"},
+				}
+				err := b.Validate(request.WithNamespace(context.Background(), "default"), admission.NewAttributesRecord(
+					obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
+					folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
+					nil, dryRun, &user.SignedInUser{},
+				), nil)
+				if dryRun || tc.missingGrandparent {
+					require.NoError(t, err)
+				} else {
+					require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+				}
+			})
+		}
 	}
 }
 
@@ -543,7 +562,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -635,7 +654,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -739,7 +758,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	b := &FolderAPIBuilder{
 		storage:  us,
 		searcher: sm,
-		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		parents:  newParentsGetter(us),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
