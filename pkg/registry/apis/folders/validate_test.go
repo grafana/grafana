@@ -1905,12 +1905,13 @@ func TestCheckMoveAccess(t *testing.T) {
 		})
 	}
 
-	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+	t.Run("sanitizes BatchCheck transport error", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient(nil)
 		mock.batchCheckErr = fmt.Errorf("boom")
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
-		require.ErrorContains(t, err, "boom")
+		require.True(t, apierrors.IsInternalError(err))
+		require.NotContains(t, err.Error(), "boom")
 		require.Equal(t, 1, mock.batchCheckCall)
 	})
 
