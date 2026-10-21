@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { HttpResponse, http, type PathParams } from 'msw';
 import { type UnknownAction } from 'redux';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -118,6 +118,22 @@ function captureCreate(name: string | null = 'nb2'): CapturedRequest {
 }
 
 describe('addToExistingNotebook', () => {
+  it('retains the source app while the notebook write is in flight', async () => {
+    captureWrite();
+    locationService.push('/a/grafana-agento11y-app/analytics');
+    const saving = addToExistingNotebook('nb1', [{ kind: 'markdown', text: 'Finding' }], 'plugin');
+    locationService.push('/a/grafana-k6-app/tests/123');
+    await saving;
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
+      'nb1',
+      'plugin',
+      0,
+      undefined,
+      false,
+      'agent_o11y'
+    );
+    locationService.push('/');
+  });
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
 
@@ -255,7 +271,8 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.PLUGIN,
       0,
       undefined,
-      false
+      false,
+      'other_plugin'
     );
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
       2,
@@ -263,7 +280,8 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.PLUGIN,
       1,
       { panel: panel('p95 latency'), isLibraryPanel: false },
-      false
+      false,
+      'other_plugin'
     );
   });
 
@@ -383,7 +401,8 @@ describe('createNotebookWithContent', () => {
       'plugin',
       2,
       { panel: panel('Chart'), isLibraryPanel: true },
-      false
+      false,
+      'other_plugin'
     );
   });
 
@@ -399,7 +418,7 @@ describe('createNotebookWithContent', () => {
       'plugin'
     );
 
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false);
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false, 'other_plugin');
   });
 
   it('passes on whether the modal locked the time range', async () => {
