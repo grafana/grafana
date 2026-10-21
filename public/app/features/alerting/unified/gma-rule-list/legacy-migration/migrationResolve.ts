@@ -1,4 +1,4 @@
-import { type Criteria } from '../rule-search/criteria';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 
 import { type SyncMigrationResult } from './migrationSync';
 
@@ -10,7 +10,7 @@ export interface NameResolvers {
 
 export interface ResolvedMigration {
   /** Only the UIDs that resolved. */
-  criteria: Criteria;
+  filter: RuleSearchFilter;
   /** Sorted, distinct keys dropped by either stage, including names that matched no single folder or data source. */
   droppedKeys: string[];
 }
@@ -40,8 +40,8 @@ export async function resolveMigratedNames(
   resolvers: NameResolvers
 ): Promise<ResolvedMigration> {
   const [namespaces, dataSourceUids] = await Promise.all([
-    resolveNames(sync.criteria.namespaces, resolvers.resolveFolderUidByName),
-    resolveNames(sync.criteria.dataSourceUids, resolvers.resolveDataSourceUidByName),
+    resolveNames(sync.filter.namespaces, resolvers.resolveFolderUidByName),
+    resolveNames(sync.filter.dataSourceUids, resolvers.resolveDataSourceUidByName),
   ]);
 
   const droppedKeys = new Set(sync.diagnostics.droppedKeys);
@@ -53,7 +53,7 @@ export async function resolveMigratedNames(
   }
 
   return {
-    criteria: { ...sync.criteria, namespaces: namespaces.uids, dataSourceUids: dataSourceUids.uids },
+    filter: { ...sync.filter, namespaces: namespaces.uids, dataSourceUids: dataSourceUids.uids },
     droppedKeys: [...droppedKeys].sort(),
   };
 }

@@ -3,7 +3,7 @@ import { LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { ResultCount } from '../rule-row/ResultCount';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { type Criteria } from '../rule-search/criteria';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
@@ -11,12 +11,12 @@ import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface ListViewProps {
-  criteria: Criteria;
+  filter: RuleSearchFilter;
 }
 
-export function ListView({ criteria }: ListViewProps) {
+export function ListView({ filter }: ListViewProps) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
-    useRecordingRuleSearch(criteria);
+    useRecordingRuleSearch(filter);
 
   if (isLoading) {
     return (

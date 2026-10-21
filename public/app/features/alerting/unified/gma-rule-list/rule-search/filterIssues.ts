@@ -1,11 +1,11 @@
-import { type Criteria, DEFAULT_POLICY, type LabelMatcher } from './criteria';
+import { DEFAULT_POLICY, type LabelMatcher, type RuleSearchFilter } from './ruleSearchFilter';
 
-export type CriteriaIssueReason = 'unsupported' | 'requiresDashboard' | 'unavailable' | 'invalid';
+export type FilterIssueReason = 'unsupported' | 'requiresDashboard' | 'unavailable' | 'invalid';
 
-export interface CriteriaIssue {
+export interface FilterIssue {
   /** The token key as typed. */
   key: string;
-  reason: CriteriaIssueReason;
+  reason: FilterIssueReason;
   /** The token exactly as typed, for unsupported tokens, so the message can say what would work. */
   raw?: string;
 }
@@ -15,8 +15,8 @@ const DATASOURCE_UID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const EXPRESSION_DATASOURCE_UIDS = new Set(['__expr__', '-100', '__ml__']);
 
 /** Callers must show these tokens as invalid and skip the request; builders never fix them up silently. */
-export function getCriteriaIssues(criteria: Criteria, kind: 'alert' | 'recording'): CriteriaIssue[] {
-  const issues: CriteriaIssue[] = criteria.invalid.map((token) => ({
+export function getFilterIssues(filter: RuleSearchFilter, kind: 'alert' | 'recording'): FilterIssue[] {
+  const issues: FilterIssue[] = filter.invalid.map((token) => ({
     key: token.key,
     reason: 'unsupported',
     raw: token.raw,
@@ -25,41 +25,41 @@ export function getCriteriaIssues(criteria: Criteria, kind: 'alert' | 'recording
   const invalid = (key: string) => issues.push({ key, reason: 'invalid' });
 
   // The title text search treats these as wildcards, which the rule search refuses.
-  if (criteria.text.some((word) => /[*%]/.test(word))) {
+  if (filter.text.some((word) => /[*%]/.test(word))) {
     invalid('rule');
   }
-  if (criteria.namespaces.some(hasWildcard)) {
+  if (filter.namespaces.some(hasWildcard)) {
     invalid('namespace');
   }
-  if (criteria.dataSourceUids.some((uid) => !isQueryDatasourceUid(uid))) {
+  if (filter.dataSourceUids.some((uid) => !isQueryDatasourceUid(uid))) {
     invalid('datasource');
   }
-  if (criteria.labels.some(isRejectedLabel)) {
+  if (filter.labels.some(isRejectedLabel)) {
     invalid('label');
   }
 
   if (kind === 'alert') {
-    if (criteria.panelId && !criteria.dashboardUid) {
+    if (filter.panelId && !filter.dashboardUid) {
       issues.push({ key: 'panelId', reason: 'requiresDashboard' });
-    } else if (criteria.panelId && !isPositiveInteger(criteria.panelId)) {
+    } else if (filter.panelId && !isPositiveInteger(filter.panelId)) {
       invalid('panelId');
     }
-    if (criteria.dashboardUid && hasWildcard(criteria.dashboardUid)) {
+    if (filter.dashboardUid && hasWildcard(filter.dashboardUid)) {
       invalid('dashboard');
     }
-    if (criteria.policy === DEFAULT_POLICY) {
+    if (filter.policy === DEFAULT_POLICY) {
       issues.push({ key: 'policy', reason: 'unavailable' });
-    } else if (criteria.policy && hasWildcard(criteria.policy)) {
+    } else if (filter.policy && hasWildcard(filter.policy)) {
       invalid('policy');
     }
-    if (criteria.contactPoint && hasWildcard(criteria.contactPoint)) {
+    if (filter.contactPoint && hasWildcard(filter.contactPoint)) {
       invalid('contactPoint');
     }
   } else {
-    if (criteria.metric && hasWildcard(criteria.metric)) {
+    if (filter.metric && hasWildcard(filter.metric)) {
       invalid('metric');
     }
-    if (criteria.targetDataSourceUid && hasWildcard(criteria.targetDataSourceUid)) {
+    if (filter.targetDataSourceUid && hasWildcard(filter.targetDataSourceUid)) {
       invalid('targetDatasource');
     }
   }

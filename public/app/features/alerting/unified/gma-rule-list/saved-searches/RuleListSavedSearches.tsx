@@ -24,11 +24,11 @@ export function RuleListSavedSearches({
   kind: SavedSearchKind;
   savedSearches: UseGenericSavedSearchesResult;
 }) {
-  const { criteria, setCriteria } = useRuleListSearchState(kind);
+  const { filter, setFilter } = useRuleListSearchState(kind);
   const warnAboutDroppedFilters = useDroppedFiltersWarning();
   const registry = kind === 'alert' ? alertTokens : recordingTokens;
 
-  const applyAndSetCriteria = async (search: SavedSearch) => {
+  const applyAndSetFilter = async (search: SavedSearch) => {
     const result = await applySavedSearch(
       search.query,
       legacyRuleListNameResolvers,
@@ -36,19 +36,19 @@ export function RuleListSavedSearches({
       (canonical) => savedSearches.updateSearch(search.id, canonical)
     );
     warnAboutDroppedFilters(result.droppedKeys);
-    setCriteria(result.criteria);
+    setFilter(result.filter);
   };
 
   return (
     <SavedSearches
       savedSearches={savedSearches.savedSearches}
-      currentSearchQuery={serialize(criteria)}
+      currentSearchQuery={serialize(filter)}
       onSave={savedSearches.saveSearch}
       onRename={savedSearches.renameSearch}
       onDelete={savedSearches.deleteSearch}
       onSetDefault={savedSearches.setDefaultSearch}
       isLoading={savedSearches.isLoading}
-      onApply={applyAndSetCriteria}
+      onApply={applyAndSetFilter}
       getHref={(search) => `/alerting/rules/${kind}?search=${encodeURIComponent(search.query)}`}
     />
   );

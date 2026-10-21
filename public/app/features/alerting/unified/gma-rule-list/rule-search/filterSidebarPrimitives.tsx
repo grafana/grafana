@@ -3,7 +3,7 @@ import { type KeyboardEvent, useEffect, useId, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Combobox, type ComboboxOption, Icon, IconButton, Input, Stack, Switch, Text } from '@grafana/ui';
 
-import { type Criteria, type HealthValue, type LabelMatcher, type LabelOperator } from './criteria';
+import { type HealthValue, type LabelMatcher, type LabelOperator, type RuleSearchFilter } from './ruleSearchFilter';
 
 function getOperatorOptions(): Array<ComboboxOption<LabelOperator>> {
   return [
@@ -174,9 +174,15 @@ function LabelMatcherRow({ matcher, onChange, onRemove }: LabelMatcherRowProps) 
   );
 }
 
-export function RuleTitleField({ criteria, onChange }: { criteria: Criteria; onChange: (criteria: Criteria) => void }) {
-  // `criteria.text` is an array, but all entries share one request text leaf, so one string is safe.
-  const appliedValue = criteria.text.join(' ');
+export function RuleTitleField({
+  filter,
+  onChange,
+}: {
+  filter: RuleSearchFilter;
+  onChange: (filter: RuleSearchFilter) => void;
+}) {
+  // `filter.text` is an array, but all entries share one request text leaf, so one string is safe.
+  const appliedValue = filter.text.join(' ');
   const [draft, setDraft] = useState(appliedValue);
 
   useEffect(() => {
@@ -184,7 +190,7 @@ export function RuleTitleField({ criteria, onChange }: { criteria: Criteria; onC
   }, [appliedValue]);
 
   const apply = () => {
-    onChange({ ...criteria, text: draft.trim() ? [draft.trim()] : [] });
+    onChange({ ...filter, text: draft.trim() ? [draft.trim()] : [] });
   };
 
   return (

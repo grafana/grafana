@@ -11,7 +11,7 @@ import { type SavedSearchKind } from './savedSearchesMigration';
 
 export interface RuleListSavedSearchIndicatorProps {
   kind: SavedSearchKind;
-  /** The canonical form of the current criteria. */
+  /** The canonical form of the current filter. */
   query: string;
   savedSearches: SavedSearch[];
 }

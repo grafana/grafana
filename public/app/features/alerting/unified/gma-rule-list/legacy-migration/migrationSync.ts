@@ -1,7 +1,7 @@
 import { alertTokens } from '../rule-search/alertTokens';
-import { type Criteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { quoteIfNeeded } from '../rule-search/serializer';
 import { tokenize } from '../rule-search/tokenizer';
 
@@ -27,7 +27,7 @@ export interface SyncMigrationResult {
   destination: Destination;
   mode: ViewMode;
   /** May still hold legacy display names instead of UIDs; resolved by the async stage. */
-  criteria: Criteria;
+  filter: RuleSearchFilter;
   diagnostics: MigrationDiagnostics;
 }
 
@@ -92,13 +92,13 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
   const reserialized = working
     .map((t) => (t.key ? `${t.key}:${quoteIfNeeded(t.value)}` : quoteIfNeeded(t.value)))
     .join(' ');
-  const criteria = parse(reserialized, destinationRegistry(destination));
+  const filter = parse(reserialized, destinationRegistry(destination));
 
   // 5. Remove what the destination cannot apply: other page's filters, unknown, malformed or repeated tokens.
-  for (const token of criteria.invalid) {
+  for (const token of filter.invalid) {
     droppedKeys.add(token.key);
   }
-  criteria.invalid = [];
+  filter.invalid = [];
 
   // 6. `view=list` stays; grouped, legacy `state` or missing become Folders (no evaluation groups).
   const mode: ViewMode = params.view === 'list' ? 'list' : 'folders';
@@ -106,7 +106,7 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
   return {
     destination,
     mode,
-    criteria,
+    filter,
     diagnostics: {
       migratedKeys: [...migratedKeys].sort(),
       droppedKeys: [...droppedKeys].sort(),

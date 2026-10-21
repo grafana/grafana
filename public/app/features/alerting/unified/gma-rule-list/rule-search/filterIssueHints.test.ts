@@ -1,12 +1,12 @@
 import { alertTokens } from './alertTokens';
-import { getIssueHints } from './criteriaIssueHints';
-import { getCriteriaIssues } from './criteriaIssues';
+import { getIssueHints } from './filterIssueHints';
+import { getFilterIssues } from './filterIssues';
 import { parse } from './parser';
 import { recordingTokens } from './recordingTokens';
 
 function hintsFor(query: string, kind: 'alert' | 'recording' = 'alert') {
   const tokens = kind === 'alert' ? alertTokens : recordingTokens;
-  return getIssueHints(getCriteriaIssues(parse(query, tokens), kind), tokens);
+  return getIssueHints(getFilterIssues(parse(query, tokens), kind), tokens);
 }
 
 describe('getIssueHints', () => {

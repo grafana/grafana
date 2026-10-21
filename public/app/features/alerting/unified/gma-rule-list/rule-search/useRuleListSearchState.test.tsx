@@ -2,7 +2,7 @@ import { act, getWrapper, renderHook } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 
-import { createEmptyCriteria } from './criteria';
+import { createEmptyFilter } from './ruleSearchFilter';
 import { useRuleListSearchState } from './useRuleListSearchState';
 
 function renderAt(path: string) {
@@ -15,12 +15,12 @@ describe('useRuleListSearchState', () => {
   it('defaults to Folders mode with no URL params', () => {
     const { result } = renderAt('/alerting/rules/alert');
     expect(result.current.mode).toBe('folders');
-    expect(result.current.criteria).toEqual(createEmptyCriteria());
+    expect(result.current.filter).toEqual(createEmptyFilter());
   });
 
-  it('restores criteria and mode from the URL on load', () => {
+  it('restores filter and mode from the URL on load', () => {
     const { result } = renderAt('/alerting/rules/alert?search=namespace%3Afolder-1&view=list');
-    expect(result.current.criteria.namespaces).toEqual(['folder-1']);
+    expect(result.current.filter.namespaces).toEqual(['folder-1']);
     expect(result.current.mode).toBe('list');
   });
 
@@ -29,7 +29,7 @@ describe('useRuleListSearchState', () => {
     expect(result.current.mode).toBe('folders');
 
     act(() => {
-      result.current.setCriteria({ ...result.current.criteria, text: ['cpu'] });
+      result.current.setFilter({ ...result.current.filter, text: ['cpu'] });
     });
 
     expect(result.current.mode).toBe('list');
@@ -40,23 +40,23 @@ describe('useRuleListSearchState', () => {
     const { result } = renderAt('/alerting/rules/alert');
 
     act(() => {
-      result.current.setCriteria({ ...result.current.criteria, text: ['cpu'] });
+      result.current.setFilter({ ...result.current.filter, text: ['cpu'] });
     });
     expect(result.current.mode).toBe('list');
 
     act(() => {
-      result.current.setCriteria({ ...result.current.criteria, text: [] });
+      result.current.setFilter({ ...result.current.filter, text: [] });
     });
 
     expect(result.current.mode).toBe('folders');
     expect(new URLSearchParams(locationService.getLocation().search).has('view')).toBe(false);
   });
 
-  it('clearing one of two non-folder criteria stays in List', () => {
+  it('clearing one of two non-folder filters stays in List', () => {
     const { result } = renderAt('/alerting/rules/alert?search=cpu%20paused%3Atrue&view=list');
 
     act(() => {
-      result.current.setCriteria({ ...result.current.criteria, text: [] });
+      result.current.setFilter({ ...result.current.filter, text: [] });
     });
 
     expect(result.current.mode).toBe('list');
@@ -79,13 +79,13 @@ describe('useRuleListSearchState', () => {
     const { result } = renderAt('/alerting/rules/alert?view=list');
 
     act(() => {
-      result.current.setCriteria({ ...result.current.criteria, namespaces: ['folder-1'] });
+      result.current.setFilter({ ...result.current.filter, namespaces: ['folder-1'] });
     });
 
     expect(result.current.mode).toBe('list');
   });
 
-  it('setMode("folders") is a no-op while non-folder criteria are active', () => {
+  it('setMode("folders") is a no-op while non-folder filters are active', () => {
     const { result } = renderAt('/alerting/rules/alert?search=cpu&view=list');
     expect(result.current.mode).toBe('list');
 
@@ -96,7 +96,7 @@ describe('useRuleListSearchState', () => {
     expect(result.current.mode).toBe('list');
   });
 
-  it('setMode("folders") is honored once no non-folder criteria remain', () => {
+  it('setMode("folders") is honored once no non-folder filters remain', () => {
     const { result } = renderAt('/alerting/rules/alert?view=list');
     expect(result.current.mode).toBe('list');
 
@@ -122,11 +122,11 @@ describe('useRuleListSearchState', () => {
     expect(result.current.hasNonFolderFilters).toBe(false);
   });
 
-  it('setCriteria serializes criteria into the search URL param', () => {
+  it('setFilter serializes the filter into the search URL param', () => {
     const { result } = renderAt('/alerting/rules/alert');
 
     act(() => {
-      result.current.setCriteria({ ...result.current.criteria, namespaces: ['folder-1'], text: ['cpu'] });
+      result.current.setFilter({ ...result.current.filter, namespaces: ['folder-1'], text: ['cpu'] });
     });
 
     expect(new URLSearchParams(locationService.getLocation().search).get('search')).toBe('namespace:folder-1 cpu');
@@ -136,10 +136,10 @@ describe('useRuleListSearchState', () => {
     const { result } = renderAt('/alerting/rules/alert?search=');
 
     expect(result.current.mode).toBe('folders');
-    expect(result.current.criteria).toEqual(createEmptyCriteria());
+    expect(result.current.filter).toEqual(createEmptyFilter());
   });
 
-  it('surfaces criteria issues from getCriteriaIssues (panelId without dashboard)', () => {
+  it('surfaces filter issues from getFilterIssues (panelId without dashboard)', () => {
     const { result } = renderAt('/alerting/rules/alert?search=panelId%3A4');
     expect(result.current.issues).toEqual([{ key: 'panelId', reason: 'requiresDashboard' }]);
   });

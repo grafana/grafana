@@ -13,8 +13,8 @@ import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
 import { getInteractiveControls, tabSequence } from '../mocks/filterSidebarTestUtils';
 import { mockFolderParents } from '../mocks/handlers';
-import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
-import { type CriteriaIssue } from '../rule-search/criteriaIssues';
+import { type FilterIssue } from '../rule-search/filterIssues';
+import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 
@@ -30,14 +30,14 @@ const server = setupMswServer();
 const FOLDER_UID = 'e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c';
 
 async function renderSidebar(
-  criteria: Criteria = createEmptyCriteria(),
-  { hasActiveFilters = true, issues }: { hasActiveFilters?: boolean; issues?: CriteriaIssue[] } = {}
+  filter: RuleSearchFilter = createEmptyFilter(),
+  { hasActiveFilters = true, issues }: { hasActiveFilters?: boolean; issues?: FilterIssue[] } = {}
 ) {
   const onChange = jest.fn();
   const onClear = jest.fn();
   const view = render(
     <AlertRulesFilterSidebar
-      criteria={criteria}
+      filter={filter}
       onChange={onChange}
       onClear={onClear}
       hasActiveFilters={hasActiveFilters}
@@ -85,7 +85,7 @@ describe('AlertRulesFilterSidebar', () => {
 
   describe('folders', () => {
     it('adds a picked folder to the selected ones', async () => {
-      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), namespaces: ['folder-2'] });
+      const { user, onChange } = await renderSidebar({ ...createEmptyFilter(), namespaces: ['folder-2'] });
 
       await user.click(screen.getByRole('button', { name: 'Folder' }));
       await user.click(await screen.findByLabelText('Alerting-folder'));
@@ -107,7 +107,7 @@ describe('AlertRulesFilterSidebar', () => {
 
     it('shows every selected folder by title and removes only the one chosen', async () => {
       const { user, onChange } = await renderSidebar({
-        ...createEmptyCriteria(),
+        ...createEmptyFilter(),
         namespaces: ['folder-1', 'folder-2'],
       });
 
@@ -118,7 +118,7 @@ describe('AlertRulesFilterSidebar', () => {
     });
 
     it('explains an invalid folder token under the folder field', async () => {
-      await renderSidebar(createEmptyCriteria(), { issues: [{ key: 'namespace', reason: 'invalid' }] });
+      await renderSidebar(createEmptyFilter(), { issues: [{ key: 'namespace', reason: 'invalid' }] });
 
       expect(screen.getByText(/this filter is not valid/i)).toBeInTheDocument();
     });
@@ -126,7 +126,7 @@ describe('AlertRulesFilterSidebar', () => {
 
   describe('query data sources', () => {
     it('adds a data source picked with the keyboard to the selected ones', async () => {
-      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-1'] });
+      const { user, onChange } = await renderSidebar({ ...createEmptyFilter(), dataSourceUids: ['ds-1'] });
 
       focus(screen.getByRole('combobox', { name: 'Select a data source' }));
       await user.keyboard('Loki');
@@ -137,7 +137,7 @@ describe('AlertRulesFilterSidebar', () => {
     });
 
     it('shows every selected data source by name and removes only the one chosen', async () => {
-      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-1', 'ds-2'] });
+      const { user, onChange } = await renderSidebar({ ...createEmptyFilter(), dataSourceUids: ['ds-1', 'ds-2'] });
 
       expect(screen.getByRole('button', { name: 'Remove Loki' })).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Remove Prometheus' }));
@@ -171,14 +171,14 @@ describe('AlertRulesFilterSidebar', () => {
 
   describe('dashboard and panel', () => {
     it.each([
-      { name: 'disabled until a dashboard is selected', criteria: createEmptyCriteria(), enabled: false },
+      { name: 'disabled until a dashboard is selected', filter: createEmptyFilter(), enabled: false },
       {
         name: 'enabled once a dashboard is selected',
-        criteria: { ...createEmptyCriteria(), dashboardUid: 'dash-1' },
+        filter: { ...createEmptyFilter(), dashboardUid: 'dash-1' },
         enabled: true,
       },
-    ])('the Panel ID field is $name', async ({ criteria, enabled }) => {
-      await renderSidebar(criteria);
+    ])('the Panel ID field is $name', async ({ filter, enabled }) => {
+      await renderSidebar(filter);
 
       const panelId = screen.getByRole('spinbutton', { name: 'Panel ID' });
       if (enabled) {
@@ -203,7 +203,7 @@ describe('AlertRulesFilterSidebar', () => {
     });
 
     it('shows a contact point chosen by title as selected in the picker, whose options are keyed by UID', async () => {
-      const { user } = await renderSidebar({ ...createEmptyCriteria(), contactPoint: 'pager' });
+      const { user } = await renderSidebar({ ...createEmptyFilter(), contactPoint: 'pager' });
 
       const picker = screen.getByRole('combobox', { name: 'Contact point' });
       expect(picker).toHaveValue('pager');
@@ -234,10 +234,10 @@ describe('AlertRulesFilterSidebar', () => {
     });
 
     it.each([
-      { chosen: 'contactPoint', criteria: { contactPoint: 'on-call' }, disabled: 'Notification policy' },
-      { chosen: 'policy', criteria: { policy: 'escalation' }, disabled: 'Contact point' },
-    ])('disables the $disabled field once a $chosen is chosen', async ({ criteria, disabled }) => {
-      await renderSidebar({ ...createEmptyCriteria(), ...criteria });
+      { chosen: 'contactPoint', filter: { contactPoint: 'on-call' }, disabled: 'Notification policy' },
+      { chosen: 'policy', filter: { policy: 'escalation' }, disabled: 'Contact point' },
+    ])('disables the $disabled field once a $chosen is chosen', async ({ filter, disabled }) => {
+      await renderSidebar({ ...createEmptyFilter(), ...filter });
 
       expect(screen.getByRole('combobox', { name: disabled })).toBeDisabled();
     });
@@ -250,7 +250,7 @@ describe('AlertRulesFilterSidebar', () => {
     });
 
     it('lets a default policy that arrived through the URL be cleared from the switch', async () => {
-      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), policy: 'default' });
+      const { user, onChange } = await renderSidebar({ ...createEmptyFilter(), policy: 'default' });
 
       const toggle = screen.getByRole('switch', { name: 'Default policy' });
       expect(toggle).toBeChecked();
@@ -279,14 +279,14 @@ describe('AlertRulesFilterSidebar', () => {
     });
 
     it('shows the legacy inactive state as Normal', async () => {
-      await renderSidebar({ ...createEmptyCriteria(), state: 'inactive' });
+      await renderSidebar({ ...createEmptyFilter(), state: 'inactive' });
 
       expect(screen.getByRole('combobox', { name: 'Alert state' })).toHaveValue('Normal');
     });
   });
 
   describe('label filters', () => {
-    it('keeps a new label row out of the criteria until it has a key, then applies it with its operator and value', async () => {
+    it('keeps a new label row out of the filter until it has a key, then applies it with its operator and value', async () => {
       const { user, onChange } = await renderSidebar();
 
       await user.click(screen.getByRole('button', { name: 'Add label filter' }));
@@ -338,7 +338,7 @@ describe('AlertRulesFilterSidebar', () => {
       );
     });
 
-    it('leaves the criteria untouched when the new label row is removed before it has a key', async () => {
+    it('leaves the filter untouched when the new label row is removed before it has a key', async () => {
       const { user, onChange } = await renderSidebar();
 
       await user.click(screen.getByRole('button', { name: 'Add label filter' }));
@@ -360,7 +360,7 @@ describe('AlertRulesFilterSidebar', () => {
 
   describe('Clear filters', () => {
     it('is disabled without active filters', async () => {
-      await renderSidebar(createEmptyCriteria(), { hasActiveFilters: false });
+      await renderSidebar(createEmptyFilter(), { hasActiveFilters: false });
 
       expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
     });
@@ -375,8 +375,8 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   describe('accessibility', () => {
-    const APPLIED: Criteria = {
-      ...createEmptyCriteria(),
+    const APPLIED: RuleSearchFilter = {
+      ...createEmptyFilter(),
       labels: [{ key: 'team', operator: 'equal', value: 'api' }],
       namespaces: ['folder-1'],
       dataSourceUids: ['ds-1'],

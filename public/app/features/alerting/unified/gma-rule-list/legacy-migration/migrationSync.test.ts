@@ -1,4 +1,4 @@
-import { createEmptyCriteria } from '../rule-search/criteria';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { type LegacyRuleListParams, migrateLegacyRuleListUrlSync } from './migrationSync';
 
@@ -19,14 +19,14 @@ describe('migrateLegacyRuleListUrlSync', () => {
     const result = migrateLegacyRuleListUrlSync(params());
     expect(result.destination).toBe('alert');
     expect(result.mode).toBe('folders');
-    expect(result.criteria).toEqual(createEmptyCriteria());
+    expect(result.filter).toEqual(createEmptyFilter());
     expect(result.diagnostics).toEqual({ migratedKeys: [], droppedKeys: [] });
   });
 
   it('type:recording routes to Recording and removes the token', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'type:recording cpu' }));
     expect(result.destination).toBe('recording');
-    expect(result.criteria.text).toEqual(['cpu']);
+    expect(result.filter.text).toEqual(['cpu']);
     expect(result.diagnostics).toEqual({ migratedKeys: [], droppedKeys: [] });
   });
 
@@ -50,37 +50,37 @@ describe('migrateLegacyRuleListUrlSync', () => {
 
   it('normalizes the legacy dataSource param into a datasource filter and reports it as migrated', () => {
     const result = migrateLegacyRuleListUrlSync(params({ dataSource: 'my-ds' }));
-    expect(result.criteria.dataSourceUids).toEqual(['my-ds']);
+    expect(result.filter.dataSourceUids).toEqual(['my-ds']);
     expect(result.diagnostics.migratedKeys).toEqual(['dataSource']);
   });
 
   it('a canonical datasource: token takes precedence over the legacy dataSource param', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'datasource:canonical-ds', dataSource: 'legacy-ds' }));
-    expect(result.criteria.dataSourceUids).toEqual(['canonical-ds']);
+    expect(result.filter.dataSourceUids).toEqual(['canonical-ds']);
     expect(result.diagnostics.migratedKeys).toEqual([]);
   });
 
   it('normalizes the legacy queryString param into free text', () => {
     const result = migrateLegacyRuleListUrlSync(params({ queryString: 'cpu high' }));
-    expect(result.criteria.text).toEqual(['cpu high']);
+    expect(result.filter.text).toEqual(['cpu high']);
     expect(result.diagnostics.migratedKeys).toEqual(['queryString']);
   });
 
   it('drops group: and reports it, since evaluation groups do not exist', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'group:my-group cpu' }));
-    expect(result.criteria.text).toEqual(['cpu']);
+    expect(result.filter.text).toEqual(['cpu']);
     expect(result.diagnostics.droppedKeys).toEqual(['group']);
   });
 
   it('drops source:grafana silently (redundant, not reported)', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'source:grafana cpu' }));
-    expect(result.criteria.text).toEqual(['cpu']);
+    expect(result.filter.text).toEqual(['cpu']);
     expect(result.diagnostics.droppedKeys).toEqual([]);
   });
 
   it('drops source:datasource and reports it (unsupported)', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'source:datasource cpu' }));
-    expect(result.criteria.text).toEqual(['cpu']);
+    expect(result.filter.text).toEqual(['cpu']);
     expect(result.diagnostics.droppedKeys).toEqual(['source']);
   });
 
@@ -97,22 +97,20 @@ describe('migrateLegacyRuleListUrlSync', () => {
   it('keeps state: when migrating to Alert', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'state:firing' }));
     expect(result.destination).toBe('alert');
-    expect(result.criteria.state).toBe('firing');
+    expect(result.filter.state).toBe('firing');
     expect(result.diagnostics.droppedKeys).toEqual([]);
   });
 
   it('keeps health: on both destinations', () => {
-    expect(migrateLegacyRuleListUrlSync(params({ search: 'health:error' })).criteria.health).toBe('error');
-    expect(migrateLegacyRuleListUrlSync(params({ search: 'type:recording health:error' })).criteria.health).toBe(
-      'error'
-    );
+    expect(migrateLegacyRuleListUrlSync(params({ search: 'health:error' })).filter.health).toBe('error');
+    expect(migrateLegacyRuleListUrlSync(params({ search: 'type:recording health:error' })).filter.health).toBe('error');
   });
 
   it('removes a genuinely unknown token and reports its key', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'unknownFilter:value cpu' }));
     expect(result.diagnostics.droppedKeys).toEqual(['unknownFilter']);
-    expect(result.criteria.text).toEqual(['cpu']);
-    expect(result.criteria.invalid).toEqual([]);
+    expect(result.filter.text).toEqual(['cpu']);
+    expect(result.filter.invalid).toEqual([]);
   });
 
   it.each([
@@ -123,8 +121,8 @@ describe('migrateLegacyRuleListUrlSync', () => {
   ])('removes $name and reports its key', ({ token, key }) => {
     const result = migrateLegacyRuleListUrlSync(params({ search: `${token} namespace:folder-1` }));
     expect(result.diagnostics.droppedKeys).toEqual([key]);
-    expect(result.criteria.invalid).toEqual([]);
-    expect(result.criteria.namespaces).toEqual(['folder-1']);
+    expect(result.filter.invalid).toEqual([]);
+    expect(result.filter.namespaces).toEqual(['folder-1']);
   });
 
   it('reports each removed key once, sorted', () => {

@@ -1,4 +1,4 @@
-import { type LabelMatcher } from './criteria';
+import { type LabelMatcher } from './ruleSearchFilter';
 
 /** Two-character operators first, and the earliest operator in the value wins (as legacy `parseMatcher`). */
 const OPERATORS: Array<{ token: string; operator: LabelMatcher['operator'] }> = [

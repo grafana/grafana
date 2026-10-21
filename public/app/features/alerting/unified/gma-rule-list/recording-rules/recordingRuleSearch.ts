@@ -6,7 +6,7 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { useDispatch } from 'app/types/store';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
-import { type Criteria } from '../rule-search/criteria';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
 import { type RecordingRuleSearchHit, toRecordingRuleSearchHit } from './recordingRuleSearchHit';
@@ -21,7 +21,7 @@ export interface RecordingRuleSearchPage {
 /** The generated search is a POST mutation with no tags or paging; this wraps it as a tagged infinite query. */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, Criteria, string | undefined>({
+    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RuleSearchFilter, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
@@ -46,13 +46,13 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
 export function useRecordingRuleSearch(
-  criteria: Criteria
+  filter: RuleSearchFilter
 ): PagedResult<RecordingRuleSearchHit> & { total?: ResultTotal } {
   const dispatch = useDispatch();
-  const query = useSearchRecordingRulesInfiniteQuery(criteria, { refetchOnMountOrArgChange: true });
+  const query = useSearchRecordingRulesInfiniteQuery(filter, { refetchOnMountOrArgChange: true });
 
   const paged = usePagedResult(query, getHits, () => {
-    dispatch(recordingRuleSearchAPI.util.updateQueryData('searchRecordingRules', criteria, keepFirstPage));
+    dispatch(recordingRuleSearchAPI.util.updateQueryData('searchRecordingRules', filter, keepFirstPage));
   });
 
   // Only the first page's total counts; later pages repeat it and the count never drives paging.

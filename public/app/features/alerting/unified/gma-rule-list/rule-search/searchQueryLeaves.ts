@@ -1,4 +1,4 @@
-import { type Criteria, type HealthValue } from './criteria';
+import { type HealthValue, type RuleSearchFilter } from './ruleSearchFilter';
 
 /**
  * Structural SearchQuery body, independent of the generated request types. The per-kind rule
@@ -48,27 +48,27 @@ export interface BuildSearchQueryOptions {
   continue?: string;
 }
 
-export function buildSharedLeaves(criteria: Criteria): SearchQueryLeaf[] {
+export function buildSharedLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   const leaves: SearchQueryLeaf[] = [];
 
-  const text = criteria.text.join(' ').trim();
+  const text = filter.text.join(' ').trim();
   if (text.length > 0) {
     leaves.push({ text: { value: text } });
   }
 
-  if (criteria.namespaces.length > 0) {
-    leaves.push({ filter: { field: 'folder', operator: 'In', values: criteria.namespaces } });
+  if (filter.namespaces.length > 0) {
+    leaves.push({ filter: { field: 'folder', operator: 'In', values: filter.namespaces } });
   }
 
-  if (criteria.dataSourceUids.length > 0) {
-    leaves.push({ filter: { field: 'datasourceUIDs', operator: 'In', values: criteria.dataSourceUids } });
+  if (filter.dataSourceUids.length > 0) {
+    leaves.push({ filter: { field: 'datasourceUIDs', operator: 'In', values: filter.dataSourceUids } });
   }
 
-  for (const label of criteria.labels) {
+  for (const label of filter.labels) {
     leaves.push(...buildLabelLeaves(label));
   }
 
-  if (criteria.hidePluginRules) {
+  if (filter.hidePluginRules) {
     // Only an origin that starts with `plugin/` marks a plugin-managed rule, and a rule without
     // the label counts as an empty value, so it is kept.
     leaves.push({ regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } });
@@ -86,15 +86,15 @@ const HEALTH_API_VALUES: Record<Exclude<HealthValue, 'ok'>, string> = {
 };
 
 /** `In` never matches a rule with no stored status, so a health filter hides those rules. */
-export function buildHealthLeaves(criteria: Criteria, okValue: 'OK' | 'Recording'): SearchQueryLeaf[] {
-  if (!criteria.health) {
+export function buildHealthLeaves(filter: RuleSearchFilter, okValue: 'OK' | 'Recording'): SearchQueryLeaf[] {
+  if (!filter.health) {
     return [];
   }
-  const value = criteria.health === 'ok' ? okValue : HEALTH_API_VALUES[criteria.health];
+  const value = filter.health === 'ok' ? okValue : HEALTH_API_VALUES[filter.health];
   return [{ filter: { field: 'health', operator: 'In', values: [value] } }];
 }
 
-function buildLabelLeaves(label: Criteria['labels'][number]): SearchQueryLeaf[] {
+function buildLabelLeaves(label: RuleSearchFilter['labels'][number]): SearchQueryLeaf[] {
   switch (label.operator) {
     case 'exists':
       return [{ filter: { field: 'labels', operator: 'In', values: [label.key] } }];

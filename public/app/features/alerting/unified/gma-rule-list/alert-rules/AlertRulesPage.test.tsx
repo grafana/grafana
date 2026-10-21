@@ -163,7 +163,7 @@ describe('AlertRulesPage', () => {
     expect(await screen.findByText('No Alert rules found')).toBeInTheDocument();
   });
 
-  it('sends the List search to searchAlertRules with the criteria as the request body', async () => {
+  it('sends the List search to searchAlertRules with the filter as the request body', async () => {
     let body: unknown;
     mockRuleSearch('alert', (received) => {
       body = received;
@@ -501,7 +501,7 @@ describe('AlertRulesPage search and filters', () => {
     mockFullRule('alert');
   });
 
-  it('keeps a multi-token query exactly as typed, puts the applied criteria in the URL and sends them as one request', async () => {
+  it('keeps a multi-token query exactly as typed, puts the applied filter in the URL and sends it as one request', async () => {
     const { user } = await renderPage();
     const typed = 'paused:false cpu label:team=api  namespace:folder-1';
 

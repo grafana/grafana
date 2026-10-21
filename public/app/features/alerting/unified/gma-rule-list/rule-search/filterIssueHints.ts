@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
-import { HEALTH_VALUES, STATE_VALUES } from './criteria';
-import { type CriteriaIssue } from './criteriaIssues';
+import { type FilterIssue } from './filterIssues';
+import { HEALTH_VALUES, STATE_VALUES } from './ruleSearchFilter';
 import { TOKEN_KEYS, type TokenDefinition } from './tokens';
 
 // Aliases such as `err` and `inactive` still parse, but suggesting them would only add noise.
@@ -20,7 +20,7 @@ const KNOWN_CONFUSIONS: Record<string, string> = {
 };
 
 /** One line per distinct problem with an unsupported token, saying what would work instead. */
-export function getIssueHints(issues: CriteriaIssue[], tokens: TokenDefinition[]): string[] {
+export function getIssueHints(issues: FilterIssue[], tokens: TokenDefinition[]): string[] {
   const validKeys = tokens.map((token) => token.key);
   const hints = new Set<string>();
 

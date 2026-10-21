@@ -7,7 +7,7 @@ import { FolderListRow } from '../folder-browsing/FolderListRow';
 import { useFolderRecordingRuleCount } from '../folder-browsing/folderLookups';
 import { useFolderPages } from '../folder-browsing/useFolderPages';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { createEmptyCriteria } from '../rule-search/criteria';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 import { PagedFailureAlert } from '../shared/PagedFailureAlert';
@@ -116,7 +116,7 @@ function ExpandableFolderRow({ folderUid, title, expanded, onToggle }: Expandabl
 
 function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useRecordingRuleSearch({
-    ...createEmptyCriteria(),
+    ...createEmptyFilter(),
     namespaces: [folderUid],
   });
 

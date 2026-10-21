@@ -7,9 +7,9 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
-import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
+import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
 import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
@@ -25,11 +25,11 @@ import { ListView } from './RecordingRulesListView';
 function RecordingRulesBody({
   canSearch,
   mode,
-  criteria,
+  filter,
 }: {
   canSearch: boolean;
   mode: RuleListMode;
-  criteria: Criteria;
+  filter: RuleSearchFilter;
 }) {
   if (!canSearch) {
     return (
@@ -39,14 +39,13 @@ function RecordingRulesBody({
     );
   }
   if (mode === 'folders') {
-    return <FoldersView folderUids={criteria.namespaces} />;
+    return <FoldersView folderUids={filter.namespaces} />;
   }
-  return <ListView criteria={criteria} />;
+  return <ListView filter={filter} />;
 }
 
 function RecordingRulesPage() {
-  const { criteria, issues, mode, hasNonFolderFilters, setCriteria, setMode, reset } =
-    useRuleListSearchState('recording');
+  const { filter, issues, mode, hasNonFolderFilters, setFilter, setMode, reset } = useRuleListSearchState('recording');
 
   const trackedView = useRef(false);
   useEffect(() => {
@@ -59,11 +58,11 @@ function RecordingRulesPage() {
   }, []);
 
   const savedSearches = useRuleListSavedSearches('recording');
-  const query = serialize(criteria);
-  const hasActiveFilters = query !== serialize(createEmptyCriteria());
+  const query = serialize(filter);
+  const hasActiveFilters = query !== serialize(createEmptyFilter());
 
   const onApplyQuery = (raw: string) => {
-    setCriteria(parse(raw, recordingTokens));
+    setFilter(parse(raw, recordingTokens));
   };
 
   const canSearch = issues.length === 0;
@@ -104,8 +103,8 @@ function RecordingRulesPage() {
           </Stack>
           <Stack direction="row" gap={0}>
             <RecordingRulesFilterSidebar
-              criteria={criteria}
-              onChange={setCriteria}
+              filter={filter}
+              onChange={setFilter}
               onClear={reset}
               hasActiveFilters={hasActiveFilters}
               issues={issues}
@@ -115,7 +114,7 @@ function RecordingRulesPage() {
               <Divider direction="vertical" spacing={2} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <RecordingRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
+              <RecordingRulesBody canSearch={canSearch} mode={mode} filter={filter} />
             </Box>
           </Stack>
         </Stack>

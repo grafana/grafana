@@ -3,35 +3,35 @@ import { useCallback, useMemo } from 'react';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 
 import { alertTokens } from './alertTokens';
-import { type Criteria, createEmptyCriteria } from './criteria';
-import { type CriteriaIssue, getCriteriaIssues } from './criteriaIssues';
+import { type FilterIssue, getFilterIssues } from './filterIssues';
 import { parse } from './parser';
 import { recordingTokens } from './recordingTokens';
+import { type RuleSearchFilter, createEmptyFilter } from './ruleSearchFilter';
 import { serialize } from './serializer';
 
 export type RuleListMode = 'list' | 'folders';
 export type RuleListKind = 'alert' | 'recording';
 
 export interface UseRuleListSearchStateResult {
-  criteria: Criteria;
-  issues: CriteriaIssue[];
+  filter: RuleSearchFilter;
+  issues: FilterIssue[];
   mode: RuleListMode;
   hasNonFolderFilters: boolean;
-  setCriteria: (criteria: Criteria, options?: { replace?: boolean }) => void;
+  setFilter: (filter: RuleSearchFilter, options?: { replace?: boolean }) => void;
   setMode: (mode: RuleListMode) => void;
   reset: () => void;
 }
 
 /** Folders mode supports only the folder filter. Serializing keeps filters added later from being missed here. */
-function hasNonFolderCriteria(criteria: Criteria): boolean {
-  return serialize({ ...criteria, namespaces: [] }).length > 0;
+function hasNonFolderFilter(filter: RuleSearchFilter): boolean {
+  return serialize({ ...filter, namespaces: [] }).length > 0;
 }
 
 /** The `search` and `view` params that apply `next`, following the `view` rules of useRuleListSearchState. */
-export function searchParamsForCriteria(next: Criteria, view: string | null, hadNonFolderFilters: boolean) {
+export function searchParamsForFilter(next: RuleSearchFilter, view: string | null, hadNonFolderFilters: boolean) {
   const search = serialize(next);
   let nextView = view ?? undefined;
-  if (hasNonFolderCriteria(next)) {
+  if (hasNonFolderFilter(next)) {
     nextView = 'list';
   } else if (hadNonFolderFilters) {
     nextView = undefined;
@@ -51,16 +51,16 @@ export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchSta
   const search = queryParams.get('search') ?? '';
   const viewParam = queryParams.get('view');
 
-  const criteria = useMemo(() => parse(search, registry), [search, registry]);
-  const issues = useMemo(() => getCriteriaIssues(criteria, kind), [criteria, kind]);
+  const filter = useMemo(() => parse(search, registry), [search, registry]);
+  const issues = useMemo(() => getFilterIssues(filter, kind), [filter, kind]);
 
   // The one place the Folders restriction is enforced on read, not just on write.
-  const hasNonFolderFilters = hasNonFolderCriteria(criteria);
+  const hasNonFolderFilters = hasNonFolderFilter(filter);
   const mode: RuleListMode = hasNonFolderFilters || viewParam === 'list' ? 'list' : 'folders';
 
-  const setCriteria = useCallback(
-    (next: Criteria, options?: { replace?: boolean }) => {
-      updateQueryParams(searchParamsForCriteria(next, viewParam, hasNonFolderFilters), options?.replace);
+  const setFilter = useCallback(
+    (next: RuleSearchFilter, options?: { replace?: boolean }) => {
+      updateQueryParams(searchParamsForFilter(next, viewParam, hasNonFolderFilters), options?.replace);
     },
     [hasNonFolderFilters, updateQueryParams, viewParam]
   );
@@ -76,14 +76,14 @@ export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchSta
     [hasNonFolderFilters, updateQueryParams]
   );
 
-  const reset = useCallback(() => setCriteria(createEmptyCriteria()), [setCriteria]);
+  const reset = useCallback(() => setFilter(createEmptyFilter()), [setFilter]);
 
   return {
-    criteria,
+    filter,
     issues,
     mode,
     hasNonFolderFilters,
-    setCriteria,
+    setFilter,
     setMode,
     reset,
   };

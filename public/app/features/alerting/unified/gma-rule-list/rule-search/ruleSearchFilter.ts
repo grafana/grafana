@@ -23,7 +23,7 @@ export interface InvalidToken {
   raw: string;
 }
 
-export interface Criteria {
+export interface RuleSearchFilter {
   text: string[];
   /** Folder UIDs. Display names are resolved to UIDs only by legacy-link migration. */
   namespaces: string[];
@@ -51,7 +51,7 @@ export interface Criteria {
   health?: HealthValue;
 }
 
-export function createEmptyCriteria(): Criteria {
+export function createEmptyFilter(): RuleSearchFilter {
   return {
     text: [],
     namespaces: [],

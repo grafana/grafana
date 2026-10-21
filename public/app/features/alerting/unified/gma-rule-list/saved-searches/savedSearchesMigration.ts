@@ -5,7 +5,7 @@ import { type SavedSearch } from '../../components/saved-searches/savedSearchesS
 import { createStorageLoader } from '../../hooks/useGenericSavedSearches';
 import { type NameResolvers, resolveMigratedNames } from '../legacy-migration/migrationResolve';
 import { migrateLegacyRuleListUrlSync } from '../legacy-migration/migrationSync';
-import { type Criteria } from '../rule-search/criteria';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { serialize } from '../rule-search/serializer';
 import { tokenize } from '../rule-search/tokenizer';
 
@@ -43,7 +43,7 @@ async function migrateQuery(
 ): Promise<{ query: string; droppedKeys: string[] }> {
   const sync = migrateLegacyRuleListUrlSync({ search: query });
   const resolved = await resolveMigratedNames(sync, resolvers);
-  return { query: serialize(resolved.criteria), droppedKeys: resolved.droppedKeys };
+  return { query: serialize(resolved.filter), droppedKeys: resolved.droppedKeys };
 }
 
 /** Id dedupe only covers a retry after a failed write; the marker prevents re-copying. */
@@ -115,11 +115,11 @@ function needsMigration(query: string): boolean {
 export async function applySavedSearch(
   query: string,
   resolvers: NameResolvers,
-  parseForKind: (query: string) => Criteria,
+  parseForKind: (query: string) => RuleSearchFilter,
   persist: (canonicalQuery: string) => Promise<void>
-): Promise<{ criteria: Criteria; query: string; droppedKeys: string[] }> {
+): Promise<{ filter: RuleSearchFilter; query: string; droppedKeys: string[] }> {
   if (!needsMigration(query)) {
-    return { criteria: parseForKind(query), query, droppedKeys: [] };
+    return { filter: parseForKind(query), query, droppedKeys: [] };
   }
 
   const migrated = await migrateQuery(query, resolvers);
@@ -128,5 +128,5 @@ export async function applySavedSearch(
   } catch {
     // Swallow: results still show if storage is unavailable.
   }
-  return { criteria: parseForKind(migrated.query), query: migrated.query, droppedKeys: migrated.droppedKeys };
+  return { filter: parseForKind(migrated.query), query: migrated.query, droppedKeys: migrated.droppedKeys };
 }

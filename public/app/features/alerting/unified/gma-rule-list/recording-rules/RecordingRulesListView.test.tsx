@@ -7,7 +7,7 @@ import { grantUserPermissions } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
 import { ruleItem } from '../mocks/factories';
 import { mockFolderParents, mockFullRule, mockRuleSearch } from '../mocks/handlers';
-import { createEmptyCriteria } from '../rule-search/criteria';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { ListView } from './RecordingRulesListView';
 
@@ -27,7 +27,7 @@ describe('RecordingRulesListView', () => {
       metadata: { totalHits: 2345, totalHitsRelation: 'eq' },
     }));
 
-    render(<ListView criteria={createEmptyCriteria()} />);
+    render(<ListView filter={createEmptyFilter()} />);
 
     expect(await screen.findByText('2,345 recording rules')).toBeInTheDocument();
     expect(screen.getByText('cpu:avg')).toBeInTheDocument();

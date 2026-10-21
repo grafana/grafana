@@ -169,7 +169,7 @@ describe('RecordingRulesPage', () => {
     expect(continuations).toEqual([null, 'tok', 'tok']);
   });
 
-  it('starts new criteria at the first page and never shows a late response for the replaced criteria', async () => {
+  it('starts a new filter at the first page and never shows a late response for the replaced filter', async () => {
     let releaseOldResponse: () => void = () => {};
     const oldResponseGate = new Promise<void>((resolve) => {
       releaseOldResponse = resolve;
@@ -182,11 +182,11 @@ describe('RecordingRulesPage', () => {
         if (!body.where) {
           await oldResponseGate;
           return HttpResponse.json({
-            items: [recordingRule('rule-old', 'old_criteria:avg', 'folder-1')],
+            items: [recordingRule('rule-old', 'old_filter:avg', 'folder-1')],
             metadata: { continue: 'old-tok' },
           });
         }
-        return HttpResponse.json({ items: [recordingRule('rule-new', 'new_criteria:avg', 'folder-1')], metadata: {} });
+        return HttpResponse.json({ items: [recordingRule('rule-new', 'new_filter:avg', 'folder-1')], metadata: {} });
       })
     );
 
@@ -194,13 +194,13 @@ describe('RecordingRulesPage', () => {
     await waitFor(() => expect(requests).toHaveLength(1));
 
     await user.type(await screen.findByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
-    expect(await screen.findByText('new_criteria:avg')).toBeInTheDocument();
+    expect(await screen.findByText('new_filter:avg')).toBeInTheDocument();
 
     releaseOldResponse();
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(requests[1]).toEqual({ where: { text: { value: 'cpu' } }, token: null });
-    expect(screen.getByText('new_criteria:avg')).toBeInTheDocument();
-    expect(screen.queryByText('old_criteria:avg')).not.toBeInTheDocument();
+    expect(screen.getByText('new_filter:avg')).toBeInTheDocument();
+    expect(screen.queryByText('old_filter:avg')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
   });
 
@@ -254,7 +254,7 @@ describe('RecordingRulesPage', () => {
       });
     });
 
-    it('keeps a multi-token query exactly as typed and sends the applied criteria as one request', async () => {
+    it('keeps a multi-token query exactly as typed and sends the applied filter as one request', async () => {
       const { user } = await renderPage();
       const typed = 'metric:cpu_usage  cpu health:ok';
 

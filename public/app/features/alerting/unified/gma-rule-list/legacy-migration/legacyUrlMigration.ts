@@ -73,7 +73,7 @@ export async function migrateLegacyRuleListUrl(
   }
 
   const urlParams = new URLSearchParams();
-  const search = serialize(resolved.criteria);
+  const search = serialize(resolved.filter);
   if (search.length > 0) {
     urlParams.set('search', search);
   }

@@ -5,8 +5,8 @@ import { FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
-import { getIssueHints } from './criteriaIssueHints';
-import { type CriteriaIssue } from './criteriaIssues';
+import { getIssueHints } from './filterIssueHints';
+import { type FilterIssue } from './filterIssues';
 import { parse } from './parser';
 import { serialize } from './serializer';
 import { type TokenDefinition } from './tokens';
@@ -15,7 +15,7 @@ export interface RuleSearchInputProps {
   query: string;
   onApply: (query: string) => void;
   tokens: TokenDefinition[];
-  issues?: CriteriaIssue[];
+  issues?: FilterIssue[];
   debounceMs?: number;
   /** Shown on the label line, after the help icon. */
   labelSuffix?: ReactNode;

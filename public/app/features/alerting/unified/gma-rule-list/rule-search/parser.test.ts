@@ -1,26 +1,26 @@
 import { alertTokens } from './alertTokens';
-import { type Criteria, createEmptyCriteria } from './criteria';
 import { parse } from './parser';
 import { recordingTokens } from './recordingTokens';
+import { type RuleSearchFilter, createEmptyFilter } from './ruleSearchFilter';
 import { serialize } from './serializer';
 
 describe('parse', () => {
-  it('builds criteria from free text, rule:, and known filter tokens', () => {
-    const criteria = parse('cpu rule:high-load namespace:folder-1 datasource:ds-1 plugins:hide', alertTokens);
+  it('builds a filter from free text, rule:, and known filter tokens', () => {
+    const filter = parse('cpu rule:high-load namespace:folder-1 datasource:ds-1 plugins:hide', alertTokens);
 
-    expect(criteria.text).toEqual(['cpu', 'high-load']);
-    expect(criteria.namespaces).toEqual(['folder-1']);
-    expect(criteria.dataSourceUids).toEqual(['ds-1']);
-    expect(criteria.hidePluginRules).toBe(true);
+    expect(filter.text).toEqual(['cpu', 'high-load']);
+    expect(filter.namespaces).toEqual(['folder-1']);
+    expect(filter.dataSourceUids).toEqual(['ds-1']);
+    expect(filter.hidePluginRules).toBe(true);
   });
 
   it('parses every label operator into a matcher', () => {
-    const criteria = parse(
+    const filter = parse(
       'label:team label:!env label:app=api label:app!=web label:host=~api.* label:host!~web.*',
       alertTokens
     );
 
-    expect(criteria.labels).toEqual([
+    expect(filter.labels).toEqual([
       { key: 'team', operator: 'exists' },
       { key: 'env', operator: 'absent' },
       { key: 'app', operator: 'equal', value: 'api' },
@@ -31,18 +31,18 @@ describe('parse', () => {
   });
 
   it('records an unknown key:value token as invalid, exactly as written', () => {
-    const criteria = parse('foo:bar namespace:folder-1', alertTokens);
+    const filter = parse('foo:bar namespace:folder-1', alertTokens);
 
-    expect(criteria.namespaces).toEqual(['folder-1']);
-    expect(criteria.invalid).toEqual([{ key: 'foo', raw: 'foo:bar' }]);
+    expect(filter.namespaces).toEqual(['folder-1']);
+    expect(filter.invalid).toEqual([{ key: 'foo', raw: 'foo:bar' }]);
   });
 
   it('records an incomplete token (empty value) as invalid', () => {
-    const criteria = parse('label: namespace:folder-1', alertTokens);
+    const filter = parse('label: namespace:folder-1', alertTokens);
 
-    expect(criteria.labels).toEqual([]);
-    expect(criteria.namespaces).toEqual(['folder-1']);
-    expect(criteria.invalid).toEqual([{ key: 'label', raw: 'label:' }]);
+    expect(filter.labels).toEqual([]);
+    expect(filter.namespaces).toEqual(['folder-1']);
+    expect(filter.invalid).toEqual([{ key: 'label', raw: 'label:' }]);
   });
 
   it.each([
@@ -52,17 +52,17 @@ describe('parse', () => {
     ['an unknown state value', 'state:bogus', 'state'],
     ['an unknown health value', 'health:great', 'health'],
   ])('records %s as invalid instead of ignoring it', (_name, input, key) => {
-    const criteria = parse(input, alertTokens);
+    const filter = parse(input, alertTokens);
 
-    expect(criteria.invalid).toEqual([{ key, raw: input }]);
+    expect(filter.invalid).toEqual([{ key, raw: input }]);
   });
 
   it('records a repeat of a single-value token as invalid and keeps the first value', () => {
-    const criteria = parse('dashboard:one dashboard:two namespace:a namespace:b', alertTokens);
+    const filter = parse('dashboard:one dashboard:two namespace:a namespace:b', alertTokens);
 
-    expect(criteria.dashboardUid).toBe('one');
-    expect(criteria.namespaces).toEqual(['a', 'b']);
-    expect(criteria.invalid).toEqual([{ key: 'dashboard', raw: 'dashboard:two' }]);
+    expect(filter.dashboardUid).toBe('one');
+    expect(filter.namespaces).toEqual(['a', 'b']);
+    expect(filter.invalid).toEqual([{ key: 'dashboard', raw: 'dashboard:two' }]);
   });
 
   it.each([
@@ -70,10 +70,10 @@ describe('parse', () => {
     ['state:NORMAL', 'normal'],
     ['state:inactive', 'inactive'],
   ])('accepts %s in any letter case', (input, state) => {
-    const criteria = parse(input, alertTokens);
+    const filter = parse(input, alertTokens);
 
-    expect(criteria.state).toBe(state);
-    expect(criteria.invalid).toEqual([]);
+    expect(filter.state).toBe(state);
+    expect(filter.invalid).toEqual([]);
   });
 
   it("reads the default routing tree's name as the default policy", () => {
@@ -87,37 +87,37 @@ describe('parse', () => {
   });
 
   it('records state: as invalid on the Recording registry', () => {
-    const criteria = parse('state:firing', recordingTokens);
+    const filter = parse('state:firing', recordingTokens);
 
-    expect(criteria.state).toBeUndefined();
-    expect(criteria.invalid).toEqual([{ key: 'state', raw: 'state:firing' }]);
+    expect(filter.state).toBeUndefined();
+    expect(filter.invalid).toEqual([{ key: 'state', raw: 'state:firing' }]);
   });
 
   it('keeps an unterminated quoted value as typed', () => {
-    const criteria = parse('label:"team cpu', alertTokens);
+    const filter = parse('label:"team cpu', alertTokens);
 
-    expect(criteria.invalid).toEqual([{ key: 'label', raw: 'label:"team cpu' }]);
+    expect(filter.invalid).toEqual([{ key: 'label', raw: 'label:"team cpu' }]);
   });
 
   it('recording-only tokens are unknown on the Alert registry', () => {
-    const criteria = parse('metric:cpu_usage', alertTokens);
+    const filter = parse('metric:cpu_usage', alertTokens);
 
-    expect(criteria.metric).toBeUndefined();
-    expect(criteria.invalid).toEqual([{ key: 'metric', raw: 'metric:cpu_usage' }]);
+    expect(filter.metric).toBeUndefined();
+    expect(filter.invalid).toEqual([{ key: 'metric', raw: 'metric:cpu_usage' }]);
   });
 
   it('alert-only tokens are unknown on the Recording registry', () => {
-    const criteria = parse('dashboard:dash-1', recordingTokens);
+    const filter = parse('dashboard:dash-1', recordingTokens);
 
-    expect(criteria.dashboardUid).toBeUndefined();
-    expect(criteria.invalid).toEqual([{ key: 'dashboard', raw: 'dashboard:dash-1' }]);
+    expect(filter.dashboardUid).toBeUndefined();
+    expect(filter.invalid).toEqual([{ key: 'dashboard', raw: 'dashboard:dash-1' }]);
   });
 });
 
-describe('parse(serialize(criteria)) round-trip', () => {
-  it('round-trips a fully populated Alert criteria', () => {
-    const criteria: Criteria = {
-      ...createEmptyCriteria(),
+describe('parse(serialize(filter)) round-trip', () => {
+  it('round-trips a fully populated Alert filter', () => {
+    const filter: RuleSearchFilter = {
+      ...createEmptyFilter(),
       text: ['cpu', 'high load'],
       namespaces: ['folder-1', 'folder-2'],
       dataSourceUids: ['ds-1'],
@@ -137,13 +137,13 @@ describe('parse(serialize(criteria)) round-trip', () => {
       health: 'error',
     };
 
-    const roundTripped = parse(serialize(criteria), alertTokens);
-    expect(roundTripped).toEqual(criteria);
+    const roundTripped = parse(serialize(filter), alertTokens);
+    expect(roundTripped).toEqual(filter);
   });
 
-  it('round-trips a fully populated Recording criteria', () => {
-    const criteria: Criteria = {
-      ...createEmptyCriteria(),
+  it('round-trips a fully populated Recording filter', () => {
+    const filter: RuleSearchFilter = {
+      ...createEmptyFilter(),
       text: ['high load'],
       namespaces: ['folder-1'],
       dataSourceUids: ['ds-1'],
@@ -154,15 +154,15 @@ describe('parse(serialize(criteria)) round-trip', () => {
       health: 'ok',
     };
 
-    const roundTripped = parse(serialize(criteria), recordingTokens);
-    expect(roundTripped).toEqual(criteria);
+    const roundTripped = parse(serialize(filter), recordingTokens);
+    expect(roundTripped).toEqual(filter);
   });
 
   it('round-trips invalid tokens, so a URL the page cannot apply keeps showing them', () => {
     const input = 'namespace:folder-1 foo:bar label: paused:maybe';
-    const criteria = parse(input, alertTokens);
+    const filter = parse(input, alertTokens);
 
-    expect(parse(serialize(criteria), alertTokens)).toEqual(criteria);
-    expect(serialize(criteria)).toBe('namespace:folder-1 foo:bar label: paused:maybe');
+    expect(parse(serialize(filter), alertTokens)).toEqual(filter);
+    expect(serialize(filter)).toBe('namespace:folder-1 foo:bar label: paused:maybe');
   });
 });

@@ -7,27 +7,27 @@ import { Input } from '@grafana/ui';
 
 import { FilterSidebar, type SidebarControl } from '../rule-search/FilterSidebar';
 import { useCommonFilterControls } from '../rule-search/commonFilterControls';
-import { type Criteria } from '../rule-search/criteria';
-import { type CriteriaIssue } from '../rule-search/criteriaIssues';
+import { type FilterIssue } from '../rule-search/filterIssues';
 import { recordingTokens } from '../rule-search/recordingTokens';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { TOKEN_KEYS } from '../rule-search/tokens';
 
 export interface RecordingRulesFilterSidebarProps {
-  criteria: Criteria;
-  onChange: (criteria: Criteria) => void;
+  filter: RuleSearchFilter;
+  onChange: (filter: RuleSearchFilter) => void;
   onClear: () => void;
   hasActiveFilters: boolean;
-  issues?: CriteriaIssue[];
+  issues?: FilterIssue[];
 }
 
 export function RecordingRulesFilterSidebar({
-  criteria,
+  filter,
   onChange,
   onClear,
   hasActiveFilters,
   issues = [],
 }: RecordingRulesFilterSidebarProps) {
-  const commonControls = useCommonFilterControls(criteria, onChange, issues);
+  const commonControls = useCommonFilterControls(filter, onChange, issues);
   const targetDataSourcePickerId = useId();
 
   const controls: Record<string, SidebarControl> = {
@@ -37,8 +37,8 @@ export function RecordingRulesFilterSidebar({
         <Input
           aria-label={t('alerting.gma-rule-list.search.property.metric', 'Recorded metric')}
           placeholder={t('alerting.gma-rule-list.search.metric-placeholder', 'Metric name (exact match)')}
-          value={criteria.metric ?? ''}
-          onChange={(e) => onChange({ ...criteria, metric: e.currentTarget.value || undefined })}
+          value={filter.metric ?? ''}
+          onChange={(e) => onChange({ ...filter, metric: e.currentTarget.value || undefined })}
         />
       ),
     },
@@ -46,10 +46,10 @@ export function RecordingRulesFilterSidebar({
       render: () => (
         <DataSourcePicker
           inputId={targetDataSourcePickerId}
-          current={criteria.targetDataSourceUid}
+          current={filter.targetDataSourceUid}
           noDefault
-          onClear={() => onChange({ ...criteria, targetDataSourceUid: undefined })}
-          onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, targetDataSourceUid: ds.uid })}
+          onClear={() => onChange({ ...filter, targetDataSourceUid: undefined })}
+          onChange={(ds: DataSourceInstanceSettings) => onChange({ ...filter, targetDataSourceUid: ds.uid })}
         />
       ),
     },

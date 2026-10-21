@@ -1,6 +1,6 @@
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { type Criteria, DEFAULT_POLICY, type StateValue } from '../rule-search/criteria';
+import { DEFAULT_POLICY, type RuleSearchFilter, type StateValue } from '../rule-search/ruleSearchFilter';
 import {
   type BuildSearchQueryOptions,
   type SearchQuery,
@@ -47,43 +47,46 @@ const STATE_API_VALUES: Record<StateValue, string[]> = {
   inactive: ['Healthy', 'Inactive'],
 };
 
-function buildStatusLeaves(criteria: Criteria): SearchQueryLeaf[] {
-  const stateLeaves: SearchQueryLeaf[] = criteria.state
-    ? [{ filter: { field: 'state', operator: 'In', values: STATE_API_VALUES[criteria.state] } }]
+function buildStatusLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
+  const stateLeaves: SearchQueryLeaf[] = filter.state
+    ? [{ filter: { field: 'state', operator: 'In', values: STATE_API_VALUES[filter.state] } }]
     : [];
-  return [...stateLeaves, ...buildHealthLeaves(criteria, 'OK')];
+  return [...stateLeaves, ...buildHealthLeaves(filter, 'OK')];
 }
 
-function buildRoutingLeaves(criteria: Criteria): SearchQueryLeaf[] {
+function buildRoutingLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   const leaves: SearchQueryLeaf[] = [];
 
-  if (criteria.dashboardUid) {
-    leaves.push({ filter: { field: 'dashboardUID', operator: 'In', values: [criteria.dashboardUid] } });
+  if (filter.dashboardUid) {
+    leaves.push({ filter: { field: 'dashboardUID', operator: 'In', values: [filter.dashboardUid] } });
   }
 
   // Panel IDs are dashboard-local: only filter by panel when a dashboard is selected.
-  if (criteria.panelId && criteria.dashboardUid) {
-    leaves.push({ filter: { field: 'panelID', operator: 'In', values: [criteria.panelId] } });
+  if (filter.panelId && filter.dashboardUid) {
+    leaves.push({ filter: { field: 'panelID', operator: 'In', values: [filter.panelId] } });
   }
 
   // policy wins over contactPoint. 'default' has no request form (needs NotIn on
-  // notificationType), so getCriteriaIssues reports it and it is never sent.
-  if (criteria.policy && criteria.policy !== DEFAULT_POLICY) {
-    leaves.push({ filter: { field: 'routingTree', operator: 'In', values: [criteria.policy] } });
-  } else if (!criteria.policy && criteria.contactPoint) {
-    leaves.push({ filter: { field: 'receiver', operator: 'In', values: [criteria.contactPoint] } });
+  // notificationType), so getFilterIssues reports it and it is never sent.
+  if (filter.policy && filter.policy !== DEFAULT_POLICY) {
+    leaves.push({ filter: { field: 'routingTree', operator: 'In', values: [filter.policy] } });
+  } else if (!filter.policy && filter.contactPoint) {
+    leaves.push({ filter: { field: 'receiver', operator: 'In', values: [filter.contactPoint] } });
   }
 
-  if (criteria.paused) {
+  if (filter.paused) {
     // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
-    leaves.push({ filter: { field: 'paused', operator: 'In', values: [criteria.paused] } });
+    leaves.push({ filter: { field: 'paused', operator: 'In', values: [filter.paused] } });
   }
 
   return leaves;
 }
 
-export function buildAlertRuleSearchQuery(criteria: Criteria, options: BuildSearchQueryOptions = {}): SearchQuery {
-  const leaves = [...buildSharedLeaves(criteria), ...buildRoutingLeaves(criteria), ...buildStatusLeaves(criteria)];
+export function buildAlertRuleSearchQuery(
+  filter: RuleSearchFilter,
+  options: BuildSearchQueryOptions = {}
+): SearchQuery {
+  const leaves = [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
 
   return {
     apiVersion: 'search.grafana.app/v0alpha1',

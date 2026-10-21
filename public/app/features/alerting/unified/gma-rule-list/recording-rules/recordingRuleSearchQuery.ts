@@ -1,6 +1,6 @@
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { type Criteria } from '../rule-search/criteria';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import {
   type BuildSearchQueryOptions,
   type SearchQuery,
@@ -26,24 +26,27 @@ const RECORDING_RULE_FIELDS = [
   'lastError',
 ];
 
-function buildRecordingOnlyLeaves(criteria: Criteria): SearchQueryLeaf[] {
+function buildRecordingOnlyLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   const leaves: SearchQueryLeaf[] = [];
 
-  if (criteria.metric) {
-    leaves.push({ filter: { field: 'metric', operator: 'In', values: [criteria.metric] } });
+  if (filter.metric) {
+    leaves.push({ filter: { field: 'metric', operator: 'In', values: [filter.metric] } });
   }
-  if (criteria.targetDataSourceUid) {
-    leaves.push({ filter: { field: 'targetDatasourceUID', operator: 'In', values: [criteria.targetDataSourceUid] } });
+  if (filter.targetDataSourceUid) {
+    leaves.push({ filter: { field: 'targetDatasourceUID', operator: 'In', values: [filter.targetDataSourceUid] } });
   }
 
   return leaves;
 }
 
-export function buildRecordingRuleSearchQuery(criteria: Criteria, options: BuildSearchQueryOptions = {}): SearchQuery {
+export function buildRecordingRuleSearchQuery(
+  filter: RuleSearchFilter,
+  options: BuildSearchQueryOptions = {}
+): SearchQuery {
   const leaves = [
-    ...buildSharedLeaves(criteria),
-    ...buildRecordingOnlyLeaves(criteria),
-    ...buildHealthLeaves(criteria, 'Recording'),
+    ...buildSharedLeaves(filter),
+    ...buildRecordingOnlyLeaves(filter),
+    ...buildHealthLeaves(filter, 'Recording'),
   ];
 
   return {

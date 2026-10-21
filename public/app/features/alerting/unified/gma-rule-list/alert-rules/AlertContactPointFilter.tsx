@@ -7,7 +7,7 @@ interface AlertContactPointFilterProps {
   onChange: (title: string | undefined) => void;
 }
 
-/** The selector keys options by UID but criteria hold a title, so resolve title to UID. */
+/** The selector keys options by UID but the filter holds a title, so resolve title to UID. */
 export function AlertContactPointFilter({ title, disabled, onChange }: AlertContactPointFilterProps) {
   const { currentData } = useListContactPoints();
   const uid = title

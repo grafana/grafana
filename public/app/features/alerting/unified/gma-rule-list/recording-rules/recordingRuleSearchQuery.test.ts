@@ -1,5 +1,5 @@
 import { getRuleSearchQueryViolations } from '../mocks/ruleSearchQueryContract';
-import { type Criteria, type HealthValue, createEmptyCriteria } from '../rule-search/criteria';
+import { type HealthValue, type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
@@ -19,8 +19,8 @@ const recordingFields = [
 ];
 
 describe('buildRecordingRuleSearchQuery', () => {
-  it('an empty criteria has no where clause and the recording-rule field set', () => {
-    expect(buildRecordingRuleSearchQuery(createEmptyCriteria())).toEqual({
+  it('an empty filter has no where clause and the recording-rule field set', () => {
+    expect(buildRecordingRuleSearchQuery(createEmptyFilter())).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -31,22 +31,26 @@ describe('buildRecordingRuleSearchQuery', () => {
   });
 
   it('metric filters by exact match', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), metric: 'cpu_usage' };
-    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), metric: 'cpu_usage' };
+    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
       filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] },
     });
   });
 
   it('target data source filters by targetDatasourceUID', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), targetDataSourceUid: 'target-ds-1' };
-    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), targetDataSourceUid: 'target-ds-1' };
+    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
       filter: { field: 'targetDatasourceUID', operator: 'In', values: ['target-ds-1'] },
     });
   });
 
   it('metric and target data source combine under one and', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), metric: 'cpu_usage', targetDataSourceUid: 'target-ds-1' };
-    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = {
+      ...createEmptyFilter(),
+      metric: 'cpu_usage',
+      targetDataSourceUid: 'target-ds-1',
+    };
+    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
       and: [
         { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } },
         { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['target-ds-1'] } },
@@ -61,32 +65,32 @@ describe('buildRecordingRuleSearchQuery', () => {
     ['err', 'Error'],
     ['unknown', 'Unknown'],
   ])('health:%s sends health In [%s]', (health, value) => {
-    const criteria: Criteria = { ...createEmptyCriteria(), health };
-    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), health };
+    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
       filter: { field: 'health', operator: 'In', values: [value] },
     });
   });
 
   it('plugins:hide sends the negated plugin-origin regex', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), hidePluginRules: true };
-    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), hidePluginRules: true };
+    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
       regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true },
     });
   });
 
-  it.each<[string, Criteria]>([
-    ['empty criteria', createEmptyCriteria()],
-    ['free text and a folder', { ...createEmptyCriteria(), text: ['cpu'], namespaces: ['f1'] }],
+  it.each<[string, RuleSearchFilter]>([
+    ['empty filter', createEmptyFilter()],
+    ['free text and a folder', { ...createEmptyFilter(), text: ['cpu'], namespaces: ['f1'] }],
     [
       'labels and hidden plugin rules',
-      { ...createEmptyCriteria(), hidePluginRules: true, labels: [{ key: 'a', operator: 'notEqual', value: 'x' }] },
+      { ...createEmptyFilter(), hidePluginRules: true, labels: [{ key: 'a', operator: 'notEqual', value: 'x' }] },
     ],
     [
       'metric and target data source',
-      { ...createEmptyCriteria(), metric: 'cpu_usage', targetDataSourceUid: 'target-ds-1' },
+      { ...createEmptyFilter(), metric: 'cpu_usage', targetDataSourceUid: 'target-ds-1' },
     ],
-    ['health', { ...createEmptyCriteria(), health: 'ok' }],
-  ])('%s: builds a request the per-kind rule search accepts', (_name, criteria) => {
-    expect(getRuleSearchQueryViolations(buildRecordingRuleSearchQuery(criteria), 'recording')).toEqual([]);
+    ['health', { ...createEmptyFilter(), health: 'ok' }],
+  ])('%s: builds a request the per-kind rule search accepts', (_name, filter) => {
+    expect(getRuleSearchQueryViolations(buildRecordingRuleSearchQuery(filter), 'recording')).toEqual([]);
   });
 });

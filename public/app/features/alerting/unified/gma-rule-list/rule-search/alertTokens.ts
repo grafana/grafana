@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { DEFAULT_POLICY } from './criteria';
+import { DEFAULT_POLICY } from './ruleSearchFilter';
 import { TOKEN_KEYS, type TokenDefinition, sharedDefinitions } from './tokens';
 
 export const alertTokens: TokenDefinition[] = [

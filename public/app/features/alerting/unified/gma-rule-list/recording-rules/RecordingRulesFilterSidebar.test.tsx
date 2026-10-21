@@ -8,7 +8,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 import { getInteractiveControls, tabSequence } from '../mocks/filterSidebarTestUtils';
 import { mockFolderParents } from '../mocks/handlers';
-import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 
@@ -19,10 +19,10 @@ window.HTMLElement.prototype.scrollIntoView = function () {};
 
 setupMswServer();
 
-async function renderSidebar(criteria: Criteria = createEmptyCriteria()) {
+async function renderSidebar(filter: RuleSearchFilter = createEmptyFilter()) {
   const onChange = jest.fn();
   const view = render(
-    <RecordingRulesFilterSidebar criteria={criteria} onChange={onChange} onClear={jest.fn()} hasActiveFilters={true} />
+    <RecordingRulesFilterSidebar filter={filter} onChange={onChange} onClear={jest.fn()} hasActiveFilters={true} />
   );
   // The data source pickers load their implementation asynchronously.
   await screen.findAllByRole('combobox', { name: 'Select a data source' });
@@ -76,7 +76,7 @@ describe('RecordingRulesFilterSidebar', () => {
 
   it('names the controls of an applied label, folder, data source and target data source', async () => {
     await renderSidebar({
-      ...createEmptyCriteria(),
+      ...createEmptyFilter(),
       labels: [{ key: 'team', operator: 'equal', value: 'api' }],
       namespaces: ['folder-1'],
       dataSourceUids: ['ds-1'],
@@ -93,7 +93,7 @@ describe('RecordingRulesFilterSidebar', () => {
 
   it('leaves no interactive element in the sidebar without an accessible name', async () => {
     const { container } = await renderSidebar({
-      ...createEmptyCriteria(),
+      ...createEmptyFilter(),
       labels: [{ key: 'team', operator: 'equal', value: 'api' }],
       namespaces: ['folder-1'],
       dataSourceUids: ['ds-1'],
@@ -127,7 +127,7 @@ describe('RecordingRulesFilterSidebar', () => {
 
   it('reaches an applied label row and the remove buttons of selected values with Tab', async () => {
     const { user } = await renderSidebar({
-      ...createEmptyCriteria(),
+      ...createEmptyFilter(),
       labels: [{ key: 'team', operator: 'equal', value: 'api' }],
       namespaces: ['folder-1'],
       dataSourceUids: ['ds-1'],
@@ -162,7 +162,7 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ text: ['cpu'] }));
   });
 
-  it('sets criteria.metric from the recorded metric input', async () => {
+  it('sets filter.metric from the recorded metric input', async () => {
     const { user, onChange } = await renderSidebar();
 
     await user.click(screen.getByRole('textbox', { name: 'Recorded metric' }));

@@ -4,8 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
 import { type SidebarControl } from './FilterSidebar';
-import { type Criteria } from './criteria';
-import { type CriteriaIssue } from './criteriaIssues';
+import { type FilterIssue } from './filterIssues';
 import {
   HealthField,
   InvalidTokenNote,
@@ -14,22 +13,23 @@ import {
   SwitchField,
 } from './filterSidebarPrimitives';
 import { DataSourceMultiFilter, FolderMultiFilter } from './multiValueFilters';
+import { type RuleSearchFilter } from './ruleSearchFilter';
 import { TOKEN_KEYS } from './tokens';
 
 export function useCommonFilterControls(
-  criteria: Criteria,
-  onChange: (criteria: Criteria) => void,
-  issues: CriteriaIssue[]
+  filter: RuleSearchFilter,
+  onChange: (filter: RuleSearchFilter) => void,
+  issues: FilterIssue[]
 ): Record<string, SidebarControl> {
   const folderPickerId = useId();
   const invalidNamespace = hasIssue(issues, 'namespace');
   const invalidDataSource = hasIssue(issues, 'datasource');
 
   return {
-    [TOKEN_KEYS.rule]: { render: () => <RuleTitleField criteria={criteria} onChange={onChange} /> },
+    [TOKEN_KEYS.rule]: { render: () => <RuleTitleField filter={filter} onChange={onChange} /> },
     [TOKEN_KEYS.label]: {
       render: () => (
-        <LabelMatchersEditor labels={criteria.labels} onChange={(labels) => onChange({ ...criteria, labels })} />
+        <LabelMatchersEditor labels={filter.labels} onChange={(labels) => onChange({ ...filter, labels })} />
       ),
     },
     [TOKEN_KEYS.namespace]: {
@@ -45,9 +45,9 @@ export function useCommonFilterControls(
       render: () => (
         <FolderMultiFilter
           id={folderPickerId}
-          values={criteria.namespaces}
+          values={filter.namespaces}
           invalid={invalidNamespace}
-          onChange={(namespaces) => onChange({ ...criteria, namespaces })}
+          onChange={(namespaces) => onChange({ ...filter, namespaces })}
         />
       ),
     },
@@ -55,9 +55,9 @@ export function useCommonFilterControls(
       note: invalidDataSource && <InvalidTokenNote />,
       render: () => (
         <DataSourceMultiFilter
-          values={criteria.dataSourceUids}
+          values={filter.dataSourceUids}
           invalid={invalidDataSource}
-          onChange={(dataSourceUids) => onChange({ ...criteria, dataSourceUids })}
+          onChange={(dataSourceUids) => onChange({ ...filter, dataSourceUids })}
         />
       ),
     },
@@ -65,17 +65,17 @@ export function useCommonFilterControls(
       render: () => (
         <SwitchField
           label={t('alerting.gma-rule-list.search.property.hide-plugin-rules', 'Hide plugin rules')}
-          value={criteria.hidePluginRules}
-          onChange={(hidePluginRules) => onChange({ ...criteria, hidePluginRules })}
+          value={filter.hidePluginRules}
+          onChange={(hidePluginRules) => onChange({ ...filter, hidePluginRules })}
         />
       ),
     },
     [TOKEN_KEYS.health]: {
-      render: () => <HealthField value={criteria.health} onChange={(health) => onChange({ ...criteria, health })} />,
+      render: () => <HealthField value={filter.health} onChange={(health) => onChange({ ...filter, health })} />,
     },
   };
 }
 
-function hasIssue(issues: CriteriaIssue[], key: string): boolean {
+function hasIssue(issues: FilterIssue[], key: string): boolean {
   return issues.some((issue) => issue.key === key);
 }

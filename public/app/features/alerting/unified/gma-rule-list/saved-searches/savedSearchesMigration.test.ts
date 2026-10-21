@@ -1,8 +1,8 @@
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { type NameResolvers } from '../legacy-migration/migrationResolve';
 import { alertTokens } from '../rule-search/alertTokens';
-import { type Criteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 
 // In-memory store shared across mocked UserStorage instances, replacing the module-level cache.
 let store: Record<string, string | undefined> = {};
@@ -40,7 +40,7 @@ import {
   migratedMarkerKeyForKind,
 } from './savedSearchesMigration';
 
-function parseAlertQuery(query: string): Criteria {
+function parseAlertQuery(query: string): RuleSearchFilter {
   return parse(query, alertTokens);
 }
 
@@ -212,7 +212,7 @@ describe('applySavedSearch', () => {
     jest.clearAllMocks();
   });
 
-  it('returns criteria straight from an already-canonical query, without migrating', async () => {
+  it('returns the filter straight from an already-canonical query, without migrating', async () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn();
 
@@ -233,7 +233,7 @@ describe('applySavedSearch', () => {
     expect(persist).toHaveBeenCalledWith('cpu');
   });
 
-  it('still returns criteria to search with even when persisting the migrated query fails', async () => {
+  it('still returns a filter to search with even when persisting the migrated query fails', async () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn(async () => {
       throw new Error('storage unavailable');
@@ -242,7 +242,7 @@ describe('applySavedSearch', () => {
     const result = await applySavedSearch('type:alerting cpu', resolvers(), parseForKind, persist);
 
     expect(result.query).toBe('cpu');
-    expect(result.criteria.text).toEqual(['cpu']);
+    expect(result.filter.text).toEqual(['cpu']);
   });
 
   it('names the filters the conversion removed, without their values', async () => {

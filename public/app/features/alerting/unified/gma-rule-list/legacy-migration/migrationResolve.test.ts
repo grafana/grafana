@@ -1,13 +1,13 @@
-import { createEmptyCriteria } from '../rule-search/criteria';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { type NameResolvers, resolveMigratedNames } from './migrationResolve';
 import { type SyncMigrationResult } from './migrationSync';
 
-function sync(overrides: Partial<SyncMigrationResult['criteria']> = {}): SyncMigrationResult {
+function sync(overrides: Partial<SyncMigrationResult['filter']> = {}): SyncMigrationResult {
   return {
     destination: 'alert',
     mode: 'folders',
-    criteria: { ...createEmptyCriteria(), ...overrides },
+    filter: { ...createEmptyFilter(), ...overrides },
     diagnostics: { migratedKeys: [], droppedKeys: [] },
   };
 }
@@ -27,8 +27,8 @@ describe('resolveMigratedNames', () => {
       resolvers()
     );
 
-    expect(result.criteria.namespaces).toEqual(['folder-uid']);
-    expect(result.criteria.dataSourceUids).toEqual(['ds-uid']);
+    expect(result.filter.namespaces).toEqual(['folder-uid']);
+    expect(result.filter.dataSourceUids).toEqual(['ds-uid']);
     expect(result.droppedKeys).toEqual([]);
   });
 
@@ -38,8 +38,8 @@ describe('resolveMigratedNames', () => {
       resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) })
     );
 
-    expect(result.criteria.namespaces).toEqual([]);
-    expect(result.criteria.invalid).toEqual([]);
+    expect(result.filter.namespaces).toEqual([]);
+    expect(result.filter.invalid).toEqual([]);
     expect(result.droppedKeys).toEqual(['namespace']);
   });
 
@@ -52,7 +52,7 @@ describe('resolveMigratedNames', () => {
       resolvers({ resolveFolderUidByName })
     );
 
-    expect(result.criteria.namespaces).toEqual(['first-uid', 'second-uid']);
+    expect(result.filter.namespaces).toEqual(['first-uid', 'second-uid']);
     expect(result.droppedKeys).toEqual(['namespace']);
   });
 
@@ -74,8 +74,8 @@ describe('resolveMigratedNames', () => {
       resolvers({ resolveFolderUidByName: jest.fn().mockRejectedValue(new Error('403')) })
     );
 
-    expect(result.criteria.namespaces).toEqual([]);
-    expect(result.criteria.dataSourceUids).toEqual(['ds-uid']);
+    expect(result.filter.namespaces).toEqual([]);
+    expect(result.filter.dataSourceUids).toEqual(['ds-uid']);
     expect(result.droppedKeys).toEqual(['namespace']);
   });
 });

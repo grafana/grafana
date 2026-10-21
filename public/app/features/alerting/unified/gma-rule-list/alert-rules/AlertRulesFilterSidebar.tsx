@@ -7,29 +7,29 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { FilterSidebar, type SidebarControl } from '../rule-search/FilterSidebar';
 import { alertTokens } from '../rule-search/alertTokens';
 import { useCommonFilterControls } from '../rule-search/commonFilterControls';
-import { type Criteria, DEFAULT_POLICY, type StateValue } from '../rule-search/criteria';
-import { type CriteriaIssue } from '../rule-search/criteriaIssues';
+import { type FilterIssue } from '../rule-search/filterIssues';
 import { InvalidTokenNote, SwitchField, UnavailableFilterNote } from '../rule-search/filterSidebarPrimitives';
+import { DEFAULT_POLICY, type RuleSearchFilter, type StateValue } from '../rule-search/ruleSearchFilter';
 import { TOKEN_KEYS } from '../rule-search/tokens';
 
 import { AlertContactPointFilter } from './AlertContactPointFilter';
 
 export interface AlertRulesFilterSidebarProps {
-  criteria: Criteria;
-  onChange: (criteria: Criteria) => void;
+  filter: RuleSearchFilter;
+  onChange: (filter: RuleSearchFilter) => void;
   onClear: () => void;
   hasActiveFilters: boolean;
-  issues?: CriteriaIssue[];
+  issues?: FilterIssue[];
 }
 
 export function AlertRulesFilterSidebar({
-  criteria,
+  filter,
   onChange,
   onClear,
   hasActiveFilters,
   issues = [],
 }: AlertRulesFilterSidebarProps) {
-  const commonControls = useCommonFilterControls(criteria, onChange, issues);
+  const commonControls = useCommonFilterControls(filter, onChange, issues);
   const panelRequiresDashboard = issues.some(
     (issue) => issue.key === 'panelId' && issue.reason === 'requiresDashboard'
   );
@@ -43,13 +43,13 @@ export function AlertRulesFilterSidebar({
       render: () => (
         <DashboardPicker
           aria-label={t('alerting.gma-rule-list.search.property.dashboard', 'Dashboard')}
-          value={criteria.dashboardUid}
+          value={filter.dashboardUid}
           onChange={(dashboard) =>
             onChange({
-              ...criteria,
+              ...filter,
               dashboardUid: dashboard?.uid,
               // Panel IDs are dashboard-local — clearing the dashboard clears the panel too.
-              panelId: dashboard?.uid ? criteria.panelId : undefined,
+              panelId: dashboard?.uid ? filter.panelId : undefined,
             })
           }
         />
@@ -67,10 +67,10 @@ export function AlertRulesFilterSidebar({
           <Input
             aria-label={t('alerting.gma-rule-list.search.property.panel', 'Panel ID')}
             type="number"
-            disabled={!criteria.dashboardUid}
+            disabled={!filter.dashboardUid}
             invalid={panelRequiresDashboard}
-            value={criteria.panelId ?? ''}
-            onChange={(e) => onChange({ ...criteria, panelId: e.currentTarget.value || undefined })}
+            value={filter.panelId ?? ''}
+            onChange={(e) => onChange({ ...filter, panelId: e.currentTarget.value || undefined })}
           />
         </Tooltip>
       ),
@@ -78,10 +78,10 @@ export function AlertRulesFilterSidebar({
     [TOKEN_KEYS.contactPoint]: {
       render: () => (
         <AlertContactPointFilter
-          title={criteria.contactPoint}
-          disabled={Boolean(criteria.policy)}
+          title={filter.contactPoint}
+          disabled={Boolean(filter.policy)}
           onChange={(contactPoint) =>
-            onChange({ ...criteria, contactPoint, policy: contactPoint ? undefined : criteria.policy })
+            onChange({ ...filter, contactPoint, policy: contactPoint ? undefined : filter.policy })
           }
         />
       ),
@@ -91,25 +91,25 @@ export function AlertRulesFilterSidebar({
         <Stack direction="column" gap={0.5}>
           <RoutingTreeSelector
             aria-label={t('alerting.gma-rule-list.search.property.policy', 'Notification policy')}
-            value={criteria.policy === DEFAULT_POLICY ? undefined : criteria.policy}
+            value={filter.policy === DEFAULT_POLICY ? undefined : filter.policy}
             placeholder={t('alerting.gma-rule-list.search.policy-placeholder', 'Select policy')}
             isClearable
-            disabled={Boolean(criteria.contactPoint) || criteria.policy === DEFAULT_POLICY}
+            disabled={Boolean(filter.contactPoint) || filter.policy === DEFAULT_POLICY}
             onChange={(tree: RoutingTree | null) =>
               onChange({
-                ...criteria,
+                ...filter,
                 policy: tree && isDefaultRoutingTree(tree) ? DEFAULT_POLICY : tree?.metadata.name,
-                contactPoint: tree ? undefined : criteria.contactPoint,
+                contactPoint: tree ? undefined : filter.contactPoint,
               })
             }
           />
           <SwitchField
             label={t('alerting.gma-rule-list.search.property.default-policy', 'Default policy')}
-            value={criteria.policy === DEFAULT_POLICY}
+            value={filter.policy === DEFAULT_POLICY}
             // Usable only to clear a URL or saved-search value while the default policy is unavailable.
-            disabled={Boolean(defaultPolicyUnavailable) && criteria.policy !== DEFAULT_POLICY}
+            disabled={Boolean(defaultPolicyUnavailable) && filter.policy !== DEFAULT_POLICY}
             onChange={(isDefault) =>
-              onChange({ ...criteria, policy: isDefault ? DEFAULT_POLICY : undefined, contactPoint: undefined })
+              onChange({ ...filter, policy: isDefault ? DEFAULT_POLICY : undefined, contactPoint: undefined })
             }
           />
           {defaultPolicyUnavailable && <UnavailableFilterNote reason={defaultPolicyUnavailable.reason()} />}
@@ -121,9 +121,9 @@ export function AlertRulesFilterSidebar({
         <Combobox<PausedValue>
           aria-label={t('alerting.gma-rule-list.search.property.paused', 'Paused')}
           options={getPausedOptions()}
-          value={criteria.paused ?? 'any'}
+          value={filter.paused ?? 'any'}
           onChange={(option: ComboboxOption<PausedValue> | null) =>
-            onChange({ ...criteria, paused: !option || option.value === 'any' ? undefined : option.value })
+            onChange({ ...filter, paused: !option || option.value === 'any' ? undefined : option.value })
           }
         />
       ),
@@ -134,9 +134,9 @@ export function AlertRulesFilterSidebar({
           aria-label={t('alerting.gma-rule-list.search.property.state', 'Alert state')}
           options={getStateOptions()}
           // `inactive` is an accepted spelling of `normal`; both select the same option.
-          value={criteria.state === 'inactive' ? 'normal' : (criteria.state ?? 'any')}
+          value={filter.state === 'inactive' ? 'normal' : (filter.state ?? 'any')}
           onChange={(option) =>
-            onChange({ ...criteria, state: !option || option.value === 'any' ? undefined : option.value })
+            onChange({ ...filter, state: !option || option.value === 'any' ? undefined : option.value })
           }
         />
       ),

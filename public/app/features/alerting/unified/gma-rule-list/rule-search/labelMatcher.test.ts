@@ -1,5 +1,5 @@
-import { type LabelMatcher } from './criteria';
 import { parseLabelValue, serializeLabelValue } from './labelMatcher';
+import { type LabelMatcher } from './ruleSearchFilter';
 
 describe('parseLabelValue', () => {
   it.each<[string, LabelMatcher | undefined]>([

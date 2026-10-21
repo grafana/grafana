@@ -1,5 +1,10 @@
 import { getRuleSearchQueryViolations } from '../mocks/ruleSearchQueryContract';
-import { type Criteria, type HealthValue, type StateValue, createEmptyCriteria } from '../rule-search/criteria';
+import {
+  type HealthValue,
+  type RuleSearchFilter,
+  type StateValue,
+  createEmptyFilter,
+} from '../rule-search/ruleSearchFilter';
 
 import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
@@ -31,8 +36,8 @@ const alertFields = [
 ];
 
 describe('buildAlertRuleSearchQuery', () => {
-  it('an empty criteria has no where clause and default sort/limit/fields', () => {
-    expect(buildAlertRuleSearchQuery(createEmptyCriteria())).toEqual({
+  it('an empty filter has no where clause and default sort/limit/fields', () => {
+    expect(buildAlertRuleSearchQuery(createEmptyFilter())).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -43,25 +48,25 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 
   it('free text and rule: merge into a single text leaf', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), text: ['cpu', 'high load'] };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({ text: { value: 'cpu high load' } });
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), text: ['cpu', 'high load'] };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({ text: { value: 'cpu high load' } });
   });
 
   it('multiple folders become one In filter', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), namespaces: ['folder-1', 'folder-2'] };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), namespaces: ['folder-1', 'folder-2'] };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       filter: { field: 'folder', operator: 'In', values: ['folder-1', 'folder-2'] },
     });
   });
 
   it('query data sources use the datasourceUIDs field', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), dataSourceUids: ['ds-1'] };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), dataSourceUids: ['ds-1'] };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       filter: { field: 'datasourceUIDs', operator: 'In', values: ['ds-1'] },
     });
   });
 
-  it.each<[string, Criteria['labels'][number], object]>([
+  it.each<[string, RuleSearchFilter['labels'][number], object]>([
     ['exists', { key: 'team', operator: 'exists' }, { filter: { field: 'labels', operator: 'In', values: ['team'] } }],
     [
       'absent',
@@ -89,19 +94,19 @@ describe('buildAlertRuleSearchQuery', () => {
       { regex: { field: 'labels', pattern: 'team=api.*', negate: true } },
     ],
   ])('maps the %s label matcher to its own leaf', (_name, label, expectedLeaf) => {
-    const criteria: Criteria = { ...createEmptyCriteria(), labels: [label] };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual(expectedLeaf);
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), labels: [label] };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual(expectedLeaf);
   });
 
   it('multiple label matchers each get their own leaf, ANDed', () => {
-    const criteria: Criteria = {
-      ...createEmptyCriteria(),
+    const filter: RuleSearchFilter = {
+      ...createEmptyFilter(),
       labels: [
         { key: 'team', operator: 'equal', value: 'api' },
         { key: 'env', operator: 'exists' },
       ],
     };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       and: [
         { filter: { field: 'labels', operator: 'In', values: ['team=api'] } },
         { filter: { field: 'labels', operator: 'In', values: ['env'] } },
@@ -110,8 +115,8 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 
   it('plugins:hide excludes only plugin-managed rules, keeping rules without the origin label', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), hidePluginRules: true };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), hidePluginRules: true };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true },
     });
   });
@@ -121,13 +126,13 @@ describe('buildAlertRuleSearchQuery', () => {
     // NotIn is not accepted on paused, so "not paused" is In ["false"].
     { paused: 'false', values: ['false'] },
   ] as const)('paused:$paused filters paused In $values', ({ paused, values }) => {
-    const criteria: Criteria = { ...createEmptyCriteria(), paused };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({ filter: { field: 'paused', operator: 'In', values } });
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), paused };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({ filter: { field: 'paused', operator: 'In', values } });
   });
 
   it('dashboard and panel combine under one and', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), dashboardUid: 'dash-1', panelId: '4' };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), dashboardUid: 'dash-1', panelId: '4' };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       and: [
         { filter: { field: 'dashboardUID', operator: 'In', values: ['dash-1'] } },
         { filter: { field: 'panelID', operator: 'In', values: ['4'] } },
@@ -136,22 +141,22 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 
   it('panel without a dashboard is not sent (panel IDs are dashboard-local)', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), panelId: '4' };
-    expect(buildAlertRuleSearchQuery(criteria).where).toBeUndefined();
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), panelId: '4' };
+    expect(buildAlertRuleSearchQuery(filter).where).toBeUndefined();
   });
 
-  it.each<[string, Partial<Criteria>, string, string]>([
+  it.each<[string, Partial<RuleSearchFilter>, string, string]>([
     ['a named policy', { policy: 'escalation' }, 'routingTree', 'escalation'],
     ['a contact point', { contactPoint: 'on-call' }, 'receiver', 'on-call'],
     ['both (the policy wins)', { policy: 'escalation', contactPoint: 'on-call' }, 'routingTree', 'escalation'],
   ])('%s filters by %s', (_name, partial, field, value) => {
-    const criteria: Criteria = { ...createEmptyCriteria(), ...partial };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({ filter: { field, operator: 'In', values: [value] } });
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), ...partial };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({ filter: { field, operator: 'In', values: [value] } });
   });
 
   it('the default policy sends no notificationType filter', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), policy: 'default' };
-    expect(buildAlertRuleSearchQuery(criteria).where).toBeUndefined();
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), policy: 'default' };
+    expect(buildAlertRuleSearchQuery(filter).where).toBeUndefined();
   });
 
   it.each<[StateValue, string[]]>([
@@ -161,8 +166,8 @@ describe('buildAlertRuleSearchQuery', () => {
     ['normal', ['Healthy', 'Inactive']],
     ['inactive', ['Healthy', 'Inactive']],
   ])('state:%s sends state In %j', (state, values) => {
-    const criteria: Criteria = { ...createEmptyCriteria(), state };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({ filter: { field: 'state', operator: 'In', values } });
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), state };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({ filter: { field: 'state', operator: 'In', values } });
   });
 
   it.each<[HealthValue, string]>([
@@ -172,15 +177,15 @@ describe('buildAlertRuleSearchQuery', () => {
     ['err', 'Error'],
     ['unknown', 'Unknown'],
   ])('health:%s sends health In [%s]', (health, value) => {
-    const criteria: Criteria = { ...createEmptyCriteria(), health };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), health };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       filter: { field: 'health', operator: 'In', values: [value] },
     });
   });
 
   it('state and health are separate leaves under one and', () => {
-    const criteria: Criteria = { ...createEmptyCriteria(), state: 'firing', health: 'error' };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+    const filter: RuleSearchFilter = { ...createEmptyFilter(), state: 'firing', health: 'error' };
+    expect(buildAlertRuleSearchQuery(filter).where).toEqual({
       and: [
         { filter: { field: 'state', operator: 'In', values: ['Firing'] } },
         { filter: { field: 'health', operator: 'In', values: ['Error'] } },
@@ -189,22 +194,22 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 
   it('passes through limit and continue', () => {
-    const query = buildAlertRuleSearchQuery(createEmptyCriteria(), { limit: 10, continue: 'opaque-token' });
+    const query = buildAlertRuleSearchQuery(createEmptyFilter(), { limit: 10, continue: 'opaque-token' });
     expect(query.limit).toBe(10);
     expect(query.continue).toBe('opaque-token');
   });
 
-  it.each<[string, Criteria]>([
-    ['empty criteria', createEmptyCriteria()],
-    ['free text', { ...createEmptyCriteria(), text: ['cpu', 'high'] }],
+  it.each<[string, RuleSearchFilter]>([
+    ['empty filter', createEmptyFilter()],
+    ['free text', { ...createEmptyFilter(), text: ['cpu', 'high'] }],
     [
       'multiple folders and data sources',
-      { ...createEmptyCriteria(), namespaces: ['f1', 'f2'], dataSourceUids: ['a', 'b'] },
+      { ...createEmptyFilter(), namespaces: ['f1', 'f2'], dataSourceUids: ['a', 'b'] },
     ],
     [
       'every label operator',
       {
-        ...createEmptyCriteria(),
+        ...createEmptyFilter(),
         labels: [
           { key: 'a', operator: 'exists' },
           { key: 'b', operator: 'absent' },
@@ -215,16 +220,16 @@ describe('buildAlertRuleSearchQuery', () => {
         ],
       },
     ],
-    ['hidden plugin rules', { ...createEmptyCriteria(), hidePluginRules: true }],
-    ['paused false', { ...createEmptyCriteria(), paused: 'false' }],
-    ['paused true', { ...createEmptyCriteria(), paused: 'true' }],
-    ['dashboard and panel', { ...createEmptyCriteria(), dashboardUid: 'dash', panelId: '4' }],
-    ['named policy', { ...createEmptyCriteria(), policy: 'escalation' }],
-    ['contact point', { ...createEmptyCriteria(), contactPoint: 'on-call' }],
-    ['default policy', { ...createEmptyCriteria(), policy: 'default' }],
-    ['state and health', { ...createEmptyCriteria(), state: 'firing', health: 'error' }],
-    ['a state that sends two values', { ...createEmptyCriteria(), state: 'normal' }],
-  ])('builds a request the per-kind rule search accepts for %s', (_name, criteria) => {
-    expect(getRuleSearchQueryViolations(buildAlertRuleSearchQuery(criteria, { continue: 'tok' }), 'alert')).toEqual([]);
+    ['hidden plugin rules', { ...createEmptyFilter(), hidePluginRules: true }],
+    ['paused false', { ...createEmptyFilter(), paused: 'false' }],
+    ['paused true', { ...createEmptyFilter(), paused: 'true' }],
+    ['dashboard and panel', { ...createEmptyFilter(), dashboardUid: 'dash', panelId: '4' }],
+    ['named policy', { ...createEmptyFilter(), policy: 'escalation' }],
+    ['contact point', { ...createEmptyFilter(), contactPoint: 'on-call' }],
+    ['default policy', { ...createEmptyFilter(), policy: 'default' }],
+    ['state and health', { ...createEmptyFilter(), state: 'firing', health: 'error' }],
+    ['a state that sends two values', { ...createEmptyFilter(), state: 'normal' }],
+  ])('builds a request the per-kind rule search accepts for %s', (_name, filter) => {
+    expect(getRuleSearchQueryViolations(buildAlertRuleSearchQuery(filter, { continue: 'tok' }), 'alert')).toEqual([]);
   });
 });

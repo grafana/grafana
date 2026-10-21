@@ -8,19 +8,19 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { ruleItem } from '../mocks/factories';
 import { mockFolderParents, mockFullRule, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
-import { createEmptyCriteria } from '../rule-search/criteria';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { ListView } from './AlertRulesListView';
 
 const server = setupMswServer();
 
-/** Stands in for the page, which owns the criteria. */
+/** Stands in for the page, which owns the filter. */
 function ListWithFilter() {
-  const [criteria, setCriteria] = useState(createEmptyCriteria());
+  const [filter, setFilter] = useState(createEmptyFilter());
   return (
     <>
-      <button onClick={() => setCriteria({ ...createEmptyCriteria(), text: ['cpu'] })}>Filter by name</button>
-      <ListView criteria={criteria} />
+      <button onClick={() => setFilter({ ...createEmptyFilter(), text: ['cpu'] })}>Filter by name</button>
+      <ListView filter={filter} />
     </>
   );
 }
@@ -32,7 +32,7 @@ describe('AlertRulesListView', () => {
     mockFullRule('alert');
   });
 
-  it('starts the new criteria at the first page and never shows a late response for the replaced criteria', async () => {
+  it('starts the new filter at the first page and never shows a late response for the replaced filter', async () => {
     let releaseOldResponse: () => void = () => {};
     const oldResponseGate = new Promise<void>((resolve) => {
       releaseOldResponse = resolve;
@@ -45,12 +45,12 @@ describe('AlertRulesListView', () => {
         if (!body.where) {
           await oldResponseGate;
           return HttpResponse.json({
-            items: [ruleItem('alert', 'rule-old', 'Old criteria rule', 'folder-1')],
+            items: [ruleItem('alert', 'rule-old', 'Old filter rule', 'folder-1')],
             metadata: { continue: 'old-tok' },
           });
         }
         return HttpResponse.json({
-          items: [ruleItem('alert', 'rule-new', 'New criteria rule', 'folder-1')],
+          items: [ruleItem('alert', 'rule-new', 'New filter rule', 'folder-1')],
           metadata: {},
         });
       })
@@ -60,12 +60,12 @@ describe('AlertRulesListView', () => {
     await waitFor(() => expect(requestedFilters).toHaveLength(1));
 
     await userEvent.click(screen.getByRole('button', { name: 'Filter by name' }));
-    expect(await screen.findByText('New criteria rule')).toBeInTheDocument();
+    expect(await screen.findByText('New filter rule')).toBeInTheDocument();
 
     releaseOldResponse();
     await waitFor(() => expect(requestedFilters).toHaveLength(2));
-    expect(screen.getByText('New criteria rule')).toBeInTheDocument();
-    expect(screen.queryByText('Old criteria rule')).not.toBeInTheDocument();
+    expect(screen.getByText('New filter rule')).toBeInTheDocument();
+    expect(screen.queryByText('Old filter rule')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
   });
 
@@ -75,7 +75,7 @@ describe('AlertRulesListView', () => {
       metadata: { totalHits: 1000, totalHitsRelation: 'lte' },
     }));
 
-    render(<ListView criteria={createEmptyCriteria()} />);
+    render(<ListView filter={createEmptyFilter()} />);
 
     expect(await screen.findByText('1,000+ alert rules')).toBeInTheDocument();
   });
@@ -89,7 +89,7 @@ describe('AlertRulesListView', () => {
             metadata: { totalHits: 2, totalHitsRelation: 'eq', continue: 'tok' },
           }
     );
-    render(<ListView criteria={createEmptyCriteria()} />);
+    render(<ListView filter={createEmptyFilter()} />);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
 

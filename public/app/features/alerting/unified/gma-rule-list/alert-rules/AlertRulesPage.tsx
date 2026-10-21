@@ -8,8 +8,8 @@ import { RulesPageShell } from '../page-shell/RulesPageShell';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { alertTokens } from '../rule-search/alertTokens';
-import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
+import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
 import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
@@ -22,7 +22,15 @@ import { FoldersView } from './AlertRulesFoldersView';
 import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
 import { ListView } from './AlertRulesListView';
 
-function AlertRulesBody({ canSearch, mode, criteria }: { canSearch: boolean; mode: RuleListMode; criteria: Criteria }) {
+function AlertRulesBody({
+  canSearch,
+  mode,
+  filter,
+}: {
+  canSearch: boolean;
+  mode: RuleListMode;
+  filter: RuleSearchFilter;
+}) {
   if (!canSearch) {
     return (
       <div role="alert">
@@ -31,13 +39,13 @@ function AlertRulesBody({ canSearch, mode, criteria }: { canSearch: boolean; mod
     );
   }
   if (mode === 'folders') {
-    return <FoldersView folderUids={criteria.namespaces} />;
+    return <FoldersView folderUids={filter.namespaces} />;
   }
-  return <ListView criteria={criteria} />;
+  return <ListView filter={filter} />;
 }
 
 function AlertRulesPage() {
-  const { criteria, issues, mode, hasNonFolderFilters, setCriteria, setMode, reset } = useRuleListSearchState('alert');
+  const { filter, issues, mode, hasNonFolderFilters, setFilter, setMode, reset } = useRuleListSearchState('alert');
 
   const trackedView = useRef(false);
   useEffect(() => {
@@ -50,14 +58,14 @@ function AlertRulesPage() {
   }, []);
 
   const savedSearches = useRuleListSavedSearches('alert');
-  const query = serialize(criteria);
-  const hasActiveFilters = query !== serialize(createEmptyCriteria());
+  const query = serialize(filter);
+  const hasActiveFilters = query !== serialize(createEmptyFilter());
 
   const onApplyQuery = (raw: string) => {
-    setCriteria(parse(raw, alertTokens));
+    setFilter(parse(raw, alertTokens));
   };
 
-  // Skip the request and show the invalid-filter state when getCriteriaIssues() reports issues.
+  // Skip the request and show the invalid-filter state when getFilterIssues() reports issues.
   const canSearch = issues.length === 0;
 
   return (
@@ -96,8 +104,8 @@ function AlertRulesPage() {
           </Stack>
           <Stack direction="row" gap={2}>
             <AlertRulesFilterSidebar
-              criteria={criteria}
-              onChange={setCriteria}
+              filter={filter}
+              onChange={setFilter}
               onClear={reset}
               hasActiveFilters={hasActiveFilters}
               issues={issues}
@@ -107,7 +115,7 @@ function AlertRulesPage() {
               <Divider direction="vertical" spacing={0} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
+              <AlertRulesBody canSearch={canSearch} mode={mode} filter={filter} />
             </Box>
           </Stack>
         </Stack>

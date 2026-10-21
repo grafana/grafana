@@ -4,7 +4,7 @@ import { render, screen } from 'test/test-utils';
 
 import { RuleSearchInput } from './RuleSearchInput';
 import { alertTokens } from './alertTokens';
-import { getCriteriaIssues } from './criteriaIssues';
+import { getFilterIssues } from './filterIssues';
 import { parse } from './parser';
 import { serialize } from './serializer';
 import { type TokenDefinition } from './tokens';
@@ -159,7 +159,7 @@ describe('RuleSearchInput', () => {
   });
 
   it('marks the input invalid, names the filters that failed and says what would work instead', () => {
-    const issues = getCriteriaIssues(parse('state:error', alertTokens), 'alert');
+    const issues = getFilterIssues(parse('state:error', alertTokens), 'alert');
     render(<RuleSearchInput query="state:error" onApply={jest.fn()} tokens={alertTokens} issues={issues} />);
 
     const input = screen.getByRole('textbox', { name: /search/i });

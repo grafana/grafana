@@ -10,7 +10,7 @@ import { useDroppedFiltersWarning } from '../legacy-migration/useDroppedFiltersW
 import { alertTokens } from '../rule-search/alertTokens';
 import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
-import { searchParamsForCriteria } from '../rule-search/useRuleListSearchState';
+import { searchParamsForFilter } from '../rule-search/useRuleListSearchState';
 
 import {
   type SavedSearchKind,
@@ -88,7 +88,7 @@ async function setUpSavedSearches(kind: SavedSearchKind): Promise<string[]> {
 
   trackDefaultSearchApplied();
   const registry = kind === 'alert' ? alertTokens : recordingTokens;
-  const { criteria, droppedKeys } = await applySavedSearch(
+  const { filter, droppedKeys } = await applySavedSearch(
     defaultSearch.query,
     legacyRuleListNameResolvers,
     (query) => parse(query, registry),
@@ -100,7 +100,7 @@ async function setUpSavedSearches(kind: SavedSearchKind): Promise<string[]> {
     }
   );
   // Replacing keeps the bare URL out of the history, so Back does not land on an unfiltered list.
-  locationService.partial(searchParamsForCriteria(criteria, params.get('view'), false), true);
+  locationService.partial(searchParamsForFilter(filter, params.get('view'), false), true);
 
   return droppedKeys;
 }

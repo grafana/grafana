@@ -1,5 +1,5 @@
-import { type Criteria } from './criteria';
 import { serializeLabelValue } from './labelMatcher';
+import { type RuleSearchFilter } from './ruleSearchFilter';
 import { TOKEN_KEYS } from './tokens';
 
 export function quoteIfNeeded(value: string): string {
@@ -11,52 +11,52 @@ function formatToken(key: string, value: string): string {
 }
 
 /** Token order is fixed, not as typed, so serialize and parse(serialize(c)) are stable. */
-export function serialize(criteria: Criteria): string {
+export function serialize(filter: RuleSearchFilter): string {
   const parts: string[] = [];
 
-  for (const namespace of criteria.namespaces) {
+  for (const namespace of filter.namespaces) {
     parts.push(formatToken(TOKEN_KEYS.namespace, namespace));
   }
-  for (const dataSourceUid of criteria.dataSourceUids) {
+  for (const dataSourceUid of filter.dataSourceUids) {
     parts.push(formatToken(TOKEN_KEYS.datasource, dataSourceUid));
   }
-  for (const label of criteria.labels) {
+  for (const label of filter.labels) {
     parts.push(formatToken(TOKEN_KEYS.label, serializeLabelValue(label)));
   }
-  if (criteria.dashboardUid) {
-    parts.push(formatToken(TOKEN_KEYS.dashboard, criteria.dashboardUid));
+  if (filter.dashboardUid) {
+    parts.push(formatToken(TOKEN_KEYS.dashboard, filter.dashboardUid));
   }
-  if (criteria.panelId) {
-    parts.push(formatToken(TOKEN_KEYS.panelId, criteria.panelId));
+  if (filter.panelId) {
+    parts.push(formatToken(TOKEN_KEYS.panelId, filter.panelId));
   }
-  if (criteria.contactPoint) {
-    parts.push(formatToken(TOKEN_KEYS.contactPoint, criteria.contactPoint));
+  if (filter.contactPoint) {
+    parts.push(formatToken(TOKEN_KEYS.contactPoint, filter.contactPoint));
   }
-  if (criteria.policy) {
-    parts.push(formatToken(TOKEN_KEYS.policy, criteria.policy));
+  if (filter.policy) {
+    parts.push(formatToken(TOKEN_KEYS.policy, filter.policy));
   }
-  if (criteria.paused) {
-    parts.push(formatToken(TOKEN_KEYS.paused, criteria.paused));
+  if (filter.paused) {
+    parts.push(formatToken(TOKEN_KEYS.paused, filter.paused));
   }
-  if (criteria.metric) {
-    parts.push(formatToken(TOKEN_KEYS.metric, criteria.metric));
+  if (filter.metric) {
+    parts.push(formatToken(TOKEN_KEYS.metric, filter.metric));
   }
-  if (criteria.targetDataSourceUid) {
-    parts.push(formatToken(TOKEN_KEYS.targetDatasource, criteria.targetDataSourceUid));
+  if (filter.targetDataSourceUid) {
+    parts.push(formatToken(TOKEN_KEYS.targetDatasource, filter.targetDataSourceUid));
   }
-  if (criteria.hidePluginRules) {
+  if (filter.hidePluginRules) {
     parts.push(formatToken(TOKEN_KEYS.plugins, 'hide'));
   }
-  if (criteria.state) {
-    parts.push(formatToken(TOKEN_KEYS.state, criteria.state));
+  if (filter.state) {
+    parts.push(formatToken(TOKEN_KEYS.state, filter.state));
   }
-  if (criteria.health) {
-    parts.push(formatToken(TOKEN_KEYS.health, criteria.health));
+  if (filter.health) {
+    parts.push(formatToken(TOKEN_KEYS.health, filter.health));
   }
-  for (const token of criteria.invalid) {
+  for (const token of filter.invalid) {
     parts.push(token.raw);
   }
-  for (const word of criteria.text) {
+  for (const word of filter.text) {
     parts.push(quoteIfNeeded(word));
   }
 
