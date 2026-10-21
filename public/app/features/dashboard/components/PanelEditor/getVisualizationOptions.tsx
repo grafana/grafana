@@ -158,8 +158,7 @@ export function getVisualizationOptions(
         ? lodashGet(defaults.custom, fieldOption.path)
         : undefined
       : lodashGet(defaults, fieldOption.path);
-    // A varMappings expression, when present, takes over the editor's displayed value - the
-    // property's own stored value (numericValue) stays untouched as the numeric fallback.
+    // The stored value stays as the fallback while an expression is shown.
     const varMappingExpr = varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined;
     const value = varMappingExpr ?? numericValue;
 
@@ -183,8 +182,7 @@ export function getVisualizationOptions(
               return;
             }
 
-            // A plain number (or clearing) always clears a stale expression too, so typing a
-            // number over an expression puts the property back into plain-value mode.
+            // Writing a plain value also drops the expression, so the plain value takes effect.
             const withoutExpr = varMappingEligible
               ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
               : currentFieldConfig;
@@ -328,8 +326,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         ? lodashGet(defaults.custom, fieldOption.path)
         : undefined
       : lodashGet(defaults, fieldOption.path);
-    // A varMappings expression, when present, takes over the editor's displayed value - the
-    // property's own stored value (numericValue) stays untouched as the numeric fallback.
+    // The stored value stays as the fallback while an expression is shown.
     const varMappingExpr = varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined;
     const value = varMappingExpr ?? numericValue;
 
@@ -354,8 +351,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
                 true
               );
             } else {
-              // A plain number (or clearing) always clears a stale expression too, so typing a
-              // number over an expression puts the property back into plain-value mode.
+              // Writing a plain value also drops the expression, so the plain value takes effect.
               const withoutExpr = varMappingEligible
                 ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
                 : currentFieldConfig;

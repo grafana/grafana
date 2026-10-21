@@ -82,9 +82,8 @@ async function tick() {
 
 describe('Variables in panel field config via varMappings (dashboard scene)', () => {
   it('resolves defaults.varMappings.min through the real sceneGraph.interpolate path and reacts to variable change', async () => {
-    // CustomVariable (not ConstantVariable+setState) so changeValueTo drives the real
-    // SceneVariableValueChangedEvent notification path that VizPanel's cache invalidation
-    // listens for - this is the mechanism the spec's non-goals claim is already fixed scenes-side.
+    // CustomVariable rather than ConstantVariable + setState: only changeValueTo publishes the
+    // SceneVariableValueChangedEvent that VizPanel's field config cache invalidation listens for.
     const varVariable = new CustomVariable({ name: 'myVar', query: '50,75', value: '50', text: '50' });
     const panel = buildPanel({
       min: 0,
@@ -105,11 +104,8 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     expect(config.min).toEqual(50);
     expect(config.varMappings).toBeUndefined();
 
-    // Changing the variable must re-process the field config even though the data is unchanged.
-    // This is the "already fixed scenes-side" reactivity mechanism this spec's non-goals rely on
-    // (VizPanel's onReferencedVariableValueChanged clearing the field-config cache) — if this
-    // assertion fails, that claim is wrong and this is a blocking checkpoint, not a silent
-    // workaround (see the spec's Completion check).
+    // Changing the variable must re-process the field config even though the data is unchanged,
+    // which relies on VizPanel clearing its field config cache on referenced variable changes.
     varVariable.changeValueTo('75', '75');
     await tick();
 

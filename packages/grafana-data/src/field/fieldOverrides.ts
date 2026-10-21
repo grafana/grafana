@@ -186,10 +186,8 @@ export function applyFieldOverrides(
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
-        // Working map of field-config property id -> variable expression. Seeded from defaults
-        // and augmented below with synthetic `varMappings.<id>` override entries as rules run,
-        // so a later rule's mapping for one property never disturbs an earlier rule's (or the
-        // defaults') mapping for a different property.
+        // Copied so matching override rules can add per-property expressions without mutating
+        // the defaults or affecting other fields.
         varMappings: { ...source.defaults.varMappings },
       };
 
@@ -200,9 +198,8 @@ export function applyFieldOverrides(
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
-          // Two sub-passes so entry order within a rule doesn't matter: first collect any
-          // synthetic `varMappings.<id>` entries into context.varMappings, then apply the real
-          // properties (which may now consult the just-updated varMappings for their own id).
+          // Collect expressions first so a varMappings.<id> entry applies regardless of whether
+          // it comes before or after the property it maps.
           for (const prop of rule.properties) {
             if (isVarMappingProp(prop) && typeof prop.value === 'string') {
               context.varMappings[unwrapVarMappingPropId(prop.id)] = prop.value;
@@ -409,10 +406,8 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
 }
 
 /**
- * Consults `context.varMappings` for a property registered with `numberOverrideProcessor` and,
- * if a mapping is present and resolves to a finite number, returns that number in place of
- * `rawValue`. Otherwise returns `rawValue` unchanged — a failed resolution is indistinguishable from "no expression was set", which is
- * exactly the fallback-to-stored-value semantics `valueExpr` established for thresholds.
+ * Returns the resolved expression for an eligible property when it resolves to a finite number,
+ * otherwise the stored value, so an unresolvable expression falls back instead of breaking.
  */
 function resolveVarMappingInput(
   item: FieldConfigPropertyItem,

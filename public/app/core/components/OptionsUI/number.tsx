@@ -35,24 +35,12 @@ type VarMappingProps = Omit<StandardEditorProps<number | string, NumberFieldConf
 };
 
 /**
- * A `varMappings`-aware sibling of `NumberValueEditor`. `NumberValueEditor` itself is a shared
- * registry entry (`FieldConfigPropertyItem.editor`/`override`) also used directly by some panel
- * editors (e.g. geomap's `StyleEditor`) with a strictly numeric `onChange` - widening its own
- * onChange to accept a string would break those unrelated callers. Instead, the defaults-editor
- * and override-row wiring render this component INSTEAD of `NumberValueEditor` for a property
- * that opts into `varMappings` expression support (see `isVarMappingEligible`), keeping
- * `NumberValueEditor` itself completely untouched.
+ * Number editor that also accepts variable expressions. It's a separate component because
+ * `NumberValueEditor` is used directly by some panel editors that expect a numeric `onChange`.
  *
- * A native `type="number"` input cannot contain a `$`, so this renders a plain text input instead
- * and, on commit (blur/Enter, mirroring `ThresholdsEditor`'s pattern), decides whether the typed
- * text is a variable expression or a plain number:
- *
- * - Text containing `$` is surfaced up via `onChange` as a raw string instead of a parsed number
- *   - the caller routes it into the `varMappings` side-channel and leaves the property's own
- *     stored value untouched as the numeric fallback.
- * - Anything else behaves exactly as `NumberInput`: parsed to a number (or reverted to the last
- *   known value if not a valid number), which also clears any existing expression for this
- *   property (handled by the caller once it sees a non-string value come through `onChange`).
+ * A `type="number"` input can't hold a `$`, so this is a text input. On blur or Enter, text
+ * containing `$` is passed to `onChange` as a string, which callers store in `varMappings`.
+ * Anything else is parsed as a number, or reverted when it isn't one.
  */
 export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMappingProps) => {
   const { settings } = item;
@@ -77,7 +65,7 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
 
       const parsed = Number(raw);
       if (!Number.isFinite(parsed)) {
-        setText(formatted); // not a valid number either - revert, same as NumberInput today
+        setText(formatted);
         return;
       }
 

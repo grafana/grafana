@@ -3,12 +3,9 @@ import { omit } from 'lodash';
 import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
 
 /**
- * Sets or clears a single `defaults.varMappings.<id>` entry, keyed by the same flat
- * `FieldConfigPropertyItem.id` space `DynamicConfigValue.id` uses (e.g. `min`,
- * `custom.lineWidth`) - not the "custom." isCustom split `updateDefaultFieldConfigValue` needs,
- * since `varMappings` is a single flat sidecar map regardless of which property it maps.
- * Passing `expr: undefined` removes the entry (and the whole `varMappings` key once empty),
- * mirroring `updateDefaultFieldConfigValue`'s "remove when value is null/empty" behavior.
+ * Sets or clears `defaults.varMappings[id]`. Unlike `updateDefaultFieldConfigValue`, `id` is the
+ * full property id (`custom.lineWidth`, not a path inside `custom`). Clearing the last entry
+ * removes `varMappings`.
  */
 export const updateDefaultFieldConfigVarMapping = (
   config: FieldConfigSource,

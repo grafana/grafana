@@ -287,8 +287,7 @@ export function getFieldOverrideCategories(
     for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
       const property = override.properties[propIdx];
 
-      // Synthetic varMappings.<id> entries are a sibling of the real property's own row, not a
-      // row of their own - the real property's row below reads/writes them transparently.
+      // varMappings.<id> entries are edited through the row of the property they map.
       if (isVarMappingProp(property)) {
         continue;
       }
@@ -304,8 +303,7 @@ export function getFieldOverrideCategories(
       const varMappingExpr = eligibleForVarMapping
         ? override.properties.find((p) => p.id === varMappingId)?.value
         : undefined;
-      // A varMappings expression, when present, takes over the row's displayed value - the
-      // property's own stored value (property.value) stays untouched as the numeric fallback.
+      // The stored value stays as the fallback while an expression is shown.
       const displayValue = typeof varMappingExpr === 'string' ? varMappingExpr : property.value;
 
       const onPropertyChange = (value: unknown) => {
@@ -318,8 +316,7 @@ export function getFieldOverrideCategories(
           return;
         }
 
-        // A plain number (or clearing) always clears a stale expression too, so typing a number
-        // over an expression puts the property back into plain-value mode.
+        // Writing a plain value also drops the expression, so the plain value takes effect.
         const properties = override.properties
           .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
           .filter((p) => !eligibleForVarMapping || p.id !== varMappingId);

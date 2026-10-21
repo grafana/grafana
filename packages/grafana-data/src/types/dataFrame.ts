@@ -118,11 +118,10 @@ export interface FieldConfig<TOptions = any> {
   fieldMinMax?: boolean;
 
   /**
-   * Maps field-config property ids (the same flat id space `DynamicConfigValue.id` uses, e.g.
-   * `min`, `decimals`, `custom.lineWidth`) to a variable expression that should be resolved
-   * during `applyFieldOverrides` in place of the property's stored value. The property's own
-   * value (e.g. `min`) is left untouched and used as the fallback when the expression cannot be
-   * resolved to a finite number. Resolved field configs never carry `varMappings`.
+   * Variable expressions keyed by field config property id (e.g. `min`, `custom.lineWidth`),
+   * resolved by `applyFieldOverrides` in place of the stored value. The stored value is the
+   * fallback when an expression doesn't resolve to a finite number. Processed field configs
+   * don't carry `varMappings`.
    */
   varMappings?: Record<string, string>;
 }

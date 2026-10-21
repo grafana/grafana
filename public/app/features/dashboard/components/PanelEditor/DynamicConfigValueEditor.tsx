@@ -46,9 +46,6 @@ export const DynamicConfigValueEditor = ({
     return null;
   }
 
-  // Rendered instead of item.override for a property that opts into varMappings expression
-  // support (see isVarMappingEligible) - item.override itself stays untouched since it's also
-  // used directly by some panel editors with a strictly numeric onChange.
   const Override = varMappingEligible ? VarMappingNumberValueEditor : item.override;
 
   const isCollapsible =

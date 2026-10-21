@@ -125,11 +125,9 @@ export const stringOverrideProcessor = (
 };
 
 /**
- * Resolves a `varMappings` variable expression (e.g. `$myVar`) against the current variable
- * values, for use as the input to a `numberOverrideProcessor`-backed field-config property.
- * Returns `undefined` (never a broken/NaN value) when the expression is missing a
- * `replaceVariables` context, resolves to something non-numeric, or the referenced variable
- * currently has more than one value selected — callers fall back to the property's stored value.
+ * Resolves a `varMappings` expression (e.g. `$myVar`) to a number. Returns `undefined` when there
+ * is no `replaceVariables`, the result isn't numeric, or a referenced variable has more than one
+ * value selected, so callers can fall back to the stored value.
  */
 export function resolveVarMapping(expr: string, context: FieldOverrideContext): number | undefined {
   if (!context.replaceVariables) {
