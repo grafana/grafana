@@ -12,11 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-// maxJSONDataBytes is the size of the plugin_setting.json_data TEXT column on MySQL. Grafana connects
-// with sql_mode=ANSI_QUOTES, which drops strict mode, so a longer value is silently truncated and
-// every later read of the row fails to decode.
+// maxJSONDataBytes is the MySQL TEXT size of plugin_setting.json_data. Grafana's MySQL connection is not
+// in strict mode, so a longer value is silently truncated and the row can no longer be read.
 const maxJSONDataBytes = 65535
 
 func ProvideService(db db.DB,
@@ -97,8 +97,10 @@ func (s *Service) GetPluginSettingByPluginID(ctx context.Context, args *pluginse
 }
 
 func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.UpdateArgs) error {
-	if err := validateJSONDataSize(args.JSONData); err != nil {
-		return err
+	if s.db.GetDBType() == migrator.MySQL {
+		if err := validateJSONDataSize(args.JSONData); err != nil {
+			return err
+		}
 	}
 
 	encryptedSecureJsonData, err := s.secretsService.EncryptJsonData(ctx, args.SecureJSONData, secrets.WithoutScope())

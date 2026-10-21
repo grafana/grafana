@@ -9,12 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 func TestMain(m *testing.M) {
@@ -101,8 +104,8 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 }
 
 func TestService_UpdatePluginSetting_JSONDataSize(t *testing.T) {
-	// A nil store proves the size check runs before any database access.
-	psService := ProvideService(nil, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+	// The embedded nil db.DB proves the size check runs before any database access.
+	psService := ProvideService(mysqlDB{}, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
 
 	err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
 		PluginID: "test-app",
@@ -113,6 +116,21 @@ func TestService_UpdatePluginSetting_JSONDataSize(t *testing.T) {
 
 	require.NoError(t, validateJSONDataSize(map[string]any{"k": strings.Repeat("a", maxJSONDataBytes-len(`{"k":""}`))}))
 }
+
+func TestService_UpdatePluginSetting_JSONDataSizeNotCheckedOutsideMySQL(t *testing.T) {
+	psService := ProvideService(dbtest.NewFakeDB(), secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+
+	err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
+		PluginID: "test-app",
+		OrgID:    1,
+		JSONData: map[string]any{"k": strings.Repeat("a", maxJSONDataBytes)},
+	})
+	require.NoError(t, err)
+}
+
+type mysqlDB struct{ db.DB }
+
+func (mysqlDB) GetDBType() core.DbType { return migrator.MySQL }
 
 func TestIntegrationPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
