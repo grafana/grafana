@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import {
   FieldMatcherID,
+  getFieldDisplayName,
   Registry,
   type GrafanaTheme2,
   type SelectableValue,
@@ -114,7 +115,9 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
             frame={{
               ...configFrame,
               fields: configFrame.fields.filter(
-                (v) => options.applyTo?.id !== CustomCFQMatchers.dynamicFieldName || v.name !== options.applyTo?.options
+                (f) =>
+                  options.applyTo?.id !== CustomCFQMatchers.dynamicFieldName ||
+                  getFieldDisplayName(f, configFrame) !== options.applyTo?.options
               ),
             }}
             mappings={options.mappings}
