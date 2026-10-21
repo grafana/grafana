@@ -49,7 +49,7 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { isVarMappingEligible, resolveVarMapping, thresholdsOverrideProcessor } from './overrides/processors';
+import { isVarMappingEligible, resolveVarMapping } from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { sortThresholds } from './thresholds';
@@ -437,7 +437,8 @@ function resolveVarMappingInput(
   rawValue: unknown,
   context: FieldOverrideEnv
 ): unknown {
-  if (item.process === thresholdsOverrideProcessor) {
+  // Step keys only address the standard thresholds property
+  if (item.id === FieldConfigProperty.Thresholds) {
     return resolveThresholdStepMappings(rawValue, context);
   }
 
