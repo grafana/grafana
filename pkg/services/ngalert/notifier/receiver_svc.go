@@ -500,10 +500,8 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	// A rename must own the transaction so the permission refresh runs after commit.
-	if existing.Name != r.Name {
-		if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
-			return nil, models.ErrReceiverUpdateInTransaction.Errorf("receiver renames cannot run inside an existing SQL transaction")
-		}
+	if existing.Name != r.Name && sqlstore.IsInTransaction(ctx) {
+		return nil, models.ErrReceiverUpdateInTransaction.Errorf("receiver renames cannot run inside an existing SQL transaction")
 	}
 
 	// We re-encrypt the existing receiver to ensure any unencrypted secure fields that are correctly encrypted, note this should NOT re-encrypt secure fields that are already encrypted.

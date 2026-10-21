@@ -57,7 +57,7 @@ func (c *embeddedTransactionCall) wait() {
 type embeddedClient struct{ legacyclient.Service }
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
-	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+	if sqlstore.IsInTransaction(ctx) {
 		call := &embeddedTransactionCall{done: make(chan struct{})}
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
@@ -95,7 +95,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 			// TODO: Before routing to remote AuthZ, confirm that no caller reads
 			// permissions inside a transaction, then remove this bridge. SQL sessions
 			// cannot be shared over remote gRPC.
-			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+			if sess := sqlstore.SessionFromContext(clientCtx); sess != nil {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
 					return status.Error(codes.Canceled, "embedded transaction call already returned")

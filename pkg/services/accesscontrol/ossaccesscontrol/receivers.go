@@ -165,7 +165,7 @@ func (r ReceiverPermissionsService) RefreshPermissions(ctx context.Context, user
 		return
 	}
 	// Remote AuthZ cannot see uncommitted changes, so a reload inside a transaction can cache old permissions.
-	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+	if sqlstore.IsInTransaction(ctx) {
 		r.log.Warn("Skipped receiver permission refresh inside a SQL transaction", "user", user.GetUID())
 		return
 	}
