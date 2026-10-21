@@ -74,7 +74,7 @@ export function QueryCoauthoringHeader({ className, children, onClose, onStop, p
   );
 }
 
-export function QueryCoauthoringLiveStatus({ children }: { children: ReactNode }) {
+function QueryCoauthoringLiveStatus({ children }: { children: ReactNode }) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <div className={styles.status} role="status" aria-live="polite" aria-atomic="true">
