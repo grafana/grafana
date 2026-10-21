@@ -1,3 +1,4 @@
+import { locationService } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import {
   type AdhocVariableKind,
@@ -157,6 +158,19 @@ describe('createSectionVariables', () => {
 
   it('should drop a GroupByVariable without a matching section adhoc variable instead of throwing', () => {
     expect(deserializeSectionVariables([makeGroupByVariableKind()])).toBeUndefined();
+  });
+
+  it('should leave the URL alone when merging a section GroupByVariable', () => {
+    // Scenes suffixes section URL keys (var-adhoc-2) when names collide, so the unscoped keys may belong to another variable
+    locationService.replace('/?var-groupby=region');
+
+    const result = deserializeSectionVariables([makeAdhocVariableKind(), makeGroupByVariableKind()]);
+
+    const adhoc = result!.state.variables[0] as AdHocFiltersVariable;
+    expect(adhoc.state.filters).toEqual([expect.objectContaining({ key: 'job', operator: 'groupBy' })]);
+    expect(locationService.getSearch().toString()).toBe('var-groupby=region');
+
+    locationService.replace('/');
   });
 });
 

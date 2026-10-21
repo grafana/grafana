@@ -19,10 +19,11 @@ export function deserializeSectionVariables(variables?: VariableKind[]): SceneVa
     return undefined;
   }
 
+  // Scenes suffixes a section variable's URL key (var-adhoc-2) when its name collides with another
+  // variable, and that can't be resolved before the scene is built, so leave the URL alone here.
+  const migrated = migrateGroupByVariablesV2(variables, { migrateUrlState: false });
   // VariableKind is structurally identical to TypedVariableModelV2
-  const sceneVariables = migrateGroupByVariablesV2(variables).map((variable) =>
-    createSceneVariableFromVariableModel(variable)
-  );
+  const sceneVariables = migrated.map((variable) => createSceneVariableFromVariableModel(variable));
   if (sceneVariables.length === 0) {
     return undefined;
   }
