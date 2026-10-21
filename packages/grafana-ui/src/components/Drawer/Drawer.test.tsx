@@ -1,6 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+
+import { getPortalContainer, PortalContainer } from '../Portal/Portal';
+import { Select } from '../Select/Select';
+import { Toggletip } from '../Toggletip/Toggletip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { DRAWER_INSIDE_ATTRIBUTE, Drawer } from './Drawer';
 
@@ -87,5 +94,102 @@ describe('Drawer', () => {
     portalContainer.remove();
     page.remove();
     floating.remove();
+  });
+
+  it('closes on Escape after dismissing its tooltip even when document stops propagation', async () => {
+    const user = userEvent.setup();
+    const close = jest.fn();
+    render(
+      <>
+        <PortalContainer />
+        <Drawer title="Inspector" onClose={close}>
+          <Tooltip content="Extra information">
+            <button>More information</button>
+          </Tooltip>
+        </Drawer>
+      </>
+    );
+
+    // Dashboard shortcuts stop Escape at document, before rc-drawer's window listener can receive it.
+    const stopAtDocument = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', stopAtDocument);
+    try {
+      const closeButton = screen.getByRole('button', { name: 'Close' });
+      act(() => closeButton.focus());
+      await screen.findByRole('tooltip', { name: 'Close' });
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('tooltip', { name: 'Close' })).not.toBeInTheDocument());
+      await user.keyboard('{Escape}');
+      expect(close).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener('keydown', stopAtDocument);
+    }
+  });
+
+  it('keeps focus inside the drawer while allowing the portalled select menu, then restores the trigger', async () => {
+    const user = userEvent.setup();
+
+    function Example() {
+      const [selectedSource, setSelectedSource] = useState<string>();
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Open inspector</button>
+          <PortalContainer />
+          {open && (
+            <Drawer title="Inspector" onClose={() => setOpen(false)}>
+              <Select
+                aria-label="Source"
+                value={selectedSource}
+                onChange={(option) => setSelectedSource(option.value)}
+                options={[
+                  { label: 'Data', value: 'data' },
+                  { label: 'JSON', value: 'json' },
+                ]}
+              />
+              <Toggletip closeButton={false} content={<button>Popover action</button>}>
+                <button>More information</button>
+              </Toggletip>
+            </Drawer>
+          )}
+        </>
+      );
+    }
+
+    render(<Example />);
+    const trigger = screen.getByRole('button', { name: 'Open inspector' });
+    await user.click(trigger);
+
+    const drawer = await screen.findByRole('dialog', { name: 'Inspector' });
+    await waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true));
+
+    const source = screen.getByRole('combobox', { name: 'Source' });
+    await user.click(source);
+    const option = await screen.findByRole('option', { name: 'JSON' });
+    await user.keyboard('{ArrowDown}');
+    expect(source).toHaveAttribute('aria-activedescendant', option.id);
+    await user.click(option);
+    expect(source).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(screen.getByRole('button', { name: 'More information' }));
+    const portalAction = await screen.findByRole('button', { name: 'Popover action' });
+    await waitFor(() => expect(portalAction).toHaveFocus());
+    expect(getPortalContainer()).toContainElement(portalAction);
+    await user.click(portalAction);
+
+    await user.tab();
+    expect(drawer.contains(document.activeElement) || getPortalContainer().contains(document.activeElement)).toBe(true);
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(portalAction).not.toBeInTheDocument());
+    expect(screen.getByRole('dialog', { name: 'Inspector' })).toBeInTheDocument();
+    await user.tab();
+    expect(drawer.contains(document.activeElement)).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 });
