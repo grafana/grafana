@@ -1968,24 +1968,27 @@ func getDummyRenderedURL(url string) string {
 // FIXME: test these cases from the public interface once the component is refactored
 func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 	tests := []struct {
-		name       string
-		baseURL    string
-		grafanaURL string
-		setupMock  func(renderer *MockScreenshotRenderer)
-		wantSnap   string
-		wantErr    string
+		name           string
+		grafanaBaseURL string
+		baseURL        string
+		grafanaURL     string
+		setupMock      func(renderer *MockScreenshotRenderer)
+		wantSnap       string
+		wantErr        string
 	}{
 		{
-			name:       "invalid grafana url",
-			baseURL:    "http://host/",
-			grafanaURL: "ht tp://host/d/uid/dashboard",
-			setupMock:  func(renderer *MockScreenshotRenderer) {},
-			wantErr:    `parse "ht tp://host/d/uid/dashboard": first path segment in URL cannot contain colon`,
+			name:           "invalid grafana url",
+			grafanaBaseURL: "http://host/",
+			baseURL:        "http://host/",
+			grafanaURL:     "ht tp://host/d/uid/dashboard",
+			setupMock:      func(renderer *MockScreenshotRenderer) {},
+			wantErr:        `parse "ht tp://host/d/uid/dashboard": first path segment in URL cannot contain colon`,
 		},
 		{
-			name:       "invalid base url",
-			baseURL:    "ht tp://bad host/",
-			grafanaURL: "http://host/d/uid/dashboard",
+			name:           "invalid base url",
+			grafanaBaseURL: "http://host/",
+			baseURL:        "ht tp://bad host/",
+			grafanaURL:     "http://host/d/uid/dashboard",
 			setupMock: func(renderer *MockScreenshotRenderer) {
 				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "test" && repo.Name == "repo"
@@ -1994,9 +1997,10 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 			wantErr: `parse "ht tp://bad host/": first path segment in URL cannot contain colon`,
 		},
 		{
-			name:       "render error",
-			baseURL:    "http://host/",
-			grafanaURL: "http://host/d/uid/dashboard",
+			name:           "render error",
+			grafanaBaseURL: "http://host/",
+			baseURL:        "http://host/",
+			grafanaURL:     "http://host/d/uid/dashboard",
 			setupMock: func(renderer *MockScreenshotRenderer) {
 				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "test" && repo.Name == "repo"
@@ -2005,9 +2009,10 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 			wantErr: "error rendering screenshot: render failed",
 		},
 		{
-			name:       "cdn url returned",
-			baseURL:    "http://host/",
-			grafanaURL: "http://host/d/uid/dashboard",
+			name:           "cdn url returned",
+			grafanaBaseURL: "http://host/",
+			baseURL:        "http://host/",
+			grafanaURL:     "http://host/d/uid/dashboard",
 			setupMock: func(renderer *MockScreenshotRenderer) {
 				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "test" && repo.Name == "repo"
@@ -2016,15 +2021,54 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 			wantSnap: "https://cdn.example.com/screenshot.png",
 		},
 		{
-			name:       "successful render with relative path",
-			baseURL:    "http://host/",
-			grafanaURL: "http://host/d/uid/dashboard",
+			name:           "successful render with relative path",
+			grafanaBaseURL: "http://host/",
+			baseURL:        "http://host/",
+			grafanaURL:     "http://host/d/uid/dashboard",
 			setupMock: func(renderer *MockScreenshotRenderer) {
 				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "test" && repo.Name == "repo"
 				}), "d/uid/dashboard", mock.Anything).Return("screenshots/123.png", nil)
 			},
 			wantSnap: "http://host/screenshots/123.png",
+		},
+		{
+			// The renderer resolves the path against callback_url, which already
+			// carries the sub-path, so it must not be repeated here.
+			name:           "sub path is not repeated in the rendered path",
+			grafanaBaseURL: "http://host/grafana/",
+			baseURL:        "http://public/grafana/",
+			grafanaURL:     "http://host/grafana/d/uid/dashboard",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "d/uid/dashboard", mock.Anything).Return("screenshots/123.png", nil)
+			},
+			wantSnap: "http://public/grafana/screenshots/123.png",
+		},
+		{
+			name:           "sub path without trailing slash",
+			grafanaBaseURL: "http://host/grafana",
+			baseURL:        "http://host/grafana",
+			grafanaURL:     "http://host/grafana/admin/provisioning/repo/dashboard/preview/x.json",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "admin/provisioning/repo/dashboard/preview/x.json", mock.Anything).Return("screenshots/123.png", nil)
+			},
+			wantSnap: "http://host/grafana/screenshots/123.png",
+		},
+		{
+			name:           "resource named like the sub path is preserved",
+			grafanaBaseURL: "http://host/grafana/",
+			baseURL:        "http://host/grafana/",
+			grafanaURL:     "http://host/grafana/d/grafana/grafana",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "d/grafana/grafana", mock.Anything).Return("screenshots/123.png", nil)
+			},
+			wantSnap: "http://host/grafana/screenshots/123.png",
 		},
 	}
 
@@ -2039,7 +2083,7 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 				Name:      "repo",
 			}
 
-			got, err := renderScreenshotFromGrafanaURL(context.Background(), tt.baseURL, renderer, repo, tt.grafanaURL, metrics)
+			got, err := renderScreenshotFromGrafanaURL(context.Background(), tt.grafanaBaseURL, tt.baseURL, renderer, repo, tt.grafanaURL, metrics)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.wantErr)

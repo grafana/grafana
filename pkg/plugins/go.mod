@@ -1,16 +1,16 @@
 module github.com/grafana/grafana/pkg/plugins
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/Machiel/slugify v1.0.1
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/ProtonMail/go-crypto v1.5.2
-	github.com/go-jose/go-jose/v4 v4.1.5
+	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
+	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3
+	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana-app-sdk v0.60.15
 	github.com/grafana/grafana-app-sdk/plugin v0.60.15
 	github.com/grafana/grafana-plugin-sdk-go v0.296.5

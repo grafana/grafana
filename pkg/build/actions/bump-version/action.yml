@@ -21,7 +21,7 @@ runs:
         yarn install
         npm version "$VERSION" --no-git-tag-version
         yarn nx release version "$VERSION"
-        yarn install
+        yarn install --no-immutable
         yarn prettier:write
     - name: make gen-cue
       shell: bash

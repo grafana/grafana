@@ -15,7 +15,7 @@ import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookSceneControls } from '../scene/NotebookSceneControls';
-import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
+import { NOTEBOOK_NEW_URL, notebookViewUrl, readNotebookLoadSource, removeNotebookLoadSourceParam } from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -38,7 +38,10 @@ export function NotebookScenePage() {
   useEffect(() => {
     if (notebooksEnabled) {
       if (uid) {
-        stateManager.loadNotebook(uid);
+        stateManager.loadNotebook(uid, readNotebookLoadSource());
+        // Taken off straight away, so a copied address is clean. Reading it again here would find nothing,
+        // which is why it is read in this effect and not while rendering: removing it changes the url.
+        removeNotebookLoadSourceParam();
       } else if (isNew) {
         stateManager.newNotebook();
         // The list's create button is the only link to this route today, so the source is fixed here.

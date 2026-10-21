@@ -10,6 +10,14 @@ import { type AppChromeService } from './AppChromeService';
 // service - a fresh `new Observable()` per render would otherwise look like a new source each time.
 const EMPTY_OBSERVABLE = new Observable();
 
+// Opening the overlay mega menu auto-focuses it (FocusScope in AppChromeMenu.tsx), which would
+// otherwise yank focus away from whatever the user is typing in - e.g. a panel editor field - the
+// moment scoped content shows up.
+function isTypingInEditableField(): boolean {
+  const el = document.activeElement;
+  return el instanceof HTMLElement && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+}
+
 /**
  * Opens a closed mega menu the moment scoped suggested dashboards become available, so the user
  * isn't left wondering why nothing happened after applying a scope. Lives here rather than inside
@@ -51,8 +59,10 @@ function useAutoOpenMegaMenuForScopedContent(chrome: AppChromeService) {
   // (fetchDashboards never re-runs for scopes that haven't changed, so this key never moves either).
   const lastContentKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (hasScopedDashboardsContent && scopeContentKey !== lastContentKeyRef.current) {
-      chrome.setMegaMenuOpen(true, true);
+    if (hasScopedDashboardsContent && scopeContentKey !== lastContentKeyRef.current && !isTypingInEditableField()) {
+      // Never persist this to the docked-open localStorage preference (2nd arg false) - this is an
+      // ambient suggestion, not the user choosing to keep the menu open going forward.
+      chrome.setMegaMenuOpen(true, false);
     }
     lastContentKeyRef.current = scopeContentKey;
   }, [hasScopedDashboardsContent, scopeContentKey, chrome]);
