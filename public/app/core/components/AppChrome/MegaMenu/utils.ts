@@ -271,7 +271,7 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
 /**
  * Items excluded from the main left navigation for all users, including pins and customisation.
  * Use the exact nav item id (e.g. 'explore', 'dashboards/playlists', 'plugin-page-my-app').
- * For items without an id, use their full nav URL, including any app sub URL.
+ * For items without an id, use their nav URL without the app sub URL; it is added when matching.
  * Hiding a parent also hides its descendants. This only controls menu visibility, not access.
  * Should be a temporary way to fix the menu sprawl until a more robust solution.
  */

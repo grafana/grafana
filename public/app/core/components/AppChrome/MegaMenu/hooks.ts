@@ -7,7 +7,7 @@ import { useLocalStorage } from 'react-use';
 import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -318,7 +318,12 @@ export const useNavCustomization = () => {
 
   // Apply hard-coded exclusions before resolving pins or edit-mode items so neither can reveal them.
   // When customisation is on, drop Bookmarks too — pinned items are re-presented in the pinned box.
-  const hiddenNavItems = new Set([...NON_MENU_NAV_IDS, ...(navigationInfoArchRefresh ? HIDDEN_NAV_ITEMS : [])]);
+  const hiddenNavItems = new Set(
+    [...NON_MENU_NAV_IDS, ...(navigationInfoArchRefresh ? HIDDEN_NAV_ITEMS : [])].map((key) =>
+      // If the key starts with a slash, it means it is a URL so we add the subUrl to it
+      key.startsWith('/') ? `${config.appSubUrl}${key}` : key
+    )
+  );
   const baseItems = removeHiddenItems(navTree, hiddenNavItems).filter(
     (item) => !(canCustomise && item.id === 'bookmarks')
   );
