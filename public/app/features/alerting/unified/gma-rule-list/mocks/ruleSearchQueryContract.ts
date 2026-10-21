@@ -1,4 +1,5 @@
 import { type SearchQueryNode } from '../rule-search/searchQueryLeaves';
+import { type RuleKind } from '../shared/ruleKind';
 
 /** What the checker reads from a built request body of either kind. */
 export interface CheckedSearchQuery {
@@ -9,7 +10,7 @@ export interface CheckedSearchQuery {
 }
 
 /** Test-only mirror of the per-kind rule search validation: a message per rejection. */
-export function getRuleSearchQueryViolations(query: CheckedSearchQuery, kind: 'alert' | 'recording'): string[] {
+export function getRuleSearchQueryViolations(query: CheckedSearchQuery, kind: RuleKind): string[] {
   const violations: string[] = [];
   const filterable = FILTERABLE_FIELDS[kind];
 
@@ -137,7 +138,7 @@ function getFilterViolations(
   filter: { field: string; operator: string; values: string[] },
   filterable: Set<string>,
   seenFields: Set<string>,
-  kind: 'alert' | 'recording'
+  kind: RuleKind
 ): string[] {
   const { field, operator, values } = filter;
   const violations: string[] = [];

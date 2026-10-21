@@ -1,6 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 /** Never pass titles, UIDs, folder paths, labels or queries - only rule kind and coarse outcome. */
 

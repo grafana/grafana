@@ -1,6 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 /** Only rule kind and coarse outcome, count or timing. Never titles, UIDs, labels or queries. */
 

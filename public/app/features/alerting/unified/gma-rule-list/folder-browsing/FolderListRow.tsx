@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { FolderPath } from '../rule-row/FolderPath';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { makeFolderRulesLink } from './folderLinks';
 import { type FolderRuleCount, useFolderPath } from './folderLookups';
@@ -14,7 +15,7 @@ import { type FolderRuleCount, useFolderPath } from './folderLookups';
 interface FolderListRowProps {
   folderUid: string;
   title: string;
-  kind: 'alert' | 'recording';
+  kind: RuleKind;
   /** Direct count for this rule kind only, never descendants. */
   count: FolderRuleCount;
   expanded: boolean;
@@ -57,7 +58,7 @@ export function FolderListRow({ folderUid, title, kind, count, expanded, onToggl
   );
 }
 
-function FolderCount({ kind, count, title }: { kind: 'alert' | 'recording'; count: FolderRuleCount; title: string }) {
+function FolderCount({ kind, count, title }: { kind: RuleKind; count: FolderRuleCount; title: string }) {
   if (count.status === 'loading') {
     return <Skeleton width={64} />;
   }
@@ -102,7 +103,7 @@ function FolderCount({ kind, count, title }: { kind: 'alert' | 'recording'; coun
   );
 }
 
-function countLabel(kind: 'alert' | 'recording', count: number): string {
+function countLabel(kind: RuleKind, count: number): string {
   if (kind === 'alert') {
     return t('alerting.gma-rule-list.folder-row.alert-rule-count', '', {
       count,

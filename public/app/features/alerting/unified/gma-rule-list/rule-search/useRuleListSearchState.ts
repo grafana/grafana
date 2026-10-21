@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { alertTokens } from './alertTokens';
 import { type FilterIssue, getFilterIssues } from './filterIssues';
@@ -10,8 +11,6 @@ import { type RuleSearchFilter, createEmptyFilter } from './ruleSearchFilter';
 import { serialize } from './serializer';
 
 export type RuleListMode = 'list' | 'folders';
-export type RuleListKind = 'alert' | 'recording';
-
 export interface UseRuleListSearchStateResult {
   filter: RuleSearchFilter;
   issues: FilterIssue[];
@@ -44,7 +43,7 @@ export function searchParamsForFilter(next: RuleSearchFilter, view: string | nul
  * Any non-folder criterion shows List, whatever `view` says. Applying one writes `view=list`;
  * clearing the last removes `view` so the page returns to Folders. A bare `view=list` is kept.
  */
-export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchStateResult {
+export function useRuleListSearchState(kind: RuleKind): UseRuleListSearchStateResult {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const registry = kind === 'alert' ? alertTokens : recordingTokens;
 

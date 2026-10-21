@@ -1,10 +1,12 @@
+import { type RuleKind } from '../shared/ruleKind';
+
 import { alertTokens } from './alertTokens';
 import { getIssueHints } from './filterIssueHints';
 import { getFilterIssues } from './filterIssues';
 import { parse } from './parser';
 import { recordingTokens } from './recordingTokens';
 
-function hintsFor(query: string, kind: 'alert' | 'recording' = 'alert') {
+function hintsFor(query: string, kind: RuleKind = 'alert') {
   const tokens = kind === 'alert' ? alertTokens : recordingTokens;
   return getIssueHints(getFilterIssues(parse(query, tokens), kind), tokens);
 }

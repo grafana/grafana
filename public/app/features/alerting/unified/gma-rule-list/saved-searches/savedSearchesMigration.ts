@@ -8,31 +8,30 @@ import { migrateLegacyRuleListUrlSync } from '../legacy-migration/migrationSync'
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { serialize } from '../rule-search/serializer';
 import { tokenize } from '../rule-search/tokenizer';
-
-export type SavedSearchKind = 'alert' | 'recording';
+import { type RuleKind } from '../shared/ruleKind';
 
 export const ALERT_SAVED_SEARCHES_STORAGE_KEY = 'alertRulesSavedSearches';
 export const RECORDING_SAVED_SEARCHES_STORAGE_KEY = 'recordingRulesSavedSearches';
 const LEGACY_SAVED_SEARCHES_STORAGE_KEY = 'savedSearches';
 const MIGRATED_MARKER_VALUE = 'true';
-const ALL_KINDS: SavedSearchKind[] = ['alert', 'recording'];
+const ALL_KINDS: RuleKind[] = ['alert', 'recording'];
 
-export function storageKeyForKind(kind: SavedSearchKind): string {
+export function storageKeyForKind(kind: RuleKind): string {
   return kind === 'alert' ? ALERT_SAVED_SEARCHES_STORAGE_KEY : RECORDING_SAVED_SEARCHES_STORAGE_KEY;
 }
 
 /** Once set, the copy never reruns, so user deletions and edits stick. */
-export function migratedMarkerKeyForKind(kind: SavedSearchKind): string {
+export function migratedMarkerKeyForKind(kind: RuleKind): string {
   return `${storageKeyForKind(kind)}Migrated`;
 }
 
-async function isKindMigrated(userStorage: UserStorage, kind: SavedSearchKind): Promise<boolean> {
+async function isKindMigrated(userStorage: UserStorage, kind: RuleKind): Promise<boolean> {
   const marker = await userStorage.getItem(migratedMarkerKeyForKind(kind));
   return marker === MIGRATED_MARKER_VALUE;
 }
 
 /** Untyped legacy entries default to Alert; only an explicit `type:recording` routes to Recording. */
-function destinationForLegacyQuery(query: string): SavedSearchKind {
+function destinationForLegacyQuery(query: string): RuleKind {
   const typeToken = tokenize(query).find((t) => t.key === 'type');
   return typeToken?.value === 'recording' ? 'recording' : 'alert';
 }
@@ -48,7 +47,7 @@ async function migrateQuery(
 
 /** Id dedupe only covers a retry after a failed write; the marker prevents re-copying. */
 async function migrateKind(
-  kind: SavedSearchKind,
+  kind: RuleKind,
   legacySearches: SavedSearch[],
   resolvers: NameResolvers,
   userStorage: UserStorage,

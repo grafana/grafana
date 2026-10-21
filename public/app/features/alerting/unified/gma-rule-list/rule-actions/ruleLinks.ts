@@ -1,6 +1,6 @@
 import { createAbsoluteUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 export function ruleShareUrl(uid: string): string {
   return createAbsoluteUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`);

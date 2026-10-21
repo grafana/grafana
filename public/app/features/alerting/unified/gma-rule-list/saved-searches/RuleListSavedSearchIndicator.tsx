@@ -6,11 +6,10 @@ import { alertTokens } from '../rule-search/alertTokens';
 import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
 import { serialize } from '../rule-search/serializer';
-
-import { type SavedSearchKind } from './savedSearchesMigration';
+import { type RuleKind } from '../shared/ruleKind';
 
 export interface RuleListSavedSearchIndicatorProps {
-  kind: SavedSearchKind;
+  kind: RuleKind;
   /** The canonical form of the current filter. */
   query: string;
   savedSearches: SavedSearch[];

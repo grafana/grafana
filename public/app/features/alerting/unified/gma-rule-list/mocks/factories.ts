@@ -1,7 +1,7 @@
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 export function folderItem(uid: string, title: string) {
   return {

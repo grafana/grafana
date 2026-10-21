@@ -1,5 +1,3 @@
-import { useEffect, useRef } from 'react';
-
 import { t } from '@grafana/i18n';
 import { Box, Divider, Stack } from '@grafana/ui';
 
@@ -15,7 +13,7 @@ import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRul
 import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
 import { RuleListSavedSearches, useRuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
-import { trackRuleListPageView } from '../shared/analytics';
+import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 import { FoldersView } from './RecordingRulesFoldersView';
@@ -47,15 +45,7 @@ function RecordingRulesBody({
 function RecordingRulesPage() {
   const { filter, issues, mode, hasNonFolderFilters, setFilter, setMode, reset } = useRuleListSearchState('recording');
 
-  const trackedView = useRef(false);
-  useEffect(() => {
-    if (!trackedView.current) {
-      trackedView.current = true;
-      trackRuleListPageView('recording', mode);
-    }
-    // Intentionally tracked once per mount with the mode at that time, not on every mode change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useTrackRuleListPageView('recording', mode);
 
   const savedSearches = useRuleListSavedSearches('recording');
   const query = serialize(filter);

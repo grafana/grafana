@@ -11,25 +11,21 @@ import { alertTokens } from '../rule-search/alertTokens';
 import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
 import { searchParamsForFilter } from '../rule-search/useRuleListSearchState';
+import { type RuleKind } from '../shared/ruleKind';
 
-import {
-  type SavedSearchKind,
-  applySavedSearch,
-  copyLegacySavedSearchesOnce,
-  storageKeyForKind,
-} from './savedSearchesMigration';
+import { applySavedSearch, copyLegacySavedSearchesOnce, storageKeyForKind } from './savedSearchesMigration';
 
 const trackDefaultSearchApplied = createAutoApplyTracker();
 
 // One setup per mounted page. It must outlive React's retries after suspending, so it lives outside the component.
-const pendingSetups = new Map<SavedSearchKind, Promise<string[]>>();
+const pendingSetups = new Map<RuleKind, Promise<string[]>>();
 
 /**
  * Renders `Page` only once the legacy copy has run and, with no `search` parameter in the URL, the default saved search
  * is in the URL. An empty `search=` is a deliberate unfiltered list and keeps it. The page never knows a saved search
  * was applied and never requests unfiltered results. Suspends to the route's boundary.
  */
-export function withSavedSearchesSetup<P extends {}>(kind: SavedSearchKind, Page: ComponentType<P>): ComponentType<P> {
+export function withSavedSearchesSetup<P extends {}>(kind: RuleKind, Page: ComponentType<P>): ComponentType<P> {
   function SavedSearchesSetupProxy(props: P) {
     useSavedSearchesSetup(kind);
     return <Page {...props} />;
@@ -37,7 +33,7 @@ export function withSavedSearchesSetup<P extends {}>(kind: SavedSearchKind, Page
   return SavedSearchesSetupProxy;
 }
 
-function useSavedSearchesSetup(kind: SavedSearchKind): void {
+function useSavedSearchesSetup(kind: RuleKind): void {
   let setupPromise = pendingSetups.get(kind);
   if (!setupPromise) {
     setupPromise = setUpSavedSearches(kind);
@@ -62,7 +58,7 @@ function useSavedSearchesSetup(kind: SavedSearchKind): void {
 }
 
 /** Never rejects. Resolves to the filter names dropped while migrating the default. */
-async function setUpSavedSearches(kind: SavedSearchKind): Promise<string[]> {
+async function setUpSavedSearches(kind: RuleKind): Promise<string[]> {
   const params = new URLSearchParams(locationService.getLocation().search);
   const applyDefault = !params.has('search');
 

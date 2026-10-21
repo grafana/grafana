@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { getAPIBaseURL } from '@grafana/api-clients';
 import server from '@grafana/test-utils/server';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 const RULES_BASE = getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1');
 const FOLDERS_BASE = getAPIBaseURL('folder.grafana.app', 'v1beta1');

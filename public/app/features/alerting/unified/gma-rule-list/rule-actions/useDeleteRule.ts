@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { useInvalidateFolderData } from '../folder-browsing/folderLookups';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { trackRuleDelete } from './analytics';
 
@@ -18,7 +19,7 @@ export interface DeleteRuleResult {
 }
 
 async function performDelete(
-  kind: 'alert' | 'recording',
+  kind: RuleKind,
   triggerDelete: () => Promise<unknown>,
   invalidateFolderData: () => void
 ): Promise<DeleteRuleResult> {

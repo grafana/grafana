@@ -1,3 +1,5 @@
+import { type RuleKind } from '../shared/ruleKind';
+
 import { DEFAULT_POLICY, type LabelMatcher, type RuleSearchFilter } from './ruleSearchFilter';
 
 export type FilterIssueReason = 'unsupported' | 'requiresDashboard' | 'unavailable' | 'invalid';
@@ -15,7 +17,7 @@ const DATASOURCE_UID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const EXPRESSION_DATASOURCE_UIDS = new Set(['__expr__', '-100', '__ml__']);
 
 /** Callers must show these tokens as invalid and skip the request; builders never fix them up silently. */
-export function getFilterIssues(filter: RuleSearchFilter, kind: 'alert' | 'recording'): FilterIssue[] {
+export function getFilterIssues(filter: RuleSearchFilter, kind: RuleKind): FilterIssue[] {
   const issues: FilterIssue[] = filter.invalid.map((token) => ({
     key: token.key,
     reason: 'unsupported',

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { trackDeletedRulesLoadResult, trackDeletedRulesPageView } from './analytics';
 

@@ -3,14 +3,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { logWarning } from '../../Analytics';
 import { serialize } from '../rule-search/serializer';
 import { TOKEN_KEYS } from '../rule-search/tokens';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { type NameResolvers, resolveMigratedNames } from './migrationResolve';
-import {
-  type Destination,
-  type LegacyRuleListParams,
-  type MigrationDiagnostics,
-  migrateLegacyRuleListUrlSync,
-} from './migrationSync';
+import { type LegacyRuleListParams, type MigrationDiagnostics, migrateLegacyRuleListUrlSync } from './migrationSync';
 
 // Event payloads carry only these names; user-typed tokens are reported as `other`.
 const ANALYTICS_FILTER_KEYS = new Set<string>([
@@ -24,7 +20,7 @@ const ANALYTICS_FILTER_KEYS = new Set<string>([
   'queryString',
 ]);
 
-const DESTINATION_PATH: Record<Destination, string> = {
+const DESTINATION_PATH: Record<RuleKind, string> = {
   alert: '/alerting/rules/alert',
   recording: '/alerting/rules/recording',
 };

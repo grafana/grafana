@@ -3,7 +3,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { trackRuleDuplicateStarted } from './analytics';
 import { ruleDuplicateUrl } from './ruleLinks';

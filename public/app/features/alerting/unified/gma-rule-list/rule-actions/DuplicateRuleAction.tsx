@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { RuleActionMenuItem } from './RuleActionMenuItem';
 import { trackRuleDuplicateStarted } from './analytics';

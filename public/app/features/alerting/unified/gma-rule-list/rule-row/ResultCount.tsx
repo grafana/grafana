@@ -3,6 +3,8 @@ import Skeleton from 'react-loading-skeleton';
 import { t } from '@grafana/i18n';
 import { Text } from '@grafana/ui';
 
+import { type RuleKind } from '../shared/ruleKind';
+
 export interface ResultTotal {
   count: number;
   /** `lte` means the backend reported a lower bound rather than an exact count. */
@@ -10,7 +12,7 @@ export interface ResultTotal {
 }
 
 interface ResultCountProps {
-  kind: 'alert' | 'recording';
+  kind: RuleKind;
   /** Absent when the response carried no total: nothing is shown rather than a count of loaded rows. */
   total?: ResultTotal;
   isLoading?: boolean;
@@ -33,7 +35,7 @@ export function ResultCount({ kind, total, isLoading = false }: ResultCountProps
   );
 }
 
-function resultCountLabel(kind: 'alert' | 'recording', count: number, formatted: string): string {
+function resultCountLabel(kind: RuleKind, count: number, formatted: string): string {
   if (kind === 'alert') {
     return t('alerting.gma-rule-list.result-count.alert-rules', '', {
       count,

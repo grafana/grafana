@@ -4,8 +4,8 @@ import { recordingTokens } from '../rule-search/recordingTokens';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { quoteIfNeeded } from '../rule-search/serializer';
 import { tokenize } from '../rule-search/tokenizer';
+import { type RuleKind } from '../shared/ruleKind';
 
-export type Destination = 'alert' | 'recording';
 export type ViewMode = 'list' | 'folders';
 
 export interface LegacyRuleListParams {
@@ -24,7 +24,7 @@ export interface MigrationDiagnostics {
 }
 
 export interface SyncMigrationResult {
-  destination: Destination;
+  destination: RuleKind;
   mode: ViewMode;
   /** May still hold legacy display names instead of UIDs; resolved by the async stage. */
   filter: RuleSearchFilter;
@@ -36,7 +36,7 @@ interface WorkingToken {
   value: string;
 }
 
-function destinationRegistry(destination: Destination) {
+function destinationRegistry(destination: RuleKind) {
   return destination === 'recording' ? recordingTokens : alertTokens;
 }
 
@@ -58,7 +58,7 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
   // 1. `type:` beats legacy `ruleType`, which beats the Alert default; it only picks a page, so it is never reported.
   const typeToken = working.find((t) => t.key === 'type');
   const typeValue = typeToken?.value ?? params.ruleType ?? undefined;
-  const destination: Destination = typeValue === 'recording' ? 'recording' : 'alert';
+  const destination: RuleKind = typeValue === 'recording' ? 'recording' : 'alert';
   working = working.filter((t) => t.key !== 'type');
 
   if (!working.some((t) => t.key === 'datasource') && params.dataSource) {

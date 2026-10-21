@@ -8,11 +8,12 @@ import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
 import { serialize } from '../rule-search/serializer';
 import { useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { type RuleKind } from '../shared/ruleKind';
 
-import { type SavedSearchKind, applySavedSearch, storageKeyForKind } from './savedSearchesMigration';
+import { applySavedSearch, storageKeyForKind } from './savedSearchesMigration';
 
 /** One load of the kind's collection, shared by the toolbar control and the applied-search indicator. */
-export function useRuleListSavedSearches(kind: SavedSearchKind): UseGenericSavedSearchesResult {
+export function useRuleListSavedSearches(kind: RuleKind): UseGenericSavedSearchesResult {
   return useGenericSavedSearches({ storageKey: storageKeyForKind(kind) });
 }
 
@@ -21,7 +22,7 @@ export function RuleListSavedSearches({
   kind,
   savedSearches,
 }: {
-  kind: SavedSearchKind;
+  kind: RuleKind;
   savedSearches: UseGenericSavedSearchesResult;
 }) {
   const { filter, setFilter } = useRuleListSearchState(kind);

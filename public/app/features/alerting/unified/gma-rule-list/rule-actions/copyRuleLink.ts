@@ -2,7 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { appEvents } from 'app/core/app_events';
 
-import { type RuleKind } from '../shared/analytics';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { trackRuleCopyLink } from './analytics';
 

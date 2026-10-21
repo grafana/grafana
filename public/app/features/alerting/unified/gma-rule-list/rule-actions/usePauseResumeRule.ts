@@ -8,11 +8,12 @@ import { appEvents } from 'app/core/app_events';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { useInvalidateFolderData } from '../folder-browsing/folderLookups';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { trackRulePauseResume } from './analytics';
 
 async function performPauseResume(
-  kind: 'alert' | 'recording',
+  kind: RuleKind,
   triggerPatch: () => Promise<unknown>,
   paused: boolean,
   invalidateFolderData: () => void

@@ -1,5 +1,3 @@
-import { useEffect, useRef } from 'react';
-
 import { t } from '@grafana/i18n';
 import { Box, Divider, Stack } from '@grafana/ui';
 
@@ -15,7 +13,7 @@ import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRul
 import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
 import { RuleListSavedSearches, useRuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
-import { trackRuleListPageView } from '../shared/analytics';
+import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { FoldersView } from './AlertRulesFoldersView';
@@ -47,15 +45,7 @@ function AlertRulesBody({
 function AlertRulesPage() {
   const { filter, issues, mode, hasNonFolderFilters, setFilter, setMode, reset } = useRuleListSearchState('alert');
 
-  const trackedView = useRef(false);
-  useEffect(() => {
-    if (!trackedView.current) {
-      trackedView.current = true;
-      trackRuleListPageView('alert', mode);
-    }
-    // Once per mount, with the mode at that time.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useTrackRuleListPageView('alert', mode);
 
   const savedSearches = useRuleListSavedSearches('alert');
   const query = serialize(filter);
