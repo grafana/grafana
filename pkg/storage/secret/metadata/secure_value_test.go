@@ -50,6 +50,7 @@ func (m versionMap) requireSame(t require.TestingT, namespace, name string, vers
 	require.Equal(t, otherExpected, otherVersion)
 }
 
+//nolint:gocyclo
 func TestPropertyStateMachine(t *testing.T) {
 	for _, tc := range []struct {
 		name                   string
