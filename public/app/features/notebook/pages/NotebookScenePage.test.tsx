@@ -1,3 +1,4 @@
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setPluginComponentHook } from '@grafana/runtime';
@@ -257,6 +258,61 @@ describe('NotebookScenePage', () => {
       await renderLoaded(scene, '/notebooks/nb-1');
 
       expect(scene.state.isEditing).toBe(false);
+    });
+
+    // Edit mode syncs through the scene, so the page has to mount UrlSyncContextProvider for every
+    // notebook. It used to skip it when the time controls were hidden, on the grounds that such a
+    // notebook had no url state — which stopped being true once edit mode moved onto the scene.
+    describe('where the reader came from', () => {
+      function renderRoute(url: string) {
+        setTestFlags({ [NOTEBOOKS_FLAG]: true });
+        const loadNotebook = jest.spyOn(getNotebookPageStateManager(), 'loadNotebook').mockResolvedValue();
+
+        render(
+          <Routes>
+            <Route path="/notebooks/:uid" element={<NotebookScenePage />} />
+          </Routes>,
+          { historyOptions: { initialEntries: [url] } }
+        );
+
+        return loadNotebook;
+      }
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('hands the source the link carried to the load', async () => {
+        const loadNotebook = renderRoute('/notebooks/nb-1?source=notebook_list');
+
+        await waitFor(() => expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'notebook_list'));
+      });
+
+      it('loads as a direct visit when the link said nothing', async () => {
+        const loadNotebook = renderRoute('/notebooks/nb-1');
+
+        await waitFor(() => expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'direct'));
+      });
+
+      // The param is only there to be read: a copied address bar must not carry it to somebody else.
+      it('takes the param off the url, keeping the rest, once it has been read', async () => {
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+        const loadNotebook = renderRoute('/notebooks/nb-1?edit=true&source=explore');
+
+        await waitFor(() => expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'explore'));
+        await waitFor(() => expect(locationService.getLocation().search).not.toContain('source'));
+        expect(locationService.getLocation().search).toContain('edit=true');
+      });
+
+      // Removing the param changes the url, which must not load the notebook a second time as a direct visit.
+      it('loads the notebook once, with the source the link carried', async () => {
+        const loadNotebook = renderRoute('/notebooks/nb-1?source=notebook_list');
+
+        await waitFor(() => expect(locationService.getLocation().search).not.toContain('source'));
+
+        expect(loadNotebook).toHaveBeenCalledTimes(1);
+        expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'notebook_list');
+      });
     });
   });
 });

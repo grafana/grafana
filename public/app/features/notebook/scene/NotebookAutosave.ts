@@ -21,7 +21,12 @@ import {
   NOTEBOOK_AUTOSAVE_FAILED_REASON,
   NOTEBOOK_ENTRY_POINT,
 } from '../analytics/types';
-import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
+import {
+  createNotebook,
+  NotebookConflictError,
+  readNotebookResourceVersion,
+  updateNotebook,
+} from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
@@ -154,6 +159,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
+    this.stopped = false;
     if (this.baseline === undefined) {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
@@ -289,6 +295,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
     this.cellTimeRangesEdited.clear();
+  }
+
+  public markVisualizationEdited(elementName: string, wasEditing = this.scene.state.isEditing): void {
+    if (!wasEditing || this.scene.state.isDraft) {
+      return;
+    }
+    this.vizConfigsEdited.add(elementName);
+    const somethingToWrite = this.hasSomethingToWrite();
+    if (somethingToWrite) {
+      this.editedByWriter = true;
+    }
+    this.schedule(somethingToWrite);
+    if (this.stopped) {
+      this.flush();
+    }
   }
 
   /**
@@ -522,6 +543,27 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
+   * Whether someone else saved the notebook after this scene loaded it, for a write from outside the
+   * notebook that should be refused rather than overwrite theirs.
+   */
+  public async isSavedElsewhere(): Promise<boolean> {
+    const uid = this.scene.state.uid;
+    if (!uid || this.state.savedResourceVersion === undefined) {
+      return false;
+    }
+
+    // Let a save of this scene's own that is already running land first. Otherwise the server can
+    // already hold a version this scene wrote but has not yet recorded, which would read as someone
+    // else's save. Only one already running: bringing a waiting edit forward could conflict and raise
+    // the overwrite modal for it while the caller is about to ask the person elsewhere.
+    await this.awaitInFlightSave();
+    const serverVersion = await readNotebookResourceVersion(uid);
+    // Read after the request, not before: a save that finished during it moved both versions.
+    const savedVersion = this.state.savedResourceVersion;
+    return serverVersion !== undefined && savedVersion !== undefined && serverVersion !== savedVersion;
+  }
+
+  /**
    * Brings forward the save the debounce was already going to make, for a caller about to read the
    * notebook back from the server. Unlike `saveDocumentChange` it claims nothing on the way.
    *
@@ -546,6 +588,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   public retry(): void {
     this.schedule();
     this.flush();
+  }
+
+  /**
+   * The Retry button's own entry, so the press is counted and an overwrite, which also calls `retry`,
+   * is not: that one is already reported as the answer to the conflict prompt.
+   */
+  public retryFromButton(): void {
+    NotebookAnalytics.autosaveRetried(this.scene.state.uid ?? '', this.failedAttempts);
+    this.retry();
   }
 
   /**

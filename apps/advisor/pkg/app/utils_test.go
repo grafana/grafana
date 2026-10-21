@@ -25,22 +25,31 @@ import (
 
 func TestGetCheck(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
-	obj.SetLabels(map[string]string{checks.TypeLabel: "testType"})
+	obj.SetLabels(map[string]string{checks.TypeLabel: "mock"})
 
-	checkMap := map[string]checks.Check{
-		"testType": &mockCheck{},
-	}
-
-	check, err := getCheck(obj, checkMap)
+	check, err := getCheck(obj, &mockCheckRegistry{})
 	assert.NoError(t, err)
 	assert.NotNil(t, check)
 }
 
+// Checks are processed concurrently and Init keeps per-run state in the check, so every
+// Check must get its own instance.
+func TestGetCheck_NewInstance(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetLabels(map[string]string{checks.TypeLabel: "mock"})
+	registry := &mockCheckRegistry{}
+
+	first, err := getCheck(obj, registry)
+	require.NoError(t, err)
+	second, err := getCheck(obj, registry)
+	require.NoError(t, err)
+	assert.NotSame(t, first, second)
+}
+
 func TestGetCheck_MissingLabel(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
-	checkMap := map[string]checks.Check{}
 
-	_, err := getCheck(obj, checkMap)
+	_, err := getCheck(obj, &mockCheckRegistry{})
 	assert.Error(t, err)
 	assert.Equal(t, "missing check type as label", err.Error())
 }
@@ -49,13 +58,23 @@ func TestGetCheck_UnknownType(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetLabels(map[string]string{checks.TypeLabel: "unknownType"})
 
-	checkMap := map[string]checks.Check{
-		"testType": &mockCheck{},
-	}
-
-	_, err := getCheck(obj, checkMap)
+	_, err := getCheck(obj, &mockCheckRegistry{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown check type unknownType")
+	assert.Contains(t, err.Error(), "Supported types are: mock")
+}
+
+type mockCheckRegistry struct{}
+
+func (m *mockCheckRegistry) Checks() []checks.Check {
+	return []checks.Check{&mockCheck{}}
+}
+
+func (m *mockCheckRegistry) Check(id string) (checks.Check, bool) {
+	if id != "mock" {
+		return nil, false
+	}
+	return &mockCheck{}, true
 }
 
 func TestProcessCheck(t *testing.T) {
