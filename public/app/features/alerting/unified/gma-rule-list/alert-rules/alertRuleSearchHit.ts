@@ -1,7 +1,11 @@
-import { type ListAlertRuleSearchRulesV0Alpha1SearchResultHit } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import {
+  type AlertRuleAlertRuleHealth,
+  type AlertRuleAlertRuleState,
+  type ListAlertRuleSearchRulesV0Alpha1SearchResultHit,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
-import { asBoolean, asLabels, asString, asStringArray } from '../rule-search/searchHitFields';
+import { asBoolean, asLabels, asOneOf, asString, asStringArray, keysOf } from '../rule-search/searchHitFields';
 
 export interface AlertRuleSearchHit {
   uid: string;
@@ -10,8 +14,8 @@ export interface AlertRuleSearchHit {
   paused?: boolean;
   interval?: string;
   /** Absent until `alerting.ruleStatusSync` populates it; absence reads as Unavailable. */
-  state?: string;
-  health?: string;
+  state?: AlertRuleAlertRuleState;
+  health?: AlertRuleAlertRuleHealth;
   lastError?: string;
   totals: InstanceTotals;
   /** Falls back to this when there's no lastError. */
@@ -33,8 +37,8 @@ export function toAlertRuleSearchHit(item: ListAlertRuleSearchRulesV0Alpha1Searc
     folderUid: asString(fields.folder),
     paused: asBoolean(fields.paused),
     interval: asString(fields.interval),
-    state: asString(fields.state),
-    health: asString(fields.health),
+    state: asOneOf(fields.state, ALERT_RULE_STATES),
+    health: asOneOf(fields.health, ALERT_RULE_HEALTHS),
     lastError: asString(fields.lastError),
     totals: {
       healthy: asCount(fields.totalsHealthy),
@@ -81,3 +85,20 @@ function asRecord(value: unknown): Record<string, string> {
 function asCount(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
+
+// Keyed by the generated unions, so a value the API adds or drops fails the type check here.
+const ALERT_RULE_STATES = keysOf<AlertRuleAlertRuleState>({
+  Inactive: true,
+  Healthy: true,
+  Firing: true,
+  Pending: true,
+  Recovering: true,
+});
+
+const ALERT_RULE_HEALTHS = keysOf<AlertRuleAlertRuleHealth>({
+  Unknown: true,
+  OK: true,
+  Paused: true,
+  Error: true,
+  NoData: true,
+});

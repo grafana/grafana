@@ -46,4 +46,22 @@ describe('toAlertRuleSearchHit', () => {
     expect(toHit({}).summary).toBeUndefined();
     expect(toHit({ annotations: '{not json' }).summary).toBeUndefined();
   });
+
+  it('reads the state and health values the API sends', () => {
+    const hit = toHit({ state: 'Pending', health: 'NoData' });
+
+    expect(hit.state).toBe('Pending');
+    expect(hit.health).toBe('NoData');
+  });
+
+  it.each([
+    { name: 'another case', state: 'FIRING', health: 'ok' },
+    { name: 'an unknown value', state: 'Mystery', health: 'Degraded' },
+    { name: 'the Recording rule health', state: 'Firing', health: 'Recording' },
+  ])('leaves state or health unset for $name', ({ state, health }) => {
+    const hit = toHit({ state, health });
+
+    expect(hit.health).toBeUndefined();
+    expect(hit.state).toBe(state === 'Firing' ? 'Firing' : undefined);
+  });
 });

@@ -45,7 +45,7 @@ describe('RecordingRuleRow', () => {
     expect(screen.getByRole('listitem', { name: 'cpu_usage:avg' })).toBeInTheDocument();
   });
 
-  it.each([
+  it.each<{ name: string; props: Partial<RecordingRuleSearchHit>; label: string }>([
     { name: 'Recording health', props: { health: 'Recording' }, label: 'Recording' },
     { name: 'Error health', props: { health: 'Error' }, label: 'Failed to evaluate rule' },
     { name: 'a missing status', props: {}, label: 'Status unavailable' },

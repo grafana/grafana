@@ -11,7 +11,6 @@ describe('RuleStatusIcon', () => {
     { name: 'state Recovering', props: { kind: 'alert', state: 'Recovering', health: 'OK' }, label: 'Recovering' },
     { name: 'state Healthy', props: { kind: 'alert', state: 'Healthy', health: 'OK' }, label: 'Normal' },
     { name: 'state Inactive', props: { kind: 'alert', state: 'Inactive', health: 'OK' }, label: 'Normal' },
-    { name: 'state in another case', props: { kind: 'alert', state: 'FIRING' }, label: 'Firing' },
     {
       name: 'health Error over state Firing',
       props: { kind: 'alert', state: 'Firing', health: 'Error' },
@@ -47,12 +46,12 @@ describe('RuleStatusIcon', () => {
       props: { kind: 'alert', health: 'Unknown' },
       label: 'Status unavailable',
     },
+    { name: 'recording without health', props: { kind: 'recording' }, label: 'Status unavailable' },
     {
-      name: 'an unmapped state with health Unknown',
-      props: { kind: 'alert', state: 'Mystery', health: 'Unknown' },
+      name: 'recording health Unknown',
+      props: { kind: 'recording', health: 'Unknown' },
       label: 'Status unavailable',
     },
-    { name: 'recording without health', props: { kind: 'recording' }, label: 'Status unavailable' },
   ])('shows the "$label" icon for $name', ({ props, label }) => {
     render(<RuleStatusIcon {...props} />);
 

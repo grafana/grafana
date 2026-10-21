@@ -1,22 +1,23 @@
 import { type ComponentProps } from 'react';
 
+import {
+  type AlertRuleAlertRuleHealth,
+  type AlertRuleAlertRuleState,
+  type RecordingRuleRecordingRuleHealth,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Icon, type IconName, Text, Tooltip } from '@grafana/ui';
 
-interface RuleStatusIconProps {
-  kind: 'alert' | 'recording';
-  /** Ignored for recording rules. */
-  state?: string;
-  health?: string;
-  paused?: boolean;
-}
+type RuleStatusIconProps =
+  | { kind: 'alert'; state?: AlertRuleAlertRuleState; health?: AlertRuleAlertRuleHealth; paused?: boolean }
+  | { kind: 'recording'; health?: RecordingRuleRecordingRuleHealth; paused?: boolean };
 
 /**
  * The status icon of the new list. It keeps the old list's colours and tooltips but gives firing, pending and paused
  * their own shapes, because their circles were confused at row size. The old list keeps StateIcon unchanged.
  */
-export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconProps) {
-  const status = resolveStatus(kind, state?.toLowerCase(), health?.toLowerCase(), Boolean(paused));
+export function RuleStatusIcon(props: RuleStatusIconProps) {
+  const status = getStatus(resolveStatusName(props));
 
   return (
     <Tooltip content={status.label} placement="right">
@@ -31,44 +32,63 @@ export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconPr
 
 const ICON_SIZE = 15;
 
+type StatusName =
+  | 'paused'
+  | 'error'
+  | 'no-data'
+  | 'recording'
+  | 'firing'
+  | 'pending'
+  | 'recovering'
+  | 'normal'
+  | 'unavailable';
+
 interface Status {
   icon: IconName;
   color: ComponentProps<typeof Text>['color'];
   label: string;
 }
 
-function resolveStatus(kind: 'alert' | 'recording', state?: string, health?: string, paused = false): Status {
+function resolveStatusName(props: RuleStatusIconProps): StatusName {
   // The spec decides: status health stays Paused until the next sync after a resume.
-  if (paused) {
-    return { icon: 'pause', color: 'warning', label: t('alerting.gma-rule-list.status.paused', 'Paused') };
+  if (props.paused) {
+    return 'paused';
   }
-  if (health === 'error') {
-    return {
-      icon: 'times-circle',
-      color: 'error',
-      label: t('alerting.gma-rule-list.status.error', 'Failed to evaluate rule'),
-    };
+  if (props.health === 'Error') {
+    return 'error';
   }
-  if (health === 'nodata') {
-    return {
-      icon: 'exclamation-triangle',
-      color: 'warning',
-      label: t('alerting.gma-rule-list.status.no-data', 'Insufficient data'),
-    };
+  if (props.health === 'NoData') {
+    return 'no-data';
   }
+  if (props.kind === 'recording') {
+    return props.health === 'Recording' ? 'recording' : 'unavailable';
+  }
+  // Health OK alone says nothing about whether the alert fires.
+  return props.state ? ALERT_STATE_STATUS[props.state] : 'unavailable';
+}
 
-  if (kind === 'recording') {
-    if (health === 'ok' || health === 'recording') {
+function getStatus(name: StatusName): Status {
+  switch (name) {
+    case 'paused':
+      return { icon: 'pause', color: 'warning', label: t('alerting.gma-rule-list.status.paused', 'Paused') };
+    case 'error':
+      return {
+        icon: 'times-circle',
+        color: 'error',
+        label: t('alerting.gma-rule-list.status.error', 'Failed to evaluate rule'),
+      };
+    case 'no-data':
+      return {
+        icon: 'exclamation-triangle',
+        color: 'warning',
+        label: t('alerting.gma-rule-list.status.no-data', 'Insufficient data'),
+      };
+    case 'recording':
       return {
         icon: 'square-shape',
         color: 'success',
         label: t('alerting.gma-rule-list.status.recording', 'Recording'),
       };
-    }
-    return statusUnavailable();
-  }
-
-  switch (state) {
     case 'firing':
       return { icon: 'fire', color: 'error', label: t('alerting.gma-rule-list.status.firing', 'Firing') };
     case 'pending':
@@ -79,20 +99,22 @@ function resolveStatus(kind: 'alert' | 'recording', state?: string, health?: str
         color: 'warning',
         label: t('alerting.gma-rule-list.status.recovering', 'Recovering'),
       };
-    case 'healthy':
-    case 'inactive':
     case 'normal':
       return { icon: 'check-circle', color: 'success', label: t('alerting.gma-rule-list.status.normal', 'Normal') };
-    default:
-      // Health OK alone says nothing about whether the alert fires.
-      return statusUnavailable();
+    case 'unavailable':
+      return {
+        icon: 'circle',
+        color: 'secondary',
+        label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
+      };
   }
 }
 
-function statusUnavailable(): Status {
-  return {
-    icon: 'circle',
-    color: 'secondary',
-    label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
-  };
-}
+// Keyed by the generated union, so a state the API adds fails the type check until it has an icon.
+const ALERT_STATE_STATUS: Record<AlertRuleAlertRuleState, StatusName> = {
+  Firing: 'firing',
+  Pending: 'pending',
+  Recovering: 'recovering',
+  Healthy: 'normal',
+  Inactive: 'normal',
+};

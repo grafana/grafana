@@ -1,6 +1,9 @@
-import { type ListRecordingRuleSearchRulesV0Alpha1SearchResultHit } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import {
+  type ListRecordingRuleSearchRulesV0Alpha1SearchResultHit,
+  type RecordingRuleRecordingRuleHealth,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-import { asBoolean, asLabels, asString, asStringArray } from '../rule-search/searchHitFields';
+import { asBoolean, asLabels, asOneOf, asString, asStringArray, keysOf } from '../rule-search/searchHitFields';
 
 export interface RecordingRuleSearchHit {
   uid: string;
@@ -11,7 +14,7 @@ export interface RecordingRuleSearchHit {
   metric?: string;
   targetDataSourceUid?: string;
   /** Absent until `alerting.ruleStatusSync` populates it; `Recording` means healthy. */
-  health?: string;
+  health?: RecordingRuleRecordingRuleHealth;
   lastError?: string;
   labels: Record<string, string>;
   dataSourceUids: string[];
@@ -30,9 +33,18 @@ export function toRecordingRuleSearchHit(
     interval: asString(fields.interval),
     metric: asString(fields.metric),
     targetDataSourceUid: asString(fields.targetDatasourceUID),
-    health: asString(fields.health),
+    health: asOneOf(fields.health, RECORDING_RULE_HEALTHS),
     lastError: asString(fields.lastError),
     labels: asLabels(fields.labels),
     dataSourceUids: asStringArray(fields.datasourceUIDs),
   };
 }
+
+// Keyed by the generated union, so a value the API adds or drops fails the type check here.
+const RECORDING_RULE_HEALTHS = keysOf<RecordingRuleRecordingRuleHealth>({
+  Unknown: true,
+  Recording: true,
+  Paused: true,
+  Error: true,
+  NoData: true,
+});
