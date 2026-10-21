@@ -7,7 +7,6 @@ import {
   type TransformerRegistryItem,
   FrameMatcherID,
   type DataTransformContext,
-  getFrameMatchers,
   transformDataFrame,
   type DataFrame,
   transformerUsesDynamicRefId,
@@ -21,7 +20,10 @@ import {
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { interpolateConfigs } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
+import {
+  frameMatcherFor,
+  interpolateConfigs,
+} from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
@@ -114,7 +116,7 @@ export const TransformationOperationRow = ({
     // transformDataFrame skips variable interpolation under Scenes, so resolve them here as the panel does.
     const resolved = interpolateConfigs(configs.map((t) => t.transformation));
     const config = resolved[index];
-    const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+    const matcher = frameMatcherFor(config);
     // we need previous transformation index to get its outputs
     //    to be used in this transforms inputs
     const prevTransformIndex = index - 1;
@@ -136,53 +138,72 @@ export const TransformationOperationRow = ({
 
     const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
 
-    const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
-      setInput(applyFilter(data));
-    });
+    // A resolved filter can be an invalid regex, which transformDataFrame throws on both while building
+    // its operators and inside the replay; the panel reports that itself, so the row must not crash.
+    const subscriptions: Subscription[] = [];
+    const error = (err: unknown) => console.error('Failed to replay transformations for the editor', err);
 
-    // The generated name has to come from what this transformation actually emits. Guessing it from
-    // the input is wrong wherever the two diverge: Reduce in fields mode keeps the incoming refIds,
-    // transformers that drop empty frames build the name from fewer of them, and the no-op paths
-    // return their input untouched. Run without the filter (already applied) or the static refId, so
-    // what comes back is the name the user would get by leaving the field blank; without `disabled`
-    // too, so a disabled row still shows one. Only the rows that can pin a name render it, and the
-    // rest would pay for the extra replay on every data or config change.
-    let generatedRefIdSubscription: Subscription | undefined;
+    try {
+      subscriptions.push(
+        transformDataFrame(inputTransforms, data.series, ctx).subscribe({
+          next: (data) => setInput(applyFilter(data)),
+          error,
+        })
+      );
 
-    if (canSetRefId) {
-      const previewConfig: DataTransformerConfig = {
-        ...config,
-        refId: undefined,
-        filter: undefined,
-        disabled: undefined,
-      };
-      generatedRefIdSubscription = transformDataFrame(inputTransforms, data.series, ctx)
-        .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
-        // More than one frame means there is no single output to name, so the row shows "(Auto)".
-        .subscribe((frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined));
+      // The generated name has to come from what this transformation actually emits. Guessing it from
+      // the input is wrong wherever the two diverge: Reduce in fields mode keeps the incoming refIds,
+      // transformers that drop empty frames build the name from fewer of them, and the no-op paths
+      // return their input untouched. Run without the filter (already applied) or the static refId, so
+      // what comes back is the name the user would get by leaving the field blank; without `disabled`
+      // too, so a disabled row still shows one. Only the rows that can pin a name render it, and the
+      // rest would pay for the extra replay on every data or config change.
+      if (canSetRefId) {
+        const previewConfig: DataTransformerConfig = {
+          ...config,
+          refId: undefined,
+          filter: undefined,
+          disabled: undefined,
+        };
+        subscriptions.push(
+          transformDataFrame(inputTransforms, data.series, ctx)
+            .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
+            .subscribe({
+              // More than one frame means there is no single output to name, so the row shows "(Auto)".
+              next: (frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined),
+              error,
+            })
+        );
+      }
+      subscriptions.push(
+        transformDataFrame(inputTransforms, data.series, ctx)
+          .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
+          .subscribe({ next: setOutput, error })
+      );
+      subscriptions.push(
+        transformDataFrame(prevInputTransforms, data.series, ctx)
+          .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
+          .subscribe({
+            next: (result) => {
+              let mergedResult = [...result];
+              // add refIds that were requested even if they did not return a result
+              data.request?.targets.forEach((series) => {
+                const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
+                if (!refIdInResult) {
+                  mergedResult.push({ refId: series.refId, fields: [], length: 0 });
+                }
+              });
+              setPrevOutput(mergedResult);
+            },
+            error,
+          })
+      );
+    } catch (err) {
+      error(err);
     }
-    const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
-      .subscribe(setOutput);
-    const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe((result) => {
-        let mergedResult = [...result];
-        // add refIds that were requested even if they did not return a result
-        data.request?.targets.forEach((series) => {
-          const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
-          if (!refIdInResult) {
-            mergedResult.push({ refId: series.refId, fields: [], length: 0 });
-          }
-        });
-        setPrevOutput(mergedResult);
-      });
 
     return function unsubscribe() {
-      inputSubscription.unsubscribe();
-      outputSubscription.unsubscribe();
-      prevOutputSubscription.unsubscribe();
-      generatedRefIdSubscription?.unsubscribe();
+      subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
   }, [index, data, configs, canSetRefId]);
 

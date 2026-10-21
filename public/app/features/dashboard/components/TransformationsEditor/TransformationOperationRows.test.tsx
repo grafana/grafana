@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -7,6 +7,7 @@ import {
   DataTransformerID,
   FieldMatcherID,
   FieldType,
+  FrameMatcherID,
   ReducerID,
   standardTransformersRegistry,
   toDataFrame,
@@ -123,7 +124,12 @@ describe('TransformationOperationRows', () => {
     beforeEach(() => {
       prevContext = window.__grafanaSceneContext;
       window.__grafanaSceneContext = new EmbeddedScene({
-        $variables: new SceneVariableSet({ variables: [new ConstantVariable({ name: 'const', value: '10' })] }),
+        $variables: new SceneVariableSet({
+          variables: [
+            new ConstantVariable({ name: 'const', value: '10' }),
+            new ConstantVariable({ name: 'brokenRegex', value: '/unclosed' }),
+          ],
+        }),
         body: new SceneCanvasText({ text: '' }),
       });
       window.__grafanaSceneContext.activate();
@@ -178,6 +184,24 @@ describe('TransformationOperationRows', () => {
 
       const menu = await screen.findByLabelText('Select options menu');
       expect(await within(menu).findByText('plus')).toBeInTheDocument();
+    });
+
+    it('keeps the rows rendered when a filter variable resolves to an invalid regex', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const reduce = { id: DataTransformerID.reduce, options: { reducers: [ReducerID.max] } };
+
+      setup(
+        [
+          { id: 'a', transformation: { ...reduce, filter: { id: FrameMatcherID.byName, options: '$brokenRegex' } } },
+          { id: 'b', transformation: reduce },
+        ],
+        seriesData
+      );
+
+      expect(await screen.findByText('1 - Reduce')).toBeInTheDocument();
+      expect(screen.getByText('2 - Reduce')).toBeInTheDocument();
+      await waitFor(() => expect(consoleError).toHaveBeenCalled());
+      consoleError.mockRestore();
     });
   });
 });
