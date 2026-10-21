@@ -206,5 +206,39 @@ describe('TransformationOperationRows', () => {
 
       expect(replayFailures()).toHaveLength(2);
     });
+
+    it('still gives a row with an invalid filter regex its input fields', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      setup(
+        [
+          {
+            id: 'a',
+            transformation: {
+              id: DataTransformerID.calculateField,
+              options: { mode: CalculateFieldMode.BinaryOperation },
+              filter: { id: FrameMatcherID.byName, options: '$brokenRegex' },
+            },
+          },
+        ],
+        {
+          series: [
+            toDataFrame({
+              refId: 'A',
+              fields: [
+                { name: 'time', type: FieldType.time, values: [1, 2] },
+                { name: 'value', type: FieldType.number, values: [10, 20] },
+              ],
+            }),
+          ],
+          annotations: [],
+        }
+      );
+
+      await userEvent.click(await screen.findByRole('combobox', { name: 'Left operand' }));
+
+      const menu = await screen.findByLabelText('Select options menu');
+      expect(await within(menu).findByText('value')).toBeInTheDocument();
+    });
   });
 });

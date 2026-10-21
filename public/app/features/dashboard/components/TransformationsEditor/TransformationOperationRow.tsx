@@ -7,6 +7,7 @@ import {
   type TransformerRegistryItem,
   FrameMatcherID,
   type DataTransformContext,
+  type FrameMatcher,
   getFrameMatchers,
   transformDataFrame,
   type DataFrame,
@@ -148,10 +149,16 @@ export const TransformationOperationRow = ({
       }
     };
 
+    // An unbuildable filter falls back to none, so the input preview still reflects the preceding transformations.
+    let matcher: FrameMatcher | undefined;
     try {
-      const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
-      const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
+      matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+    } catch (err) {
+      error(err);
+    }
+    const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
 
+    try {
       subscriptions.push(
         transformDataFrame(inputTransforms, data.series, ctx).subscribe({
           next: (data) => setInput(applyFilter(data)),
