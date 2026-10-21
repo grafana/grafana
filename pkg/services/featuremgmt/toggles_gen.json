@@ -4960,7 +4960,8 @@
       "metadata": {
         "name": "provisioning.userAttribution",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-10T09:02:18Z"
+        "creationTimestamp": "2026-07-10T09:02:18Z",
+        "deletionTimestamp": "2026-10-12T06:52:55Z"
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",

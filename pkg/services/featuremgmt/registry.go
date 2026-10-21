@@ -264,14 +264,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.userAttribution",
-			Description: "Author Git Sync commits as the acting Grafana user",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{Go: true, React: true},
-		},
-		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
 			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).`,
 			Stage:        FeatureStageExperimental,
