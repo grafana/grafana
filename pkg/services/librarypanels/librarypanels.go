@@ -174,5 +174,17 @@ func (lps LibraryPanelService) DeleteInFolders(ctx context.Context, orgID int64,
 	return nil
 }
 
+// DeleteInFoldersUnchecked is DeleteInFolders without requiring edit permissions on each folder, for
+// callers that have already authorized the requester through a different mechanism (e.g. a
+// standalone folder apiserver's cascade delete).
+func (lps LibraryPanelService) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	for _, folderUID := range folderUIDs {
+		if err := lps.LibraryElementService.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, user, folderUID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Kind returns the name of the library panel type of entity.
 func (lps LibraryPanelService) Kind() string { return entity.StandardKindLibraryPanel }

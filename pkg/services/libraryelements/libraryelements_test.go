@@ -198,6 +198,28 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 		})
 }
 
+func TestIntegration_DeleteLibraryElementsInFolderUnchecked(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	scenarioWithPanel(t, "refuses to run without the unchecked-delete marker, and runs once it's set",
+		func(t *testing.T, sc scenarioContext) {
+			orgID := sc.reqContext.GetOrgID()
+
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(context.Background(), orgID, sc.reqContext.SignedInUser, sc.folder.UID)
+			require.ErrorIs(t, err, folder.ErrUncheckedDeleteNotAuthorized)
+
+			ctx := folder.WithUncheckedDeleteAuthorized(context.Background())
+			err = sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var result libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &result))
+			require.Equal(t, 0, len(result.Result.Elements))
+		})
+}
+
 // dbSpy wraps a db.DB and records whether WithDbSession/WithTransactionalDbSession were called on
 // it, so a test can prove a query went through this specific connection rather than l.SQLStore.
 type dbSpy struct {
@@ -457,14 +479,15 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
 	service := LibraryElementService{
-		Cfg:               cfg,
-		features:          featuremgmt.WithFeatures(),
-		SQLStore:          sqlStore,
-		folderService:     folderSvc,
-		dashboardsService: dashService,
-		AccessControl:     ac,
-		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc, false),
+		Cfg:                       cfg,
+		features:                  featuremgmt.WithFeatures(),
+		SQLStore:                  sqlStore,
+		folderService:             folderSvc,
+		dashboardsService:         dashService,
+		ConnectedDashboardsFinder: dashService,
+		AccessControl:             ac,
+		log:                       log.NewNopLogger(),
+		treeCache:                 newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))

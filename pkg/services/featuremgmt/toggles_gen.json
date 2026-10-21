@@ -3956,6 +3956,21 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFolderCascadeDeleteContents",
+        "resourceVersion": "1792042850320",
+        "creationTimestamp": "2026-10-15T05:40:50Z"
+      },
+      "spec": {
+        "description": "Enable folder.grafana.app cascade delete to also remove alert rules and library panels from a tenant's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesFolderCountsLegacyStorage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-11T15:39:49Z"
