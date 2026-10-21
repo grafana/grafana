@@ -140,6 +140,26 @@ describe('useWizardSubmission', () => {
           expect(mockOnSuccess).toHaveBeenCalled();
         });
 
+        it('should copy the saved git URL back into the form when it differs', async () => {
+          mockGetValues.mockReturnValue({
+            repository: { type: 'git', url: 'https://git.example.com/owner/repo' },
+          });
+          mockSubmitData.mockResolvedValue({
+            data: {
+              metadata: { name: 'new-repo' },
+              spec: { type: 'git', git: { url: 'https://git.example.com/owner/repo.git', branch: 'main' } },
+            },
+          });
+
+          const { result } = renderHook(() => useWizardSubmission(createParams()));
+
+          await act(async () => {
+            await result.current.handleSubmit();
+          });
+
+          expect(mockSetValue).toHaveBeenCalledWith('repository.url', 'https://git.example.com/owner/repo.git');
+        });
+
         it('should not submit if validation fails', async () => {
           mockTrigger.mockResolvedValue(false);
 

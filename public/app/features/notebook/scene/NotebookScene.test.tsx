@@ -243,7 +243,7 @@ describe('NotebookScene', () => {
 
         scene.onEnterEditMode();
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle', schema_version: 1 }]);
       });
 
       it('reports a navigation when the url brought the reader into edit mode', () => {
@@ -251,7 +251,7 @@ describe('NotebookScene', () => {
 
         scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.NAVIGATION);
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation', schema_version: 1 }]);
       });
 
       // The blank route opens in edit mode before autosave creates the notebook, so there is no uid yet.
@@ -260,7 +260,7 @@ describe('NotebookScene', () => {
 
         scene.onEnterEditMode();
 
-        expect(started).toEqual([{ notebookUid: '', source: 'new' }]);
+        expect(started).toEqual([{ notebookUid: '', source: 'new', schema_version: 1 }]);
       });
 
       it('reports one session when edit mode is entered again while already editing', () => {
@@ -269,7 +269,7 @@ describe('NotebookScene', () => {
         scene.onEnterEditMode();
         scene.onEnterEditMode();
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle', schema_version: 1 }]);
       });
 
       it('counts nothing from the previous session when edit mode is entered again', () => {
@@ -433,7 +433,7 @@ describe('NotebookScene', () => {
         new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
         unsubscribeStarted();
 
-        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation', schema_version: 1 }]);
         expect(scene.state.isEditing).toBe(true);
       });
 
@@ -444,6 +444,167 @@ describe('NotebookScene', () => {
         deactivate();
 
         expect(ended).toEqual([]);
+      });
+
+      // A reload or a closed tab tears nothing down inside the app, so only the page itself says so.
+      it('reports a page hide while a session is still open', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        window.dispatchEvent(new Event('pagehide'));
+        deactivate();
+
+        // Once: `pagehide` leaves edit mode on, so the teardown that follows must not end it again.
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'page_hide' });
+      });
+
+      it('does not report a second end when the toggle is turned off after a page hide', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        window.dispatchEvent(new Event('pagehide'));
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'page_hide' });
+      });
+
+      describe('when the browser brings the page back from the back/forward cache', () => {
+        const pageshow = (persisted: boolean) => Object.assign(new Event('pageshow'), { persisted });
+        let timeline: string[];
+        let stopStarted: () => void;
+        let stopEnded: () => void;
+
+        beforeEach(() => {
+          timeline = [];
+          stopStarted = onInteraction('grafana_notebook_edit_session_started', (properties) =>
+            timeline.push(`started:${properties.source}`)
+          );
+          stopEnded = onInteraction('grafana_notebook_edit_session_ended', (properties) =>
+            timeline.push(`ended:${properties.endReason}`)
+          );
+        });
+
+        afterEach(() => {
+          stopStarted();
+          stopEnded();
+        });
+
+        it('starts a new session, so every end is paired with a start', () => {
+          const scene = buildScene(false, 'nb1');
+          const deactivate = scene.activate();
+          scene.onEnterEditMode();
+
+          window.dispatchEvent(new Event('pagehide'));
+          window.dispatchEvent(pageshow(true));
+          scene.onExitEditMode();
+          deactivate();
+
+          expect(timeline).toEqual(['started:toggle', 'ended:page_hide', 'started:page_restore', 'ended:toggle']);
+        });
+
+        it('counts the restored session from the restore, not from before the page was hidden', () => {
+          const scene = buildScene(false, 'nb1');
+          const cell = scene.state.body.state.cells[0];
+          const deactivate = scene.activate();
+          scene.onEnterEditMode();
+          scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Before' } });
+
+          window.dispatchEvent(new Event('pagehide'));
+          window.dispatchEvent(pageshow(true));
+          scene.onExitEditMode();
+          deactivate();
+
+          expect(ended).toHaveLength(2);
+          expect(ended[0]).toMatchObject({ endReason: 'page_hide', editCount: 1 });
+          expect(ended[1]).toMatchObject({ endReason: 'toggle', editCount: 0 });
+        });
+
+        it('ends a restored session once when the page is torn down instead', () => {
+          const scene = buildScene(false, 'nb1');
+          const deactivate = scene.activate();
+          scene.onEnterEditMode();
+
+          window.dispatchEvent(new Event('pagehide'));
+          window.dispatchEvent(pageshow(true));
+          deactivate();
+
+          expect(timeline).toEqual(['started:toggle', 'ended:page_hide', 'started:page_restore', 'ended:navigation']);
+        });
+
+        // An ordinary load fires `pageshow` too, with nothing kept from before.
+        it('starts nothing for a pageshow that is not a restore', () => {
+          const scene = buildScene(false, 'nb1');
+          const deactivate = scene.activate();
+          scene.onEnterEditMode();
+          window.dispatchEvent(new Event('pagehide'));
+
+          window.dispatchEvent(pageshow(false));
+          deactivate();
+
+          expect(timeline).toEqual(['started:toggle', 'ended:page_hide']);
+        });
+
+        it('starts nothing when the notebook is not being edited', () => {
+          const scene = buildScene(false, 'nb1');
+          const deactivate = scene.activate();
+
+          window.dispatchEvent(pageshow(true));
+          deactivate();
+
+          expect(timeline).toEqual([]);
+        });
+
+        it('starts nothing once the scene has been deactivated', () => {
+          const scene = buildScene(false, 'nb1');
+          const deactivate = scene.activate();
+          scene.onEnterEditMode();
+          window.dispatchEvent(new Event('pagehide'));
+          deactivate();
+          timeline.length = 0;
+
+          window.dispatchEvent(pageshow(true));
+
+          expect(timeline).toEqual([]);
+        });
+
+        it('does not start a second session when a restore finds one already running', () => {
+          const scene = buildScene(false, 'nb1');
+          const deactivate = scene.activate();
+          scene.onEnterEditMode();
+
+          window.dispatchEvent(pageshow(true));
+          deactivate();
+
+          expect(timeline).toEqual(['started:toggle', 'ended:navigation']);
+        });
+      });
+
+      it('reports nothing on a page hide when the notebook is not being edited', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+
+        window.dispatchEvent(new Event('pagehide'));
+        deactivate();
+
+        expect(ended).toEqual([]);
+      });
+
+      // In-app navigation deactivates the scene, which ends the session itself and turns editing off.
+      it('does not report a page hide for a session that navigation already ended', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+        window.dispatchEvent(new Event('pagehide'));
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'navigation' });
       });
 
       it('does not double-fire when a toggle-off is followed by a deactivation', () => {
@@ -459,28 +620,19 @@ describe('NotebookScene', () => {
       });
     });
 
-    it('clears history when the notebook body is replaced', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      scene.state.body.addCell('code', 1);
-      const replacement = new NotebookLayoutManager({ cells: [] });
+    // A different notebook is never the same scene instance swapping its body under itself — it's a
+    // distinct NotebookScene, built fresh by transformNotebookToScene, with its own editHistory that
+    // was never going to know about the first one's stack in the first place.
+    it('gives a different notebook scene its own independent edit history', () => {
+      const first = buildScene(false, 'nb1');
+      activate(first);
+      first.state.body.addCell('code', 1);
+      expect(first.editHistory.state.canUndo).toBe(true);
 
-      scene.setState({ body: replacement });
+      const second = buildScene(false, 'nb2');
+      activate(second);
 
-      expect(scene.editHistory.state.canUndo).toBe(false);
-      replacement.addCell('code', 0);
-      expect(scene.editHistory.state.canUndo).toBe(true);
-    });
-
-    it('records history for a body replaced before activation', () => {
-      const scene = buildScene(false);
-      const replacement = new NotebookLayoutManager({ cells: [] });
-      scene.setState({ body: replacement });
-
-      activate(scene);
-      replacement.addCell('code', 0);
-
-      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(second.editHistory.state.canUndo).toBe(false);
     });
 
     it('keeps history across a deactivation and activation', () => {
@@ -763,6 +915,157 @@ describe('NotebookScene', () => {
       );
 
       expect(scene.state.body.state.title).toBe('Rebuilt');
+    });
+
+    it('records a title change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.state.body.state.title).toBe('My notebook');
+    });
+
+    it('coalesces rapid title changes into one undo action', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q'));
+      act(() => scene.onTitleChange('Q3'));
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      // One undo reverts the whole rename, not just the last keystroke.
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('drops a title edit that returns to its starting value', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const scene = buildScene(false);
+        act(() => scene.activate());
+
+        act(() => scene.onTitleChange('Q3 latency regression'));
+        act(() => jest.advanceTimersByTime(801));
+        act(() => scene.onTitleChange('Q4 latency regression'));
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('Q3 latency regression');
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('My notebook');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('does not record a no-op title change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the title change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('starts a fresh pending edit after a tag change, instead of extending the buried one', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTagsChange(['incident']));
+      // Without the commit above, this would extend the buried rename and silently discard it instead
+      // of recording a new step, since editHistory.discard only acts on the top of the stack.
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onEnterEditMode());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onExitEditMode());
+      act(() => scene.onEnterEditMode());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed by onExitEditMode.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit on deactivation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => deactivate());
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed on deactivation.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
     });
   });
 });

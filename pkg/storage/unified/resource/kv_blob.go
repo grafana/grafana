@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"uuid"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -51,7 +50,7 @@ func (s *kvBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.Put
 
 	hash := md5.Sum(req.Value) // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 	info := &utils.BlobInfo{
-		UID:  uuid.NewV4().String(),
+		UID:  NewBlobUID(),
 		Size: int64(len(req.Value)),
 		Hash: hex.EncodeToString(hash[:]),
 	}

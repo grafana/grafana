@@ -1,12 +1,14 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON, NOTEBOOK_FEEDBACK_SOURCE } from '../analytics/types';
 
 import { NotebookFeedbackButton } from './NotebookFeedbackButton';
+import { NotebookFeedbackFormRequestEvent, NotebookFeedbackFormStateEvent } from './notebookFeedbackFormEvents';
 
 const mockSuccess = jest.fn();
 
@@ -129,5 +131,49 @@ describe('NotebookFeedbackButton', () => {
       '',
       NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
     );
+  });
+
+  it('opens the same form when requested by the feedback nudge', async () => {
+    render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
+
+    act(() => appEvents.publish(new NotebookFeedbackFormRequestEvent({ action: 'open' })));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
+  });
+
+  it('answers availability checks and reports when the form is open', async () => {
+    render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
+    const states: string[] = [];
+    const subscription = appEvents.subscribe(NotebookFeedbackFormStateEvent, ({ payload }) =>
+      states.push(payload.state)
+    );
+
+    act(() => appEvents.publish(new NotebookFeedbackFormRequestEvent({ action: 'status' })));
+    expect(states.at(-1)).toBe('available');
+
+    act(() => appEvents.publish(new NotebookFeedbackFormRequestEvent({ action: 'open' })));
+    expect(states.at(-1)).toBe('open');
+    subscription.unsubscribe();
+  });
+
+  it('stops nudges only after submission, not when the form is cancelled', async () => {
+    jest.spyOn(NotebookAnalytics, 'feedbackSubmitted').mockImplementation();
+    const { user } = render(<NotebookFeedbackButton source={NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR} />);
+    const states: string[] = [];
+    const subscription = appEvents.subscribe(NotebookFeedbackFormStateEvent, ({ payload }) =>
+      states.push(payload.state)
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Give feedback' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(states).not.toContain('submitted');
+    expect(states.at(-1)).toBe('available');
+
+    await user.click(screen.getByRole('button', { name: 'Give feedback' }));
+    await user.click(screen.getByRole('button', { name: 'Good' }));
+    await user.click(screen.getByRole('button', { name: 'Send feedback' }));
+    expect(states.filter((state) => state === 'submitted')).toHaveLength(1);
+    subscription.unsubscribe();
   });
 });

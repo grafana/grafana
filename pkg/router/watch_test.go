@@ -108,10 +108,6 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		upstreamURL, err := url.Parse(upstream.URL)
 		require.NoError(t, err)
 		switch kind {
-		case "forward":
-			b, err := NewForwardBackend(metav1.APIGroup{Name: watchGroup}, forwardSpec(upstream.URL), "1", &http.Transport{})
-			require.NoError(t, err)
-			backends = append(backends, b)
 		case "aggregate":
 			b, err := newAggregateBackend("target", metav1.APIGroup{Name: watchGroup}, upstreamURL, &http.Transport{})
 			require.NoError(t, err)
@@ -130,7 +126,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, nil, prometheus.NewRegistry())
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: backends}, nil), prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))
@@ -140,7 +136,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrument(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {
@@ -184,7 +180,7 @@ func requireCleanEnd(t *testing.T, events *bufio.Reader) {
 }
 
 func TestWatchThroughEveryBackendAndMode(t *testing.T) {
-	for _, kind := range []string{"forward", "aggregate", "single-tenant", "in-process"} {
+	for _, kind := range []string{"aggregate", "single-tenant", "in-process"} {
 		for _, middleware := range []bool{false, true} {
 			mode := "standalone"
 			if middleware {
@@ -287,12 +283,14 @@ func TestWatchMetricsAreSeparate(t *testing.T) {
 		return testutil.ToFloat64(metrics.longRunning.WithLabelValues(watchGroup)) == 0
 	}, time.Second, time.Millisecond)
 	require.Zero(t, testutil.CollectAndCount(metrics.duration), "a watch is not observed as a request duration")
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "watch", routeBackend, "200")), "a watch is counted when it ends")
 
 	resp, err := http.Get(rig.url + watchPath)
 	require.NoError(t, err)
 	_ = resp.Body.Close()
 	require.Equal(t, 1, testutil.CollectAndCount(metrics.duration))
-	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend, "204")))
+	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend)))
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "list", routeBackend, "204")))
 }
 
 func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {
@@ -305,7 +303,7 @@ func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {
 }
 
 func TestWatchEndsWhenItsBackendChanges(t *testing.T) {
-	for _, kind := range []string{"forward", "in-process"} {
+	for _, kind := range []string{"aggregate", "in-process"} {
 		t.Run(kind, func(t *testing.T) {
 			rig := newWatchRig(t, kind, false)
 			loader := rig.service.router.loader.(*mutableLoader)
@@ -329,7 +327,7 @@ func TestWatchEndsWhenItsBackendChanges(t *testing.T) {
 }
 
 func TestWatchEndsWhenTheServiceStops(t *testing.T) {
-	for _, kind := range []string{"forward", "single-tenant", "in-process"} {
+	for _, kind := range []string{"aggregate", "single-tenant", "in-process"} {
 		t.Run(kind, func(t *testing.T) {
 			rig := newWatchRig(t, kind, false)
 			events := openWatch(t.Context(), t, rig.url+watchPath+"?watch=true")
@@ -341,7 +339,7 @@ func TestWatchEndsWhenTheServiceStops(t *testing.T) {
 }
 
 func TestUpgradeRequestsAreRejected(t *testing.T) {
-	for _, kind := range []string{"forward", "single-tenant", "in-process"} {
+	for _, kind := range []string{"aggregate", "single-tenant", "in-process"} {
 		t.Run(kind, func(t *testing.T) {
 			rig := newWatchRig(t, kind, false)
 			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
@@ -359,4 +357,17 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 			require.Empty(t, rig.backend.queries, "the backend must not be called")
 		})
 	}
+}
+
+func TestRequestVerbIsParsedOncePerRequest(t *testing.T) {
+	req, outcome := withRequestOutcome(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things?watch=true", nil))
+	require.Equal(t, "watch", requestVerb(req))
+	require.Equal(t, "watch", outcome.verb)
+
+	// A later call reads the recorded verb instead of parsing the request.
+	outcome.verb = "recorded"
+	require.Equal(t, "recorded", requestVerb(req))
+
+	// Without an outcome, as for the router's own sub-requests, it parses.
+	require.Equal(t, "list", requestVerb(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things", nil)))
 }

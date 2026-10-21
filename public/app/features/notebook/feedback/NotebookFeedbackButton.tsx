@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, Modal, Stack, Text, TextArea, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -16,6 +17,8 @@ import {
   type NotebookFeedbackRating,
   type NotebookFeedbackReason,
 } from '../analytics/types';
+
+import { NotebookFeedbackFormRequestEvent, NotebookFeedbackFormStateEvent } from './notebookFeedbackFormEvents';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
@@ -41,6 +44,27 @@ export function NotebookFeedbackButton({
   const [rating, setRating] = useState<NotebookFeedbackRating>();
   const [selectedReasons, setSelectedReasons] = useState<NotebookFeedbackReason[]>([]);
   const [comment, setComment] = useState('');
+  const enabled = Boolean(config.rudderstackWriteKey && config.rudderstackDataPlaneUrl);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    const publishState = () =>
+      appEvents.publish(new NotebookFeedbackFormStateEvent({ state: isOpen ? 'open' : 'available' }));
+    const subscription = appEvents.subscribe(NotebookFeedbackFormRequestEvent, ({ payload }) => {
+      if (payload.action === 'open') {
+        setIsOpen(true);
+      } else {
+        publishState();
+      }
+    });
+    publishState();
+    return () => {
+      subscription.unsubscribe();
+      appEvents.publish(new NotebookFeedbackFormStateEvent({ state: 'unavailable' }));
+    };
+  }, [enabled, isOpen]);
   const negativeFeedbackNeedsDetails =
     rating === NOTEBOOK_FEEDBACK_RATING.COULD_BE_BETTER && selectedReasons.length === 0 && !comment.trim();
   const reasons: Array<{ value: NotebookFeedbackReason; label: string }> = [
@@ -84,11 +108,12 @@ export function NotebookFeedbackButton({
     }
 
     NotebookAnalytics.feedbackSubmitted(rating, selectedReasons, comment, source);
+    appEvents.publish(new NotebookFeedbackFormStateEvent({ state: 'submitted' }));
     notifyApp.success(t('notebooks.feedback.sent', 'Thanks for your feedback'));
     close();
   };
 
-  if (!(config.rudderstackWriteKey && config.rudderstackDataPlaneUrl)) {
+  if (!enabled) {
     return null;
   }
 

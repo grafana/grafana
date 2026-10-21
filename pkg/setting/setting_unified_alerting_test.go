@@ -430,6 +430,77 @@ func TestHARedisSentinelModeSettings(t *testing.T) {
 	}
 }
 
+func TestRecordingRulesWriteBatchingSettings(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		maxWriteBatchSize   string
+		maxWriteConcurrency string
+		expectedBatchSize   int
+		expectedConcurrency int
+		expectedErr         string
+	}{
+		{
+			desc: "should default to no splitting",
+		},
+		{
+			desc:                "should accept the minimum batch size and maximum concurrency",
+			maxWriteBatchSize:   "65536",
+			maxWriteConcurrency: "32",
+			expectedBatchSize:   65536,
+			expectedConcurrency: 32,
+		},
+		{
+			desc:              "should fail when batch size is below the minimum",
+			maxWriteBatchSize: "65535",
+			expectedErr:       "max_write_batch_size",
+		},
+		{
+			desc:              "should fail when batch size is negative",
+			maxWriteBatchSize: "-1",
+			expectedErr:       "max_write_batch_size",
+		},
+		{
+			desc:                "should fail when concurrency is above the maximum",
+			maxWriteBatchSize:   "1048576",
+			maxWriteConcurrency: "33",
+			expectedErr:         "max_write_concurrency",
+		},
+		{
+			desc:                "should fail when concurrency is negative",
+			maxWriteConcurrency: "-1",
+			expectedErr:         "max_write_concurrency",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("recording_rules")
+			require.NoError(t, err)
+
+			if tc.maxWriteBatchSize != "" {
+				_, err = section.NewKey("max_write_batch_size", tc.maxWriteBatchSize)
+				require.NoError(t, err)
+			}
+			if tc.maxWriteConcurrency != "" {
+				_, err = section.NewKey("max_write_concurrency", tc.maxWriteConcurrency)
+				require.NoError(t, err)
+			}
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr != "" {
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedBatchSize, cfg.UnifiedAlerting.RecordingRules.MaxWriteBatchSize)
+			require.Equal(t, tc.expectedConcurrency, cfg.UnifiedAlerting.RecordingRules.MaxWriteConcurrency)
+		})
+	}
+}
+
 func TestReadAllowedIntegrations(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -520,6 +591,56 @@ func TestQueriesServedByLoki(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(t, tc.want, tc.stateHistory.QueriesServedByLoki())
+		})
+	}
+}
+
+func TestWritesToPrometheus(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stateHistory UnifiedAlertingStateHistorySettings
+		want         bool
+	}{
+		{
+			name:         "disabled state history",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: false, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+		{
+			name:         "prometheus backend",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			name:         "prometheus backend without a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus"},
+			want:         false,
+		},
+		{
+			name:         "non-prometheus backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+		{
+			name:         "multiple backend with prometheus primary, with padding and mixed casing",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: " Multiple ", MultiPrimary: " Prometheus ", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			name:         "multiple backend with prometheus as a secondary",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "loki", MultiSecondaries: []string{"annotations", "prometheus"}, PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			name:         "multiple backend without prometheus",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "loki", MultiSecondaries: []string{"annotations"}, PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.stateHistory.WritesToPrometheus())
 		})
 	}
 }

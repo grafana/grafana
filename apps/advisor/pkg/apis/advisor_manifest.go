@@ -68,6 +68,7 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaCheckTypev0alpha1,
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/register": {

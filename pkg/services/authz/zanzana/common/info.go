@@ -9,6 +9,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
@@ -67,7 +68,7 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
 			// Create checks use an empty Name. For a subfolder, Folder is the parent;
-			// permission must be evaluated on the parent folder (can_create), not on "general".
+			// permission must be evaluated on the parent folder, not on "general".
 			if resource.folder != "" {
 				resource.name = resource.folder
 				resource.folder = ""
@@ -143,6 +144,7 @@ func getTypeAndRelations(group, resource string) (string, []string) {
 func newResource(
 	typ, group, resource, name, folder, subresource string, relations []string,
 ) ResourceInfo {
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
 	// Global variables and library panels intentionally use root-folder permissions.
 	if group != "dashboard.grafana.app" || (resource != "variables" && resource != "librarypanels") {
 		folder = foldermodel.ToLegacyFolderUID(folder)

@@ -1,7 +1,6 @@
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
@@ -378,22 +377,14 @@ describe('useProvisionedDashboardData', () => {
   });
 
   describe('enforced branch name template', () => {
-    // write-first repo: without the enforced-template override the default workflow would be `write`.
+    // write-first repo: without the enforced template the default workflow would be `write`.
     const enforcedRepo: RepositoryView = {
       ...folderRepo,
       workflows: ['write', 'branch'],
       branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
     };
 
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('switches to the branch workflow when the template is enforced and the flag is on', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-
+    it('switches to the branch workflow when the template is enforced', () => {
       const { result } = renderHook(
         () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
         { wrapper }
@@ -405,38 +396,7 @@ describe('useProvisionedDashboardData', () => {
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
     });
 
-    it('keeps the same defaultValues object across rerenders when the override applies', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-
-      const dashboard = createDashboard();
-      const folderData = folder('dashboards');
-      const { result, rerender } = renderHook(
-        () => useProvisionedDashboardData(dashboard, readyView(enforcedRepo, folderData)),
-        { wrapper }
-      );
-
-      const initial = result.current.defaultValues;
-      expect(initial?.workflow).toBe('branch');
-
-      // The form resets to defaultValues whenever its identity changes, so a fresh object per render
-      // would reset the form on every unrelated rerender.
-      rerender();
-      expect(result.current.defaultValues).toBe(initial);
-    });
-
-    it('keeps the default write workflow when the gitConventions flag is off', () => {
-      setTestFlags({ 'provisioning.gitConventions': false });
-
-      const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
-        { wrapper }
-      );
-
-      expect(result.current.defaultValues?.workflow).toBe('write');
-    });
-
     it('keeps the default write workflow when enforcement has no usable template', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
       // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so the
       // workflow must not switch (nothing to enforce).
       const repo: RepositoryView = { ...enforcedRepo, branchOptions: { enforceTemplate: true } };
@@ -447,6 +407,40 @@ describe('useProvisionedDashboardData', () => {
       );
 
       expect(result.current.defaultValues?.workflow).toBe('write');
+    });
+  });
+
+  describe('loaded from a branch preview', () => {
+    const previewWrapper = getWrapper({
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/?ref=feature-branch'] },
+    });
+
+    it.each([
+      { desc: 'a branch-only repository', workflows: ['branch'] as RepositoryView['workflows'] },
+      { desc: 'a repository allowing both workflows', workflows: ['branch', 'write'] as RepositoryView['workflows'] },
+    ])('defaults to writing back to the previewed branch for $desc', ({ workflows }) => {
+      const repo: RepositoryView = { ...folderRepo, workflows };
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(repo, folder('dashboards'))),
+        { wrapper: previewWrapper }
+      );
+
+      expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('feature-branch');
+    });
+
+    it('falls back to the configured branch when the repository is write-only', () => {
+      // Without the branch workflow the previewed ref can't be pushed to; the configured branch is the only target.
+      const writeOnlyRepo: RepositoryView = { ...folderRepo, workflows: ['write'] };
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(writeOnlyRepo, folder('dashboards'))),
+        { wrapper: previewWrapper }
+      );
+
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('main');
     });
   });
 

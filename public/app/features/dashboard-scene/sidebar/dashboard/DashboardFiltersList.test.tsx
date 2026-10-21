@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -233,16 +232,6 @@ describe('<DashboardFiltersList />', () => {
 });
 
 describe('predefined filters in the sidebar list', () => {
-  const previousUnified = config.featureToggles.dashboardUnifiedDrilldownControls;
-
-  beforeEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = true;
-  });
-
-  afterEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = previousUnified;
-  });
-
   test('places filter and group-by variables in the display bucket their hide setting selects', async () => {
     const localFilter = new AdHocFiltersVariable({ name: 'localFilter', type: 'adhoc', hide: VariableHide.dontHide });
     const localGroupBy = new GroupByVariable({ name: 'localGroupBy', datasource: null, hide: VariableHide.dontHide });
