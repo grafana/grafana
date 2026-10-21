@@ -920,7 +920,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         default:
           // If reloadDashboardsOnParamsChange is on, we need to process query params for dashboard load
           // Since the scene is not yet there, we need to process whatever came through URL
-          if (config.featureToggles.reloadDashboardsOnParamsChange) {
+          if (getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false)) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
             rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
           } else {
@@ -1262,7 +1262,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           throw new DashboardVersionError('v0alpha1', 'Grafana-provisioned dashboard templates use V1 schema');
         }
         default:
-          if (config.featureToggles.reloadDashboardsOnParamsChange) {
+          if (getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false)) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
             rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
           } else {

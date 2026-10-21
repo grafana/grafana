@@ -159,6 +159,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
+    this.stopped = false;
     if (this.baseline === undefined) {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
@@ -294,6 +295,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
     this.cellTimeRangesEdited.clear();
+  }
+
+  public markVisualizationEdited(elementName: string, wasEditing = this.scene.state.isEditing): void {
+    if (!wasEditing || this.scene.state.isDraft) {
+      return;
+    }
+    this.vizConfigsEdited.add(elementName);
+    const somethingToWrite = this.hasSomethingToWrite();
+    if (somethingToWrite) {
+      this.editedByWriter = true;
+    }
+    this.schedule(somethingToWrite);
+    if (this.stopped) {
+      this.flush();
+    }
   }
 
   /**
