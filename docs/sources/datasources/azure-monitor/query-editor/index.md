@@ -127,7 +127,7 @@ Grafana can display and filter metrics based on dimension values.
 
 The data source supports the `equals`, `not equals`, and `starts with` operators as detailed in the [Monitor Metrics API documentation](https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list).
 
-To choose the dimension or its filter values from a dashboard variable, refer to [Create dimension variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/#create-dimension-variables).
+To choose the dimension or its filter values from a dashboard variable, refer to [Azure Monitor template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/#available-query-types).
 
 For more information on multi-dimensional metrics, refer to the [Azure Monitor data platform metrics documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics#multi-dimensional-metrics) and [Azure Monitor filtering documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-charts#filters).
 
