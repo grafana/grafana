@@ -680,6 +680,7 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 		attribute.Int("maxBatchSize", int(maxBatchSize)),
 	))
 	defer span.End()
+
 	now := s.clock.Now().UTC().Unix()
 
 	candidates, err := s.listLeaseCandidates(ctx, maxBatchSize, now)

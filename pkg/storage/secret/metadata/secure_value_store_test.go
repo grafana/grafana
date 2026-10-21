@@ -331,7 +331,7 @@ func TestLeaseInactiveSecureValuesBatching(t *testing.T) {
 		}
 		wg.Wait()
 
-		leased := make([]string, 0)
+		leased := make([]string, 0, len(uids))
 		for i := range workers {
 			require.NoError(t, errs[i])
 			leased = append(leased, leasedUIDs(results[i])...)

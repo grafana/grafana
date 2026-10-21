@@ -260,8 +260,8 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Cols: []string{"namespace", "owner_reference_api_group", "active"},
 	}))
 
-	mg.AddMigration("add gc lease candidates index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
-		Name: "IDX_secret_secure_value_active_created",
-		Cols: []string{"active", "created"},
+	mg.AddMigration("add ordered gc lease candidates index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Name: "IDX_secret_secure_value_active_created_guid",
+		Cols: []string{"active", "created", "guid"},
 	}))
 }
