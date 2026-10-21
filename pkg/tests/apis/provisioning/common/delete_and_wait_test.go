@@ -103,7 +103,7 @@ func TestDeleteAndWait(t *testing.T) {
 		}
 	})
 
-	t.Run("a transient error that lasts until the timeout is named", func(t *testing.T) {
+	t.Run("transient errors that lasts result in a timeout error", func(t *testing.T) {
 		client := newFakeResourceClient("busy")
 		always := apierrors.NewServiceUnavailable("not ready")
 		client.deleteErrs["busy"] = []error{always, always, always, always, always, always, always, always, always, always}

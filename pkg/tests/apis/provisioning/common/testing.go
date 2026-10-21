@@ -79,6 +79,8 @@ const (
 	// is a safety margin for the delete/list round-trips under SQLite write
 	// contention when many folders are left over.
 	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
+
+	orphanCleanupTimeout = 30 * time.Second
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -1910,7 +1912,7 @@ func (h *ProvisioningTestHelper) supportedResourceClients() (map[string]dynamic.
 		if err != nil {
 			return nil, fmt.Errorf("resolve supported resource %s: %w", supported.GroupKind, err)
 		}
-		clients[supported.GroupKind.String()] = dyn.Resource(mapping.Resource).Namespace("default")
+		clients[supported.String()] = dyn.Resource(mapping.Resource).Namespace("default")
 	}
 	return clients, nil
 }
@@ -1963,8 +1965,6 @@ func describeOrphans(orphaned map[string][]string) string {
 	}
 	return strings.Join(parts, "; ")
 }
-
-const orphanCleanupTimeout = 30 * time.Second
 
 // cleanupOrphanedResources deletes resources where their
 // repository has been deleted but the resource themselves were left behind.
