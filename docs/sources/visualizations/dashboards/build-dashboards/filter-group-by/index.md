@@ -129,9 +129,8 @@ To enable this functionality, you need to add an override for every field by whi
 In the override:
 
 - Select a field name.
-- Enable the **Filterable** switch.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.2.png" max-width="400px" alt="Field override making some fields filterable" >}}
+- Add the **Standard options > Filter from values** override property.
+- Enable the **Filter from values** switch to allow viewers to update dashboard filters by interacting with the panel.
 
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
 
