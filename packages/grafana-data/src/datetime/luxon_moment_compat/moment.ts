@@ -471,16 +471,31 @@ function parseFromCachedFormat(value: string, fmt: string, options?: MomentOptio
   if (fmt.includes('o')) {
     const { result, zone, matches, invalidReason } = DateTime.fromFormatExplain(value, fmt, options);
     if (!invalidReason && result?.ordinal !== undefined) {
-      // Moment's day-of-year overrides calendar fields, including the month derived from Q.
       const fields = { ...result };
-      delete fields.month;
-      delete fields.day;
-      delete fields.quarter;
       const parseOptions = {
         ...options,
         zone: zone ?? options?.zone,
         specificOffset: typeof matches?.Z === 'number' ? matches.Z : undefined,
       };
+      const hasISOWeek = matches?.k !== undefined || matches?.W !== undefined || matches?.E !== undefined;
+      if (hasISOWeek && fields.month === undefined && fields.day === undefined) {
+        // Moment derives the date from ISO week fields only when no calendar month/day was supplied.
+        fields.weekYear ??= fields.year ?? DateTime.now().setZone(parseOptions.zone ?? Settings.defaultZone).weekYear;
+        fields.weekNumber ??= 1;
+        fields.weekday = matches?.E ?? 1;
+        delete fields.year;
+        delete fields.ordinal;
+      } else {
+        // Otherwise day-of-year overrides calendar fields, including the month derived from Q.
+        delete fields.month;
+        delete fields.day;
+        delete fields.quarter;
+        delete fields.weekYear;
+        delete fields.weekNumber;
+        if (matches?.E !== undefined) {
+          delete fields.weekday;
+        }
+      }
       return resolveParsedZone(DateTime.fromObject(fields, parseOptions), options);
     }
   }

@@ -137,6 +137,7 @@ describe('format', () => {
     ['2024-11-05', '[Q]Q YYYY-DDD', 'Q4 2024-310'],
     ['2024-12-31', 'DDD DDDD', '366 366'],
     ['2024-11-05', 'QQ QQQ [Q DDD DDDD]', '44 444 Q DDD DDDD'],
+    ['2024-11-05', 'Q[Q] Q[yr] QQ[Q]', '4Q 4yr 44Q'],
   ])('formats quarter and day-of-year tokens in %s with %s', (input, format, expected) => {
     expect(moment.utc(input).format(format)).toBe(expected);
   });
@@ -228,6 +229,28 @@ describe('formatted string parsing', () => {
     expect(parsed.toISOString()).toBe('2024-11-05T13:05:00.000Z');
     expect(parsed.format('YYYY-MM-DD HH:mm Z')).toBe('2024-11-05 08:05 -05:00');
   });
+
+  it.each([
+    ['2024-310 45', 'YYYY-DDD WW', '2024-11-04T00:00:00.000Z'],
+    ['2024-310 24', 'YYYY-DDD GG', '2024-01-01T00:00:00.000Z'],
+    ['2024-310 2', 'YYYY-DDD E', '2024-01-02T00:00:00.000Z'],
+    ['2024-310 20-53-5', 'YYYY-DDD GG-WW-E', '2021-01-01T00:00:00.000Z'],
+    ['2024-000 45', 'YYYY-DDDD WW', '2024-11-04T00:00:00.000Z'],
+    ['2024-310 45 08:05 +02:00', 'YYYY-DDD WW HH:mm Z', '2024-11-04T06:05:00.000Z'],
+    ['2024-01-02 310 45', 'YYYY-MM-DD DDD WW', '2024-11-05T00:00:00.000Z'],
+    ['2024-01 310 20-53-5', 'YYYY-MM DDD GG-WW-E', '2024-11-05T00:00:00.000Z'],
+    ['2024-02 310 45', 'YYYY-DD DDD WW', '2024-11-05T00:00:00.000Z'],
+    ['2024-310 1 45', 'YYYY-DDD Q WW', '2024-11-05T00:00:00.000Z'],
+  ])('applies Moment week/day-of-year precedence to %s with %s', (input, format, expected) => {
+    expect(moment.utc(input, format).toISOString()).toBe(expected);
+  });
+
+  it.each(['2024-310 54-1', '2024-310 45-8'])(
+    'rejects invalid ISO week fields that override day-of-year in %s',
+    (input) => {
+      expect(moment.utc(input, 'YYYY-DDD WW-E').isValid()).toBe(false);
+    }
+  );
 
   it('treats single quotes as literal characters in the format', () => {
     expect(moment.utc("May'24", "MMM'YY").toISOString()).toBe('2024-05-01T00:00:00.000Z');
