@@ -741,6 +741,7 @@ type Cfg struct {
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
+	GlobalSearchIndexStartupBuild              bool          // Temporary: build global indexes before readiness instead of in the background. To be removed once environments restore them from snapshots at startup.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -776,8 +777,8 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
 	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. Off by default: violations are counted first, so they can be fixed
-	// before requests start failing.
+	// sorting. On by default; kept for one release so an instance that still
+	// depends on such sorts can turn it off.
 	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
@@ -905,6 +906,8 @@ type Cfg struct {
 	TenantDeleterInterval         time.Duration
 
 	ManifestApiServerAddress        string
+	ManifestDiscoveryAddress        string
+	ManifestDiscoveryAudience       string
 	ManifestWatcherAllowInsecureTLS bool
 	ManifestWatcherCAFile           string
 	ManifestWatcherPollInterval     time.Duration
@@ -2110,6 +2113,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
+	}
+	if strings.TrimSpace(enableFrontendSandboxForPlugins) != "" {
+		cfg.Logger.Warn("[Deprecated] The enable_frontend_sandbox_for_plugins configuration setting is deprecated and the Plugin Frontend Sandbox will be removed in Grafana 13.4.")
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {

@@ -389,7 +389,7 @@ func buildFolderIndex(t *testing.T, key resource.NamespacedResource, items ...*r
 
 	index, err := backend.BuildIndex(t.Context(), key, int64(len(items)), "test", func(index resource.ResourceIndex) (int64, error) {
 		return int64(len(items)), index.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: int64(len(items))})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }

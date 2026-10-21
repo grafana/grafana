@@ -196,10 +196,10 @@ var (
 		{
 			Name:         "grafana.recordedQueriesDisableCreate",
 			Description:  "Disables creating new recorded queries while preserving access to existing queries",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -689,7 +689,7 @@ var (
 		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
@@ -966,15 +966,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:         "dashboardUnifiedDrilldownControls",
-			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "true",
-		},
-		{
 			Name:        "grafana.filterablePanels",
 			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1169,7 +1160,7 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "pluginProxyPreserveTrailingSlash",
@@ -1402,33 +1393,6 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // Enabled by default for now
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:         "alertingAIGenAlertRules",
-			Description:  "Enable AI-generated alert rules.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "alertingAIFeedback",
-			Description:  "Enable AI-generated feedback from the Grafana UI.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "alertingAIImproveAlertRules",
-			Description:  "Enable AI-improve alert rules labels and annotations.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingAIGenTemplates",
@@ -1828,10 +1792,10 @@ var (
 		{
 			Name:         "kubernetesAuthzTeamLBACRuleApi",
 			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -1929,7 +1893,7 @@ var (
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "newInfluxDSConfigPageDesign",
@@ -1938,15 +1902,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
-		},
-		{
-			Name:         "enableAppChromeExtensions",
-			Description:  "Set this to true to enable all app chrome extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
 		},
 		{
 			Name:         "foldersAppPlatformAPI",
@@ -2032,13 +1987,12 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "text.newFeatures",
-			Description:  "Enables the new features in text panel",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			HideFromDocs: true,
-			Generate:     Generate{React: true},
-			Expression:   "false",
+			Name:        "text.newFeatures",
+			Description: "Enables the new features in text panel",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
 		},
 		{
 			Name:        "interactiveLearning",
@@ -2050,12 +2004,12 @@ var (
 		},
 		{
 			Name:         "alertingTriage",
-			Description:  "Enables the alerting triage feature",
-			Stage:        FeatureStageExperimental,
+			Description:  "Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.",
+			Stage:        FeatureStageDeprecated,
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree in backend
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true", // enabled by default: the page still needs state history to write to Prometheus
 		},
 		{
 			Name:        "graphiteBackendMode",
@@ -2789,6 +2743,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alerting.gmaOnlyListView",
+			Description:  "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
+		{
 			Name:        "alerting.notificationsAPIV1Beta1",
 			Description: "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
 			Stage:       FeatureStageExperimental,
@@ -3178,6 +3141,14 @@ var (
 		{
 			Name:        "assistant.dashboardPlanning",
 			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanBuildingScreen",
+			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

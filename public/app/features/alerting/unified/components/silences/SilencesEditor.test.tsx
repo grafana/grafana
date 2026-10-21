@@ -8,6 +8,7 @@ import { type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/t
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
+import { getAlertRuleHandler, mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -15,6 +16,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 import { SilencesEditor } from './SilencesEditor';
 
 const RULE_UID = 'rule-uid-1';
+const RULE_TITLE = 'CPU usage high';
 
 const server = setupMswServer();
 
@@ -24,6 +26,7 @@ const dataSources = {
 
 const saveButton = () => screen.getByRole('button', { name: /save silence/i });
 const commentField = () => screen.getByLabelText(/comment/i);
+const findRuleField = () => screen.findByRole('textbox', { name: /^alert rule/i });
 
 const renderEditor = (overrides: { onSilenceCreated?: jest.Mock; onCancel?: jest.Mock } = {}) => {
   const onSilenceCreated = overrides.onSilenceCreated ?? jest.fn();
@@ -70,6 +73,41 @@ beforeEach(() => {
 });
 
 describe('SilencesEditor', () => {
+  it('shows the title of the silenced rule from the Kubernetes rules API', async () => {
+    const rulerRequests: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname.startsWith('/api/ruler/')) {
+        rulerRequests.push(request.url);
+      }
+    });
+    server.use(getAlertRuleHandler([mockK8sAlertRule({ uid: RULE_UID, title: RULE_TITLE })]));
+    renderEditor();
+
+    expect(await findRuleField()).toHaveValue(RULE_TITLE);
+    expect(screen.getByText('Refine affected alerts')).toBeInTheDocument();
+    expect(screen.getByText('This silence applies only to alerts from this alert rule.')).toBeInTheDocument();
+    expect(rulerRequests).toEqual([]);
+    server.events.removeAllListeners('request:start');
+  });
+
+  it('explains that the rule is unavailable when it cannot be loaded, and still scopes to its UID', async () => {
+    server.use(getAlertRuleHandler([]));
+    const captured = captureCreateSilence();
+    const { user, onSilenceCreated } = renderEditor();
+
+    expect(await findRuleField()).toHaveValue('Alert rule unavailable');
+    expect(
+      screen.getByText(new RegExp(`only to alerts from the alert rule with UID ${RULE_UID}.*may have been deleted`))
+    ).toBeInTheDocument();
+
+    await user.click(saveButton());
+
+    await waitFor(() => expect(onSilenceCreated).toHaveBeenCalledTimes(1));
+    expect(captured.bodies[0].matchers).toEqual([
+      { isEqual: true, isRegex: false, name: '__alert_rule_uid__', value: RULE_UID },
+    ]);
+  });
+
   it('calls onSilenceCreated after a successful submit', async () => {
     const captured = captureCreateSilence();
     const { user, onSilenceCreated } = renderEditor();

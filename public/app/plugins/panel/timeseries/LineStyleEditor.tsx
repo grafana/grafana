@@ -2,7 +2,7 @@ import { useId, useMemo } from 'react';
 
 import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagEnableColorblindSafePanelOptions } from '@grafana/runtime/internal';
 import { type LineStyle } from '@grafana/schema';
 import { Field, IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
@@ -42,6 +42,7 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
+  const colorblindSafePanelOptions = useFlagEnableColorblindSafePanelOptions();
   const dashPatternId = useId();
   const lineFillOptions: Array<SelectableValue<LineFill>> = [
     {
@@ -58,7 +59,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
     },
   ];
 
-  if (config.featureToggles.enableColorblindSafePanelOptions) {
+  if (colorblindSafePanelOptions) {
     lineFillOptions.push({
       label: t('timeseries.line-style-editor.line-fill-options.label-accessible', 'Accessible'),
       value: 'accessible',

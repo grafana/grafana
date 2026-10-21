@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -263,7 +265,17 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
 		tracing:              tracing.InitializeTracerForTest(),
 	}
-	require.Nil(t, b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(nil))
+	defs := iamv0.GetOpenAPIDefinitions(func(string) spec.Ref { return spec.Ref{} })
+	routes := b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(defs)
+	require.Len(t, routes.Namespace, 1)
+	route := routes.Namespace[0]
+	require.Equal(t, "teamlbacusage", route.Path)
+	responseSchema := route.Spec.Get.Responses.StatusCodeResponses[200].Content["application/json"].Schema
+	require.Contains(t, responseSchema.Properties, "counts")
+	response := httptest.NewRecorder()
+	route.Handler(response, httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/namespaces/org-1/teamlbacusage", nil))
+	require.Equal(t, http.StatusForbidden, response.Code)
+	require.NotContains(t, response.Body.String(), "counts")
 	decision, _, err := b.teamLBACApiInstaller.GetTeamLBACUsageAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
 		ResourceRequest: true, Resource: "teamlbacusage", Verb: "list", Namespace: "org-1",
 	})

@@ -8,6 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+const (
+	watchEventPhaseLive = "live"
+	// The event's resource version timestamp precedes the end of the watch's
+	// initial events, including the initial bookmark.
+	watchEventPhaseInitialList = "initial_list"
+)
+
 type StorageMetrics struct {
 	WatchEventLatency      *prometheus.HistogramVec
 	WatchEventReadyLatency *prometheus.HistogramVec
@@ -34,12 +41,12 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 		}, []string{"group", "resource"}),
 		WatchEventReadyLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_storage_server_watch_event_ready_latency_seconds",
-			Help:                            "Time (in seconds) from resource version generation until the watch event is ready to be sent over gRPC",
+			Help:                            "Time (in seconds) from resource version generation until the watch event is ready to be sent over gRPC. phase=initial_list marks events whose resource version timestamp precedes the end of the watch's initial events, including the initial bookmark",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"group", "resource"}),
+		}, []string{"group", "resource", "phase"}),
 		WatchEventSendDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_storage_server_watch_event_send_duration_seconds",
 			Help:                            "Time (in seconds) spent scheduling a watch event with the gRPC transport, including its flow-control wait",
@@ -90,15 +97,14 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	}
 }
 
-func (m *StorageMetrics) observeWatchEvent(group, resource string, resourceVersionAt, sendStartedAt, sentAt time.Time) {
+func (m *StorageMetrics) observeWatchEvent(group, resource, phase string, resourceVersionAt, sendStartedAt, sentAt time.Time) {
 	readySeconds := sendStartedAt.Sub(resourceVersionAt).Seconds()
 	sendSeconds := sentAt.Sub(sendStartedAt).Seconds()
 	if readySeconds < 0 || sendSeconds < 0 {
 		return
 	}
 
-	labels := []string{group, resource}
-	m.WatchEventLatency.WithLabelValues(labels...).Observe(readySeconds + sendSeconds)
-	m.WatchEventReadyLatency.WithLabelValues(labels...).Observe(readySeconds)
-	m.WatchEventSendDuration.WithLabelValues(labels...).Observe(sendSeconds)
+	m.WatchEventLatency.WithLabelValues(group, resource).Observe(readySeconds + sendSeconds)
+	m.WatchEventReadyLatency.WithLabelValues(group, resource, phase).Observe(readySeconds)
+	m.WatchEventSendDuration.WithLabelValues(group, resource).Observe(sendSeconds)
 }

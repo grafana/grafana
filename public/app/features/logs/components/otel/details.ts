@@ -240,7 +240,17 @@ function normalizeAttributeKey(key: string): string {
 
 function isStacktraceAttributeKey(key: string): boolean {
   const normalized = normalizeAttributeKey(key);
-  return normalized.endsWith('stacktrace') || normalized.endsWith('stack_trace');
+  if (normalized.endsWith('stacktrace') || normalized.endsWith('stack_trace')) {
+    return true;
+  }
+
+  // kube-apiserver statusStack and Pino err.stack do not use the stacktrace suffix.
+  if (normalized === 'statusstack' || normalized === 'status_stack' || normalized === 'err_stack') {
+    return true;
+  }
+
+  // Limit the "_stack" suffix to error.* and exception.* so names like tech_stack are left alone.
+  return normalized.endsWith('_stack') && ERROR_CATEGORY_IDS.has(findCategory(key).id);
 }
 
 function isErrorAttributeKey(key: string): boolean {

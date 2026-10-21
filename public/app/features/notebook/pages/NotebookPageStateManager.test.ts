@@ -392,7 +392,7 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-1');
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false, false, 'direct');
     });
 
     it('fires again on a second navigation to a cached scene, reporting it was cached', async () => {
@@ -403,7 +403,13 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-1');
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(2);
-      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(2, expect.anything(), true);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        true,
+        false,
+        'direct'
+      );
     });
 
     it('does not fire when a blank notebook adopts its own uid instead of being fetched', async () => {

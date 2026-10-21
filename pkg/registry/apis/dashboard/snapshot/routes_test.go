@@ -800,12 +800,12 @@ func TestDeleteExternalSnapshotLegacy(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// URL is in K8s format — function must strip the path and rebuild as legacy.
-		err := deleteExternalSnapshotLegacy(server.URL + "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
+		// Preserve a configured base path while changing the endpoint format.
+		err := deleteExternalSnapshotLegacy(server.URL + "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodGet, receivedReq.Method)
-		assert.Equal(t, "/api/snapshots-delete/abc", receivedReq.URL.Path)
+		assert.Equal(t, "/snapshots/api/snapshots-delete/abc", receivedReq.URL.Path)
 	})
 
 	t.Run("passes through legacy-format URL unchanged", func(t *testing.T) {
@@ -1054,10 +1054,13 @@ func TestStripSensitiveFields(t *testing.T) {
 				Dashboard: dashboard,
 			},
 		}
+		snap.Spec.ExternalUrl = new("https://example.com/dashboard/snapshot/public-key")
+		snap.Spec.ExternalDeleteUrl = new("https://delete.example.com/private/secret")
 		stripped, err := stripSensitiveFields(snap)
 		require.NoError(t, err)
 		assert.Nil(t, stripped.Spec.DeleteKey)
 		assert.Nil(t, stripped.Spec.Dashboard)
+		assert.Empty(t, stripped.GetExternalDeleteURL())
 	})
 
 	t.Run("does not modify original snapshot", func(t *testing.T) {
@@ -1080,11 +1083,16 @@ func TestStripSensitiveFields(t *testing.T) {
 				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
 			},
 		}
+		for i := range list.Items {
+			list.Items[i].Spec.ExternalUrl = new("https://example.com/dashboard/snapshot/public-key")
+			list.Items[i].Spec.ExternalDeleteUrl = new("https://delete.example.com/private/secret")
+		}
 		stripped, err := stripSensitiveFieldsFromList(list)
 		require.NoError(t, err)
 		for _, item := range stripped.Items {
 			assert.Nil(t, item.Spec.DeleteKey)
 			assert.Nil(t, item.Spec.Dashboard)
+			assert.Empty(t, item.GetExternalDeleteURL())
 		}
 	})
 

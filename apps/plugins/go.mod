@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/plugins
 
-go 1.27.2
+go 1.27.3
 
 replace github.com/grafana/grafana => ../..
 
@@ -20,8 +20,8 @@ replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
+	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3
+	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.60.15
 	github.com/grafana/grafana-app-sdk/logging v0.60.15
@@ -87,7 +87,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/getkin/kin-openapi v0.149.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -220,7 +220,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
 	github.com/trivago/tgo v1.0.7 // indirect
