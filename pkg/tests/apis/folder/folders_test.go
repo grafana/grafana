@@ -2220,6 +2220,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 
 	expectedAnnotations := map[string]string{
 		"grafana.app/createdBy": "access-policy:service",
+		"grafana.app/updatedBy": "access-policy:service",
 		"grafana.app/managedBy": "classic-file-provisioning",
 		"grafana.app/managerId": "provisioned dashboards",
 	}
