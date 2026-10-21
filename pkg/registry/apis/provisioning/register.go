@@ -964,7 +964,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	return nil
 }
 
-
 // performanceEnabled reports whether the synthetic "test" job type is enabled.
 // It is evaluated per request via OpenFeature (rather than captured once at
 // startup) so the flag behaves consistently with the other provisioning flags.
