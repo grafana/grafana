@@ -1,11 +1,11 @@
 import { t } from '@grafana/i18n';
 import { LoadingPlaceholder, Stack } from '@grafana/ui';
 
+import { ResultCount } from '../rule-row/ResultCount';
 import { RuleRowList } from '../rule-row/RuleRowList';
 import { type Criteria } from '../rule-search/criteria';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
-import { ResultCount } from '../shared/ResultCount';
 
 import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { useAlertRuleSearch } from './alertRuleSearch';

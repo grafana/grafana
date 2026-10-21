@@ -6,9 +6,9 @@ import { setupMswServer } from '../../mockApi';
 import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
+import { getInteractiveControls, tabSequence } from '../mocks/filterSidebarTestUtils';
 import { mockFolderParents } from '../mocks/handlers';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
-import { getInteractiveControls, tabSequence } from '../rule-search/filterSidebarTestUtils';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 

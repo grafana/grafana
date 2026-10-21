@@ -11,10 +11,10 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { getInteractiveControls, tabSequence } from '../mocks/filterSidebarTestUtils';
 import { mockFolderParents } from '../mocks/handlers';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { type CriteriaIssue } from '../rule-search/criteriaIssues';
-import { getInteractiveControls, tabSequence } from '../rule-search/filterSidebarTestUtils';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 

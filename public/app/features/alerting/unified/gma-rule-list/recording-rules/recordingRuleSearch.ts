@@ -5,8 +5,8 @@ import {
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { useDispatch } from 'app/types/store';
 
+import { type ResultTotal } from '../rule-row/ResultCount';
 import { type Criteria } from '../rule-search/criteria';
-import { type ResultTotal } from '../shared/ResultCount';
 import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
 import { type RecordingRuleSearchHit, toRecordingRuleSearchHit } from './recordingRuleSearchHit';
