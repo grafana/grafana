@@ -1,3 +1,5 @@
+import * as z from 'zod';
+
 import { FieldMatcherID } from '@grafana/data';
 
 import { payloads } from './schemas';
@@ -84,6 +86,31 @@ describe('variable payloads reject the deprecated GroupByVariable kind', () => {
     expect(result.error?.issues.map((issue) => issue.message)).toContainEqual(
       expect.stringContaining('AdhocVariable with spec.enableGroupBy: true')
     );
+  });
+
+  it('names the replacement even when the GroupByVariable payload is incomplete', () => {
+    const result = payloads.addVariable.safeParse({ variable: { kind: 'GroupByVariable', spec: { name: 'groupBy' } } });
+
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ['variable', 'kind'],
+        message: expect.stringContaining('AdhocVariable with spec.enableGroupBy: true'),
+      }),
+    ]);
+  });
+
+  it.each([
+    ['ADD_VARIABLE', payloads.addVariable],
+    ['UPDATE_VARIABLE', payloads.updateVariable],
+    ['ADD_ROW', payloads.addRow],
+    ['UPDATE_ROW', payloads.updateRow],
+    ['ADD_TAB', payloads.addTab],
+    ['UPDATE_TAB', payloads.updateTab],
+  ])('%s no longer advertises GroupByVariable in its JSON schema', (_command, schema) => {
+    const jsonSchema = JSON.stringify(z.toJSONSchema(schema));
+
+    expect(jsonSchema).toContain('AdhocVariable');
+    expect(jsonSchema).not.toContain('GroupByVariable');
   });
 });
 

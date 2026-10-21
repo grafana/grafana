@@ -1,3 +1,5 @@
+import { isRecord } from 'app/core/utils/isRecord';
+
 /**
  * GroupByVariable is still a kind in the v2 spec, so a stored dashboard can carry one (the loader
  * merges it into the adhoc variable on the same datasource). Mutation API callers must not author new
@@ -46,8 +48,4 @@ function findInLayout(layout: unknown, path: Array<string | number>): string | u
     }
   }
   return undefined;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

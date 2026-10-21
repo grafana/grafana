@@ -30,6 +30,21 @@ describe('findGroupByVariablePath', () => {
     expect(findGroupByVariablePath(spec)).toBe('layout.spec.rows.0.spec.layout.spec.tabs.0.spec.variables.0.kind');
   });
 
+  it('finds one in a top-level tab', () => {
+    const spec = { variables: [], layout: tabs({ title: 'Tab', variables: [groupBy], layout: grid() }) };
+
+    expect(findGroupByVariablePath(spec)).toBe('layout.spec.tabs.0.spec.variables.0.kind');
+  });
+
+  it('finds one in a row nested in a tab', () => {
+    const spec = {
+      variables: [],
+      layout: tabs({ title: 'Tab', layout: rows({ title: 'Row', variables: [groupBy], layout: grid() }) }),
+    };
+
+    expect(findGroupByVariablePath(spec)).toBe('layout.spec.tabs.0.spec.layout.spec.rows.0.spec.variables.0.kind');
+  });
+
   it('ignores the kind inside a variable query, which is opaque datasource data', () => {
     const queryVariable = {
       kind: 'QueryVariable',

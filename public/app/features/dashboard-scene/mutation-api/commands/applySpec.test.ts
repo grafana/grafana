@@ -404,14 +404,21 @@ describe('APPLY_SPEC with a GroupByVariable', () => {
     }
   );
 
-  it('rejects one in a row section', async () => {
-    const scene = buildScene(makeSpec());
+  it.each([false, true])(
+    'rejects one in a row section and leaves the dashboard unchanged (validate: %s)',
+    async (validate) => {
+      const scene = buildScene(makeSpec());
+      const before = await readSpec(scene);
 
-    const result = await applySpec(scene, makeSpec(withRowGroupBy));
+      const result = await applySpec(scene, makeSpec(withRowGroupBy), validate);
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('layout.spec.rows.0.spec.variables.0.kind: GroupByVariable is no longer supported');
-  });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        'layout.spec.rows.0.spec.variables.0.kind: GroupByVariable is no longer supported'
+      );
+      expect(await readSpec(scene)).toEqual(before);
+    }
+  );
 });
 
 describe('APPLY_SPEC with a user-set transformation refId', () => {
