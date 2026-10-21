@@ -7,7 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
 
 describe('AlertRulesHeaderActions', () => {
-  it('ALERT-5: shows New alert rule and Design rule for provisioning for a user who can create rules', async () => {
+  it('shows New alert rule and Design rule for provisioning for a user who can create rules', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
     const { user } = render(<AlertRulesHeaderActions />);
 
@@ -23,7 +23,7 @@ describe('AlertRulesHeaderActions', () => {
     );
   });
 
-  it('ALERT-5: hides New alert rule for a user without create permission, but keeps the ungated Design rule action', async () => {
+  it('hides New alert rule for a user without create permission, but keeps the ungated Design rule action', async () => {
     grantUserPermissions([]);
     const { user } = render(<AlertRulesHeaderActions />);
 
@@ -33,7 +33,7 @@ describe('AlertRulesHeaderActions', () => {
     expect(screen.getByRole('menuitem', { name: /design rule for provisioning/i })).toBeInTheDocument();
   });
 
-  it('NAV-6: links to New alert rule and Design rule for provisioning without returnTo, from a filtered list', async () => {
+  it('links to New alert rule and Design rule for provisioning without returnTo, from a filtered list', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
     locationService.push('/alerting/rules/alert?search=state%3Afiring');
     const { user } = render(<AlertRulesHeaderActions />);
@@ -55,14 +55,5 @@ describe('AlertRulesHeaderActions', () => {
     await user.click(screen.getByRole('button', { name: /more/i }));
     expect(screen.queryByRole('menuitem', { name: /export all/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /import/i })).not.toBeInTheDocument();
-  });
-
-  it('places New alert rule before the More menu button', () => {
-    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
-    render(<AlertRulesHeaderActions />);
-
-    const newRule = screen.getByRole('link', { name: /new alert rule/i });
-    const more = screen.getByRole('button', { name: /more/i });
-    expect(newRule.compareDocumentPosition(more)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 });

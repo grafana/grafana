@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { RuleListItem, RuleListItemDescription } from './RuleListItem';
 
 describe('RuleListItem', () => {
-  it('VIS-1: renders title, description, actions and renders only truthy meta entries', () => {
+  it('renders title, description, actions and only the truthy meta entries', () => {
     render(
       <ul>
         <RuleListItem
@@ -25,16 +25,21 @@ describe('RuleListItem', () => {
     ]);
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
+});
 
-  it('shows the error instead of the summary when both exist', () => {
-    render(<RuleListItemDescription error="boom" summary="all good" />);
+describe('RuleListItemDescription', () => {
+  it.each([
+    {
+      name: 'the error instead of the summary when both exist',
+      props: { error: 'boom', summary: 'all good' },
+      shown: 'boom',
+      hidden: 'all good',
+    },
+    { name: 'the summary without an error', props: { summary: 'all good' }, shown: 'all good', hidden: 'boom' },
+  ])('shows $name', ({ props, shown, hidden }) => {
+    render(<RuleListItemDescription {...props} />);
 
-    expect(screen.getByText('boom')).toBeInTheDocument();
-    expect(screen.queryByText('all good')).not.toBeInTheDocument();
-  });
-
-  it('falls back to the summary without an error', () => {
-    render(<RuleListItemDescription summary="all good" />);
-    expect(screen.getByText('all good')).toBeInTheDocument();
+    expect(screen.getByText(shown)).toBeInTheDocument();
+    expect(screen.queryByText(hidden)).not.toBeInTheDocument();
   });
 });

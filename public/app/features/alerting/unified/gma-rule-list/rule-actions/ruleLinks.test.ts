@@ -3,32 +3,28 @@ import { config } from '@grafana/runtime';
 import { ruleDuplicateUrl, ruleEditUrl, ruleShareUrl } from './ruleLinks';
 
 describe('ruleLinks', () => {
-  it('ALERT-6: builds an absolute, subpath-aware share URL containing only the rule UID and no returnTo', () => {
+  const { appUrl, appSubUrl } = config;
+
+  afterEach(() => {
+    config.appUrl = appUrl;
+    config.appSubUrl = appSubUrl;
+  });
+
+  it('builds an absolute, subpath-aware share URL containing only the rule UID and no returnTo', () => {
     config.appUrl = 'http://localhost:3000/';
     config.appSubUrl = '/grafana';
 
-    const url = ruleShareUrl('rule-uid-1');
-
-    expect(url).toBe('http://localhost:3000/grafana/alerting/grafana/rule-uid-1/view');
+    expect(ruleShareUrl('rule-uid-1')).toBe('http://localhost:3000/grafana/alerting/grafana/rule-uid-1/view');
   });
 
   it('builds the UID-only edit URL used by the ungrouped rule editor route', () => {
-    const url = ruleEditUrl('rule-uid-1');
-
-    expect(url).toContain('/alerting/rule-uid-1/edit');
+    expect(ruleEditUrl('rule-uid-1')).toBe('/alerting/rule-uid-1/edit');
   });
 
-  it('ALERT-6/REC-5: builds the duplicate URL for an alert rule via the new-rule route with copyFrom', () => {
-    const url = ruleDuplicateUrl('alert', 'rule-uid-1');
-
-    expect(url).toContain('/alerting/new?');
-    expect(url).toContain('copyFrom=rule-uid-1');
-  });
-
-  it('REC-5: builds the duplicate URL for a recording rule via the recording-specific new-rule route', () => {
-    const url = ruleDuplicateUrl('recording', 'rule-uid-2');
-
-    expect(url).toContain('/alerting/new/grafana-recording?');
-    expect(url).toContain('copyFrom=rule-uid-2');
+  it.each([
+    { kind: 'alert', uid: 'rule-uid-1', url: '/alerting/new?copyFrom=rule-uid-1' },
+    { kind: 'recording', uid: 'rule-uid-2', url: '/alerting/new/grafana-recording?copyFrom=rule-uid-2' },
+  ] as const)('builds the $kind duplicate URL through its new-rule route with copyFrom', ({ kind, uid, url }) => {
+    expect(ruleDuplicateUrl(kind, uid)).toBe(url);
   });
 });

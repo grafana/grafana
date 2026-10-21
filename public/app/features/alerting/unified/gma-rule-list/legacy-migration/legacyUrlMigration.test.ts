@@ -27,7 +27,7 @@ function resolvers(overrides: Partial<NameResolvers> = {}): NameResolvers {
 }
 
 describe('parseLegacyRuleListParams', () => {
-  it('NAV-3: reads the recognized legacy params out of a query string', () => {
+  it('reads the recognized legacy params out of a query string', () => {
     expect(
       parseLegacyRuleListParams(
         '?search=cpu&view=list&dataSource=ds-1&alertState=firing&ruleType=recording&queryString=old'
@@ -53,7 +53,7 @@ describe('migrateLegacyRuleListUrl', () => {
     return { search: new URLSearchParams(query).toString() };
   }
 
-  it('NAV-4: resolves a legacy folder name to its UID and builds the destination URL', async () => {
+  it('resolves a legacy folder name to its UID and builds the destination URL', async () => {
     const result = await migrateLegacyRuleListUrl(
       legacyLocation({ search: 'namespace:"My Folder"' }),
       resolvers({
@@ -66,7 +66,7 @@ describe('migrateLegacyRuleListUrl', () => {
     expect(result.diagnostics.droppedKeys).toEqual([]);
   });
 
-  it('NAV-4: removes an unresolved folder name from the destination and reports its key', async () => {
+  it('removes an unresolved folder name from the destination and reports its key', async () => {
     const result = await migrateLegacyRuleListUrl(
       legacyLocation({ search: 'namespace:unknown-folder cpu' }),
       resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) })
@@ -76,7 +76,7 @@ describe('migrateLegacyRuleListUrl', () => {
     expect(result.diagnostics.droppedKeys).toEqual(['namespace']);
   });
 
-  it('NAV-4: still redirects, dropping the filter, when the name lookup fails', async () => {
+  it('still redirects, dropping the filter, when the name lookup fails', async () => {
     const result = await migrateLegacyRuleListUrl(
       legacyLocation({ search: 'namespace:Team datasource:Prom cpu' }),
       resolvers({
@@ -90,7 +90,7 @@ describe('migrateLegacyRuleListUrl', () => {
     expect(result.diagnostics.droppedKeys).toEqual(['datasource', 'namespace']);
   });
 
-  it('NAV-4: still redirects and drops malformed and unknown parameters', async () => {
+  it('still redirects and drops malformed and unknown parameters', async () => {
     const result = await migrateLegacyRuleListUrl(
       legacyLocation({ search: 'state:bogus nonsense:1 cpu label:"unterminated', view: 'bogus' }),
       resolvers()
@@ -101,7 +101,7 @@ describe('migrateLegacyRuleListUrl', () => {
     expect(result.diagnostics.droppedKeys).toEqual(['label', 'nonsense', 'state']);
   });
 
-  it('NAV-4: emits the migration analytics event once, with only sorted filter-key names', async () => {
+  it('emits the migration analytics event once, with only sorted filter-key names', async () => {
     await migrateLegacyRuleListUrl(legacyLocation({ dataSource: 'my-ds', search: 'group:g1' }), resolvers());
 
     expect(reportInteractionMock).toHaveBeenCalledTimes(1);
@@ -111,12 +111,12 @@ describe('migrateLegacyRuleListUrl', () => {
     });
   });
 
-  it('NAV-4: does not emit the analytics event when nothing was migrated or dropped', async () => {
+  it('does not emit the analytics event when nothing was migrated or dropped', async () => {
     await migrateLegacyRuleListUrl(legacyLocation({ search: 'cpu' }), resolvers());
     expect(reportInteractionMock).not.toHaveBeenCalled();
   });
 
-  it('NAV-4: reports a user-typed filter name as other in analytics and logs, never as typed', async () => {
+  it('reports a user-typed filter name as other in analytics and logs, never as typed', async () => {
     await migrateLegacyRuleListUrl(legacyLocation({ search: 'secret-team-name:1 cpu' }), resolvers());
 
     expect(reportInteractionMock).toHaveBeenCalledWith('grafana_alerting_gma_list_query_migration', {
@@ -126,14 +126,14 @@ describe('migrateLegacyRuleListUrl', () => {
     expect(logWarningMock).toHaveBeenCalledWith(expect.any(String), { filterKey: 'other' });
   });
 
-  it('NAV-4: logs a warning with only the filter key name for each dropped filter', async () => {
+  it('logs a warning with only the filter key name for each dropped filter', async () => {
     await migrateLegacyRuleListUrl(legacyLocation({ search: 'type:recording dashboard:dash-1' }), resolvers());
 
     expect(logWarningMock).toHaveBeenCalledTimes(1);
     expect(logWarningMock).toHaveBeenCalledWith(expect.any(String), { filterKey: 'dashboard' });
   });
 
-  it('NAV-4: routes recording destinations to the Recording path', async () => {
+  it('routes recording destinations to the Recording path', async () => {
     const result = await migrateLegacyRuleListUrl(legacyLocation({ ruleType: 'recording' }), resolvers());
     expect(result.pathname).toBe('/alerting/rules/recording');
   });

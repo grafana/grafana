@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
-import { getAPIBaseURL } from '@grafana/api-clients';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -12,9 +11,9 @@ import { mockDashboardDto, mockDataSource } from 'app/features/alerting/unified/
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
-import { DeletedRuleReviewDrawer } from './DeletedRuleReviewDrawer';
+import { FOLDER_PARENTS_URL } from '../mocks/handlers';
 
-const FOLDER_PARENTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/folders/:name/parents`;
+import { DeletedRuleReviewDrawer } from './DeletedRuleReviewDrawer';
 
 setBackendSrv(backendSrv);
 setupMockServer();

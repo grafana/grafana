@@ -36,61 +36,37 @@ describe('useGenericSavedSearches.updateSearch', () => {
     mockUserStorage.setItem.mockResolvedValue(undefined);
   });
 
-  it('replaces only the matching entry\'s query, leaving name and default status untouched', async () => {
-    const stored = [existingSearch({ id: 'search-1', name: 'Keep me', isDefault: true, query: 'old query' })];
+  async function setup(stored: SavedSearch[]) {
     mockUserStorage.getItem.mockResolvedValue(JSON.stringify(stored));
-
     const { result } = renderHook(() => useGenericSavedSearches({ storageKey: STORAGE_KEY }), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
+    return result;
+  }
 
-    await act(async () => {
-      await result.current.updateSearch('search-1', 'namespace:folder-1');
-    });
-
-    expect(result.current.savedSearches).toEqual([
-      expect.objectContaining({ id: 'search-1', name: 'Keep me', isDefault: true, query: 'namespace:folder-1' }),
+  it("replaces only the matching entry's query, persisting it under the configured key and leaving the others unchanged", async () => {
+    const other = existingSearch({ id: 'search-2', name: 'Other', query: 'unchanged' });
+    const result = await setup([
+      existingSearch({ id: 'search-1', name: 'Keep me', isDefault: true, query: 'old query' }),
+      other,
     ]);
-  });
-
-  it('persists the updated query to UserStorage under the configured key', async () => {
-    mockUserStorage.getItem.mockResolvedValue(JSON.stringify([existingSearch({ query: 'old query' })]));
-
-    const { result } = renderHook(() => useGenericSavedSearches({ storageKey: STORAGE_KEY }), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {
       await result.current.updateSearch('search-1', 'namespace:folder-1');
     });
 
+    const expected = [
+      expect.objectContaining({ id: 'search-1', name: 'Keep me', isDefault: true, query: 'namespace:folder-1' }),
+      other,
+    ];
+    expect(result.current.savedSearches).toEqual(expected);
     const [persistedKey, persistedJson] = mockUserStorage.setItem.mock.calls.at(-1);
     expect(persistedKey).toBe(STORAGE_KEY);
-    expect(JSON.parse(persistedJson)).toEqual([
-      expect.objectContaining({ id: 'search-1', query: 'namespace:folder-1' }),
-    ]);
-  });
-
-  it('leaves the other entries in a multi-entry collection unchanged', async () => {
-    const other = existingSearch({ id: 'search-2', name: 'Other', query: 'unchanged' });
-    mockUserStorage.getItem.mockResolvedValue(
-      JSON.stringify([existingSearch({ id: 'search-1', query: 'old query' }), other])
-    );
-
-    const { result } = renderHook(() => useGenericSavedSearches({ storageKey: STORAGE_KEY }), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    await act(async () => {
-      await result.current.updateSearch('search-1', 'namespace:folder-1');
-    });
-
-    expect(result.current.savedSearches.find((s) => s.id === 'search-2')).toEqual(other);
+    expect(JSON.parse(persistedJson)).toEqual(expected);
   });
 
   it('is a no-op when the ID does not match any saved search', async () => {
     const stored = [existingSearch({ query: 'old query' })];
-    mockUserStorage.getItem.mockResolvedValue(JSON.stringify(stored));
-
-    const { result } = renderHook(() => useGenericSavedSearches({ storageKey: STORAGE_KEY }), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const result = await setup(stored);
 
     await act(async () => {
       await result.current.updateSearch('does-not-exist', 'namespace:folder-1');

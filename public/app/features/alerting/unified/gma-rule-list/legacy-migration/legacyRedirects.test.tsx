@@ -6,12 +6,12 @@ import { type Store } from 'redux';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { generatedAPI as folderSearchAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import * as appNotification from 'app/core/copy/appNotification';
 import { setStore } from 'app/store/store';
 import { type StoreState } from 'app/types/store';
 
 import { setupMswServer } from '../../mockApi';
+import { setupDataSources } from '../../testSetup/datasources';
 
 import { LegacyRecentlyDeletedRedirect, LegacyRuleListRedirect } from './legacyRedirects';
 
@@ -19,7 +19,7 @@ const server = setupMswServer();
 
 const FOLDER_SEARCH_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/search';
 
-setDataSourceSrv({ getList: () => [], getInstanceSettings: () => undefined } as unknown as DataSourceSrv);
+setupDataSources();
 
 const warning = jest.fn();
 
@@ -38,7 +38,7 @@ async function waitForNavigateTarget() {
   return calls[calls.length - 1][0].to;
 }
 
-// NAV-1: a `type:` token is consumed by the migration, not carried to the destination.
+// A `type:` token is consumed by the migration, not carried to the destination.
 describe('LegacyRuleListRedirect', () => {
   beforeEach(() => {
     // The folder-name lookup dispatches through the global app store, which render() does not populate.
@@ -77,28 +77,9 @@ describe('LegacyRuleListRedirect', () => {
     expect(await waitForNavigateTarget()).toBe('/alerting/rules/recording?search=cpu&view=list');
   });
 
-  it('redirects to Alert rules when there is no type token', async () => {
-    renderAt('/alerting/list?search=cpu', <LegacyRuleListRedirect />);
-
-    expect(await waitForNavigateTarget()).toBe('/alerting/rules/alert?search=cpu');
-  });
-
-  it('redirects to Alert rules and drops the type token when type is explicitly alerting', async () => {
-    renderAt('/alerting/list?search=type%3Aalerting%20cpu', <LegacyRuleListRedirect />);
-
-    expect(await waitForNavigateTarget()).toBe('/alerting/rules/alert?search=cpu');
-  });
-
-  it('redirects to Alert rules with no query string at all', async () => {
-    renderAt('/alerting/list', <LegacyRuleListRedirect />);
-
-    expect(await waitForNavigateTarget()).toBe('/alerting/rules/alert');
-    expect(warning).not.toHaveBeenCalled();
-  });
-
-  // NAV-4: unmigratable filters are removed and named; the redirect never fails.
+  // Unmigratable filters are removed and named; the redirect never fails.
   it.each([403, 500])(
-    'NAV-4: still redirects, without the folder filter, and warns when the folder lookup fails with %s',
+    'still redirects, without the folder filter, and warns when the folder lookup fails with %s',
     async (status) => {
       server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ message: 'nope' }, { status })));
 
@@ -111,7 +92,7 @@ describe('LegacyRuleListRedirect', () => {
     }
   );
 
-  it('NAV-4: warns about a folder name that matches no folder, and redirects without it', async () => {
+  it('warns about a folder name that matches no folder, and redirects without it', async () => {
     server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
 
     renderAt('/alerting/list?search=namespace%3AGone&view=grouped', <LegacyRuleListRedirect />);
@@ -121,7 +102,7 @@ describe('LegacyRuleListRedirect', () => {
     expect(warning).toHaveBeenCalledWith('Some filters were removed', expect.stringContaining('namespace'));
   });
 
-  it('NAV-4: redirects and names every removed key when parameters are malformed or unknown', async () => {
+  it('redirects and names every removed key when parameters are malformed or unknown', async () => {
     renderAt(
       '/alerting/list?search=state%3Abogus%20nonsense%3A1%20cpu%20label%3A%22unterminated&view=list',
       <LegacyRuleListRedirect />

@@ -2,14 +2,12 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
+import { FOLDER_PARENTS_URL, mockFullRule, ruleUrl } from '../mocks/handlers';
 
 import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 const server = setupMswServer();
-
-const ALERT_RULE_GET_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/:name';
-const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
 
 const hit: AlertRuleSearchHit = {
   uid: 'rule-1',
@@ -19,22 +17,6 @@ const hit: AlertRuleSearchHit = {
   dataSourceUids: [],
   totals: {},
 };
-
-function mockFullRule(annotations: Record<string, string> = {}) {
-  const requests = { count: 0 };
-  server.use(
-    http.get(ALERT_RULE_GET_URL, ({ params }) => {
-      requests.count += 1;
-      return HttpResponse.json({
-        apiVersion: 'v0alpha1',
-        kind: 'AlertRule',
-        metadata: { name: params.name, annotations },
-        spec: { title: 'CPU high', paused: false },
-      });
-    })
-  );
-  return requests;
-}
 
 function mockFolderPath() {
   const requests = { count: 0 };
@@ -62,7 +44,7 @@ function renderEntry(showFolderPath: boolean) {
 
 describe('AlertRuleListEntry', () => {
   it('shows the resolved folder path in List mode', async () => {
-    mockFullRule();
+    mockFullRule('alert');
     mockFolderPath();
     renderEntry(true);
 
@@ -71,17 +53,20 @@ describe('AlertRuleListEntry', () => {
   });
 
   it('neither shows nor requests the folder path in Folders mode', async () => {
-    mockFullRule({ 'grafana.com/access/canWrite': 'true' });
+    mockFullRule('alert', { 'grafana.com/access/canWrite': 'true' });
     const folderRequests = mockFolderPath();
     renderEntry(false);
 
-    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/rule-1/edit');
     expect(screen.queryByText('Team Alerts')).not.toBeInTheDocument();
     expect(folderRequests.count).toBe(0);
   });
 
   it('feeds one full-rule lookup to both the provisioning badge and the Edit action', async () => {
-    const ruleRequests = mockFullRule({ 'grafana.com/provenance': 'api', 'grafana.com/access/canWrite': 'true' });
+    const ruleRequests = mockFullRule('alert', {
+      'grafana.com/provenance': 'api',
+      'grafana.com/access/canWrite': 'true',
+    });
     renderEntry(false);
 
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
@@ -91,15 +76,8 @@ describe('AlertRuleListEntry', () => {
     expect(ruleRequests.count).toBe(1);
   });
 
-  it('enables Edit once the full rule reports write access', async () => {
-    mockFullRule({ 'grafana.com/access/canWrite': 'true' });
-    renderEntry(false);
-
-    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/rule-1/edit');
-  });
-
   it('keeps the row usable, without Edit, when the full-rule lookup fails', async () => {
-    server.use(http.get(ALERT_RULE_GET_URL, () => HttpResponse.json({}, { status: 500 })));
+    server.use(http.get(ruleUrl('alert'), () => HttpResponse.json({}, { status: 500 })));
     renderEntry(false);
 
     expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();

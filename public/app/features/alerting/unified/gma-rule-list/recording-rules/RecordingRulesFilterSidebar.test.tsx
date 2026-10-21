@@ -1,77 +1,179 @@
-import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen, within } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { setupMswServer } from '../../mockApi';
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+import { DataSourceType } from '../../utils/datasource';
+import { mockFolderParents } from '../mocks/handlers';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { getInteractiveControls, tabSequence } from '../rule-search/filterSidebarTestUtils';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 
-// jsdom reports zero size, so Combobox renders no option rows.
+// Real pickers on purpose: stand-ins would hide their names and keyboard behavior.
 mockComboboxRect();
 
-// jsdom lacks scrollIntoView, which the folder picker calls.
 window.HTMLElement.prototype.scrollIntoView = function () {};
 
 setupMswServer();
 
-/** Feeds onChange back into criteria like a real page. */
-function ControlledSidebar() {
-  const [criteria, setCriteria] = useState<Criteria>(createEmptyCriteria());
-  return (
-    <RecordingRulesFilterSidebar
-      criteria={criteria}
-      onChange={setCriteria}
-      onClear={jest.fn()}
-      hasActiveFilters={false}
-    />
+async function renderSidebar(criteria: Criteria = createEmptyCriteria()) {
+  const onChange = jest.fn();
+  const view = render(
+    <RecordingRulesFilterSidebar criteria={criteria} onChange={onChange} onClear={jest.fn()} hasActiveFilters={true} />
   );
+  // The data source pickers load their implementation asynchronously.
+  await screen.findAllByRole('combobox', { name: 'Select a data source' });
+  return { ...view, onChange };
 }
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  DataSourcePicker: ({ current, onChange, ...rest }: { current?: string; onChange: (ds: { uid: string }) => void }) => (
-    <select
-      aria-label={(rest as { 'aria-label'?: string })['aria-label'] ?? 'data source'}
-      value={current ?? ''}
-      onChange={(e) => onChange({ uid: e.target.value })}
-    >
-      <option value="">none</option>
-      <option value="ds-1">ds-1</option>
-      <option value="target-ds-1">target-ds-1</option>
-    </select>
-  ),
-}));
+function focus(element: HTMLElement) {
+  act(() => element.focus());
+}
+
+function getTargetDataSourcePicker() {
+  return within(screen.getByRole('group', { name: 'Target data source' })).getByRole('combobox', {
+    name: 'Select a data source',
+  });
+}
 
 describe('RecordingRulesFilterSidebar', () => {
-  it('ACC-2: the recorded metric input is found by role and name, and typing in it sets criteria.metric', async () => {
-    const user = userEvent.setup();
-    render(<ControlledSidebar />);
-
-    await user.type(screen.getByRole('textbox', { name: 'Recorded metric' }), 'cpu_usage');
-
-    expect(screen.getByRole('textbox', { name: 'Recorded metric' })).toHaveValue('cpu_usage');
-  });
-
-  it('SEARCH-3: the folder control says it matches rules directly in the folder', () => {
-    render(<ControlledSidebar />);
-
-    expect(screen.getByText('Rules directly in this folder')).toBeInTheDocument();
-  });
-
-  it('SEARCH-3: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <RecordingRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
+  beforeEach(() => {
+    setupDataSources(
+      mockDataSource({ uid: 'ds-1', name: 'Prometheus', type: DataSourceType.Prometheus }, { metrics: true }),
+      mockDataSource({ uid: 'ds-2', name: 'Loki', type: DataSourceType.Prometheus }, { metrics: true })
     );
+    mockFolderParents({ 'folder-1': 'Team Alerts' });
+  });
+
+  it('shows one labelled field group per filter, in the order of the filter definitions', async () => {
+    await renderSidebar();
+    const fieldNames = [
+      'Rule name',
+      'Labels',
+      'Folder',
+      'Query data source',
+      'Plugin rules',
+      'Recorded metric',
+      'Target data source',
+      'Health',
+    ];
+
+    expect(screen.getAllByRole('group')).toEqual(fieldNames.map((name) => screen.getByRole('group', { name })));
+  });
+
+  it('gives the query and target data source pickers distinct ids and tells them apart by their field groups', async () => {
+    await renderSidebar();
+
+    const queryPicker = within(screen.getByRole('group', { name: 'Query data source' })).getByRole('combobox', {
+      name: 'Select a data source',
+    });
+
+    expect(queryPicker.id).not.toBe(getTargetDataSourcePicker().id);
+  });
+
+  it('names the controls of an applied label, folder, data source and target data source', async () => {
+    await renderSidebar({
+      ...createEmptyCriteria(),
+      labels: [{ key: 'team', operator: 'equal', value: 'api' }],
+      namespaces: ['folder-1'],
+      dataSourceUids: ['ds-1'],
+      targetDataSourceUid: 'ds-2',
+    });
+
+    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
+    expect(screen.getByRole('combobox', { name: 'Label operator' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
+    expect(screen.getByRole('button', { name: 'Remove label filter' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Remove Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Prometheus' })).toBeInTheDocument();
+  });
+
+  it('leaves no interactive element in the sidebar without an accessible name', async () => {
+    const { container } = await renderSidebar({
+      ...createEmptyCriteria(),
+      labels: [{ key: 'team', operator: 'equal', value: 'api' }],
+      namespaces: ['folder-1'],
+      dataSourceUids: ['ds-1'],
+      targetDataSourceUid: 'ds-2',
+    });
+    await screen.findByRole('button', { name: 'Remove Team Alerts' });
+
+    const controls = getInteractiveControls(container);
+
+    expect(controls).toContain(screen.getByRole('button', { name: 'Remove Team Alerts' }));
+    controls.forEach((control) => expect(control).toHaveAccessibleName());
+  });
+
+  it('reaches every control with Tab', async () => {
+    const { user } = await renderSidebar();
+    const controls = [
+      screen.getByRole('textbox', { name: 'Rule name' }),
+      screen.getByRole('button', { name: 'Add label filter' }),
+      screen.getByRole('button', { name: 'Folder' }),
+      within(screen.getByRole('group', { name: 'Query data source' })).getByRole('combobox'),
+      screen.getByRole('switch', { name: 'Hide plugin rules' }),
+      screen.getByRole('textbox', { name: 'Recorded metric' }),
+      getTargetDataSourcePicker(),
+      screen.getByRole('combobox', { name: 'Health' }),
+    ];
+
+    const visited = await tabSequence(user, screen.getByRole('button', { name: 'Clear filters' }), 10);
+
+    controls.forEach((control) => expect(visited).toContain(control));
+  });
+
+  it('reaches an applied label row and the remove buttons of selected values with Tab', async () => {
+    const { user } = await renderSidebar({
+      ...createEmptyCriteria(),
+      labels: [{ key: 'team', operator: 'equal', value: 'api' }],
+      namespaces: ['folder-1'],
+      dataSourceUids: ['ds-1'],
+    });
+    const removeFolder = await screen.findByRole('button', { name: 'Remove Team Alerts' });
+
+    const visited = await tabSequence(user, screen.getByRole('button', { name: 'Clear filters' }), 12);
+
+    [
+      screen.getByRole('textbox', { name: 'Label key' }),
+      screen.getByRole('textbox', { name: 'Label value' }),
+      screen.getByRole('button', { name: 'Remove label filter' }),
+      removeFolder,
+      screen.getByRole('button', { name: 'Remove Prometheus' }),
+    ].forEach((control) => expect(visited).toContain(control));
+  });
+
+  it('toggles Hide plugin rules with the Space key', async () => {
+    const { user, onChange } = await renderSidebar();
+
+    focus(screen.getByRole('switch', { name: 'Hide plugin rules' }));
+    await user.keyboard(' ');
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ hidePluginRules: true }));
+  });
+
+  it('applies the rule name on Enter', async () => {
+    const { user, onChange } = await renderSidebar();
+
+    await user.type(screen.getByRole('textbox', { name: 'Rule name' }), 'cpu{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ text: ['cpu'] }));
+  });
+
+  it('sets criteria.metric from the recorded metric input', async () => {
+    const { user, onChange } = await renderSidebar();
+
+    await user.click(screen.getByRole('textbox', { name: 'Recorded metric' }));
+    await user.paste('cpu_usage');
+
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ metric: 'cpu_usage' }));
+  });
+
+  it('says the folder control matches rules directly in the folder, and selecting one sets it as the namespace criterion', async () => {
+    const { user, onChange } = await renderSidebar();
+    expect(screen.getByText('Rules directly in this folder')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Folder' }));
     await user.click(await screen.findByLabelText('Alerting-folder'));
@@ -81,51 +183,10 @@ describe('RecordingRulesFilterSidebar', () => {
     );
   });
 
-  it.each([
-    'Rule name',
-    'Labels',
-    'Folder',
-    'Query data source',
-    'Plugin rules',
-    'Recorded metric',
-    'Target data source',
-    'Health',
-  ])('ACC-6: the "%s" field is a labelled group', (name) => {
-    render(<ControlledSidebar />);
+  it('opens the folder picker from the keyboard and selects a folder with arrow keys', async () => {
+    const { user, onChange } = await renderSidebar();
 
-    expect(screen.getByRole('group', { name })).toBeInTheDocument();
-  });
-
-  it('ACC-1: the rule name input is found by role and name and applies on Enter', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <RecordingRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
-
-    await user.type(screen.getByRole('textbox', { name: 'Rule name' }), 'cpu{Enter}');
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ text: ['cpu'] }));
-  });
-
-  it('ACC-3: the folder picker is a button named Folder that opens from the keyboard and selects with arrow keys', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <RecordingRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
-
-    screen.getByRole('button', { name: 'Folder' }).focus();
+    focus(screen.getByRole('button', { name: 'Folder' }));
     await user.keyboard('{Enter}');
     expect(await screen.findByPlaceholderText('Search folders')).toHaveFocus();
 
@@ -137,33 +198,8 @@ describe('RecordingRulesFilterSidebar', () => {
     );
   });
 
-  it('does not render Alert-only controls (dashboard, panel, contact point, policy, paused)', () => {
-    render(
-      <RecordingRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
-
-    expect(screen.queryByLabelText('Dashboard')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Contact point')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Notification policy')).not.toBeInTheDocument();
-    expect(screen.queryByText('Paused')).not.toBeInTheDocument();
-  });
-
-  it('SEARCH-5: selecting a health calls onChange with that health', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <RecordingRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+  it('selects a health by clicking its option', async () => {
+    const { user, onChange } = await renderSidebar();
 
     await user.click(screen.getByRole('combobox', { name: 'Health' }));
     await user.click(await screen.findByRole('option', { name: 'OK' }));
@@ -171,16 +207,25 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ health: 'ok' }));
   });
 
-  it('does not offer an Alert state filter', () => {
-    render(
-      <RecordingRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+  it('selects a health in the Health combobox with the keyboard', async () => {
+    const { user, onChange } = await renderSidebar();
 
-    expect(screen.queryByRole('combobox', { name: 'Alert state' })).not.toBeInTheDocument();
+    focus(screen.getByRole('combobox', { name: 'Health' }));
+    await user.keyboard('{ArrowDown}');
+    await screen.findByRole('option', { name: 'No data' });
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ health: 'nodata' }));
+  });
+
+  it('selects a target data source with the keyboard', async () => {
+    const { user, onChange } = await renderSidebar();
+
+    focus(getTargetDataSourcePicker());
+    await user.keyboard('Loki');
+    await screen.findByText('Loki');
+    await user.keyboard('{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ targetDataSourceUid: 'ds-2' }));
   });
 });

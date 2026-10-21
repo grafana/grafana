@@ -5,7 +5,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { RulesPageShell } from './RulesPageShell';
 
-// NAV-2
 describe('RulesPageShell', () => {
   const previousRole = contextSrv.user.orgRole;
 
@@ -27,45 +26,33 @@ describe('RulesPageShell', () => {
     );
   }
 
-  it('shows the Recently deleted tab for an organization Admin', () => {
-    contextSrv.user.orgRole = OrgRole.Admin;
-
-    renderShell('active');
-
-    expect(screen.getByRole('tab', { name: 'Recently deleted' })).toBeInTheDocument();
-  });
-
-  it('hides the Recently deleted tab for a non-Admin', () => {
-    contextSrv.user.orgRole = OrgRole.Editor;
-
-    renderShell('active');
-
-    expect(screen.queryByRole('tab', { name: 'Recently deleted' })).not.toBeInTheDocument();
-  });
-
-  it('marks the first (page-name) tab as selected on the active page', () => {
-    contextSrv.user.orgRole = OrgRole.Admin;
-
-    renderShell('active');
-
-    expect(screen.getByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'false');
-  });
-
-  it('marks the Recently deleted tab as selected on the deleted page', () => {
-    contextSrv.user.orgRole = OrgRole.Admin;
-
-    renderShell('deleted');
-
-    expect(screen.getByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  it('renders the page body', () => {
+  it('shows the page body and the Recently deleted tab to an organization Admin', () => {
     contextSrv.user.orgRole = OrgRole.Admin;
 
     renderShell('active');
 
     expect(screen.getByText('page body')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Recently deleted' })).toBeInTheDocument();
+  });
+
+  it('hides the Recently deleted tab from a non-Admin', () => {
+    contextSrv.user.orgRole = OrgRole.Editor;
+
+    renderShell('active');
+
+    expect(screen.getByRole('tab', { name: 'Alert rules' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Recently deleted' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { activeTab: 'active', selected: 'Alert rules', other: 'Recently deleted' },
+    { activeTab: 'deleted', selected: 'Recently deleted', other: 'Alert rules' },
+  ] as const)('marks only the $selected tab as selected on the $activeTab page', ({ activeTab, selected, other }) => {
+    contextSrv.user.orgRole = OrgRole.Admin;
+
+    renderShell(activeTab);
+
+    expect(screen.getByRole('tab', { name: selected })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: other })).toHaveAttribute('aria-selected', 'false');
   });
 });

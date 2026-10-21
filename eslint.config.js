@@ -175,7 +175,8 @@ function modulesRegex(modules) {
 function gmaImportAllowlistPatterns({ tests }) {
   const unifiedModules = modulesRegex([...gmaAllowedUnifiedModules, ...(tests ? gmaAllowedTestUnifiedModules : [])]);
   const appModules = modulesRegex([...gmaAllowedAppModules, ...(tests ? gmaAllowedTestAppModules : [])]);
-  const ownFolders = modulesRegex([...gmaKindFolders, ...gmaCapabilityFolders, 'shared']);
+  // Only tests may use the shared test helpers in gma-rule-list/mocks.
+  const ownFolders = modulesRegex([...gmaKindFolders, ...gmaCapabilityFolders, 'shared', ...(tests ? ['mocks'] : [])]);
   const message =
     'The GMA-only rule list may import only files inside gma-rule-list/, packages, and the shared alerting infrastructure on the allowlist in eslint.config.js. Do not reuse the legacy rule list, its components, rule hooks or models; build an equivalent under gma-rule-list/.';
 
@@ -315,10 +316,10 @@ function gmaRuleListOverrides() {
       ],
       rules: { 'no-restricted-syntax': ['error', transitionNodeRefRestriction] },
     },
-    // Tests stand in for the server, so they name the endpoint URLs.
+    // Tests and their mocks stand in for the server, so they name the endpoint URLs.
     {
       name: 'grafana/gma-rule-list-overrides-tests',
-      files: [`${gmaRuleListRoot}/**/*.test.{ts,tsx}`],
+      files: [`${gmaRuleListRoot}/**/*.test.{ts,tsx}`, `${gmaRuleListRoot}/mocks/**/*.{ts,tsx}`],
       rules: { 'no-restricted-syntax': ['error', transitionNodeRefRestriction] },
     },
     ...gmaRuleListBlocks('alert-rules', folderGlobs(['alert-rules']), [siblingKindMessage('recording-rules')]),

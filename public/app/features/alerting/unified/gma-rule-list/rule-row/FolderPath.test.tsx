@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { FolderPath } from './FolderPath';
 
 describe('FolderPath', () => {
-  it('VIS-1: renders segments root first with chevron separators, never a slash', () => {
+  it('renders segments root first with chevron separators, never a slash', () => {
     const { container } = render(<FolderPath segments={['Platform', 'Infra', 'Kubernetes']} />);
 
     expect(container).toHaveTextContent('PlatformInfraKubernetes');

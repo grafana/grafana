@@ -5,7 +5,7 @@ function toHit(fields: Record<string, unknown>) {
 }
 
 describe('toAlertRuleSearchHit', () => {
-  it('ALERT-10: reads every returned instance total, keeping a returned zero', () => {
+  it('reads every returned instance total, keeping a returned zero', () => {
     const hit = toHit({
       totalsHealthy: 4,
       totalsFiring: 0,
@@ -18,7 +18,7 @@ describe('toAlertRuleSearchHit', () => {
     expect(hit.totals).toEqual({ healthy: 4, firing: 0, pending: 2, recovering: 1, noData: 3, error: 5 });
   });
 
-  it('ALERT-10: leaves a total undefined, never zero, when the search did not return it', () => {
+  it('leaves a total undefined, never zero, when the search did not return it', () => {
     const hit = toHit({ totalsFiring: 2, totalsPending: 'many' });
 
     expect(hit.totals).toEqual({

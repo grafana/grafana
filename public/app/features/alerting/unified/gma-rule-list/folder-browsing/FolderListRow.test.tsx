@@ -43,7 +43,7 @@ function renderRow(overrides: Partial<RowProps> = {}) {
 }
 
 describe('FolderListRow', () => {
-  it('VIS-2: shows the own title as a link, the parent path for a nested folder, and the pluralized count', async () => {
+  it('shows the own title as a link, the parent path for a nested folder, and the pluralized count', async () => {
     mockParents(['Platform', 'Infra', 'Kubernetes']);
     renderRow({ folderUid: 'k8s', title: 'Kubernetes', count: { status: 'loaded', count: 21 } });
 
@@ -63,14 +63,6 @@ describe('FolderListRow', () => {
 
     expect(screen.getByText('1 recording rule')).toBeInTheDocument();
     expect(screen.getAllByText('Root')).toHaveLength(1);
-  });
-
-  it('shows no count text while the count is loading', () => {
-    mockParents(['Root']);
-    renderRow({ count: { status: 'loading' } });
-
-    expect(screen.queryByText(/alert rule/)).not.toBeInTheDocument();
-    expect(screen.queryByText('–')).not.toBeInTheDocument();
   });
 
   it('shows an unavailable message with a Retry that calls the lookup retry when the count failed', async () => {

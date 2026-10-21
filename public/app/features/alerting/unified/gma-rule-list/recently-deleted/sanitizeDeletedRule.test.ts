@@ -80,16 +80,11 @@ describe('sanitizeDeletedRule', () => {
     });
   });
 
-  it('keeps the rule spec untouched', () => {
+  it('keeps the rule spec and name untouched', () => {
     const original = buildTombstone();
     const sanitized = sanitizeDeletedRule(original);
 
     expect(sanitized.spec).toEqual(original.spec);
-  });
-
-  it('keeps the rule name', () => {
-    const sanitized = sanitizeDeletedRule(buildTombstone());
-
     expect(sanitized.metadata.name).toBe('rule-uid-1');
   });
 });

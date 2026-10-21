@@ -2,21 +2,21 @@ import { type Criteria, createEmptyCriteria } from './criteria';
 import { getCriteriaIssues } from './criteriaIssues';
 
 describe('getCriteriaIssues', () => {
-  it('SEARCH-4: reports no issues for a criteria with no problems', () => {
+  it('reports no issues for a criteria with no problems', () => {
     expect(getCriteriaIssues(createEmptyCriteria(), 'alert')).toEqual([]);
   });
 
-  it('SEARCH-4: reports panelId without a dashboard as requiresDashboard, for Alert only', () => {
+  it('reports panelId without a dashboard as requiresDashboard, for Alert only', () => {
     const criteria: Criteria = { ...createEmptyCriteria(), panelId: '4' };
     expect(getCriteriaIssues(criteria, 'alert')).toEqual([{ key: 'panelId', reason: 'requiresDashboard' }]);
   });
 
-  it('SEARCH-4: panelId paired with a dashboard has no issue', () => {
+  it('panelId paired with a dashboard has no issue', () => {
     const criteria: Criteria = { ...createEmptyCriteria(), panelId: '4', dashboardUid: 'dash-1' };
     expect(getCriteriaIssues(criteria, 'alert')).toEqual([]);
   });
 
-  it('NAV-5: reports each token the page cannot apply, by the key the user typed', () => {
+  it('reports each token the page cannot apply, by the key the user typed', () => {
     const criteria: Criteria = {
       ...createEmptyCriteria(),
       invalid: [

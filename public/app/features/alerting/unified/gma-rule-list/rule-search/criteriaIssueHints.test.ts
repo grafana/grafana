@@ -14,17 +14,17 @@ describe('getIssueHints', () => {
     ['state:error', 'state:error is not a valid filter. Use health:error.'],
     ['state:nodata', 'state:nodata is not a valid filter. Use health:nodata.'],
     ['is:paused', 'is:paused is not a valid filter. Use paused:true.'],
-  ])('NAV-5: points %s at the filter that does what was meant', (query, hint) => {
+  ])('points %s at the filter that does what was meant', (query, hint) => {
     expect(hintsFor(query)).toEqual([hint]);
   });
 
-  it('NAV-5: lists the valid keys of the page for an unknown key', () => {
+  it('lists the valid keys of the page for an unknown key', () => {
     expect(hintsFor('foo:bar', 'recording')).toEqual([
       'Unknown filter foo. Valid filters: rule, label, namespace, datasource, plugins, metric, targetDatasource, health.',
     ]);
   });
 
-  it('NAV-5: does not suggest an Alert-only filter on the Recording page', () => {
+  it('does not suggest an Alert-only filter on the Recording page', () => {
     expect(hintsFor('is:paused', 'recording')).toEqual([
       expect.stringContaining('Unknown filter is. Valid filters: rule, label,'),
     ]);
@@ -36,7 +36,7 @@ describe('getIssueHints', () => {
     ['paused:maybe', 'paused accepts: true, false.'],
     ['plugins:show', 'plugins accepts: hide.'],
     ['state:', 'state accepts: firing, pending, recovering, normal.'],
-  ])('NAV-5: lists the valid values for %s', (query, hint) => {
+  ])('lists the valid values for %s', (query, hint) => {
     expect(hintsFor(query)).toEqual([hint]);
   });
 

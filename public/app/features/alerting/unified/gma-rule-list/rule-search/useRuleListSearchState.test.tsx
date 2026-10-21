@@ -12,19 +12,19 @@ function renderAt(path: string) {
 }
 
 describe('useRuleListSearchState', () => {
-  it('SEARCH-7: defaults to Folders mode with no URL params', () => {
+  it('defaults to Folders mode with no URL params', () => {
     const { result } = renderAt('/alerting/rules/alert');
     expect(result.current.mode).toBe('folders');
     expect(result.current.criteria).toEqual(createEmptyCriteria());
   });
 
-  it('SEARCH-2: restores criteria and mode from the URL on load', () => {
+  it('restores criteria and mode from the URL on load', () => {
     const { result } = renderAt('/alerting/rules/alert?search=namespace%3Afolder-1&view=list');
     expect(result.current.criteria.namespaces).toEqual(['folder-1']);
     expect(result.current.mode).toBe('list');
   });
 
-  it('SEARCH-7: applying free text switches to List mode even when view was Folders', () => {
+  it('applying free text switches to List mode even when view was Folders', () => {
     const { result } = renderAt('/alerting/rules/alert?search=namespace%3Afolder-1');
     expect(result.current.mode).toBe('folders');
 
@@ -36,7 +36,7 @@ describe('useRuleListSearchState', () => {
     expect(new URLSearchParams(locationService.getLocation().search).get('view')).toBe('list');
   });
 
-  it('SEARCH-7: clearing the last non-folder criterion returns to Folders and removes view from the URL', () => {
+  it('clearing the last non-folder criterion returns to Folders and removes view from the URL', () => {
     const { result } = renderAt('/alerting/rules/alert');
 
     act(() => {
@@ -52,7 +52,7 @@ describe('useRuleListSearchState', () => {
     expect(new URLSearchParams(locationService.getLocation().search).has('view')).toBe(false);
   });
 
-  it('SEARCH-7: clearing one of two non-folder criteria stays in List', () => {
+  it('clearing one of two non-folder criteria stays in List', () => {
     const { result } = renderAt('/alerting/rules/alert?search=cpu%20paused%3Atrue&view=list');
 
     act(() => {
@@ -63,7 +63,7 @@ describe('useRuleListSearchState', () => {
     expect(new URLSearchParams(locationService.getLocation().search).get('view')).toBe('list');
   });
 
-  it('SEARCH-7: reset with filters applied returns to Folders', () => {
+  it('reset returns to Folders and writes an empty search param so a reload stays unfiltered', () => {
     const { result } = renderAt('/alerting/rules/alert?search=cpu&view=list');
 
     act(() => {
@@ -71,10 +71,11 @@ describe('useRuleListSearchState', () => {
     });
 
     expect(result.current.mode).toBe('folders');
+    // An empty search param, not a missing one, keeps a reload unfiltered instead of re-applying the default saved search.
     expect(locationService.getLocation().search).toBe('?search=');
   });
 
-  it('SEARCH-7: a List chosen with no filters is kept when the folder filter changes', () => {
+  it('a List chosen with no filters is kept when the folder filter changes', () => {
     const { result } = renderAt('/alerting/rules/alert?view=list');
 
     act(() => {
@@ -84,7 +85,7 @@ describe('useRuleListSearchState', () => {
     expect(result.current.mode).toBe('list');
   });
 
-  it('SEARCH-7: setMode("folders") is a no-op while non-folder criteria are active', () => {
+  it('setMode("folders") is a no-op while non-folder criteria are active', () => {
     const { result } = renderAt('/alerting/rules/alert?search=cpu&view=list');
     expect(result.current.mode).toBe('list');
 
@@ -95,7 +96,7 @@ describe('useRuleListSearchState', () => {
     expect(result.current.mode).toBe('list');
   });
 
-  it('SEARCH-7: setMode("folders") is honored once no non-folder criteria remain', () => {
+  it('setMode("folders") is honored once no non-folder criteria remain', () => {
     const { result } = renderAt('/alerting/rules/alert?view=list');
     expect(result.current.mode).toBe('list');
 
@@ -110,18 +111,18 @@ describe('useRuleListSearchState', () => {
     ['a state token', 'state%3Afiring'],
     ['a health token', 'health%3Aerror'],
     ['a token the page does not support', 'foo%3Abar'],
-  ])('SEARCH-7: %s switches to List mode', (_name, search) => {
+  ])('%s switches to List mode', (_name, search) => {
     const { result } = renderAt(`/alerting/rules/alert?search=${search}`);
     expect(result.current.mode).toBe('list');
   });
 
-  it('SEARCH-7: only a folder filter stays in Folders mode', () => {
+  it('only a folder filter stays in Folders mode', () => {
     const { result } = renderAt('/alerting/rules/alert?search=namespace%3Afolder-1');
     expect(result.current.mode).toBe('folders');
     expect(result.current.hasNonFolderFilters).toBe(false);
   });
 
-  it('SEARCH-1: setCriteria serializes criteria into the search URL param', () => {
+  it('setCriteria serializes criteria into the search URL param', () => {
     const { result } = renderAt('/alerting/rules/alert');
 
     act(() => {
@@ -131,17 +132,7 @@ describe('useRuleListSearchState', () => {
     expect(new URLSearchParams(locationService.getLocation().search).get('search')).toBe('namespace:folder-1 cpu');
   });
 
-  it('SAVE-3: reset writes an empty search param, so a reload stays unfiltered', () => {
-    const { result } = renderAt('/alerting/rules/alert?search=cpu');
-
-    act(() => {
-      result.current.reset();
-    });
-
-    expect(new URLSearchParams(locationService.getLocation().search).get('search')).toBe('');
-  });
-
-  it('SAVE-3: an empty search param still means Folders mode', () => {
+  it('an empty search param still means Folders mode', () => {
     const { result } = renderAt('/alerting/rules/alert?search=');
 
     expect(result.current.mode).toBe('folders');

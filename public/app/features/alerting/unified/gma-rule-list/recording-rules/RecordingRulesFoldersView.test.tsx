@@ -1,50 +1,29 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
-import { contextSrv } from 'app/core/services/context_srv';
+import server from '@grafana/test-utils/server';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
+import { grantUserPermissions } from '../../mocks';
+import { folderItem } from '../mocks/factories';
+import {
+  FOLDER_COUNTS_URL,
+  FOLDER_PARENTS_URL,
+  mockFolderCounts,
+  mockFolderParents,
+  mockFolderSearch,
+} from '../mocks/handlers';
 
 import { FoldersView } from './RecordingRulesFoldersView';
 
-const server = setupMswServer();
-
-const FOLDER_SEARCH_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/search';
-const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
-const FOLDER_COUNTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/counts';
-
-function mockFolders() {
-  server.use(
-    http.post(FOLDER_SEARCH_URL, () =>
-      HttpResponse.json({
-        items: [
-          {
-            resource: { group: 'folder.grafana.app', kind: 'Folder', name: 'folder-1', resource: 'folders' },
-            fields: { title: 'Team Alerts' },
-          },
-        ],
-        metadata: {},
-      })
-    )
-  );
-}
-
-function mockParents(handler: Parameters<typeof http.get>[1]) {
-  server.use(http.get(FOLDER_PARENTS_URL, handler));
-}
+setupMswServer();
 
 describe('RecordingRulesFoldersView folder row lookups', () => {
-  const previousPermissions = contextSrv.user.permissions;
-
   beforeEach(() => {
-    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
-    mockFolders();
-    mockParents(() => HttpResponse.json({ items: [{ name: 'folder-1', title: 'Team Alerts' }] }));
-  });
-
-  afterEach(() => {
-    contextSrv.user.permissions = previousPermissions;
+    grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+    mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
+    mockFolderParents({ 'folder-1': 'Team Alerts' });
   });
 
   it('replaces the count skeleton with an unavailable message and Retry when /counts fails, then shows the count after Retry', async () => {
@@ -82,12 +61,8 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
   });
 
   it('keeps the title and count and shows no parent path when /parents fails', async () => {
-    mockParents(() => HttpResponse.json({ message: 'boom' }, { status: 500 }));
-    server.use(
-      http.get(FOLDER_COUNTS_URL, () =>
-        HttpResponse.json({ counts: [{ resource: 'recordingrules', group: 'rules.alerting.grafana.app', count: 2 }] })
-      )
-    );
+    server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+    mockFolderCounts('recording', { 'folder-1': 2 });
 
     render(<FoldersView folderUids={[]} />);
 
@@ -96,20 +71,18 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
     expect(screen.getByRole('button', { name: 'Expand Team Alerts' })).toBeEnabled();
   });
 
-  it('says no recording rules match the folder when a folder filter returns no folders', async () => {
-    server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
+  it.each([
+    {
+      name: 'a folder filter returns no folders',
+      folderUids: ['folder-1'],
+      text: 'No recording rules match this folder',
+    },
+    { name: 'no folder filter is active', folderUids: [], text: 'No folders found' },
+  ])('shows "$text" when $name and there are no folders', async ({ folderUids, text }) => {
+    mockFolderSearch(() => ({ items: [], metadata: {} }));
 
-    render(<FoldersView folderUids={['folder-1']} />);
+    render(<FoldersView folderUids={folderUids} />);
 
-    expect(await screen.findByText('No recording rules match this folder')).toBeInTheDocument();
-    expect(screen.queryByText('No folders found')).not.toBeInTheDocument();
-  });
-
-  it('keeps the plain empty state when no folder filter is active', async () => {
-    server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
-
-    render(<FoldersView folderUids={[]} />);
-
-    expect(await screen.findByText('No folders found')).toBeInTheDocument();
+    expect(await screen.findByText(text)).toBeInTheDocument();
   });
 });

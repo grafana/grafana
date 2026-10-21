@@ -156,7 +156,7 @@ describe('data source managed route proxies', () => {
   });
 });
 
-// NAV-1, NAV-2: GMA-only rule list routes and redirects, gated by alerting.gmaOnlyListView.
+// GMA-only rule list routes and redirects, gated by alerting.gmaOnlyListView.
 describe('GMA-only rule list routes', () => {
   const gmaRoutePaths = [
     '/alerting/rules/alert',
@@ -165,113 +165,65 @@ describe('GMA-only rule list routes', () => {
     '/alerting/rules/recording/deleted',
   ];
 
+  const previousPermissions = contextSrv.user.permissions;
+
   afterEach(() => {
     setTestFlags();
+    contextSrv.user.permissions = previousPermissions;
   });
 
-  it('does not register the new routes and keeps the legacy pages while the flag is off', () => {
-    setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: false });
-
-    const routes = getAlertingRoutes();
-    const paths = routes.map((route) => route.path);
-
-    for (const path of gmaRoutePaths) {
-      expect(paths).not.toContain(path);
+  function getRouteRolesGuard(path: string) {
+    const route = getAlertingRoutes().find((r) => r.path === path);
+    if (!route?.roles) {
+      throw new Error(`Route not found or has no roles guard: ${path}`);
     }
+    return route.roles;
+  }
 
-    const listRoute = routes.find((route) => route.path === '/alerting/list');
-    expect(listRoute?.component).not.toBe(LegacyRuleListRedirect);
+  it.each([
+    { flag: false, registered: false, redirects: false },
+    { flag: true, registered: true, redirects: true },
+  ])(
+    'with the flag $flag: registers the new routes $registered and redirects the legacy pages $redirects',
+    ({ flag, registered, redirects }) => {
+      setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: flag });
 
-    const deletedRoute = routes.find((route) => route.path === '/alerting/recently-deleted/');
-    expect(deletedRoute?.component).not.toBe(LegacyRecentlyDeletedRedirect);
-  });
+      const routes = getAlertingRoutes();
+      const paths = routes.map((route) => route.path);
 
-  it('NAV-1: keeps admitting data source-managed readers to the legacy list while the flag is off', () => {
+      expect(gmaRoutePaths.map((path) => paths.includes(path))).toEqual(gmaRoutePaths.map(() => registered));
+      expect(routes.find((route) => route.path === '/alerting/list')?.component === LegacyRuleListRedirect).toBe(
+        redirects
+      );
+      expect(
+        routes.find((route) => route.path === '/alerting/recently-deleted/')?.component ===
+          LegacyRecentlyDeletedRedirect
+      ).toBe(redirects);
+    }
+  );
+
+  it('keeps admitting data source-managed readers to the legacy list while the flag is off', () => {
     setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: false });
-    const previousPermissions = contextSrv.user.permissions;
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleExternalRead]: true };
 
-    try {
-      const listRoute = getAlertingRoutes().find((route) => route.path === '/alerting/list');
-      expect(listRoute?.roles?.()).toEqual([]);
-    } finally {
-      contextSrv.user.permissions = previousPermissions;
-    }
-  });
-
-  it('registers the new routes and redirects the legacy pages once the flag is on', () => {
-    setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
-
-    const routes = getAlertingRoutes();
-    const paths = routes.map((route) => route.path);
-
-    for (const path of gmaRoutePaths) {
-      expect(paths).toContain(path);
-    }
-
-    const listRoute = routes.find((route) => route.path === '/alerting/list');
-    expect(listRoute?.component).toBe(LegacyRuleListRedirect);
-
-    const deletedRoute = routes.find((route) => route.path === '/alerting/recently-deleted/');
-    expect(deletedRoute?.component).toBe(LegacyRecentlyDeletedRedirect);
+    expect(getRouteRolesGuard('/alerting/list')()).toEqual([]);
   });
 
   describe('access boundary once the flag is on', () => {
-    const previousPermissions = contextSrv.user.permissions;
-
     beforeEach(() => {
       setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
     });
 
-    afterEach(() => {
-      contextSrv.user.permissions = previousPermissions;
-    });
-
-    function getRouteRolesGuard(path: string) {
-      const route = getAlertingRoutes().find((r) => r.path === path);
-      if (!route?.roles) {
-        throw new Error(`Route not found or has no roles guard: ${path}`);
-      }
-      return route.roles;
-    }
-
-    it.each(['/alerting/rules/alert', '/alerting/rules/recording'])(
-      'denies a Viewer without alert.rules:read on %s',
+    it.each(['/alerting/rules/alert', '/alerting/rules/recording', '/alerting/list'])(
+      'denies a user with only data source-managed read on %s and admits a Grafana-managed reader',
       (path) => {
-        contextSrv.user.permissions = {
-          [AccessControlAction.AlertingRuleExternalRead]: true,
-        };
-
+        contextSrv.user.permissions = { [AccessControlAction.AlertingRuleExternalRead]: true };
         expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
-      }
-    );
 
-    it.each(['/alerting/rules/alert', '/alerting/rules/recording'])(
-      'allows a reader with Grafana-managed read on %s',
-      (path) => {
-        contextSrv.user.permissions = {
-          [AccessControlAction.AlertingRuleRead]: true,
-        };
-
+        contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
         expect(getRouteRolesGuard(path)()).toEqual([]);
       }
     );
-
-    it('NAV-1: denies a user with only data source-managed read on the legacy list redirect', () => {
-      contextSrv.user.permissions = {
-        [AccessControlAction.AlertingRuleExternalRead]: true,
-      };
-
-      expect(getRouteRolesGuard('/alerting/list')()).toEqual(['Reject']);
-    });
-
-    it('NAV-1: allows a reader with Grafana-managed read on the legacy list redirect', () => {
-      contextSrv.user.permissions = {
-        [AccessControlAction.AlertingRuleRead]: true,
-      };
-
-      expect(getRouteRolesGuard('/alerting/list')()).toEqual([]);
-    });
 
     it.each(['/alerting/rules/alert/deleted', '/alerting/rules/recording/deleted'])(
       'requires the organization Admin role for %s',

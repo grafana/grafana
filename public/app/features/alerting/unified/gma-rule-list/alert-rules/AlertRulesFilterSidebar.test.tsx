@@ -1,6 +1,4 @@
-import userEvent from '@testing-library/user-event';
-import { HttpResponse, http } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import {
   ContactPointFactory,
@@ -8,102 +6,60 @@ import {
   listReceiverHandler,
   simpleRoutingTreesListScenario,
 } from '@grafana/alerting/testing';
-import { type DataSourceInstanceSettings } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { setupMswServer } from '../../mockApi';
-import { createEmptyCriteria } from '../rule-search/criteria';
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+import { mockFolderParents } from '../mocks/handlers';
+import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { type CriteriaIssue } from '../rule-search/criteriaIssues';
+import { getInteractiveControls, tabSequence } from '../rule-search/filterSidebarTestUtils';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 
+// Real pickers, not stand-ins, so their accessible names and keyboard behavior are exercised.
 // Combobox measures its floating element; jsdom reports zero.
 mockComboboxRect();
 
 // jsdom lacks scrollIntoView, which the folder picker uses.
 window.HTMLElement.prototype.scrollIntoView = function () {};
 
-jest.mock('app/core/components/Select/DashboardPicker', () => ({
-  DashboardPicker: ({
-    value,
-    onChange,
-  }: {
-    value?: string;
-    onChange: (dashboard: { uid: string } | undefined) => void;
-  }) => (
-    <select
-      aria-label="Dashboard"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value ? { uid: e.target.value } : undefined)}
-    >
-      <option value="">none</option>
-      <option value="dash-1">dash-1</option>
-    </select>
-  ),
-}));
-
-// Exposes `noDefault` as text and `onClear` as a button to assert the sidebar passes both.
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  DataSourcePicker: ({
-    current,
-    noDefault,
-    onClear,
-    onChange,
-  }: {
-    current?: string;
-    noDefault?: boolean;
-    onClear?: () => void;
-    onChange: (ds: { uid: string }) => void;
-  }) => (
-    <div>
-      <span>{noDefault ? 'noDefault' : 'defaultsToOrgDefault'}</span>
-      <select aria-label="Query data source" value={current ?? ''} onChange={(e) => onChange({ uid: e.target.value })}>
-        <option value="">none</option>
-        <option value="ds-1">ds-1</option>
-      </select>
-      {onClear && (
-        <button type="button" onClick={onClear}>
-          Clear data source
-        </button>
-      )}
-    </div>
-  ),
-}));
-
 const server = setupMswServer();
 
 const FOLDER_UID = 'e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c';
 
-const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
-
-function mockDataSourceNames(nameByUid: Record<string, string>) {
-  setDataSourceSrv({
-    getList: () => [],
-    getInstanceSettings: (ref: string) =>
-      ref in nameByUid ? ({ uid: ref, name: nameByUid[ref] } as DataSourceInstanceSettings) : undefined,
-  } as unknown as DataSourceSrv);
-}
-
-function renderSidebar(criteria = createEmptyCriteria()) {
+async function renderSidebar(
+  criteria: Criteria = createEmptyCriteria(),
+  { hasActiveFilters = true, issues }: { hasActiveFilters?: boolean; issues?: CriteriaIssue[] } = {}
+) {
   const onChange = jest.fn();
+  const onClear = jest.fn();
   const view = render(
-    <AlertRulesFilterSidebar criteria={criteria} onChange={onChange} onClear={jest.fn()} hasActiveFilters={false} />
+    <AlertRulesFilterSidebar
+      criteria={criteria}
+      onChange={onChange}
+      onClear={onClear}
+      hasActiveFilters={hasActiveFilters}
+      issues={issues}
+    />
   );
-  return { ...view, onChange };
+  // The data source picker loads its implementation asynchronously.
+  await screen.findByRole('combobox', { name: 'Select a data source' });
+  return { ...view, onChange, onClear };
 }
 
-function mockFolderTitles(titleByUid: Record<string, string>) {
-  server.use(
-    http.get(FOLDER_PARENTS_URL, ({ params }) => {
-      const name = params.name as string;
-      return HttpResponse.json({ items: [{ name, title: titleByUid[name] ?? name }] });
-    })
-  );
+function focus(element: HTMLElement) {
+  act(() => element.focus());
 }
 
 describe('AlertRulesFilterSidebar', () => {
   beforeEach(() => {
+    setupDataSources(
+      mockDataSource({ uid: 'ds-1', name: 'Prometheus' }, { metrics: true }),
+      mockDataSource({ uid: 'ds-2', name: 'Loki' }, { metrics: true })
+    );
+    mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
     server.use(
       listReceiverHandler(
         ListReceiverApiResponseFactory.build({
@@ -117,308 +73,125 @@ describe('AlertRulesFilterSidebar', () => {
     );
   });
 
-  it('SEARCH-3: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('button', { name: 'Folder' }));
-    await user.click(await screen.findByLabelText('Alerting-folder'));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: [FOLDER_UID] }));
-  });
-
-  it('SEARCH-3: selecting a query data source calls onChange with that data source UID', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Query data source' }), 'ds-1');
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-1'] }));
-  });
-
-  it('SEARCH-3: toggling "Hide plugin rules" calls onChange with hidePluginRules true', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ hidePluginRules: true }));
-  });
-
-  it('the panel ID field is disabled until a dashboard is selected', () => {
-    renderSidebar();
-
-    expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeDisabled();
-  });
-
-  it('the panel ID field is enabled once a dashboard is selected', () => {
-    renderSidebar({ ...createEmptyCriteria(), dashboardUid: 'dash-1' });
-
-    expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeEnabled();
-  });
-
-  it('SEARCH-4: choosing a contact point disables and clears the notification policy field', () => {
-    renderSidebar({ ...createEmptyCriteria(), contactPoint: 'on-call' });
-
-    expect(screen.getByRole('combobox', { name: 'Notification policy' })).toBeDisabled();
-  });
-
-  it('SEARCH-4: choosing a notification policy disables the contact point field', () => {
-    renderSidebar({ ...createEmptyCriteria(), policy: 'escalation' });
-
-    expect(screen.getByRole('combobox', { name: 'Contact point' })).toBeDisabled();
-  });
-
-  it('choosing the default tree in the policy picker selects the default policy, not a named tree', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('combobox', { name: 'Notification policy' }));
-    await user.click(await screen.findByRole('option', { name: /Default policy/ }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: 'default' }));
-  });
-
-  it('SEARCH-4: selecting Paused calls onChange with paused "true"', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('combobox', { name: 'Paused' }));
-    await user.click(await screen.findByRole('option', { name: 'Paused' }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ paused: 'true' }));
-  });
-
-  it('the Default policy switch is disabled and explains it is not available yet when it is off', () => {
-    renderSidebar();
-
-    expect(screen.getByRole('switch', { name: 'Default policy' })).toBeDisabled();
-    expect(screen.getAllByText("Filtering by the default policy isn't available yet.")).toHaveLength(1);
-  });
-
-  it('a default policy that arrived through the URL can still be cleared from the switch', async () => {
-    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), policy: 'default' });
-
-    const toggle = screen.getByRole('switch', { name: 'Default policy' });
-    expect(toggle).toBeChecked();
-    await user.click(toggle);
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: undefined }));
-  });
-
-  it('Clear filters is disabled with no active filters and calls onClear when active', async () => {
-    const user = userEvent.setup();
-    const onClear = jest.fn();
-    const sidebar = (hasActiveFilters: boolean) => (
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={onClear}
-        hasActiveFilters={hasActiveFilters}
-      />
-    );
-    const { rerender } = render(sidebar(false));
-    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
-
-    rerender(sidebar(true));
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
-
-    expect(onClear).toHaveBeenCalledTimes(1);
-  });
-
-  it('NAV-5: shows an explanation under the folder field when a folder token is invalid', () => {
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-        issues={[{ key: 'namespace', reason: 'invalid' }]}
-      />
-    );
-
-    expect(screen.getByText(/this filter is not valid/i)).toBeInTheDocument();
-  });
-
-  it('the query data source picker never preselects the org default (noDefault)', () => {
-    renderSidebar();
-
-    expect(screen.getByText('noDefault')).toBeInTheDocument();
-  });
-
-  it('SEARCH-3: shows every selected folder by title and removes only the one chosen', async () => {
-    mockFolderTitles({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
-    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), namespaces: ['folder-1', 'folder-2'] });
-
-    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
-    expect(await screen.findByText('Infra')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Remove Team Alerts' }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2'] }));
-  });
-
-  it('SEARCH-3: picking a folder adds it to the selected ones', async () => {
-    mockFolderTitles({ 'folder-2': 'Infra' });
-    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), namespaces: ['folder-2'] });
-
-    await user.click(screen.getByRole('button', { name: 'Folder' }));
-    await user.click(await screen.findByLabelText('Alerting-folder'));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2', FOLDER_UID] }));
-  });
-
-  it('SEARCH-3: shows every selected query data source by name and removes only the one chosen', async () => {
-    mockDataSourceNames({ 'ds-1': 'Prometheus', 'ds-2': 'Loki' });
-    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-1', 'ds-2'] });
-
-    expect(await screen.findByText('Prometheus')).toBeInTheDocument();
-    expect(await screen.findByText('Loki')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Remove Prometheus' }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-2'] }));
-  });
-
-  it('SEARCH-3: picking a query data source adds it to the selected ones', async () => {
-    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-2'] });
-
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Query data source' }), 'ds-1');
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-2', 'ds-1'] }));
-  });
-
-  it('SEARCH-5: selecting a state calls onChange with that state', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('combobox', { name: 'Alert state' }));
-    await user.click(await screen.findByRole('option', { name: 'Firing' }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ state: 'firing' }));
-  });
-
-  it('SEARCH-5: shows the legacy inactive state as Normal', () => {
-    renderSidebar({ ...createEmptyCriteria(), state: 'inactive' });
-
-    expect(screen.getByRole('combobox', { name: 'Alert state' })).toHaveValue('Normal');
-  });
-
-  it('SEARCH-5: selecting a health calls onChange with that health', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('combobox', { name: 'Health' }));
-    await user.click(await screen.findByRole('option', { name: 'No data' }));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ health: 'nodata' }));
-  });
-
-  it('SEARCH-3: a label row added with Add label filter is not applied until it has a key', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
-    await user.click(await screen.findByRole('option', { name: '!=' }));
-    await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api');
-    await user.tab();
-
-    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('');
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('SEARCH-3: entering the key of a new label row applies it with the chosen operator and value', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
-    await user.click(await screen.findByRole('option', { name: '!=' }));
-    await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api');
-    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
-
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ labels: [{ key: 'team', operator: 'notEqual', value: 'api' }] })
-    );
-  });
-
-  it('SEARCH-3: a label row with a key but no value stays visible and is not sent until it has a value', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
-
-    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
-    expect(onChange).not.toHaveBeenCalled();
-
-    await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api{Enter}');
-
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ labels: [{ key: 'team', operator: 'equal', value: 'api' }] })
-    );
-  });
-
-  it('SEARCH-3: a label row with a key and the exists operator is sent without a value', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
-    await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
-    await user.click(await screen.findByRole('option', { name: 'exists' }));
-
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ labels: [{ key: 'team', operator: 'exists', value: undefined }] })
-    );
-  });
-
-  it('SEARCH-3: the folder control says it matches rules directly in the folder', () => {
-    renderSidebar();
-
-    expect(screen.getByText('Rules directly in this folder')).toBeInTheDocument();
-  });
-
-  it('SEARCH-3: removing the new label row before it has a key leaves the criteria untouched', async () => {
-    const { user, onChange } = renderSidebar();
-
-    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.click(screen.getByRole('button', { name: 'Remove label filter' }));
-
-    expect(screen.queryByRole('textbox', { name: 'Label key' })).not.toBeInTheDocument();
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('the contact point and notification policy fields show a selection placeholder', () => {
-    renderSidebar();
-
-    expect(screen.getByRole('combobox', { name: 'Contact point' })).toHaveAttribute(
-      'placeholder',
-      'Select contact point'
-    );
-    expect(screen.getByRole('combobox', { name: 'Notification policy' })).toHaveAttribute(
-      'placeholder',
-      'Select policy'
-    );
-  });
-
-  describe('accessible names and keyboard use', () => {
-    it('ACC-1: the rule name input is found by role and name and applies on Enter', async () => {
-      const { user, onChange } = renderSidebar();
+  describe('rule name', () => {
+    it('applies the typed name on Enter', async () => {
+      const { user, onChange } = await renderSidebar();
 
       await user.type(screen.getByRole('textbox', { name: 'Rule name' }), 'cpu{Enter}');
 
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ text: ['cpu'] }));
     });
+  });
 
-    it('ACC-3: the folder picker is a button named Folder that opens from the keyboard and selects with arrow keys', async () => {
-      const { user, onChange } = renderSidebar();
+  describe('folders', () => {
+    it('adds a picked folder to the selected ones', async () => {
+      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), namespaces: ['folder-2'] });
 
-      screen.getByRole('button', { name: 'Folder' }).focus();
+      await user.click(screen.getByRole('button', { name: 'Folder' }));
+      await user.click(await screen.findByLabelText('Alerting-folder'));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2', FOLDER_UID] }));
+    });
+
+    it('opens the folder picker from the keyboard and selects with the arrow keys', async () => {
+      const { user, onChange } = await renderSidebar();
+
+      focus(screen.getByRole('button', { name: 'Folder' }));
       await user.keyboard('{Enter}');
-      const search = await screen.findByPlaceholderText('Search folders');
-      expect(search).toHaveFocus();
-
+      expect(await screen.findByPlaceholderText('Search folders')).toHaveFocus();
       await screen.findByLabelText('Alerting-folder');
       await user.keyboard('{ArrowDown}{Enter}');
 
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: [FOLDER_UID] }));
     });
 
-    it('ACC-5: the contact point picker is named, filters by typing and selects with Enter', async () => {
-      const { user, onChange } = renderSidebar();
+    it('shows every selected folder by title and removes only the one chosen', async () => {
+      const { user, onChange } = await renderSidebar({
+        ...createEmptyCriteria(),
+        namespaces: ['folder-1', 'folder-2'],
+      });
+
+      expect(await screen.findByText('Infra')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Remove Team Alerts' }));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2'] }));
+    });
+
+    it('explains an invalid folder token under the folder field', async () => {
+      await renderSidebar(createEmptyCriteria(), { issues: [{ key: 'namespace', reason: 'invalid' }] });
+
+      expect(screen.getByText(/this filter is not valid/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('query data sources', () => {
+    it('adds a data source picked with the keyboard to the selected ones', async () => {
+      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-1'] });
+
+      focus(screen.getByRole('combobox', { name: 'Select a data source' }));
+      await user.keyboard('Loki');
+      await screen.findByText('Loki');
+      await user.keyboard('{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-1', 'ds-2'] }));
+    });
+
+    it('shows every selected data source by name and removes only the one chosen', async () => {
+      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-1', 'ds-2'] });
+
+      expect(screen.getByRole('button', { name: 'Remove Loki' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Remove Prometheus' }));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-2'] }));
+    });
+  });
+
+  describe('plugin rules', () => {
+    it.each([
+      {
+        name: 'click',
+        toggle: (user: Awaited<ReturnType<typeof renderSidebar>>['user']) =>
+          user.click(screen.getByRole('switch', { name: 'Hide plugin rules' })),
+      },
+      {
+        name: 'Space key',
+        toggle: (user: Awaited<ReturnType<typeof renderSidebar>>['user']) => {
+          focus(screen.getByRole('switch', { name: 'Hide plugin rules' }));
+          return user.keyboard(' ');
+        },
+      },
+    ])('hides plugin rules on $name', async ({ toggle }) => {
+      const { user, onChange } = await renderSidebar();
+
+      await toggle(user);
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ hidePluginRules: true }));
+    });
+  });
+
+  describe('dashboard and panel', () => {
+    it.each([
+      { name: 'disabled until a dashboard is selected', criteria: createEmptyCriteria(), enabled: false },
+      {
+        name: 'enabled once a dashboard is selected',
+        criteria: { ...createEmptyCriteria(), dashboardUid: 'dash-1' },
+        enabled: true,
+      },
+    ])('the Panel ID field is $name', async ({ criteria, enabled }) => {
+      await renderSidebar(criteria);
+
+      const panelId = screen.getByRole('spinbutton', { name: 'Panel ID' });
+      if (enabled) {
+        expect(panelId).toBeEnabled();
+      } else {
+        expect(panelId).toBeDisabled();
+      }
+    });
+  });
+
+  describe('notification routing', () => {
+    it('picks a contact point by filtering and selecting with the keyboard', async () => {
+      const { user, onChange } = await renderSidebar();
 
       await user.click(screen.getByRole('combobox', { name: 'Contact point' }));
       await user.keyboard('pag');
@@ -429,8 +202,19 @@ describe('AlertRulesFilterSidebar', () => {
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ contactPoint: 'pager' }));
     });
 
-    it('ACC-4: the notification policy picker is named and selects with the keyboard', async () => {
-      const { user, onChange } = renderSidebar();
+    it('shows a contact point chosen by title as selected in the picker, whose options are keyed by UID', async () => {
+      const { user } = await renderSidebar({ ...createEmptyCriteria(), contactPoint: 'pager' });
+
+      const picker = screen.getByRole('combobox', { name: 'Contact point' });
+      expect(picker).toHaveValue('pager');
+      await user.click(picker);
+
+      expect(await screen.findByRole('option', { name: /pager/ })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('option', { name: /on-call/ })).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('picks a named notification policy by filtering and selecting with the keyboard', async () => {
+      const { user, onChange } = await renderSidebar();
 
       await user.click(screen.getByRole('combobox', { name: 'Notification policy' }));
       await user.keyboard('platform');
@@ -440,15 +224,233 @@ describe('AlertRulesFilterSidebar', () => {
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: 'team-platform' }));
     });
 
-    it('a contact point chosen by title is shown as selected in the picker, whose options are keyed by UID', async () => {
-      const { user } = renderSidebar({ ...createEmptyCriteria(), contactPoint: 'pager' });
+    it('selects the default policy, not a named tree, from the policy picker', async () => {
+      const { user, onChange } = await renderSidebar();
 
-      const picker = screen.getByRole('combobox', { name: 'Contact point' });
-      expect(picker).toHaveValue('pager');
-      await user.click(picker);
+      await user.click(screen.getByRole('combobox', { name: 'Notification policy' }));
+      await user.click(await screen.findByRole('option', { name: /Default policy/ }));
 
-      expect(await screen.findByRole('option', { name: /pager/ })).toHaveAttribute('aria-selected', 'true');
-      expect(screen.getByRole('option', { name: /on-call/ })).toHaveAttribute('aria-selected', 'false');
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: 'default' }));
+    });
+
+    it.each([
+      { chosen: 'contactPoint', criteria: { contactPoint: 'on-call' }, disabled: 'Notification policy' },
+      { chosen: 'policy', criteria: { policy: 'escalation' }, disabled: 'Contact point' },
+    ])('disables the $disabled field once a $chosen is chosen', async ({ criteria, disabled }) => {
+      await renderSidebar({ ...createEmptyCriteria(), ...criteria });
+
+      expect(screen.getByRole('combobox', { name: disabled })).toBeDisabled();
+    });
+
+    it('disables the Default policy switch with an explanation while it is off', async () => {
+      await renderSidebar();
+
+      expect(screen.getByRole('switch', { name: 'Default policy' })).toBeDisabled();
+      expect(screen.getByText("Filtering by the default policy isn't available yet.")).toBeInTheDocument();
+    });
+
+    it('lets a default policy that arrived through the URL be cleared from the switch', async () => {
+      const { user, onChange } = await renderSidebar({ ...createEmptyCriteria(), policy: 'default' });
+
+      const toggle = screen.getByRole('switch', { name: 'Default policy' });
+      expect(toggle).toBeChecked();
+      await user.click(toggle);
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: undefined }));
+    });
+  });
+
+  describe('rule status', () => {
+    it.each([
+      { name: 'Paused', option: 'Paused', arrowPresses: 1, expected: { paused: 'true' } },
+      { name: 'Paused', option: 'Not paused', arrowPresses: 2, expected: { paused: 'false' } },
+      { name: 'Alert state', option: 'Firing', arrowPresses: 1, expected: { state: 'firing' } },
+      { name: 'Health', option: 'No data', arrowPresses: 2, expected: { health: 'nodata' } },
+    ])('selects $option in the $name combobox with the keyboard', async ({ name, option, arrowPresses, expected }) => {
+      const { user, onChange } = await renderSidebar();
+
+      focus(screen.getByRole('combobox', { name }));
+      await user.keyboard('{ArrowDown}');
+      await screen.findByRole('option', { name: option });
+      await user.keyboard('{ArrowDown}'.repeat(arrowPresses));
+      await user.keyboard('{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining(expected));
+    });
+
+    it('shows the legacy inactive state as Normal', async () => {
+      await renderSidebar({ ...createEmptyCriteria(), state: 'inactive' });
+
+      expect(screen.getByRole('combobox', { name: 'Alert state' })).toHaveValue('Normal');
+    });
+  });
+
+  describe('label filters', () => {
+    it('keeps a new label row out of the criteria until it has a key, then applies it with its operator and value', async () => {
+      const { user, onChange } = await renderSidebar();
+
+      await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+      expect(screen.getByRole('textbox', { name: 'Label key' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Add label filter' })).toBeDisabled();
+      await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
+      await user.click(await screen.findByRole('option', { name: '!=' }));
+      await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api');
+      await user.tab();
+
+      expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('');
+      expect(onChange).not.toHaveBeenCalled();
+
+      await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ labels: [{ key: 'team', operator: 'notEqual', value: 'api' }] })
+      );
+    });
+
+    it('keeps a label row with a key but no value visible and sends it once it has a value', async () => {
+      const { user, onChange } = await renderSidebar();
+
+      await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+      await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+
+      expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
+      expect(onChange).not.toHaveBeenCalled();
+
+      await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api{Enter}');
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ labels: [{ key: 'team', operator: 'equal', value: 'api' }] })
+      );
+    });
+
+    it('sends a label with the exists operator without a value', async () => {
+      const { user, onChange } = await renderSidebar();
+
+      await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+      await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+      await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
+      await user.click(await screen.findByRole('option', { name: 'exists' }));
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ labels: [{ key: 'team', operator: 'exists', value: undefined }] })
+      );
+    });
+
+    it('leaves the criteria untouched when the new label row is removed before it has a key', async () => {
+      const { user, onChange } = await renderSidebar();
+
+      await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+      await user.click(screen.getByRole('button', { name: 'Remove label filter' }));
+
+      expect(screen.queryByRole('textbox', { name: 'Label key' })).not.toBeInTheDocument();
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('adds a label row with Enter on Add label filter', async () => {
+      const { user } = await renderSidebar();
+
+      focus(screen.getByRole('button', { name: 'Add label filter' }));
+      await user.keyboard('{Enter}');
+
+      expect(screen.getByRole('textbox', { name: 'Label key' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Clear filters', () => {
+    it('is disabled without active filters', async () => {
+      await renderSidebar(createEmptyCriteria(), { hasActiveFilters: false });
+
+      expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
+    });
+
+    it('calls onClear when there are active filters', async () => {
+      const { user, onClear } = await renderSidebar();
+
+      await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+      expect(onClear).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('accessibility', () => {
+    const APPLIED: Criteria = {
+      ...createEmptyCriteria(),
+      labels: [{ key: 'team', operator: 'equal', value: 'api' }],
+      namespaces: ['folder-1'],
+      dataSourceUids: ['ds-1'],
+    };
+
+    it('shows one labelled field group per filter, in the order of the filter definitions', async () => {
+      await renderSidebar();
+
+      const fieldNames = [
+        'Rule name',
+        'Labels',
+        'Folder',
+        'Query data source',
+        'Plugin rules',
+        'Dashboard',
+        'Panel ID',
+        'Contact point',
+        'Notification policy',
+        'Paused',
+        'Alert state',
+        'Health',
+      ];
+
+      expect(screen.getAllByRole('group')).toEqual(fieldNames.map((name) => screen.getByRole('group', { name })));
+    });
+
+    it('names the controls of an applied label, folder and data source, and leaves no control unnamed', async () => {
+      const { container } = await renderSidebar(APPLIED);
+
+      expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
+      expect(screen.getByRole('combobox', { name: 'Label operator' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
+      expect(screen.getByRole('button', { name: 'Remove label filter' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Remove Team Alerts' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Remove Prometheus' })).toBeInTheDocument();
+      getInteractiveControls(container).forEach((control) => expect(control).toHaveAccessibleName());
+    });
+
+    it('reaches every enabled control with Tab, and skips Panel ID until a dashboard is selected', async () => {
+      const { user } = await renderSidebar();
+      const enabledControls = [
+        screen.getByRole('textbox', { name: 'Rule name' }),
+        screen.getByRole('button', { name: 'Add label filter' }),
+        screen.getByRole('button', { name: 'Folder' }),
+        screen.getByRole('combobox', { name: 'Select a data source' }),
+        screen.getByRole('switch', { name: 'Hide plugin rules' }),
+        screen.getByRole('combobox', { name: 'Dashboard' }),
+        screen.getByRole('combobox', { name: 'Contact point' }),
+        screen.getByRole('combobox', { name: 'Notification policy' }),
+        screen.getByRole('combobox', { name: 'Paused' }),
+        screen.getByRole('combobox', { name: 'Alert state' }),
+        screen.getByRole('combobox', { name: 'Health' }),
+      ];
+
+      const visited = await tabSequence(user, screen.getByRole('button', { name: 'Clear filters' }), 14);
+
+      enabledControls.forEach((control) => expect(visited).toContain(control));
+      expect(visited).not.toContain(screen.getByRole('spinbutton', { name: 'Panel ID' }));
+      expect(visited).not.toContain(screen.getByRole('switch', { name: 'Default policy' }));
+    });
+
+    it('reaches an applied label row and the remove buttons of selected values with Tab', async () => {
+      const { user } = await renderSidebar(APPLIED);
+      const removeFolder = await screen.findByRole('button', { name: 'Remove Team Alerts' });
+
+      const visited = await tabSequence(user, screen.getByRole('button', { name: 'Clear filters' }), 12);
+
+      [
+        screen.getByRole('textbox', { name: 'Label key' }),
+        screen.getByRole('textbox', { name: 'Label value' }),
+        screen.getByRole('button', { name: 'Remove label filter' }),
+        removeFolder,
+        screen.getByRole('button', { name: 'Remove Prometheus' }),
+      ].forEach((control) => expect(visited).toContain(control));
     });
   });
 });

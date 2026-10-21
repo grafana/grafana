@@ -1,31 +1,18 @@
 import { renderHook } from 'test/test-utils';
 
-import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type RuleResourceState } from '../rule-data/ruleResourceState';
+import { FAILED_RULE, LOADING_RULE, buildAlertRule, loadedRule } from '../mocks/factories';
 
 import { useRuleActionAbilities } from './useRuleActionAbilities';
 
-function buildRule(annotations: Record<string, string> = {}, labels: Record<string, string> = {}): AlertRule {
-  return {
-    apiVersion: 'v0alpha1',
-    kind: 'AlertRule',
-    metadata: { name: 'rule-uid-1', annotations },
-    spec: {
-      title: 'My rule',
-      labels,
-      execErrState: 'Alerting',
-      noDataState: 'NoData',
-      trigger: { interval: '1m' },
-      expressions: {},
-    },
-  };
-}
+const CAN_WRITE = { 'grafana.com/access/canWrite': 'true' };
+const CAN_WRITE_AND_DELETE = { ...CAN_WRITE, 'grafana.com/access/canDelete': 'true' };
+const NO_PERMISSION = 'You do not have permission to do this';
 
-function loaded(rule: AlertRule): RuleResourceState<AlertRule> {
-  return { status: 'loaded', rule };
+function abilitiesFor(annotations: Record<string, string>, labels?: Record<string, string>) {
+  return renderHook(() => useRuleActionAbilities(loadedRule(buildAlertRule({ annotations, labels })))).result.current;
 }
 
 describe('useRuleActionAbilities', () => {
@@ -33,8 +20,8 @@ describe('useRuleActionAbilities', () => {
     grantUserPermissions([]);
   });
 
-  it('ACT-1: makes edit/pause/delete/duplicate unavailable while the resource is loading', () => {
-    const { result } = renderHook(() => useRuleActionAbilities({ status: 'loading' }));
+  it('makes every action unavailable while the resource is loading', () => {
+    const { result } = renderHook(() => useRuleActionAbilities(LOADING_RULE));
 
     expect(result.current.edit.available).toBe(false);
     expect(result.current.pause.available).toBe(false);
@@ -42,164 +29,114 @@ describe('useRuleActionAbilities', () => {
     expect(result.current.duplicate.available).toBe(false);
   });
 
-  it('ACT-2: makes edit/pause/delete/duplicate unavailable when the resource failed to load', () => {
-    const { result } = renderHook(() => useRuleActionAbilities({ status: 'error' }));
+  it('makes every action unavailable with an unknown permission when the resource failed to load', () => {
+    const { result } = renderHook(() => useRuleActionAbilities(FAILED_RULE));
 
-    expect(result.current.edit.available).toBe(false);
-    expect(result.current.edit.reason).toBe('Permission unknown');
-    expect(result.current.delete.available).toBe(false);
-  });
-
-  it('ACT-3: grants edit only when canWrite is the exact string "true"', () => {
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(loaded(buildRule({ 'grafana.com/access/canWrite': 'true' })))
-    );
-
-    expect(result.current.edit).toEqual({ available: true });
-  });
-
-  it('ACT-2: treats a missing canWrite annotation on a loaded rule as denied', () => {
-    const { result } = renderHook(() => useRuleActionAbilities(loaded(buildRule({}))));
-
-    expect(result.current.edit.available).toBe(false);
-    expect(result.current.edit.reason).toBe('You do not have permission to do this');
-    expect(result.current.delete.reason).toBe('You do not have permission to do this');
-  });
-
-  it('ACT-3: denies edit when canWrite is present but not "true"', () => {
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(loaded(buildRule({ 'grafana.com/access/canWrite': 'false' })))
-    );
-
-    expect(result.current.edit.available).toBe(false);
-    expect(result.current.edit.reason).toBe('You do not have permission to do this');
-  });
-
-  it('makes delete independent of the canWrite annotation, gated on canDelete instead', () => {
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(
-        loaded(buildRule({ 'grafana.com/access/canWrite': 'true', 'grafana.com/access/canDelete': 'false' }))
-      )
-    );
-
-    expect(result.current.edit).toEqual({ available: true });
-    expect(result.current.delete.available).toBe(false);
-  });
-
-  it('makes edit/pause/delete unavailable for a provisioned rule even with canWrite=true', () => {
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(
-        loaded(buildRule({ 'grafana.com/access/canWrite': 'true', 'grafana.com/provenance': 'api' }))
-      )
-    );
-
-    expect(result.current.edit.available).toBe(false);
+    expect(result.current.edit).toEqual({ available: false, reason: 'Permission unknown' });
     expect(result.current.pause.available).toBe(false);
-    expect(result.current.edit.reason).toBe('Provisioned');
-  });
-
-  it('does not block duplicate for a provisioned rule when the user can create rules', () => {
-    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
-    const { result } = renderHook(() => useRuleActionAbilities(loaded(buildRule({ 'grafana.com/provenance': 'api' }))));
-
-    expect(result.current.duplicate).toEqual({ available: true });
-  });
-
-  it('makes edit/pause/delete/duplicate unavailable for a plugin-managed rule', () => {
-    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(
-        loaded(
-          buildRule(
-            { 'grafana.com/access/canWrite': 'true', 'grafana.com/access/canDelete': 'true' },
-            {
-              __grafana_origin: 'plugin/my-plugin',
-            }
-          )
-        )
-      )
-    );
-
-    expect(result.current.edit.available).toBe(false);
     expect(result.current.delete.available).toBe(false);
     expect(result.current.duplicate.available).toBe(false);
   });
 
-  it('ACT-7: names the manager, in place of the provisioned reason, when a rule is both provisioned and managed', () => {
-    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(
-        loaded(
-          buildRule({
-            'grafana.com/access/canWrite': 'true',
-            'grafana.com/access/canDelete': 'true',
-            'grafana.com/provenance': 'api',
-            'grafana.app/managedBy': 'terraform',
-          })
-        )
-      )
-    );
-
-    expect(result.current.edit).toEqual({ available: false, reason: 'Managed by Terraform' });
-    expect(result.current.pause).toEqual({ available: false, reason: 'Managed by Terraform' });
-    expect(result.current.delete).toEqual({ available: false, reason: 'Managed by Terraform' });
-    expect(result.current.duplicate).toEqual({ available: true });
+  it.each<{ name: string; annotations: Record<string, string>; edit: object }>([
+    { name: 'canWrite is "true"', annotations: CAN_WRITE, edit: { available: true } },
+    {
+      name: 'the capability annotations are missing',
+      annotations: {},
+      edit: { available: false, reason: NO_PERMISSION },
+    },
+    {
+      name: 'canWrite is present but not "true"',
+      annotations: { 'grafana.com/access/canWrite': 'false' },
+      edit: { available: false, reason: NO_PERMISSION },
+    },
+  ])('edit follows the canWrite annotation: $name', ({ annotations, edit }) => {
+    expect(abilitiesFor(annotations).edit).toEqual(edit);
   });
 
-  it.each(['classic-file-provisioning', 'classic-api-provisioning'])(
-    'ACT-7: gives the plain Provisioned reason, not a managed one, for the %s manager kind',
-    (managedBy) => {
+  it('gates delete on canDelete, independently of canWrite', () => {
+    const abilities = abilitiesFor({ ...CAN_WRITE, 'grafana.com/access/canDelete': 'false' });
+
+    expect(abilities.edit).toEqual({ available: true });
+    expect(abilities.delete).toEqual({ available: false, reason: NO_PERMISSION });
+  });
+
+  it('denies duplicate without the create permission, whatever canWrite and canDelete say', () => {
+    expect(abilitiesFor(CAN_WRITE_AND_DELETE).duplicate.available).toBe(false);
+  });
+
+  describe('with permission to create rules', () => {
+    beforeEach(() => {
       grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
-      const { result } = renderHook(() =>
-        useRuleActionAbilities(
-          loaded(
-            buildRule({
-              'grafana.com/access/canWrite': 'true',
-              'grafana.com/access/canDelete': 'true',
-              'grafana.com/provenance': 'api',
-              'grafana.app/managedBy': managedBy,
-            })
-          )
-        )
-      );
+    });
 
-      expect(result.current.edit).toEqual({ available: false, reason: 'Provisioned' });
-      expect(result.current.pause).toEqual({ available: false, reason: 'Provisioned' });
-      expect(result.current.delete).toEqual({ available: false, reason: 'Provisioned' });
-      expect(result.current.duplicate).toEqual({ available: true });
-    }
-  );
+    it('lets a plain writable rule be duplicated', () => {
+      expect(abilitiesFor(CAN_WRITE_AND_DELETE).duplicate).toEqual({ available: true });
+    });
 
-  it('ACT-7: does not treat the Grafana UI as a manager', () => {
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(
-        loaded(buildRule({ 'grafana.com/access/canWrite': 'true', 'grafana.app/managedBy': 'grafana' }))
-      )
-    );
+    it.each([
+      {
+        name: 'provisioned',
+        annotations: { ...CAN_WRITE_AND_DELETE, 'grafana.com/provenance': 'api' },
+        reason: 'Provisioned',
+      },
+      {
+        name: 'provisioned and managed by Terraform (the manager is named instead)',
+        annotations: {
+          ...CAN_WRITE_AND_DELETE,
+          'grafana.com/provenance': 'api',
+          'grafana.app/managedBy': 'terraform',
+        },
+        reason: 'Managed by Terraform',
+      },
+      {
+        name: 'provisioned by classic file provisioning (no manager is named)',
+        annotations: {
+          ...CAN_WRITE_AND_DELETE,
+          'grafana.com/provenance': 'api',
+          'grafana.app/managedBy': 'classic-file-provisioning',
+        },
+        reason: 'Provisioned',
+      },
+      {
+        name: 'provisioned by classic API provisioning (no manager is named)',
+        annotations: {
+          ...CAN_WRITE_AND_DELETE,
+          'grafana.com/provenance': 'api',
+          'grafana.app/managedBy': 'classic-api-provisioning',
+        },
+        reason: 'Provisioned',
+      },
+    ])('blocks edit, pause and delete but not duplicate for a rule that is $name', ({ annotations, reason }) => {
+      const abilities = abilitiesFor(annotations);
 
-    expect(result.current.edit).toEqual({ available: true });
-  });
+      expect(abilities.edit).toEqual({ available: false, reason });
+      expect(abilities.pause).toEqual({ available: false, reason });
+      expect(abilities.delete).toEqual({ available: false, reason });
+      expect(abilities.duplicate).toEqual({ available: true });
+    });
 
-  it('ACT-5: restricts a rule only when its origin label starts with plugin/', () => {
-    const annotations = { 'grafana.com/access/canWrite': 'true' };
-    const { result: plugin } = renderHook(() =>
-      useRuleActionAbilities(loaded(buildRule(annotations, { __grafana_origin: 'plugin/my-plugin' })))
-    );
-    const { result: other } = renderHook(() =>
-      useRuleActionAbilities(loaded(buildRule(annotations, { __grafana_origin: 'my-plugin' })))
-    );
+    it('blocks edit, delete and duplicate for a plugin-managed rule', () => {
+      const abilities = abilitiesFor(CAN_WRITE_AND_DELETE, { __grafana_origin: 'plugin/my-plugin' });
 
-    expect(plugin.current.edit.available).toBe(false);
-    expect(other.current.edit).toEqual({ available: true });
-  });
+      expect(abilities.edit.available).toBe(false);
+      expect(abilities.delete.available).toBe(false);
+      expect(abilities.duplicate.available).toBe(false);
+    });
 
-  it('denies duplicate without the create permission, independent of canWrite/canDelete', () => {
-    const { result } = renderHook(() =>
-      useRuleActionAbilities(
-        loaded(buildRule({ 'grafana.com/access/canWrite': 'true', 'grafana.com/access/canDelete': 'true' }))
-      )
-    );
-
-    expect(result.current.duplicate.available).toBe(false);
+    it.each([
+      {
+        name: 'an origin label that does not start with plugin/',
+        annotations: CAN_WRITE,
+        labels: { __grafana_origin: 'my-plugin' },
+      },
+      {
+        name: 'the Grafana UI as manager',
+        annotations: { ...CAN_WRITE, 'grafana.app/managedBy': 'grafana' },
+        labels: undefined,
+      },
+    ])('restricts nothing for $name', ({ annotations, labels }) => {
+      expect(abilitiesFor(annotations, labels).edit).toEqual({ available: true });
+    });
   });
 });

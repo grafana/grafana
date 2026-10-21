@@ -1,15 +1,15 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import server from '@grafana/test-utils/server';
+
 import { setupMswServer } from '../../mockApi';
+import { FOLDER_PARENTS_URL, mockFullRule, ruleUrl } from '../mocks/handlers';
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
-const server = setupMswServer();
-
-const RECORDING_RULE_GET_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/recordingrules/:name';
-const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
+setupMswServer();
 
 const hit: RecordingRuleSearchHit = {
   uid: 'rule-1',
@@ -18,22 +18,6 @@ const hit: RecordingRuleSearchHit = {
   labels: {},
   dataSourceUids: [],
 };
-
-function mockFullRule(annotations: Record<string, string> = {}) {
-  const requests = { count: 0 };
-  server.use(
-    http.get(RECORDING_RULE_GET_URL, ({ params }) => {
-      requests.count += 1;
-      return HttpResponse.json({
-        apiVersion: 'v0alpha1',
-        kind: 'RecordingRule',
-        metadata: { name: params.name, annotations },
-        spec: { title: 'cpu_usage:avg', paused: false },
-      });
-    })
-  );
-  return requests;
-}
 
 function mockFolderPath() {
   const requests = { count: 0 };
@@ -61,7 +45,7 @@ function renderEntry(showFolderPath: boolean) {
 
 describe('RecordingRuleListEntry', () => {
   it('shows the resolved folder path in List mode', async () => {
-    mockFullRule();
+    mockFullRule('recording');
     mockFolderPath();
     renderEntry(true);
 
@@ -69,18 +53,21 @@ describe('RecordingRuleListEntry', () => {
     expect(screen.getByText('Team Alerts')).toBeInTheDocument();
   });
 
-  it('neither shows nor requests the folder path in Folders mode', async () => {
-    mockFullRule({ 'grafana.com/access/canWrite': 'true' });
+  it('neither shows nor requests the folder path in Folders mode, and enables Edit once the rule reports write access', async () => {
+    mockFullRule('recording', { 'grafana.com/access/canWrite': 'true' });
     const folderRequests = mockFolderPath();
     renderEntry(false);
 
-    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/rule-1/edit');
     expect(screen.queryByText('Team Alerts')).not.toBeInTheDocument();
     expect(folderRequests.count).toBe(0);
   });
 
   it('feeds one full-rule lookup to both the provisioning badge and the Edit action', async () => {
-    const ruleRequests = mockFullRule({ 'grafana.com/provenance': 'api', 'grafana.com/access/canWrite': 'true' });
+    const ruleRequests = mockFullRule('recording', {
+      'grafana.com/provenance': 'api',
+      'grafana.com/access/canWrite': 'true',
+    });
     renderEntry(false);
 
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
@@ -90,15 +77,8 @@ describe('RecordingRuleListEntry', () => {
     expect(ruleRequests.count).toBe(1);
   });
 
-  it('enables Edit once the full rule reports write access', async () => {
-    mockFullRule({ 'grafana.com/access/canWrite': 'true' });
-    renderEntry(false);
-
-    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/rule-1/edit');
-  });
-
   it('keeps the row usable, without Edit, when the full-rule lookup fails', async () => {
-    server.use(http.get(RECORDING_RULE_GET_URL, () => HttpResponse.json({}, { status: 500 })));
+    server.use(http.get(ruleUrl('recording'), () => HttpResponse.json({}, { status: 500 })));
     renderEntry(false);
 
     expect(await screen.findByRole('link', { name: 'cpu_usage:avg' })).toBeInTheDocument();
