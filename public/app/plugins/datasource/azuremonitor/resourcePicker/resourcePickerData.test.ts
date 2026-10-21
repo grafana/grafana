@@ -95,44 +95,37 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(postBody.options.$skipToken).toEqual('skipfirst100');
     });
 
-    it('makes multiple requests for resource groups when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
-      const subscriptionResponse = createMockARGSubscriptionResponse();
+    it('makes multiple requests for resource groups when arg returns a skip token and passes the right skipToken to each subsequent call', async () => {
       const resourceGroupResponse1 = {
         ...createMockARGResourceGroupsResponse(),
         $skipToken: 'skipfirst100',
       };
       const resourceGroupResponse2 = createMockARGResourceGroupsResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([
-        subscriptionResponse,
         resourceGroupResponse1,
         resourceGroupResponse2,
       ]);
 
       await resourcePickerData.getResourceGroupsBySubscriptionId('1', 'metrics');
 
-      expect(postResource).toHaveBeenCalledTimes(3);
-      const secondCall = postResource.mock.calls[2];
+      expect(postResource).toHaveBeenCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
       const [_, postBody] = secondCall;
       expect(postBody.options.$skipToken).toEqual('skipfirst100');
     });
 
-    it('makes multiple requests for resources when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
-      const subscriptionResponse = createMockARGSubscriptionResponse();
+    it('makes multiple requests for resources when arg returns a skip token and passes the right skipToken to each subsequent call', async () => {
       const resourcesResponse1 = {
         ...createARGResourcesResponse(),
         $skipToken: 'skipfirst100',
       };
       const resourcesResponse2 = createARGResourcesResponse();
-      const { resourcePickerData, postResource } = createResourcePickerData([
-        subscriptionResponse,
-        resourcesResponse1,
-        resourcesResponse2,
-      ]);
+      const { resourcePickerData, postResource } = createResourcePickerData([resourcesResponse1, resourcesResponse2]);
 
       await resourcePickerData.getResourcesForResourceGroup('resourceGroupURI', 'metrics');
 
-      expect(postResource).toHaveBeenCalledTimes(3);
-      const secondCall = postResource.mock.calls[2];
+      expect(postResource).toHaveBeenCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
       const [_, postBody] = secondCall;
       expect(postBody.options.$skipToken).toEqual('skipfirst100');
     });
@@ -341,14 +334,14 @@ describe('AzureMonitor resourcePickerData', () => {
       }
     });
 
-    it('filters by metric specific resources', async () => {
+    it('preserves namespace filtering for traces resource groups', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
       const mockResourceGroupsResponse = createMockARGResourceGroupsResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([
         mockSubscriptionsResponse,
         mockResourceGroupsResponse,
       ]);
-      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'metrics');
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'traces');
 
       expect(postResource).toBeCalledTimes(2);
       const secondCall = postResource.mock.calls[1];
@@ -420,14 +413,14 @@ describe('AzureMonitor resourcePickerData', () => {
       });
     });
 
-    it('should filter metrics resources', async () => {
+    it('preserves namespace filtering for traces resources', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
       const mockResourcesResponse = createARGResourcesResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([
         mockSubscriptionsResponse,
         mockResourcesResponse,
       ]);
-      await resourcePickerData.getResourcesForResourceGroup('dev', 'metrics');
+      await resourcePickerData.getResourcesForResourceGroup('dev', 'traces');
 
       expect(postResource).toBeCalledTimes(2);
       const secondCall = postResource.mock.calls[1];
@@ -437,7 +430,7 @@ describe('AzureMonitor resourcePickerData', () => {
   });
 
   describe('search', () => {
-    it('makes requests for metrics searches', async () => {
+    it('preserves namespace discovery for traces searches', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
 
       const mockResponse = {
@@ -456,7 +449,7 @@ describe('AzureMonitor resourcePickerData', () => {
         mockSubscriptionsResponse,
         mockResponse,
       ]);
-      const formattedResults = await resourcePickerData.search('vmname', 'metrics', emptyFilters);
+      const formattedResults = await resourcePickerData.search('vmname', 'traces', emptyFilters);
       expect(postResource).toHaveBeenCalledTimes(2);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         {
@@ -557,7 +550,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const postBody = firstCall[1];
       expect(postBody.query).toContain('| where location in ("eastus","westeurope")');
     });
-    it('metrics searches - fallback namespaces', async () => {
+    it('traces searches retain fallback namespaces', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
 
       const mockResponse = {
@@ -576,7 +569,7 @@ describe('AzureMonitor resourcePickerData', () => {
         [mockSubscriptionsResponse, mockResponse],
         true
       );
-      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
+      await resourcePickerData.search('vmname', 'traces', emptyFilters);
       expect(postResource).toHaveBeenCalledTimes(2);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         {
@@ -679,7 +672,7 @@ describe('AzureMonitor resourcePickerData', () => {
         false,
         'govazuremonitor'
       );
-      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
+      await resourcePickerData.search('vmname', 'traces', emptyFilters);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         { resourceUri: '/subscriptions/1' },
         false,
@@ -716,7 +709,7 @@ describe('AzureMonitor resourcePickerData', () => {
         false,
         'chinaazuremonitor'
       );
-      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
+      await resourcePickerData.search('vmname', 'traces', emptyFilters);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         { resourceUri: '/subscriptions/1' },
         false,
@@ -766,9 +759,124 @@ describe('AzureMonitor resourcePickerData', () => {
         mockDatasource.azureResourceGraphDatasource
       );
 
-      await expect(resourcePickerData.search('vmname', 'metrics', emptyFilters)).resolves.not.toThrow();
+      await expect(resourcePickerData.search('vmname', 'traces', emptyFilters)).resolves.not.toThrow();
       const namespaces = resourcePickerData.supportedMetricNamespaces;
       expect(namespaces.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('metrics resource discovery', () => {
+    const filters = {
+      subscriptions: ['sub2'],
+      types: ['contoso.monitor/widgets'],
+      locations: ['westus3'],
+    };
+    const resource = {
+      id: '/subscriptions/sub2/resourceGroups/test-rg/providers/contoso.monitor/widgets/widget',
+      name: 'widget',
+      type: 'contoso.monitor/widgets',
+      resourceGroup: 'test-rg',
+      subscriptionId: 'sub2',
+      location: 'westus3',
+    };
+
+    it.each([
+      {
+        name: 'search',
+        fetch: (data: ResourcePickerData) => data.search('widget', 'metrics', filters),
+        response: { data: [resource] },
+        expectedQuery: `resources
+          | where id contains "widget"
+          | where subscriptionId in ("sub2")
+          | where type in ("contoso.monitor/widgets")
+          | where location in ("westus3")
+          | order by tolower(name) asc
+          | limit 200`,
+        expectedName: 'widget',
+      },
+      {
+        name: 'resource-group browsing',
+        fetch: (data: ResourcePickerData) => data.getResourceGroupsBySubscriptionId('sub2', 'metrics', filters),
+        response: {
+          data: [
+            {
+              resourceGroupName: 'test-rg',
+              resourceGroupURI: '/subscriptions/sub2/resourceGroups/test-rg',
+            },
+          ],
+        },
+        expectedQuery: `resources
+          | where subscriptionId == 'sub2'
+          | where subscriptionId in ("sub2")
+          | where type in ("contoso.monitor/widgets")
+          | where location in ("westus3")
+          | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup)
+          | join kind=leftouter (resourcecontainers
+              | where type =~ 'microsoft.resources/subscriptions/resourcegroups'
+              | project resourceGroupName=name, resourceGroupURI=tolower(id)) on resourceGroupURI
+          | project resourceGroupName=iff(resourceGroupName != "", resourceGroupName, resourceGroup), resourceGroupURI
+          | summarize count=count() by resourceGroupName, resourceGroupURI
+          | order by tolower(resourceGroupName) asc`,
+        expectedName: 'test-rg',
+      },
+      {
+        name: 'resource browsing',
+        fetch: (data: ResourcePickerData) =>
+          data.getResourcesForResourceGroup('/subscriptions/sub2/resourceGroups/test-rg', 'metrics', filters),
+        response: { data: [resource] },
+        expectedQuery: `resources
+          | where id hasprefix "/subscriptions/sub2/resourceGroups/test-rg/"
+          | where subscriptionId in ("sub2")
+          | where type in ("contoso.monitor/widgets")
+          | where location in ("westus3")
+          | order by tolower(name) asc`,
+        expectedName: 'widget',
+      },
+    ])(
+      'discovers an unlisted type through $name while preserving explicit filters',
+      async ({ fetch, response, expectedQuery, expectedName }) => {
+        const { resourcePickerData, postResource, mockDatasource } = createResourcePickerData([]);
+        postResource.mockImplementation(async (_path, { query }) =>
+          query.includes('join kind=inner') ? createMockARGSubscriptionResponse() : response
+        );
+
+        const rows = await fetch(resourcePickerData);
+
+        expect(postResource.mock.calls.at(-1)[1].query.replace(/\s+/g, ' ').trim()).toBe(
+          expectedQuery.replace(/\s+/g, ' ').trim()
+        );
+        expect(rows[0].name).toBe(expectedName);
+        expect(resourceTypes).not.toContain('contoso.monitor/widgets');
+        expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).not.toHaveBeenCalled();
+        expect(postResource).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each(['azuremonitor', 'govazuremonitor', 'chinaazuremonitor'])(
+      'discovers resources without namespace sampling in %s',
+      async (cloudName) => {
+        const { resourcePickerData, postResource, mockDatasource } = createResourcePickerData([], false, cloudName);
+        postResource.mockResolvedValue({ data: [resource] });
+        mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
+          .fn()
+          .mockRejectedValue(new Error('Namespace discovery is forbidden'));
+
+        const rows = await resourcePickerData.search('widget', 'metrics', emptyFilters);
+
+        expect(postResource.mock.calls[0][1].query.replace(/\s+/g, ' ').trim()).toBe(
+          'resources | where id contains "widget" | order by tolower(name) asc | limit 200'
+        );
+        expect(rows[0].uri).toBe('/subscriptions/sub2/resourceGroups/test-rg/providers/contoso.monitor/widgets/widget');
+        expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).not.toHaveBeenCalled();
+      }
+    );
+
+    it('propagates resource discovery errors rather than returning an empty resource list', async () => {
+      const { resourcePickerData, postResource } = createResourcePickerData([]);
+      const error = new Error('Resource Graph access denied');
+      postResource.mockRejectedValue(error);
+
+      await expect(resourcePickerData.search('widget', 'metrics', emptyFilters)).rejects.toBe(error);
     });
   });
 
