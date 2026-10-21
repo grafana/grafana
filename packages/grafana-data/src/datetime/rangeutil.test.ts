@@ -4,6 +4,8 @@ import { dateTime } from './moment_wrapper';
 import {
   convertRawToRange,
   describeInterval,
+  intervalToMs,
+  intervalToSeconds,
   type describeTimeRange as DescribeTimeRange,
   isRelativeTimeRange,
   relativeToTimeRange,
@@ -145,6 +147,66 @@ describe('Range Utils', () => {
         type: 'ms',
         count: -50,
       });
+    });
+
+    it('should keep the fractional part of decimal intervals', () => {
+      expect(describeInterval('1.5h')).toEqual({
+        sec: 3600,
+        type: 'h',
+        count: 1.5,
+      });
+    });
+
+    it('should keep the fractional part of decimal intervals in milliseconds', () => {
+      expect(describeInterval('0.5s')).toEqual({
+        sec: 1,
+        type: 's',
+        count: 0.5,
+      });
+    });
+
+    it('should keep the fractional part of unit-less decimal intervals', () => {
+      expect(describeInterval('2.5')).toEqual({
+        sec: 1,
+        type: 's',
+        count: 2.5,
+      });
+    });
+
+    it('should keep the fractional part of negative decimal intervals', () => {
+      expect(describeInterval('-0.5h')).toEqual({
+        sec: 3600,
+        type: 'h',
+        count: -0.5,
+      });
+    });
+  });
+
+  describe('intervalToMs', () => {
+    it('should convert decimal intervals to milliseconds', () => {
+      expect(intervalToMs('1.5h')).toEqual(5400000);
+    });
+
+    it('should convert decimal intervals in seconds to milliseconds', () => {
+      expect(intervalToMs('0.5s')).toEqual(500);
+    });
+
+    it('should convert negative decimal intervals to milliseconds', () => {
+      expect(intervalToMs('-0.5h')).toEqual(-1800000);
+    });
+
+    it('should convert integer intervals to milliseconds', () => {
+      expect(intervalToMs('1h')).toEqual(3600000);
+    });
+  });
+
+  describe('intervalToSeconds', () => {
+    it('should convert unit-less decimal intervals to seconds', () => {
+      expect(intervalToSeconds('2.5')).toEqual(2.5);
+    });
+
+    it('should convert decimal intervals to seconds', () => {
+      expect(intervalToSeconds('1.5h')).toEqual(5400);
     });
   });
 
