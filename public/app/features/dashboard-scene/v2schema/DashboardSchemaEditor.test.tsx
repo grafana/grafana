@@ -53,30 +53,34 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
   });
 
   it.each(['JSON', 'YAML'])('validates %s once after typing pauses and blocks saving while pending', async (format) => {
-    const onValidationChange = jest.fn();
-    render(<ControlledEditor onValidationChange={onValidationChange} />);
-    await screen.findByRole('textbox', { name: 'Dashboard schema' });
-    if (format === 'YAML') {
-      await userEvent.setup().click(screen.getByRole('radio', { name: 'YAML' }));
-    }
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
     jest.useFakeTimers();
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onValidationChange = jest.fn();
+    const { unmount } = render(<ControlledEditor onValidationChange={onValidationChange} />);
     const validate = jest.spyOn(draft07Config, 'validate');
     try {
+      await screen.findByRole('textbox', { name: 'Dashboard schema' });
+      if (format === 'YAML') {
+        await user.click(screen.getByRole('radio', { name: 'YAML' }));
+      }
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+      await act(async () => jest.advanceTimersByTime(100));
+      validate.mockClear();
+
       await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":123}}' : 'spec:\n  title: 123');
+      await act(async () => jest.advanceTimersByTime(5));
       await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":"Edited"}}' : 'spec:\n  title: Edited');
       expect(onValidationChange).toHaveBeenLastCalledWith(true);
       expect(validate).not.toHaveBeenCalled();
 
-      await act(async () => jest.advanceTimersByTime(99));
-      expect(validate).not.toHaveBeenCalled();
-      await act(async () => jest.advanceTimersByTime(1));
+      // CodeMirror's linter allows a 10 ms scheduling tolerance.
+      await act(async () => jest.advanceTimersByTime(100));
       expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
       expect(onValidationChange).toHaveBeenLastCalledWith(false);
       await act(async () => jest.advanceTimersByTime(200));
       expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
     } finally {
+      unmount();
       validate.mockRestore();
       jest.useRealTimers();
     }
