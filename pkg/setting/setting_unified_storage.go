@@ -24,6 +24,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	SnapshotResource         = "snapshots.dashboard.grafana.app"
+	LibraryPanelResource     = "librarypanels.dashboard.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
@@ -39,6 +40,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
+	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
 	StarsResource:            false,
 	PreferencesResource:      true, // Only Mode5!
 	DataSourceResources:      false,
