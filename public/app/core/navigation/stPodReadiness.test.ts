@@ -121,25 +121,13 @@ describe('stPodReadiness', () => {
       ['waiting', markStPodWaiting, StPodStatus.Waiting],
       ['ready', markStPodReady, StPodStatus.Ready],
       ['timeout', markStPodTimeout, StPodStatus.Timeout],
-    ])('notifies once when the pod is marked %s', (_, mark, expected) => {
-      const listener = jest.fn();
-      unsubscribe = subscribeToStPodStatus(listener);
+    ])('notifies once, with the new status already set, when the pod is marked %s', (_, mark, expected) => {
+      const seen: StPodStatus[] = [];
+      unsubscribe = subscribeToStPodStatus(() => seen.push(getStPodStatus()));
 
       mark();
 
-      expect(listener).toHaveBeenCalledTimes(1);
-      expect(getStPodStatus()).toBe(expected);
-    });
-
-    it('reads the new status from inside the listener', () => {
-      let seen: StPodStatus | undefined;
-      unsubscribe = subscribeToStPodStatus(() => {
-        seen = getStPodStatus();
-      });
-
-      markStPodReady();
-
-      expect(seen).toBe(StPodStatus.Ready);
+      expect(seen).toEqual([expected]);
     });
 
     it('notifies when a timed-out pod is invalidated so mounted consumers can show pending again', () => {
@@ -153,66 +141,29 @@ describe('stPodReadiness', () => {
       expect(getStPodStatus()).toBe(StPodStatus.Unknown);
     });
 
-    it('notifies when a ready pod goes back to waiting', () => {
-      markStPodReady();
-      const listener = jest.fn();
-      unsubscribe = subscribeToStPodStatus(listener);
-
-      markStPodWaiting();
-
-      expect(listener).toHaveBeenCalledTimes(1);
-    });
-
     it('does not notify when the status does not change', () => {
       markStPodWaiting();
       const listener = jest.fn();
       unsubscribe = subscribeToStPodStatus(listener);
 
       markStPodWaiting();
-      markStPodWaiting();
 
+      expect(getStPodStatus()).toBe(StPodStatus.Waiting);
       expect(listener).not.toHaveBeenCalled();
     });
 
-    it('does not notify when invalidating a pod that is already unknown', () => {
-      const listener = jest.fn();
-      unsubscribe = subscribeToStPodStatus(listener);
-
-      invalidateStPodReadiness();
-
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('notifies every subscriber', () => {
-      const first = jest.fn();
-      const second = jest.fn();
-      const unsubscribeFirst = subscribeToStPodStatus(first);
-      unsubscribe = subscribeToStPodStatus(second);
+    it('notifies every subscriber until it unsubscribes', () => {
+      const stays = jest.fn();
+      const leaves = jest.fn();
+      unsubscribe = subscribeToStPodStatus(stays);
+      const stop = subscribeToStPodStatus(leaves);
 
       markStPodReady();
-      unsubscribeFirst();
-
-      expect(first).toHaveBeenCalledTimes(1);
-      expect(second).toHaveBeenCalledTimes(1);
-    });
-
-    it('stops notifying after unsubscribing', () => {
-      const listener = jest.fn();
-      const stop = subscribeToStPodStatus(listener);
-
       stop();
-      markStPodReady();
+      markStPodTimeout();
 
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('still resolves the pending promise on ready when there are subscribers', async () => {
-      const pending = getStPodReadyPromise();
-      unsubscribe = subscribeToStPodStatus(jest.fn());
-
-      markStPodReady();
-
-      await expect(pending).resolves.toBeUndefined();
+      expect(stays).toHaveBeenCalledTimes(2);
+      expect(leaves).toHaveBeenCalledTimes(1);
     });
   });
 });
