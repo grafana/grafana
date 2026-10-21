@@ -2671,6 +2671,19 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		hasDefaults = true
 	}
 
+	if varMappingsMap, ok := extractMapField(defaults, "varMappings"); ok {
+		varMappings := make(map[string]string, len(varMappingsMap))
+		for key, val := range varMappingsMap {
+			if expr, ok := val.(string); ok {
+				varMappings[key] = expr
+			}
+		}
+		if len(varMappings) > 0 {
+			fieldConfigDefaults.VarMappings = varMappings
+			hasDefaults = true
+		}
+	}
+
 	// Add frontend-style default custom field to match frontend behavior
 	if !hasDefaults {
 		fieldConfigDefaults.Custom = map[string]interface{}{}

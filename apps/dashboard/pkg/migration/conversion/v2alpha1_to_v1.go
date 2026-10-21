@@ -2125,6 +2125,9 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	if defaults.Thresholds != nil {
 		result["thresholds"] = convertThresholdsToV1(defaults.Thresholds)
 	}
+	if defaults.VarMappings != nil {
+		result["varMappings"] = defaults.VarMappings
+	}
 
 	if len(result) == 0 {
 		return nil
