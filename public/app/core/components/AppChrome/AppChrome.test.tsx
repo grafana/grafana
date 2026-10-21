@@ -257,6 +257,12 @@ describe('AppChrome', () => {
     });
 
     it('does not render the docked drawer when the mega-menu flag is on', async () => {
+      // Mocked with real scoped content so the drawer would render something if the flag gate in
+      // AppChrome.tsx were removed - without this, useScopesServices() returns undefined and
+      // ScopesDashboards bails out on its own !scopeServices check regardless of the flag, so this
+      // test would pass even if that gate were deleted.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ dashboards: [], scopeNavigations: [] }));
+
       await act(async () => {
         setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
       });
