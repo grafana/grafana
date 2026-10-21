@@ -2729,6 +2729,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardVariablesMigration",
+        "resourceVersion": "1792033601704",
+        "creationTimestamp": "2026-10-15T03:06:41Z"
+      },
+      "spec": {
+        "description": "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardsAutoHeightPanels",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-19T13:59:18Z"
