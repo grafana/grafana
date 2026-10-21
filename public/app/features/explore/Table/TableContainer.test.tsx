@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -133,7 +133,8 @@ describe('TableContainer', () => {
     });
 
     it("gives the no-data message normal panel padding, not the table panel's noPadding", async () => {
-      mockImportPanelPlugin.mockResolvedValue({ noPadding: true });
+      const pluginPromise = Promise.resolve({ noPadding: true });
+      mockImportPanelPlugin.mockReturnValue(pluginPromise);
       const emptyFrames: DataFrame[] = [
         {
           name: 'TableResultName',
@@ -143,10 +144,12 @@ describe('TableContainer', () => {
       ];
       render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
 
-      await waitFor(() => {
-        const insetWrapper = screen.getByTestId('meta-info-text').parentElement;
-        expect(insetWrapper?.parentElement?.style.padding).not.toBe('0px 0px 0px 0px');
-      });
+      // Force the resolution in before asserting: panelPadding defaults to 'md' before this
+      // plugin promise resolves too, so a waitFor here could pass without proving anything.
+      await act(() => pluginPromise);
+
+      const insetWrapper = screen.getByTestId('meta-info-text').parentElement;
+      expect(insetWrapper?.parentElement?.style.padding).not.toBe('0px 0px 0px 0px');
     });
 
     it('aligns the no-data message with the panel title', () => {
