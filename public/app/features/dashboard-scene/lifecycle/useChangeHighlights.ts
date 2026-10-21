@@ -9,7 +9,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { changedPanelKeys, type SpecChange } from './specDiff';
 
 /** Marks the root of an embedded dashboard view (`grafana/dashboard-view/v1`). */
-export const DASHBOARD_VIEW_ATTRIBUTE = 'data-dashboard-view';
+const DASHBOARD_VIEW_ATTRIBUTE = 'data-dashboard-view';
 
 /**
  * The element holding a view's panels, found from an element inside the view's banner: the embedded
