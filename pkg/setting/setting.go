@@ -931,6 +931,13 @@ type Cfg struct {
 	// only; OSS keeps the no-op path. Default off.
 	EnableEmbeddedAPIExtensions bool
 
+	// EnableAPIExtensionsRouteHandling makes the embedded apiextensions apiserver serve
+	// routing.grafana.app and render an AppManifest's custom routes into RouteHandlers, so
+	// matching requests are proxied to the manifest's operator URL — what multi-tenant
+	// apiextensions already does. Requires EnableEmbeddedAPIExtensions. Enterprise only;
+	// OSS keeps the no-op path. Default off, and off leaves today's behaviour unchanged.
+	EnableAPIExtensionsRouteHandling bool
+
 	// EnableVersionPolicy turns on the global API version policy (preferred and
 	// max-allowed API version per group). Off leaves today's behavior unchanged.
 	// Temporary opt-in kill-switch while the feature is experimental; remove it and
@@ -1988,6 +1995,7 @@ func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
 	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
 	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.EnableEmbeddedAPIExtensions = iniFile.Section("grafana-apiserver").Key("apiextensions_enabled").MustBool(false)
+	cfg.EnableAPIExtensionsRouteHandling = iniFile.Section("grafana-apiserver").Key("apiextensions_route_handling").MustBool(false)
 	cfg.EnableVersionPolicy = iniFile.Section("grafana-apiserver").Key("version_policy_enabled").MustBool(false)
 }
 func (cfg *Cfg) LogConfigSources() {

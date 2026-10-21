@@ -57,6 +57,10 @@ type ApiExtensionsDelegateConfig struct {
 	// AuthorizerRegistry is the ST authorizer, which supports dynamic per-CRD-group
 	// authorizer (un)registration.
 	AuthorizerRegistry *authorizer.GrafanaAuthorizer
+	// ServeRouteHandling asks the apiextensions server to serve routing.grafana.app and run
+	// the controller that proxies an AppManifest's custom routes to its operator URL. Off by
+	// default; it follows [grafana-apiserver] apiextensions_route_handling.
+	ServeRouteHandling bool
 	// BuildHandlerChainFunc is the ST handler chain, so CRD-backed requests run
 	// through the same authn/authz/tracing middleware as core groups.
 	BuildHandlerChainFunc builder.BuildHandlerChainFunc
