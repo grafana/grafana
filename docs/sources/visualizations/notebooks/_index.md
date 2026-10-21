@@ -15,34 +15,30 @@ description: Create and manage notebooks, a linear, narrative artifact for inves
 
 A notebook is a page of text and panel blocks arranged in sequence.
 Text blocks capture notes and context, and panel blocks display query results inline.
-The sequence tells the story of your investigation as you work, without additional authoring.
+It brings dashboard panels, Explore queries, and Grafana Assistant findings into one editable artifact.
+You can add your reasoning alongside these findings, and then share and collaborate on the notebook with your teammates.
 
 Every block is directly editable, and you can rewrite, reorder, remove, or add more context, as needed.
 
-A notebook:
+You can use a notebook to explore a question about your data, document an investigation, or prepare a post-incident review.
+In addition, a notebook:
 
+- Provides a space to persist what you learned from your Grafana Assistant chats.
+- Keeps your notes within Grafana rather than in external tools, like chat apps, wikis, or stand-alone documents.
 - Removes the need for incident-specific dashboards that contribute to dashboard sprawl.
 - Doesn't require you to declare an incident to be able to generate an investigation artifact, providing a space for pre-escalation work.
-- Provides a space to persist what you learned from your Grafana Assistant chats.
-- Keeps your investigation notes within Grafana rather than in external tools, like chat apps, wikis, or stand-alone documents.
 
 ![A notebook with a latency investigation](./screenshot-notebook-v13.3.png)
 <!-- TODO: Update screenshot -->
 
-You can share a saved notebook with your teammates and reload it as context for a new or continuing investigation in a Grafana Assistant investigation.
-This way, the next investigation builds on what was already learned.
-
-Many investigations never become incidents, but the pre-escalation work often includes important signals, and notebooks let you keep that.
-Additionally, they provide reusable context you can return to the next time something similar happens.
-Each investigation in a notebook makes the next one faster.
-
 ## When to use notebooks
 
-Dashboards, the Workspace canvas, and notebooks each support investigations in a different way. They differ in design effort, ease of editing, and reuse.
+Dashboards, the Workspace canvas, and notebooks each help you work with your data in a different way.
+They differ in design effort, ease of editing, and reuse.
 
-- **Dashboards** are reusable, curated views. Building one during an investigation requires design decisions while you're still exploring, and adding investigative work can make the dashboard less curated.
-- **The Workspace canvas** is a temporary exploration space. You can explore without design work, but an agent creates the canvas, you can't edit it, and it doesn't persist.
-- **Notebooks** are a scratchpad you can refine and reuse. A notebook picks up where the Workspace canvas leaves off. You write and edit it during an investigation, then clean it up into a reusable record.
+- **Dashboards** are reusable, curated views. Building one while you're still exploring requires design decisions, and adding exploratory work can make the dashboard less curated.
+- **The Workspace canvas** is a temporary exploration space. You can explore without design work, but because an agent creates the canvas, you can't edit it, and it doesn't persist.
+- **Notebooks** are a scratchpad you can refine and reuse. A notebook picks up where the Workspace canvas leaves off. You write and edit it as you explore, then clean it up into a reusable record.
 
 ## Manage notebooks
 
@@ -81,6 +77,9 @@ When you export a notebook, panels render as JSON code blocks, like this:
 ]
 ```
 
+You can also access all of these options inside a notebook in the toolbar:
+<!--TODO: SCREENSHOT HERE -->
+
 ## Add notebooks
 
 To create a notebook from the **Notebooks** page, follow these steps:
@@ -96,9 +95,16 @@ To create a notebook from the **Notebooks** page, follow these steps:
    - **Code**: Adds a code block. Select a language, like Go, SQL, or plain text.
    - **Visualization**: Opens the panel query editor with a graph panel below it.
 
+   You can also type a forward slash (`/`) to open a list of block types from which to select.
+
 1. Add as many blocks as you need.
 
-    You can also duplicate or delete blocks.
+    Each new block is automatically added after the previous one. To add a block above a previous one, click the plus icon at the top-left corner of the block:
+    <!-- TODO: SCREENSHOT HERE --> 
+
+1. Reorder, duplicate, and delete blocks as needed:
+
+   <!--TODO: SCREENTHOS HERE -->
 
 1. In the toolbar, take the following actions, as needed:
 
@@ -106,11 +112,11 @@ To create a notebook from the **Notebooks** page, follow these steps:
    - Change the time range of the notebook.
    - Change the refresh rate of the notebook.
 
-1. When you've finished making changes, click **View** to leave edit mode.
+1. When you've finished making changes, click **View** in the toolbar to leave edit mode.
+
+To edit the notebook, click **Edit** in the toolbar again.
 
 You don't need to save a notebook because it auto-saves throughout the creation process.
-
-After you start adding to a notebook, you can access options to share, export, or delete it in the toolbar.
 
 ## Create notebooks from Grafana Assistant Workspace
 
@@ -124,6 +130,10 @@ When the canvas is worth keeping, you can direct Assistant to create a notebook 
 ![Canvas with the option to create a notebook](./screenshot-create-notebook-v13.3.png)
 
 ## Notebooks and incidents
+
+Many investigations never become incidents, but the pre-escalation work often includes important signals, and notebooks let you keep that.
+Additionally, they provide context you can return to the next time something similar happens.
+Each investigation in a notebook makes the next one faster.
 
 You can attach a notebook to an existing incident or declare an incident based on your notebook.
 
@@ -166,4 +176,4 @@ To edit a notebook, follow these steps:
 
 1. When you've finished updating the notebook, click **View** to leave edit mode.
 
-You don't need to save a notebook because it auto-saves throughout the creation process.
+You don't need to save a notebook because it auto-saves throughout the editing process.
