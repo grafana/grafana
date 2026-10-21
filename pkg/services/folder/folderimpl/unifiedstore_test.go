@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"testing"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -893,7 +895,8 @@ func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents [
 			},
 			Rows: rows,
 		},
-		TotalHits: int64(len(rows)),
+		TotalHits:      int64(len(rows)),
+		TotalHitsExact: true,
 	}, nil).Once()
 }
 
@@ -1118,7 +1121,8 @@ func TestSearchChildren(t *testing.T) {
 					},
 					Rows: rows,
 				},
-				TotalHits: int64(len(rows)),
+				TotalHits:      int64(n),
+				TotalHitsExact: true,
 			}
 		}
 		pageMatcher := func(offset int64) any {
@@ -1674,6 +1678,251 @@ func searchRow(uid, title, parentUID string) *resourcepb.ResourceTableRow {
 	}
 }
 
+type folderIndexSearchClient struct {
+	client.K8sHandler
+	index            resource.ResourceIndex
+	access           *folderSearchAccessClient
+	ignoreExactTotal bool
+	calls            int
+	firstPageRows    int
+	firstTotalExact  bool
+}
+
+func (c *folderIndexSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	c.calls++
+	req.Options.Key = &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
+	response, err := c.index.Search(ctx, c.access, req, nil, nil)
+	if err == nil && response != nil {
+		if c.calls == 1 {
+			c.firstPageRows, c.firstTotalExact = len(response.Rows), response.TotalHitsExact
+		}
+		if c.ignoreExactTotal {
+			// Reproduce the previous pagination for the benchmark comparison.
+			response.TotalHitsExact = false
+		}
+	}
+	return response, err
+}
+
+type folderSearchAccessClient struct {
+	claims.AccessClient
+	allowedFolders map[string]bool
+	checked        int
+}
+
+func (c *folderSearchAccessClient) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	c.checked += len(req.Checks)
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		results[check.CorrelationID] = claims.BatchCheckResult{Allowed: c.allowedFolders == nil || c.allowedFolders[check.Folder]}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
+	t.Helper()
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        100,
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(t.Context(), resource.NamespacedResource{
+		Namespace: "default", Group: "folder.grafana.app", Resource: "folders",
+	}, int64(count), "test", func(idx resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, count)
+		for i := range items {
+			name := fmt.Sprintf("folder-%05d", i)
+			parent := "allowed"
+			if i%2 == 1 {
+				parent = "denied"
+			}
+			items[i] = &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: name,
+					},
+					Name: name, Title: name, Folder: parent, RV: 1,
+				},
+			}
+		}
+		return int64(count), idx.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 1})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	cli := &folderIndexSearchClient{index: index, access: &folderSearchAccessClient{AccessClient: claims.FixedAccessClient(true)}}
+	return &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}, cli
+}
+
+func TestFolderSearchPostRankAuthz(t *testing.T) {
+	for _, children := range []bool{false, true} {
+		for _, tc := range []struct {
+			name           string
+			count          int
+			allowedFolders map[string]bool
+			cfg            search.PostRankAuthzConfig
+			want           int
+		}{
+			{name: "all folders", count: 1771, want: 1771},
+			{name: "restricted caller", count: 1771, allowedFolders: map[string]bool{"allowed": true}, want: 886},
+			{name: "no readable folders", count: 1771, allowedFolders: map[string]bool{}, want: 0},
+			{name: "candidate budget", count: 21, allowedFolders: map[string]bool{"allowed": true},
+				cfg: search.PostRankAuthzConfig{MaxWindow: 5, MaxCandidates: 5}, want: 11},
+		} {
+			t.Run(fmt.Sprintf("%s/children=%t", tc.name, children), func(t *testing.T) {
+				store, cli := newFolderIndexSearchStore(t, tc.count, tc.cfg)
+				cli.access.allowedFolders = tc.allowedFolders
+				ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+
+				var hits []*folder.FolderReference
+				var err error
+				if children {
+					hits, err = store.searchChildren(ctx, 1, []string{"allowed", "denied"})
+				} else {
+					hits, err = store.searchAllFolders(ctx, 1)
+				}
+
+				require.NoError(t, err)
+				require.Len(t, hits, tc.want)
+				for i, hit := range hits {
+					n := i
+					if tc.allowedFolders != nil {
+						n *= 2
+					}
+					require.Equal(t, fmt.Sprintf("folder-%05d", n), hit.UID)
+				}
+				if tc.cfg.MaxCandidates > 0 {
+					require.Greater(t, cli.calls, 1)
+					require.Positive(t, cli.firstPageRows)
+					require.Less(t, cli.firstPageRows, searchPageSize)
+					require.False(t, cli.firstTotalExact)
+				} else {
+					require.Equal(t, 1, cli.calls)
+					require.True(t, cli.firstTotalExact)
+					require.Equal(t, tc.count, cli.access.checked)
+				}
+			})
+		}
+	}
+}
+
+func BenchmarkSearchAllFolders(b *testing.B) {
+	for _, restricted := range []bool{false, true} {
+		for _, ignoreExactTotal := range []bool{true, false} {
+			b.Run(fmt.Sprintf("restricted=%t/ignoreExactTotal=%t", restricted, ignoreExactTotal), func(b *testing.B) {
+				store, cli := newFolderIndexSearchStore(b, 1771, search.PostRankAuthzConfig{})
+				cli.ignoreExactTotal = ignoreExactTotal
+				want := 1771
+				if restricted {
+					cli.access.allowedFolders = map[string]bool{"allowed": true}
+					want = 886
+				}
+				ctx := claims.WithAuthInfo(b.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+				b.ReportAllocs()
+				for b.Loop() {
+					hits, err := store.searchAllFolders(ctx, 1)
+					if err != nil {
+						b.Fatal(err)
+					}
+					if len(hits) != want {
+						b.Fatalf("got %d folders, want %d", len(hits), want)
+					}
+				}
+				b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
+				b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+			})
+		}
+	}
+}
+
+func TestFolderSearchPagination(t *testing.T) {
+	type page struct {
+		count int
+		total int64
+		exact bool
+	}
+	for _, tc := range []struct {
+		name  string
+		pages []page
+	}{
+		{name: "empty", pages: []page{{}}},
+		{name: "exact page boundary", pages: []page{{count: searchPageSize, total: searchPageSize, exact: true}}},
+		{name: "multiple pages", pages: []page{
+			{count: searchPageSize, total: searchPageSize + 1, exact: true},
+			{count: 1, total: searchPageSize + 1, exact: true},
+		}},
+		{name: "short page with approximate total", pages: []page{
+			{count: 1, total: 2},
+			{count: 1, total: 2, exact: true},
+		}},
+		{name: "approximate total already reached", pages: []page{
+			{count: 1, total: 1},
+			{count: 1, total: 2, exact: true},
+		}},
+		{name: "server without exactness", pages: []page{{count: 1, total: 1}, {}}},
+		{name: "total grows between pages", pages: []page{
+			{count: 1, total: 2, exact: true},
+			{count: 2, total: 3, exact: true},
+		}},
+		{name: "total shrinks between pages", pages: []page{
+			{count: 1, total: 3, exact: true},
+			{count: 1, total: 2, exact: true},
+		}},
+		{name: "empty page with remaining approximate hits", pages: []page{{total: 10}}},
+	} {
+		for _, children := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/children=%t", tc.name, children), func(t *testing.T) {
+				cli := new(client.MockK8sHandler)
+				var want []string
+				offset := int64(0)
+				for _, p := range tc.pages {
+					results := make([]folderResult, p.count)
+					for i := range results {
+						uid := fmt.Sprintf("folder-%05d", len(want))
+						results[i] = folderResult{uid: uid}
+						want = append(want, uid)
+					}
+					response := buildFolderSearchResponse(results...)
+					response.TotalHits, response.TotalHitsExact = p.total, p.exact
+					options := &resourcepb.ListOptions{}
+					if children {
+						options.Fields = []*resourcepb.Requirement{{
+							Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.In), Values: []string{"root"},
+						}}
+					}
+					cli.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+						Options:      options,
+						Limit:        searchPageSize,
+						Offset:       offset,
+						ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+					}).Return(response, nil).Once()
+					offset += int64(p.count)
+				}
+				store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+
+				var hits []*folder.FolderReference
+				var err error
+				if children {
+					hits, err = store.searchChildren(t.Context(), 1, []string{"root"})
+				} else {
+					hits, err = store.searchAllFolders(t.Context(), 1)
+				}
+
+				require.NoError(t, err)
+				require.Len(t, hits, len(want))
+				for i, hit := range hits {
+					require.Equal(t, want[i], hit.UID)
+				}
+				cli.AssertExpectations(t)
+			})
+		}
+	}
+}
+
 func TestGetFoldersMetadata(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersMetadata")
 	orgID := int64(1)
@@ -1703,13 +1952,8 @@ func TestGetFoldersMetadata(t *testing.T) {
 				searchRow("c", "C", "b"),
 			},
 		},
-		TotalHits: 3,
-	}
-
-	emptyResponse := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: searchResponse.Results.Columns,
-		},
+		TotalHits:      3,
+		TotalHitsExact: true,
 	}
 
 	expectSearchAll := func(mockCli *client.MockK8sHandler) {
@@ -1719,14 +1963,6 @@ func TestGetFoldersMetadata(t *testing.T) {
 			Limit:        searchPageSize,
 			Offset:       0,
 		}).Return(searchResponse, nil).Once()
-		// searchAllFolders pages until an empty page, so it issues a trailing
-		// Search past the last hit (offset = number of hits returned above).
-		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Options:      &resourcepb.ListOptions{},
-			Limit:        searchPageSize,
-			Offset:       int64(len(searchResponse.Results.Rows)),
-		}).Return(emptyResponse, nil).Once()
 	}
 
 	t.Run("builds full paths from the search index without reading full objects", func(t *testing.T) {
