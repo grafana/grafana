@@ -34,3 +34,16 @@ export const setMockStarredFolders = (uids: string[]) => {
   mockStarredFoldersMap.clear();
   uids.forEach((uid) => mockStarredFoldersMap.set(uid, true));
 };
+
+// No pages are starred by default
+export const setupMockStarredPages = () => {
+  mockStarredPagesMap.clear();
+};
+
+export const mockStarredPagesMap = new Map<string, boolean>();
+
+/** Seed the starred Assistant pages for a test (replaces the current set). The stars endpoints read from it. */
+export const setMockStarredPages = (names: string[]) => {
+  mockStarredPagesMap.clear();
+  names.forEach((name) => mockStarredPagesMap.set(name, true));
+};

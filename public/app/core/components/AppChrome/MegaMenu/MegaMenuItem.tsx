@@ -137,7 +137,7 @@ export function MegaMenuItem({
   }
 
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
-  // as two identical links to screen readers. Only the two icons starredNavEntry produces are
+  // as two identical links to screen readers. Only the icons starredNavEntry produces are
   // mapped; anything else stays untitled (and thus aria-hidden), so a future kind never gets a
   // wrong label. Level-0 section icons must stay aria-hidden or they double-announce the label.
   let starredLeafIconTitle: string | undefined;
@@ -146,6 +146,8 @@ export function MegaMenuItem({
       starredLeafIconTitle = t('navigation.megamenu-item.starred-folder-icon', 'Folder');
     } else if (link.icon === 'apps') {
       starredLeafIconTitle = t('navigation.megamenu-item.starred-dashboard-icon', 'Dashboard');
+    } else if (link.icon === 'pages') {
+      starredLeafIconTitle = t('navigation.megamenu-item.starred-page-icon', 'Page');
     }
   }
 

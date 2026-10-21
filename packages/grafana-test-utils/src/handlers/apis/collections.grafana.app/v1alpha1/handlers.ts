@@ -1,11 +1,12 @@
 import { HttpResponse, http } from 'msw';
 
-import { mockStarredDashboardsMap, mockStarredFoldersMap } from '../../../../fixtures/starred';
+import { mockStarredDashboardsMap, mockStarredFoldersMap, mockStarredPagesMap } from '../../../../fixtures/starred';
 
 // Maps a stars resource (keyed by `${group}/${kind}`) to the in-memory set backing it
 const STARRED_RESOURCE_MAPS = {
   'dashboard.grafana.app/Dashboard': mockStarredDashboardsMap,
   'folder.grafana.app/Folder': mockStarredFoldersMap,
+  'assistant.ext.grafana.app/Page': mockStarredPagesMap,
 };
 
 const getStarsMapFor = (group: string, kind: string) =>

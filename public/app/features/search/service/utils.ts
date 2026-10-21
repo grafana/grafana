@@ -87,6 +87,10 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
     return 'users-alt';
   }
 
+  if (kind === 'page') {
+    return 'pages';
+  }
+
   return 'question-circle';
 }
 

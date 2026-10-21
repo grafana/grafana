@@ -3,6 +3,7 @@ import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { starResourceForKind } from 'app/features/stars/utils';
 
 import { type Dashboard } from './DashList';
 import { ListRow } from './ListRow';
@@ -34,15 +35,17 @@ export function DashListItem({
   const css = useStyles2(getStyles);
   const isCompact = density === 'compact';
 
-  const starButton = (
+  // Rows may be dashboards, folders or pages; the star has to target the row's own kind
+  const resource = starResourceForKind(dashboard.kind);
+  const starButton = resource ? (
     <StarToolbarButton
       title={dashboard.name}
-      group="dashboard.grafana.app"
-      kind="Dashboard"
+      group={resource.group}
+      kind={resource.kind}
       id={dashboard.uid}
       onStarChange={onStarChange}
     />
-  );
+  ) : null;
 
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {

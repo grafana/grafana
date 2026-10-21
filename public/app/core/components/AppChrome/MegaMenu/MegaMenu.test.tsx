@@ -4,6 +4,7 @@ import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { getPagesSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -12,6 +13,7 @@ import {
   mockUserPreferences,
   setMockStarredDashboards,
   setMockStarredFolders,
+  setMockStarredPages,
   setMockUserPreferences,
   setTestFlags,
 } from '@grafana/test-utils/unstable';
@@ -613,5 +615,28 @@ describe('MegaMenu', () => {
       expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
       expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
     });
+  });
+
+  it('renders a starred page with the pages icon titled for screen readers, linking to the page', async () => {
+    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+    setMockStarredDashboards([]);
+    setMockStarredPages([pageUuid]);
+    server.use(getPagesSearchHandler([{ name: pageUuid, title: 'Capacity review', folder: folderB.item.uid }]));
+    setupSearcher([]);
+
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+    const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    await waitFor(() => {
+      expect(starredSection().getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+        'href',
+        `/a/grafana-assistant-app/pages/${pageUuid}`
+      );
+    });
+
+    // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
+    expect(starredSection().getByTitle('Page')).toBe(starredSection().getByTestId('icon-pages'));
   });
 });

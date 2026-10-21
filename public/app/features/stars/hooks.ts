@@ -5,6 +5,7 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import { ASSISTANT_PAGES_API_GROUP } from 'app/core/constants';
 import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
@@ -12,6 +13,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { getIconForKind } from 'app/features/search/service/utils';
 import { dispatch } from 'app/store/store';
 
+import { searchStarredPages, starredPageURL } from './pages';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 type StarItemArgs = {
@@ -20,8 +22,9 @@ type StarItemArgs = {
   title: string;
 };
 
-// Positive sortWeight pushes starred folders below dashboards in the nav; dashboards carry none
+// Positive sortWeight pushes starred folders below dashboards in the nav, and pages below folders; dashboards carry none
 const STARRED_FOLDER_SORT_WEIGHT = 1;
+const STARRED_PAGE_SORT_WEIGHT = 2;
 
 /** Nav Starred entry (url + icon + sort rank) for a starred item, or undefined when this kind isn't shown in the nav. */
 function starredNavEntry(
@@ -39,6 +42,9 @@ function starredNavEntry(
   }
   if (group === FOLDER_API_GROUP && kind === 'Folder' && foldersEnabled) {
     return { url: getFolderURL(id), icon: getIconForKind('folder'), sortWeight: STARRED_FOLDER_SORT_WEIGHT };
+  }
+  if (group === ASSISTANT_PAGES_API_GROUP && kind === 'Page') {
+    return { url: starredPageURL(id), icon: 'pages', sortWeight: STARRED_PAGE_SORT_WEIGHT };
   }
   return undefined;
 }
@@ -113,7 +119,7 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
 const STARRED_NAV_CAP = 50;
 
 /**
- * Sync starred dashboards into the nav tree on mount and when the star set changes.
+ * Sync starred dashboards, folders and pages into the nav tree on mount and when the star set changes.
  * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
  */
 export const useSyncStarredItemsInNav = () => {
@@ -128,12 +134,17 @@ export const useSyncStarredItemsInNav = () => {
     isLoading: folderLoadingRaw,
     isError: folderError,
   } = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
+  const {
+    data: pageNames,
+    isLoading: pagesLoading,
+    isError: pagesError,
+  } = useStarredItems(ASSISTANT_PAGES_API_GROUP, 'Page');
 
   // A skipped useStarredItems reports isLoading:true indefinitely, so only honor
   // the folder query's loading/error when the feature is actually on.
   const folderLoading = foldersEnabled ? folderLoadingRaw : false;
-  const isLoading = dashboardsLoading || folderLoading;
-  const isError = dashboardsError || (foldersEnabled && folderError);
+  const isLoading = dashboardsLoading || folderLoading || pagesLoading;
+  const isError = dashboardsError || (foldersEnabled && folderError) || pagesError;
 
   // Initialized from the stars query so a remount with a warm RTK cache doesn't
   // flash a loading state — the nav tree is already correct from the prior sync
@@ -146,16 +157,18 @@ export const useSyncStarredItemsInNav = () => {
     () => (foldersEnabled ? folderUids && [...folderUids].sort().join(',') : ''),
     [folderUids, foldersEnabled]
   );
+  const pageKey = useMemo(() => pageNames && [...pageNames].sort().join(','), [pageNames]);
 
   useEffect(() => {
-    if (isLoading || dashboardKey === undefined || folderKey === undefined) {
+    if (isLoading || dashboardKey === undefined || folderKey === undefined || pageKey === undefined) {
       return;
     }
 
     const dashboardNames = dashboardKey === '' ? [] : dashboardKey.split(',');
     const folderNames = folderKey === '' ? [] : folderKey.split(',');
-    // Dedupe so a uid starred as both kinds can't occupy two cap slots or render twice
-    const names = [...new Set([...dashboardNames, ...folderNames])].sort().slice(0, STARRED_NAV_CAP);
+    const pageList = pageKey === '' ? [] : pageKey.split(',');
+    // Dedupe so a uid starred as several kinds can't occupy two cap slots or render twice
+    const names = [...new Set([...dashboardNames, ...folderNames, ...pageList])].sort().slice(0, STARRED_NAV_CAP);
 
     if (names.length === 0) {
       dispatch(setStarredItems({ uids: [], items: [] }));
@@ -171,16 +184,32 @@ export const useSyncStarredItemsInNav = () => {
       dashboard: new Set(dashboardNames),
       folder: new Set(folderNames),
     };
+    const starredPages = new Set(pageList);
+    const searchNames = names.filter(
+      (name) => starredUidsByKind.dashboard?.has(name) || starredUidsByKind.folder?.has(name)
+    );
+    // Pages live in the Assistant's own index, so they resolve through their per-kind endpoint
+    const pageSearchNames = names.filter((name) => starredPages.has(name));
+    // Icons only when more than one kind can be present — that's when kinds need distinguishing
+    const showKindIcons = foldersEnabled || pageSearchNames.length > 0;
     let cancelled = false;
 
-    getGrafanaSearcher()
-      .search({ name: names, kind: kinds })
-      .then((response) => {
+    Promise.all([
+      searchNames.length ? getGrafanaSearcher().search({ name: searchNames, kind: kinds }) : Promise.resolve(undefined),
+      pageSearchNames.length
+        ? searchStarredPages(pageSearchNames).catch((err) => {
+            // The Pages API is plugin-served and may be absent; dashboards must still render
+            console.error('Failed to resolve starred pages', err);
+            return [];
+          })
+        : Promise.resolve([]),
+    ])
+      .then(([response, pages]) => {
         if (cancelled) {
           return;
         }
         const items: StarredNavItem[] = [];
-        for (let i = 0; i < response.view.length; i++) {
+        for (let i = 0; response && i < response.view.length; i++) {
           const row = response.view.get(i);
           if (!starredUidsByKind[row.kind]?.has(row.uid)) {
             continue;
@@ -189,8 +218,17 @@ export const useSyncStarredItemsInNav = () => {
             id: row.uid,
             title: row.name,
             url: row.url,
-            icon: foldersEnabled ? getIconForKind(row.kind) : undefined,
+            icon: showKindIcons ? getIconForKind(row.kind) : undefined,
             sortWeight: row.kind === 'folder' ? STARRED_FOLDER_SORT_WEIGHT : undefined,
+          });
+        }
+        for (const page of pages) {
+          items.push({
+            id: page.name,
+            title: page.title,
+            url: starredPageURL(page.name),
+            icon: 'pages',
+            sortWeight: STARRED_PAGE_SORT_WEIGHT,
           });
         }
         dispatch(setStarredItems({ uids: names, items }));
@@ -207,7 +245,7 @@ export const useSyncStarredItemsInNav = () => {
     return () => {
       cancelled = true;
     };
-  }, [dashboardKey, folderKey, isLoading, foldersEnabled]);
+  }, [dashboardKey, folderKey, pageKey, isLoading, foldersEnabled]);
 
   return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };

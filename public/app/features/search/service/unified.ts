@@ -18,8 +18,10 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { ASSISTANT_PAGES_API_GROUP } from 'app/core/constants';
 import kbn from 'app/core/utils/kbn';
 import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { searchStarredPages, starredPageURL } from 'app/features/stars/pages';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -39,7 +41,7 @@ import { appendFrame, replaceCurrentFolderQuery } from './utils';
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
-  resource: string; // dashboards | folders
+  resource: string; // dashboards | folders | pages
   name: string;
   title: string;
   description?: string;
@@ -67,6 +69,8 @@ export type SearchAPIResponse = {
 };
 
 const folderViewSort = 'name_sort';
+// Shared so each starred() call doesn't construct a collator just to order a handful of page rows
+const pageTitleCollator = new Intl.Collator();
 
 export class UnifiedSearcher implements GrafanaSearcher {
   private locationInfo = loadLocationInfo();
@@ -82,7 +86,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // get the starred items — dashboards, plus folders when starred folders are enabled
+    // get the starred items — dashboards, folders when starred folders are enabled, and Assistant pages
     const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
         fieldSelector: userStarsFieldSelector(),
@@ -92,16 +96,62 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (starredFoldersEnabled()) {
       starsIds = [...new Set([...starsIds, ...findStarredNames(result.data, FOLDER_API_GROUP, 'Folder')])];
     }
+    const pageNames = findStarredNames(result.data, ASSISTANT_PAGES_API_GROUP, 'Page');
+    const pageHits = await this.starredPageHits(pageNames, query);
 
     if (starsIds.length) {
-      return this.doSearchQuery({
-        ...query,
-        name: starsIds,
-        query: query.query ?? '*',
-      });
+      return this.doSearchQuery({ ...query, name: starsIds, query: query.query ?? '*' }, pageHits);
+    }
+    if (pageHits.length) {
+      return this.toQueryResponse({ hits: [], totalHits: 0 }, query.sort ?? '', pageHits);
     }
     // Nothing is starred
     return noDataResponse();
+  }
+
+  /**
+   * Starred Pages as search hits, resolved through the Assistant's per-kind search endpoint since
+   * Pages are not in the dashboard index. Filters that only dashboards can satisfy yield none.
+   * Sorted by title here: the rows trail the server-sorted dashboard rows, so they can only be
+   * ordered among themselves.
+   */
+  private async starredPageHits(names: string[], query: SearchQuery): Promise<SearchHit[]> {
+    const dashboardOnlyFilter =
+      query.panel_type ||
+      query.ds_type ||
+      query.ds_uid ||
+      query.createdBy ||
+      query.ownerReference?.length ||
+      query.deleted;
+    // Pages never live at the root, so a root-folder filter cannot match one
+    if (names.length === 0 || dashboardOnlyFilter || query.location === 'general') {
+      return [];
+    }
+    try {
+      const pages = await searchStarredPages(names, {
+        text: query.query,
+        tags: query.tags,
+        folder: query.location || undefined,
+      });
+      const descending = toSortParam(query.sort ?? '') === '-title';
+      return pages
+        .sort((a, b) => (descending ? -1 : 1) * pageTitleCollator.compare(a.title, b.title))
+        .map(({ name, title, description, folder, tags }) => ({
+          resource: 'pages',
+          name,
+          title,
+          description,
+          folder,
+          tags,
+          field: {},
+          // Recomputed from the resource and name when the hits become rows
+          url: '',
+        }));
+    } catch (err) {
+      // A dead Pages API must not blank the Starred view; dashboards still render
+      console.error('Failed to load starred pages', err);
+      return [];
+    }
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -140,7 +190,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return Promise.resolve(opts);
   }
 
-  async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
+  async doSearchQuery(query: SearchQuery, trailingHits: SearchHit[] = []): Promise<QueryResponse> {
     const uri = await this.newRequest(query);
 
     let rsp: SearchAPIResponse;
@@ -154,7 +204,34 @@ export class UnifiedSearcher implements GrafanaSearcher {
       rsp = await this.fetchResponse(uri);
     }
 
-    const first = toDashboardResults(rsp, query.sort ?? '');
+    return this.toQueryResponse(rsp, query.sort ?? '', trailingHits, (offset) =>
+      this.fetchResponse(`${uri}&offset=${offset}`)
+    );
+  }
+
+  /**
+   * Builds the paged response for a search result. `trailingHits` come from another index and cannot
+   * be server-sorted with the paged rows, so they are appended once, after the last server page;
+   * `fetchPage` loads the server page starting at `offset`.
+   */
+  private async toQueryResponse(
+    rsp: SearchAPIResponse,
+    sort: string,
+    trailingHits: SearchHit[],
+    fetchPage?: (offset: number) => Promise<SearchAPIResponse>
+  ): Promise<QueryResponse> {
+    // Rows the server pages through; the trailing rows count towards the total but are never fetched
+    const pagedCount = rsp.totalHits;
+    let trailing = trailingHits;
+    const totalHits = pagedCount + trailing.length;
+    if (rsp.hits.length >= pagedCount && trailing.length) {
+      // The first page already holds every server row, so the trailing rows belong in it. Merging before
+      // the frame is built matters: DataFrameView only knows fields present at construction.
+      rsp = { ...rsp, hits: [...rsp.hits, ...trailing] };
+      trailing = [];
+    }
+
+    const first = toDashboardResults({ ...rsp, totalHits }, sort);
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -193,12 +270,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const getNextPage = async () => {
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
-        if (offset >= meta.count) {
+        if (offset >= pagedCount) {
+          // Past the last server page: the trailing rows go on the end, once
+          if (trailing.length) {
+            appendFrame(view.dataFrame, toDashboardResults({ hits: trailing, totalHits: trailing.length }, sort));
+            trailing = [];
+          }
           return;
         }
-        const nextPageUrl = `${uri}&offset=${offset}`;
-        const resp = await this.fetchResponse(nextPageUrl);
-        const frame = toDashboardResults(resp, query.sort ?? '');
+        if (!fetchPage) {
+          return;
+        }
+        const resp = await fetchPage(offset);
+        const frame = toDashboardResults(resp, sort);
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -516,6 +600,9 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 }
 
 export function toURL(resource: string, name: string, title: string): string {
+  if (resource === 'pages') {
+    return starredPageURL(name);
+  }
   if (resource === 'folders') {
     return `${config.appSubUrl}/dashboards/f/${name}`;
   }

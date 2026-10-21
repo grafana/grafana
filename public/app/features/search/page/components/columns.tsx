@@ -466,6 +466,11 @@ function makeTypeColumn(
             txt = t('search.results-table.type-folder', 'Folder');
             break;
 
+          case 'page':
+            icon = 'pages';
+            txt = t('search.results-table.type-page', 'Page');
+            break;
+
           case 'panel':
             icon = `${PluginIconName.panel}`;
             const type = typeField.values[i];

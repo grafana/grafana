@@ -182,6 +182,22 @@ describe('enrichWithInteractionTracking', () => {
     );
   });
 
+  it('reports a starred page click with itemKind page', () => {
+    const item: NavModelItem = {
+      text: 'Page 1',
+      id: 'starred/p1',
+      url: '/a/grafana-assistant-app/pages/p1',
+      parentItem: { text: 'Starred', id: 'starred' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'page' })
+    );
+  });
+
   it('reports non-starred items as not starred and without a kind', () => {
     const item: NavModelItem = {
       text: 'Playlists',

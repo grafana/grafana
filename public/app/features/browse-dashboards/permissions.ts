@@ -34,8 +34,13 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
   };
 }
 
+/** Whether the user may bulk move/delete items of this kind; the `*` select-all sentinel counts as dashboard-like. */
 export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
   const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  // Pages are managed by the Assistant, so the browse view never moves or deletes them
+  if (itemKind === 'page') {
+    return false;
+  }
   return itemKind === 'folder'
     ? Boolean(canEditFolders || canDeleteFolders)
     : Boolean(canEditDashboards || canDeleteDashboards);
