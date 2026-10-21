@@ -81,6 +81,9 @@ const defaultProps = {
       .mockResolvedValue(createMockSubscriptions().map((sub) => ({ text: sub.name, value: sub.id }))),
     getLocations: jest.fn().mockResolvedValue(createMockLocations()),
     getMetricNamespaces: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
+    azureResourceGraphDatasource: {
+      getResourceTypes: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
+    },
   }),
   onCancel: noop,
   onApply: noop,
@@ -99,6 +102,15 @@ describe('AzureMonitor ResourcePicker', () => {
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     config.featureToggles.azureResourcePickerUpdates = false;
+  });
+
+  it('explains that metrics are checked after selecting a resource', async () => {
+    render(<ResourcePicker {...defaultProps} queryType="metrics" />);
+
+    expect(await screen.findByLabelText('Primary Subscription')).toBeInTheDocument();
+    expect(
+      screen.getByText('Some resources do not have metrics. Select a resource to load its available metrics.')
+    ).toBeInTheDocument();
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resources={[noResourceURI]} />);
@@ -445,13 +457,59 @@ describe('AzureMonitor ResourcePicker', () => {
       render(<ResourcePicker {...defaultProps} queryType="metrics" />);
 
       await waitFor(() => {
-        expect(defaultProps.datasource.getMetricNamespaces).toHaveBeenCalled();
+        expect(defaultProps.datasource.azureResourceGraphDatasource.getResourceTypes).toHaveBeenCalledWith();
       });
 
       const resourceTypeFilter = await screen.findByTestId(
         selectors.components.queryEditor.resourcePicker.filters.type.input
       );
       expect(resourceTypeFilter).toBeInTheDocument();
+    });
+
+    it('lets users filter by an unlisted type without sampling the first subscription', async () => {
+      const user = userEvent.setup();
+      const getResourceTypes = jest
+        .fn()
+        .mockResolvedValue([{ text: 'contoso.monitor/widgets', value: 'contoso.monitor/widgets' }]);
+      const datasource = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([
+          { text: 'First subscription', value: 'sub1' },
+          { text: 'Second subscription', value: 'sub2' },
+        ]),
+        getLocations: jest.fn().mockResolvedValue(createMockLocations()),
+        getMetricNamespaces: jest.fn(),
+        azureResourceGraphDatasource: { getResourceTypes },
+      });
+      const fetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+      render(<ResourcePicker {...defaultProps} datasource={datasource} queryType="metrics" />);
+
+      const typeFilter = await screen.findByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      await user.click(typeFilter);
+      await user.type(typeFilter, 'contoso.monitor/widgets{ArrowDown}{Enter}');
+
+      await waitFor(() => {
+        expect(fetchInitialRows).toHaveBeenCalledWith('metrics', undefined, {
+          subscriptions: [],
+          types: ['contoso.monitor/widgets'],
+          locations: [],
+        });
+      });
+      expect(getResourceTypes).toHaveBeenCalledWith();
+      expect(datasource.getMetricNamespaces).not.toHaveBeenCalled();
+    });
+
+    it('shows a resource-type discovery error instead of silently empty filter options', async () => {
+      const datasource = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'First subscription', value: 'sub1' }]),
+        azureResourceGraphDatasource: {
+          getResourceTypes: jest.fn().mockRejectedValue(new Error('Resource Graph access denied')),
+        },
+      });
+      render(<ResourcePicker {...defaultProps} datasource={datasource} queryType="metrics" />);
+
+      expect(await screen.findByText('Resource Graph access denied')).toBeInTheDocument();
+      expect(screen.getByLabelText('Primary Subscription')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
     });
 
     it('should not render resource type filter for logs query type', async () => {
