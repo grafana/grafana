@@ -1,4 +1,4 @@
-import { LoadingState, getDefaultTimeRange } from '@grafana/data';
+import { LoadingState, PanelPlugin, getDefaultTimeRange } from '@grafana/data';
 import {
   EmbeddedScene,
   SceneFlexItem,
@@ -10,13 +10,11 @@ import {
 } from '@grafana/scenes';
 
 import {
-  NO_QUERY_GRACE_MS,
   RENDER_READY_FALLBACK_MS,
+  RENDER_SETTLE_MS,
   createRenderCompleteReporter,
   watchRenderReadiness,
 } from './notebookRenderReadiness';
-
-const FRAME_MS = 20;
 
 function buildScene(children: SceneFlexItem[] = []) {
   const controller = new behaviors.SceneQueryController();
@@ -42,50 +40,51 @@ describe('watchRenderReadiness', () => {
     jest.useRealTimers();
   });
 
-  it('is ready one frame after the queries that started have finished', () => {
+  it('is ready once the queries that started have finished and the scene has settled', () => {
     const { scene, controller } = buildScene();
     const onReady = jest.fn();
     watchRenderReadiness(scene, onReady);
 
     const complete = startQuery(controller, scene);
-    jest.advanceTimersByTime(NO_QUERY_GRACE_MS + FRAME_MS);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS * 2);
     expect(onReady).not.toHaveBeenCalled();
 
     complete();
+    jest.advanceTimersByTime(RENDER_SETTLE_MS - 1);
     expect(onReady).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(FRAME_MS);
+    jest.advanceTimersByTime(1);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
-  it('waits for queries that start while others are finishing', () => {
+  it('starts the settle window over when a query starts inside it', () => {
     const { scene, controller } = buildScene();
     const onReady = jest.fn();
     watchRenderReadiness(scene, onReady);
 
-    const completeFirst = startQuery(controller, scene);
-    completeFirst();
+    startQuery(controller, scene)();
+    jest.advanceTimersByTime(RENDER_SETTLE_MS - 1);
     const completeSecond = startQuery(controller, scene);
-    jest.advanceTimersByTime(NO_QUERY_GRACE_MS + FRAME_MS);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS * 2);
     expect(onReady).not.toHaveBeenCalled();
 
     completeSecond();
-    jest.advanceTimersByTime(FRAME_MS);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
-  it('is ready shortly after activation when the notebook has no queries', () => {
+  it('is ready after the settle window when the notebook has no queries', () => {
     const { scene } = buildScene();
     const onReady = jest.fn();
     watchRenderReadiness(scene, onReady);
 
-    jest.advanceTimersByTime(NO_QUERY_GRACE_MS - 1);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS - 1);
     expect(onReady).not.toHaveBeenCalled();
 
-    jest.advanceTimersByTime(1 + FRAME_MS);
+    jest.advanceTimersByTime(1);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps waiting past the grace period for a panel whose query has not reached the controller yet', () => {
+  it('keeps waiting for a panel whose query has not reached the controller yet', () => {
     const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }], runQueriesMode: 'manual' });
     const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
     const { scene, controller } = buildScene([new SceneFlexItem({ body: panel })]);
@@ -93,13 +92,29 @@ describe('watchRenderReadiness', () => {
     const onReady = jest.fn();
     watchRenderReadiness(scene, onReady);
 
-    jest.advanceTimersByTime(NO_QUERY_GRACE_MS + FRAME_MS);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS * 3);
     expect(onReady).not.toHaveBeenCalled();
 
     const complete = startQuery(controller, scene);
     runner.setState({ data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() } });
     complete();
-    jest.advanceTimersByTime(FRAME_MS);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS);
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps waiting for a panel whose plugin has not loaded yet', () => {
+    const panel = new VizPanel({ pluginId: 'timeseries' });
+    const { scene } = buildScene([new SceneFlexItem({ body: panel })]);
+    jest.spyOn(panel, 'isActive', 'get').mockReturnValue(true);
+    jest.spyOn(panel, 'getPlugin').mockReturnValue(undefined);
+    const onReady = jest.fn();
+    watchRenderReadiness(scene, onReady);
+
+    jest.advanceTimersByTime(RENDER_SETTLE_MS * 3);
+    expect(onReady).not.toHaveBeenCalled();
+
+    jest.spyOn(panel, 'getPlugin').mockReturnValue(new PanelPlugin(() => null));
+    jest.advanceTimersByTime(RENDER_SETTLE_MS);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
@@ -122,7 +137,7 @@ describe('watchRenderReadiness', () => {
     watchRenderReadiness(scene, onReady);
 
     startQuery(controller, scene)();
-    jest.advanceTimersByTime(FRAME_MS);
+    jest.advanceTimersByTime(RENDER_SETTLE_MS);
     startQuery(controller, scene)();
     jest.advanceTimersByTime(RENDER_READY_FALLBACK_MS);
 

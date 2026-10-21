@@ -1,12 +1,15 @@
-import { type SceneObject, SceneQueryRunner, sceneGraph } from '@grafana/scenes';
+import { type SceneObject, SceneQueryRunner, VizPanel, sceneGraph } from '@grafana/scenes';
 import { sendRenderComplete } from 'app/features/dashboard/services/sendRenderComplete';
 
 // Below grafana-image-renderer's 30s readiness timeout, so a notebook whose queries never settle
 // still prints, partially, instead of failing the whole export.
 export const RENDER_READY_FALLBACK_MS = 20_000;
 
-// How long to wait for a first query before deciding the notebook has none to wait for.
-export const NO_QUERY_GRACE_MS = 1_000;
+// How long the scene has to stay free of running queries before it counts as rendered. Queries
+// finishing is not the end of the work: plugins load and charts paint afterwards, and a panel that
+// is slow to reach its datasource starts its query late. A query starting inside the window restarts
+// it, the same way a new query cancels the dashboard profiler's tail recording.
+export const RENDER_SETTLE_MS = 1_000;
 
 /**
  * Sends the render-complete message at most once, whichever of success, fallback or failure
@@ -25,64 +28,59 @@ export function createRenderCompleteReporter(): (success: boolean) => void {
 }
 
 /**
- * Calls `onReady` once the scene's queries have run and the panels have had a frame to paint, or
- * after RENDER_READY_FALLBACK_MS if they never settle. Returns a cleanup function.
+ * Calls `onReady` once the scene has had no running queries, and no panel still waiting on its plugin
+ * or first data, for RENDER_SETTLE_MS, or after RENDER_READY_FALLBACK_MS if it never settles. Returns
+ * a cleanup function.
  */
 export function watchRenderReadiness(scene: SceneObject, onReady: () => void): () => void {
   const controller = sceneGraph.getQueryController(scene);
-  let started = (controller?.runningQueriesCount() ?? 0) > 0;
-  let frame: number | undefined;
+  let settleTimer: ReturnType<typeof setTimeout> | undefined;
 
   const ready = () => {
     stop();
     onReady();
   };
 
-  const checkAfterPaint = () => {
-    if (frame !== undefined) {
-      return;
-    }
-    frame = requestAnimationFrame(() => {
-      frame = undefined;
-      if ((controller?.runningQueriesCount() ?? 0) === 0 && !hasQueryRunnerWithoutData(scene)) {
-        ready();
-      }
-    });
+  const isSettled = () => (controller?.runningQueriesCount() ?? 0) === 0 && !hasPanelsStillLoading(scene);
+
+  const scheduleSettle = () => {
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => (isSettled() ? ready() : scheduleSettle()), RENDER_SETTLE_MS);
   };
 
   const sub = controller?.subscribeToState((state) => {
     if (state.isRunning) {
-      started = true;
+      clearTimeout(settleTimer);
     } else {
-      checkAfterPaint();
+      scheduleSettle();
     }
   });
 
-  const graceTimer = setTimeout(() => {
-    if (!started) {
-      checkAfterPaint();
-    }
-  }, NO_QUERY_GRACE_MS);
+  if ((controller?.runningQueriesCount() ?? 0) === 0) {
+    scheduleSettle();
+  }
 
   const fallbackTimer = setTimeout(ready, RENDER_READY_FALLBACK_MS);
 
   function stop() {
     sub?.unsubscribe();
-    clearTimeout(graceTimer);
+    clearTimeout(settleTimer);
     clearTimeout(fallbackTimer);
-    if (frame !== undefined) {
-      cancelAnimationFrame(frame);
-      frame = undefined;
-    }
   }
 
   return stop;
 }
 
-// A runner registers with the query controller only once its datasource has loaded, so a quiet
-// controller alone does not mean every panel has asked for its data yet.
-function hasQueryRunnerWithoutData(scene: SceneObject): boolean {
+// A runner registers with the query controller only once its datasource has loaded, and a panel
+// draws only once its plugin has, so a quiet controller alone does not mean everything has rendered.
+function hasPanelsStillLoading(scene: SceneObject): boolean {
   return sceneGraph
-    .findAllObjects(scene, (obj) => obj instanceof SceneQueryRunner && obj.isActive)
-    .some((runner) => runner instanceof SceneQueryRunner && !runner.state.data);
+    .findAllObjects(scene, (obj) => obj.isActive && (obj instanceof SceneQueryRunner || obj instanceof VizPanel))
+    .some((obj) => {
+      if (obj instanceof SceneQueryRunner) {
+        return !obj.state.data;
+      }
+
+      return obj instanceof VizPanel && !obj.getPlugin() && !obj.state._pluginLoadError;
+    });
 }
