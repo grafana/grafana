@@ -573,7 +573,7 @@ importers:
         specifier: ^1.4.0
         version: 1.4.3
       ol:
-        specifier: ^10.10.0
+        specifier: 10.11.0
         version: 10.11.0
       ol-ext:
         specifier: 4.0.39
@@ -1569,7 +1569,7 @@ importers:
         specifier: ^1.1.12
         version: 1.1.14(marked@16.3.0)
       ol:
-        specifier: ^10.10.0
+        specifier: ^10.11.0
         version: 10.11.0
       papaparse:
         specifier: ^5.5.3
@@ -2587,7 +2587,7 @@ importers:
         specifier: ^0.34.1
         version: 0.34.1
       ol:
-        specifier: ^10.10.0
+        specifier: ^10.11.0
         version: 10.11.0
       prismjs:
         specifier: ^1.30.0
