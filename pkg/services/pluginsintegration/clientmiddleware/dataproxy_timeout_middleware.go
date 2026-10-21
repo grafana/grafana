@@ -32,6 +32,10 @@ var decoupledCorePluginIDs = map[string]bool{
 // [dataproxy] timeout options that differ from the SDK defaults to decoupled core datasource
 // plugins, by setting them in the datasource jsonData that the SDK reads them from.
 // Options already set in a datasource's jsonData take precedence.
+//
+// Deprecated: this only keeps backwards compatibility for datasources that were moved out of
+// core and is not a pattern to follow; it may be removed in the next major version of Grafana.
+// Timeout options for a datasource should be set in its jsonData.
 func NewDataProxyTimeoutMiddleware(configured, sdkDefaults sdkhttpclient.TimeoutOptions) backend.HandlerMiddleware {
 	overrides := timeoutJSONDataOverrides(configured, sdkDefaults)
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
@@ -42,6 +46,9 @@ func NewDataProxyTimeoutMiddleware(configured, sdkDefaults sdkhttpclient.Timeout
 	})
 }
 
+// DataProxyTimeoutMiddleware is the middleware created by NewDataProxyTimeoutMiddleware.
+//
+// Deprecated: see NewDataProxyTimeoutMiddleware.
 type DataProxyTimeoutMiddleware struct {
 	backend.BaseHandler
 	overrides map[string]json.RawMessage

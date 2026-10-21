@@ -223,6 +223,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
+	//nolint:staticcheck // Deprecated, kept for backwards compatibility of datasources moved out of core
 	middlewares = append(middlewares, clientmiddleware.NewDataProxyTimeoutMiddleware(
 		httpclientprovider.TimeoutOptionsFromConfig(cfg),
 		httpclientprovider.SDKDefaultTimeoutOptions(),
