@@ -28,8 +28,7 @@ In addition, a notebook:
 - Removes the need for incident-specific dashboards that contribute to dashboard sprawl.
 - Doesn't require you to declare an incident to be able to generate an investigation artifact, providing a space for pre-escalation work.
 
-![A notebook with a latency investigation](./screenshot-notebook-v13.3.png)
-<!-- TODO: Update screenshot -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-v13.3.png" max-width="750px" alt="A notebook with an investigation into excessive series" >}}
 
 ## When to use notebooks
 
@@ -50,8 +49,7 @@ The **Notebooks** page lists all of the notebooks in your organization, along wi
 - Creation date
 - Date of last update
 
-![Notebooks page](./screenshot-manage-notebooks-v13.3.png)
-<!-- TODO: Update screenshot -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebooks-list-page-v13.3.png" max-width="750px" alt="Notebooks page" >}}
 
 You can search the page by notebook title and filter by tags or by notebooks you authored.
 
@@ -61,6 +59,11 @@ Each notebook row includes an **Edit** button and a menu where you can access th
 - Export by copying the raw Markdown
 - Export by downloading a .md file
 - Delete
+
+You can also access all of these options inside a notebook in the toolbar:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-toolbar-v13.3.png" max-width="600px" alt="The toolbar in a notebook with the actions menu open" >}}
+
 
 When you export a notebook, panels render as JSON code blocks, like this:
 
@@ -76,9 +79,6 @@ When you export a notebook, panels render as JSON code blocks, like this:
   }
 ]
 ```
-
-You can also access all of these options inside a notebook in the toolbar:
-<!--TODO: SCREENSHOT HERE -->
 
 ## Add notebooks
 
@@ -100,11 +100,11 @@ To create a notebook from the **Notebooks** page, follow these steps:
 1. Add as many blocks as you need.
 
     Each new block is automatically added after the previous one. To add a block above a previous one, click the plus icon at the top-left corner of the block:
-    <!-- TODO: SCREENSHOT HERE --> 
+    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-add-block-above-v13.3.png" max-width="600px" alt="Adding a notebook block above the current block" >}}
 
 1. Reorder, duplicate, and delete blocks as needed:
 
-   <!--TODO: SCREENTHOS HERE -->
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-block-actions-v13.3.png" max-width="600px" alt="Notebook block with actions menu open" >}}
 
 1. In the toolbar, take the following actions, as needed:
 
