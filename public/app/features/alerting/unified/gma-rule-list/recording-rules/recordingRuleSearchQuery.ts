@@ -2,13 +2,7 @@ import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/a
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
-import {
-  type BuildSearchQueryOptions,
-  type SearchQueryLeaf,
-  buildHealthLeaves,
-  buildSharedLeaves,
-  toWhere,
-} from '../rule-search/searchQueryLeaves';
+import { type SearchQueryLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
 
 const RECORDING_RULE_FIELDS = [
   'title',
@@ -39,7 +33,7 @@ function buildRecordingOnlyLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   return leaves;
 }
 
-export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, options: BuildSearchQueryOptions = {}) {
+export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, continueToken?: string) {
   const leaves = [
     ...buildSharedLeaves(filter),
     ...buildRecordingOnlyLeaves(filter),
@@ -52,7 +46,7 @@ export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, options:
     where: toWhere(leaves),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: RECORDING_RULE_FIELDS,
-    limit: options.limit ?? DEFAULT_PER_PAGE_PAGINATION,
-    ...(options.continue ? { continue: options.continue } : {}),
+    limit: DEFAULT_PER_PAGE_PAGINATION,
+    ...(continueToken ? { continue: continueToken } : {}),
   } satisfies ListRecordingRuleSearchRulesV0Alpha1RequestBody;
 }

@@ -23,11 +23,6 @@ export interface SearchQueryRegex {
   negate?: boolean;
 }
 
-export interface BuildSearchQueryOptions {
-  limit?: number;
-  continue?: string;
-}
-
 export function buildSharedLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   const leaves: SearchQueryLeaf[] = [];
 

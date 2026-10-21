@@ -18,7 +18,7 @@ const recordingRulesTrashAPI = generatedAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.metadata.continue || undefined,
       },
-      // The list belongs to the current page only.
+      // Results are a view of the current page only: leaving it drops them, and coming back loads the list again.
       keepUnusedDataFor: 0,
       query: ({ pageParam }) => ({
         url: '/recordingrules',
@@ -33,7 +33,7 @@ const { useListDeletedRecordingRulesInfiniteQuery } = recordingRulesTrashAPI;
 
 export function useDeletedRecordingRules(): UseDeletedRulesResult<RecordingRule> {
   const dispatch = useDispatch();
-  const query = useListDeletedRecordingRulesInfiniteQuery(undefined, { refetchOnMountOrArgChange: true });
+  const query = useListDeletedRecordingRulesInfiniteQuery(undefined);
 
   return useDeletedRules(query, () => {
     dispatch(recordingRulesTrashAPI.util.updateQueryData('listDeletedRecordingRules', undefined, keepFirstPage));

@@ -2,13 +2,7 @@ import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-c
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { DEFAULT_POLICY, type RuleSearchFilter, type StateValue } from '../rule-search/ruleSearchFilter';
-import {
-  type BuildSearchQueryOptions,
-  type SearchQueryLeaf,
-  buildHealthLeaves,
-  buildSharedLeaves,
-  toWhere,
-} from '../rule-search/searchQueryLeaves';
+import { type SearchQueryLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
 
 const ALERT_RULE_FIELDS = [
   'title',
@@ -82,7 +76,7 @@ function buildRoutingLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   return leaves;
 }
 
-export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, options: BuildSearchQueryOptions = {}) {
+export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, continueToken?: string) {
   const leaves = [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
 
   return {
@@ -91,7 +85,7 @@ export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, options: Bui
     where: toWhere(leaves),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: ALERT_RULE_FIELDS,
-    limit: options.limit ?? DEFAULT_PER_PAGE_PAGINATION,
-    ...(options.continue ? { continue: options.continue } : {}),
+    limit: DEFAULT_PER_PAGE_PAGINATION,
+    ...(continueToken ? { continue: continueToken } : {}),
   } satisfies ListAlertRuleSearchRulesV0Alpha1RequestBody;
 }

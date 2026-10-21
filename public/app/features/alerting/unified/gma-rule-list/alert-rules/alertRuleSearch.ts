@@ -2,10 +2,9 @@ import {
   type ListAlertRuleSearchRulesV0Alpha1ApiResponse,
   generatedAPI,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { useDispatch } from 'app/types/store';
 
-import { type ResultTotal } from '../rule-row/ResultCount';
+import { type ResultTotal, toResultTotal } from '../rule-row/ResultCount';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
@@ -26,12 +25,12 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
-      // Results are a view of the current page only; leaving it drops them.
+      // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
       query: ({ queryArg, pageParam }) => ({
         url: '/searchAlertRules',
         method: 'POST',
-        body: buildAlertRuleSearchQuery(queryArg, { continue: pageParam, limit: DEFAULT_PER_PAGE_PAGINATION }),
+        body: buildAlertRuleSearchQuery(queryArg, pageParam),
       }),
       transformResponse: (response: ListAlertRuleSearchRulesV0Alpha1ApiResponse): AlertRuleSearchPage => ({
         hits: response.items.map(toAlertRuleSearchHit),
@@ -49,7 +48,7 @@ export function useAlertRuleSearch(
   filter: RuleSearchFilter
 ): PagedResult<AlertRuleSearchHit> & { total?: ResultTotal } {
   const dispatch = useDispatch();
-  const query = useSearchAlertRulesInfiniteQuery(filter, { refetchOnMountOrArgChange: true });
+  const query = useSearchAlertRulesInfiniteQuery(filter);
 
   const paged = usePagedResult(query, getHits, () => {
     dispatch(alertRuleSearchAPI.util.updateQueryData('searchAlertRules', filter, keepFirstPage));
@@ -61,11 +60,4 @@ export function useAlertRuleSearch(
 
 function getHits(page: AlertRuleSearchPage) {
   return page.hits;
-}
-
-function toResultTotal(metadata: { totalHits?: number; totalHitsRelation?: string }): ResultTotal | undefined {
-  if (typeof metadata.totalHits !== 'number') {
-    return undefined;
-  }
-  return { count: metadata.totalHits, isLowerBound: metadata.totalHitsRelation === 'lte' };
 }

@@ -193,10 +193,8 @@ describe('buildAlertRuleSearchQuery', () => {
     });
   });
 
-  it('passes through limit and continue', () => {
-    const query = buildAlertRuleSearchQuery(createEmptyFilter(), { limit: 10, continue: 'opaque-token' });
-    expect(query.limit).toBe(10);
-    expect(query.continue).toBe('opaque-token');
+  it('passes the continuation token through', () => {
+    expect(buildAlertRuleSearchQuery(createEmptyFilter(), 'opaque-token').continue).toBe('opaque-token');
   });
 
   it.each<[string, RuleSearchFilter]>([
@@ -230,6 +228,6 @@ describe('buildAlertRuleSearchQuery', () => {
     ['state and health', { ...createEmptyFilter(), state: 'firing', health: 'error' }],
     ['a state that sends two values', { ...createEmptyFilter(), state: 'normal' }],
   ])('builds a request the per-kind rule search accepts for %s', (_name, filter) => {
-    expect(getRuleSearchQueryViolations(buildAlertRuleSearchQuery(filter, { continue: 'tok' }), 'alert')).toEqual([]);
+    expect(getRuleSearchQueryViolations(buildAlertRuleSearchQuery(filter, 'tok'), 'alert')).toEqual([]);
   });
 });

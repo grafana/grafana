@@ -14,7 +14,7 @@ const alertRulesTrashAPI = generatedAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.metadata.continue || undefined,
       },
-      // The list is a view of the current page only; leaving it drops it.
+      // Results are a view of the current page only: leaving it drops them, and coming back loads the list again.
       keepUnusedDataFor: 0,
       query: ({ pageParam }) => ({
         url: '/alertrules',
@@ -29,7 +29,7 @@ const { useListDeletedAlertRulesInfiniteQuery } = alertRulesTrashAPI;
 
 export function useDeletedAlertRules(): UseDeletedRulesResult<AlertRule> {
   const dispatch = useDispatch();
-  const query = useListDeletedAlertRulesInfiniteQuery(undefined, { refetchOnMountOrArgChange: true });
+  const query = useListDeletedAlertRulesInfiniteQuery(undefined);
 
   return useDeletedRules(query, () => {
     dispatch(alertRulesTrashAPI.util.updateQueryData('listDeletedAlertRules', undefined, keepFirstPage));

@@ -27,7 +27,7 @@ export const folderSearchAPI = folderAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
-      // Results are a view of the current page only; leaving it drops them.
+      // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
       query: ({ queryArg, pageParam }) => ({
         url: '/folders/search',

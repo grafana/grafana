@@ -28,7 +28,7 @@ export function useFolderPages(folderUids: string[]): UseFolderPagesResult {
     setPosition({ filterKey, pageIndex: 0 });
   }
 
-  const query = useSearchRuleFoldersInfiniteQuery({ folderUids }, { refetchOnMountOrArgChange: true });
+  const query = useSearchRuleFoldersInfiniteQuery({ folderUids });
   const pages = query.currentData?.pages;
   const hasLoaded = pages !== undefined;
   // The wanted page can be ahead of the loaded ones while the next page is fetching or has failed;

@@ -2,10 +2,9 @@ import {
   type ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
   generatedAPI,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { useDispatch } from 'app/types/store';
 
-import { type ResultTotal } from '../rule-row/ResultCount';
+import { type ResultTotal, toResultTotal } from '../rule-row/ResultCount';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
@@ -18,7 +17,7 @@ export interface RecordingRuleSearchPage {
   total?: ResultTotal;
 }
 
-/** The generated search is a POST mutation with no tags or paging; this wraps it as a tagged infinite query. */
+/** Infinite query keyed by filter; the generated search is a POST mutation with no tags or page state. */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RuleSearchFilter, string | undefined>({
@@ -26,12 +25,12 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
-      // Results belong to the current page only.
+      // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
       query: ({ queryArg, pageParam }) => ({
         url: '/searchRecordingRules',
         method: 'POST',
-        body: buildRecordingRuleSearchQuery(queryArg, { continue: pageParam, limit: DEFAULT_PER_PAGE_PAGINATION }),
+        body: buildRecordingRuleSearchQuery(queryArg, pageParam),
       }),
       transformResponse: (response: ListRecordingRuleSearchRulesV0Alpha1ApiResponse): RecordingRuleSearchPage => ({
         hits: response.items.map(toRecordingRuleSearchHit),
@@ -49,7 +48,7 @@ export function useRecordingRuleSearch(
   filter: RuleSearchFilter
 ): PagedResult<RecordingRuleSearchHit> & { total?: ResultTotal } {
   const dispatch = useDispatch();
-  const query = useSearchRecordingRulesInfiniteQuery(filter, { refetchOnMountOrArgChange: true });
+  const query = useSearchRecordingRulesInfiniteQuery(filter);
 
   const paged = usePagedResult(query, getHits, () => {
     dispatch(recordingRuleSearchAPI.util.updateQueryData('searchRecordingRules', filter, keepFirstPage));
@@ -61,11 +60,4 @@ export function useRecordingRuleSearch(
 
 function getHits(page: RecordingRuleSearchPage) {
   return page.hits;
-}
-
-function toResultTotal(metadata: { totalHits?: number; totalHitsRelation?: string }): ResultTotal | undefined {
-  if (typeof metadata.totalHits !== 'number') {
-    return undefined;
-  }
-  return { count: metadata.totalHits, isLowerBound: metadata.totalHitsRelation === 'lte' };
 }
