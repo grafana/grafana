@@ -198,6 +198,23 @@ describe('when the header controls are provided from outside the panel', () => {
     hoverSlot.remove();
   });
 
+  it('offers stopping a stream from the hover slot when the panel has no other header items', async () => {
+    const hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+    const onCancelQuery = jest.fn();
+
+    renderWithHeaderControls(
+      { external: true, hoverSlot, hideDragHandle: true },
+      { hoverHeader: true, dragClass: 'drag-handle', loadingState: LoadingState.Streaming, onCancelQuery }
+    );
+
+    await userEvent.click(within(hoverSlot).getByRole('button'));
+
+    expect(onCancelQuery).toHaveBeenCalledTimes(1);
+
+    hoverSlot.remove();
+  });
+
   it('renders no hover header items while there is no hover slot', () => {
     renderWithHeaderControls(
       { external: true, hoverSlot: null },
