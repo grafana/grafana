@@ -4682,6 +4682,7 @@
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
       "load-error-title": "Couldn't load this document",
+      "metadata-label": "Document metadata",
       "panel-label": "Folder documentation",
       "parse-error": "Unable to display this document.",
       "tab-contributing": "Contributing",
