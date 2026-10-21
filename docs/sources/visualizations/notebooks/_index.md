@@ -65,7 +65,6 @@ You can also access all of these options inside a notebook in the toolbar:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-toolbar-v13.3.png" max-width="600px" alt="The toolbar in a notebook with the actions menu open" >}}
 
-
 When you export a notebook, panels render as JSON code blocks, like this:
 
 ```json
@@ -90,7 +89,6 @@ To create a notebook from the **Notebooks** page, follow these steps:
 1. (Optional) Update the title of the notebook to something descriptive and searchable.
 1. (Optional) Add tags to further define the subject of your notebook.
 1. Start typing to create a text block or click one of the other options to add:
-
    - **Heading**: Adds an H3 heading.
    - **Paragraph**: The default. Use this to revert to paragraph text if you've previously selected another option.
    - **Code**: Adds a code block. Select a language, like Go, SQL, or plain text.
@@ -100,15 +98,14 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 1. Add as many blocks as you need.
 
-    Each new block is automatically added after the previous one. To add a block above a previous one, click the plus icon at the top-left corner of the block:
-    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-add-block-above-v13.3.png" max-width="600px" alt="Adding a notebook block above the current block" >}}
+   Each new block is automatically added after the previous one. To add a block above a previous one, click the plus icon at the top-left corner of the block:
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-add-block-above-v13.3.png" max-width="600px" alt="Adding a notebook block above the current block" >}}
 
 1. Reorder, duplicate, and delete blocks as needed:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-block-actions-v13.3.png" max-width="600px" alt="Notebook block with actions menu open" >}}
 
 1. In the toolbar, take the following actions, as needed:
-
    - Click the undo and redo icons at the top of the notebook to revert or reinstate changes.
    - Change the time range of the notebook.
    - Change the refresh rate of the notebook.
