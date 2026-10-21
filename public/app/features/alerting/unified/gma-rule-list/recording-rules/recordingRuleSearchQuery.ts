@@ -1,9 +1,9 @@
+import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import {
   type BuildSearchQueryOptions,
-  type SearchQuery,
   type SearchQueryLeaf,
   buildHealthLeaves,
   buildSharedLeaves,
@@ -39,10 +39,7 @@ function buildRecordingOnlyLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   return leaves;
 }
 
-export function buildRecordingRuleSearchQuery(
-  filter: RuleSearchFilter,
-  options: BuildSearchQueryOptions = {}
-): SearchQuery {
+export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, options: BuildSearchQueryOptions = {}) {
   const leaves = [
     ...buildSharedLeaves(filter),
     ...buildRecordingOnlyLeaves(filter),
@@ -57,5 +54,5 @@ export function buildRecordingRuleSearchQuery(
     fields: RECORDING_RULE_FIELDS,
     limit: options.limit ?? DEFAULT_PER_PAGE_PAGINATION,
     ...(options.continue ? { continue: options.continue } : {}),
-  };
+  } satisfies ListRecordingRuleSearchRulesV0Alpha1RequestBody;
 }

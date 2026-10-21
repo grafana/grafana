@@ -1,5 +1,6 @@
+import { type ListRecordingRuleSearchRulesV0Alpha1SearchResultHit } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { asBoolean, asLabels, asString, asStringArray } from '../rule-search/searchHitFields';
-import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
 export interface RecordingRuleSearchHit {
   uid: string;
@@ -16,7 +17,9 @@ export interface RecordingRuleSearchHit {
   dataSourceUids: string[];
 }
 
-export function toRecordingRuleSearchHit(item: RuleSearchResultItem): RecordingRuleSearchHit {
+export function toRecordingRuleSearchHit(
+  item: ListRecordingRuleSearchRulesV0Alpha1SearchResultHit
+): RecordingRuleSearchHit {
   const fields: Record<string, unknown> = item.fields ?? {};
 
   return {

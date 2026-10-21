@@ -1,7 +1,10 @@
 import { toAlertRuleSearchHit } from './alertRuleSearchHit';
 
 function toHit(fields: Record<string, unknown>) {
-  return toAlertRuleSearchHit({ resource: { name: 'rule-1' }, fields });
+  return toAlertRuleSearchHit({
+    resource: { group: 'rules.alerting.grafana.app', kind: 'AlertRule', resource: 'alertrules', name: 'rule-1' },
+    fields,
+  });
 }
 
 describe('toAlertRuleSearchHit', () => {

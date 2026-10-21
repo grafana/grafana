@@ -1,9 +1,9 @@
+import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { DEFAULT_POLICY, type RuleSearchFilter, type StateValue } from '../rule-search/ruleSearchFilter';
 import {
   type BuildSearchQueryOptions,
-  type SearchQuery,
   type SearchQueryLeaf,
   buildHealthLeaves,
   buildSharedLeaves,
@@ -82,10 +82,7 @@ function buildRoutingLeaves(filter: RuleSearchFilter): SearchQueryLeaf[] {
   return leaves;
 }
 
-export function buildAlertRuleSearchQuery(
-  filter: RuleSearchFilter,
-  options: BuildSearchQueryOptions = {}
-): SearchQuery {
+export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, options: BuildSearchQueryOptions = {}) {
   const leaves = [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
 
   return {
@@ -96,5 +93,5 @@ export function buildAlertRuleSearchQuery(
     fields: ALERT_RULE_FIELDS,
     limit: options.limit ?? DEFAULT_PER_PAGE_PAGINATION,
     ...(options.continue ? { continue: options.continue } : {}),
-  };
+  } satisfies ListAlertRuleSearchRulesV0Alpha1RequestBody;
 }

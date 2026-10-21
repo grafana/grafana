@@ -1,31 +1,11 @@
 import { type HealthValue, type RuleSearchFilter } from './ruleSearchFilter';
 
 /**
- * Structural SearchQuery body, independent of the generated request types. The per-kind rule
- * search accepts one leaf or one flat `and`; filters (In, and NotIn only on labels, state and
- * health) with exactly one value except on folder, datasource UIDs, state and health; regex on
- * labels only; a single title text leaf; and title sort. Builders stay inside that subset.
+ * The part of the generated where tree that the per-kind rule search accepts: one leaf or one flat
+ * `and`; filters (In, and NotIn only on labels, state and health) with exactly one value except on
+ * folder, datasource UIDs, state and health; regex on labels only; and a single title text leaf.
+ * Builders stay inside that subset, and each kind checks its body against the generated request type.
  */
-export interface SearchQuery {
-  apiVersion: 'search.grafana.app/v0alpha1';
-  kind: 'SearchQuery';
-  where?: SearchQueryNode;
-  sort: SearchQuerySort[];
-  fields: string[];
-  limit: number;
-  continue?: string;
-}
-
-export interface RuleSearchResultItem {
-  resource: { name: string };
-  fields?: Record<string, unknown>;
-}
-
-export interface SearchQuerySort {
-  field: string;
-  direction: 'asc' | 'desc';
-}
-
 export type SearchQueryNode = SearchQueryLeaf | { and: SearchQueryLeaf[] };
 
 export type SearchQueryLeaf = { text: { value: string } } | { filter: SearchQueryFilter } | { regex: SearchQueryRegex };

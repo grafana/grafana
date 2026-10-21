@@ -1,6 +1,7 @@
+import { type ListAlertRuleSearchRulesV0Alpha1SearchResultHit } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
 import { asBoolean, asLabels, asString, asStringArray } from '../rule-search/searchHitFields';
-import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
 export interface AlertRuleSearchHit {
   uid: string;
@@ -22,7 +23,7 @@ export interface AlertRuleSearchHit {
   routingTree?: string;
 }
 
-export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearchHit {
+export function toAlertRuleSearchHit(item: ListAlertRuleSearchRulesV0Alpha1SearchResultHit): AlertRuleSearchHit {
   const fields: Record<string, unknown> = item.fields ?? {};
   const annotations = asAnnotations(fields.annotations);
 

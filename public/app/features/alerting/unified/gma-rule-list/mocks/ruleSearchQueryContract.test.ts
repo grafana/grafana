@@ -1,11 +1,7 @@
-import { type SearchQuery } from '../rule-search/searchQueryLeaves';
+import { type CheckedSearchQuery, getRuleSearchQueryViolations } from './ruleSearchQueryContract';
 
-import { getRuleSearchQueryViolations } from './ruleSearchQueryContract';
-
-function queryWith(where: SearchQuery['where']): SearchQuery {
+function queryWith(where: CheckedSearchQuery['where']): CheckedSearchQuery {
   return {
-    apiVersion: 'search.grafana.app/v0alpha1',
-    kind: 'SearchQuery',
     where,
     sort: [{ field: 'title', direction: 'asc' }],
     fields: ['title'],

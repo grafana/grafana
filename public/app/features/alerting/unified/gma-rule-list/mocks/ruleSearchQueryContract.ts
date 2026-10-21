@@ -1,7 +1,15 @@
-import { type SearchQuery } from '../rule-search/searchQueryLeaves';
+import { type SearchQueryNode } from '../rule-search/searchQueryLeaves';
+
+/** What the checker reads from a built request body of either kind. */
+export interface CheckedSearchQuery {
+  where?: SearchQueryNode;
+  sort: Array<{ field: string; direction?: string }>;
+  fields: string[];
+  limit: number;
+}
 
 /** Test-only mirror of the per-kind rule search validation: a message per rejection. */
-export function getRuleSearchQueryViolations(query: SearchQuery, kind: 'alert' | 'recording'): string[] {
+export function getRuleSearchQueryViolations(query: CheckedSearchQuery, kind: 'alert' | 'recording'): string[] {
   const violations: string[] = [];
   const filterable = FILTERABLE_FIELDS[kind];
 
@@ -110,9 +118,9 @@ const HEALTH_API_VALUES = {
 };
 const EXPRESSION_DATASOURCE_UIDS = new Set(['__expr__', '-100', '__ml__']);
 
-type Leaf = Exclude<NonNullable<SearchQuery['where']>, { and: unknown }>;
+type Leaf = Exclude<SearchQueryNode, { and: unknown }>;
 
-function flattenWhere(where: SearchQuery['where'], violations: string[]): Leaf[] {
+function flattenWhere(where: CheckedSearchQuery['where'], violations: string[]): Leaf[] {
   if (!where) {
     return [];
   }
