@@ -39,6 +39,8 @@ func backendStatusError(err error) apierrors.StatusError {
 	// Retry classification can differ from the HTTP code's default reason;
 	// ServerTimeout, for example, uses 500 but must remain retryable.
 	switch mapped.ErrStatus.Reason {
+	case metav1.StatusReasonUnknown:
+		// Keep the classification derived from the HTTP code when no reason is supplied.
 	case metav1.StatusReasonUnauthorized, metav1.StatusReasonForbidden,
 		metav1.StatusReasonNotFound, metav1.StatusReasonAlreadyExists,
 		metav1.StatusReasonConflict, metav1.StatusReasonGone,
