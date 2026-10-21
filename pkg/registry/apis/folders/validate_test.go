@@ -1285,6 +1285,25 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "[folder.not-empty]",
 	}, {
+		name: "folder not empty - contains migrated library panels",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "librarypanels",
+						Count:    3,
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
 		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
