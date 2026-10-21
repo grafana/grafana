@@ -506,6 +506,8 @@ export type {
   GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
+  NavigationConfig,
+  NavigationPlacement,
   PreinstalledPlugin,
   UnifiedAlertingConfig,
 } from './types/config';

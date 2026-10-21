@@ -9,10 +9,18 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
+import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor, isOperatorPlacedSection } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
-import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+import {
+  appendIntoSection,
+  findNavById,
+  hoistedPluginPageId,
+  pluginPageId,
+  standalonePluginPageId,
+  updateNavById,
+  withAppSubUrl,
+} from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -193,8 +201,23 @@ interface StandalonePage {
   link: NavModelItem;
 }
 
-/** Places a lifted page at the top level, or into the section it names */
+/**
+ * Places a lifted page at the top level, or into the section it names. A page
+ * whose url matches one already in that section replaces it rather than sitting
+ * beside it, which is how an operator points a core page at a plugin (Cloud does
+ * this for Add new connection and Infrastructure).
+ */
 function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: StandalonePage): NavModelItem[] {
+  const section = findNavById(tree, sectionId);
+  const replaced = section?.children?.find((child) => child.url === link.url);
+  if (section && replaced) {
+    return updateNavById(tree, sectionId, (node) => ({
+      ...node,
+      children: (node.children ?? []).map((child) =>
+        child === replaced ? { ...child, ...link, children: [] } : child
+      ),
+    }));
+  }
   return appendIntoSection(tree, sectionId, [link]) ?? tree;
 }
 
@@ -239,7 +262,11 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
 
   const shellConfig = PLUGIN_SECTION_SHELLS[sectionId];
   if (!shellConfig) {
-    console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    // An operator naming a section that does not exist is how an app gets hidden,
+    // so only our own tables pointing somewhere unknown is worth warning about
+    if (!isOperatorPlacedSection(sectionId)) {
+      console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    }
     return tree;
   }
   const { shell, absorbs = [], imgFromAppLogo } = shellConfig;

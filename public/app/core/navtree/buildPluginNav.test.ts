@@ -584,4 +584,79 @@ describe('applyPluginNav', () => {
       expect(findById(merged, 'plugin-page-some-app')?.url).toBe('/a/some-app');
     });
   });
+
+  // [navigation.app_sections] and [navigation.app_standalone_pages], delivered
+  // through frontend settings. Cloud sets five of these on every stack.
+  describe('operator overrides', () => {
+    it('moves an app into the section the operator names, keeping its display config', () => {
+      setup({
+        config: { navigation: { appSections: { 'grafana-csp-app': { sectionId: NavID.testingAndSynthetics } } } },
+      });
+
+      const merged = merge(app('grafana-csp-app', 'Cloud provider', [page('Home', '/a/grafana-csp-app/home')]));
+
+      const csp = findById(findById(merged, NavID.testingAndSynthetics)?.children ?? [], 'plugin-page-grafana-csp-app');
+      // placement comes from the override, the icon from the built-in entry
+      expect(csp?.icon).toBe('cloud-provider');
+      expect(findById(merged, NavID.observability)).toBeUndefined();
+    });
+
+    it('keeps the built-in weight when the override gives none', () => {
+      setup({ config: { navigation: { appSections: { 'grafana-irm-app': { sectionId: NavID.cfg } } } } });
+
+      const merged = merge(app('grafana-irm-app', 'Grafana IRM', [page('IRM', '/a/grafana-irm-app/home')]));
+
+      expect(findById(merged, 'plugin-page-grafana-irm-app')?.sortWeight).toBe(3);
+    });
+
+    it('hides an app pointed at a section that does not exist, without warning', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      setup({ config: { navigation: { appSections: { 'some-app': { sectionId: 'nonexistent' } } } } });
+
+      const merged = merge(app('some-app', 'Some app', [page('Page', '/a/some-app/page')]));
+
+      expect(findById(merged, 'plugin-page-some-app')).toBeUndefined();
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('hides a page pointed at a section that does not exist', () => {
+      setup({
+        config: { navigation: { appStandalonePages: { '/a/some-app/hidden': { sectionId: 'nonexistent' } } } },
+      });
+
+      const merged = merge(
+        app('some-app', 'Some app', [page('Page', '/a/some-app/page'), page('Hidden', '/a/some-app/hidden')])
+      );
+
+      expect(childTexts(merged, 'some-app')).toEqual(['Page']);
+      expect(findById(merged, 'standalone-plugin-page-/a/some-app/hidden')).toBeUndefined();
+    });
+
+    it('replaces a core page the operator points at a plugin page', () => {
+      setup({
+        config: {
+          navigation: { appStandalonePages: { '/connections/infrastructure': { sectionId: NavID.connections } } },
+        },
+        permissions: ['datasources:read', 'datasources:create'],
+      });
+      const existing: NavModelItem[] = [
+        {
+          id: NavID.connections,
+          text: 'Connections',
+          url: '/connections',
+          children: [{ id: 'connections-infrastructure', text: 'Infrastructure', url: '/connections/infrastructure' }],
+        },
+      ];
+
+      const merged = applyPluginNav(existing, [
+        app('some-app', 'Some app', [page('Infrastructure', '/connections/infrastructure')]),
+      ]);
+
+      const children = findById(merged, NavID.connections)?.children ?? [];
+      // one entry, not two: the plugin page takes the core page's place
+      expect(children).toHaveLength(1);
+      expect(children[0].id).toBe('standalone-plugin-page-/connections/infrastructure');
+      expect(children[0].pluginId).toBe('some-app');
+    });
+  });
 });
