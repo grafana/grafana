@@ -282,7 +282,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
-    this.savedTimeSettings = timeSettings;
+    // Never the stored `hideTimepicker`: the scene ignores it, and `buildSpecToSave` substitutes this
+    // whenever time was not edited, so keeping it would write `true` back on every cell or title save.
+    this.savedTimeSettings = { ...timeSettings, hideTimepicker: false };
   }
 
   /**
