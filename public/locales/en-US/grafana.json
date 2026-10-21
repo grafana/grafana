@@ -1455,6 +1455,42 @@
         "recording-rules_one": "{{formatted}} recording rule",
         "recording-rules_other": "{{formatted}} recording rules"
       },
+      "search": {
+        "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "help": {
+          "contact-point": "Direct contact point (mutually exclusive with policy:).",
+          "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
+          "datasource": "Query data source referenced by the rule (canonical value is the UID).",
+          "folder": "Folder (canonical value is the folder UID).",
+          "health": "Rule health: ok, nodata, error or unknown.",
+          "label": "Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex).",
+          "metric": "Recorded metric name (exact match).",
+          "panel-id": "Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.",
+          "paused": "Whether the rule is paused (true/false).",
+          "plugins": "plugins:hide excludes rules created by plugins.",
+          "policy": "Named notification policy (mutually exclusive with contactPoint:).",
+          "rule": "Rule title text search (equivalent to free text).",
+          "state": "Alert state: firing, pending, recovering or normal.",
+          "target-datasource": "Data source the recorded metric is written to (canonical value is the UID)."
+        },
+        "not-paused-unavailable": "Filtering by not paused isn't available yet.",
+        "property": {
+          "contact-point": "Contact point",
+          "dashboard": "Dashboard",
+          "datasource": "Query data source",
+          "folder": "Folder",
+          "health": "Health",
+          "labels": "Labels",
+          "metric": "Recorded metric",
+          "panel": "Panel ID",
+          "paused": "Paused",
+          "plugins": "Plugin rules",
+          "policy": "Notification policy",
+          "rule-name": "Rule name",
+          "state": "Alert state",
+          "target-datasource": "Target data source"
+        }
+      },
       "shared": {
         "load-more": "Load more",
         "load-more-error": "Failed to load more results",
