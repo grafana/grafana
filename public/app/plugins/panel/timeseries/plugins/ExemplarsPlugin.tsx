@@ -9,7 +9,8 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   type TimeZone,
 } from '@grafana/data';
-import { FIXED_UNIT, EventsCanvas, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
+import { EventsCanvasView } from '@grafana/ui/internal';
 
 import { ExemplarMarker, type ExemplarSelection } from './ExemplarMarker';
 
@@ -23,7 +24,46 @@ interface ExemplarsPluginProps {
   maxWidth?: number;
 }
 
-export const ExemplarsPlugin = ({
+export const ExemplarsPluginBridge = (props: ExemplarsPluginProps) => {
+  const { config, exemplars } = props;
+  const hasRows = exemplars.some((frame) => frame.length > 0);
+  const hasRowsRef = useRef(hasRows);
+  hasRowsRef.current = hasRows;
+  const [initialized, setInitialized] = useState<{ config: UPlotConfigBuilder; plot: uPlot }>();
+  const [drawCount, setDrawCount] = useState(0);
+
+  // uPlot fires init once, so capture the instance even before exemplar data arrives.
+  useLayoutEffect(() => {
+    let mounted = true;
+    config.addHook('init', (plot) => {
+      if (mounted) {
+        setInitialized({ config, plot });
+      }
+    });
+    config.addHook('draw', () => {
+      if (mounted && hasRowsRef.current) {
+        setDrawCount((count) => count + 1);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [config]);
+
+  if (!hasRows) {
+    return null;
+  }
+
+  return (
+    <ExemplarsPlugin
+      {...props}
+      plot={initialized?.config === config ? initialized.plot : undefined}
+      drawCount={drawCount}
+    />
+  );
+};
+
+const ExemplarsPlugin = ({
   exemplars,
   timeZone,
   config,
@@ -31,13 +71,9 @@ export const ExemplarsPlugin = ({
   openExemplar,
   maxHeight,
   maxWidth,
-}: ExemplarsPluginProps) => {
-  const plotInstance = useRef<uPlot | undefined>(undefined);
-  const openExemplarRef = useRef(openExemplar);
-  openExemplarRef.current = openExemplar;
-  const [initializedConfig, setInitializedConfig] = useState<UPlotConfigBuilder>();
-  const [drawCount, setDrawCount] = useState(0);
-
+  plot,
+  drawCount,
+}: ExemplarsPluginProps & { plot: uPlot | undefined; drawCount: number }) => {
   const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
   const currentLockedExemplar = useMemo(
     () => findExemplarSelection(exemplars, lockedExemplar),
@@ -50,44 +86,46 @@ export const ExemplarsPlugin = ({
     }
   }, [currentLockedExemplar, lockedExemplar]);
 
-  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, rowIndex: number) => {
-    const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
-    const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
+  const mapExemplarToXYCoords = useCallback(
+    (dataFrame: DataFrame, rowIndex: number) => {
+      const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+      const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
-    if (!time || !value || !plotInstance.current) {
-      return undefined;
-    }
+      if (!time || !value || !plot) {
+        return undefined;
+      }
 
-    // Filter x, y scales out
-    const yScale =
-      Object.keys(plotInstance.current.scales).find((scale) => !['x', 'y'].some((key) => key === scale)) ?? FIXED_UNIT;
+      // Filter x, y scales out
+      const yScale = Object.keys(plot.scales).find((scale) => !['x', 'y'].some((key) => key === scale)) ?? FIXED_UNIT;
 
-    const yMin = plotInstance.current.scales[yScale].min;
-    const yMax = plotInstance.current.scales[yScale].max;
+      const yMin = plot.scales[yScale].min;
+      const yMax = plot.scales[yScale].max;
 
-    const x = time.values[rowIndex];
-    let y = value.values[rowIndex];
-    if (!Number.isFinite(x) || !Number.isFinite(y)) {
-      return undefined;
-    }
-    // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
-    if (yMin != null && y < yMin) {
-      y = yMin;
-    }
+      const x = time.values[rowIndex];
+      let y = value.values[rowIndex];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        return undefined;
+      }
+      // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
+      if (yMin != null && y < yMin) {
+        y = yMin;
+      }
 
-    if (yMax != null && y > yMax) {
-      y = yMax;
-    }
+      if (yMax != null && y > yMax) {
+        y = yMax;
+      }
 
-    const coords = {
-      x: plotInstance.current.valToPos(x, 'x'),
-      y: plotInstance.current.valToPos(y, yScale),
-    };
-    return Number.isFinite(coords.x) && Number.isFinite(coords.y) ? coords : undefined;
-  }, []);
+      const coords = {
+        x: plot.valToPos(x, 'x'),
+        y: plot.valToPos(y, yScale),
+      };
+      return Number.isFinite(coords.x) && Number.isFinite(coords.y) ? coords : undefined;
+    },
+    [plot]
+  );
 
   useEffect(() => {
-    if (!openExemplar || initializedConfig !== config) {
+    if (!openExemplar || !plot) {
       return;
     }
     const request = openExemplar.getRequest(exemplars);
@@ -110,19 +148,7 @@ export const ExemplarsPlugin = ({
       return;
     }
     setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
-  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config, mapExemplarToXYCoords, drawCount]);
-
-  useLayoutEffect(() => {
-    config.addHook('init', (u) => {
-      plotInstance.current = u;
-      setInitializedConfig(config);
-    });
-    config.addHook('draw', () => {
-      if (openExemplarRef.current) {
-        setDrawCount((count) => count + 1);
-      }
-    });
-  }, [config]);
+  }, [exemplars, visibleSeries, openExemplar, plot, mapExemplarToXYCoords, drawCount]);
 
   const onManualSelection = useCallback(
     (selection: ExemplarSelection | undefined) => {
@@ -166,9 +192,14 @@ export const ExemplarsPlugin = ({
     [visibleSeries, currentLockedExemplar, onManualSelection, timeZone, config, maxHeight, maxWidth]
   );
 
+  if (!plot) {
+    return null;
+  }
+
   return (
-    <EventsCanvas
-      config={config}
+    <EventsCanvasView
+      plot={plot}
+      renderToken={drawCount}
       id="exemplars"
       events={exemplars}
       renderEventMarker={renderMarker}

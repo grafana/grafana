@@ -183,6 +183,7 @@ describe('TimeSeriesPanel', () => {
   it('does not retry a pending exemplar request on an unrelated panel render', async () => {
     const props = getPanelProps({ ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } });
     props.data.series = [validFrame];
+    props.data.annotations = [validFrame];
     const getRequest = jest.fn(() => undefined);
     const context = {
       eventsScope: 'test',
@@ -195,7 +196,7 @@ describe('TimeSeriesPanel', () => {
       </PanelContextProvider>
     );
     await act(() => Promise.resolve());
-    await waitFor(() => expect(getRequest).toHaveBeenCalledWith([]));
+    await waitFor(() => expect(getRequest).toHaveBeenCalledWith([validFrame]));
     const attempts = getRequest.mock.calls.length;
 
     rerender(

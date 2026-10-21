@@ -22,7 +22,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
-import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
+import { ExemplarsPluginBridge } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
@@ -327,7 +327,7 @@ export const CandlestickPanel = ({
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
             {data.annotations && (
-              <ExemplarsPlugin
+              <ExemplarsPluginBridge
                 config={uplotConfig}
                 exemplars={data.annotations}
                 timeZone={timeZone}
