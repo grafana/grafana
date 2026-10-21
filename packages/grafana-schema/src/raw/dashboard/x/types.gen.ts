@@ -1110,8 +1110,7 @@ export interface FieldConfig {
    */
   displayNameFromDS?: string;
   /**
-   * Enables viewers to update dashboard ad hoc filters by interacting with this field in supported visualizations.
-   * Corresponds to the "Filter from values" option in the panel editor. Requires data source support for ad hoc filters.
+   * True if data source field supports ad-hoc filters
    */
   filterable?: boolean;
   /**

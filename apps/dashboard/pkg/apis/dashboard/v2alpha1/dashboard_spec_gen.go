@@ -515,8 +515,7 @@ type DashboardFieldConfig struct {
 	Path *string `json:"path,omitempty"`
 	// True if data source can write a value to the path. Auth/authz are supported separately
 	Writeable *bool `json:"writeable,omitempty"`
-	// Enables viewers to update dashboard ad hoc filters by interacting with this field in supported visualizations.
-	// Corresponds to the "Filter from values" option in the panel editor. Requires data source support for ad hoc filters.
+	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
 	// You can use the units ID available in Grafana or a custom unit.
