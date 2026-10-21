@@ -1,13 +1,12 @@
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
-import { type RuleIdentifier, type RuleWithLocation } from 'app/types/unified-alerting';
+import { type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
-import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
@@ -121,7 +120,7 @@ export function ExistingRuleEditor({
       pageNav={getPageNav({ text: pageTitle })}
     >
       {clone ? (
-        <AlertRuleForm prefill={getCloneFormValues(ruleWithLocation)} />
+        <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />
       ) : (
         <AlertRuleForm existing={ruleWithLocation} prefill={prefill} isManualRestore={isManualRestore} />
       )}
@@ -138,12 +137,6 @@ function getPageTitle(isRecordingRule: boolean, clone: boolean) {
   return isRecordingRule
     ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
     : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
-}
-
-function getCloneFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
-  const values = rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation));
-  // A copy without a group is group-free only where the editor can create such rules; otherwise the user picks a group.
-  return values.group === '' ? { ...values, isUngroupedRuleGroup: shouldUseRulesAPIV2() } : values;
 }
 
 const getPageNav = (pageNavOptions?: Partial<NavModelItem>): NavModelItem => {

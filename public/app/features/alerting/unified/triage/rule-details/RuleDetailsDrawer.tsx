@@ -159,10 +159,7 @@ function LoadedRuleDetailsDrawer({ rule, ruleUID, onClose }: LoadedRuleDetailsDr
         </TabContent>
       </Drawer>
       {silenceSupported && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer
-          rule={{ uid: ruleUID, title: rule.name, folderUid: rule.namespace.uid }}
-          onClose={() => setShowSilenceDrawer(false)}
-        />
+        <SilenceGrafanaRuleDrawer ruleUid={ruleUID} onClose={() => setShowSilenceDrawer(false)} />
       )}
     </>
   );

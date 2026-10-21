@@ -9,9 +9,12 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { type DataQuery, defaultDashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { type NotifiersState, type ReceiversState } from 'app/features/alerting/unified/types/alerting';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
   type AlertManagerCortexConfig,
@@ -362,7 +365,7 @@ export const MOCK_SILENCE_ID_EXISTING = 'f209e273-0e4e-434f-9f66-e72f092025a2';
 export const MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID = '5f7d08cd-ac62-432e-8449-8c20c95c19b6';
 const MOCK_SILENCE_ID_EXPIRED = '145884a8-ee20-4864-9f84-661305fb7d82';
 export const MOCK_SILENCE_ID_LACKING_PERMISSIONS = '31063317-f0d2-4d98-baf3-ec9febc1fa83';
-export const MOCK_SILENCE_ID_DANGLING_ALERT_RULE = '8d2c3d6a-3e2c-4d44-9b8e-5e5fa3ab2f9c';
+const MOCK_SILENCE_ID_DANGLING_ALERT_RULE = '8d2c3d6a-3e2c-4d44-9b8e-5e5fa3ab2f9c';
 const MOCK_DANGLING_ALERT_RULE_UID = 'deleted-rule-uid-0001';
 
 export const mockSilences = [
@@ -758,6 +761,56 @@ export function mockDashboardDto(
       ...dashboard,
     },
     meta: { ...meta },
+  };
+}
+
+interface MockV2Panel {
+  id: number;
+  title?: string;
+  type?: string;
+  libraryPanel?: { uid: string; name: string };
+}
+
+export function mockDashboardV2Dto(dashboard: {
+  uid?: string;
+  title?: string;
+  folderTitle?: string;
+  panels?: MockV2Panel[];
+}): DashboardWithAccessInfo<DashboardV2Spec> {
+  const elements: DashboardV2Spec['elements'] = {};
+  for (const { id, title = '', type = 'timeseries', libraryPanel } of dashboard.panels ?? []) {
+    elements[`panel-${id}`] = libraryPanel
+      ? { kind: 'LibraryPanel', spec: { id, title, libraryPanel } }
+      : {
+          kind: 'Panel',
+          spec: {
+            id,
+            title,
+            description: '',
+            links: [],
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: type,
+              version: '1.0.0',
+              spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        };
+  }
+
+  return {
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    kind: 'DashboardWithAccessInfo',
+    metadata: {
+      name: dashboard.uid ?? 'dashboard-test',
+      generation: 1,
+      resourceVersion: '1',
+      creationTimestamp: new Date().toISOString(),
+      annotations: dashboard.folderTitle ? { [AnnoKeyFolderTitle]: dashboard.folderTitle } : {},
+    },
+    access: {},
+    spec: { ...defaultSpec(), title: dashboard.title ?? 'Dashboard test', elements },
   };
 }
 

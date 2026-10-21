@@ -5,7 +5,6 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { LogMessages } from '../../Analytics';
-import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { createRelativeUrl } from '../../utils/url';
 import { MoreButton } from '../shared/MoreButton';
 
@@ -25,7 +24,6 @@ export function AlertRulesHeaderActions() {
           <Trans i18nKey="alerting.gma-rule-list.actions.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
-      {canCreate && <AIAlertRuleButtonComponent />}
       <Dropdown
         overlay={
           <Menu>

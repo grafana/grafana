@@ -5,9 +5,8 @@ import { useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
-import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
+import { AnalyzeRuleButton } from '../../components/assistant/AnalizeRuleButton';
 import { EnrichmentDrawerExtension } from '../../components/rule-list/extensions/EnrichmentDrawerExtension';
 import SilenceGrafanaRuleDrawer from '../../components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
@@ -46,7 +45,6 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
 
   const rule = resourceState.status === 'loaded' ? resourceState.rule : undefined;
   const ruleTitle = rule?.spec.title ?? ruleUid;
-  const folderUid = rule?.metadata.annotations?.[AnnoKeyFolder];
   const isPaused = Boolean(rule?.spec.paused);
   const silence = useSilenceAvailability(resourceState);
   const confirmBeforeCopy = rule !== undefined && isProvisionedOrManaged(rule);
@@ -82,7 +80,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
         icon="bell-slash"
         onClick={() => setShowSilenceDrawer(true)}
       />
-      {rule && <AnalyzeK8sRuleButton kind="alert" rule={rule} />}
+      {rule && <AnalyzeRuleButton alertRule={rule} />}
       <DuplicateRuleMenuItem
         kind="alert"
         uid={ruleUid}
@@ -120,10 +118,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
       </Dropdown>
       {showSilenceDrawer && (
         <AlertmanagerProvider accessType="instance">
-          <SilenceGrafanaRuleDrawer
-            rule={{ uid: ruleUid, title: ruleTitle, folderUid }}
-            onClose={() => setShowSilenceDrawer(false)}
-          />
+          <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
         </AlertmanagerProvider>
       )}
       {showEnrichmentDrawer && (

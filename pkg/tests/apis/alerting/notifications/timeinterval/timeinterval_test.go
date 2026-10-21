@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -751,7 +752,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use time interval
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	mtis := make([]v1model.TimeInterval, 0, len(amConfig.AlertmanagerConfig.MuteTimeIntervals))

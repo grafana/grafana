@@ -154,6 +154,21 @@ export async function updateNotebookSpec(
 }
 
 /**
+ * The resourceVersion the server holds for a notebook right now, or undefined when it cannot be read.
+ *
+ * Uncached for the same reason as `updateNotebookSpec`'s read: a version left over from an earlier fetch
+ * is exactly the stale answer a caller checking for someone else's save is trying to avoid. A failed read
+ * is undefined, not an error, because the check it serves is advisory: the save still carries its own
+ * precondition.
+ */
+export async function readNotebookResourceVersion(uid: string): Promise<string | undefined> {
+  const read = await dispatch(
+    dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+  );
+  return 'error' in read && read.error ? undefined : read.data?.metadata?.resourceVersion;
+}
+
+/**
  * Replace an existing notebook's spec, leaving its metadata alone.
  *
  * A JSON patch replacing all of `/spec`, not a merge patch: `spec.elements` is a keyed map, so a merge

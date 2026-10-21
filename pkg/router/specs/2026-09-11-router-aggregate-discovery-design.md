@@ -1,8 +1,8 @@
 # Router: Active discovery for aggregate apiservers
 
 Status: implemented. Amended 2026-10-10 for the configured target list (#134381),
-`discovery_auth = none` (#134461), per-target TLS and `poll_interval`, aggregated-discovery
-polling, and the removal of the AppManifest source (#134652).
+`discovery_auth = none` (#134461), per-target TLS and `poll_interval`, and aggregated-discovery
+polling.
 Package: `pkg/router`
 
 ## Context
@@ -20,8 +20,8 @@ known only from the target's own `/apis` endpoint, and the router must poll that
 them. The design also covers how that active discovery fits with the passive health model.
 
 The original design had a fixed pair of targets, `baas_apiserver` and
-`cloud_app_platform_apiserver`, plus a separate AppManifest CR source. #134381 replaced the fixed pair
-with a configured list, and #134652 removed the CR source.
+`cloud_app_platform_apiserver`. #134381 replaced the fixed pair
+with a configured list.
 
 ## Active discovery vs. passive health: distinct concerns
 
@@ -103,9 +103,8 @@ Targets are uniquely named `[router.aggregate.<name>]` sections. Section order s
 two targets discover the same group, the first one wins. AGENTS.md ("Settings") lists the keys:
 `url`, `audience`, `discovery_auth`, `poll_interval`, `group_regex`, `ca_file` and `insecure`.
 
-The older `[cloud_router] baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys are still read
-as a rollout shim (`parseAggregateTargets`). A new section with the same name replaces the legacy
-target. The shim is due to be removed (A4 in `2026-10-10-router-review-plan.md`).
+The older `[cloud_router] baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys were read as a
+rollout shim until every deployed config used sections. They are no longer read.
 
 The original design kept the pair fixed, because a list would need new config machinery and
 per-target lifecycle. Once the router stood in for kube-aggregator, a list was the simpler model;
@@ -202,7 +201,7 @@ because the cooldown is the loop's only timing source (see the Design section).
 
 Unit tests cover:
 
-- Config parsing (`aggregate_config_test.go`): section order, legacy keys, `discovery_auth`,
+- Config parsing (`aggregate_config_test.go`): section order, `discovery_auth`,
   `poll_interval`, pattern filtering and edge cases (empty URL, unset patterns).
 - Cooldown backoff: success resets to steady, failures double-and-cap correctly, timeout edge cases.
 - Discovery poll (`aggregate_poller_test.go`, `aggregate_discovery_test.go`): both discovery

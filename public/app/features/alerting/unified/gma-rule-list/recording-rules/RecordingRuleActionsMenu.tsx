@@ -5,7 +5,7 @@ import { useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { Dropdown, Menu } from '@grafana/ui';
 
-import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
+import { AnalyzeRuleButton } from '../../components/assistant/AnalizeRuleButton';
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
@@ -56,7 +56,7 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRu
         disabled={pausePending}
         onClick={() => setPaused(!isPaused)}
       />
-      {rule && <AnalyzeK8sRuleButton kind="recording" rule={rule} />}
+      {rule && <AnalyzeRuleButton recordingRule={rule} />}
       <DuplicateRuleMenuItem
         kind="recording"
         uid={ruleUid}

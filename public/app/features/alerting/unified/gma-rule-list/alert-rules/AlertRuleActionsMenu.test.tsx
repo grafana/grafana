@@ -300,6 +300,8 @@ describe('AlertRuleActionsMenu', () => {
   describe('Silence availability gate', () => {
     it('shows Silence when Grafana AM is supported and the user has org-wide alert.instances:create, and opens the drawer for this rule', async () => {
       grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingInstanceCreate]);
+      // The drawer loads the rule itself, by the UID this menu passes.
+      server.use(http.get(`${ALERT_RULES_URL}/rule-uid-1`, () => HttpResponse.json(buildRule())));
 
       renderLoaded();
       const user = await openMenu();
@@ -307,7 +309,6 @@ describe('AlertRuleActionsMenu', () => {
       await waitFor(() => expect(silenceItem).toBeEnabled());
       await user.click(silenceItem);
 
-      // Drawer is populated from this menu's rule, proving it received the right UID.
       expect(await screen.findByText('Silence alert rule')).toBeInTheDocument();
       expect(document.getElementById('alert-rule-name')).toHaveValue('High CPU usage');
     });
@@ -445,7 +446,7 @@ describe('AlertRuleActionsMenu', () => {
     });
   });
 
-  describe('Analyze availability gate and payload from the loaded full Alert rule, never defaulting state to firing', () => {
+  describe('Analyze availability gate', () => {
     function mockAssistant(isAvailable: boolean) {
       const openAssistant = jest.fn();
       jest.mocked(useAssistant).mockReturnValue({
@@ -483,52 +484,17 @@ describe('AlertRuleActionsMenu', () => {
       expect(screen.queryByRole('menuitem', { name: 'Analyze rule' }) !== null).toBe(shown);
     });
 
-    it('opens the Assistant with the loaded rule and omits state from the prompt when status.state is missing', async () => {
+    it('opens the Assistant for the loaded rule', async () => {
       const openAssistant = mockAssistant(true);
-      const rule = buildRule({ labels: { team: 'infra' } });
-      rule.spec.annotations = { summary: 'CPU is high' };
-      rule.spec.expressions = { A: { model: { expr: 'avg(cpu)' } } as AlertRule['spec']['expressions'][string] };
-      renderLoaded(rule);
+      renderLoaded();
       const user = await openMenu();
 
       await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
 
       expect(openAssistant).toHaveBeenCalledTimes(1);
-      const [{ prompt, context, origin, autoSend }] = openAssistant.mock.calls[0];
+      const [{ prompt, origin }] = openAssistant.mock.calls[0];
       expect(origin).toBe('alerting/analyze-rule-menu-item');
-      expect(autoSend).toBe(true);
-      expect(prompt).toContain('Analyze the alert rule "High CPU usage (uid: rule-uid-1)".');
-      expect(prompt).toContain('CPU is high Labels: team="infra".');
-      expect(prompt).not.toMatch(/firing|currently/i);
-      expect(context).toEqual([
-        {
-          type: 'structured',
-          title: 'Alert: High CPU usage',
-          data: {
-            rule: {
-              name: 'rule-uid-1',
-              title: 'High CPU usage',
-              labels: { team: 'infra' },
-              expressions: { A: { model: { expr: 'avg(cpu)' } } },
-              annotations: { summary: 'CPU is high' },
-            },
-          },
-        },
-      ]);
-    });
-
-    it('reports the state the API returned instead of a default', async () => {
-      const openAssistant = mockAssistant(true);
-      const rule = buildRule();
-      rule.status = { state: 'Healthy' };
-      renderLoaded(rule);
-      const user = await openMenu();
-
-      await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
-
-      const [{ prompt }] = openAssistant.mock.calls[0];
-      expect(prompt).toContain('Analyze the alert rule "High CPU usage (uid: rule-uid-1)" (currently Healthy).');
-      expect(prompt).not.toMatch(/firing/i);
+      expect(prompt).toContain('"High CPU usage (uid: rule-uid-1)"');
     });
   });
 });

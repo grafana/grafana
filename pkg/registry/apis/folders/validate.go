@@ -2,10 +2,12 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -150,16 +153,16 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// note: `parents` will include itself as the last item
 	parents, err := getter(ctx, f)
 	if err != nil {
-		return fmt.Errorf("unable to create folder inside parent: %w", err)
+		return err
 	}
 
 	// Git Sync previews use dry-run creates with parents that may only exist
-	// on a repository branch. Require a complete chain only when persisting.
-	if !dryRun {
-		for _, parent := range parents.Items {
-			if parent.Detached {
-				return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable ancestor %s", parent.Name)
-			}
+	// on a repository branch. Require only the immediate parent when persisting;
+	// an inaccessible ancestor above it must not block folder creation.
+	if !dryRun && len(parents.Items) >= 2 {
+		parent := parents.Items[len(parents.Items)-2]
+		if parent.Detached {
+			return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable parent %s", parent.Name)
 		}
 	}
 
@@ -603,16 +606,18 @@ func validateOnDelete(ctx context.Context,
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
-		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", err)
-		return err
+	rawErr, publicErr := countStatsErrors(resp.GetError(), err, true)
+	if rawErr == nil && resp.Stats == nil {
+		rawErr = errors.New("count response did not include stats")
+		publicErr = countFailedError(rawErr, true)
+	}
+	if rawErr != nil {
+		_ = tracing.Error(trace.SpanFromContext(ctx), rawErr)
+		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", rawErr)
+		return publicErr
 	}
 
-	if resp.Stats == nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
-	}
-
-	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "folders", "variables"}
+	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
 	for _, v := range resp.Stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {

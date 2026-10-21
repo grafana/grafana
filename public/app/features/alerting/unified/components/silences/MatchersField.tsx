@@ -3,19 +3,20 @@ import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Divider, Field, IconButton, Input, Select, useStyles2 } from '@grafana/ui';
+import { Button, Field, IconButton, Input, Select, useStyles2 } from '@grafana/ui';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
-import { type RuleReference, type SilenceFormFields } from '../../types/silence-form';
+import { type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
   className?: string;
-  required: boolean;
-  rule?: RuleReference;
+  /** A rule-scoped silence already targets one rule, so matchers only narrow it and are optional. */
+  scopedToRule: boolean;
 }
 
-const MatchersField = ({ className, required, rule }: Props) => {
+const MatchersField = ({ className, scopedToRule }: Props) => {
+  const required = !scopedToRule;
   const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
@@ -26,27 +27,18 @@ const MatchersField = ({ className, required, rule }: Props) => {
 
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 
-  // The caller already has this rule loaded (or only ever had its UID); we never fetch it ourselves,
-  // so a deleted/unreadable/absent title just falls back to a clear placeholder.
-  const alertRuleTitle =
-    rule?.title ?? (rule?.uid ? t('alerting.matchers-field.text-unknown-alert-rule', 'Unknown alert rule') : undefined);
-
   return (
     <div className={className}>
       <Field
-        label={t('alerting.matchers-field.label-refine-affected-alerts', 'Refine affected alerts')}
+        label={
+          scopedToRule
+            ? t('alerting.matchers-field.label-refine-affected-alerts', 'Refine affected alerts')
+            : t('alerting.matchers-field.label-matching-labels', 'Matching labels')
+        }
         required={required}
       >
         <div>
           <div className={cx(styles.matchers, styles.indent)}>
-            {alertRuleTitle && (
-              <div>
-                <Field label={t('alerting.matchers-field.label-alert-rule', 'Alert rule')} disabled>
-                  <Input id="alert-rule-name" defaultValue={alertRuleTitle} disabled />
-                </Field>
-                <Divider />
-              </div>
-            )}
             {matchers.map((matcher, index) => {
               return (
                 <div className={styles.row} key={`${matcher.id}`} data-testid="matcher">

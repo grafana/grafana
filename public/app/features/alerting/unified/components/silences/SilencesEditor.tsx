@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { pickBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
+import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import {
   type GrafanaTheme2,
   addDurationToDate,
@@ -17,6 +19,7 @@ import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
   Field,
   FieldSet,
@@ -36,7 +39,7 @@ import { contextSrv } from '../../../../../core/services/context_srv';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { type RuleReference, type SilenceFormFields } from '../../types/silence-form';
+import { type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -67,9 +70,6 @@ const ExistingSilenceEditor = () => {
     accessControl: true,
   });
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
-  const rule: RuleReference | undefined = ruleUid
-    ? { uid: ruleUid, title: silence?.metadata?.rule_title, folderUid: silence?.metadata?.folder_uid }
-    : undefined;
   const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const defaultValues = useMemo(() => {
@@ -124,7 +124,7 @@ const ExistingSilenceEditor = () => {
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
-      <SilencesEditor rule={rule} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
+      <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
     </>
   );
 };
@@ -134,7 +134,7 @@ type SilencesEditorProps = {
   alertManagerSourceName: string;
   onSilenceCreated?: (response: SilenceCreatedResponse) => void;
   onCancel?: () => void;
-  rule?: RuleReference;
+  ruleUid?: string;
 };
 
 /**
@@ -146,10 +146,13 @@ export const SilencesEditor = ({
   alertManagerSourceName,
   onSilenceCreated,
   onCancel,
-  rule,
+  ruleUid,
 }: SilencesEditorProps) => {
-  const ruleUid = rule?.uid;
   const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
+
+  const { data: silencedRule, isError: silencedRuleUnavailable } = useGetAlertRuleQuery(
+    ruleUid ? { name: ruleUid } : skipToken
+  );
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });
@@ -170,11 +173,11 @@ export const SilencesEditor = ({
   const onSubmit = async (data: SilenceFormFields) => {
     const { id, startsAt, endsAt, comment, createdBy, matchers: matchersFields } = data;
 
-    if (ruleUid) {
-      matchersFields.push({ name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal });
-    }
+    const matchersWithRuleUid = ruleUid
+      ? [...matchersFields, { name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal }]
+      : matchersFields;
 
-    const matchersToSend = matchersFields.map(matcherFieldToMatcher).filter((field) => field.name && field.value);
+    const matchersToSend = matchersWithRuleUid.map(matcherFieldToMatcher).filter((field) => field.name);
     const payload = pickBy(
       {
         id,
@@ -186,11 +189,16 @@ export const SilencesEditor = ({
       },
       (value) => !!value
     ) as SilenceCreatePayload;
-    await createSilence({ datasourceUid: getDatasourceAPIUid(alertManagerSourceName), payload })
-      .unwrap()
-      .then((newSilenceResponse) => {
-        onSilenceCreatedHandler?.(newSilenceResponse);
-      });
+
+    try {
+      const newSilenceResponse = await createSilence({
+        datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
+        payload,
+      }).unwrap();
+      onSilenceCreatedHandler?.(newSilenceResponse);
+    } catch {
+      // The mutation's onQueryStarted already surfaces an error toast; keep the editor open so the user can retry.
+    }
   };
 
   // Keep duration and endsAt in sync
@@ -247,7 +255,27 @@ export const SilencesEditor = ({
             </Field>
           </div>
 
-          <MatchersField required={Boolean(!ruleUid)} rule={rule} />
+          {ruleUid && (silencedRule || silencedRuleUnavailable) && (
+            <Box marginBottom={2}>
+              <Field
+                noMargin
+                label={t('alerting.silences-editor.label-alert-rule', 'Alert rule')}
+                description={getSilencedRuleDescription(ruleUid, Boolean(silencedRule))}
+                disabled
+              >
+                <Input
+                  id="alert-rule-name"
+                  value={
+                    silencedRule?.spec.title ??
+                    t('alerting.silences-editor.alert-rule-unavailable', 'Alert rule unavailable')
+                  }
+                  disabled
+                />
+              </Field>
+            </Box>
+          )}
+
+          <MatchersField scopedToRule={Boolean(ruleUid)} />
 
           <Field
             label={t('alerting.silences-editor.label-comment', 'Comment')}
@@ -308,6 +336,21 @@ export const SilencesEditor = ({
     </FormProvider>
   );
 };
+
+function getSilencedRuleDescription(ruleUid: string, ruleLoaded: boolean) {
+  if (ruleLoaded) {
+    return t(
+      'alerting.silences-editor.description-alert-rule-scope',
+      'This silence applies only to alerts from this alert rule.'
+    );
+  }
+
+  return t(
+    'alerting.silences-editor.description-alert-rule-unavailable',
+    'This silence applies only to alerts from the alert rule with UID {{ruleUid}}. The rule may have been deleted, or you may not have permission to view it.',
+    { ruleUid }
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   formContainer: css({

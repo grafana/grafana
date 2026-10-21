@@ -1,32 +1,38 @@
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-// Prevents the module-level UserStorage instance from caching state across tests.
+import { type SavedSearch } from '../components/saved-searches/savedSearchesSchema';
+
+import { useGenericSavedSearches } from './useGenericSavedSearches';
+
 const mockUserStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
 };
 
+// UserStorage keeps a module-level cache that tests outside the runtime package cannot clear, so a mocked
+// instance is the only way to give every test an isolated, inspectable store.
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   UserStorage: jest.fn().mockImplementation(() => mockUserStorage),
 }));
 
-import { type SavedSearch } from '../components/saved-searches/savedSearchesSchema';
-
-import { useGenericSavedSearches } from './useGenericSavedSearches';
-
 const STORAGE_KEY = 'testSavedSearches';
 
-function existingSearch(overrides: Partial<SavedSearch> = {}): SavedSearch {
-  return {
-    id: 'search-1',
-    name: 'My search',
-    query: 'label:team=infra',
-    isDefault: false,
-    createdAt: Date.now(),
-    ...overrides,
-  };
-}
+const defaultSearch: SavedSearch = {
+  id: 'search-1',
+  name: 'Keep me',
+  query: 'old query',
+  isDefault: true,
+  createdAt: 1700000000000,
+};
+
+const otherSearch: SavedSearch = {
+  id: 'search-2',
+  name: 'Other',
+  query: 'label:team=infra',
+  isDefault: false,
+  createdAt: 1700000001000,
+};
 
 describe('useGenericSavedSearches.updateSearch', () => {
   const Wrapper = getWrapper({ renderWithRouter: true });
@@ -43,35 +49,29 @@ describe('useGenericSavedSearches.updateSearch', () => {
     return result;
   }
 
-  it("replaces only the matching entry's query, persisting it under the configured key and leaving the others unchanged", async () => {
-    const other = existingSearch({ id: 'search-2', name: 'Other', query: 'unchanged' });
-    const result = await setup([
-      existingSearch({ id: 'search-1', name: 'Keep me', isDefault: true, query: 'old query' }),
-      other,
-    ]);
+  it('replaces only the matching search query and persists the list under the configured key', async () => {
+    const result = await setup([defaultSearch, otherSearch]);
 
     await act(async () => {
       await result.current.updateSearch('search-1', 'namespace:folder-1');
     });
 
-    const expected = [
-      expect.objectContaining({ id: 'search-1', name: 'Keep me', isDefault: true, query: 'namespace:folder-1' }),
-      other,
-    ];
+    const expected = [{ ...defaultSearch, query: 'namespace:folder-1' }, otherSearch];
     expect(result.current.savedSearches).toEqual(expected);
-    const [persistedKey, persistedJson] = mockUserStorage.setItem.mock.calls.at(-1);
+    expect(mockUserStorage.setItem).toHaveBeenCalledTimes(1);
+    const [persistedKey, persistedJson] = mockUserStorage.setItem.mock.calls[0];
     expect(persistedKey).toBe(STORAGE_KEY);
     expect(JSON.parse(persistedJson)).toEqual(expected);
   });
 
-  it('is a no-op when the ID does not match any saved search', async () => {
-    const stored = [existingSearch({ query: 'old query' })];
-    const result = await setup(stored);
+  it('neither changes the saved searches nor writes to storage when the ID does not exist', async () => {
+    const result = await setup([defaultSearch, otherSearch]);
 
     await act(async () => {
       await result.current.updateSearch('does-not-exist', 'namespace:folder-1');
     });
 
-    expect(result.current.savedSearches).toEqual(stored);
+    expect(result.current.savedSearches).toEqual([defaultSearch, otherSearch]);
+    expect(mockUserStorage.setItem).not.toHaveBeenCalled();
   });
 });

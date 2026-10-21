@@ -1,17 +1,12 @@
 import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import {
-  isNotificationHistoryEnabled,
-  shouldAllowRecoveringDeletedRules,
-  shouldUseGmaOnlyListView,
-} from './unified/featureToggles';
+import { isNotificationHistoryEnabled, shouldUseGmaOnlyListView } from './unified/featureToggles';
 import {
   LegacyRecentlyDeletedRedirect,
   LegacyRuleListRedirect,
@@ -24,6 +19,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from './unified/utils/alertmanagerPermissions';
+import { alertActivityEnabled } from './unified/utils/pageAccess';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -435,7 +431,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
   ];
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false)) {
+  if (alertActivityEnabled()) {
     routes.push({
       path: '/alerting/alerts',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
@@ -504,26 +500,16 @@ function importAlertingComponent(loader: () => Promise<unknown>): GrafanaRouteCo
   return SafeDynamicImport(config.unifiedAlertingEnabled ? loader : featureDisabledPageLoader);
 }
 
-// Once gmaOnlyListView is on, the combined Recently deleted page always redirects to Alert
-// rules' Recently deleted tab; the legacy shouldAllowRecoveringDeletedRules gate only decides
-// the page's own behavior while the flag is off.
+// Once gmaOnlyListView is on, the combined Recently deleted page redirects to Alert rules' Recently deleted tab.
 function getLegacyRecentlyDeletedComponent(): GrafanaRouteComponent {
   if (shouldUseGmaOnlyListView()) {
     return LegacyRecentlyDeletedRedirect;
   }
 
-  if (shouldAllowRecoveringDeletedRules()) {
-    return importAlertingComponent(
-      () =>
-        import(
-          /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-        )
-    );
-  }
-
-  return RedirectToLegacyRuleList;
-}
-
-function RedirectToLegacyRuleList() {
-  return <Navigate replace to="/alerting/list" />;
+  return importAlertingComponent(
+    () =>
+      import(
+        /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+      )
+  );
 }

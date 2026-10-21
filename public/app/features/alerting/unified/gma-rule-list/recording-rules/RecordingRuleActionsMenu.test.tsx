@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, type userEvent, within } from 'test/test-utils';
 
-import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
@@ -238,7 +237,7 @@ describe('RecordingRuleActionsMenu', () => {
     expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
   });
 
-  describe('Analyze sends the full Recording rule without inventing Alert state or routing', () => {
+  describe('Analyze', () => {
     function mockAssistant(isAvailable: boolean) {
       const openAssistant = jest.fn();
       jest.mocked(useAssistant).mockReturnValue({
@@ -253,63 +252,16 @@ describe('RecordingRuleActionsMenu', () => {
       mockAssistant(false);
     });
 
-    it('opens the Assistant with the loaded rule definition and no alert state, instances or routing', async () => {
+    it('opens the Assistant with the recording prompt for the loaded rule', async () => {
       const openAssistant = mockAssistant(true);
-      const rule = buildRule({ labels: { team: 'infra' } });
-      rule.spec.expressions = { A: { model: { expr: 'avg(cpu)' } } as RecordingRule['spec']['expressions'][string] };
-      const { user } = renderLoaded(rule);
+      const { user } = renderLoaded();
       await openMenu(user);
 
       await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
 
       expect(openAssistant).toHaveBeenCalledTimes(1);
-      const [{ prompt, context, origin, autoSend }] = openAssistant.mock.calls[0];
-      expect(origin).toBe('alerting/analyze-rule-menu-item');
-      expect(autoSend).toBe(true);
-      expect(prompt).toBe(
-        'Analyze the recording rule "CPU usage average (uid: rule-uid-1)", which records its query result as the metric "cpu_usage:avg" on data source "prom-1". Labels: team="infra".'
-      );
-      expect(context).toEqual([
-        {
-          type: 'structured',
-          title: 'Recording: CPU usage average',
-          data: {
-            rule: {
-              name: 'rule-uid-1',
-              title: 'CPU usage average',
-              labels: { team: 'infra' },
-              expressions: { A: { model: { expr: 'avg(cpu)' } } },
-              metric: 'cpu_usage:avg',
-              targetDatasourceUID: 'prom-1',
-            },
-          },
-        },
-      ]);
-    });
-
-    it('keeps server-reported status out of the Assistant payload', async () => {
-      const openAssistant = mockAssistant(true);
-      const rule = buildRule();
-      rule.status = {
-        health: 'Recording',
-        lastError: 'boom',
-        lastEvaluationTime: '2026-01-01T00:00:00Z',
-      };
-      const { user } = renderLoaded(rule);
-      await openMenu(user);
-
-      await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
-
-      const [{ prompt, context }] = openAssistant.mock.calls[0];
-      expect(Object.keys(context[0].data.rule).sort()).toEqual([
-        'expressions',
-        'labels',
-        'metric',
-        'name',
-        'targetDatasourceUID',
-        'title',
-      ]);
-      expect(prompt).not.toMatch(/firing|state|instance|routing|notification|contact point|boom/i);
+      const [{ prompt }] = openAssistant.mock.calls[0];
+      expect(prompt).toContain('Analyze the recording rule "CPU usage average".');
     });
   });
 });

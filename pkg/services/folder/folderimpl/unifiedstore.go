@@ -31,6 +31,15 @@ import (
 
 const tracePrefix = "folder.unifiedstore."
 
+var folderReferenceFields = []string{
+	resource.SEARCH_FIELD_TITLE,
+	resource.SEARCH_FIELD_FOLDER,
+	resource.SEARCH_FIELD_MANAGER_KIND,
+	resource.SEARCH_FIELD_LEGACY_ID,
+	// The numeric legacy ID is derived from this stored label.
+	resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+}
+
 type FolderUnifiedStoreImpl struct {
 	log         log.Logger
 	k8sclient   client.K8sHandler
@@ -279,16 +288,17 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 }
 
 // doSearchPage performs one Search round-trip against the unified resource
-// index and returns the parsed hits along with the raw response hit count
-// (so paginating callers can detect a short final page).
-func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, int, error) {
+// index and reports whether pagination is complete. A short page alone is not
+// enough: authorization can stop at its candidate budget with more hits remaining.
+func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, bool, error) {
+	req.Fields = folderReferenceFields
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
 	if err := resource.ErrorFromResponse(out.GetError(), err); err != nil {
-		return nil, 0, err
+		return nil, false, err
 	}
 	res, err := dashboardsearch.ParseResults(out, 0)
 	if err != nil {
-		return nil, 0, err
+		return nil, false, err
 	}
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
@@ -302,7 +312,8 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 			ManagedBy: item.ManagedBy.Kind,
 		})
 	}
-	return hits, len(res.Hits), nil
+	done := len(hits) == 0 || (out.GetTotalHitsExact() && req.Offset+int64(len(hits)) >= out.GetTotalHits())
+	return hits, done, nil
 }
 
 // GetFolders returns org folders by their UIDs.
@@ -465,15 +476,15 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
+		hits, done, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
 			return nil, err
 		}
 		all = append(all, hits...)
-		if raw == 0 {
+		if done {
 			return all, nil
 		}
-		offset += int64(raw)
+		offset += int64(len(hits))
 	}
 }
 
@@ -507,15 +518,15 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
+		hits, done, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
 			return nil, err
 		}
 		all = append(all, hits...)
-		if raw < searchPageSize {
+		if done {
 			return all, nil
 		}
-		offset += int64(raw)
+		offset += int64(len(hits))
 	}
 }
 

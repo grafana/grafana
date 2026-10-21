@@ -83,8 +83,6 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   const silenceableRule =
     isString(ruleUid) &&
     (rulerRuleType.grafana.alertingRule(rule) || prometheusRuleType.grafana.alertingRule(promRule));
-  const ruleTitle = rule && rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.title : promRule?.name;
-  const folderUid = groupIdentifier.groupOrigin === 'grafana' ? groupIdentifier.namespace.uid : undefined;
 
   if (canEditRule) {
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
@@ -120,10 +118,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
       />
       {deleteModal}
       {silenceableRule && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer
-          rule={{ uid: ruleUid, title: ruleTitle, folderUid }}
-          onClose={() => setShowSilenceDrawer(false)}
-        />
+        <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {ruleUid && showEnrichmentDrawer && (
         <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />

@@ -34,7 +34,7 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v10.0 What’s new](../../whatsnew/whats-new-in-v10-0/). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide](../../upgrade-guide/upgrade-v10.0/).
+For release highlights and deprecations, refer to our [v10.0 What’s new](../../whatsnew/whats-new-in-v10-0/). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide](https://archive.grafana.com/docs/grafana/v10.0/upgrade-guide/upgrade-v10.0/).
 
 <!--
 ## Feature

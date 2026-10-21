@@ -301,9 +301,11 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	var discoveryErr error
 	var shadowed []shadowedGroup
 	// put adds b, recording any backend for the same group it overrides.
+	// Overriding the single-tenant fallback is the expected migration path,
+	// not a conflict, so it is not recorded.
 	put := func(b Backend) {
 		group := b.Group().Name
-		if previous, ok := lookup[group]; ok {
+		if previous, ok := lookup[group]; ok && previous.Source() != sourceSingleTenant {
 			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
 		}
 		lookup[group] = b

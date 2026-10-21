@@ -28,6 +28,7 @@ import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { InstanceSilenceForm } from '../../components/silences/InstanceSilenceForm';
 import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -38,7 +39,6 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
-import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
@@ -335,11 +335,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           onClose={handleDrawerClose}
           width={drawerWidth}
         >
-          <InstanceSilenceForm
-            rule={{ uid: ruleUID, title: rule?.grafana_alert.title, folderUid: rule?.grafana_alert.namespace_uid }}
-            instanceLabels={instanceLabels}
-            onClose={animateCloseSilenceDrawer}
-          />
+          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
         </Drawer>
       </>
     );

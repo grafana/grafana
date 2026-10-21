@@ -51,9 +51,10 @@ export interface UseGenericSavedSearchesResult {
    */
   renameSearch: (id: string, newName: string) => Promise<void>;
   /**
-   * Update an existing saved search's query, leaving its name/default status untouched.
+   * Replace the query of an existing saved search, leaving its name and default status untouched.
+   * Does nothing if no saved search has the given ID.
    * @param id - The ID of the search to update
-   * @param query - The new canonical query string
+   * @param query - The new query string
    */
   updateSearch: (id: string, query: string) => Promise<void>;
   /**
@@ -297,12 +298,14 @@ export function useGenericSavedSearches(config: SavedSearchesConfig): UseGeneric
   );
 
   /**
-   * Update an existing saved search's query in place - used when applying a saved search
-   * whose stored query needed migration, so the canonical form is persisted without
-   * disturbing its name or default status. No-op (never throws) if the ID doesn't exist.
+   * Replace a saved search's query in place.
    */
   const updateSearch = useCallback(
     async (id: string, query: string): Promise<void> => {
+      if (!savedSearches.some((s) => s.id === id)) {
+        return;
+      }
+
       const newSearches = savedSearches.map((s) => (s.id === id ? { ...s, query } : s));
 
       await persistSearches(newSearches);

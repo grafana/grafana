@@ -2,6 +2,9 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
+type SelectionOptionSwitch = 'Multi-value' | 'Include All value' | 'Allow custom values';
+type SelectionOptionTitle = SelectionOptionSwitch | 'Custom all value';
+
 /**
  * The "Variable options" pane in the sidebar — variable type,
  * name/label inputs, plus type-specific options (e.g. datasource variables)
@@ -140,6 +143,34 @@ export class VariableOptions extends PageObject {
     },
   };
 
+  readonly selection = {
+    /** Returns a "Selection options" field, found by its title */
+    getField: (title: SelectionOptionTitle): Locator =>
+      this.getByGrafanaSelector(
+        this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`selection-options-category ${title}`),
+        { root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container) }
+      ),
+    /** Returns a "Selection options" switch, found by its field title */
+    getSwitch: (title: SelectionOptionSwitch): Locator => this.selection.getField(title).getByRole('switch'),
+    /** Toggles a "Selection options" switch */
+    toggle: async (title: SelectionOptionSwitch) => {
+      await test.step(`Toggle "${title}" option`, async () => {
+        // force: true because the switch input is visually covered by its label
+        await this.selection.getSwitch(title).click({ force: true });
+      });
+    },
+    /** Returns the custom All value input (only rendered while "Include All value" is on) */
+    getCustomAllValueInput: (): Locator => this.selection.getField('Custom all value').getByRole('textbox'),
+    /** Sets the custom All value; the field applies it on blur */
+    setCustomAllValue: async (allValue: string) => {
+      await test.step(`Set custom all value to "${allValue}"`, async () => {
+        const input = this.selection.getCustomAllValueInput();
+        await input.fill(allValue);
+        await input.blur();
+      });
+    },
+  };
+
   readonly groupby = {
     /** Returns the datasource picker input; it shows the selected datasource as its placeholder, not its value */
     getDatasourceInput: (): Locator =>
@@ -233,6 +264,39 @@ export class VariableOptions extends PageObject {
         const queryInput = this.query.getTestDataQueryInput();
         await queryInput.fill(query);
         await queryInput.blur();
+      });
+    },
+    /** Sets the regex filtering the returned values; the field applies it on blur */
+    setRegex: async (regex: string) => {
+      await test.step(`Set regex to "${regex}"`, async () => {
+        const regexInput = this.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2,
+          { root: this.query.getEditor() }
+        );
+        await regexInput.fill(regex);
+        await regexInput.blur();
+      });
+    },
+    /** Selects the sort order of the returned values (e.g. "Alphabetical (desc)") */
+    selectSort: async (sortLabel: string) => {
+      await test.step(`Select sort "${sortLabel}"`, async () => {
+        await this.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2,
+          { root: this.query.getEditor() }
+        ).click();
+        await this.page.getByRole('listbox').getByRole('option', { name: sortLabel, exact: true }).click();
+      });
+    },
+    /** Returns the sidebar's refresh combobox input; its value is the selected option's label */
+    getRefreshInput: (): Locator =>
+      this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('variable-type Refresh'), {
+        root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+      }).getByRole('combobox'),
+    /** Selects when the variable's options are refreshed ("On dashboard load" or "On time range change") */
+    selectRefresh: async (refreshLabel: 'On dashboard load' | 'On time range change') => {
+      await test.step(`Select refresh "${refreshLabel}"`, async () => {
+        await this.query.getRefreshInput().click();
+        await this.page.getByRole('listbox').getByRole('option', { name: refreshLabel, exact: true }).click();
       });
     },
     /** Returns the editor's "Static options (<count>)" tab */
