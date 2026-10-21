@@ -254,4 +254,9 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Type:    migrator.DB_Integer,
 		Default: "0",
 	}))
+
+	mg.AddMigration("add ordered gc lease candidates index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Name: "IDX_secret_secure_value_active_created_guid",
+		Cols: []string{"active", "created", "guid"},
+	}))
 }

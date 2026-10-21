@@ -299,13 +299,13 @@ func TestProperty(t *testing.T) {
 				require.ErrorIs(t, err, modelErr)
 
 				require.Equal(t, len(modelDeleted), len(deleted), "model and impl deleted a different number of secure values")
-				seen := make(map[types.UID]bool, 0)
+				seen := make(map[types.UID]string, 0)
 				for _, v := range modelDeleted {
-					seen[v.UID] = true
+					seen[v.UID] = fmt.Sprintf("%s/%s v%d", v.Namespace, v.Name, v.Status.Version)
 				}
 
 				for _, v := range deleted {
-					require.True(t, seen[v.UID], "impl deleted a secure value that the model did not")
+					require.NotEmpty(t, seen[v.UID], "impl deleted %s/%s v%d (%s), model deleted %v", v.Namespace, v.Name, v.Status.Version, v.UID, seen)
 				}
 			},
 			"advanceTime": func(t *rapid.T) {
