@@ -160,7 +160,7 @@ describe('AlertRulesPage', () => {
 
     await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
-    expect(await screen.findByText('No Alert rules found')).toBeInTheDocument();
+    expect(await screen.findByText('No alert rules found')).toBeInTheDocument();
   });
 
   it('sends the List search to searchAlertRules with the filter as the request body', async () => {
@@ -188,7 +188,7 @@ describe('AlertRulesPage', () => {
     await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
-    expect(screen.queryByText('No Alert rules found')).not.toBeInTheDocument();
+    expect(screen.queryByText('No alert rules found')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
@@ -277,7 +277,7 @@ describe('AlertRulesPage', () => {
 
     expect(await screen.findByText('Failed to load rules')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
-    expect(screen.queryByText('No Alert rules in this folder')).not.toBeInTheDocument();
+    expect(screen.queryByText('No alert rules in this folder')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
@@ -441,7 +441,7 @@ describe('AlertRulesPage', () => {
       reportInteractionMock.mock.calls.filter(([event]) => event === 'grafana_alerting_gma_rule_list_view');
 
     const { rerender } = await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
-    await screen.findByText('No Alert rules found');
+    await screen.findByText('No alert rules found');
     expect(pageViewCalls()).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'alert', mode: 'list' }]]);
 
     rerender(
@@ -449,7 +449,7 @@ describe('AlertRulesPage', () => {
         <AlertRulesPage />
       </Suspense>
     );
-    await screen.findByText('No Alert rules found');
+    await screen.findByText('No alert rules found');
 
     expect(pageViewCalls()).toHaveLength(1);
   });

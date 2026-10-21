@@ -5,7 +5,8 @@ import {
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
-import { asBoolean, asLabels, asOneOf, asString, asStringArray, keysOf } from '../rule-search/searchHitFields';
+import { asBoolean, asLabels, asOneOf, asString, asStringArray } from '../rule-search/searchHitFields';
+import { keysOf } from '../shared/keysOf';
 
 export interface AlertRuleSearchHit {
   uid: string;

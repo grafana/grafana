@@ -15,7 +15,7 @@ interface ListViewProps {
   filter: RuleSearchFilter;
 }
 
-export function ListView({ filter }: ListViewProps) {
+export function RecordingRulesListView({ filter }: ListViewProps) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
     useRecordingRuleSearch(filter);
 
@@ -42,7 +42,7 @@ export function ListView({ filter }: ListViewProps) {
     return (
       <EmptyState
         variant="not-found"
-        message={t('alerting.gma-rule-list.recording-rules.no-rules', 'No Recording rules found')}
+        message={t('alerting.gma-rule-list.recording-rules.no-rules', 'No recording rules found')}
       />
     );
   }

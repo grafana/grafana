@@ -9,7 +9,7 @@ import { ruleItem } from '../mocks/factories';
 import { mockFolderParents, mockFullRule, mockRuleSearch } from '../mocks/handlers';
 import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
-import { ListView } from './RecordingRulesListView';
+import { RecordingRulesListView } from './RecordingRulesListView';
 
 setupMswServer();
 
@@ -27,7 +27,7 @@ describe('RecordingRulesListView', () => {
       metadata: { totalHits: 2345, totalHitsRelation: 'eq' },
     }));
 
-    render(<ListView filter={createEmptyFilter()} />);
+    render(<RecordingRulesListView filter={createEmptyFilter()} />);
 
     expect(await screen.findByText('2,345 recording rules')).toBeInTheDocument();
     expect(screen.getByText('cpu:avg')).toBeInTheDocument();

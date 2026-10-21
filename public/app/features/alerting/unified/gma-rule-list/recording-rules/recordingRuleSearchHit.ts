@@ -3,7 +3,8 @@ import {
   type RecordingRuleRecordingRuleHealth,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-import { asBoolean, asLabels, asOneOf, asString, asStringArray, keysOf } from '../rule-search/searchHitFields';
+import { asBoolean, asLabels, asOneOf, asString, asStringArray } from '../rule-search/searchHitFields';
+import { keysOf } from '../shared/keysOf';
 
 export interface RecordingRuleSearchHit {
   uid: string;

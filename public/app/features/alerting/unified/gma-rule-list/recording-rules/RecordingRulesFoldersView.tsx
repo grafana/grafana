@@ -21,7 +21,7 @@ interface FoldersViewProps {
   folderUids: string[];
 }
 
-export function FoldersView({ folderUids }: FoldersViewProps) {
+export function RecordingRulesFoldersView({ folderUids }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { folders, isLoading, error, failure, isLoadingPage, hasNext, hasPrevious, next, previous, retry } =
     useFolderPages(folderUids);
@@ -147,7 +147,7 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
   if (items.length === 0 && !failure) {
     return (
       <li>
-        <div>{t('alerting.gma-rule-list.recording-rules.no-rules-in-folder', 'No Recording rules in this folder')}</div>
+        <div>{t('alerting.gma-rule-list.recording-rules.no-rules-in-folder', 'No recording rules in this folder')}</div>
       </li>
     );
   }

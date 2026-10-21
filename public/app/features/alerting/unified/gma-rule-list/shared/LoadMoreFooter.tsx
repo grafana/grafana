@@ -1,5 +1,5 @@
 import { Trans } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
+import { Box, Button } from '@grafana/ui';
 
 import { PagedFailureAlert } from './PagedFailureAlert';
 import { type PagedFailure } from './pagedQuery';
@@ -20,7 +20,8 @@ export function LoadMoreFooter({ hasMore, isLoadingMore, failure, onLoadMore, on
     return null;
   }
   return (
-    <div>
+    // Keeps the button at its own width inside a column Stack.
+    <Box>
       <Button
         size="sm"
         variant="secondary"
@@ -30,6 +31,6 @@ export function LoadMoreFooter({ hasMore, isLoadingMore, failure, onLoadMore, on
       >
         <Trans i18nKey="alerting.gma-rule-list.shared.load-more">Load more</Trans>
       </Button>
-    </div>
+    </Box>
   );
 }

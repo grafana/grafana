@@ -15,7 +15,7 @@ import {
   mockFolderSearch,
 } from '../mocks/handlers';
 
-import { FoldersView } from './RecordingRulesFoldersView';
+import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 
 setupMswServer();
 
@@ -39,7 +39,7 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
       })
     );
 
-    const { user } = render(<FoldersView folderUids={[]} />);
+    const { user } = render(<RecordingRulesFoldersView folderUids={[]} />);
 
     expect(await screen.findByText('Count unavailable')).toBeInTheDocument();
     // The failed lookup affects only the count: the folder row itself stays usable.
@@ -55,7 +55,7 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
   it('shows zero rules when /counts succeeds without an entry for this rule kind', async () => {
     server.use(http.get(FOLDER_COUNTS_URL, () => HttpResponse.json({ counts: [] })));
 
-    render(<FoldersView folderUids={[]} />);
+    render(<RecordingRulesFoldersView folderUids={[]} />);
 
     expect(await screen.findByText('0 recording rules')).toBeInTheDocument();
   });
@@ -64,7 +64,7 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
     server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
     mockFolderCounts('recording', { 'folder-1': 2 });
 
-    render(<FoldersView folderUids={[]} />);
+    render(<RecordingRulesFoldersView folderUids={[]} />);
 
     expect(await screen.findByText('2 recording rules')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
   ])('shows "$text" when $name and there are no folders', async ({ folderUids, text }) => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
 
-    render(<FoldersView folderUids={folderUids} />);
+    render(<RecordingRulesFoldersView folderUids={folderUids} />);
 
     expect(await screen.findByText(text)).toBeInTheDocument();
   });

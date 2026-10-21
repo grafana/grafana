@@ -15,7 +15,7 @@ import {
   mockFolderSearch,
 } from '../mocks/handlers';
 
-import { FoldersView } from './AlertRulesFoldersView';
+import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 
 const server = setupMswServer();
 
@@ -37,7 +37,7 @@ describe('AlertRulesFoldersView folder row lookups', () => {
       })
     );
 
-    const { user } = render(<FoldersView folderUids={[]} />);
+    const { user } = render(<AlertRulesFoldersView folderUids={[]} />);
 
     expect(await screen.findByText('Count unavailable')).toBeInTheDocument();
     // The failed lookup affects only the count: the folder row itself stays usable.
@@ -53,7 +53,7 @@ describe('AlertRulesFoldersView folder row lookups', () => {
   it('shows zero rules when /counts succeeds without an entry for this rule kind', async () => {
     server.use(http.get(FOLDER_COUNTS_URL, () => HttpResponse.json({ counts: [] })));
 
-    render(<FoldersView folderUids={[]} />);
+    render(<AlertRulesFoldersView folderUids={[]} />);
 
     expect(await screen.findByText('0 alert rules')).toBeInTheDocument();
   });
@@ -62,7 +62,7 @@ describe('AlertRulesFoldersView folder row lookups', () => {
     server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
     mockFolderCounts('alert', { 'folder-1': 2 });
 
-    render(<FoldersView folderUids={[]} />);
+    render(<AlertRulesFoldersView folderUids={[]} />);
 
     expect(await screen.findByText('2 alert rules')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('AlertRulesFoldersView folder row lookups', () => {
   ])('says "$text" when $name', async ({ folderUids, text }) => {
     server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
 
-    render(<FoldersView folderUids={folderUids} />);
+    render(<AlertRulesFoldersView folderUids={folderUids} />);
 
     expect(await screen.findByText(text)).toBeInTheDocument();
   });

@@ -16,9 +16,9 @@ import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
-import { FoldersView } from './AlertRulesFoldersView';
+import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
-import { ListView } from './AlertRulesListView';
+import { AlertRulesListView } from './AlertRulesListView';
 
 function AlertRulesBody({
   canSearch,
@@ -37,9 +37,9 @@ function AlertRulesBody({
     );
   }
   if (mode === 'folders') {
-    return <FoldersView folderUids={filter.namespaces} />;
+    return <AlertRulesFoldersView folderUids={filter.namespaces} />;
   }
-  return <ListView filter={filter} />;
+  return <AlertRulesListView filter={filter} />;
 }
 
 function AlertRulesPage() {

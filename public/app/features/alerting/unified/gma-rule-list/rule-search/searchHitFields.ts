@@ -11,11 +11,6 @@ export function asOneOf<T extends string>(value: unknown, values: readonly T[]):
   return values.find((candidate) => candidate === value);
 }
 
-/** The keys of a record keyed by a union, so a union member that is missing or extra fails the type check. */
-export function keysOf<T extends string>(record: Record<T, true>): T[] {
-  return Object.keys(record).filter((key): key is T => key in record);
-}
-
 export function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }

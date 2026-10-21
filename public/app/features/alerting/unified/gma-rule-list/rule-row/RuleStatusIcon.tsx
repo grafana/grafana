@@ -17,7 +17,7 @@ type RuleStatusIconProps =
  * their own shapes, because their circles were confused at row size. The old list keeps StateIcon unchanged.
  */
 export function RuleStatusIcon(props: RuleStatusIconProps) {
-  const status = getStatus(resolveStatusName(props));
+  const status = STATUSES[resolveStatusName(props)]();
 
   return (
     <Tooltip content={status.label} placement="right">
@@ -31,17 +31,6 @@ export function RuleStatusIcon(props: RuleStatusIconProps) {
 }
 
 const ICON_SIZE = 15;
-
-type StatusName =
-  | 'paused'
-  | 'error'
-  | 'no-data'
-  | 'recording'
-  | 'firing'
-  | 'pending'
-  | 'recovering'
-  | 'normal'
-  | 'unavailable';
 
 interface Status {
   icon: IconName;
@@ -67,48 +56,48 @@ function resolveStatusName(props: RuleStatusIconProps): StatusName {
   return props.state ? ALERT_STATE_STATUS[props.state] : 'unavailable';
 }
 
-function getStatus(name: StatusName): Status {
-  switch (name) {
-    case 'paused':
-      return { icon: 'pause', color: 'warning', label: t('alerting.gma-rule-list.status.paused', 'Paused') };
-    case 'error':
-      return {
-        icon: 'times-circle',
-        color: 'error',
-        label: t('alerting.gma-rule-list.status.error', 'Failed to evaluate rule'),
-      };
-    case 'no-data':
-      return {
-        icon: 'exclamation-triangle',
-        color: 'warning',
-        label: t('alerting.gma-rule-list.status.no-data', 'Insufficient data'),
-      };
-    case 'recording':
-      return {
-        icon: 'square-shape',
-        color: 'success',
-        label: t('alerting.gma-rule-list.status.recording', 'Recording'),
-      };
-    case 'firing':
-      return { icon: 'fire', color: 'error', label: t('alerting.gma-rule-list.status.firing', 'Firing') };
-    case 'pending':
-      return { icon: 'hourglass', color: 'warning', label: t('alerting.gma-rule-list.status.pending', 'Pending') };
-    case 'recovering':
-      return {
-        icon: 'exclamation-circle',
-        color: 'warning',
-        label: t('alerting.gma-rule-list.status.recovering', 'Recovering'),
-      };
-    case 'normal':
-      return { icon: 'check-circle', color: 'success', label: t('alerting.gma-rule-list.status.normal', 'Normal') };
-    case 'unavailable':
-      return {
-        icon: 'circle',
-        color: 'secondary',
-        label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
-      };
-  }
-}
+type StatusName = keyof typeof STATUSES;
+
+// Labels are functions so they translate when shown, not when the module loads.
+const STATUSES = {
+  paused: () => ({ icon: 'pause', color: 'warning', label: t('alerting.gma-rule-list.status.paused', 'Paused') }),
+  error: () => ({
+    icon: 'times-circle',
+    color: 'error',
+    label: t('alerting.gma-rule-list.status.error', 'Failed to evaluate rule'),
+  }),
+  'no-data': () => ({
+    icon: 'exclamation-triangle',
+    color: 'warning',
+    label: t('alerting.gma-rule-list.status.no-data', 'Insufficient data'),
+  }),
+  recording: () => ({
+    icon: 'square-shape',
+    color: 'success',
+    label: t('alerting.gma-rule-list.status.recording', 'Recording'),
+  }),
+  firing: () => ({ icon: 'fire', color: 'error', label: t('alerting.gma-rule-list.status.firing', 'Firing') }),
+  pending: () => ({
+    icon: 'hourglass',
+    color: 'warning',
+    label: t('alerting.gma-rule-list.status.pending', 'Pending'),
+  }),
+  recovering: () => ({
+    icon: 'exclamation-circle',
+    color: 'warning',
+    label: t('alerting.gma-rule-list.status.recovering', 'Recovering'),
+  }),
+  normal: () => ({
+    icon: 'check-circle',
+    color: 'success',
+    label: t('alerting.gma-rule-list.status.normal', 'Normal'),
+  }),
+  unavailable: () => ({
+    icon: 'circle',
+    color: 'secondary',
+    label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
+  }),
+} satisfies Record<string, () => Status>;
 
 // Keyed by the generated union, so a state the API adds fails the type check until it has an icon.
 const ALERT_STATE_STATUS: Record<AlertRuleAlertRuleState, StatusName> = {

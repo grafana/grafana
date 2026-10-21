@@ -94,7 +94,6 @@ export function RuleListItemDescription({ error, summary }: RuleListItemDescript
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     listStyle: 'none',
-    position: 'relative',
     padding: theme.spacing(1),
 
     // Not action.hover: it drops secondary text below 4.5:1 contrast in the dark theme.
@@ -118,6 +117,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   overflow: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    color: 'inherit',
   }),
 });

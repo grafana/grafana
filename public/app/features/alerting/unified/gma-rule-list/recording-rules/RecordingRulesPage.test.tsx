@@ -210,7 +210,7 @@ describe('RecordingRulesPage', () => {
 
     await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
-    await screen.findByText('No Recording rules found');
+    await screen.findByText('No recording rules found');
 
     const pageViewCalls = reportInteractionMock.mock.calls.filter(
       ([event]) => event === 'grafana_alerting_gma_rule_list_view'

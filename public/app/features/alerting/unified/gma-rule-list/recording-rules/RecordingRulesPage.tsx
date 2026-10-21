@@ -16,9 +16,9 @@ import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
-import { FoldersView } from './RecordingRulesFoldersView';
+import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 import { RecordingRulesHeaderActions } from './RecordingRulesHeaderActions';
-import { ListView } from './RecordingRulesListView';
+import { RecordingRulesListView } from './RecordingRulesListView';
 
 function RecordingRulesBody({
   canSearch,
@@ -37,9 +37,9 @@ function RecordingRulesBody({
     );
   }
   if (mode === 'folders') {
-    return <FoldersView folderUids={filter.namespaces} />;
+    return <RecordingRulesFoldersView folderUids={filter.namespaces} />;
   }
-  return <ListView filter={filter} />;
+  return <RecordingRulesListView filter={filter} />;
 }
 
 function RecordingRulesPage() {

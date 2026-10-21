@@ -10,7 +10,7 @@ import { ruleItem } from '../mocks/factories';
 import { mockFolderParents, mockFullRule, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
 import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
-import { ListView } from './AlertRulesListView';
+import { AlertRulesListView } from './AlertRulesListView';
 
 const server = setupMswServer();
 
@@ -20,7 +20,7 @@ function ListWithFilter() {
   return (
     <>
       <button onClick={() => setFilter({ ...createEmptyFilter(), text: ['cpu'] })}>Filter by name</button>
-      <ListView filter={filter} />
+      <AlertRulesListView filter={filter} />
     </>
   );
 }
@@ -81,7 +81,7 @@ describe('AlertRulesListView', () => {
       })
     );
 
-    render(<ListView filter={createEmptyFilter()} />);
+    render(<AlertRulesListView filter={createEmptyFilter()} />);
 
     expect(await screen.findByRole('list', { name: 'Loading rules' })).toHaveAttribute('aria-busy', 'true');
     releasePage();
@@ -95,7 +95,7 @@ describe('AlertRulesListView', () => {
       metadata: { totalHits: 1000, totalHitsRelation: 'lte' },
     }));
 
-    render(<ListView filter={createEmptyFilter()} />);
+    render(<AlertRulesListView filter={createEmptyFilter()} />);
 
     expect(await screen.findByText('1,000+ alert rules')).toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe('AlertRulesListView', () => {
             metadata: { totalHits: 2, totalHitsRelation: 'eq', continue: 'tok' },
           }
     );
-    render(<ListView filter={createEmptyFilter()} />);
+    render(<AlertRulesListView filter={createEmptyFilter()} />);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
 

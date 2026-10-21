@@ -15,7 +15,7 @@ interface ListViewProps {
   filter: RuleSearchFilter;
 }
 
-export function ListView({ filter }: ListViewProps) {
+export function AlertRulesListView({ filter }: ListViewProps) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
     useAlertRuleSearch(filter);
 
@@ -42,7 +42,7 @@ export function ListView({ filter }: ListViewProps) {
     return (
       <EmptyState
         variant="not-found"
-        message={t('alerting.gma-rule-list.alert-rules.no-rules', 'No Alert rules found')}
+        message={t('alerting.gma-rule-list.alert-rules.no-rules', 'No alert rules found')}
       />
     );
   }
