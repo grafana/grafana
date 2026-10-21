@@ -98,7 +98,6 @@ type secureValueKV struct {
 	OwnerReferenceName       string            `json:"owner_reference_name,omitempty"`
 
 	// Kubernetes Status
-	Active  bool  `json:"active"`
 	Version int64 `json:"version"`
 
 	// Spec
@@ -109,11 +108,10 @@ type secureValueKV struct {
 	ExternalID  string   `json:"external_id"`
 
 	// Internal fields, not exposed to clients
-	// Gargbage collection
-	LeaseToken    string `json:"lease_token,omitempty"`
-	LeaseCreated  int64  `json:"lease_created,omitempty"`
-	LeaseDuration int64  `json:"lease_duration"`
-	GCAttempts    int    `json:"gc_attempts"`
+	// Garbage collection
+	LeaseCreated  int64 `json:"lease_created,omitempty"`
+	LeaseDuration int64 `json:"lease_duration"`
+	GCAttempts    int   `json:"gc_attempts"`
 }
 
 // toKubernetes converts a secureValueKV to a Kubernetes SecureValue
@@ -234,7 +232,6 @@ func fromKubernetes(createdAt, updatedAt int64, keeper string, sv *v1beta1.Secur
 		OwnerReferenceAPIVersion: ownerReferenceAPIVersion,
 		OwnerReferenceKind:       ownerReferenceKind,
 		OwnerReferenceName:       ownerReferenceName,
-		Active:                   false,
 		Version:                  sv.Status.Version,
 		Description:              sv.Spec.Description,
 		Keeper:                   keeper,
@@ -341,8 +338,6 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		value.CreatedBy = createdBy
 	}
 
-	value.UpdatedBy = actorUID
-
 	buffer, err := json.Marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("json marshaling secure value: %w", err)
@@ -378,7 +373,6 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 	return newVersionK8s, nil
 }
 
-// TODO: make sure deletion cleans everything up
 func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contracts.SecureValueIdentifier) (err error) {
 	start := s.clock.Now()
 	inputStr := fmt.Sprintf("%+v", in)
@@ -460,8 +454,6 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 		leaseTTL = 5 * time.Minute
 	)
 
-	leaseToken := uuid.NewV4().String()
-
 	now := s.clock.Now().UTC().Unix()
 
 	// First, collect all eligible items with their keys
@@ -480,6 +472,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 	for gcKey, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: gcKeyPrefix,
 		EndKey:   resource.PrefixRangeEnd(gcKeyPrefix),
+		Limit:    1024,
 	}) {
 		if err != nil {
 			return nil, fmt.Errorf("listing gc keys in the kv store: %w", err)
@@ -549,11 +542,9 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 		}
 		leases = append(leases, l)
 
-		item.value.LeaseToken = leaseToken
 		item.value.LeaseCreated = now
 		item.value.LeaseDuration = int64(leaseTTL.Seconds() * math.Pow(2, float64(item.value.GCAttempts)))
 		toUpdate = append(toUpdate, item)
-
 	}
 
 	result := make([]v1beta1.SecureValue, 0, min(int(maxBatchSize), len(eligible)))

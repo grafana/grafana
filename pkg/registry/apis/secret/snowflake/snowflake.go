@@ -12,7 +12,6 @@ type Snowflake struct {
 
 func New() *Snowflake {
 	node, _ := snowflake.NewNode(rand.Int63n(1024))
-	node.Generate()
 	return &Snowflake{node: node}
 }
 

@@ -193,8 +193,8 @@ func newStorageMetrics() *StorageMetrics {
 		SecureValueLeaseInactiveDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       namespace,
 			Subsystem:                       subsystem,
-			Name:                            "secure_value_lease_inactive",
-			Help:                            "Duration of call to lease inactive secure valuers",
+			Name:                            "secure_value_lease_inactive_duration_seconds",
+			Help:                            "Duration of call to lease inactive secure values",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
@@ -272,8 +272,8 @@ func newStorageMetrics() *StorageMetrics {
 		KVSecureValueLeaseInactiveDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       namespace,
 			Subsystem:                       subsystem,
-			Name:                            "kv_secure_value_lease_inactive",
-			Help:                            "Duration of call to lease inactive secure valuers",
+			Name:                            "kv_secure_value_lease_inactive_duration_seconds",
+			Help:                            "Duration of call to lease inactive secure values",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,

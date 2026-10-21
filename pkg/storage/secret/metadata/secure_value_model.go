@@ -43,7 +43,7 @@ type secureValueDB struct {
 	Ref         sql.NullString
 	ExternalID  string
 
-	// Gargbage collection
+	// Garbage collection
 	GCAttempts int
 }
 

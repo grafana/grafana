@@ -108,8 +108,8 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 
 	// Create doesn't read a secure value before creating a new version
 	// so there's no observed version to pass.
-	observedVersion := 0
-	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID, int64(observedVersion))
+	const observedVersion = 0
+	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID, observedVersion)
 }
 
 func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, sync bool, updateErr error) {
