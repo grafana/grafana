@@ -28,16 +28,20 @@ let natural = { left: 312, top: 500, width: 400, height: 244 };
 /** How far the handle sticks out past the box's left edge (0: inside the box). */
 let handleOutset = 0;
 const onHandleClick = jest.fn();
+const onDock = jest.fn();
 
 function Floating() {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
-  useFloatingDrag(element);
+  const dockPreview = useFloatingDrag(element, { dockWidth: 360, onDock });
   return (
-    <div ref={setElement} data-testid="floating">
-      <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }} onClick={onHandleClick}>
-        Move
-      </button>
-    </div>
+    <>
+      <div ref={setElement} data-testid="floating">
+        <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }} onClick={onHandleClick}>
+          Move
+        </button>
+      </div>
+      {dockPreview && <div data-testid="dock-preview">{JSON.stringify(dockPreview)}</div>}
+    </>
   );
 }
 
@@ -45,6 +49,7 @@ beforeEach(() => {
   natural = { left: 312, top: 500, width: 400, height: 244 };
   handleOutset = 0;
   onHandleClick.mockClear();
+  onDock.mockClear();
   jest.mocked(reportInteraction).mockClear();
   window.localStorage.clear();
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
@@ -164,6 +169,49 @@ it('does not glide when let go away from the edges, or moved with the arrow keys
   // Left edge at 20: inside the snap distance, but keys never snap.
   expect(floating().style.transform).toBe('translate(-292px, -200px)');
   expect(floating()).not.toHaveAttribute('data-snapping');
+});
+
+it('previews the docked sidebar while the pointer is at the right edge, and docks when let go there', () => {
+  render(<Floating />);
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+  fireEvent.pointerMove(handle(), { clientX: 900, clientY: 300 });
+  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+
+  // Within 32px of the window's right edge (1024).
+  fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
+  expect(JSON.parse(screen.getByTestId('dock-preview').textContent ?? '')).toEqual({
+    top: 0,
+    left: 664,
+    width: 360,
+    height: 768,
+  });
+
+  fireEvent.pointerUp(handle(), { clientX: 1000, clientY: 300 });
+  fireEvent.click(handle());
+  expect(onDock).toHaveBeenCalledTimes(1);
+  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+  expect(onHandleClick).not.toHaveBeenCalled();
+  expect(reportInteraction).not.toHaveBeenCalled();
+  // Docking does not remember where the drag left the box.
+  expect(window.localStorage.getItem('grafana.navigation.extensionSidebarFloatingOffset')).toBeNull();
+});
+
+it('does not dock when the pointer leaves the right edge before letting go, or the drag is cancelled', () => {
+  render(<Floating />);
+
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+  fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
+  fireEvent.pointerMove(handle(), { clientX: 800, clientY: 300 });
+  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+  fireEvent.pointerUp(handle(), { clientX: 800, clientY: 300 });
+
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+  fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
+  fireEvent.pointerCancel(handle(), { clientX: 1000, clientY: 300 });
+  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+
+  expect(onDock).not.toHaveBeenCalled();
 });
 
 it('keeps a handle that sits outside the box on the page too, and snaps by it', () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -19,6 +19,8 @@ const GUTTER = 8;
 const DRAG_THRESHOLD = 4;
 /** Let go closer than this to an edge of the page content, the container snaps to that edge. */
 const SNAP_DISTANCE = 48;
+/** A drag whose pointer reaches this close to the page content's right edge docks the sidebar when let go. */
+const DOCK_DISTANCE = 32;
 const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
 /** How long the container glides to an edge it snaps to; ExtensionSidebar's transition uses it too. */
@@ -41,6 +43,20 @@ interface Placement extends Offset {
   anchor: Anchor;
 }
 
+/** Where the docked sidebar would go, in viewport coordinates, shown while a drag would dock it. */
+export interface DockPreview {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+interface FloatingDragOptions {
+  /** The docked sidebar's width, for the preview. */
+  dockWidth: number;
+  onDock: () => void;
+}
+
 const ORIGIN: Offset = { x: 0, y: 0 };
 const DEFAULT_PLACEMENT: Placement = { ...ORIGIN, anchor: 'bottom' };
 
@@ -53,15 +69,23 @@ function reportMoved(method: 'drag' | 'reset', anchor: Anchor): void {
  * translation of `element` from that place, kept fully inside the page content (with a gutter), and
  * re-clamped when the window or the element resizes. A pointer drag follows the pointer and the container
  * stays where it is let go, unless that is near an edge of the page content: then it glides to that edge,
- * inset as far as the default place is from the bottom. The arrow keys move it in steps without snapping.
- * Left in the top half of the page, it keeps its
- * top edge and grows downward; in the bottom half, it keeps its bottom edge and grows upward. The placement
- * is remembered in local storage, so floating again, or a reload, puts it back; a re-clamp never overwrites
- * it, so it returns once there is room.
+ * inset as far as the default place is from the bottom. Pushing the pointer to the right edge of the page
+ * docks the sidebar instead: the returned preview shows where while the pointer stays there, and letting go
+ * calls `onDock`. The arrow keys move it in steps without snapping or docking. Left in the top half of the
+ * page, it keeps its top edge and grows downward; in the bottom half, it keeps its bottom edge and grows
+ * upward. The placement is remembered in local storage, so floating again, or a reload, puts it back; a
+ * re-clamp never overwrites it, so it returns once there is room.
  */
-export function useFloatingDrag(element: HTMLElement | null): void {
+export function useFloatingDrag(
+  element: HTMLElement | null,
+  { dockWidth, onDock }: FloatingDragOptions
+): DockPreview | null {
   const offsetRef = useRef<Offset>(ORIGIN);
   const chosenRef = useRef<Placement>(DEFAULT_PLACEMENT);
+  const [dockPreview, setDockPreview] = useState<DockPreview | null>(null);
+  // The listeners are attached once per element, so they read the latest options through a ref.
+  const optionsRef = useRef({ dockWidth, onDock });
+  optionsRef.current = { dockWidth, onDock };
 
   const apply = useCallback(
     (next: Offset) => {
@@ -120,7 +144,9 @@ export function useFloatingDrag(element: HTMLElement | null): void {
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(reclamp);
     observer?.observe(element);
 
-    let drag: { pointerId: number; x: number; y: number; from: Offset; dragging: boolean } | undefined;
+    let drag:
+      | { pointerId: number; x: number; y: number; from: Offset; dragging: boolean; docking: boolean }
+      | undefined;
     let swallowClick = false;
     let snapTimer: number | undefined;
     const endSnap = () => {
@@ -145,6 +171,7 @@ export function useFloatingDrag(element: HTMLElement | null): void {
         y: event.clientY,
         from: offsetRef.current,
         dragging: false,
+        docking: false,
       };
       swallowClick = false;
       handle.setPointerCapture?.(event.pointerId);
@@ -164,12 +191,23 @@ export function useFloatingDrag(element: HTMLElement | null): void {
       drag.dragging = true;
       element.setAttribute('data-dragging', '');
       apply({ x: drag.from.x + dx, y: drag.from.y + dy });
+      const preview = dockPreviewAt(event.clientX, optionsRef.current.dockWidth);
+      if (Boolean(preview) !== drag.docking) {
+        drag.docking = Boolean(preview);
+        setDockPreview(preview);
+      }
     };
     const onPointerEnd = (event: PointerEvent) => {
       if (!drag || event.pointerId !== drag.pointerId) {
         return;
       }
-      if (drag.dragging) {
+      if (drag.docking) {
+        setDockPreview(null);
+      }
+      if (drag.dragging && drag.docking && event.type === 'pointerup') {
+        swallowClick = true;
+        optionsRef.current.onDock();
+      } else if (drag.dragging) {
         // The handle's own click must not fire after a move.
         swallowClick = true;
         const snapped = snapToEdges(element, offsetRef.current);
@@ -229,6 +267,7 @@ export function useFloatingDrag(element: HTMLElement | null): void {
     element.addEventListener('keydown', onKeyDown);
     return () => {
       endSnap();
+      setDockPreview(null);
       window.removeEventListener('resize', reclamp);
       observer?.disconnect();
       element.removeEventListener('pointerdown', onPointerDown);
@@ -240,6 +279,18 @@ export function useFloatingDrag(element: HTMLElement | null): void {
       element.removeEventListener('keydown', onKeyDown);
     };
   }, [element, apply, place, remember]);
+
+  return dockPreview;
+}
+
+/** Where the docked sidebar would go when the pointer is at `clientX`, or null when it is not near the right edge. */
+function dockPreviewAt(clientX: number, dockWidth: number): DockPreview | null {
+  const page = pageRect();
+  if (clientX < page.right - DOCK_DISTANCE) {
+    return null;
+  }
+  const width = Math.min(dockWidth, page.right - page.left);
+  return { top: page.top, left: page.right - width, width, height: page.bottom - page.top };
 }
 
 /** A stored `{ x, y }` without an anchor predates top anchoring, and is an offset from the bottom centre. */
@@ -346,7 +397,7 @@ function clampOffset(element: HTMLElement, current: Offset, next: Offset): Offse
 function contentEdges(): { left: number; top: number; right: number; bottom: number } {
   const element = document.getElementById('pageContent');
   if (!element) {
-    return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+    return pageRect();
   }
   const rect = element.getBoundingClientRect();
   const style = window.getComputedStyle(element);
@@ -357,6 +408,16 @@ function contentEdges(): { left: number; top: number; right: number; bottom: num
     right: rect.left + rect.width - padding(style.paddingRight),
     bottom: rect.top + rect.height - padding(style.paddingBottom),
   };
+}
+
+/** The page content's border box, or the window's when the page has no content element. */
+function pageRect(): { left: number; top: number; right: number; bottom: number } {
+  const element = document.getElementById('pageContent');
+  if (!element) {
+    return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+  }
+  const { left, top, width, height } = element.getBoundingClientRect();
+  return { left, top, right: left + width, bottom: top + height };
 }
 
 /**

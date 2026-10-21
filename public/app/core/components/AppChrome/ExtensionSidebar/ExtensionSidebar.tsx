@@ -1,13 +1,14 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { css as cssReact, Global } from '@emotion/react';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
-import { type ExtensionSidebarPresentation } from './extensionSidebarLayout';
+import { type ExtensionSidebarPresentation, setExtensionSidebarPresentation } from './extensionSidebarLayout';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
 import { FLOATING_DRAG_HANDLE_ATTRIBUTE, FLOATING_SNAP_DURATION_MS, useFloatingDrag } from './useFloatingDrag';
 
@@ -19,10 +20,13 @@ type ExtensionSidebarComponentProps = {
 export function ExtensionSidebar() {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const { dockedComponentId, presentation, props = {} } = useExtensionSidebarContext();
+  const { dockedComponentId, presentation, extensionSidebarWidth, props = {} } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
   const floating = presentation === 'floating';
-  useFloatingDrag(floating ? wrapper : null);
+  const dockPreview = useFloatingDrag(floating ? wrapper : null, {
+    dockWidth: extensionSidebarWidth,
+    onDock: dockExtensionSidebar,
+  });
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
@@ -55,8 +59,18 @@ export function ExtensionSidebar() {
         {/* The presentation is a prop, not a key: changing it re-renders the same instance. */}
         <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
       </div>
+      {/* Portalled: the floating container's transform would otherwise position it. */}
+      {dockPreview &&
+        createPortal(
+          <div className={styles.dockPreview} style={dockPreview} data-testid="extension-sidebar-dock-preview" />,
+          document.body
+        )}
     </div>
   );
+}
+
+function dockExtensionSidebar() {
+  setExtensionSidebarPresentation('docked');
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -123,5 +137,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1,
       minHeight: 0,
     }),
+    // Above the floating container (modalBackdrop + 1), so the sidebar shows through it while it would dock.
+    dockPreview: css({
+      position: 'fixed',
+      zIndex: theme.zIndex.modalBackdrop + 2,
+      pointerEvents: 'none',
+      backgroundColor: theme.colors.primary.transparent,
+      borderLeft: `1px solid ${theme.colors.primary.border}`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${dockPreviewFadeIn} ${FLOATING_SNAP_DURATION_MS}ms ${theme.transitions.easing.easeOut}`,
+      },
+    }),
   };
 };
+
+const dockPreviewFadeIn = keyframes({
+  from: { opacity: 0 },
+  to: { opacity: 1 },
+});
