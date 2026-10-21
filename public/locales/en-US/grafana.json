@@ -1448,7 +1448,10 @@
         "recording-rules_other": "{{formatted}} recording rules"
       },
       "shared": {
+        "load-more": "Load more",
+        "load-more-error": "Failed to load more results",
         "loading-rules": "Loading rules",
+        "refresh-error": "Failed to refresh results",
         "retry": "Retry"
       },
       "status": {
