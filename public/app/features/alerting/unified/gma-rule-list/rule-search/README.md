@@ -60,6 +60,7 @@ parser applies a token when one of the page's definitions accepts it.
   the search help lists them, with each kind's key type.
 - `parser.ts`: `parse(query, kind)`, the parsing and feedback steps above. Label matchers reuse
   `parseMatcher` from `utils/matchers.ts`, as RuleList.v2 does.
+- `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and its filter.
 
 ## New filters
 
