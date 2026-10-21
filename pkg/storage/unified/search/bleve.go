@@ -2440,23 +2440,7 @@ func (b *bleveIndex) Search(
 		b.observeSearchResultFormat(response)
 	}()
 
-	var federate []resource.ResourceIndex
-	folderIndex := b
-	if !b.key.IsGlobal() && (b.key.Group != folderv1.GROUP || b.key.Resource != folderv1.RESOURCE) {
-		folderIndex = nil
-	}
-	if indexes != nil {
-		federate = indexes.Federated
-		if indexes.Folders != nil && !b.key.IsGlobal() {
-			typed, ok := indexes.Folders.(*bleveIndex)
-			if !ok || typed == nil || typed.key.Namespace != b.key.Namespace || typed.key.Group != folderv1.GROUP || typed.key.Resource != folderv1.RESOURCE {
-				return nil, fmt.Errorf("folder index must hold folders of the searched namespace")
-			}
-			folderIndex = typed
-		}
-	}
-
-	index, err := b.getIndex(ctx, req, federate)
+	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
 	if err != nil {
 		return nil, err
 	}
@@ -2496,10 +2480,6 @@ func (b *bleveIndex) Search(
 	}
 
 	conversionStarts := time.Now()
-	if e := b.validateSearchRequest(req); e != nil {
-		response.Error = e
-		return response, nil
-	}
 	// Cursor fallback converts the request again; keep the same folder set.
 	filters, e := b.filterQueries(ctx, req, folderIndex)
 	if e != nil {
@@ -3043,16 +3023,31 @@ func (b *bleveIndex) verifyKey(key *resourcepb.ResourceKey) *resourcepb.ErrorRes
 	return nil
 }
 
-func (b *bleveIndex) getIndex(
+func (b *bleveIndex) getIndexes(
 	ctx context.Context,
 	req *resourcepb.ResourceSearchRequest,
-	federate []resource.ResourceIndex,
-) (bleve.Index, error) {
-	_, span := tracer.Start(ctx, "search.bleveIndex.getIndex")
+	indexes *resource.SearchIndexes,
+) (bleve.Index, *bleveIndex, error) {
+	_, span := tracer.Start(ctx, "search.bleveIndex.getIndexes")
 	defer span.End()
 
+	var federate []resource.ResourceIndex
+	folderIndex := b
+	if !b.key.IsGlobal() && (b.key.Group != folderv1.GROUP || b.key.Resource != folderv1.RESOURCE) {
+		folderIndex = nil
+	}
+	if indexes != nil {
+		federate = indexes.Federated
+		if indexes.Folders != nil && !b.key.IsGlobal() {
+			typed, ok := indexes.Folders.(*bleveIndex)
+			if !ok || typed == nil || typed.key.Namespace != b.key.Namespace || typed.key.Group != folderv1.GROUP || typed.key.Resource != folderv1.RESOURCE {
+				return nil, nil, fmt.Errorf("folder index must hold folders of the searched namespace")
+			}
+			folderIndex = typed
+		}
+	}
 	if len(req.Federated) != len(federate) {
-		return nil, fmt.Errorf("federation is misconfigured")
+		return nil, nil, fmt.Errorf("federation is misconfigured")
 	}
 
 	// Search across resources using
@@ -3062,16 +3057,16 @@ func (b *bleveIndex) getIndex(
 		for i, extra := range federate {
 			typedindex, ok := extra.(*bleveIndex)
 			if !ok {
-				return nil, fmt.Errorf("federated indexes must be the same type")
+				return nil, nil, fmt.Errorf("federated indexes must be the same type")
 			}
 			if typedindex.verifyKey(req.Federated[i]) != nil {
-				return nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
+				return nil, nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
 			}
 			all = append(all, typedindex.index)
 		}
-		return bleve.NewIndexAlias(all...), nil
+		return bleve.NewIndexAlias(all...), folderIndex, nil
 	}
-	return b.index, nil
+	return b.index, folderIndex, nil
 }
 
 func (b *bleveIndex) validateSearchRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
@@ -3621,6 +3616,9 @@ var declaredTopLevelNames = func() map[string]bool {
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
 func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest, folderIndex *bleveIndex) ([]query.Query, *resourcepb.ErrorResult) {
+	if err := b.validateSearchRequest(req); err != nil {
+		return nil, err
+	}
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
