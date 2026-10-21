@@ -117,7 +117,8 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
   };
 
   // Unknown signals and an unreliable plugin list are transient, so an empty verdict built on them says nothing.
-  const conclusive = selection.baseRow !== 'unknown' && listReady;
+  // Every signal counts: a gated probe (span metrics, synthetics, IRM) hides its card without marking the row unknown.
+  const conclusive = listReady && Object.values(signals).every((status) => status !== 'unknown');
   return { selection, recommendations, recommendationsBySolution, conclusive };
 }
 

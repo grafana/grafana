@@ -195,6 +195,14 @@ describe('Recommendations', () => {
     expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
   });
 
+  it('does not remember an empty verdict built on an unknown gated probe, which the matrix hides without marking the row', async () => {
+    // Everything active and App Observability undecided: the only card the row could offer is withheld, not ruled out.
+    const undecided: SolutionState = { ...SATURATED_STATE, spanMetrics: 'unknown' };
+    const { container } = render(<Recommendations solutions={homepageSolutions(undecided)} />);
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBeNull();
+  });
+
   it('keeps this visit’s reservation when another tab stores an empty verdict mid-selection', async () => {
     const state = deferred<SolutionState>();
     render(
