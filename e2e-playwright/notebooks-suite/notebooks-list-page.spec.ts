@@ -190,6 +190,22 @@ test.describe('Notebooks list pagination', () => {
 });
 
 test.describe('Notebooks list created-by-me filter', () => {
+  let notebookUid: string;
+
+  test.beforeAll(async ({ request }) => {
+    const response = await request.post(NOTEBOOKS_API, {
+      data: notebookResource(`E2E Notebook Created By Me ${SUFFIX}`, []),
+    });
+    expect(response.ok()).toBeTruthy();
+    notebookUid = (await response.json()).metadata.name;
+  });
+
+  test.afterAll(async ({ request }) => {
+    if (notebookUid) {
+      await request.delete(`${NOTEBOOKS_API}/${notebookUid}`);
+    }
+  });
+
   test('scopes the search request to the current user when checked', async ({ page, selectors }) => {
     await page.goto('/notebooks');
 
