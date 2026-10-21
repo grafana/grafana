@@ -10,7 +10,14 @@ it.each([
   ['grafana-metricsdrilldown-app', 'metrics_drilldown'],
   ['grafana-exploretraces-app', 'traces_drilldown'],
   ['grafana-pyroscope-app', 'profiles_drilldown'],
-  ['grafana-k6-app', 'k6'],
+  ['k6-app', 'k6'],
+  ['grafana-irm-app', 'irm'],
+  ['grafana-slo-app', 'slo'],
+  ['grafana-synthetic-monitoring-app', 'synthetic_monitoring'],
+  ['grafana-k8s-app', 'kubernetes'],
+  ['grafana-dbo11y-app', 'database_o11y'],
+  ['grafana-csp-app', 'cloud_provider_o11y'],
+  ['grafana-kowalski-app', 'frontend_o11y'],
 ])('attributes %s captures to %s without recording the route', (pluginId, expected) => {
   locationService.push(`/a/${pluginId}/private-service-name?query=private-query`);
   expect(readNotebookSourceApp(NOTEBOOK_ENTRY_POINT.PLUGIN)).toBe(expected);
@@ -20,7 +27,7 @@ it('works when Grafana is served under a subpath', () => {
   const original = config.appSubUrl;
   config.appSubUrl = '/grafana';
   try {
-    locationService.push('/grafana/a/grafana-k6-app/tests/123');
+    locationService.push('/grafana/a/k6-app/tests/123');
     expect(readNotebookSourceApp(NOTEBOOK_ENTRY_POINT.PLUGIN)).toBe('k6');
   } finally {
     config.appSubUrl = original;

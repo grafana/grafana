@@ -9,7 +9,14 @@ const SOURCE_APPS = {
   'grafana-metricsdrilldown-app': 'metrics_drilldown',
   'grafana-exploretraces-app': 'traces_drilldown',
   'grafana-pyroscope-app': 'profiles_drilldown',
-  'grafana-k6-app': 'k6',
+  'k6-app': 'k6',
+  'grafana-irm-app': 'irm',
+  'grafana-slo-app': 'slo',
+  'grafana-synthetic-monitoring-app': 'synthetic_monitoring',
+  'grafana-k8s-app': 'kubernetes',
+  'grafana-dbo11y-app': 'database_o11y',
+  'grafana-csp-app': 'cloud_provider_o11y',
+  'grafana-kowalski-app': 'frontend_o11y',
 } as const;
 
 export type NotebookSourceApp = (typeof SOURCE_APPS)[keyof typeof SOURCE_APPS] | 'other_plugin';

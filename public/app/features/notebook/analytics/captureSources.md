@@ -2,7 +2,7 @@
 
 The shared Add to notebook picker snapshots the source app when it opens. The same source follows a successful create, each cell appended to an existing notebook, and failed submissions. It is not inferred again after a network request or navigation.
 
-Existing `source: plugin` remains unchanged. The optional `source_app` property is a bounded label: `agent_o11y`, `app_o11y`, `logs_drilldown`, `metrics_drilldown`, `traces_drilldown`, `profiles_drilldown`, `k6`, or `other_plugin`. Routes, service names, test names, queries and notebook content are not added to analytics. Non-plugin events omit the property.
+Existing `source: plugin` remains unchanged. The optional `source_app` property is a bounded label: `agent_o11y`, `app_o11y`, `logs_drilldown`, `metrics_drilldown`, `traces_drilldown`, `profiles_drilldown`, `k6`, `irm`, `slo`, `synthetic_monitoring`, `kubernetes`, `database_o11y`, `cloud_provider_o11y`, `frontend_o11y`, or `other_plugin`. Routes, service names, test names, queries and notebook content are not added to analytics. Non-plugin events omit the property.
 
 ## Events
 
