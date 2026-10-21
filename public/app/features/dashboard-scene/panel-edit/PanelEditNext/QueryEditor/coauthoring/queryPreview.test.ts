@@ -1,3 +1,5 @@
+import { act, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
 import { NEVER, of } from 'rxjs';
 
 import {
@@ -6,14 +8,16 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
+  type PanelProps,
   toDataFrame,
 } from '@grafana/data';
-import { setRunRequest } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { sceneGraph, SceneDataTransformer, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getMockDataSource } from 'app/features/query/state/mocks/mockDataSource';
 
-import { startQueryPreview } from './queryPreview';
+import { type QueryPreview, startQueryPreview } from './queryPreview';
 
 const queryA: DataQuery = { refId: 'A' };
 const queryB: DataQuery = { refId: 'B' };
@@ -22,6 +26,12 @@ const optionOne: DataQuery & { expr: string } = { refId: 'A', expr: 'increase(ht
 const optionTwo: DataQuery & { expr: string } = { refId: 'A', expr: 'sum(increase(http_requests_total[5m]))' };
 const optionThree: DataQuery & { expr: string } = { refId: 'A', expr: 'sum by (code) (rate(http_requests_total[5m]))' };
 const mockGetDataSource = jest.fn();
+const mockGetPanelPlugin = jest.fn<ReturnType<typeof getPanelPlugin>, [string]>();
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => mockGetPanelPlugin(id),
+  getPanelPluginFromCache: mockGetPanelPlugin,
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -59,7 +69,101 @@ function setupPreview(state = LoadingState.Done) {
   return { baselineData, panel, queryRunner, requests, requestedQueries, result, timeRange };
 }
 
+async function setupRenderedPreview(topic: 'series' | 'annotations' = 'series') {
+  const plugin = getPanelPlugin({ id: 'preview-values' }, ({ data }: PanelProps) =>
+    createElement(
+      'output',
+      { 'data-testid': 'preview-values' },
+      JSON.stringify(data[topic]?.map((frame) => frame.fields.map((field) => field.values)))
+    )
+  );
+  plugin.setDataSupport({ annotations: true });
+  mockGetPanelPlugin.mockReturnValue(plugin);
+  const fixture = setupPreview();
+  fixture.baselineData.annotations = fixture.result(10).series;
+  fixture.queryRunner.setState({ _hasFetchedData: true, runQueriesMode: 'manual' });
+  fixture.panel.setState({ pluginId: 'preview-values', _UNSAFE_clearPreviousFieldValues: true });
+  const { unmount } = render(createElement(fixture.panel.Component, { model: fixture.panel }));
+  await screen.findByTestId('preview-values');
+  return {
+    ...fixture,
+    result: (value: number): PanelData => ({ ...fixture.result(value), annotations: fixture.result(value).series }),
+    unmount,
+  };
+}
+
 describe('startQueryPreview', () => {
+  it.each([
+    { topic: 'series', method: 'select' },
+    { topic: 'annotations', method: 'select' },
+    { topic: 'series', method: 'peek' },
+    { topic: 'annotations', method: 'peek' },
+  ] as const)('restores cached $topic values on $method after panel renderer cleanup', async ({ topic, method }) => {
+    const { panel, requests, requestedQueries, result, unmount } = await setupRenderedPreview(topic);
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[10]]]');
+
+    let preview: QueryPreview;
+    act(() => {
+      preview = startQueryPreview(panel, 'A', optionOne)!;
+      requests[0].setState({ data: result(11) });
+    });
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[11]]]');
+    act(() => {
+      preview.select(optionTwo);
+      requests[1].setState({ data: result(12) });
+    });
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[12]]]');
+    act(() => {
+      preview.select(optionThree);
+      requests[2].setState({ data: result(13) });
+    });
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[13]]]');
+    act(() => preview[method](queryA));
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[10]]]');
+    act(() => preview[method](optionOne));
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[11]]]');
+    act(() => preview[method](optionTwo));
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[12]]]');
+    act(() => preview[method](optionThree));
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[13]]]');
+    act(() => preview.stopPeek());
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[13]]]');
+    expect(requestedQueries).toEqual([
+      [optionOne, queryB],
+      [optionTwo, queryB],
+      [optionThree, queryB],
+    ]);
+    act(() => preview.dispose());
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[10]]]');
+    expect(panel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+    unmount();
+  });
+
+  it('restores the last rendered values when a peek interrupts a pending keyboard selection', async () => {
+    const { panel, requests, requestedQueries, result, unmount } = await setupRenderedPreview();
+    let preview: QueryPreview;
+    act(() => {
+      preview = startQueryPreview(panel, 'A', optionOne)!;
+      requests[0].setState({ data: result(11) });
+    });
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[11]]]');
+    act(() => {
+      preview.select(optionTwo, { debounce: true });
+      preview.peek(queryA);
+    });
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[10]]]');
+    act(() => preview.stopPeek());
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[11]]]');
+    act(() => requests[1].setState({ data: result(12) }));
+    expect(screen.getByTestId('preview-values')).toHaveTextContent('[[[12]]]');
+    expect(requestedQueries).toEqual([
+      [optionOne, queryB],
+      [optionTwo, queryB],
+    ]);
+    act(() => preview.dispose());
+    unmount();
+  });
+
   it('caches Original and each option, runs each option once, and never projects an empty Loading frame', () => {
     const { baselineData, panel, queryRunner, requests, requestedQueries, result } = setupPreview();
     const projections: PanelData[] = [];
@@ -69,26 +173,26 @@ describe('startQueryPreview', () => {
       }
     });
     const preview = startQueryPreview(panel, 'A', optionOne)!;
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     expect(preview.data?.state).toBe(LoadingState.Loading);
     const first = result(11);
     requests[0].setState({ data: first });
     preview.select(queryA);
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     preview.select(optionOne);
-    expect(queryRunner.state.data).toBe(first);
+    expect(queryRunner.state.data).toEqual(first);
     preview.select(optionTwo);
-    expect(queryRunner.state.data).toBe(first);
+    expect(queryRunner.state.data).toEqual(first);
     const second = result(12);
     requests[1].setState({ data: second });
     preview.select(optionThree);
     const third = result(13);
     requests[2].setState({ data: third });
     preview.select(queryA);
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     expect(panel.state.$behaviors).toHaveLength(0);
     preview.select(optionOne);
-    expect(queryRunner.state.data).toBe(first);
+    expect(queryRunner.state.data).toEqual(first);
     expect(requestedQueries).toEqual([
       [optionOne, queryB],
       [optionTwo, queryB],
@@ -97,7 +201,7 @@ describe('startQueryPreview', () => {
     expect(queryRunner.state.queries).toEqual([queryA, queryB]);
     expect(projections.filter((data) => data.state === LoadingState.Loading && data.series.length === 0)).toEqual([]);
     preview.dispose();
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
   });
 
   it('peeks cached options and Original without a request and restores the selected result on release', () => {
@@ -109,13 +213,13 @@ describe('startQueryPreview', () => {
     const second = result(12);
     requests[1].setState({ data: second });
     preview.peek(optionOne);
-    expect(queryRunner.state.data).toBe(first);
+    expect(queryRunner.state.data).toEqual(first);
     preview.stopPeek();
-    expect(queryRunner.state.data).toBe(second);
+    expect(queryRunner.state.data).toEqual(second);
     preview.peek(queryA);
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     preview.stopPeek();
-    expect(queryRunner.state.data).toBe(second);
+    expect(queryRunner.state.data).toEqual(second);
     expect(requests).toHaveLength(2);
     expect(queryRunner.state.queries).toEqual([queryA, queryB]);
     preview.dispose();
@@ -133,12 +237,12 @@ describe('startQueryPreview', () => {
     requests[1].setState({ data: peeked });
     const first = result(11);
     selected.setState({ data: first });
-    expect(queryRunner.state.data).toBe(peeked);
+    expect(queryRunner.state.data).toEqual(peeked);
     preview.stopPeek();
-    expect(queryRunner.state.data).toBe(first);
+    expect(queryRunner.state.data).toEqual(first);
     expect(panel.state.$behaviors).toHaveLength(0);
     preview.select(optionTwo);
-    expect(queryRunner.state.data).toBe(peeked);
+    expect(queryRunner.state.data).toEqual(peeked);
     expect(requests).toHaveLength(2);
     preview.dispose();
   });
@@ -154,11 +258,11 @@ describe('startQueryPreview', () => {
       preview.peek(optionThree);
       requests[1].setState({ data: result(13) });
       preview.stopPeek();
-      expect(queryRunner.state.data).toBe(first);
+      expect(queryRunner.state.data).toEqual(first);
       expect(requests).toHaveLength(3);
       const second = result(12);
       requests[2].setState({ data: second });
-      expect(queryRunner.state.data).toBe(second);
+      expect(queryRunner.state.data).toEqual(second);
       preview.dispose();
     } finally {
       jest.useRealTimers();
@@ -172,15 +276,15 @@ describe('startQueryPreview', () => {
     preview.peek(optionThree);
     expect(panel.state.$behaviors).toEqual([requests[0], requests[2]]);
     requests[1].setState({ data: result(12) });
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     preview.stopPeek();
     expect(panel.state.$behaviors).toEqual([requests[0]]);
     expect(requests).toHaveLength(3);
     requests[2].setState({ data: result(13) });
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     const selected = result(11);
     requests[0].setState({ data: selected });
-    expect(queryRunner.state.data).toBe(selected);
+    expect(queryRunner.state.data).toEqual(selected);
     preview.dispose();
     expect(panel.state.$behaviors).toHaveLength(0);
   });
@@ -195,9 +299,9 @@ describe('startQueryPreview', () => {
     expect(panel.state.$behaviors).toEqual([requests[1]]);
     const late = result(11);
     firstRunner.setState({ data: late });
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     preview.select(optionOne);
-    expect(queryRunner.state.data).toBe(late);
+    expect(queryRunner.state.data).toEqual(late);
     expect(requests).toHaveLength(2);
     preview.dispose();
   });
@@ -225,7 +329,7 @@ describe('startQueryPreview', () => {
     cancelled.setState({ data: result(11) });
     preview.select(queryA);
     preview.select(optionOne);
-    expect(queryRunner.state.data).toBe(selected);
+    expect(queryRunner.state.data).toEqual(selected);
     expect(requests).toHaveLength(3);
     preview.dispose();
   });
@@ -273,7 +377,7 @@ describe('startQueryPreview', () => {
       preview.select(queryA);
       jest.advanceTimersByTime(200);
       expect(requests).toHaveLength(2);
-      expect(queryRunner.state.data).toBe(baselineData);
+      expect(queryRunner.state.data).toEqual(baselineData);
       preview.dispose();
     } finally {
       jest.useRealTimers();
@@ -408,7 +512,7 @@ describe('startQueryPreview', () => {
 
     previewRunner.setState({ data: previewData });
 
-    expect(queryRunner.state.data).toBe(previewData);
+    expect(queryRunner.state.data).toEqual(previewData);
     expect(previewStateListener).toHaveBeenCalledWith(LoadingState.Done);
 
     const cancelCallsBeforeDispose = jest.mocked(previewRunner.cancelQuery).mock.calls.length;
@@ -417,7 +521,7 @@ describe('startQueryPreview', () => {
 
     expect(panel.state.$behaviors).not.toContain(previewRunner);
     expect(previewRunner.parent).toBeUndefined();
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     expect(previewRunner.cancelQuery).toHaveBeenCalledTimes(cancelCallsBeforeDispose + 1);
   });
 
@@ -450,7 +554,7 @@ describe('startQueryPreview', () => {
     )!;
 
     previewRunner.setState({ data: previewData });
-    expect(queryRunner.state.data).toBe(previewData);
+    expect(queryRunner.state.data).toEqual(previewData);
 
     queryRunner.setState({ queries: [{ ...queryA, hide: true }, queryB] });
     queryRunner.setState({ data: canonicalData });

@@ -443,23 +443,23 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
     expect(screen.getByText('Running updated query...')).toBeVisible();
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     const first = panelResult(11);
     act(() => previewRequests[0].setState({ data: first }));
     await user.click(screen.getByRole('tab', { name: 'Option 2' }));
     expect(screen.getByText('Total.')).toBeVisible();
-    expect(queryRunner.state.data).toBe(first);
+    expect(queryRunner.state.data).toEqual(first);
     const second = panelResult(12);
     act(() => previewRequests[1].setState({ data: second }));
     await user.click(screen.getByRole('tab', { name: 'Original' }));
     expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
     expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
-    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.data).toEqual(baselineData);
     expect(queryRunner.state.queries).toEqual([baseline]);
     await user.click(screen.getByRole('tab', { name: 'Option 2' }));
     expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
     expect(screen.getByText('Previewing query')).toBeVisible();
-    expect(queryRunner.state.data).toBe(second);
+    expect(queryRunner.state.data).toEqual(second);
     expect(previewRequests).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Accept' }));
     expect(queryRunner.state.queries).toEqual([{ refId: 'A', expr: 'sum(increase(http_requests_total[5m]))' }]);
@@ -918,23 +918,23 @@ describe('QueryCoauthoring', () => {
     await waitFor(() => expect(previewRequests).toHaveLength(2));
     const peeked = panelResult(12);
     act(() => previewRequests[1].setState({ data: peeked }));
-    expect(queryRunner.state.data).toBe(peeked);
+    expect(queryRunner.state.data).toEqual(peeked);
     expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
     expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByText('Counts selected requests.')).toBeVisible();
     expect(screen.queryByText('Uses the latest two samples.')).not.toBeInTheDocument();
     expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 });
     await user.pointer({ keys: '[/MouseLeft]', target: second });
-    expect(queryRunner.state.data).toBe(selected);
+    expect(queryRunner.state.data).toEqual(selected);
     expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
     const original = screen.getByRole('tab', { name: 'Original' });
     await user.pointer({ keys: '[MouseLeft>]', target: original });
-    await waitFor(() => expect(queryRunner.state.data).toBe(baselineData));
+    await waitFor(() => expect(queryRunner.state.data).toEqual(baselineData));
     await user.pointer({ keys: '[/MouseLeft]', target: original });
-    expect(queryRunner.state.data).toBe(selected);
+    expect(queryRunner.state.data).toEqual(selected);
     await user.click(second);
-    expect(queryRunner.state.data).toBe(peeked);
+    expect(queryRunner.state.data).toEqual(peeked);
     expect(previewRequests).toHaveLength(2);
     expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('irate(http_requests_total[5m])');
     const peeks = mockReportInteraction.mock.calls.filter(
@@ -965,7 +965,7 @@ describe('QueryCoauthoring', () => {
         } else {
           fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
         }
-        expect(queryRunner.state.data).toBe(baselineData);
+        expect(queryRunner.state.data).toEqual(baselineData);
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       } else {
         if (ending === 'outside-release') {
@@ -977,7 +977,7 @@ describe('QueryCoauthoring', () => {
         } else {
           fireEvent.lostPointerCapture(chip);
         }
-        expect(queryRunner.state.data).toBe(selected);
+        expect(queryRunner.state.data).toEqual(selected);
         expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
         expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
         await user.click(screen.getByRole('tab', { name: 'Option 1' }));

@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { LoadingState, type PanelData } from '@grafana/data';
+import { type DataFrame, LoadingState, type PanelData } from '@grafana/data';
 import { sceneGraph, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
@@ -39,7 +39,7 @@ export function startQueryPreview(
   }
 
   const baselineQueries = queryRunner.state.queries;
-  const baselineData = queryRunner.state.data;
+  const baselineData = queryRunner.state.data && copyPreviewData(queryRunner.state.data);
   const readRangeKey = () => {
     const range = sceneGraph.getTimeRange(panel).state.value;
     return range.from.valueOf() + ':' + range.to.valueOf();
@@ -75,8 +75,9 @@ export function startQueryPreview(
     if (data.state === LoadingState.Loading && data.series.length === 0 && queryRunner.state.data) {
       return;
     }
-    lastProjectedData = data;
-    queryRunner.setState({ data });
+    // VizPanel clears previous field values; keep the retained results separate from rendered arrays.
+    lastProjectedData = copyPreviewData(data);
+    queryRunner.setState({ data: lastProjectedData });
   };
   const clearPendingStart = () => {
     if (pendingStart !== undefined) {
@@ -237,7 +238,7 @@ export function startQueryPreview(
     if (!isPeeking) {
       isPeeking = true;
       peekRestoreRun = activeRun;
-      peekRestoreData = queryRunner.state.data;
+      peekRestoreData = queryRunner.state.data && copyPreviewData(queryRunner.state.data);
     }
     return display(query);
   };
@@ -309,4 +310,19 @@ export function startQueryPreview(
       return () => dataListeners.delete(listener);
     },
   };
+}
+
+function copyPreviewData(data: PanelData): PanelData {
+  return {
+    ...data,
+    series: copyPreviewFrames(data.series),
+    annotations: data.annotations && copyPreviewFrames(data.annotations),
+  };
+}
+
+function copyPreviewFrames(frames: DataFrame[]): DataFrame[] {
+  return frames.map((frame) => ({
+    ...frame,
+    fields: frame.fields.map((field) => ({ ...field, values: field.values.slice() })),
+  }));
 }
