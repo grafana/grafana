@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { type DraggableProvided } from '@hello-pangea/dnd';
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -12,14 +12,13 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { STPodHealthPoller } from 'app/core/navigation/STPodHealthPoller';
 import { useIsUrlAllowed } from 'app/core/navigation/mtFallback';
-import { getStPodReadyPromise, getStPodStatus, StPodStatus } from 'app/core/navigation/stPodReadiness';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
+import { StPodPendingEllipsis } from './StPodPendingEllipsis';
 import { getDragHandleStyles } from './styles';
 import { hasChildMatch } from './utils';
 
@@ -404,38 +403,6 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     padding: theme.spacing(1, 1.5, 1, 7),
   }),
 });
-
-// The ready promise resolves on both Ready and Timeout, the only transitions that hide the ellipsis.
-const subscribeToStPodStatus = (onChange: () => void) => {
-  let subscribed = true;
-  getStPodReadyPromise().then(() => {
-    if (subscribed) {
-      onChange();
-    }
-  });
-  return () => {
-    subscribed = false;
-  };
-};
-
-function StPodPendingEllipsis() {
-  const status = useSyncExternalStore(subscribeToStPodStatus, getStPodStatus);
-
-  if (status === StPodStatus.Ready || status === StPodStatus.Timeout) {
-    return null;
-  }
-
-  // GrafanaRoute only polls when the current route is not allowlisted, so on an allowlisted page
-  // nothing else would ever mark the pod ready.
-  return (
-    <>
-      <STPodHealthPoller skip={false} />
-      <Text color="secondary" aria-hidden>
-        ...
-      </Text>
-    </>
-  );
-}
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
