@@ -13,7 +13,7 @@ import {
   type FieldConfigSource,
   type ThresholdsConfig,
 } from '@grafana/data';
-import { thresholdStepVarMappingKey, wrapVarMappingPropId } from '@grafana/data/internal';
+import { splitThresholdStepExpressions, wrapVarMappingPropId } from '@grafana/data/internal';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 export function migrateThresholdValueExprs(fieldConfig: FieldConfigSource): FieldConfigSource {
@@ -43,25 +43,12 @@ function hasValueExpr(thresholds: ThresholdsConfig | undefined): thresholds is T
   return Array.isArray(thresholds?.steps) && thresholds.steps.some((step) => step.valueExpr !== undefined);
 }
 
-function extractValueExprs(thresholds: ThresholdsConfig) {
-  const expressions: Record<string, string> = {};
-  const steps = thresholds.steps.map(({ valueExpr, ...step }, index) => {
-    // The base step is always -Infinity, so an expression there has never applied
-    if (index > 0 && valueExpr) {
-      expressions[thresholdStepVarMappingKey(index)] = valueExpr;
-    }
-    return step;
-  });
-
-  return { thresholds: { ...thresholds, steps }, expressions };
-}
-
 function migrateDefaults(defaults: FieldConfig): FieldConfig {
   if (!hasValueExpr(defaults?.thresholds)) {
     return defaults;
   }
 
-  const { thresholds, expressions } = extractValueExprs(defaults.thresholds);
+  const { thresholds, expressions } = splitThresholdStepExpressions(defaults.thresholds);
   const varMappings = { ...expressions, ...defaults.varMappings };
 
   return {
@@ -77,7 +64,7 @@ function migrateOverrideProperties(properties: DynamicConfigValue[]): DynamicCon
     return properties;
   }
 
-  const { thresholds, expressions } = extractValueExprs(properties[thresholdsIndex].value);
+  const { thresholds, expressions } = splitThresholdStepExpressions(properties[thresholdsIndex].value);
   const migrated = properties.map((prop, index) => (index === thresholdsIndex ? { ...prop, value: thresholds } : prop));
 
   for (const [key, expression] of Object.entries(expressions)) {

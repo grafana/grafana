@@ -2,7 +2,7 @@ import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry, ThresholdsMode } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
@@ -234,6 +234,56 @@ describe('PanelOptions', () => {
         const decimalsInput = getDecimalsOverrideInput();
         expect(decimalsInput).toHaveAttribute('type', 'text');
         expect(decimalsInput).toHaveValue('$decimals');
+      });
+
+      it('re-keys threshold step expressions when steps are re-sorted, added and removed', async () => {
+        const panel = new VizPanel({
+          key: 'panel-1',
+          pluginId: 'text',
+          fieldConfig: {
+            defaults: {
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 50, color: 'orange' },
+                  { value: 80, color: 'red' },
+                ],
+              },
+              varMappings: { 'thresholds.steps.1': '$warn' },
+            },
+            overrides: [],
+          },
+        });
+        new DashboardGridItem({ body: panel });
+        await setup({ panel });
+
+        const stepExpressions = () => panel.state.fieldConfig.defaults.varMappings;
+        const stepValues = () => panel.state.fieldConfig.defaults.thresholds?.steps.map((step) => step.value);
+
+        // inputs are listed from the highest step down
+        expect(screen.getByRole('textbox', { name: 'Threshold 2' })).toHaveValue('$warn');
+
+        const highest = screen.getByRole('textbox', { name: 'Threshold 1' });
+        await userEvent.clear(highest);
+        await userEvent.type(highest, '10');
+        await userEvent.tab();
+
+        expect(stepValues()).toEqual([-Infinity, 10, 50]);
+        expect(stepExpressions()).toEqual({ 'thresholds.steps.2': '$warn' });
+        expect(JSON.stringify(panel.state.fieldConfig)).not.toContain('valueExpr');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Add threshold' }));
+        expect(stepValues()).toEqual([-Infinity, 10, 50, 60]);
+        expect(stepExpressions()).toEqual({ 'thresholds.steps.2': '$warn' });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Remove threshold 3' }));
+        expect(stepValues()).toEqual([-Infinity, 50, 60]);
+        expect(stepExpressions()).toEqual({ 'thresholds.steps.1': '$warn' });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Remove threshold 2' }));
+        expect(stepValues()).toEqual([-Infinity, 60]);
+        expect(stepExpressions()).toBeUndefined();
       });
 
       it('writes a typed expression to defaults.varMappings', async () => {

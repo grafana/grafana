@@ -13,6 +13,7 @@ import {
   type DataFrame,
   type StandardEditorContext,
   FieldType,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { isVarMappingEligible, isVarMappingProp, wrapVarMappingPropId } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -33,6 +34,12 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+import {
+  hasThresholdSteps,
+  isThresholdStepVarMappingProp,
+  updateOverrideThresholds,
+  withThresholdStepExpressions,
+} from './utils';
 
 const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
@@ -303,10 +310,27 @@ export function getFieldOverrideCategories(
       const varMappingExpr = eligibleForVarMapping
         ? override.properties.find((p) => p.id === varMappingId)?.value
         : undefined;
+      const isThresholds = property.id === FieldConfigProperty.Thresholds;
+      const thresholdsWithExpressions = varMappingsEnabled && isThresholds;
       // The stored value stays as the fallback while an expression is shown.
-      const displayValue = typeof varMappingExpr === 'string' ? varMappingExpr : property.value;
+      const displayValue = thresholdsWithExpressions
+        ? withThresholdStepExpressions(
+            property.value,
+            (key) => override.properties.find((p) => p.id === wrapVarMappingPropId(key))?.value
+          )
+        : typeof varMappingExpr === 'string'
+          ? varMappingExpr
+          : property.value;
 
       const onPropertyChange = (value: unknown) => {
+        if (thresholdsWithExpressions && hasThresholdSteps(value)) {
+          onOverrideChange(idx, {
+            ...override,
+            properties: updateOverrideThresholds(override.properties, propIdx, value),
+          });
+          return;
+        }
+
         if (eligibleForVarMapping && typeof value === 'string') {
           const varMappingEntry: DynamicConfigValue = { id: varMappingId, value };
           const properties = override.properties.some((p) => p.id === varMappingId)
@@ -327,7 +351,9 @@ export function getFieldOverrideCategories(
       const onPropertyRemove = () => {
         onOverrideChange(idx, {
           ...override,
-          properties: override.properties.filter((p, i) => i !== propIdx && p.id !== varMappingId),
+          properties: override.properties.filter(
+            (p, i) => i !== propIdx && p.id !== varMappingId && !(isThresholds && isThresholdStepVarMappingProp(p))
+          ),
         });
       };
 

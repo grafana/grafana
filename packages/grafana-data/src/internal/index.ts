@@ -12,8 +12,11 @@
 
 export { actionsOverrideProcessor, isVarMappingEligible } from '../field/overrides/processors';
 export {
+  isThresholdStepVarMappingKey,
   isVarMappingProp,
+  splitThresholdStepExpressions,
   thresholdStepVarMappingKey,
+  unwrapVarMappingPropId,
   wrapVarMappingPropId,
 } from '../panel/getPanelOptionsWithDefaults';
 export { nullToUndefThreshold } from '../transformations/transformers/nulls/nullToUndefThreshold';

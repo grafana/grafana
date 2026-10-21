@@ -11,6 +11,9 @@ import {
   supportsDataQuery,
   updateDefaultFieldConfigValue,
   updateDefaultFieldConfigVarMapping,
+  updateDefaultThresholdStepVarMappings,
+  updateOverrideThresholds,
+  withThresholdStepExpressions,
 } from './utils';
 
 describe('standardFieldConfigEditorRegistry', () => {
@@ -160,6 +163,81 @@ describe('updateDefaultFieldConfigVarMapping', () => {
     updateDefaultFieldConfigVarMapping(config, 'min', undefined);
 
     expect(config).toEqual(before);
+  });
+});
+
+describe('threshold step expressions', () => {
+  const thresholds = {
+    mode: ThresholdsMode.Absolute,
+    steps: [
+      { value: -Infinity, color: 'green' },
+      { value: 50, color: 'orange' },
+      { value: 80, color: 'red' },
+    ],
+  };
+
+  it('gives non-base steps their expression as valueExpr', () => {
+    const expressions: Record<string, string> = { 'thresholds.steps.0': '$base', 'thresholds.steps.2': '$high' };
+
+    expect(withThresholdStepExpressions(thresholds, (key) => expressions[key])?.steps).toEqual([
+      { value: -Infinity, color: 'green' },
+      { value: 50, color: 'orange' },
+      { value: 80, color: 'red', valueExpr: '$high' },
+    ]);
+  });
+
+  it('replaces every step key in defaults.varMappings and keeps other mappings', () => {
+    const config: FieldConfigSource = {
+      defaults: { varMappings: { min: '$min', 'thresholds.steps.1': '$old', 'thresholds.steps.3': '$stale' } },
+      overrides: [],
+    };
+
+    expect(
+      updateDefaultThresholdStepVarMappings(config, { 'thresholds.steps.2': '$new' }).defaults.varMappings
+    ).toEqual({
+      min: '$min',
+      'thresholds.steps.2': '$new',
+    });
+  });
+
+  it('removes defaults.varMappings once no mapping is left', () => {
+    const config: FieldConfigSource = { defaults: { varMappings: { 'thresholds.steps.1': '$old' } }, overrides: [] };
+
+    expect(updateDefaultThresholdStepVarMappings(config, {}).defaults).toEqual({});
+  });
+
+  it("re-keys an override rule's step entries from the edited steps", () => {
+    const properties = [
+      { id: 'thresholds', value: thresholds },
+      { id: 'varMappings.thresholds.steps.1', value: '$old' },
+      { id: 'varMappings.min', value: '$min' },
+      { id: 'min', value: 1 },
+    ];
+    const edited = {
+      ...thresholds,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 10, color: 'red' },
+        { value: 50, color: 'orange', valueExpr: '$old' },
+      ],
+    };
+
+    expect(updateOverrideThresholds(properties, 0, edited)).toEqual([
+      {
+        id: 'thresholds',
+        value: {
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 10, color: 'red' },
+            { value: 50, color: 'orange' },
+          ],
+        },
+      },
+      { id: 'varMappings.min', value: '$min' },
+      { id: 'min', value: 1 },
+      { id: 'varMappings.thresholds.steps.2', value: '$old' },
+    ]);
   });
 });
 

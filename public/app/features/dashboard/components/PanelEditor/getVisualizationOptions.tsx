@@ -12,9 +12,10 @@ import {
   type VariableSuggestionsScope,
   type FieldConfigSource,
   type FieldConfigPropertyItem,
+  FieldConfigProperty,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { isVarMappingEligible } from '@grafana/data/internal';
+import { isVarMappingEligible, splitThresholdStepExpressions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
@@ -28,7 +29,14 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { getOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
-import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
+import {
+  hasThresholdSteps,
+  setOptionImmutably,
+  updateDefaultFieldConfigValue,
+  updateDefaultFieldConfigVarMapping,
+  updateDefaultThresholdStepVarMappings,
+  withThresholdStepExpressions,
+} from './utils';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -96,6 +104,59 @@ export function isFieldConfigOptionVisible(
   return Boolean(fieldOption.showIf(currentValue, data?.series, data?.annotations, context));
 }
 
+/**
+ * How the defaults editor for a field config option reads its value and writes changes, including
+ * expressions kept in `defaults.varMappings`. The stored value stays as the fallback while an
+ * expression is shown.
+ */
+function getDefaultsEditing(
+  fieldOption: FieldConfigPropertyItem,
+  fieldConfig: FieldConfigSource,
+  varMappingsEnabled: boolean
+) {
+  const defaults = fieldConfig.defaults;
+  const storedValue = fieldOption.isCustom
+    ? defaults.custom
+      ? lodashGet(defaults.custom, fieldOption.path)
+      : undefined
+    : lodashGet(defaults, fieldOption.path);
+  const writeValue = (config: FieldConfigSource, v: unknown) =>
+    updateDefaultFieldConfigValue(config, fieldOption.path, v, fieldOption.isCustom);
+
+  if (varMappingsEnabled && fieldOption.id === FieldConfigProperty.Thresholds) {
+    return {
+      Editor: fieldOption.editor,
+      storedValue,
+      value: withThresholdStepExpressions(storedValue, (key) => defaults.varMappings?.[key]),
+      toFieldConfig: (v: unknown) => {
+        if (!hasThresholdSteps(v)) {
+          return writeValue(fieldConfig, v);
+        }
+        const { thresholds, expressions } = splitThresholdStepExpressions(v);
+        return writeValue(updateDefaultThresholdStepVarMappings(fieldConfig, expressions), thresholds);
+      },
+    };
+  }
+
+  const varMappingEligible = varMappingsEnabled && isVarMappingEligible(fieldOption);
+
+  return {
+    Editor: varMappingEligible ? VarMappingNumberValueEditor : fieldOption.editor,
+    storedValue,
+    value: (varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined) ?? storedValue,
+    toFieldConfig: (v: unknown) => {
+      if (varMappingEligible && typeof v === 'string') {
+        return updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, v);
+      }
+      // Writing a plain value also drops the expression, so the plain value takes effect.
+      return writeValue(
+        varMappingEligible ? updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, undefined) : fieldConfig,
+        v
+      );
+    },
+  };
+}
+
 export function getVisualizationOptions(
   props: OptionPaneRenderProps,
   varMappingsEnabled = false
@@ -149,21 +210,14 @@ export function getVisualizationOptions(
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const varMappingEligible = varMappingsEnabled && isVarMappingEligible(fieldOption);
-    const Editor = varMappingEligible ? VarMappingNumberValueEditor : fieldOption.editor;
-
-    const defaults = currentFieldConfig.defaults;
-    const numericValue = fieldOption.isCustom
-      ? defaults.custom
-        ? lodashGet(defaults.custom, fieldOption.path)
-        : undefined
-      : lodashGet(defaults, fieldOption.path);
-    // The stored value stays as the fallback while an expression is shown.
-    const varMappingExpr = varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined;
-    const value = varMappingExpr ?? numericValue;
+    const { Editor, storedValue, value, toFieldConfig } = getDefaultsEditing(
+      fieldOption,
+      currentFieldConfig,
+      varMappingsEnabled
+    );
 
     if (fieldOption.getItemsCount) {
-      category.props.itemsCount = fieldOption.getItemsCount(numericValue);
+      category.props.itemsCount = fieldOption.getItemsCount(storedValue);
     }
 
     const htmlId = fieldOption.path;
@@ -177,17 +231,7 @@ export function getVisualizationOptions(
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            if (varMappingEligible && typeof v === 'string') {
-              onFieldConfigsChange(updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, v));
-              return;
-            }
-
-            // Writing a plain value also drops the expression, so the plain value takes effect.
-            const withoutExpr = varMappingEligible
-              ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
-              : currentFieldConfig;
-
-            onFieldConfigsChange(updateDefaultFieldConfigValue(withoutExpr, fieldOption.path, v, fieldOption.isCustom));
+            onFieldConfigsChange(toFieldConfig(v));
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
@@ -317,21 +361,14 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const varMappingEligible = varMappingsEnabled && isVarMappingEligible(fieldOption);
-    const Editor = varMappingEligible ? VarMappingNumberValueEditor : fieldOption.editor;
-    const defaults = currentFieldConfig.defaults;
-
-    const numericValue = fieldOption.isCustom
-      ? defaults.custom
-        ? lodashGet(defaults.custom, fieldOption.path)
-        : undefined
-      : lodashGet(defaults, fieldOption.path);
-    // The stored value stays as the fallback while an expression is shown.
-    const varMappingExpr = varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined;
-    const value = varMappingExpr ?? numericValue;
+    const { Editor, storedValue, value, toFieldConfig } = getDefaultsEditing(
+      fieldOption,
+      currentFieldConfig,
+      varMappingsEnabled
+    );
 
     if (fieldOption.getItemsCount) {
-      category.props.itemsCount = fieldOption.getItemsCount(numericValue);
+      category.props.itemsCount = fieldOption.getItemsCount(storedValue);
     }
 
     const htmlId = `${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`;
@@ -345,22 +382,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            if (varMappingEligible && typeof v === 'string') {
-              panel.onFieldConfigChange(
-                updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, v),
-                true
-              );
-            } else {
-              // Writing a plain value also drops the expression, so the plain value takes effect.
-              const withoutExpr = varMappingEligible
-                ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
-                : currentFieldConfig;
-
-              panel.onFieldConfigChange(
-                updateDefaultFieldConfigValue(withoutExpr, fieldOption.path, v, fieldOption.isCustom),
-                true
-              );
-            }
+            panel.onFieldConfigChange(toFieldConfig(v), true);
 
             // Record interaction for analytics
             DashboardInteractions.setVisualOption({

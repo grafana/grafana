@@ -601,4 +601,44 @@ describe('ThresholdsEditor', () => {
       expect(screen.getByRole('textbox', { name: 'Threshold 3' })).toHaveValue('50');
     });
   });
+
+  describe('with panelOptionInterpolation enabled', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.panelOptionInterpolation': true });
+    });
+
+    // reset in afterAll rather than afterEach: RTL's cleanup runs after this
+    // block's afterEach, so resetting per-test would emit a flag change into a
+    // still-mounted component and trip the act() warning
+    afterAll(() => {
+      setTestFlags();
+    });
+
+    it('accepts a variable expression and emits it as the step valueExpr', async () => {
+      const onChange = jest.fn();
+      setup({
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: '#7EB26D' },
+            { value: 50, color: '#EAB839' },
+          ],
+        },
+        onChange,
+      });
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+      await userEvent.tripleClick(input);
+      await userEvent.paste('$warn');
+      await userEvent.tab();
+
+      expect(onChange).toHaveBeenCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 50, valueExpr: '$warn', color: '#EAB839' },
+        ],
+      });
+    });
+  });
 });

@@ -11,7 +11,10 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagGrafanaThresholdsInterpolation } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaPanelOptionInterpolation,
+  useFlagGrafanaThresholdsInterpolation,
+} from '@grafana/runtime/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -29,7 +32,10 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   const isMounted = useRef(false);
   const userAddedThreshold = useRef(false);
   const styles = useStyles2(getStyles);
-  const interpolationEnabled = useFlagGrafanaThresholdsInterpolation();
+  const thresholdsInterpolation = useFlagGrafanaThresholdsInterpolation();
+  // With panelOptionInterpolation the panel editor stores these valueExprs in varMappings
+  const panelOptionInterpolation = useFlagGrafanaPanelOptionInterpolation();
+  const interpolationEnabled = thresholdsInterpolation || panelOptionInterpolation;
 
   const stepsRef = useRef(steps);
   stepsRef.current = steps;

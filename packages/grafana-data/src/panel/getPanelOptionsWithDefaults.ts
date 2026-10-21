@@ -303,6 +303,27 @@ export function isThresholdStepVarMappingKey(key: string): boolean {
   return key.startsWith(THRESHOLD_STEP_KEY_PREFIX);
 }
 
+/**
+ * Removes `valueExpr` from every step and returns the non-base step expressions keyed by
+ * `thresholdStepVarMappingKey`. The base step is always -Infinity, so its expression is dropped.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function splitThresholdStepExpressions(thresholds: ThresholdsConfig): {
+  thresholds: ThresholdsConfig;
+  expressions: Record<string, string>;
+} {
+  const expressions: Record<string, string> = {};
+  const steps = thresholds.steps.map(({ valueExpr, ...step }, index) => {
+    if (index > 0 && valueExpr) {
+      expressions[thresholdStepVarMappingKey(index)] = valueExpr;
+    }
+    return step;
+  });
+
+  return { thresholds: { ...thresholds, steps }, expressions };
+}
+
 function varMappingTargetId(key: string): string {
   return isThresholdStepVarMappingKey(key) ? 'thresholds' : key;
 }

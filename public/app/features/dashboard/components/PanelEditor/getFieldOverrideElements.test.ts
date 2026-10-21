@@ -9,6 +9,7 @@ import {
   identityOverrideProcessor,
   numberOverrideProcessor,
   Registry,
+  ThresholdsMode,
 } from '@grafana/data';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -553,6 +554,100 @@ describe('getFieldOverrideCategories', () => {
       expect(onFieldConfigsChange).toHaveBeenCalledWith({
         ...fieldConfig,
         overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: '$myVar' }] }],
+      });
+    });
+
+    describe('thresholds', () => {
+      const thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange' },
+          { value: 80, color: 'red' },
+        ],
+      };
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'thresholds', value: thresholds },
+              { id: 'varMappings.thresholds.steps.1', value: '$warn' },
+            ],
+          },
+        ],
+      };
+
+      function renderRow(varMappingsEnabled: boolean, onFieldConfigsChange = jest.fn()) {
+        const registry = makeRegistry([makeItem('thresholds', { isCustom: false })]);
+        const categories = getFieldOverrideCategories(
+          fieldConfig,
+          registry,
+          [],
+          '',
+          onFieldConfigsChange,
+          undefined,
+          varMappingsEnabled
+        );
+        const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+        return propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+          property: DynamicConfigValue;
+          onChange: (value: unknown) => void;
+          onRemove: () => void;
+        }>;
+      }
+
+      it('shows step expressions and writes edited steps back as re-keyed entries', () => {
+        const onFieldConfigsChange = jest.fn();
+        const element = renderRow(true, onFieldConfigsChange);
+
+        expect(element.props.property.value.steps[1]).toEqual({ value: 50, color: 'orange', valueExpr: '$warn' });
+
+        element.props.onChange({
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 10, color: 'red' },
+            { value: 50, color: 'orange', valueExpr: '$warn' },
+          ],
+        });
+
+        expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([
+          {
+            id: 'thresholds',
+            value: {
+              ...thresholds,
+              steps: [
+                { value: -Infinity, color: 'green' },
+                { value: 10, color: 'red' },
+                { value: 50, color: 'orange' },
+              ],
+            },
+          },
+          { id: 'varMappings.thresholds.steps.2', value: '$warn' },
+        ]);
+      });
+
+      it('removes the step entries with the thresholds row', () => {
+        const onFieldConfigsChange = jest.fn();
+        renderRow(true, onFieldConfigsChange).props.onRemove();
+
+        expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([]);
+      });
+
+      it('passes the stored thresholds through with the flag off', () => {
+        const onFieldConfigsChange = jest.fn();
+        const element = renderRow(false, onFieldConfigsChange);
+
+        expect(element.props.property).toEqual({ id: 'thresholds', value: thresholds });
+
+        const edited = { ...thresholds, steps: [{ value: -Infinity, color: 'green' }] };
+        element.props.onChange(edited);
+        expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([
+          { id: 'thresholds', value: edited },
+          { id: 'varMappings.thresholds.steps.1', value: '$warn' },
+        ]);
       });
     });
 

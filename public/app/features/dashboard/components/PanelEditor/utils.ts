@@ -1,6 +1,19 @@
-import { omit } from 'lodash';
+import { omit, omitBy } from 'lodash';
 
-import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
+import {
+  type DynamicConfigValue,
+  type FieldConfigSource,
+  type PanelPlugin,
+  type ThresholdsConfig,
+} from '@grafana/data';
+import {
+  isThresholdStepVarMappingKey,
+  isVarMappingProp,
+  splitThresholdStepExpressions,
+  thresholdStepVarMappingKey,
+  unwrapVarMappingPropId,
+  wrapVarMappingPropId,
+} from '@grafana/data/internal';
 
 /**
  * Sets or clears `defaults.varMappings[id]`. Unlike `updateDefaultFieldConfigValue`, `id` is the
@@ -27,6 +40,69 @@ export const updateDefaultFieldConfigVarMapping = (
 
   return { ...config, defaults: { ...config.defaults, varMappings: { ...current, [id]: expr } } };
 };
+
+export function hasThresholdSteps(value: unknown): value is ThresholdsConfig {
+  return typeof value === 'object' && value !== null && 'steps' in value && Array.isArray(value.steps);
+}
+
+/**
+ * Gives each threshold step its stored expression as `valueExpr`, which is how `ThresholdsEditor`
+ * shows and edits expressions. Its output goes back through `splitThresholdStepExpressions`, so
+ * expressions follow their step through sorting, adding and removing.
+ */
+export function withThresholdStepExpressions(
+  thresholds: ThresholdsConfig | undefined,
+  getExpression: (key: string) => unknown
+): ThresholdsConfig | undefined {
+  if (!thresholds?.steps) {
+    return thresholds;
+  }
+
+  const steps = thresholds.steps.map((step, index) => {
+    const expression = index > 0 ? getExpression(thresholdStepVarMappingKey(index)) : undefined;
+    return typeof expression === 'string' ? { ...step, valueExpr: expression } : step;
+  });
+
+  return { ...thresholds, steps };
+}
+
+/** Replaces every `thresholds.steps.<i>` key in `defaults.varMappings` with `expressions`. */
+export function updateDefaultThresholdStepVarMappings(
+  config: FieldConfigSource,
+  expressions: Record<string, string>
+): FieldConfigSource {
+  const varMappings = {
+    ...omitBy(config.defaults.varMappings, (_, key) => isThresholdStepVarMappingKey(key)),
+    ...expressions,
+  };
+  const defaults = Object.keys(varMappings).length
+    ? { ...config.defaults, varMappings }
+    : omit(config.defaults, 'varMappings');
+
+  return { ...config, defaults };
+}
+
+export const isThresholdStepVarMappingProp = (prop: DynamicConfigValue) =>
+  isVarMappingProp(prop) && isThresholdStepVarMappingKey(unwrapVarMappingPropId(prop.id));
+
+/**
+ * Sets the thresholds property at `index` of an override rule and replaces the rule's
+ * `varMappings.thresholds.steps.<i>` entries with the editor's step expressions.
+ */
+export function updateOverrideThresholds(
+  properties: DynamicConfigValue[],
+  index: number,
+  value: ThresholdsConfig
+): DynamicConfigValue[] {
+  const { thresholds, expressions } = splitThresholdStepExpressions(value);
+
+  return [
+    ...properties
+      .map((prop, i) => (i === index ? { ...prop, value: thresholds } : prop))
+      .filter((prop) => !isThresholdStepVarMappingProp(prop)),
+    ...Object.entries(expressions).map(([key, expression]) => ({ id: wrapVarMappingPropId(key), value: expression })),
+  ];
+}
 
 export function supportsDataQuery(plugin: PanelPlugin | undefined | null): boolean {
   return plugin?.meta.skipDataQuery === false;

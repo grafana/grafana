@@ -12,6 +12,7 @@ import {
   type PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
+  ThresholdsMode,
   type StandardEditorContext,
   toDataFrame,
 } from '@grafana/data';
@@ -583,6 +584,96 @@ describe('getVisualizationOptions', () => {
       element.props.onChange('$myVar');
 
       expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: '$myVar' }, overrides: [] }, true);
+    });
+
+    describe('thresholds', () => {
+      const thresholdsProperty: FieldConfigPropertyItem = {
+        id: 'thresholds',
+        path: 'thresholds',
+        name: 'Thresholds',
+        process: (value) => value,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+      };
+      const thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange' },
+        ],
+      };
+      const currentFieldConfig = {
+        defaults: { thresholds, varMappings: { 'thresholds.steps.1': '$warn' } },
+        overrides: [],
+      };
+
+      function renderThresholds(varMappingsEnabled: boolean) {
+        const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-thresholds' });
+        const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+        const vizOptions = getVisualizationOptions2({
+          panel: vizPanel,
+          eventBus: new EventBusSrv(),
+          plugin: buildPlugin([thresholdsProperty]),
+          instanceState: {},
+          currentOptions: {},
+          currentFieldConfig,
+          reportInteractionUI: 'panel-edit',
+          varMappingsEnabled,
+        });
+        const item = vizOptions[0].items[0];
+        const element = item.props.render(item) as React.ReactElement<{
+          value: { steps: unknown[] };
+          onChange: (v: unknown) => void;
+        }>;
+        return { element, onFieldConfigChange };
+      }
+
+      it('shows step expressions and writes edited steps back as re-keyed varMappings', () => {
+        const { element, onFieldConfigChange } = renderThresholds(true);
+
+        expect(element.props.value.steps[1]).toEqual({ value: 50, color: 'orange', valueExpr: '$warn' });
+
+        element.props.onChange({
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 10, color: 'red' },
+            { value: 50, color: 'orange', valueExpr: '$warn' },
+          ],
+        });
+
+        expect(onFieldConfigChange).toHaveBeenCalledWith(
+          {
+            defaults: {
+              thresholds: {
+                ...thresholds,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 10, color: 'red' },
+                  { value: 50, color: 'orange' },
+                ],
+              },
+              varMappings: { 'thresholds.steps.2': '$warn' },
+            },
+            overrides: [],
+          },
+          true
+        );
+      });
+
+      it('passes the stored thresholds through with the flag off', () => {
+        const { element, onFieldConfigChange } = renderThresholds(false);
+
+        expect(element.props.value).toEqual(thresholds);
+
+        const edited = { ...thresholds, steps: [{ value: -Infinity, color: 'green' }] };
+        element.props.onChange(edited);
+        expect(onFieldConfigChange).toHaveBeenCalledWith(
+          { defaults: { thresholds: edited, varMappings: { 'thresholds.steps.1': '$warn' } }, overrides: [] },
+          true
+        );
+      });
     });
 
     it('routes a $-containing onChange value into varMappings for a custom addNumberInput property too', () => {
