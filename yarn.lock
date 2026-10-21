@@ -19027,7 +19027,7 @@ __metadata:
     node-forge: "npm:^1.4.0"
     node-notifier: "npm:10.0.1"
     nx: "npm:22.7.10"
-    ol: "npm:10.10.0"
+    ol: "npm:^10.10.0"
     ol-ext: "npm:4.0.38"
     ol-mapbox-style: "npm:^13.0.1"
     open: "npm:^10.2.0"
@@ -24733,7 +24733,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol@npm:10.10.0, ol@npm:^10.10.0":
+"ol@npm:^10.10.0":
   version: 10.10.0
   resolution: "ol@npm:10.10.0"
   dependencies:
