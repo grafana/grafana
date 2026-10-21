@@ -2,6 +2,7 @@ package metadata_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"slices"
 	"sync"
@@ -233,37 +234,6 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.NoError(t, rows.Close())
 		}
 	})
-}
-
-func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []string {
-	t.Helper()
-
-	uids := make([]string, 0, n)
-	for i := range n {
-		sv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
-			cfg.Sv.Name = fmt.Sprintf("sv-%d", i)
-		})
-		require.NoError(t, err)
-		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
-		require.NoError(t, err)
-		uids = append(uids, string(sv.UID))
-		sut.Clock.AdvanceBy(time.Second)
-	}
-	sut.Clock.AdvanceBy(15 * time.Minute)
-
-	return uids
-}
-
-func leasedUIDs(svs []secretv1beta1.SecureValue) []string {
-	uids := make([]string, 0, len(svs))
-	for _, sv := range svs {
-		uids = append(uids, string(sv.UID))
-	}
-	return uids
-}
-
-func TestLeaseInactiveSecureValuesBatching(t *testing.T) {
-	t.Parallel()
 
 	t.Run("leases the oldest inactive secure values up to the batch size", func(t *testing.T) {
 		t.Parallel()
@@ -339,6 +309,115 @@ func TestLeaseInactiveSecureValuesBatching(t *testing.T) {
 		require.Len(t, leased, len(uids))
 		require.ElementsMatch(t, uids, leased)
 	})
+
+	t.Run("does not steal a lease acquired after candidate selection", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		// Start with an eligible candidate, so an empty result cannot be explained
+		// by the value being active or still within the GC grace period.
+		uids := createInactiveSecureValues(t, sut, 1)
+
+		// After SELECT has chosen the candidate, let another request lease it before
+		// this request's UPDATE. This makes the selected candidate stale deterministically.
+		var leasedSv []secretv1beta1.SecureValue
+		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
+			var err error
+			leasedSv, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(ctx, 1)
+			require.NoError(t, err)
+		}}
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		require.NoError(t, err)
+
+		// The UPDATE must recheck the lease and leave the other request's claim intact.
+		values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+		require.NoError(t, err)
+		require.Empty(t, values)
+
+		// Confirm that the competing request actually acquired the expected candidate.
+		require.Equal(t, uids, leasedUIDs(leasedSv))
+	})
+
+	t.Run("does not lease a value activated after candidate selection", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		sv, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+
+		// Deletion marks this version inactive; advancing past the grace period makes
+		// it eligible for SELECT before the hook changes its state.
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+
+		sut.Clock.AdvanceBy(15 * time.Minute)
+
+		// Reactivate the selected candidate before UPDATE. The claim must use the
+		// current active flag rather than trust the state observed by SELECT.
+		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
+			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version))
+		}}
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		require.NoError(t, err)
+
+		// The UPDATE must reject the now-active candidate, keeping it out of GC.
+		values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+		require.NoError(t, err)
+		require.Empty(t, values)
+
+		// Read returns only active versions. Finding this UID confirms the rejected
+		// candidate still exists as an active secret.
+		activeValue, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, sv.UID, activeValue.UID)
+	})
+}
+
+// Lease acquisition calls QueryContext to select candidates, then ExecContext to claim them.
+// Running the callback before ExecContext changes the selected row before the claim,
+// reproducing a stale candidate list without relying on goroutine scheduling.
+type beforeExecDatabase struct {
+	contracts.Database
+	beforeExec func(ctx context.Context)
+}
+
+func (db *beforeExecDatabase) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	if db.beforeExec != nil {
+		beforeExec := db.beforeExec
+		// Consume the hook first so a nested ExecContext cannot invoke it again.
+		db.beforeExec = nil
+		beforeExec(ctx)
+	}
+	return db.Database.ExecContext(ctx, query, args...)
+}
+
+func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []string {
+	t.Helper()
+
+	uids := make([]string, 0, n)
+	for i := range n {
+		sv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = fmt.Sprintf("sv-%d", i)
+		})
+		require.NoError(t, err)
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		uids = append(uids, string(sv.UID))
+		sut.Clock.AdvanceBy(time.Second)
+	}
+	sut.Clock.AdvanceBy(15 * time.Minute)
+
+	return uids
+}
+
+func leasedUIDs(svs []secretv1beta1.SecureValue) []string {
+	uids := make([]string, 0, len(svs))
+	for _, sv := range svs {
+		uids = append(uids, string(sv.UID))
+	}
+	return uids
 }
 
 func TestPropertySecureValueMetadataStorage(t *testing.T) {
