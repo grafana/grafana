@@ -17,19 +17,31 @@ export interface SavedDashboard {
 }
 
 /**
+ * A dashboard uid as one path segment. The uid comes from the route, so anything else (a `/`, `..`,
+ * or another character a uid can't have) would change the request's path.
+ */
+function uidSegment(uid: string): string {
+  if (!/^[A-Za-z0-9_.-]+$/.test(uid) || uid === '.' || uid === '..') {
+    throw new Error(`Invalid dashboard uid: ${uid}`);
+  }
+  return uid;
+}
+
+/**
  * A saved dashboard with the requester's access to it. The spec is the stored one, not the
  * DTO's, which adds defaults (such as the built-in annotation) a stored spec doesn't have.
  */
 export async function getSavedDashboard(uid: string): Promise<SavedDashboard> {
+  const segment = uidSegment(uid);
   const [resource, dto] = await Promise.all([
     getBackendSrv().get<{ metadata: { generation?: number }; spec: { title?: string } }>(
-      `${dashboardsURL()}/${uid}`,
+      `${dashboardsURL()}/${segment}`,
       undefined,
       undefined,
       { showErrorAlert: false }
     ),
     getBackendSrv().get<{ access?: { canEdit?: boolean; url?: string } }>(
-      `${dashboardsURL()}/${uid}/dto`,
+      `${dashboardsURL()}/${segment}/dto`,
       undefined,
       undefined,
       { showErrorAlert: false }

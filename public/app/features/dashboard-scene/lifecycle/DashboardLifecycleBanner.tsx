@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppEvents, type GrafanaTheme2, locationUtil, urlUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -24,7 +24,7 @@ import {
   proposesNewDashboard,
   showOriginal,
 } from './pendingChangePreview';
-import { useChangeHighlights } from './useChangeHighlights';
+import { dashboardViewRoot, panelSelector, queryDashboardView, useChangeHighlights } from './useChangeHighlights';
 import { usePendingChangeDiff } from './usePendingChangeDiff';
 
 interface Props {
@@ -130,8 +130,11 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
 
   const latestGeneration = currentGeneration ?? saved?.generation;
   const stale = latestGeneration !== undefined && latestGeneration !== pending.baseGeneration;
+  // Finds this view's panels: the same dashboard can also be open in another view.
+  const anchor = useRef<HTMLSpanElement>(null);
+  const viewRoot = useCallback(() => dashboardViewRoot(anchor.current), []);
   // Against the version they were made from: once the dashboard moved on, they'd mislead.
-  useChangeHighlights(dashboard, stale ? undefined : changes);
+  useChangeHighlights(dashboard, stale ? undefined : changes, viewRoot);
   const title = saved?.title ?? dashboard.state.title;
   const changeCount = changes?.length;
   const canApply = saved?.canEdit ?? false;
@@ -163,6 +166,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
 
   return (
     <>
+      <span ref={anchor} hidden />
       <LifecycleAlert
         className={styles.banner}
         heading={t('dashboard-scene.lifecycle.pending-title', 'Pending changes')}
@@ -244,9 +248,9 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
           onClose={() => setComparing(false)}
           onSelectPanel={(panelKey) => {
             setComparing(false);
-            document
-              .querySelector(`[data-viz-panel-key="${CSS.escape(panelKey)}"]`)
-              ?.scrollIntoView({ block: 'center' });
+            const root = viewRoot();
+            const [panel] = root ? queryDashboardView(root, panelSelector(panelKey)) : [];
+            panel?.scrollIntoView({ block: 'center' });
           }}
         />
       )}

@@ -94,7 +94,8 @@ function DashboardViewRenderer({
   }
 
   return (
-    <div className={styles.root}>
+    // DASHBOARD_VIEW_ATTRIBUTE: keeps the pending changes highlights to this view's panels.
+    <div className={styles.root} data-dashboard-view="">
       <DashboardLifecycleBanner dashboard={model} placement="embedded" reload={reload} />
       <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
         {controls && (
