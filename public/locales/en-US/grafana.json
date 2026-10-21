@@ -1441,6 +1441,10 @@
       "title-error-saving-receiver": "Error saving receiver"
     },
     "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "No alert rules found",
+        "rules-error": "Failed to load rules"
+      },
       "result-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",
