@@ -413,3 +413,103 @@ func findChildLink(nav *navtree.NavLink, id string) *navtree.NavLink {
 	}
 	return nil
 }
+
+func TestBuildAlertNavLinks_GmaOnlyListView(t *testing.T) {
+	ruleReadPermission := []ac.Permission{{Action: ac.ActionAlertingRuleRead, Scope: "*"}}
+
+	newReqCtx := func(role org.RoleType) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{OrgRole: role},
+			IsSignedIn:   true,
+			Context:      &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("flag off keeps the combined Alert rules entry and legacy Recently deleted", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: false})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(ruleReadPermission),
+			features:      featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore, featuremgmt.FlagAlertingRuleRecoverDeleted),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleAdmin))
+
+		require.NotNil(t, findChildLink(alertNav, "alert-list"), "expected the legacy combined Alert rules entry")
+		require.Nil(t, findChildLink(alertNav, "alert-rules"))
+		require.Nil(t, findChildLink(alertNav, "recording-rules"))
+		require.NotNil(t, findChildLink(alertNav, "alerts/recently-deleted"), "expected the legacy standalone Recently deleted entry")
+	})
+
+	t.Run("flag on replaces Alert rules with peer Alert/Recording entries and drops the combined Recently deleted entry", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(ruleReadPermission),
+			features:      featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore, featuremgmt.FlagAlertingRuleRecoverDeleted),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleAdmin))
+
+		require.Nil(t, findChildLink(alertNav, "alert-list"))
+		require.Nil(t, findChildLink(alertNav, "alerts/recently-deleted"), "the combined Recently deleted entry must not appear once gmaOnlyListView is on")
+
+		alertRulesLink := findChildLink(alertNav, "alert-rules")
+		require.NotNil(t, alertRulesLink, "expected a peer Alert rules entry")
+		require.Equal(t, "/alerting/rules/alert", alertRulesLink.Url)
+
+		recordingRulesLink := findChildLink(alertNav, "recording-rules")
+		require.NotNil(t, recordingRulesLink, "expected a peer Recording rules entry")
+		require.Equal(t, "/alerting/rules/recording", recordingRulesLink.Url)
+	})
+
+	t.Run("flag on gives the same peer entries when alertingNavigationV2 is enabled", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(ruleReadPermission),
+			features:      featuremgmt.WithFeatures(featuremgmt.FlagAlertingNavigationV2),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleAdmin))
+
+		require.Nil(t, findChildLink(alertNav, "alert-list"))
+		require.Nil(t, findChildLink(alertNav, "alerts/recently-deleted"))
+		require.Equal(t, "/alerting/rules/alert", findChildLink(alertNav, "alert-rules").Url)
+		require.Equal(t, "/alerting/rules/recording", findChildLink(alertNav, "recording-rules").Url)
+	})
+
+	t.Run("flag on with only data source-managed read permission shows neither entry", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{{Action: ac.ActionAlertingRuleExternalRead, Scope: "*"}}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleViewer))
+
+		require.Nil(t, findChildLink(alertNav, "alert-rules"))
+		require.Nil(t, findChildLink(alertNav, "recording-rules"))
+	})
+
+	t.Run("flag on without Grafana-managed read permission shows neither entry", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(nil),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleViewer))
+
+		require.Nil(t, findChildLink(alertNav, "alert-rules"))
+		require.Nil(t, findChildLink(alertNav, "recording-rules"))
+	})
+}

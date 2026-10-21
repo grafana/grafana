@@ -2729,6 +2729,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardVariablesMigration",
+        "resourceVersion": "1792033601704",
+        "creationTimestamp": "2026-10-15T03:06:41Z"
+      },
+      "spec": {
+        "description": "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardsAutoHeightPanels",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-19T13:59:18Z"
@@ -4782,26 +4795,34 @@
     {
       "metadata": {
         "name": "preferLibraryPanelTitle",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-06-17T11:21:21Z"
+        "resourceVersion": "1792486861194",
+        "creationTimestamp": "2025-06-17T11:21:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:01:01.194942 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Prefer library panel title over viz panel title.",
         "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-05-27T12:28:06Z"
+        "resourceVersion": "1792489412857",
+        "creationTimestamp": "2024-05-27T12:28:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:43:32.857637 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5253,13 +5274,17 @@
     {
       "metadata": {
         "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-25T12:56:54Z"
+        "resourceVersion": "1792489752750",
+        "creationTimestamp": "2024-10-25T12:56:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:49:12.750999 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables reload of dashboards on scopes, time range and variables changes",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5438,7 +5463,8 @@
       "metadata": {
         "name": "restrictedPluginApis",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-10-16T13:40:44Z"
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",

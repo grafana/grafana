@@ -21,11 +21,20 @@ var requestInfoFactory = &request.RequestInfoFactory{
 // or "get" for reads, and so on. Paths outside the resource API, such as
 // discovery and OpenAPI, return the lowercased HTTP method.
 func requestVerb(req *http.Request) string {
-	info, err := requestInfoFactory.NewRequestInfo(req)
-	if err != nil || info.Verb == "" {
-		return strings.ToLower(req.Method)
+	outcome := outcomeOf(req)
+	if outcome != nil && outcome.verb != "" {
+		return outcome.verb
 	}
-	return info.Verb
+	var verb string
+	if info, err := requestInfoFactory.NewRequestInfo(req); err == nil && info.Verb != "" {
+		verb = info.Verb
+	} else {
+		verb = strings.ToLower(req.Method)
+	}
+	if outcome != nil {
+		outcome.verb = verb
+	}
+	return verb
 }
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a

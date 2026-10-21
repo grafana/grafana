@@ -160,6 +160,14 @@ func RootFolder(repository *provisioning.Repository) string {
 	return ""
 }
 
+// IsRootFolderPath reports whether a folder path is the repository root, in
+// any of the forms safepath treats as root ("", "." or "/"). The folder at the
+// root takes its identity from RootFolder, never from a `_folder.json`, so it
+// must not be replaced or deleted by sync.
+func IsRootFolderPath(folderPath string) bool {
+	return safepath.EnsureTrailingSlash(folderPath) == ""
+}
+
 func ParentFolder(filePath string, repository *provisioning.Repository) string {
 	parent := safepath.Dir(filePath)
 	if parent == "" {
