@@ -188,8 +188,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
       <>
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
-          {cancelButton}
           {saveButton(false)}
+          {cancelButton}
         </Stack>
       </>
     );

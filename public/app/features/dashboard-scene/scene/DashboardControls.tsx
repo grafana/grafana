@@ -265,7 +265,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardUnifiedDrilldownControls && !dashboardNewLayoutsEnabled && (
+        {!dashboardNewLayoutsEnabled && (
           <div className={styles.fixedControls}>
             <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>

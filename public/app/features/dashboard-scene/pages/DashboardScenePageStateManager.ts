@@ -486,7 +486,10 @@ abstract class DashboardScenePageStateManagerBase<T>
         return;
       }
 
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false) &&
+        Boolean(options.uid)
+      ) {
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
@@ -1051,7 +1054,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false) &&
+        Boolean(uid)
+      ) {
         restoreDashboardStateFromLocalStorage(scene);
       }
 
@@ -1432,7 +1438,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const scene = transformSaveModelSchemaV2ToScene(rsp, reloadOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false) &&
+        Boolean(uid)
+      ) {
         restoreDashboardStateFromLocalStorage(scene);
       }
 

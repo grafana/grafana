@@ -9,8 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 

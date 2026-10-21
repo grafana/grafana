@@ -135,6 +135,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
 	getter := grafanarest.NewMockStorage(t)
 	getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(snap, nil)
+	getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 	rest, err := NewDashboardREST(getter, store)
 	require.NoError(t, err)
 	ctx := k8srequest.WithNamespace(context.Background(), namespace)
@@ -187,7 +188,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 		inline.Blobs.Dashboard = nil
 		inline.Spec.Dashboard = map[string]any{"title": "CPU"}
 		getter := grafanarest.NewMockStorage(t)
-		getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(inline, nil)
+		getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*inline}}, nil)
 		r, err := NewDashboardREST(getter, nil)
 		require.NoError(t, err)
 		ctx := k8srequest.WithNamespace(context.Background(), "default")

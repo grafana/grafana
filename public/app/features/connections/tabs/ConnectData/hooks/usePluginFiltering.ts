@@ -27,15 +27,21 @@ function getPredefinedCategoryLabels(): Record<string, string> {
   };
 }
 
+function getPluginCategory(plugin: CatalogPlugin): string {
+  return plugin.isEnterprise ? 'enterprise' : plugin.category || 'other';
+}
+
+function matchesFilter(selected: string[], value: string | undefined): boolean {
+  return selected.length === 0 || (value !== undefined && selected.includes(value));
+}
+
 export function useCategoryFilterOptions(plugins: CatalogPlugin[]): SelectableValue[] {
   const predefinedCategories = getPredefinedCategoryLabels();
   return useMemo(() => {
     const uniqueCategories = new Set<string>();
-    plugins.forEach((p) => uniqueCategories.add(p.isEnterprise ? 'enterprise' : p.category || 'other'));
+    plugins.forEach((p) => uniqueCategories.add(getPluginCategory(p)));
 
-    const options: SelectableValue[] = [
-      { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
-    ];
+    const options: SelectableValue[] = [];
 
     CATEGORY_ORDER.forEach((cat) => {
       if (uniqueCategories.has(cat)) {
@@ -66,23 +72,16 @@ function pluginToCardGridItem(plugin: CatalogPlugin): CardGridItem {
   };
 }
 
-export function useFilteredPlugins(plugins: CatalogPlugin[], categoryFilter: string, typeFilter: string) {
+export function useFilteredPlugins(plugins: CatalogPlugin[], categoryFilter: string[], typeFilter: string[]) {
   return useMemo(() => {
-    const dataSources = plugins.filter((p) => p.type === PluginType.datasource);
-    const apps = plugins.filter((p) => p.type === PluginType.app);
+    const catFiltered = plugins.filter((p) => matchesFilter(categoryFilter, getPluginCategory(p)));
 
-    const catFilteredDataSources =
-      categoryFilter === 'all'
-        ? dataSources
-        : dataSources.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
-    const catFilteredApps =
-      categoryFilter === 'all'
-        ? apps
-        : apps.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
-
-    const typeFilteredDataSources =
-      typeFilter === 'all' || typeFilter === PluginType.datasource ? catFilteredDataSources : [];
-    const typeFilteredApps = typeFilter === 'all' || typeFilter === PluginType.app ? catFilteredApps : [];
+    const typeFilteredDataSources = matchesFilter(typeFilter, PluginType.datasource)
+      ? catFiltered.filter((p) => p.type === PluginType.datasource)
+      : [];
+    const typeFilteredApps = matchesFilter(typeFilter, PluginType.app)
+      ? catFiltered.filter((p) => p.type === PluginType.app)
+      : [];
 
     const datasourceCardGridItems = typeFilteredDataSources.map(pluginToCardGridItem);
     const appsCardGridItems = typeFilteredApps.map(pluginToCardGridItem);
@@ -96,19 +95,18 @@ export function useFilteredPlugins(plugins: CatalogPlugin[], categoryFilter: str
 
 export function usePluginsByCategory(
   plugins: CatalogPlugin[],
-  typeFilter: string,
-  categoryFilter: string
+  typeFilter: string[],
+  categoryFilter: string[]
 ): Array<{ label: string; items: CardGridItem[] }> {
   const categoryLabels = getPredefinedCategoryLabels();
   return useMemo(() => {
-    let allPlugins = typeFilter === 'all' ? plugins : plugins.filter((p) => p.type === typeFilter);
-    if (categoryFilter !== 'all') {
-      allPlugins = allPlugins.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
-    }
+    const allPlugins = plugins.filter(
+      (p) => matchesFilter(typeFilter, p.type) && matchesFilter(categoryFilter, getPluginCategory(p))
+    );
 
     const grouped: Record<string, CardGridItem[]> = {};
     allPlugins.forEach((plugin) => {
-      const category = plugin.isEnterprise ? 'enterprise' : plugin.category || 'other';
+      const category = getPluginCategory(plugin);
       if (!grouped[category]) {
         grouped[category] = [];
       }

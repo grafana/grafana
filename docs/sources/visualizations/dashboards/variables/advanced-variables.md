@@ -93,78 +93,82 @@ Technically, there is no limit to how many variables you can chain together, but
 
 <!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
-The following Grafana Play dashboards contain basic chained variables, only two layers deep. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
+The following Grafana Play dashboards contain chained variables. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
 
-- [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
-- [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m)
+- [Templating - Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/templating-nested-variables-drilldown?orgId=1)
+- [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)
 
 While the examples are data source-specific, the concepts can be applied broadly.
 
-#### Graphite example explained
+#### Templating - Nested Variables Drilldown example explained
 
-In this example, there are several applications. Each application has a different subset of servers. It's based on the [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h).
+In this example, there are several data centers. Each data center has a different set of servers, and each server has a different set of pods. The example uses the TestData data source, whose variable queries use dot-separated paths with `*` wildcards, similar to Graphite metric paths.
 
-Now, you could make separate variables for each metric source, but then you have to know which server goes with which app. A better solution is to use one variable to filter another. In this example, when the user changes the value of the `app` variable, it changes the drop-down options returned by the `server` variable. Both variables use the **Multi-value** option and **Include all option**, enabling users to select some or all options presented at any time.
+You could make separate variables for data centers, servers, and pods, but then you have to know which server belongs to which data center, and which pod runs on which server. A better solution is to use one variable to filter the next. In this example, when you change the value of the `datacenter` variable, it changes the drop-down options returned by the `server` variable. When you change the value of the `server` variable, it changes the drop-down options returned by the `pod` variable. All three variables use the **Multi-value** option and **Include all option**, so you can select some or all options at any time.
 
-##### `app` variable
+##### `datacenter` variable
 
-The query for this variable returns all the applications that exist.
+The query for this variable returns all the data centers that exist.
 
 ```
-apps.*
+*
 ```
 
-The values returned are `backend`, `country`, `fakesite`, and `All`.
+The values returned are `A` through `H`, and `All`.
 
 ##### `server` variable
 
-The query for this variable returns all servers for the currently selected application.
+The query for this variable returns all servers for the currently selected data centers.
 
 ```
-apps.$app.*
+$datacenter.*
 ```
 
-If the user selects `backend`, then the query changes to:
+If you select `A`, then the query changes to:
 
 ```
-apps.backend.*
+A.*
 ```
 
-The query returns all servers associated with `backend`, including `backend_01`, `backend_02`, and so on.
+The query returns all servers in data center `A`: `AA`, `AB`, and so on, through `AH`.
 
-If the user selects `fakesite`, then the query changes to:
-
-```
-apps.fakesite.*
-```
-
-The query returns all servers associated with `fakesite`, including `web_server_01`, `web_server_02`, and so on.
-
-##### More variables
-
-{{< admonition type="note" >}}
-This example is theoretical. The Graphite server used in the example doesn't contain CPU metrics.
-{{< /admonition >}}
-
-The dashboard stops at two levels, but you could keep going. For example, if you wanted to get CPU metrics for selected servers, you could copy the `server` variable and extend the query so that it reads:
+If you select `B`, then the query changes to:
 
 ```
-apps.$app.$server.cpu.*
+B.*
 ```
 
-This query returns all the CPU metrics for the selected server.
+The query returns all servers in data center `B`: `BA`, `BB`, and so on, through `BH`.
 
-Depending on what variable options the user selects, you could get queries like:
+Because `datacenter` is a multi-value variable, you can select more than one data center. If you select both `A` and `B`, then the query changes to:
 
 ```
-apps.backend.backend_01.cpu.*
-apps.{backend.backend_02,backend_03}.cpu.*
-apps.fakesite.web_server_01.cpu.*
+{A,B}.*
 ```
+
+The query returns the servers in both data centers, `AA` through `AH` and `BA` through `BH`.
+
+##### `pod` variable
+
+The query for this variable returns all pods for the currently selected data centers and servers.
+
+```
+$datacenter.$server.*
+```
+
+If you select data center `A` and server `AB`, then the query changes to:
+
+```
+A.AB.*
+```
+
+The query returns all pods on server `AB`: `ABA`, `ABB`, and so on, through `ABH`.
+
+The dashboard includes a text panel that displays the current values of `$datacenter`, `$server`, and `$pod`, so you can see how each selection narrows the options for the next variable.
 
 #### InfluxDB example explained
 
-In this example, you have several data centers. Each data center has a different subset of hosts. It's based on the [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m) dashboard.
+In this example, you have several data centers. Each data center has a different subset of hosts. It's based on the [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard) dashboard.
 
 In this example, when the user changes the value of the `datacenter` variable, it changes the drop-down options returned by the `host` variable. The `host` variable uses the **Multi-value** option and **Include all option**, allowing users to select some or all options presented at any time. The `datacenter` does not use either option, so you can only select one data center at a time.
 

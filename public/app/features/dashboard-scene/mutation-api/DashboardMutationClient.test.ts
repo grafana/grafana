@@ -167,6 +167,29 @@ describe('DashboardMutationClient', () => {
       expect(scene.state.isEditing).toBeFalsy();
     });
 
+    it('handles the first write of a build like any other Assistant write', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const scene = activeScene();
+      const recordEditMutation = jest.spyOn(scene, 'recordEditMutation');
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+      try {
+        const result = await client.execute(
+          { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Built' } },
+          'grafana-assistant-app'
+        );
+
+        expect(result.success).toBe(true);
+        expect(scene.state.planning).toBeUndefined();
+        expect(recordEditMutation).toHaveBeenCalledWith('assistant');
+      } finally {
+        if (scene.state.isEditing) {
+          scene.exitEditMode({ skipConfirm: true });
+        }
+      }
+    });
+
     it('still allows a read-only command', async () => {
       const scene = activeScene();
       const client = new DashboardMutationClient(scene);
