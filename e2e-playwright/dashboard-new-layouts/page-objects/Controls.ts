@@ -112,8 +112,9 @@ export class Controls extends PageObject {
     },
     /** Returns the variable's value input */
     getInput: (variableLabel: string): Locator => {
-      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
-      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
+      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling.
+      // Ad hoc filters with group by enabled also render a group by input after the filters input.
+      return this.variables.getLabel(variableLabel).locator('+ *').locator('input').first();
     },
     /** Returns an ad hoc variable's applied filter pill; its text is "<key> <operator> <value>" */
     getFilter: (variableLabel: string, key: string): Locator =>
