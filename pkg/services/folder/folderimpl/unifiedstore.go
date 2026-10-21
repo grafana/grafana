@@ -427,6 +427,9 @@ func (ss *FolderUnifiedStoreImpl) getFoldersMetadata(ctx context.Context, q fold
 	if err != nil {
 		return nil, err
 	}
+	if len(refs) == 0 {
+		return []*folder.Folder{}, nil
+	}
 
 	if len(uids) > 0 && (q.WithFullpath || q.WithFullpathUIDs) {
 		seen := maps.Clone(filters)

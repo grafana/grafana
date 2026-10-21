@@ -2226,6 +2226,7 @@ func TestGetFoldersMetadataTargeted(t *testing.T) {
 		{name: "requested parent", uids: []string{"folder-00001", "folder-00002"}, paths: true, want: []string{"folder-00001", "folder-00002"}, wantPaths: []string{"folder-00000/folder-00001", "folder-00000/folder-00001/folder-00002"}, calls: 2, checked: 3},
 		{name: "duplicates and empty UID", uids: []string{"folder-00002", "folder-00002", ""}, want: []string{"folder-00002"}, calls: 1, checked: 1},
 		{name: "empty UID", uids: []string{""}},
+		{name: "empty UID with paths", uids: []string{""}, paths: true, uidPaths: true},
 		{name: "root UIDs", uids: []string{"", "general"}, paths: true, calls: 1},
 		{name: "literal wildcard", uids: []string{"*"}, paths: true, calls: 1},
 		{name: "invalid UID", uids: []string{"folder-00006 "}, paths: true, calls: 1, checked: 1},
@@ -2259,6 +2260,7 @@ func TestGetFoldersMetadataTargeted(t *testing.T) {
 				require.ErrorIs(t, err, folder.ErrCircularReference)
 			} else {
 				require.NoError(t, err)
+				require.NotNil(t, got, "empty results must remain an empty list, not null")
 				require.Len(t, got, len(tc.want))
 				for i, f := range got {
 					require.Equal(t, tc.want[i], f.UID)
