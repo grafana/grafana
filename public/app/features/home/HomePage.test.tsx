@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { type ComponentType, lazy, Suspense, useEffect } from 'react';
+import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints, store } from '@grafana/data';
@@ -379,28 +379,15 @@ describe('HomePage', () => {
     expect(screen.queryByTestId('home-page-assistant-slot')).not.toBeInTheDocument();
   });
 
-  it('keeps the slot reserved while the Assistant component renders nothing behind its own Suspense', async () => {
+  it('hides the Assistant slot while the plugin component renders nothing, as it does once the Assistant cannot be used', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
-    let resolveInput!: (module: { default: ComponentType<{}> }) => void;
-    const LazyInput = lazy(
-      () =>
-        new Promise<{ default: ComponentType<{}> }>((resolve) => {
-          resolveInput = resolve;
-        })
-    );
-    // The plugin's shape: a boundary with no fallback around its lazy input, so the host's fallback never shows.
-    const PluginShaped = () => (
-      <Suspense>
-        <LazyInput />
-      </Suspense>
-    );
     setPluginComponentsHook(({ extensionPointId }) => ({
       isLoading: false,
       components:
         extensionPointId === PluginExtensionPoints.HomepageAssistant
           ? [
               createComponentWithMeta(
-                { pluginId: 'grafana-assistant-app', title: 'Assistant', component: PluginShaped },
+                { pluginId: 'grafana-assistant-app', title: 'Assistant', component: () => null },
                 PluginExtensionPoints.HomepageAssistant
               ),
             ]
@@ -412,14 +399,7 @@ describe('HomePage', () => {
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     const slot = screen.getByTestId('home-page-assistant-slot');
     expect(slot).toBeEmptyDOMElement();
-    expect(slot).toHaveStyle({ minHeight: '52px' });
-
-    await act(async () => {
-      resolveInput({ default: () => <div>Assistant input</div> });
-    });
-
-    expect(await screen.findByText('Assistant input')).toBeInTheDocument();
-    expect(screen.getByTestId('home-page-assistant-slot')).toBe(slot);
+    expect(slot).toHaveStyle({ display: 'none' });
   });
 
   it('holds the Assistant slot while its lazy component loads instead of hiding the page', async () => {

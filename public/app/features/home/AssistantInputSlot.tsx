@@ -6,16 +6,15 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
-import { HomeSection } from './HomeSection';
+import { PluginSectionFrame } from './PluginSectionFrame';
 
 /** The plugin's prompt input: a 48px input inside a 2px border. */
 const ASSISTANT_INPUT_HEIGHT = 52;
 
 /**
- * Holds the input's height from first paint so the sections below never move: a skeleton while the registry and
- * the component's chunk load, then a reserved area while the plugin resolves availability without painting. The
- * host cannot tell resolving from settled-on-nothing, so an unavailable Assistant (OSS without accepted terms)
- * keeps an empty slot; only an instance with no Assistant registered drops it.
+ * Holds the input's height while the registry and the component's chunk load, so the sections below never move.
+ * From then on the plugin owns the slot: it renders nothing once the Assistant cannot be used, which hides the
+ * frame. The slot is dropped outright when the registry settles without an Assistant component.
  */
 export function AssistantInputSlot() {
   const { components, isLoading } = usePluginComponents({ extensionPointId: PluginExtensionPoints.HomepageAssistant });
@@ -31,19 +30,14 @@ export function AssistantInputSlot() {
     />
   );
   return (
-    <HomeSection>
-      <div className={styles.reserved} data-testid="home-page-assistant-slot">
-        <Suspense fallback={skeleton}>{content ?? skeleton}</Suspense>
-      </div>
-    </HomeSection>
+    <PluginSectionFrame data-testid="home-page-assistant-slot">
+      <Suspense fallback={skeleton}>{content ?? skeleton}</Suspense>
+    </PluginSectionFrame>
   );
 }
 
 const styles = {
   block: css({
     display: 'block',
-  }),
-  reserved: css({
-    minHeight: ASSISTANT_INPUT_HEIGHT,
   }),
 };

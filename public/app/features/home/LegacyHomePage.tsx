@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import { type ReactNode, Suspense, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useRef } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
@@ -19,6 +18,7 @@ import { HomeGrid } from './HomeGrid';
 import { HomePageFrame } from './HomePageFrame';
 import { HomeSection } from './HomeSection';
 import { LegacyHomePageSkeleton } from './LegacyHomePageSkeleton';
+import { PluginSectionFrame } from './PluginSectionFrame';
 import { homepageViewed } from './analytics/main';
 
 /** Reports a view on mount; inside a Suspense boundary React defers the effect until the content is revealed. */
@@ -28,15 +28,6 @@ function HomepageViewTracker({ onView }: { onView: () => void }) {
   }, [onView]);
 
   return null;
-}
-
-/** Frames a setup-guide section, hidden while empty. Module-level so an inline wrapper doesn't remount it every render. */
-function PluginSectionFrame({ children }: { children: ReactNode }) {
-  return (
-    <div className={styles.extra}>
-      <HomeSection>{children}</HomeSection>
-    </div>
-  );
 }
 
 /**
@@ -120,15 +111,3 @@ export function LegacyHomePage() {
     </HomePageFrame>
   );
 }
-
-const styles = {
-  extra: css({
-    display: 'contents',
-
-    '> div': {
-      '&:empty': {
-        display: 'none',
-      },
-    },
-  }),
-};
