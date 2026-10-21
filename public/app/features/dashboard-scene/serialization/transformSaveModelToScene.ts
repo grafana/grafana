@@ -69,6 +69,7 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
+import { migrateThresholdValueExprs } from './thresholdsValueExprMigration';
 
 type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
@@ -495,7 +496,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     description: panel.description,
     pluginId: panel.type ?? 'timeseries', // TODO: should this be `getDefaultPluginId()`?
     options: panel.options ?? {},
-    fieldConfig: panel.fieldConfig,
+    fieldConfig: migrateThresholdValueExprs(panel.fieldConfig),
     pluginVersion: panel.pluginVersion,
     seriesLimit: config.panelSeriesLimit,
     displayMode: panel.transparent ? 'transparent' : undefined,

@@ -46,6 +46,7 @@ import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutMa
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
+import { migrateThresholdValueExprs } from '../thresholdsValueExprMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
@@ -129,7 +130,7 @@ export function buildVizPanelState(
     // and must win, not be clobbered by the sample's. RENDER_PLAN supplies synthetic $data
     // for query-less previews; keeping samples there also avoids loading them for real dashboards.
     options,
-    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
+    fieldConfig: migrateThresholdValueExprs(transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig)),
   };
 
   // Set up Angular migration handler if migration data is present

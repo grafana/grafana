@@ -12,8 +12,10 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 
@@ -204,19 +206,7 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     deactivate();
   });
 
-  it('keeps varMappings when a library panel is loaded and saved', async () => {
-    const fieldConfig = {
-      defaults: { min: 0, varMappings: { min: '$myVar' } },
-      overrides: [
-        {
-          matcher: { id: 'byName', options: 'value' },
-          properties: [
-            { id: 'max', value: 100 },
-            { id: 'varMappings.max', value: '$myVar' },
-          ],
-        },
-      ],
-    };
+  async function loadLibraryPanel(fieldConfig: LibraryPanel['model']['fieldConfig']) {
     const libraryPanel: LibraryPanel = {
       name: 'Library panel',
       uid: 'lib-1',
@@ -249,6 +239,30 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     const deactivateData = activateFullSceneTree(panel.state.$data!);
     await tick();
 
+    return {
+      panel,
+      cleanup: () => {
+        deactivateData();
+        deactivate();
+      },
+    };
+  }
+
+  it('keeps varMappings when a library panel is loaded and saved', async () => {
+    const fieldConfig = {
+      defaults: { min: 0, varMappings: { min: '$myVar' } },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'value' },
+          properties: [
+            { id: 'max', value: 100 },
+            { id: 'varMappings.max', value: '$myVar' },
+          ],
+        },
+      ],
+    };
+    const { panel, cleanup } = await loadLibraryPanel(fieldConfig);
+
     const config = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config;
     expect(config.min).toEqual(50);
     expect(config.max).toEqual(50);
@@ -257,7 +271,49 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     expect(saved?.defaults).toMatchObject(fieldConfig.defaults);
     expect(saved?.overrides).toEqual(fieldConfig.overrides);
 
-    deactivateData();
-    deactivate();
+    cleanup();
+  });
+
+  describe('library panel threshold valueExpr migration', () => {
+    const withValueExpr = (): LibraryPanel['model']['fieldConfig'] => ({
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 80, color: 'red', valueExpr: '$myVar' },
+          ],
+        },
+      },
+      overrides: [],
+    });
+
+    afterEach(() => {
+      setTestFlags();
+    });
+
+    it('moves valueExpr into varMappings with the flag on, and the save model has no valueExpr', async () => {
+      setTestFlags({ [FlagKeys.GrafanaPanelOptionInterpolation]: true });
+      const { panel, cleanup } = await loadLibraryPanel(withValueExpr());
+
+      expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ 'thresholds.steps.1': '$myVar' });
+      const config = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config;
+      expect(config.thresholds?.steps.map((step) => step.value)).toEqual([-Infinity, 50]);
+
+      const saved = libraryPanelsApi.libraryVizPanelToSaveModel(panel).model;
+      expect(saved.fieldConfig?.defaults?.varMappings).toEqual({ 'thresholds.steps.1': '$myVar' });
+      expect(JSON.stringify(saved)).not.toContain('valueExpr');
+
+      cleanup();
+    });
+
+    it('keeps valueExpr with the flag off', async () => {
+      const { panel, cleanup } = await loadLibraryPanel(withValueExpr());
+
+      expect(panel.state.fieldConfig.defaults.varMappings).toBeUndefined();
+      expect(panel.state.fieldConfig.defaults.thresholds?.steps[1].valueExpr).toBe('$myVar');
+
+      cleanup();
+    });
   });
 });
