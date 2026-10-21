@@ -1,5 +1,6 @@
 import { type SceneObject, SceneQueryRunner, VizPanel, sceneGraph } from '@grafana/scenes';
 import { sendRenderComplete } from 'app/features/dashboard/services/sendRenderComplete';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 
 // Below grafana-image-renderer's 30s readiness timeout, so a notebook whose queries never settle
 // still prints, partially, instead of failing the whole export.
@@ -73,6 +74,8 @@ export function watchRenderReadiness(scene: SceneObject, onReady: () => void): (
 
 // A runner registers with the query controller only once its datasource has loaded, and a panel
 // draws only once its plugin has, so a quiet controller alone does not mean everything has rendered.
+// A library panel is both at once: it shows a placeholder plugin, which loads fine, and has no data
+// runner until its definition has been fetched.
 function hasPanelsStillLoading(scene: SceneObject): boolean {
   return sceneGraph
     .findAllObjects(scene, (obj) => obj.isActive && (obj instanceof SceneQueryRunner || obj instanceof VizPanel))
@@ -81,6 +84,14 @@ function hasPanelsStillLoading(scene: SceneObject): boolean {
         return !obj.state.data;
       }
 
-      return obj instanceof VizPanel && !obj.getPlugin() && !obj.state._pluginLoadError;
+      return (
+        obj instanceof VizPanel && (!obj.getPlugin() || hasUnloadedLibraryPanel(obj)) && !obj.state._pluginLoadError
+      );
     });
+}
+
+function hasUnloadedLibraryPanel(panel: VizPanel): boolean {
+  return Boolean(
+    panel.state.$behaviors?.some((behavior) => behavior instanceof LibraryPanelBehavior && !behavior.state.isLoaded)
+  );
 }

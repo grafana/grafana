@@ -8,6 +8,7 @@ import {
   behaviors,
   type SceneQueryControllerEntry,
 } from '@grafana/scenes';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 
 import {
   RENDER_READY_FALLBACK_MS,
@@ -114,6 +115,23 @@ describe('watchRenderReadiness', () => {
     expect(onReady).not.toHaveBeenCalled();
 
     jest.spyOn(panel, 'getPlugin').mockReturnValue(new PanelPlugin(() => null));
+    jest.advanceTimersByTime(RENDER_SETTLE_MS);
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps waiting for a library panel whose definition has not been fetched yet', () => {
+    const behavior = new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' });
+    const panel = new VizPanel({ pluginId: 'timeseries', $behaviors: [behavior] });
+    const { scene } = buildScene([new SceneFlexItem({ body: panel })]);
+    jest.spyOn(panel, 'isActive', 'get').mockReturnValue(true);
+    jest.spyOn(panel, 'getPlugin').mockReturnValue(new PanelPlugin(() => null));
+    const onReady = jest.fn();
+    watchRenderReadiness(scene, onReady);
+
+    jest.advanceTimersByTime(RENDER_SETTLE_MS * 3);
+    expect(onReady).not.toHaveBeenCalled();
+
+    behavior.setState({ isLoaded: true });
     jest.advanceTimersByTime(RENDER_SETTLE_MS);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
