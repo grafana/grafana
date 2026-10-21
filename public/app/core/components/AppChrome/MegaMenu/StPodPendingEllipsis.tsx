@@ -2,20 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { Text } from '@grafana/ui';
 import { STPodHealthPoller } from 'app/core/navigation/STPodHealthPoller';
-import { getStPodReadyPromise, getStPodStatus, StPodStatus } from 'app/core/navigation/stPodReadiness';
-
-// The ready promise resolves on both Ready and Timeout, the only transitions that hide the ellipsis.
-const subscribeToStPodStatus = (onChange: () => void) => {
-  let subscribed = true;
-  getStPodReadyPromise().then(() => {
-    if (subscribed) {
-      onChange();
-    }
-  });
-  return () => {
-    subscribed = false;
-  };
-};
+import { getStPodStatus, StPodStatus, subscribeToStPodStatus } from 'app/core/navigation/stPodReadiness';
 
 export const StPodPendingEllipsis = () => {
   const status = useSyncExternalStore(subscribeToStPodStatus, getStPodStatus);
