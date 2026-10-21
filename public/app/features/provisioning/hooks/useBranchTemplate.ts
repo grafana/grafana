@@ -40,39 +40,47 @@ export function useBranchTemplate({ repository, vars, isNewBranch, value, setBra
   // Fill the rendered name when the ref first becomes a new branch, then keep it in sync with the
   // live template variables — but stop once the user edits the field. We can't gate on react-hook-
   // form's dirty state: typing a new branch name already marks `ref` dirty, which would suppress the
-  // first fill. Instead we latch as soon as the field value diverges from the value the hook last
-  // wrote itself.
+  // first fill. Instead we latch on any change the hook did not write itself, including edits made
+  // while the refs are still resolving, so a late activation never reclaims an edited field.
   const lastApplied = useRef<string | undefined>(undefined);
   const userEdited = useRef(false);
+  const previous = useRef<{ value: string; isNewBranch: boolean | undefined } | undefined>(undefined);
   useEffect(() => {
-    if (!active || !rendered) {
-      lastApplied.current = undefined;
-      userEdited.current = false;
-      return;
-    }
+    const prev = previous.current;
+    previous.current = { value, isNewBranch };
+
     // Enforced templates render the field read-only, so a value diverging from what the hook last
     // wrote is a form reset (the Save drawer re-runs reset on parent re-renders, e.g. selecting a
     // target folder), never a user edit. Keep re-applying the rendered name so the enforced branch
     // survives the reset instead of latching off.
     if (enforce) {
-      if (rendered !== value) {
+      if (rendered && rendered !== value) {
         lastApplied.current = rendered;
         setBranch(rendered);
       }
       return;
     }
-    // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
-    if (lastApplied.current !== undefined && value !== lastApplied.current) {
+    // The configured branch or an existing one: not in new-branch mode. Leaving it later is a fresh
+    // entry the template fills again.
+    if (isNewBranch === false) {
+      lastApplied.current = undefined;
+      userEdited.current = false;
+      return;
+    }
+    // A value the hook did not write, changed while already on (or still resolving) a new branch,
+    // is a user edit. A change that moved the field off a known branch is the entry into
+    // new-branch mode, which the template fills.
+    if (prev && prev.isNewBranch !== false && value !== prev.value && value !== lastApplied.current) {
       userEdited.current = true;
     }
-    if (userEdited.current) {
+    if (!active || userEdited.current) {
       return;
     }
     if (rendered !== lastApplied.current) {
       lastApplied.current = rendered;
       setBranch(rendered);
     }
-  }, [active, enforce, rendered, value, setBranch]);
+  }, [active, enforce, rendered, value, isNewBranch, setBranch]);
 
   return { locked };
 }

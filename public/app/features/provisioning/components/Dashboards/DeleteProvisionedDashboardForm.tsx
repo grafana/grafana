@@ -21,7 +21,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
-import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type DeleteJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -100,9 +100,9 @@ export function DeleteProvisionedDashboardForm({
     );
   };
 
-  const handleSubmitForm = async ({ repo }: ProvisionedDashboardFormData) => {
+  const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
-    if (!repo || !repository) {
+    if (!repo || !path || !repository) {
       showError(
         t(
           'dashboard-scene.delete-provisioned-dashboard-form.no-repository-selected',
@@ -118,19 +118,10 @@ export function DeleteProvisionedDashboardForm({
       repositoryType: repository.type ?? 'unknown',
     });
 
-    const jobSpec = {
-      action: 'delete' as const,
+    const jobSpec: DeleteJobSpec = {
+      action: 'delete',
       message,
-      delete: {
-        ref: getRequestRef(repository, ref),
-        resources: [
-          {
-            name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-            group: 'dashboard.grafana.app' as const,
-            kind: 'Dashboard' as const,
-          },
-        ],
-      },
+      delete: { ref: getRequestRef(repository, ref), paths: [path] },
     };
 
     try {

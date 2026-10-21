@@ -23,7 +23,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
-import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type DeleteJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -90,9 +90,9 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     );
   };
 
-  const handleSubmitForm = async ({ repo }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo, path }: BaseProvisionedFormData) => {
     setError(undefined);
-    if (!repo || !repository) {
+    if (!repo || !path || !repository) {
       showError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
       return;
     }
@@ -103,19 +103,10 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       repositoryType: repository.type ?? 'unknown',
     });
 
-    const jobSpec = {
-      action: 'delete' as const,
+    const jobSpec: DeleteJobSpec = {
+      action: 'delete',
       message,
-      delete: {
-        ref: getRequestRef(repository, ref),
-        resources: [
-          {
-            name: resourceId,
-            group: 'folder.grafana.app' as const,
-            kind: 'Folder' as const,
-          },
-        ],
-      },
+      delete: { ref: getRequestRef(repository, ref), paths: [path] },
     };
 
     try {

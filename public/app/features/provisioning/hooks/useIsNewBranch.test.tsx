@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
@@ -41,6 +41,30 @@ describe('useIsNewBranch', () => {
 
   it('resolves to true for a branch absent from the refs', async () => {
     const { result } = render(repo, 'feature/x');
+    expect(result.current).toBeUndefined();
+    await waitFor(() => expect(result.current).toBe(true));
+  });
+
+  it('goes back to unresolved while a newly selected repository loads its refs', async () => {
+    // Refs differ per repository: the first repo knows `feature/x`, the second does not and is slow.
+    server.use(
+      http.get(`${BASE}/repositories/:name/refs`, async ({ params }) => {
+        if (params.name === 'other') {
+          await delay(50);
+          return HttpResponse.json({ items: [{ name: 'main' }] });
+        }
+        return HttpResponse.json({ items: [{ name: 'main' }, { name: 'feature/x' }] });
+      })
+    );
+
+    const { result, rerender } = renderHook(({ repository }) => useIsNewBranch(repository, 'feature/x'), {
+      wrapper: getWrapper({}),
+      initialProps: { repository: repo },
+    });
+    await waitFor(() => expect(result.current).toBe(false));
+
+    // The first repository's answer must not stand in for the second while it loads.
+    rerender({ repository: { ...repo, name: 'other' } });
     expect(result.current).toBeUndefined();
     await waitFor(() => expect(result.current).toBe(true));
   });

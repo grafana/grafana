@@ -13,12 +13,14 @@ import { getWorkflowForRef } from '../utils/workflow';
  */
 export function useIsNewBranch(repository: RepositoryView | undefined, ref: string | undefined): boolean | undefined {
   const queryArg = repository?.name && isGitProvider(repository.type) ? { name: repository.name } : skipToken;
-  const { data } = useGetRepositoryRefsQuery(queryArg);
+  // `currentData` belongs to this repository; `data` would keep the previous repository's refs
+  // while a newly selected one loads and classify the branch against the wrong list.
+  const { currentData } = useGetRepositoryRefsQuery(queryArg);
   if (queryArg === skipToken || getWorkflowForRef(repository, ref) === 'write') {
     return false;
   }
-  if (!data) {
+  if (!currentData) {
     return undefined;
   }
-  return !data.items?.some((item) => item.name === ref);
+  return !currentData.items?.some((item) => item.name === ref);
 }

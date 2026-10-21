@@ -11,14 +11,16 @@ import { extractErrorMessage } from 'app/api/utils';
 // needs a fully-specified ref, whereas the generated fields are all optional.
 export type ResourceRef = Required<GeneratedResourceRef>;
 
+// What a job acts on. A form that knows the file path submits it directly; the backend resolves
+// `resources` through the live Grafana object, which does not exist for a file that only lives on
+// a branch and points at the configured branch's path after a rename on one.
+type JobTargets = { paths: string[] } | { resources: ResourceRef[] };
+
 export interface DeleteJobSpec {
   action: 'delete';
   // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
   message?: string;
-  delete: {
-    ref?: string;
-    resources: ResourceRef[];
-  };
+  delete: { ref?: string } & JobTargets;
 }
 
 export interface MoveJobSpec {
@@ -28,8 +30,7 @@ export interface MoveJobSpec {
   move: {
     ref?: string;
     targetPath: string; // Must end with '/' slash
-    resources: ResourceRef[];
-  };
+  } & JobTargets;
 }
 
 type BulkJobSpec = DeleteJobSpec | MoveJobSpec;

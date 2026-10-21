@@ -93,6 +93,53 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
   });
 
+  it('keeps an edit made while the ref was still resolving', async () => {
+    // The drawer opens on a generated branch whose refs lookup is still pending. An edit in that
+    // window must survive the lookup resolving to "new": the template may not reclaim the field.
+    const repository = makeRepo({ nameTemplate: TEMPLATE });
+    const { rerender, user } = render(
+      <Host repository={repository} vars={dashboardVars} isNewBranch={undefined} defaultRef="dashboard/2026-abc" />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    await user.clear(input);
+    await user.type(input, 'feature/my-choice');
+    expect(input).toHaveValue('feature/my-choice');
+
+    rerender(<Host repository={repository} vars={dashboardVars} isNewBranch defaultRef="dashboard/2026-abc" />);
+    // Give the template effect a chance to run; it must leave the edit alone.
+    await waitFor(() => expect(input).toHaveValue('feature/my-choice'));
+    rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Renamed' }} isNewBranch />);
+    expect(input).toHaveValue('feature/my-choice');
+  });
+
+  it('fills the generated branch once the pending lookup confirms it is new', async () => {
+    const repository = makeRepo({ nameTemplate: TEMPLATE });
+    const { rerender } = render(
+      <Host repository={repository} vars={dashboardVars} isNewBranch={undefined} defaultRef="dashboard/2026-abc" />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    expect(input).toHaveValue('dashboard/2026-abc');
+
+    rerender(<Host repository={repository} vars={dashboardVars} isNewBranch defaultRef="dashboard/2026-abc" />);
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+  });
+
+  it('fills the template again after the field returns to a known branch and leaves it', async () => {
+    const repository = makeRepo({ nameTemplate: TEMPLATE });
+    const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+    await user.type(input, 'x');
+
+    // Back on an existing branch the edit latch releases; the next new branch gets the template.
+    rerender(<Host repository={repository} vars={dashboardVars} isNewBranch={false} />);
+    rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Next' }} isNewBranch />);
+    await waitFor(() => expect(input).toHaveValue('grafana/create-next'));
+  });
+
   it('pre-fills the branch field from the rendered template when the ref is a new branch', async () => {
     render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} />);
 

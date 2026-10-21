@@ -24,7 +24,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
-import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type MoveJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -108,7 +108,7 @@ export function MoveProvisionedDashboardForm({
   };
 
   const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
-    if (!repo || !repository || !targetFolderPath) {
+    if (!repo || !path || !repository || !targetFolderPath) {
       showError();
       return;
     }
@@ -129,20 +129,10 @@ export function MoveProvisionedDashboardForm({
       repositoryType: repository.type ?? 'unknown',
     });
 
-    const jobSpec = {
-      action: 'move' as const,
+    const jobSpec: MoveJobSpec = {
+      action: 'move',
       message,
-      move: {
-        ref: getRequestRef(repository, ref),
-        targetPath: targetFolderPath,
-        resources: [
-          {
-            name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-            group: 'dashboard.grafana.app' as const,
-            kind: 'Dashboard' as const,
-          },
-        ],
-      },
+      move: { ref: getRequestRef(repository, ref), targetPath: targetFolderPath, paths: [path] },
     };
 
     try {

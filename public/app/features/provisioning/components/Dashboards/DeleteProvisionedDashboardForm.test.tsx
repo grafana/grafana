@@ -24,7 +24,7 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ),
 }));
 
-type DeleteJobBody = { message?: string; delete?: { ref?: string } };
+type DeleteJobBody = { message?: string; delete?: { ref?: string; paths?: string[] } };
 
 /** Captures the posted delete job and answers the job watch with `job`. */
 function mockDeleteJob(job = createJob()) {
@@ -132,6 +132,8 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       await waitFor(() => expect(posted.body).not.toBeNull());
       expect(posted.body!.delete?.ref).toBe(expectedRef);
+      // The form knows the file path, so the job must not resolve it through the live Grafana object
+      expect(posted.body!.delete?.paths).toEqual(['dashboards/test.json']);
       expect(posted.body!.message).toBe('Delete dashboard: Test Dashboard');
     });
 
