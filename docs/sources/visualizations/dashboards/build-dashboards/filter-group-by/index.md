@@ -145,7 +145,7 @@ For example, add the following override to the panel's `fieldConfig.overrides` a
 ```
 
 Replace `service` with the name of the field you want to filter by.
-This requires a supported visualization and data source support for ad hoc filters.
+This requires a supported visualization and data source support for free-form filters.
 The standard `filterable` property updates dashboard filters.
 
 Cross-filtering is supported for the following visualizations:
