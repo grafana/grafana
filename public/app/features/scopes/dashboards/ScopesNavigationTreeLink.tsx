@@ -189,8 +189,12 @@ const getStyles = (theme: GrafanaTheme2, megaMenuStyle?: boolean, visualRefreshE
             color: theme.colors.accent.text,
             backgroundColor: theme.colors.accent.subtleBackground,
             borderRadius: theme.shape.radius.default,
-            '&:hover': {
+            // `container`'s own `&:hover, &:focus` rule has equal specificity and is declared later
+            // in this same stylesheet, so without re-asserting these here on hover/focus it wins and
+            // replaces the active row's highlight with the plain hover treatment.
+            '&:hover, &:focus': {
               color: theme.colors.accent.textEmphasis,
+              backgroundColor: theme.colors.accent.subtleBackground,
             },
           })
         : css({
@@ -211,6 +215,11 @@ const getStyles = (theme: GrafanaTheme2, megaMenuStyle?: boolean, visualRefreshE
               width: theme.spacing(0.25),
               top: 0,
               left: 0,
+            },
+            // See the visualRefresh branch above - same reason.
+            '&:hover, &:focus': {
+              color: theme.colors.text.primary,
+              background: theme.colors.action.selected,
             },
           }),
   };
