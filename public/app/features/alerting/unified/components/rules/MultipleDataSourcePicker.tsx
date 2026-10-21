@@ -1,34 +1,48 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
-import { isDataSourceManagingAlerts } from '@grafana/alerting/internal';
+import { useDataSourcesManagingAlertsByUid } from '@grafana/alerting/internal';
 import {
-  type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type SelectableValue,
   getDataSourceUID,
   isUnsignedPluginSignature,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, getDataSourceSrv, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
+import { useDataSourceInstanceList, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
-export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProps, 'onChange' | 'current'> {
-  onChange: (ds: DataSourceInstanceSettings, action: 'add' | 'remove') => void;
+export interface MultipleDataSourcePickerProps {
+  /** Only offer data sources whose plugin supports alerting. */
+  alerting?: boolean;
+  noDefault?: boolean;
+  placeholder?: string;
   current: string[] | undefined;
+  onChange: (ds: DataSourceInstanceListItem, action: 'add' | 'remove') => void;
+  onClear?: () => void;
 }
 
 export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
-  const dataSourceSrv = getDataSourceSrv();
+  const { alerting, noDefault, placeholder, current, onClear } = props;
 
-  const [state, setState] = useState<{ error?: string }>();
+  const { items: dataSources, isLoading: isLoadingOptions } = useDataSourceInstanceList({ alerting });
+  const { byUid: managingAlertsByUid, isLoading: isLoadingManagingAlerts } = useDataSourcesManagingAlertsByUid();
 
-  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceSrv.getList());
+  // `current` comes from the URL and may name a data source that the options exclude, so resolve it
+  // against every data source, by uid or by name.
+  const { items: allDataSources, isLoading: isLoadingAllDataSources } = useDataSourceInstanceList({ all: true });
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(allDataSources);
+  const resolveDataSource = useMemo(() => {
+    const byUid = new Map(allDataSources.map((ds) => [ds.uid, ds]));
+    const byName = new Map(allDataSources.map((ds) => [ds.name, ds]));
+    return (uidOrName: string) => byUid.get(uidOrName) ?? byName.get(uidOrName);
+  }, [allDataSources]);
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear' && props.onClear) {
-      props.onClear();
+    if (actionMeta.action === 'clear' && onClear) {
+      onClear();
       return;
     }
 
@@ -47,28 +61,30 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       action = 'add';
     }
 
-    const dsSettings = dataSourceSrv.getInstanceSettings(dataSourceName);
+    const ds = dataSourceName ? resolveDataSource(dataSourceName) : undefined;
 
-    if (dsSettings) {
-      props.onChange(dsSettings, action);
-      setState({ error: undefined });
+    if (ds) {
+      props.onChange(ds, action);
     }
   };
 
   const getCurrentValue = (): Array<SelectableValue<string>> | undefined => {
-    const { current, hideTextValue, noDefault } = props;
     if (!current && noDefault) {
       return;
     }
 
     return current?.map((dataSourceName: string) => {
-      const ds = dataSourceSrv.getInstanceSettings(dataSourceName);
+      // Show the stored name until the list resolves, rather than flashing "not found".
+      if (isLoadingAllDataSources) {
+        return { label: dataSourceName, value: dataSourceName };
+      }
+
+      const ds = resolveDataSource(dataSourceName);
       if (ds) {
         return {
           label: ds.name.slice(0, 37),
           value: ds.name,
           imgUrl: ds.meta.info.logos.small,
-          hideText: hideTextValue,
           meta: ds.meta,
         };
       }
@@ -76,51 +92,27 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       const uid = getDataSourceUID(dataSourceName);
 
       if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
-        return { label: uid, value: uid, hideText: hideTextValue };
+        return { label: uid, value: uid };
       }
 
       return {
         label: (uid ?? 'no name') + ' - not found',
         value: uid ?? undefined,
         imgUrl: '',
-        hideText: hideTextValue,
       };
     });
   };
 
   const getDataSourceOptions = () => {
-    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
-      props;
-
-    const dataSources = dataSourceSrv.getList({
-      alerting,
-      tracing,
-      metrics,
-      logs,
-      dashboard,
-      mixed,
-      variables,
-      annotations,
-      pluginId,
-      filter,
-      type,
-    });
-
-    const alertManagingDs = dataSources.filter(isDataSourceManagingAlerts).map((ds) => ({
+    const toOption = (ds: DataSourceInstanceListItem) => ({
       value: ds.name,
       label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
-    }));
+    });
 
-    const nonAlertManagingDs = dataSources
-      .filter((ds) => !isDataSourceManagingAlerts(ds))
-      .map((ds) => ({
-        value: ds.name,
-        label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+    const alertManagingDs = dataSources.filter((ds) => managingAlertsByUid.has(ds.uid)).map(toOption);
+    const nonAlertManagingDs = dataSources.filter((ds) => !managingAlertsByUid.has(ds.uid)).map(toOption);
 
     const groupedOptions = [
       {
@@ -144,18 +136,6 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
     return groupedOptions;
   };
 
-  const {
-    autoFocus,
-    onBlur,
-    onClear,
-    openMenuOnFocus,
-    placeholder,
-    width,
-    inputId,
-    disabled = false,
-    isLoading = false,
-  } = props;
-
   const options = getDataSourceOptions();
   const value = getCurrentValue();
   const isClearable = typeof onClear === 'function';
@@ -163,19 +143,14 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   return (
     <div data-testid={selectors.components.DataSourcePicker.container}>
       <MultiSelect
-        isLoading={isLoading}
-        disabled={disabled}
+        isLoading={isLoadingOptions || isLoadingManagingAlerts || isLoadingAllDataSources}
         data-testid={selectors.components.DataSourcePicker.inputV2}
-        inputId={inputId || 'data-source-picker'}
+        inputId="data-source-picker"
         className="ds-picker select-container"
         isClearable={isClearable}
         backspaceRemovesValue={true}
         onChange={onChange}
         options={options}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        width={width}
-        openMenuOnFocus={openMenuOnFocus}
         maxMenuHeight={500}
         placeholder={placeholder}
         noOptionsMessage={t(
@@ -183,7 +158,6 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
           'No datasources found'
         )}
         value={value ?? []}
-        invalid={Boolean(state?.error) || Boolean(props.invalid)}
         getOptionLabel={(o) => {
           if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
             return (
