@@ -12,11 +12,14 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // use the real standard field config registry so min/max/decimals run through the real
@@ -143,6 +146,84 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     const reprocessed = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!);
     expect(reprocessed.series[0].fields[0].config.max).toEqual(2);
 
+    deactivate();
+  });
+
+  it('resolves each repeated panel against its own repeat value', async () => {
+    const source = buildPanel({ min: 0, varMappings: { min: '$server' } });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 }, source);
+
+    const deactivate = activateFullSceneTree(scene);
+    const panels = [repeater.state.body, ...(repeater.state.repeatedPanels ?? [])] as VizPanel[];
+    // activateFullSceneTree doesn't reach repeat clones
+    const deactivateClones = panels.slice(1).map((panel) => activateFullSceneTree(panel));
+    await tick();
+
+    const mins = panels.map(
+      (panel) => panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config.min
+    );
+
+    // the dashboard-level $server has every value selected, so only the per-repeat scope resolves
+    expect(mins).toEqual([1, 2, 3, 4, 5]);
+
+    deactivateClones.forEach((deactivateClone) => deactivateClone());
+    deactivate();
+  });
+
+  it('keeps varMappings when a library panel is loaded and saved', async () => {
+    const fieldConfig = {
+      defaults: { min: 0, varMappings: { min: '$myVar' } },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'value' },
+          properties: [
+            { id: 'max', value: 100 },
+            { id: 'varMappings.max', value: '$myVar' },
+          ],
+        },
+      ],
+    };
+    const libraryPanel: LibraryPanel = {
+      name: 'Library panel',
+      uid: 'lib-1',
+      type: 'timeseries',
+      model: {
+        title: 'Library panel',
+        type: 'timeseries',
+        fieldConfig,
+        datasource: { uid: 'ds1' },
+        targets: [{ refId: 'A' }],
+      },
+      version: 1,
+    };
+    jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue(libraryPanel);
+
+    const panel = new VizPanel({
+      title: 'Library panel',
+      pluginId: 'lib-panel-loading',
+      key: 'panel-1',
+      $behaviors: [new LibraryPanelBehavior({ name: libraryPanel.name, uid: libraryPanel.uid })],
+    });
+    const scene = buildScene(
+      panel,
+      new SceneVariableSet({ variables: [new CustomVariable({ name: 'myVar', query: '50', value: '50', text: '50' })] })
+    );
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+    // loading replaces the panel's data provider, which the earlier tree walk didn't activate
+    const deactivateData = activateFullSceneTree(panel.state.$data!);
+    await tick();
+
+    const config = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config;
+    expect(config.min).toEqual(50);
+    expect(config.max).toEqual(50);
+
+    const saved = libraryPanelsApi.libraryVizPanelToSaveModel(panel).model.fieldConfig;
+    expect(saved?.defaults).toMatchObject(fieldConfig.defaults);
+    expect(saved?.overrides).toEqual(fieldConfig.overrides);
+
+    deactivateData();
     deactivate();
   });
 });
