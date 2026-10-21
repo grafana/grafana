@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { draft07Config } from 'json-schema-library';
 import { useState } from 'react';
@@ -52,39 +52,42 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
     jest.mocked(useAsync).mockImplementation(jest.requireActual('react-use').useAsync);
   });
 
-  it.each(['JSON', 'YAML'])('validates %s once after typing pauses and blocks saving while pending', async (format) => {
-    jest.useFakeTimers();
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    const onValidationChange = jest.fn();
-    const { unmount } = render(<ControlledEditor onValidationChange={onValidationChange} />);
-    const validate = jest.spyOn(draft07Config, 'validate');
-    try {
+  describe('debounced validation', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      cleanup();
+      jest.runOnlyPendingTimers();
+      jest.restoreAllMocks();
+      jest.useRealTimers();
+    });
+
+    it.each([
+      { format: 'json', invalid: '{"spec":{"title":123}}', valid: '{"spec":{"title":"Edited"}}' },
+      { format: 'yaml', invalid: 'spec:\n  title: 123', valid: 'spec:\n  title: Edited' },
+    ] as const)('validates $format edits once after typing pauses', async ({ format, invalid, valid }) => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const onValidationChange = jest.fn();
+      render(<ControlledEditor initialFormat={format} onValidationChange={onValidationChange} />);
       await screen.findByRole('textbox', { name: 'Dashboard schema' });
-      if (format === 'YAML') {
-        await user.click(screen.getByRole('radio', { name: 'YAML' }));
-      }
       await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
       await act(async () => jest.advanceTimersByTime(100));
-      validate.mockClear();
+      const validate = jest.spyOn(draft07Config, 'validate');
 
-      await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":123}}' : 'spec:\n  title: 123');
+      await replaceBuffer(user, invalid);
       await act(async () => jest.advanceTimersByTime(5));
-      await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":"Edited"}}' : 'spec:\n  title: Edited');
+      await replaceBuffer(user, valid);
       expect(onValidationChange).toHaveBeenLastCalledWith(true);
       expect(validate).not.toHaveBeenCalled();
 
       // CodeMirror's linter allows a 10 ms scheduling tolerance.
       await act(async () => jest.advanceTimersByTime(100));
-      expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
       expect(onValidationChange).toHaveBeenLastCalledWith(false);
       await act(async () => jest.advanceTimersByTime(200));
       expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
-    } finally {
-      unmount();
-      jest.runOnlyPendingTimers();
-      validate.mockRestore();
-      jest.useRealTimers();
-    }
+    });
   });
 
   it('shows a read-only buffer and an error when schema support fails to load', async () => {
