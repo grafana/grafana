@@ -364,6 +364,31 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
 	})
 
+	t.Run("update does not re-encrypt unchanged secrets", func(t *testing.T) {
+		cfg := createEncryptedConfig(t, secretsService)
+		store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+		expected := store.LastSaveCommand.AlertmanagerConfiguration
+
+		newCp.Settings = createTestContactPoint().Settings
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		assert.Equal(t, expected, store.LastSaveCommand.AlertmanagerConfiguration)
+
+		newCp.Settings.Set("token", definitions.RedactedValue)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		assert.Equal(t, expected, store.LastSaveCommand.AlertmanagerConfiguration)
+
+		newCp.Settings.Set("token", "new_token")
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		assert.NotEqual(t, expected, store.LastSaveCommand.AlertmanagerConfiguration)
+	})
+
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
