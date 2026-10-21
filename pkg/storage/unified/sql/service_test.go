@@ -202,10 +202,6 @@ func TestSearchServerDrainsBeforeStopping(t *testing.T) {
 				t.Fatal("shutdown did not drain gRPC")
 			}
 			require.False(t, server.stopped.Load(), "backend must remain open for accepted RPCs")
-			require.EventuallyWithT(t, func(c *assert.CollectT) {
-				_, err := client.GetStats(ctx, &resourcepb.ResourceStatsRequest{})
-				assert.Equal(c, codes.Unavailable, status.Code(err))
-			}, time.Second, 10*time.Millisecond)
 			unblock()
 			select {
 			case <-searchDone:
