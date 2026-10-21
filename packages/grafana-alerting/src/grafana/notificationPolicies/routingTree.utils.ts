@@ -1,6 +1,7 @@
-import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
+
+import { type RoutingTree, type RoutingTreeRoute } from '../api/notifications';
 
 import { type Route } from './types';
 

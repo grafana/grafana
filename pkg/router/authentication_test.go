@@ -2,13 +2,20 @@ package router
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"io"
-	"maps"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -32,10 +39,9 @@ func authenticatedTestContext(ctx context.Context) context.Context {
 }
 
 func TestRouterAuthentication(t *testing.T) {
-	accessToken := http.Header{"X-Access-Token": {"test-token"}}
 	for _, tc := range []struct {
 		name          string
-		headers       http.Header
+		header        string
 		authErr       error
 		emptyIdentity bool
 		noVerifier    bool
@@ -44,16 +50,12 @@ func TestRouterAuthentication(t *testing.T) {
 		authCalls     int
 	}{
 		{name: "missing", status: http.StatusUnauthorized},
-		{name: "authorization only", headers: http.Header{"Authorization": {"Bearer test-token"}}, authCalls: 2},
-		{name: "lowercase bearer", headers: http.Header{"Authorization": {"bearer test-token"}}, authCalls: 2},
-		{name: "basic", headers: http.Header{"Authorization": {"Basic dGVzdDp0ZXN0"}}, status: http.StatusUnauthorized},
-		{name: "empty bearer", headers: http.Header{"Authorization": {"Bearer "}}, status: http.StatusUnauthorized},
-		{name: "both headers", headers: http.Header{"X-Access-Token": {"test-token"}, "Authorization": {"Bearer other-token"}}, authCalls: 2},
-		{name: "invalid", headers: accessToken, authErr: apierrors.NewUnauthorized("invalid token"), status: http.StatusUnauthorized, authCalls: 2},
-		{name: "unavailable", headers: accessToken, authErr: errors.New("unavailable"), status: http.StatusInternalServerError, authCalls: 2},
-		{name: "nil requester", headers: accessToken, emptyIdentity: true, status: http.StatusUnauthorized, authCalls: 2},
-		{name: "unconfigured", headers: accessToken, noVerifier: true, status: http.StatusUnauthorized},
-		{name: "valid", headers: accessToken, authCalls: 2},
+		{name: "authorization only", header: "Authorization", status: http.StatusUnauthorized},
+		{name: "invalid", header: "X-Access-Token", authErr: apierrors.NewUnauthorized("invalid token"), status: http.StatusUnauthorized, authCalls: 2},
+		{name: "unavailable", header: "X-Access-Token", authErr: errors.New("unavailable"), status: http.StatusInternalServerError, authCalls: 2},
+		{name: "nil requester", header: "X-Access-Token", emptyIdentity: true, status: http.StatusUnauthorized, authCalls: 2},
+		{name: "unconfigured", header: "X-Access-Token", noVerifier: true, status: http.StatusUnauthorized},
+		{name: "valid", header: "X-Access-Token", authCalls: 2},
 		{name: "existing", trusted: true},
 	} {
 		for _, path := range []string{"/apis", "/apis/", "/openapi/v3", "/openapi/v3/apis/example/v1", "/apis/example/v1/widgets", "/apis/unknown/v1/widgets"} {
@@ -91,7 +93,9 @@ func TestRouterAuthentication(t *testing.T) {
 				}
 				for range 2 {
 					req := httptest.NewRequest(http.MethodGet, path, nil)
-					maps.Copy(req.Header, tc.headers)
+					if tc.header != "" {
+						req.Header.Set(tc.header, "test-token")
+					}
 					if tc.trusted {
 						req = req.WithContext(identity.WithRequester(req.Context(), info))
 					}
@@ -119,9 +123,62 @@ func TestProvideStandaloneServiceRequiresTokenVerificationConfig(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Target = []string{"router"}
 		cfg.ExtJWTAuth.JWKSUrl = jwks
-		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry())
+		svc, err := provideTestService(cfg, featuremgmt.WithFeatures(), stubLoader{})
 		require.Error(t, err)
 		require.Nil(t, svc)
+	}
+}
+
+func TestStandaloneRouterGroupAudience(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{Key: &key.PublicKey, KeyID: "test-key", Algorithm: string(jose.ES256), Use: "sig"}}}))
+	}))
+	t.Cleanup(server.Close)
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
+	cfg.ExtJWTAuth.JWKSUrl = server.URL
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+	router, err := ProvideGrafanaRouter(cfg)
+	require.NoError(t, err)
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry(), router)
+	require.NoError(t, err)
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, (&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "test-key"))
+	require.NoError(t, err)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		requester, err := identity.GetRequester(req.Context())
+		require.NoError(t, err)
+		require.Equal(t, "access-policy:policy-1", requester.GetUID())
+		w.WriteHeader(http.StatusNoContent)
+	})
+	snapshot := map[string]servingEntry{"iam.grafana.app": {handler: handler, breaker: newGroupBreaker("iam.grafana.app")}}
+	svc.router.snapshot.Store(&snapshot)
+	svc.router.unregisteredGroupHandler = handler
+
+	for _, audience := range []string{"grafana", "iam.grafana.app"} {
+		claims := authnlib.Claims[authnlib.AccessTokenClaims]{
+			Claims: jwt.Claims{Subject: "access-policy:policy-1", Audience: jwt.Audience{audience}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))},
+			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457"},
+		}
+		token, err := jwt.Signed(signer).Claims(claims).Serialize()
+		require.NoError(t, err)
+		for _, target := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/folder.grafana.app/v1/folders", "/apis", "/apis/discovery", "/openapi/v3"} {
+			t.Run(audience+target, func(t *testing.T) {
+				req := httptest.NewRequest(http.MethodGet, target, nil)
+				req.Header.Set("X-Access-Token", token)
+				rec := httptest.NewRecorder()
+				svc.router.HandleFunc(rec, req, http.NotFoundHandler())
+				want := http.StatusUnauthorized
+				if audience == "grafana" || target == "/apis/iam.grafana.app/v0alpha1/whoami" {
+					want = http.StatusNoContent
+					if target == "/apis" || target == "/apis/discovery" || target == "/openapi/v3" {
+						want = http.StatusOK
+					}
+				}
+				require.Equal(t, want, rec.Code, rec.Body.String())
+			})
+		}
 	}
 }
 

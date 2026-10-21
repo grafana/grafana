@@ -1716,8 +1716,12 @@
       },
       "preview": {
         "error": "Obsah se nepodařilo načíst: {{error}}",
+        "hide-secrets": "",
         "loading": "Načítání obsahu…",
         "notifications-title": "Náhled konfigurace oznámení",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Náhled pravidel výstrah"
       },
       "recording-rules": "Pravidla nahrávání",
@@ -2785,7 +2789,8 @@
     "recording-rules": {
       "description-target-data-source": "Zdroj dat Prometheus, do kterého se uloží pravidla záznamu",
       "label-target-data-source": "Cílový zdroj dat",
-      "target-data-source-required": "Vyberte cílový zdroj dat"
+      "target-data-source-required": "Vyberte cílový zdroj dat",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Vyberte jmenný prostor a skupinu pro pravidlo záznamu.",
@@ -6131,6 +6136,24 @@
       "tooltip-next": "Další",
       "tooltip-previous": "Předchozí"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Úprava schématu asistenta"
@@ -6251,6 +6274,9 @@
           "no-template-variables-found": "Nebyly nalezeny žádné proměnné šablony"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Zrušit",
@@ -7700,6 +7726,47 @@
       "body-restore-version": "Opravdu chcete obnovit nástěnku na verzi {{version}}? Veškeré neuložené změny budou ztraceny.",
       "confirmText-restore-version": "Ano, obnovit na verzi {{version}}",
       "title-restore-version": "Obnovit verzi"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_few": "",
+      "allowed-always_many": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_few": "",
+      "allowed-panels_many": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_few": "",
+      "banner-title_many": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_few": "",
+      "resources_many": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_few": "",
+      "resources-at-least_many": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_few": "",
+      "sources_many": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_few": "",
+      "url-count_many": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Uložit",
@@ -10229,6 +10296,7 @@
             "name-humidity": "Vlhkost (%H)",
             "name-locale": "Formát lokálního nastavení",
             "name-number": "Číslo",
+            "name-ordinal": "",
             "name-percent-1": "Procento (0,0–1,0)",
             "name-percent-100": "Procento (0–100)",
             "name-pixels": "Pixely",
@@ -10354,7 +10422,11 @@
           },
           "name": "Objem"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_many": "",
+      "ordinal-suffix_ordinal_few": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13423,6 +13495,7 @@
       "created-by-me": "Vytvořené mnou",
       "error-conflict": "Tento zápisník se změnil, zatímco jste do něj přidávali obsah. Zkuste znovu přidat panel do nejnovější verze.",
       "error-generic": "Nepodařilo se přidat panel do zápisníku",
+      "error-open-conflict": "",
       "list-error": "Zápisníky se nepodařilo načíst",
       "list-error-body": "Při načítání vašich zápisníků se něco pokazilo. Zkuste to znovu nebo místo toho vytvořte nový.",
       "list-no-matches": "Těmto filtrům neodpovídají žádné zápisníky.",
@@ -13431,6 +13504,8 @@
       "list-truncated": "Ne každý zápisník je zobrazen. Zužte vyhledávání, abyste našli další.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Hledat podle názvu",
       "sort-alphabetical": "Abecedně (A–Z)",
       "sort-label": "Seřadit zápisníky",
@@ -13438,13 +13513,15 @@
       "sort-updated": "Nedávno aktualizováno",
       "submit": "Přidat do zápisníku",
       "success": "Panel přidán do {{title}}",
+      "success-cells": "",
       "success-link": "Zobrazit zápisník",
       "tag-placeholder": "Filtrovat podle štítku",
       "target-description": "Vyberte, kam chcete panel přidat.",
       "target-existing": "Existující zápisník",
       "target-label": "Cílový zápisník",
       "target-new": "Nový zápisník",
-      "title": "Přidat panel do zápisníku"
+      "title": "Přidat panel do zápisníku",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16880,6 +16957,7 @@
     "name-page-size": "Velikost stránky",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Styling z pole",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",

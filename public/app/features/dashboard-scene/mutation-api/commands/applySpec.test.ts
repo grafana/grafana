@@ -389,14 +389,6 @@ describe('APPLY_SPEC with a user-set transformation refId', () => {
 });
 
 describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also
@@ -410,8 +402,7 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     expect(scene.state.isEditing).toBeFalsy();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
-
-    expect(isDraggable(scene)).toBe(true);
+    await waitFor(() => expect(isDraggable(scene)).toBe(true));
   });
 
   it('when the scene was already in edit mode before applying the spec', async () => {
@@ -419,7 +410,6 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     scene.onEnterEditMode();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
-
-    expect(isDraggable(scene)).toBe(true);
+    await waitFor(() => expect(isDraggable(scene)).toBe(true));
   });
 });

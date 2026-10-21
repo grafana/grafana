@@ -169,7 +169,7 @@ describe('HomePage', () => {
   it('renders dashboard tabs and auto-switches to starred', async () => {
     render(<HomePage />);
 
-    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
+    // Default mocks have starred dashboards but no recent activity, so DashboardTabs
     // auto-switches to the Starred tab once its fetches settle.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
@@ -364,13 +364,13 @@ describe('HomePage', () => {
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
   });
 
-  it('renders the dashboards grid above the stack overview on the redesigned homepage', async () => {
+  it('renders the jump-back-in grid above the stack overview on the redesigned homepage', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
 
     render(<HomePage />);
 
-    const dashboards = await screen.findByRole('heading', { name: 'Dashboards' });
+    const dashboards = await screen.findByRole('heading', { name: 'Jump back in' });
     const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
     expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });

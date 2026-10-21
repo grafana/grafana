@@ -605,6 +605,17 @@ func deleteFolders(
 	safepath.SortByDepth(foldersToDelete, func(d folderDeletion) string { return d.Path }, false)
 
 	for _, entry := range foldersToDelete {
+		// The root folder holds every managed resource of the repository, so
+		// deleting it always fails and would fail every following sync too.
+		if resources.IsRootFolderPath(entry.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(entry.UID).
+				WithWarning(fmt.Errorf("folder %s was not deleted because it is the repository root folder", entry.UID)).
+				Build())
+			continue
+		}
+
 		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) || progress.HasChildPathFailedUpdate(entry.Path) {
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
 				WithAction(repository.FileActionIgnored).

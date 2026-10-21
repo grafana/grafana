@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
@@ -93,6 +93,65 @@ describe('TimePicker', () => {
     expect(screen.getByTestId(selectors.overlayContent)).toBeInTheDocument();
     await userEvent.click(openButton);
     expect(overlayContent).not.toBeInTheDocument();
+  });
+
+  it('renders the open overlay outside the control and fixed to the viewport', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    const openButton = screen.getByTestId(selectors.openButton);
+    const control = openButton.closest('.button-group');
+    if (!control) {
+      throw new Error('time picker control not found');
+    }
+
+    await userEvent.click(openButton);
+
+    const overlay = screen.getByTestId(selectors.overlayContent);
+    // Outside the control, so an overflow ancestor can't clip it.
+    expect(control.contains(overlay)).toBe(false);
+    const dialog = overlay.querySelector<HTMLElement>('[role="dialog"]');
+    expect(dialog).toHaveStyle({ position: 'fixed' });
+    // A transform would misplace the fixed time zone Select menu inside.
+    expect(dialog?.style.transform).toBe('');
+    // Toasts portal at zIndex.portal (1061) and must stay above the panel.
+    expect(overlay.parentElement).toHaveStyle({ zIndex: '1060' });
+  });
+
+  it('closes when the backdrop is clicked', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+    const overlay = screen.getByTestId(selectors.overlayContent);
+    const backdrop = overlay.querySelector('[role="presentation"]');
+    if (!backdrop) {
+      throw new Error('backdrop not found');
+    }
+
+    // jsdom has no PointerEvent, so react-aria listens for mouse events, which userEvent.click skips here.
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.mouseDown(backdrop);
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.mouseUp(backdrop);
+
+    expect(screen.queryByTestId(selectors.overlayContent)).not.toBeInTheDocument();
   });
 
   it('shows the "change time settings" footer by default', async () => {
