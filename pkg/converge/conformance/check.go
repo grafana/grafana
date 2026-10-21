@@ -241,6 +241,8 @@ func p8Exclusions(t *testing.T, s scenario, opts Options) {
 	}
 	for _, d := range s.desired {
 		switch d.Verdict {
+		case converge.Entity:
+			// Nothing to report: it is supposed to be held.
 		case converge.Excluded:
 			if reported[d.Key] == 0 {
 				t.Fatalf("excluded %q was not reported: %v", d.Key, p.Exclusions)
@@ -262,6 +264,8 @@ func p8Exclusions(t *testing.T, s scenario, opts Options) {
 				switch o.Kind {
 				case converge.OpCreate, converge.OpUpdate, converge.OpMove:
 					t.Fatalf("ignored %q was written by %s", d.Key, o.Kind)
+				case converge.OpDelete, converge.OpEnsureContainer, converge.OpRemoveContainer:
+					// Removing what the source no longer declares is correct.
 				}
 			}
 		}
@@ -338,7 +342,7 @@ func p10HistoryIndependence(t *testing.T, s scenario, opts Options) {
 // identities happen to carry it. Two runs that mint identities differently are
 // not two different plans.
 func contentOf(p *converge.Plan) string {
-	var keys []string
+	keys := make([]string, 0, len(p.Ops))
 	for _, o := range p.Ops {
 		keys = append(keys, fmt.Sprintf("%s|%s|%s|%s", o.Kind, o.From, o.Key, o.Fingerprint))
 	}

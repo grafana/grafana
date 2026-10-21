@@ -62,7 +62,7 @@ func TestFilesWriteCreatesTheFolderItNeeds(t *testing.T) {
 	p, err := plan.Targeted(repoName, plan.Write{Path: "new/deep/one.json", Hash: "h1"}, nil)
 	require.NoError(t, err)
 
-	var kinds []string
+	kinds := make([]string, 0, len(p.Ops))
 	for _, op := range p.Ops {
 		kinds = append(kinds, op.Kind.String()+" "+string(op.Key))
 	}
@@ -83,7 +83,7 @@ func TestFilesWriteCreatesTheFolderItNeeds(t *testing.T) {
 	restricted, err := converge.Restrict(p, vetoes)
 	require.NoError(t, err)
 
-	var left []string
+	left := make([]string, 0, len(restricted.Ops))
 	for _, op := range restricted.Ops {
 		left = append(left, op.Kind.String()+" "+string(op.Key))
 	}

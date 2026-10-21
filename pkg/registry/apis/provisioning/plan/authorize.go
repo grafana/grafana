@@ -2,6 +2,7 @@ package plan
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/converge"
@@ -87,7 +88,8 @@ func Vetoes(ctx context.Context, p *converge.Plan, c Checker, resolve FolderReso
 		if err == nil {
 			continue
 		}
-		if transient, is := err.(*TransientError); is {
+		var transient *TransientError
+		if errors.As(err, &transient) {
 			return nil, transient
 		}
 		out = append(out, converge.Veto{Ref: op.Ref(), Reason: converge.Reason(err.Error())})

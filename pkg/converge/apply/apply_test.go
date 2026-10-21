@@ -82,12 +82,12 @@ func TestFailurePropagatesToDependents(t *testing.T) {
 	}
 
 	for _, o := range res.Outcomes {
-		switch {
-		case o.Op.Key == "a/":
+		switch o.Op.Key {
+		case "a/":
 			if o.Status != apply.Applied {
 				t.Fatalf("a/ should have applied, got %s", o.Status)
 			}
-		case o.Op.Key == "a/b/":
+		case "a/b/":
 			if o.Status != apply.Failed {
 				t.Fatalf("a/b/ should have failed, got %s", o.Status)
 			}

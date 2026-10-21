@@ -50,7 +50,7 @@ func TestTargetedPlanCreatesTheContainersItNeeds(t *testing.T) {
 	_, outer := findOp(t, p, OpEnsureContainer, "new/")
 	_, inner := findOp(t, p, OpEnsureContainer, "new/deep/")
 	_, create := findOp(t, p, OpCreate, "new/deep/file.json")
-	if !(outer < inner && inner < create) {
+	if outer >= inner || inner >= create {
 		t.Fatalf("stages out of order: %d %d %d\n%s", outer, inner, create, p)
 	}
 }

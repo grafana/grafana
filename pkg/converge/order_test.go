@@ -37,7 +37,7 @@ func TestOrderPutsRemovalsDeepestFirst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var seq []string
+	seq := make([]string, 0, len(p.Ops))
 	for _, op := range p.Ops {
 		seq = append(seq, string(op.Key))
 	}
@@ -68,7 +68,7 @@ func TestOrderReparentsBeforeRemovingTheOldContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var seq []string
+	seq := make([]string, 0, len(p.Ops))
 	for _, op := range p.Ops {
 		seq = append(seq, op.Kind.String()+" "+string(op.Key))
 	}

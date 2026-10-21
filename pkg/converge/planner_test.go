@@ -86,9 +86,8 @@ func TestExcludedEntityIsAbsentAndNamed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, _ = findOp(t, p, OpDelete, "a/two.json"); true {
-		// present: nothing declares it
-	}
+	// Nothing declares a/two.json any more, so it goes.
+	findOp(t, p, OpDelete, "a/two.json")
 	mustNotHave(t, p, OpUpdate, "a/one.json")
 	mustNotHave(t, p, OpCreate, "a/Bad & Name.json")
 
@@ -131,7 +130,7 @@ func TestContainerExistsBeforeItsContents(t *testing.T) {
 	_, inner := findOp(t, p, OpEnsureContainer, "a/b/")
 	_, create := findOp(t, p, OpCreate, "a/b/c.json")
 
-	if !(outer < inner && inner < create) {
+	if outer >= inner || inner >= create {
 		t.Fatalf("stages out of order: a/=%d a/b/=%d create=%d\n%s", outer, inner, create, p)
 	}
 }
@@ -154,7 +153,7 @@ func TestContainerRemovedOnlyAfterItIsEmptied(t *testing.T) {
 	_, rmInner := findOp(t, p, OpRemoveContainer, "a/b/")
 	_, rmOuter := findOp(t, p, OpRemoveContainer, "a/")
 
-	if !(del < rmInner && rmInner < rmOuter) {
+	if del >= rmInner || rmInner >= rmOuter {
 		t.Fatalf("stages out of order: delete=%d a/b/=%d a/=%d\n%s", del, rmInner, rmOuter, p)
 	}
 }
@@ -225,7 +224,7 @@ func TestContainerReidentificationReparentsThenRemoves(t *testing.T) {
 	update, updateStage := findOp(t, p, OpUpdate, "a/c.json")
 	remove, removeStage := findOp(t, p, OpRemoveContainer, "a/")
 
-	if !(ensureStage < updateStage && updateStage < removeStage) {
+	if ensureStage >= updateStage || updateStage >= removeStage {
 		t.Fatalf("stages out of order: ensure=%d update=%d remove=%d\n%s",
 			ensureStage, updateStage, removeStage, p)
 	}

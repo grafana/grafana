@@ -55,14 +55,6 @@ func folderItem(path, hash string) provisioning.ResourceListItem {
 	}
 }
 
-// pinnedFolderItem is a managed folder whose UID came from a _folder.json.
-func pinnedFolderItem(path, uid, hash string) provisioning.ResourceListItem {
-	return provisioning.ResourceListItem{
-		Path: path, Name: uid, Hash: hash,
-		Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource,
-	}
-}
-
 // endState is what the target holds after a diff is applied: path to content.
 // Folders are tracked separately because their identity, not their content, is
 // what matters.
@@ -72,7 +64,7 @@ type endState struct {
 }
 
 func (e endState) String() string {
-	var lines []string
+	lines := make([]string, 0, len(e.entities)+len(e.folders))
 	for k, v := range e.entities {
 		lines = append(lines, "entity "+k+"="+v)
 	}
@@ -294,7 +286,7 @@ func TestUnaddressablePathIsReported(t *testing.T) {
 	legacy, next, p := runBoth(t, tree, items)
 	require.Equal(t, legacy.String(), next.String(), "both remove the dashboard")
 
-	var reported []string
+	reported := make([]string, 0, len(p.Exclusions))
 	for _, e := range p.Exclusions {
 		reported = append(reported, fmt.Sprintf("%s (%s)", e.Key, e.Reason))
 	}
