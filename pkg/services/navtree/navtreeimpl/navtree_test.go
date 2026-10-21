@@ -345,8 +345,16 @@ func TestBuildAlertNavLinks_AlertActivity(t *testing.T) {
 			expectedGroups:     true,
 		},
 		{
-			name:               "hidden when state history does not write to prometheus",
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			name:               "shown when a target data source is set with the loki backend",
 			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom-uid"},
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "alert-alerts",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when no target data source is set",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki"},
 			features:           []any{featuremgmt.FlagAlertingTriage},
 			expectedActivityID: "",
 			expectedGroups:     true,

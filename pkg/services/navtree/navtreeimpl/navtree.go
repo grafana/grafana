@@ -422,10 +422,10 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
-	// The alert activity page reads alert states from the metrics that state history writes to Prometheus,
-	// so it only shows up when that is configured. The feature flag is kept so the page can still be turned off.
+	// The alert activity page reads the alert state metrics from Prometheus, so it only shows up when a data
+	// source is set for them. The feature flag is kept so the page can still be turned off.
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	alertActivityEnabled := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) && s.cfg.UnifiedAlerting.StateHistory.WritesToPrometheus()
+	alertActivityEnabled := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) && s.cfg.UnifiedAlerting.StateHistory.HasAlertStateMetrics()
 
 	if alertActivityEnabled {
 		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
