@@ -97,7 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       pointerEvents: 'auto',
       [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
       [`&[data-dragging], &[data-dragging] [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grabbing' },
-      // Only the glide to a snap point after a drag animates; the drag itself follows the pointer.
+      // Only the glide to an edge after a drag animates; the drag itself follows the pointer.
       [theme.transitions.handleMotion('no-preference')]: {
         '&[data-snapping]': {
           transition: theme.transitions.create('transform', {

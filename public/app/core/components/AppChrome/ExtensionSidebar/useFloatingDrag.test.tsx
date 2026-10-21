@@ -109,55 +109,61 @@ it('follows the pointer while dragging, kept inside the page with a gutter', () 
   expect(floating().style.transform).toBe('translate(304px, 16px)');
 });
 
-// The anchors keep the default's 24px inset: left edge 24 (x -288), right edge 1000 (x 288), top edge 24 (y -476).
+// The box's centre is above the page's middle (384) once moved up by more than 238px.
 it.each([
-  ['top-left', { x: -250, y: -400 }, 'translate(-288px, -476px)'],
-  ['top-center', { x: 30, y: -400 }, 'translate(0px, -476px)'],
-  ['top-right', { x: 250, y: -400 }, 'translate(288px, -476px)'],
-  ['bottom-left', { x: -250, y: -50 }, 'translate(-288px, 0px)'],
-  ['bottom-right', { x: 250, y: -50 }, 'translate(288px, 0px)'],
-])('snaps on release to the nearest snap point and reports it: %s', (position, by, transform) => {
+  ['top', { x: -250, y: -400 }, 'translate(-250px, -400px)'],
+  ['bottom', { x: 250, y: -50 }, 'translate(250px, -50px)'],
+])('stays where it is let go and reports the edge it keeps: %s', (anchor, by, transform) => {
   render(<Floating />);
 
   drag({ x: 500, y: 520 }, { x: 500 + by.x, y: 520 + by.y });
 
   expect(floating().style.transform).toBe(transform);
+  expect(floating()).not.toHaveAttribute('data-dragging');
   // The handle's click does not fire after a move.
   expect(onHandleClick).not.toHaveBeenCalled();
   expect(reportInteraction).toHaveBeenCalledTimes(1);
   expect(reportInteraction).toHaveBeenCalledWith('grafana_extension_sidebar_floating_moved', {
     method: 'drag',
-    position,
+    anchor,
   });
 });
 
-it('snaps back to the default place at the bottom centre', () => {
-  render(<Floating />);
-
-  drag({ x: 500, y: 520 }, { x: 540, y: 460 });
-
-  expect(floating().style.transform).toBe('');
-  expect(onHandleClick).not.toHaveBeenCalled();
-});
-
-it('marks the glide to the snap point, and only that', () => {
+// Snapped edges keep the default's 24px inset: left edge 24 (x -288), right edge 1000 (x 288), top edge 24 (y -476).
+it.each([
+  ['left', { x: -290, y: -200 }, 'translate(-288px, -200px)'],
+  ['right', { x: 270, y: -200 }, 'translate(288px, -200px)'],
+  ['top', { x: 0, y: -460 }, 'translate(0px, -476px)'],
+  ['top-left corner', { x: -290, y: -460 }, 'translate(-288px, -476px)'],
+  ['bottom', { x: 100, y: -10 }, 'translate(100px, 0px)'],
+])('glides to an edge it is let go within 48px of: %s', (_edge, by, transform) => {
   jest.useFakeTimers();
   render(<Floating />);
 
-  drag({ x: 500, y: 520 }, { x: 250, y: 120 });
-  expect(floating()).not.toHaveAttribute('data-dragging');
-  expect(floating()).toHaveAttribute('data-snapping');
+  drag({ x: 500, y: 520 }, { x: 500 + by.x, y: 520 + by.y });
 
+  expect(floating().style.transform).toBe(transform);
+  expect(floating()).toHaveAttribute('data-snapping');
   act(() => {
     jest.advanceTimersByTime(FLOATING_SNAP_DURATION_MS);
   });
   expect(floating()).not.toHaveAttribute('data-snapping');
-
-  // The arrow keys move in steps, without snapping or gliding.
-  fireEvent.keyDown(handle(), { key: 'ArrowRight' });
-  expect(floating().style.transform).toBe('translate(-272px, -476px)');
-  expect(floating()).not.toHaveAttribute('data-snapping');
   jest.useRealTimers();
+});
+
+it('does not glide when let go away from the edges, or moved with the arrow keys', () => {
+  render(<Floating />);
+
+  drag({ x: 500, y: 520 }, { x: 400, y: 320 });
+  expect(floating()).not.toHaveAttribute('data-snapping');
+
+  handle().focus();
+  fireEvent.keyDown(handle(), { key: 'ArrowLeft', shiftKey: true });
+  fireEvent.keyDown(handle(), { key: 'ArrowLeft', shiftKey: true });
+  fireEvent.keyDown(handle(), { key: 'ArrowLeft', shiftKey: true });
+  // Left edge at 20: inside the snap distance, but keys never snap.
+  expect(floating().style.transform).toBe('translate(-292px, -200px)');
+  expect(floating()).not.toHaveAttribute('data-snapping');
 });
 
 it('keeps a handle that sits outside the box on the page too, and snaps by it', () => {
@@ -171,7 +177,7 @@ it('keeps a handle that sits outside the box on the page too, and snaps by it', 
   expect(floating().style.transform).toBe('translate(-276px, 0px)');
 
   fireEvent.pointerUp(handle(), { clientX: -2000, clientY: 520 });
-  // The bottom-left point puts the flag's edge 24px in (312 - 28 - 260 = 24).
+  // Snapped to the left edge, the flag's edge is 24px in (312 - 28 - 260 = 24).
   expect(floating().style.transform).toBe('translate(-260px, 0px)');
 });
 
@@ -188,7 +194,7 @@ it('keeps off the docked menu, which the page content reserves as padding', () =
   expect(floating().style.transform).toBe('translate(-204px, 0px)');
 
   fireEvent.pointerUp(handle(), { clientX: -2000, clientY: 520 });
-  // The bottom-left point is 24px past the menu, at 124.
+  // Snapped 24px past the menu, at 124.
   expect(floating().style.transform).toBe('translate(-188px, 0px)');
 });
 
@@ -216,21 +222,28 @@ it('moves with the arrow keys and resets with Home or a double-click', () => {
 
   // Each reset is reported; the arrow-key steps are not.
   expect(jest.mocked(reportInteraction).mock.calls).toEqual([
-    ['grafana_extension_sidebar_floating_moved', { method: 'reset', position: 'bottom-center' }],
-    ['grafana_extension_sidebar_floating_moved', { method: 'reset', position: 'bottom-center' }],
+    ['grafana_extension_sidebar_floating_moved', { method: 'reset', anchor: 'bottom' }],
+    ['grafana_extension_sidebar_floating_moved', { method: 'reset', anchor: 'bottom' }],
   ]);
 });
 
 it('remembers the position: floating again starts where it was left', () => {
   const { unmount } = render(<Floating />);
-  drag({ x: 500, y: 520 }, { x: 200, y: 420 });
-  expect(floating().style.transform).toBe('translate(-288px, 0px)');
+  drag({ x: 500, y: 520 }, { x: 300, y: 420 });
+  expect(floating().style.transform).toBe('translate(-200px, -100px)');
 
   // Docking unmounts the floating element; floating again mounts a fresh one.
   unmount();
   render(<Floating />);
 
-  expect(floating().style.transform).toBe('translate(-288px, 0px)');
+  expect(floating().style.transform).toBe('translate(-200px, -100px)');
+});
+
+it('reads a position stored before anchors as an offset from the bottom centre', () => {
+  window.localStorage.setItem('grafana.navigation.extensionSidebarFloatingOffset', '{"x":-100,"y":-50}');
+  render(<Floating />);
+
+  expect(floating().style.transform).toBe('translate(-100px, -50px)');
 });
 
 it('forgets the position on reset, so floating again starts at the bottom centre', () => {
@@ -251,22 +264,43 @@ it('ignores a stored position that is not an offset', () => {
   expect(floating().style.transform).toBe('');
 });
 
-it('re-clamps when the box grows upward or the window resizes', () => {
-  render(<Floating />);
-  drag({ x: 700, y: 520 }, { x: 700, y: 44 });
-  expect(floating().style.transform).toBe('translate(0px, -476px)');
-
-  // Expanded upward from its bottom anchor: 600 tall, top now at 144.
-  natural = { ...natural, top: 144, height: 600 };
+function resizeBox(box: { top: number; height: number }) {
+  natural = { ...natural, ...box };
   act(() => {
     window.dispatchEvent(new Event('resize'));
   });
+}
+
+it('left in the top half, keeps its top edge as the box grows and shrinks, and after floating again', () => {
+  const { unmount } = render(<Floating />);
+  drag({ x: 700, y: 520 }, { x: 700, y: 44 });
+  // Top edge at 24.
+  expect(floating().style.transform).toBe('translate(0px, -476px)');
+
+  // Expanded: 600 tall, its untranslated top at 144. The top edge stays at 24.
+  resizeBox({ top: 144, height: 600 });
+  expect(floating().style.transform).toBe('translate(0px, -120px)');
+
+  resizeBox({ top: 500, height: 244 });
+  expect(floating().style.transform).toBe('translate(0px, -476px)');
+
+  // Floating again expanded, the top edge is still at 24.
+  unmount();
+  natural = { ...natural, top: 144, height: 600 };
+  render(<Floating />);
+  expect(floating().style.transform).toBe('translate(0px, -120px)');
+});
+
+it('left in the bottom half, keeps its bottom edge, re-clamped while the box has no room', () => {
+  render(<Floating />);
+  drag({ x: 700, y: 520 }, { x: 700, y: 320 });
+  expect(floating().style.transform).toBe('translate(0px, -200px)');
+
+  // Expanded upward: 600 tall, top at 144. Its bottom edge would put the top off the page, so it stops at 8.
+  resizeBox({ top: 144, height: 600 });
   expect(floating().style.transform).toBe('translate(0px, -136px)');
 
   // Collapsed again, it returns to the place the user chose, not the clamped one.
-  natural = { ...natural, top: 500, height: 244 };
-  act(() => {
-    window.dispatchEvent(new Event('resize'));
-  });
-  expect(floating().style.transform).toBe('translate(0px, -476px)');
+  resizeBox({ top: 500, height: 244 });
+  expect(floating().style.transform).toBe('translate(0px, -200px)');
 });

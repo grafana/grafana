@@ -17,9 +17,11 @@ const HANDLE_SELECTOR = `[${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`;
 const GUTTER = 8;
 /** A press that moves less than this is a click on the handle, not a drag. */
 const DRAG_THRESHOLD = 4;
+/** Let go closer than this to an edge of the page content, the container snaps to that edge. */
+const SNAP_DISTANCE = 48;
 const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
-/** How long the container glides to its snap point after a drag; ExtensionSidebar's transition uses it too. */
+/** How long the container glides to an edge it snaps to; ExtensionSidebar's transition uses it too. */
 export const FLOATING_SNAP_DURATION_MS = 150;
 const OFFSET_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingOffset';
 
@@ -28,39 +30,38 @@ interface Offset {
   y: number;
 }
 
-const ORIGIN: Offset = { x: 0, y: 0 };
+type Anchor = 'top' | 'bottom';
 
-type SnapPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
-
-interface SnapPoint {
-  position: SnapPosition;
-  offset: Offset;
+/**
+ * Where the user left the container. `x` is the horizontal offset from the default place. The anchor is the
+ * edge that stays put when the container grows or shrinks: for `bottom`, `y` is the vertical offset from the
+ * default place; for `top`, it is the distance from the page content's top edge to the container's.
+ */
+interface Placement extends Offset {
+  anchor: Anchor;
 }
 
-function reportMoved(method: 'drag' | 'reset', position: SnapPosition): void {
-  reportInteraction('grafana_extension_sidebar_floating_moved', { method, position });
+const ORIGIN: Offset = { x: 0, y: 0 };
+const DEFAULT_PLACEMENT: Placement = { ...ORIGIN, anchor: 'bottom' };
+
+function reportMoved(method: 'drag' | 'reset', anchor: Anchor): void {
+  reportInteraction('grafana_extension_sidebar_floating_moved', { method, anchor });
 }
 
 /**
  * Moves the floating extension sidebar away from its default place at the bottom centre. The offset is a
  * translation of `element` from that place, kept fully inside the page content (with a gutter), and
- * re-clamped when the window or the element resizes. A pointer drag follows the pointer freely, then snaps
- * on release to the nearest corner of the page content or its top or bottom centre; the arrow keys move in
- * steps without snapping. The user's chosen offset is remembered in local storage, so floating again, or a
- * reload, puts it back; a re-clamp never overwrites it, so it returns once there is room.
+ * re-clamped when the window or the element resizes. A pointer drag follows the pointer and the container
+ * stays where it is let go, unless that is near an edge of the page content: then it glides to that edge,
+ * inset as far as the default place is from the bottom. The arrow keys move it in steps without snapping.
+ * Left in the top half of the page, it keeps its
+ * top edge and grows downward; in the bottom half, it keeps its bottom edge and grows upward. The placement
+ * is remembered in local storage, so floating again, or a reload, puts it back; a re-clamp never overwrites
+ * it, so it returns once there is room.
  */
 export function useFloatingDrag(element: HTMLElement | null): void {
   const offsetRef = useRef<Offset>(ORIGIN);
-  const chosenRef = useRef<Offset>(ORIGIN);
-
-  const remember = useCallback(() => {
-    chosenRef.current = offsetRef.current;
-    if (isOrigin(offsetRef.current)) {
-      store.delete(OFFSET_LOCAL_STORAGE_KEY);
-    } else {
-      store.setObject(OFFSET_LOCAL_STORAGE_KEY, offsetRef.current);
-    }
-  }, []);
+  const chosenRef = useRef<Placement>(DEFAULT_PLACEMENT);
 
   const apply = useCallback(
     (next: Offset) => {
@@ -74,26 +75,48 @@ export function useFloatingDrag(element: HTMLElement | null): void {
     [element]
   );
 
+  const place = useCallback(
+    (placement: Placement) => {
+      if (element) {
+        apply(placementToOffset(element, offsetRef.current, placement));
+      }
+    },
+    [element, apply]
+  );
+
+  const remember = useCallback(() => {
+    if (!element) {
+      return;
+    }
+    const placement = offsetToPlacement(element, offsetRef.current);
+    chosenRef.current = placement;
+    if (placement.anchor === 'bottom' && isOrigin(placement)) {
+      store.delete(OFFSET_LOCAL_STORAGE_KEY);
+    } else {
+      store.setObject(OFFSET_LOCAL_STORAGE_KEY, placement);
+    }
+  }, [element]);
+
   // Floating starts where the user left it; docking (the element going away) only clears the transform.
   useLayoutEffect(() => {
     if (!element) {
       return;
     }
-    chosenRef.current = readStoredOffset();
-    apply(chosenRef.current);
+    chosenRef.current = readStoredPlacement();
+    place(chosenRef.current);
     return () => {
       offsetRef.current = ORIGIN;
       element.style.transform = '';
     };
-  }, [element, apply]);
+  }, [element, place]);
 
   useEffect(() => {
     if (!element) {
       return;
     }
-    const reclamp = () => apply(chosenRef.current);
+    const reclamp = () => place(chosenRef.current);
     window.addEventListener('resize', reclamp);
-    // The container grows upward when it expands; keep it on screen.
+    // The container grows when it expands; keep its anchored edge in place and keep it on screen.
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(reclamp);
     observer?.observe(element);
 
@@ -103,6 +126,12 @@ export function useFloatingDrag(element: HTMLElement | null): void {
     const endSnap = () => {
       window.clearTimeout(snapTimer);
       element.removeAttribute('data-snapping');
+    };
+
+    const reset = () => {
+      apply(ORIGIN);
+      remember();
+      reportMoved('reset', 'bottom');
     };
 
     const onPointerDown = (event: PointerEvent) => {
@@ -143,14 +172,16 @@ export function useFloatingDrag(element: HTMLElement | null): void {
       if (drag.dragging) {
         // The handle's own click must not fire after a move.
         swallowClick = true;
-        // Let go, it glides to the nearest snap point; `data-snapping` turns the transition on just for that.
-        element.setAttribute('data-snapping', '');
-        const snap = snapOffset(element, offsetRef.current);
-        apply(snap.offset);
+        const snapped = snapToEdges(element, offsetRef.current);
+        if (snapped.x !== offsetRef.current.x || snapped.y !== offsetRef.current.y) {
+          // `data-snapping` turns the transition on just for the glide.
+          element.setAttribute('data-snapping', '');
+          apply(snapped);
+          window.clearTimeout(snapTimer);
+          snapTimer = window.setTimeout(endSnap, FLOATING_SNAP_DURATION_MS);
+        }
         remember();
-        reportMoved('drag', snap.position);
-        window.clearTimeout(snapTimer);
-        snapTimer = window.setTimeout(endSnap, FLOATING_SNAP_DURATION_MS);
+        reportMoved('drag', chosenRef.current.anchor);
       }
       drag = undefined;
       element.removeAttribute('data-dragging');
@@ -164,9 +195,7 @@ export function useFloatingDrag(element: HTMLElement | null): void {
     };
     const onDoubleClick = (event: MouseEvent) => {
       if (event.target instanceof Element && event.target.closest(HANDLE_SELECTOR)) {
-        apply(ORIGIN);
-        remember();
-        reportMoved('reset', 'bottom-center');
+        reset();
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
@@ -182,9 +211,7 @@ export function useFloatingDrag(element: HTMLElement | null): void {
       };
       if (event.key === 'Home') {
         event.preventDefault();
-        apply(ORIGIN);
-        remember();
-        reportMoved('reset', 'bottom-center');
+        reset();
       } else if (moves[event.key]) {
         event.preventDefault();
         const { x, y } = offsetRef.current;
@@ -212,11 +239,12 @@ export function useFloatingDrag(element: HTMLElement | null): void {
       element.removeEventListener('dblclick', onDoubleClick);
       element.removeEventListener('keydown', onKeyDown);
     };
-  }, [element, apply, remember]);
+  }, [element, apply, place, remember]);
 }
 
-function readStoredOffset(): Offset {
-  const stored: unknown = store.getObject(OFFSET_LOCAL_STORAGE_KEY, ORIGIN);
+/** A stored `{ x, y }` without an anchor predates top anchoring, and is an offset from the bottom centre. */
+function readStoredPlacement(): Placement {
+  const stored: unknown = store.getObject(OFFSET_LOCAL_STORAGE_KEY, DEFAULT_PLACEMENT);
   if (
     typeof stored === 'object' &&
     stored !== null &&
@@ -225,9 +253,63 @@ function readStoredOffset(): Offset {
     Number.isFinite(stored.x) &&
     Number.isFinite(stored.y)
   ) {
-    return { x: Number(stored.x), y: Number(stored.y) };
+    const anchor = 'anchor' in stored && stored.anchor === 'top' ? 'top' : 'bottom';
+    return { x: Number(stored.x), y: Number(stored.y), anchor };
   }
-  return ORIGIN;
+  return DEFAULT_PLACEMENT;
+}
+
+/** The translation that puts the element, currently translated by `current`, at `placement`. */
+function placementToOffset(element: HTMLElement, current: Offset, placement: Placement): Offset {
+  if (placement.anchor === 'bottom') {
+    return { x: placement.x, y: placement.y };
+  }
+  const untranslatedTop = measureWithHandles(element).top - current.y;
+  return { x: placement.x, y: contentEdges().top + placement.y - untranslatedTop };
+}
+
+/** The placement of the element, translated by `current`: anchored to the edge of the page it is nearer. */
+function offsetToPlacement(element: HTMLElement, current: Offset): Placement {
+  const rect = measureWithHandles(element);
+  const content = contentEdges();
+  if (rect.top + rect.height / 2 < (content.top + content.bottom) / 2) {
+    return { x: current.x, y: Math.round(rect.top - content.top), anchor: 'top' };
+  }
+  return { ...current, anchor: 'bottom' };
+}
+
+/**
+ * The offset with each axis moved flush to the nearer edge of the page content when the element, translated
+ * by `current`, is within `SNAP_DISTANCE` of it. The inset is the default place's distance from the bottom.
+ */
+function snapToEdges(element: HTMLElement, current: Offset): Offset {
+  const rect = measureWithHandles(element);
+  const left = rect.left - current.x;
+  const top = rect.top - current.y;
+  const content = contentEdges();
+  const inset = Math.max(GUTTER, content.bottom - (top + rect.height));
+  const snapAxis = (value: number, startGap: number, endGap: number, toStart: number, toEnd: number) => {
+    if (Math.min(startGap, endGap) >= SNAP_DISTANCE) {
+      return value;
+    }
+    return startGap <= endGap ? toStart : toEnd;
+  };
+  return {
+    x: snapAxis(
+      current.x,
+      rect.left - content.left,
+      content.right - (rect.left + rect.width),
+      content.left + inset - left,
+      content.right - inset - (left + rect.width)
+    ),
+    y: snapAxis(
+      current.y,
+      rect.top - content.top,
+      content.bottom - (rect.top + rect.height),
+      content.top + inset - top,
+      content.bottom - inset - (top + rect.height)
+    ),
+  };
 }
 
 /**
@@ -255,33 +337,6 @@ function clampOffset(element: HTMLElement, current: Offset, next: Offset): Offse
     x: clampAxis(next.x, bounds.left - left, bounds.right - (left + rect.width)),
     y: clampAxis(next.y, bounds.top - top, bounds.bottom - (top + rect.height)),
   };
-}
-
-/**
- * The snap point nearest `current`: a corner of the page content, or its top or bottom centre. The default
- * place is the bottom centre, so the bottom row and the centre column keep its offset, and every other point
- * keeps its inset from the bottom edge, from the side and top edges instead. The result still goes through
- * the clamp, which keeps a point the page has no room for on the page.
- */
-function snapOffset(element: HTMLElement, current: Offset): SnapPoint {
-  const rect = measureWithHandles(element);
-  const left = rect.left - current.x;
-  const top = rect.top - current.y;
-  const content = contentEdges();
-  const inset = Math.max(GUTTER, content.bottom - (top + rect.height));
-  const start = content.left + inset - left;
-  const end = content.right - inset - (left + rect.width);
-  const above = content.top + inset - top;
-  const points: SnapPoint[] = [
-    { position: 'top-left', offset: { x: start, y: above } },
-    { position: 'top-center', offset: { x: 0, y: above } },
-    { position: 'top-right', offset: { x: end, y: above } },
-    { position: 'bottom-left', offset: { x: start, y: 0 } },
-    { position: 'bottom-center', offset: ORIGIN },
-    { position: 'bottom-right', offset: { x: end, y: 0 } },
-  ];
-  const distance = ({ offset }: SnapPoint) => (offset.x - current.x) ** 2 + (offset.y - current.y) ** 2;
-  return points.reduce((nearest, point) => (distance(point) < distance(nearest) ? point : nearest));
 }
 
 /**
