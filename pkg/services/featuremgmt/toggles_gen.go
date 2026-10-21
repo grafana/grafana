@@ -91,10 +91,6 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
-	// FlagProvisioningUserAttribution
-	// Author Git Sync commits as the acting Grafana user
-	FlagProvisioningUserAttribution = "provisioning.userAttribution"
-
 	// FlagGrafanaFrontendLegacyFeatureToggleHandling
 	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
 	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
@@ -383,10 +379,6 @@ const (
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
 
-	// FlagPreserveDashboardStateWhenNavigating
-	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
-	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
-
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
@@ -422,10 +414,6 @@ const (
 	// FlagZanzanaMergeUserPermissions
 	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
 	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
-
-	// FlagReloadDashboardsOnParamsChange
-	// Enables reload of dashboards on scopes, time range and variables changes
-	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
 	// FlagEnableScopesInMetricsExplore
 	// Enables the scopes usage in Metrics Explore
@@ -470,18 +458,6 @@ const (
 	// FlagAzureMonitorEnableUserAuth
 	// Enables user auth for Azure Monitor datasource only
 	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
-
-	// FlagAlertingAIGenAlertRules
-	// Enable AI-generated alert rules.
-	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
-
-	// FlagAlertingAIFeedback
-	// Enable AI-generated feedback from the Grafana UI.
-	FlagAlertingAIFeedback = "alertingAIFeedback"
-
-	// FlagAlertingAIImproveAlertRules
-	// Enable AI-improve alert rules labels and annotations.
-	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
 
 	// FlagAlertingAIGenTemplates
 	// Enable AI-generated alerting templates.
@@ -530,6 +506,10 @@ const (
 	// FlagDatasourcesTeamHttpHeadersWriteGuard
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
 	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
+
+	// FlagTeamlbacUsageFromAppPlatform
+	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
+	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -646,10 +626,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagPreferLibraryPanelTitle
-	// Prefer library panel title over viz panel title.
-	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
-
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
@@ -671,7 +647,7 @@ const (
 	FlagInteractiveLearning = "interactiveLearning"
 
 	// FlagAlertingTriage
-	// Enables the alerting triage feature
+	// Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
 	FlagAlertingTriage = "alertingTriage"
 
 	// FlagGraphiteBackendMode
@@ -745,6 +721,10 @@ const (
 	// FlagGrafanaDashboardGlobalVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGrafanaDashboardGlobalVariables = "grafana.dashboardGlobalVariables"
+
+	// FlagGrafanaDashboardVariablesMigration
+	// Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
+	FlagGrafanaDashboardVariablesMigration = "grafana.dashboardVariablesMigration"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
@@ -913,6 +893,10 @@ const (
 	// FlagAlertingRulesAPIV2
 	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
 	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
+
+	// FlagAlertingGmaOnlyListView
+	// Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list
+	FlagAlertingGmaOnlyListView = "alerting.gmaOnlyListView"
 
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform

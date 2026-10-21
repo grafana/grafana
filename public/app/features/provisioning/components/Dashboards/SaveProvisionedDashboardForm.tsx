@@ -36,7 +36,7 @@ import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -349,7 +349,7 @@ export function SaveProvisionedDashboardForm({
       const data = await createFolder({
         name: repository.name,
         path: folderPath,
-        message: getSingleResourceCommitMessage({
+        message: getResourceCommitMessage({
           comment: '',
           repository,
           action: 'create',

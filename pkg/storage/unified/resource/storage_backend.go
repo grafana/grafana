@@ -25,6 +25,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -788,22 +790,59 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 	b.blobGCMu.Lock()
 	defer b.blobGCMu.Unlock()
+	// Resource GC defers this call, including when shutdown cancels its context.
+	if ctx.Err() != nil {
+		return
+	}
 	if b.blobGC == nil {
 		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
+	if err != nil && ctx.Err() != nil && onlyCancellationErrors(err) {
+		b.blobGCMetrics.RecordInterrupted(count, dryRun)
+		b.log.Debug("blob garbage collection interrupted", "error", err)
+		return
+	}
 	b.blobGCMetrics.Record(count, dryRun, err)
 	skipped := b.blobGC.SkippedWithoutAge()
 	b.blobGCMetrics.RecordSkippedWithoutAge(skipped, err)
 	if err != nil {
 		b.log.Error("blob garbage collection failed", "error", err)
+		return
 	}
 	logArgs := []any{"blobs", count, "dryRun", dryRun}
 	if skipped > 0 {
 		logArgs = append(logArgs, "skippedWithoutAge", skipped)
 	}
 	b.log.Info("blob garbage collection finished", logArgs...)
+}
+
+// onlyCancellationErrors checks every branch of a joined error so a storage
+// failure collected before cancellation is still reported.
+func onlyCancellationErrors(err error) bool {
+	if err == nil {
+		return false
+	}
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		children := joined.Unwrap()
+		if len(children) == 0 {
+			return false
+		}
+		for _, child := range children {
+			if !onlyCancellationErrors(child) {
+				return false
+			}
+		}
+		return true
+	}
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok && wrapped.Unwrap() != nil {
+		return onlyCancellationErrors(wrapped.Unwrap())
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	return status.Code(err) == codes.Canceled || status.Code(err) == codes.DeadlineExceeded
 }
 
 // runGarbageCollection identifies deleted resources that are safe
@@ -3119,8 +3158,11 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 	saved := make([]DataKey, 0)
 	rollback := func() {
+		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+		defer cancel()
+
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.dataStore.BatchDelete(ctx, saved)
+		err = b.dataStore.BatchDelete(rollbackCtx, saved)
 		if err != nil {
 			b.log.Error("failed to delete during rollback", "error", err)
 		}

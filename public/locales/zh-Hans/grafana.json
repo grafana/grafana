@@ -1695,8 +1695,12 @@
       },
       "preview": {
         "error": "加载内容失败：{{error}}",
+        "hide-secrets": "",
         "loading": "正在加载内容…",
         "notifications-title": "通知配置预览",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "警报规则预览"
       },
       "recording-rules": "录制规则",
@@ -2722,7 +2726,8 @@
     "recording-rules": {
       "description-target-data-source": "用于存储录制规则的 Prometheus 数据源",
       "label-target-data-source": "目标数据源",
-      "target-data-source-required": "请选择一个目标数据源"
+      "target-data-source-required": "请选择一个目标数据源",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "为您的录制规则选择命名空间和组。",
@@ -5990,6 +5995,24 @@
       "tooltip-next": "下一步",
       "tooltip-previous": "上一个"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "助手架构编辑"
@@ -6107,6 +6130,9 @@
           "no-template-variables-found": "未找到模板变量"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "取消",
@@ -7547,6 +7573,26 @@
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
       "confirmText-restore-version": "是，恢复到版本 {{version}}",
       "title-restore-version": "恢复版本"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_other": "",
+      "allowed-panels_other": "",
+      "banner-title_other": "",
+      "resources_other": "",
+      "resources-at-least_other": "",
+      "sources_other": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "保存",
@@ -10019,6 +10065,7 @@
             "name-humidity": "湿度 (%H)",
             "name-locale": "区域格式",
             "name-number": "数量",
+            "name-ordinal": "",
             "name-percent-1": "百分比 (0.0-1.0)",
             "name-percent-100": "百分比 (0-100)",
             "name-pixels": "像素",
@@ -10144,7 +10191,8 @@
           },
           "name": "容量"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13126,6 +13174,7 @@
       "created-by-me": "由我创建",
       "error-conflict": "此笔记本在您添加内容时发生了更改。请重试，以便将面板添加到最新版本的笔记本。",
       "error-generic": "将面板添加到笔记本失败",
+      "error-open-conflict": "",
       "list-error": "加载笔记本失败",
       "list-error-body": "加载您的笔记本时出错。请重试，或改为创建新笔记本。",
       "list-no-matches": "没有符合这些筛选条件的笔记本。",
@@ -13134,6 +13183,8 @@
       "list-truncated": "并非所有笔记本都会显示。缩小搜索范围以查找其他笔记本。",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "按标题搜索",
       "sort-alphabetical": "按字母顺序 (A-Z)",
       "sort-label": "对笔记本进行排序",
@@ -13141,13 +13192,15 @@
       "sort-updated": "近期更新",
       "submit": "添加到笔记本",
       "success": "面板已添加至 {{title}}",
+      "success-cells": "",
       "success-link": "查看笔记本",
       "tag-placeholder": "按标签筛选",
       "target-description": "选择要添加面板的位置。",
       "target-existing": "现有笔记本",
       "target-label": "目标笔记本",
       "target-new": "新笔记本",
-      "title": "将面板添加到笔记本"
+      "title": "将面板添加到笔记本",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16490,6 +16543,7 @@
     "name-page-size": "页面大小",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "显示表格表头",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "字段中的样式",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",

@@ -2854,6 +2854,10 @@
             "description": "When set to true, the snapshot exists in a remote server",
             "type": "boolean"
           },
+          "externalDeleteUrl": {
+            "description": "The server-provided URL for deleting the external snapshot",
+            "type": "string"
+          },
           "externalUrl": {
             "description": "The external URL where the snapshot can be seen",
             "type": "string"
@@ -3274,7 +3278,7 @@
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {

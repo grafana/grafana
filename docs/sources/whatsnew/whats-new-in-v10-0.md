@@ -19,7 +19,7 @@ weight: -37
 
 Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide](../../upgrade-guide/upgrade-v10.0/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide](https://archive.grafana.com/docs/grafana/v10.0/upgrade-guide/upgrade-v10.0/).
 
 <!-- Template below
 ## Feature

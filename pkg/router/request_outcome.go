@@ -37,6 +37,8 @@ type requestOutcome struct {
 	route    string
 	pluginID string
 	failure  string
+	// verb caches requestVerb, which parses the request each time.
+	verb string
 }
 
 func withRequestOutcome(req *http.Request) (*http.Request, *requestOutcome) {
