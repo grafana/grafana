@@ -658,12 +658,10 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			seen[v.UID] = struct{}{}
 			rank++
 			r.Score += 1.0 / float64(rrfK+rank)
-			// Only fill in the title and folder when the resource wasn't found by lexical search
+			// Only fill in the title, folder, and tags when the resource wasn't found by lexical search.
 			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = titleFromChunkMetadata(v.Metadata, v.Title)
 				r.Folder = v.Folder
-			}
-			if r.Tags == nil {
 				r.Tags = parseSnippetTags(v.Content)
 			}
 		}

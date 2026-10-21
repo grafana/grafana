@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -100,7 +101,7 @@ func TestFuseRRF_Tags(t *testing.T) {
 		{name: "empty tags line", content: "Dashboard → CPU\nTags: "},
 		{name: "indexed tags take precedence", lex: []lexicalHit{{uid: "a", tags: []string{"prod"}}}, content: "Dashboard → CPU\nTags: stale", want: []string{"prod"}},
 		{name: "empty indexed tags take precedence", lex: []lexicalHit{{uid: "a", tags: []string{}}}, content: "Dashboard → CPU\nTags: stale", want: []string{}},
-		{name: "missing indexed tags use semantic tags", lex: []lexicalHit{{uid: "a"}}, content: "Dashboard → CPU\nTags: prod", want: []string{"prod"}},
+		{name: "nil indexed tags take precedence", lex: []lexicalHit{{uid: "a"}}, content: "Dashboard → CPU\nTags: stale"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := fuseRRF(hybridKey(), tc.lex, []vector.VectorSearchResult{
@@ -403,6 +404,60 @@ func TestLexicalHitsFromResponse_Tags(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, hits, 1)
 			assert.Equal(t, []string{"prod", "team,a"}, hits[0].tags)
+		})
+	}
+}
+
+func TestLexicalHitsFromResponse_TagPrecedence(t *testing.T) {
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				hasField bool
+				tags     []string
+			}{
+				{name: "missing tags field suppresses semantic tags"},
+				{name: "omitted tags value suppresses semantic tags", hasField: true},
+				{name: "empty tags value suppresses semantic tags", hasField: true, tags: []string{}},
+				{name: "indexed tags override semantic tags", hasField: true, tags: []string{"prod"}},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					key := &resourcepb.ResourceKey{Name: "dash"}
+					response := &resourcepb.ResourceSearchResponse{ResultFormat: format}
+					if format == resourcepb.ResourceSearchRequest_RESOURCE_TABLE {
+						row := &resourcepb.ResourceTableRow{Key: key}
+						response.Results = &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{row}}
+						if tc.hasField {
+							response.Results.Columns = []*resourcepb.ResourceTableColumnDefinition{{Name: SEARCH_FIELD_TAGS}}
+						}
+						if tc.tags != nil {
+							value, err := json.Marshal(tc.tags)
+							require.NoError(t, err)
+							row.Cells = [][]byte{value}
+						}
+					} else {
+						row := &resourcepb.ResourceSearchRow{Key: key}
+						response.Rows = []*resourcepb.ResourceSearchRow{row}
+						if tc.hasField {
+							response.Fields = []*resourcepb.ResourceSearchField{{Name: SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING, IsArray: true}}
+						}
+						if tc.tags != nil {
+							row.Values = []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: tc.tags}}
+						}
+					}
+
+					hits, err := lexicalHitsFromResponse(response)
+					require.NoError(t, err)
+					require.Len(t, hits, 1)
+					assert.Equal(t, tc.tags, hits[0].tags)
+					out := fuseRRF(hybridKey(), hits, []vector.VectorSearchResult{{UID: "dash", Content: "Dashboard\nTags: stale"}})
+					require.Len(t, out, 1)
+					assert.Equal(t, tc.tags, out[0].Tags)
+				})
+			}
 		})
 	}
 }
