@@ -1,0 +1,60 @@
+import {
+  type ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
+  generatedAPI,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { useDispatch } from 'app/types/store';
+
+import { type ResultTotal, toResultTotal } from '../rule-row/ResultCount';
+import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
+
+import { type RecordingRuleSearchHit, toRecordingRuleSearchHit } from './recordingRuleSearchHit';
+import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
+
+interface RecordingRuleSearchPage {
+  hits: RecordingRuleSearchHit[];
+  continueToken?: string;
+  total?: ResultTotal;
+}
+
+/** Infinite query; the generated search is a POST mutation with no tags or page state. */
+const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
+  endpoints: (build) => ({
+    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, void, string | undefined>({
+      infiniteQueryOptions: {
+        initialPageParam: undefined,
+        getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
+      },
+      // Results are a view of the current page only: leaving it drops them, and coming back searches again.
+      keepUnusedDataFor: 0,
+      query: ({ pageParam }) => ({
+        url: '/searchRecordingRules',
+        method: 'POST',
+        body: buildRecordingRuleSearchQuery(pageParam),
+      }),
+      transformResponse: (response: ListRecordingRuleSearchRulesV0Alpha1ApiResponse): RecordingRuleSearchPage => ({
+        hits: response.items.map(toRecordingRuleSearchHit),
+        continueToken: response.metadata.continue,
+        total: toResultTotal(response.metadata),
+      }),
+      providesTags: ['RecordingRule'],
+    }),
+  }),
+});
+
+const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
+
+export function useRecordingRuleSearch(): PagedResult<RecordingRuleSearchHit> & { total?: ResultTotal } {
+  const dispatch = useDispatch();
+  const query = useSearchRecordingRulesInfiniteQuery();
+
+  const paged = usePagedResult(query, getHits, () => {
+    dispatch(recordingRuleSearchAPI.util.updateQueryData('searchRecordingRules', undefined, keepFirstPage));
+  });
+
+  // Only the first page's total counts; later pages repeat it and the count never drives paging.
+  return { ...paged, total: query.currentData?.pages[0]?.total };
+}
+
+function getHits(page: RecordingRuleSearchPage) {
+  return page.hits;
+}
