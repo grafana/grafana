@@ -52,19 +52,24 @@ export function getSaveDashboardErrorInfo(error: unknown): SaveDashboardErrorInf
   }
 
   if (isApiMachineryError(error)) {
-    const kind = getApiMachineryErrorKind(error);
+    if (isBareForbidden(error)) {
+      return {
+        kind: 'forbidden',
+        message: t('dashboard-scene.save-errors.forbidden', 'Ask your Grafana administrator for access.'),
+        causes: [],
+      };
+    }
     return {
-      kind,
-      message: resolveMessage(error, kind),
+      kind: API_MACHINERY_REASON_KINDS[error.data.reason ?? ''] ?? 'unknown',
+      message: resolveMessage(error),
       causes: formatCauses(error.data.details?.causes),
     };
   }
 
   if (isFetchError(error)) {
-    const kind = LEGACY_STATUS_KINDS[error.data?.status] ?? 'unknown';
     return {
-      kind,
-      message: resolveMessage(error, kind),
+      kind: LEGACY_STATUS_KINDS[error.data?.status] ?? 'unknown',
+      message: resolveMessage(error),
       causes: [],
     };
   }
@@ -76,13 +81,11 @@ export function getSaveDashboardErrorInfo(error: unknown): SaveDashboardErrorInf
   };
 }
 
-// Unified storage rejects a write the user may not make with a bare 403 Status, so without a reason
-// the HTTP status is the only signal left.
-function getApiMachineryErrorKind(error: FetchError<MetaStatus>): SaveDashboardErrorKind {
-  if (!error.data.reason && error.status === 403) {
-    return 'forbidden';
-  }
-  return API_MACHINERY_REASON_KINDS[error.data.reason ?? ''] ?? 'unknown';
+// Unified storage's create permission check rejects with a 403 Status carrying neither a reason nor a
+// message. A 403 that has a message but no reason stays unclassified: quota and service-to-service
+// auth failures share that shape, and their text explains them better than a permission alert would.
+function isBareForbidden(error: FetchError<MetaStatus>): boolean {
+  return error.status === 403 && !error.data.reason && !error.data.message;
 }
 
 function formatCauses(causes?: MetaStatusCause[]): string[] {
@@ -102,17 +105,13 @@ function formatCauses(causes?: MetaStatusCause[]): string[] {
  * A FetchError is built from the response, so it has no `message` of its own — the server text
  * lives in `data.message`. Walk every source before giving up so the alert always says something.
  */
-function resolveMessage(error: unknown, kind: SaveDashboardErrorKind): string {
+function resolveMessage(error: unknown): string {
   if (isFetchError(error)) {
     if (error.data?.message) {
       return error.data.message;
     }
     if (error.message) {
       return error.message;
-    }
-    // "403 Forbidden" only restates the alert title, so say what the user can do about it instead.
-    if (kind === 'forbidden') {
-      return t('dashboard-scene.save-errors.forbidden', 'Ask your Grafana administrator for access.');
     }
     if (error.statusText) {
       return `${error.status} ${error.statusText}`;
