@@ -181,11 +181,11 @@ The Tempo data source settings page includes three sections for linking from spa
 - [Trace to metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/): Link spans to metrics queries in Prometheus or other metrics data sources.
 - [Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope with embedded flame graphs.
 
-For more flexible, rule-based correlations that can target any data source or external URL, use [Trace correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/trace-correlations/). Trace correlations are configured under **Configuration > Plugins & data > Correlations**, not in the Tempo data source settings.
+For more flexible, rule-based correlations that can target any data source or external URL, use [Trace correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/trace-correlations/). Trace correlations are configured under **Administration > Plugins and data > Correlations**, not in the Tempo data source settings.
 
 To link _from_ logs or metrics _to_ traces (the reverse direction), refer to:
 
-- [Derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields) in the Loki data source (for logs to traces). The [trace to logs](configure-trace-to-logs/) page also covers this setup.
+- [Derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields) in the Loki data source (for logs to traces). The [trace to logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/) page also covers this setup.
 - [Exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) in the Prometheus data source (for metrics to traces).
 
 ## Other settings

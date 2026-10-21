@@ -162,7 +162,7 @@ These issues occur when configuring the Tempo data source itself, before you run
 - You get a read-only error when you try to configure trace to logs correlation, enable **Filter by trace ID**, or change service graph or node graph settings.
 - Changes you make in the UI silently revert after Grafana restarts.
 
-**Cause:** The data source is provisioned through a YAML configuration file, Helm chart, or Terraform. Provisioned data sources are read-only in the Grafana UI, so the UI can't save changes and any edits revert on the next restart or provisioning reload.
+**Cause:** The data source is provisioned through a YAML configuration file, Helm chart, or Terraform. By default, provisioned data sources are read-only in the Grafana UI, so the UI can't save changes. If the provisioning file sets `editable: true`, you can save changes in the UI, but provisioning overwrites them on the next restart or provisioning reload.
 
 **Solutions:**
 
@@ -274,7 +274,10 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 
 ### TraceQL metrics query exceeds the maximum time range
 
-**Error message:** `metrics query time range exceeds the maximum allowed duration of <DURATION>`
+**Error message:** One of the following, depending on whether streaming is enabled for metrics queries:
+
+- `The selected time range exceeds the maximum allowed duration. Please select a shorter time range.`
+- `metrics query time range exceeds the maximum allowed duration of <DURATION>`
 
 **Symptoms:**
 
@@ -286,12 +289,12 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 **Solutions:**
 
 1. Reduce the query time range to within the configured maximum, which is 24 hours by default.
-1. For self-managed Tempo, raise the maximum metrics query duration in your Tempo configuration, then restart Tempo. Refer to [TraceQL metrics queries](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/metrics-queries/) in the Tempo documentation.
+1. For self-managed Tempo, raise `query_frontend.metrics.max_duration` (default `24h`) in your Tempo configuration and restart Tempo, or set the per-tenant `max_metrics_duration` override. Refer to [Configure Tempo](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/) in the Tempo documentation.
 1. For Grafana Cloud Traces, contact [Grafana Support](https://grafana.com/contact/) to request a higher limit. You can't change this limit yourself.
 
 ## Streaming issues
 
-Streaming displays TraceQL query results as they become available. Without streaming, you don't see results until the query completes. Streaming is available for Grafana Cloud users by default. For self-managed Tempo, search streaming requires Tempo v2.2 or later, and metrics streaming requires Tempo v2.7 or later. Both require `stream_over_http_enabled: true` in the Tempo configuration.
+Streaming displays TraceQL query results as they become available. Without streaming, you don't see results until the query completes. For Grafana Cloud users, search streaming is enabled by default and metrics streaming is off by default. For self-managed Tempo, search streaming requires Tempo v2.2 or later, and metrics streaming requires Tempo v2.7 or later. Both require `stream_over_http_enabled: true` in the Tempo configuration.
 
 For more information, refer to [Streaming](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming).
 
@@ -301,7 +304,7 @@ For more information, refer to [Streaming](https://grafana.com/docs/grafana/<GRA
 
 **Solution:**
 
-1. For self-managed Tempo, verify that you're using the required Tempo version (v2.2 or later for search streaming, v2.7 or later for metrics streaming) and that streaming is enabled in your configuration (`stream_over_http_enabled: true`). Refer to [Tempo gRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api) in the Tempo documentation. Streaming is available for Grafana Cloud users by default.
+1. For self-managed Tempo, verify that you're using the required Tempo version (v2.2 or later for search streaming, v2.7 or later for metrics streaming) and that streaming is enabled in your configuration (`stream_over_http_enabled: true`). Refer to [Tempo gRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api) in the Tempo documentation. For Grafana Cloud users, search streaming is enabled by default and metrics streaming is off by default.
 1. Verify that **Streaming** is enabled in your [Tempo data source settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming). The **Search queries** and **Metrics queries** toggles are independent. Check that the toggle for the query type you're using is enabled.
 1. If your Tempo instance is behind a load balancer or proxy that doesn't support gRPC or HTTP2, streaming may not work. Disable streaming and use standard HTTP queries instead.
 1. If you're using [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to reach Tempo, verify that the PDC tunnel is running and the Tempo instance is reachable from the PDC agent. PDC connectivity issues can present as streaming timeouts.
@@ -362,7 +365,7 @@ The Service Graph visualizes service dependencies and highlights request rate, e
 
 **Solution:**
 
-1. The Service Graph view table uses a different set of metrics from the node graph. The Grafana frontend queries `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket`. Confirm that these metrics exist in your linked Prometheus data source. Newer Tempo versions may produce `traces_spanmetrics_duration_seconds_bucket` instead of `traces_spanmetrics_latency_bucket`. If you only have the newer metric name, the duration column shows no data until the Grafana frontend supports the renamed metric.
+1. The Service Graph view table uses a different set of metrics from the node graph. The Grafana frontend queries `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket` (or `traces_spanmetrics_latency` for native histograms). Confirm that these metrics exist in your linked Prometheus data source.
 1. Verify that span metrics generation is enabled in your Tempo or Alloy configuration. Refer to [Enable service graphs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/service_graphs/enable-service-graphs/) in the Tempo documentation.
 
 ### High cardinality warnings

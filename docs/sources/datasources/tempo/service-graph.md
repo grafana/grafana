@@ -105,9 +105,7 @@ The Service Graph view displays a table of RED metrics (rate, error rate, durati
 The table uses a different set of metrics from the node graph:
 
 - `traces_spanmetrics_calls_total`: Rate and error rate columns.
-- `traces_spanmetrics_latency_bucket`: Duration column.
-
-Newer Tempo versions may emit the duration histogram as `traces_spanmetrics_duration_seconds_bucket` instead. If your metrics use only the renamed metric, the Duration column shows no data. For more information, refer to [Service Graph view table is empty](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/#service-graph-view-table-is-empty).
+- `traces_spanmetrics_latency_bucket`, or `traces_spanmetrics_latency` for native histograms: Duration column.
 
 These span metrics must be present in your linked Prometheus data source.
 Span metrics generation must be enabled in your Tempo or Alloy configuration. Refer to [Enable service graphs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/service_graphs/enable-service-graphs/) in the Tempo documentation.

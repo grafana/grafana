@@ -41,7 +41,7 @@ To use trace correlations, you need:
 
 1. Log in to Grafana with an administrator account.
 
-1. Go to **Configuration** > **Plugins & data** > **Correlations**.
+1. Go to **Administration** > **Plugins and data** > **Correlations**.
 
 1. Select **Add correlation** or **Add new**.
 
