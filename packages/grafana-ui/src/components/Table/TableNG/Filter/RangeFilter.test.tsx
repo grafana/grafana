@@ -34,6 +34,7 @@ function setup(
     onCancel,
     rerender: (range?: { min?: number; max?: number; includeMissing: boolean }) =>
       view.rerender(<Filter {...props} range={range} />),
+    rerenderTimeZone: (timeZone: string) => view.rerender(<Filter {...props} range={range} timeZone={timeZone} />),
   };
 }
 
@@ -71,6 +72,28 @@ it('keeps typed dates outside the calendar extent available as exact bounds', as
   await user.type(screen.getByRole('textbox', { name: 'Start' }), '2026-09-16 12:00:00.000');
   await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApply).toHaveBeenCalledWith({ min: Date.UTC(2026, 8, 16, 16), max: undefined, includeMissing: false });
+});
+
+it('keeps drafted date bounds at the same instants when the timezone changes', async () => {
+  const start = Date.UTC(2026, 8, 17, 16);
+  const end = Date.UTC(2026, 8, 17, 18);
+  const { user, onApply, rerenderTimeZone } = setup(FieldType.time, [start, end], {
+    min: start,
+    max: end,
+    includeMissing: false,
+  });
+
+  const startInput = screen.getByRole('textbox', { name: 'Start' });
+  const endInput = screen.getByRole('textbox', { name: 'End' });
+  await user.clear(startInput);
+  await user.type(startInput, '2026-09-17 13:00:00.000');
+
+  rerenderTimeZone('UTC');
+  expect(startInput).toHaveValue('2026-09-17 17:00:00.000');
+  expect(endInput).toHaveValue('2026-09-17 18:00:00.000');
+
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApply).toHaveBeenCalledWith({ min: Date.UTC(2026, 8, 17, 17), max: end, includeMissing: false });
 });
 
 it('disables calendar selection and uses unbounded placeholders with no finite dates', () => {
