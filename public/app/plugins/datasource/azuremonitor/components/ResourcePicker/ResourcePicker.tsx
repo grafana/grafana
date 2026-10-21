@@ -108,14 +108,19 @@ const ResourcePicker = ({
 
       if (queryType === 'metrics') {
         setIsLoadingNamespaces(true);
-        const initialNamespaces = await datasource.azureResourceGraphDatasource.getResourceTypes();
-        setNamespaces(
-          initialNamespaces.map((ns) => ({
-            label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
-            value: ns.value,
-          }))
-        );
-        setIsLoadingNamespaces(false);
+        try {
+          const initialNamespaces = await datasource.azureResourceGraphDatasource.getResourceTypes();
+          setNamespaces(
+            initialNamespaces.map((ns) => ({
+              label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
+              value: ns.value,
+            }))
+          );
+        } catch (error) {
+          setFilterErrorMessage(messageFromError(error));
+        } finally {
+          setIsLoadingNamespaces(false);
+        }
       }
 
       setIsLoadingLocations(true);
@@ -131,7 +136,6 @@ const ResourcePicker = ({
       setFilterErrorMessage(messageFromError(error));
     } finally {
       setIsLoadingSubscriptions(false);
-      setIsLoadingNamespaces(false);
       setIsLoadingLocations(false);
     }
   }, [datasource, queryType]);

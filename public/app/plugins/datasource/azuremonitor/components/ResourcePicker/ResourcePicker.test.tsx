@@ -571,6 +571,37 @@ describe('AzureMonitor ResourcePicker', () => {
       expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
     });
 
+    it('keeps the location filter usable when resource-type discovery fails', async () => {
+      const user = userEvent.setup();
+      const getLocations = jest.fn().mockResolvedValue(createMockLocations());
+      const datasource = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'First subscription', value: 'sub1' }]),
+        getLocations,
+        azureResourceGraphDatasource: {
+          getResourceTypes: jest.fn().mockRejectedValue(new Error('Resource Graph access denied')),
+        },
+      });
+      const fetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+      render(<ResourcePicker {...defaultProps} datasource={datasource} queryType="metrics" />);
+
+      await waitFor(() => {
+        expect(getLocations).toHaveBeenCalledWith(['sub1']);
+      });
+      const locationFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input);
+      await user.click(locationFilter);
+      await user.type(locationFilter, 'North Europe{ArrowDown}{Enter}');
+
+      await waitFor(() => {
+        expect(fetchInitialRows).toHaveBeenCalledWith('metrics', undefined, {
+          subscriptions: [],
+          types: [],
+          locations: ['northeurope'],
+        });
+      });
+      expect(screen.getByText('Resource Graph access denied')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
+    });
+
     it('should not render resource type filter for logs query type', async () => {
       render(<ResourcePicker {...defaultProps} />);
 
