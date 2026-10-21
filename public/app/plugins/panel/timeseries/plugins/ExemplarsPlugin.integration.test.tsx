@@ -16,7 +16,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { FIXED_UNIT, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
 
-import { ExemplarsPluginBridge, type VisibleExemplarLabels } from './ExemplarsPlugin';
+import { ExemplarsPlugin, type VisibleExemplarLabels } from './ExemplarsPlugin';
 
 const defaultExemplarFrame = createDataFrame({
   name: 'exemplars',
@@ -164,7 +164,7 @@ describe('ExemplarsPlugin', () => {
   };
 
   const setUp = (
-    props?: Partial<React.ComponentProps<typeof ExemplarsPluginBridge>>,
+    props?: Partial<React.ComponentProps<typeof ExemplarsPlugin>>,
     uPlotProps?: Partial<uPlot.Options>,
     configOverride?: Partial<UPlotConfigBuilder>,
     callHooks = true
@@ -189,12 +189,7 @@ describe('ExemplarsPlugin', () => {
 
     const result = render(
       <div>
-        <ExemplarsPluginBridge
-          config={configWithDefaults}
-          timeZone="browser"
-          {...props}
-          exemplars={exemplarsWithOverrides}
-        />
+        <ExemplarsPlugin config={configWithDefaults} timeZone="browser" {...props} exemplars={exemplarsWithOverrides} />
       </div>
     );
 
@@ -204,7 +199,7 @@ describe('ExemplarsPlugin', () => {
 
     const rerenderExemplars = (
       exemplars: DataFrame[],
-      overrides?: Partial<React.ComponentProps<typeof ExemplarsPluginBridge>>
+      overrides?: Partial<React.ComponentProps<typeof ExemplarsPlugin>>
     ) => {
       const processed = applyFieldOverrides({
         data: exemplars,
@@ -215,7 +210,7 @@ describe('ExemplarsPlugin', () => {
       });
       result.rerender(
         <div>
-          <ExemplarsPluginBridge
+          <ExemplarsPlugin
             config={configWithDefaults}
             timeZone="browser"
             {...props}

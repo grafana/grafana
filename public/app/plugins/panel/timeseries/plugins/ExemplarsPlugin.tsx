@@ -24,7 +24,7 @@ interface ExemplarsPluginProps {
   maxWidth?: number;
 }
 
-export const ExemplarsPluginBridge = (props: ExemplarsPluginProps) => {
+export const ExemplarsPlugin = (props: ExemplarsPluginProps) => {
   const { config, exemplars } = props;
   const hasRows = exemplars.some((frame) => frame.length > 0);
   const hasRowsRef = useRef(hasRows);
@@ -55,7 +55,7 @@ export const ExemplarsPluginBridge = (props: ExemplarsPluginProps) => {
   }
 
   return (
-    <ExemplarsPlugin
+    <ExemplarsPluginInternal
       {...props}
       plot={initialized?.config === config ? initialized.plot : undefined}
       drawCount={drawCount}
@@ -63,7 +63,7 @@ export const ExemplarsPluginBridge = (props: ExemplarsPluginProps) => {
   );
 };
 
-const ExemplarsPlugin = ({
+const ExemplarsPluginInternal = ({
   exemplars,
   timeZone,
   config,

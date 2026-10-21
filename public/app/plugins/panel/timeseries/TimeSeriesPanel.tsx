@@ -29,7 +29,7 @@ import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
-import { ExemplarsPluginBridge, getVisibleLabels } from './plugins/ExemplarsPlugin';
+import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
@@ -246,7 +246,7 @@ export const TimeSeriesPanel = ({
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                <ExemplarsPluginBridge
+                <ExemplarsPlugin
                   openExemplar={openExemplar}
                   visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
                   config={uplotConfig}
