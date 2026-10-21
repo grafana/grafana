@@ -5274,13 +5274,17 @@
     {
       "metadata": {
         "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-25T12:56:54Z"
+        "resourceVersion": "1792489752750",
+        "creationTimestamp": "2024-10-25T12:56:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:49:12.750999 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables reload of dashboards on scopes, time range and variables changes",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
