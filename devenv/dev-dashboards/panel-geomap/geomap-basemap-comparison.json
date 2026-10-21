@@ -2933,6 +2933,2444 @@
             }
           }
         }
+      },
+      "panel-29": {
+        "kind": "Panel",
+        "spec": {
+          "id": 29,
+          "title": "CARTO positron · World z1",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 20,
+                  "lon": 0,
+                  "zoom": 1,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-30": {
+        "kind": "Panel",
+        "spec": {
+          "id": 30,
+          "title": "Protomaps grayscale · World z1",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 20,
+                  "lon": 0,
+                  "zoom": 1,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-31": {
+        "kind": "Panel",
+        "spec": {
+          "id": 31,
+          "title": "CARTO positron · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-32": {
+        "kind": "Panel",
+        "spec": {
+          "id": 32,
+          "title": "Protomaps grayscale · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-33": {
+        "kind": "Panel",
+        "spec": {
+          "id": 33,
+          "title": "CARTO positron · New York z10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.73,
+                  "lon": -73.98,
+                  "zoom": 10,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-34": {
+        "kind": "Panel",
+        "spec": {
+          "id": 34,
+          "title": "Protomaps grayscale · New York z10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.73,
+                  "lon": -73.98,
+                  "zoom": 10,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-35": {
+        "kind": "Panel",
+        "spec": {
+          "id": 35,
+          "title": "CARTO positron · Lower Manhattan z15",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.7075,
+                  "lon": -74.0113,
+                  "zoom": 15,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-36": {
+        "kind": "Panel",
+        "spec": {
+          "id": 36,
+          "title": "Protomaps grayscale · Lower Manhattan z15",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.7075,
+                  "lon": -74.0113,
+                  "zoom": 15,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-37": {
+        "kind": "Panel",
+        "spec": {
+          "id": 37,
+          "title": "Heatmap · CARTO positron · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "heatmap",
+                    "name": "Flights heatmap",
+                    "config": {
+                      "blur": 30,
+                      "radius": 20,
+                      "weight": {
+                        "field": "Count",
+                        "fixed": 1,
+                        "max": 1,
+                        "min": 0
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-38": {
+        "kind": "Panel",
+        "spec": {
+          "id": 38,
+          "title": "Heatmap · Protomaps light · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "light",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "heatmap",
+                    "name": "Flights heatmap",
+                    "config": {
+                      "blur": 30,
+                      "radius": 20,
+                      "weight": {
+                        "field": "Count",
+                        "fixed": 1,
+                        "max": 1,
+                        "min": 0
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-39": {
+        "kind": "Panel",
+        "spec": {
+          "id": 39,
+          "title": "Heatmap · Protomaps white · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "white",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "heatmap",
+                    "name": "Flights heatmap",
+                    "config": {
+                      "blur": 30,
+                      "radius": 20,
+                      "weight": {
+                        "field": "Count",
+                        "fixed": 1,
+                        "max": 1,
+                        "min": 0
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-40": {
+        "kind": "Panel",
+        "spec": {
+          "id": 40,
+          "title": "Heatmap · Protomaps grayscale · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "heatmap",
+                    "name": "Flights heatmap",
+                    "config": {
+                      "blur": 30,
+                      "radius": 20,
+                      "weight": {
+                        "field": "Count",
+                        "fixed": 1,
+                        "max": 1,
+                        "min": 0
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-41": {
+        "kind": "Panel",
+        "spec": {
+          "id": 41,
+          "title": "GeoJSON · CARTO positron · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "geojson",
+                    "name": "US states",
+                    "config": {
+                      "rules": [],
+                      "src": "public/maps/usa-states.geojson",
+                      "style": {
+                        "color": {
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.4
+                      }
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-42": {
+        "kind": "Panel",
+        "spec": {
+          "id": 42,
+          "title": "GeoJSON · Protomaps light · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "light",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "geojson",
+                    "name": "US states",
+                    "config": {
+                      "rules": [],
+                      "src": "public/maps/usa-states.geojson",
+                      "style": {
+                        "color": {
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.4
+                      }
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-43": {
+        "kind": "Panel",
+        "spec": {
+          "id": 43,
+          "title": "GeoJSON · Protomaps white · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "white",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "geojson",
+                    "name": "US states",
+                    "config": {
+                      "rules": [],
+                      "src": "public/maps/usa-states.geojson",
+                      "style": {
+                        "color": {
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.4
+                      }
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-44": {
+        "kind": "Panel",
+        "spec": {
+          "id": 44,
+          "title": "GeoJSON · Protomaps grayscale · USA z4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "geojson",
+                    "name": "US states",
+                    "config": {
+                      "rules": [],
+                      "src": "public/maps/usa-states.geojson",
+                      "style": {
+                        "color": {
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.4
+                      }
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 38.3,
+                  "lon": -99.2,
+                  "zoom": 4,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-45": {
+        "kind": "Panel",
+        "spec": {
+          "id": 45,
+          "title": "Route · CARTO positron · New York z10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "lat,lon,val\n40.7831,-73.9712,0\n40.7580,-73.9855,20\n40.7359,-73.9911,40\n40.7128,-74.0060,60\n40.7033,-74.0170,80\n40.6892,-74.0445,100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "route",
+                    "name": "Broadway route",
+                    "config": {
+                      "arrow": 1,
+                      "style": {
+                        "color": {
+                          "field": "val",
+                          "fixed": "dark-green"
+                        },
+                        "lineWidth": 3,
+                        "opacity": 1,
+                        "size": {
+                          "fixed": 5,
+                          "max": 10,
+                          "min": 3
+                        }
+                      }
+                    },
+                    "location": {
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.73,
+                  "lon": -73.98,
+                  "zoom": 10,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-46": {
+        "kind": "Panel",
+        "spec": {
+          "id": 46,
+          "title": "Route · Protomaps light · New York z10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "lat,lon,val\n40.7831,-73.9712,0\n40.7580,-73.9855,20\n40.7359,-73.9911,40\n40.7128,-74.0060,60\n40.7033,-74.0170,80\n40.6892,-74.0445,100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "light",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "route",
+                    "name": "Broadway route",
+                    "config": {
+                      "arrow": 1,
+                      "style": {
+                        "color": {
+                          "field": "val",
+                          "fixed": "dark-green"
+                        },
+                        "lineWidth": 3,
+                        "opacity": 1,
+                        "size": {
+                          "fixed": 5,
+                          "max": 10,
+                          "min": 3
+                        }
+                      }
+                    },
+                    "location": {
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.73,
+                  "lon": -73.98,
+                  "zoom": 10,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-47": {
+        "kind": "Panel",
+        "spec": {
+          "id": 47,
+          "title": "Route · Protomaps white · New York z10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "lat,lon,val\n40.7831,-73.9712,0\n40.7580,-73.9855,20\n40.7359,-73.9911,40\n40.7128,-74.0060,60\n40.7033,-74.0170,80\n40.6892,-74.0445,100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "white",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "route",
+                    "name": "Broadway route",
+                    "config": {
+                      "arrow": 1,
+                      "style": {
+                        "color": {
+                          "field": "val",
+                          "fixed": "dark-green"
+                        },
+                        "lineWidth": 3,
+                        "opacity": 1,
+                        "size": {
+                          "fixed": 5,
+                          "max": 10,
+                          "min": 3
+                        }
+                      }
+                    },
+                    "location": {
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.73,
+                  "lon": -73.98,
+                  "zoom": 10,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-48": {
+        "kind": "Panel",
+        "spec": {
+          "id": 48,
+          "title": "Route · Protomaps grayscale · New York z10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "lat,lon,val\n40.7831,-73.9712,0\n40.7580,-73.9855,20\n40.7359,-73.9911,40\n40.7128,-74.0060,60\n40.7033,-74.0170,80\n40.6892,-74.0445,100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "grayscale",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "route",
+                    "name": "Broadway route",
+                    "config": {
+                      "arrow": 1,
+                      "style": {
+                        "color": {
+                          "field": "val",
+                          "fixed": "dark-green"
+                        },
+                        "lineWidth": 3,
+                        "opacity": 1,
+                        "size": {
+                          "fixed": 5,
+                          "max": 10,
+                          "min": 3
+                        }
+                      }
+                    },
+                    "location": {
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.73,
+                  "lon": -73.98,
+                  "zoom": 10,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-49": {
+        "kind": "Panel",
+        "spec": {
+          "id": 49,
+          "title": "CARTO positron · Lower Manhattan z17",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "light",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.7075,
+                  "lon": -74.0113,
+                  "zoom": 17,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-50": {
+        "kind": "Panel",
+        "spec": {
+          "id": 50,
+          "title": "Protomaps light · Lower Manhattan z17",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "light",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.7075,
+                  "lon": -74.0113,
+                  "zoom": 17,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-51": {
+        "kind": "Panel",
+        "spec": {
+          "id": 51,
+          "title": "CARTO dark-matter · Lower Manhattan z17",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "carto",
+                  "name": "Basemap",
+                  "config": {
+                    "theme": "dark",
+                    "showLabels": true
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.7075,
+                  "lon": -74.0113,
+                  "zoom": 17,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-52": {
+        "kind": "Panel",
+        "spec": {
+          "id": 52,
+          "title": "Protomaps dark · Lower Manhattan z17",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "13.3.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "type": "protomaps",
+                  "name": "Basemap",
+                  "config": {
+                    "flavor": "dark",
+                    "showLabels": true,
+                    "delivery": "pmtiles",
+                    "server": "http://localhost:8095/"
+                  }
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "type": "markers",
+                    "name": "Flights by state",
+                    "config": {
+                      "color": {
+                        "field": "Price",
+                        "fixed": "dark-green"
+                      },
+                      "fillOpacity": 0.6,
+                      "shape": "circle",
+                      "showLegend": false,
+                      "size": {
+                        "field": "Count",
+                        "fixed": 5,
+                        "max": 15,
+                        "min": 2
+                      }
+                    },
+                    "location": {
+                      "gazetteer": "public/gazetteer/usa-states.json",
+                      "lookup": "State",
+                      "mode": "auto"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "id": "coords",
+                  "lat": 40.7075,
+                  "lon": -74.0113,
+                  "zoom": 17,
+                  "shared": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -3337,6 +5775,360 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-28"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Grayscale",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-29"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-30"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 10,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-31"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 10,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-32"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 20,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-33"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 20,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-34"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 30,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-35"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 30,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-36"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Data layers",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-37"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-38"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-39"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-40"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 10,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-41"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 10,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-42"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 10,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-43"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 10,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-44"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 20,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-45"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 20,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-46"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 20,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-47"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 20,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-48"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Overzoom z17 (Protomaps tiles stop at z15)",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-49"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-50"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-51"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-52"
                         }
                       }
                     }
