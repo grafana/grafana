@@ -11,7 +11,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 const ATTRIBUTION = `<a href="https://protomaps.com">Protomaps</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`;
 
 /** Where a local Protomaps tile server listens by default; replaced by a real host before this leaves dev */
-export const DEV_SERVER_URL = 'http://localhost:8095/';
+const DEV_SERVER_URL = 'http://localhost:8095/';
 
 /** The source id the Protomaps style generator gives every layer */
 const SOURCE_ID = 'protomaps';
@@ -81,7 +81,7 @@ function resolveFlavor(flavor: ProtomapsFlavor | undefined, theme: GrafanaTheme2
 }
 
 /** A trailing slash makes every asset resolve inside the configured path, not beside it */
-export function resolveServer(server?: string): URL {
+function resolveServer(server?: string): URL {
   try {
     const url = new URL(server || DEV_SERVER_URL);
     if (url.protocol === 'http:' || url.protocol === 'https:') {
@@ -131,7 +131,7 @@ export function isProtomapsBasemapEnabled() {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGeomapProtomapsBasemap, false);
 }
 
-export function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
+function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
   const layers = glStyle.layers
     .filter((layer) => showLabels || layer.type !== 'symbol')
     .map((layer) =>
