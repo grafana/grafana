@@ -29,10 +29,13 @@ let natural = { left: 312, top: 500, width: 400, height: 244 };
 let handleOutset = 0;
 const onHandleClick = jest.fn();
 const onDock = jest.fn();
+const onCollapse = jest.fn();
+/** Whether the extension has anything to collapse. */
+let collapsible = true;
 
 function Floating() {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
-  const dockPreview = useFloatingDrag(element, { dockWidth: 360, onDock });
+  const preview = useFloatingDrag(element, { dockWidth: 360, onDock, canCollapse: () => collapsible, onCollapse });
   return (
     <>
       <div ref={setElement} data-testid="floating">
@@ -40,7 +43,7 @@ function Floating() {
           Move
         </button>
       </div>
-      {dockPreview && <div data-testid="dock-preview">{JSON.stringify(dockPreview)}</div>}
+      {preview && <div data-testid="preview">{JSON.stringify(preview)}</div>}
     </>
   );
 }
@@ -50,6 +53,8 @@ beforeEach(() => {
   handleOutset = 0;
   onHandleClick.mockClear();
   onDock.mockClear();
+  onCollapse.mockClear();
+  collapsible = true;
   jest.mocked(reportInteraction).mockClear();
   window.localStorage.clear();
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
@@ -175,12 +180,14 @@ it('previews the docked sidebar while the pointer is at the right edge, and dock
   render(<Floating />);
   fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
 
-  fireEvent.pointerMove(handle(), { clientX: 900, clientY: 300 });
-  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+  // The box stops at the gutter 304px right; 16px further is not a push yet.
+  fireEvent.pointerMove(handle(), { clientX: 820, clientY: 300 });
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
 
   // Within 32px of the window's right edge (1024).
   fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
-  expect(JSON.parse(screen.getByTestId('dock-preview').textContent ?? '')).toEqual({
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
+    action: 'dock',
     top: 0,
     left: 664,
     width: 360,
@@ -190,7 +197,8 @@ it('previews the docked sidebar while the pointer is at the right edge, and dock
   fireEvent.pointerUp(handle(), { clientX: 1000, clientY: 300 });
   fireEvent.click(handle());
   expect(onDock).toHaveBeenCalledTimes(1);
-  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+  expect(onCollapse).not.toHaveBeenCalled();
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
   expect(onHandleClick).not.toHaveBeenCalled();
   expect(reportInteraction).not.toHaveBeenCalled();
   // Docking does not remember where the drag left the box.
@@ -203,15 +211,104 @@ it('does not dock when the pointer leaves the right edge before letting go, or t
   fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
   fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
   fireEvent.pointerMove(handle(), { clientX: 800, clientY: 300 });
-  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
   fireEvent.pointerUp(handle(), { clientX: 800, clientY: 300 });
 
   fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
   fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
   fireEvent.pointerCancel(handle(), { clientX: 1000, clientY: 300 });
-  expect(screen.queryByTestId('dock-preview')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
 
   expect(onDock).not.toHaveBeenCalled();
+});
+
+it('previews the collapsed box while pushed down past the bottom edge, and collapses it there when let go', () => {
+  render(<Floating />);
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+  // The box stops at the 8px gutter, 16px down; the drag goes 224px further.
+  fireEvent.pointerMove(handle(), { clientX: 500, clientY: 760 });
+  expect(floating().style.transform).toBe('translate(0px, 16px)');
+  // Lined up with the bottom of the box (760).
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
+    action: 'collapse',
+    top: 704,
+    left: 312,
+    width: 400,
+    height: 56,
+  });
+
+  // The preview follows the box along the bottom edge.
+  fireEvent.pointerMove(handle(), { clientX: 400, clientY: 760 });
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ left: 212 });
+
+  fireEvent.pointerUp(handle(), { clientX: 400, clientY: 760 });
+  // Snapped to the bottom edge, then collapsed.
+  expect(floating().style.transform).toBe('translate(-100px, 0px)');
+  expect(onCollapse).toHaveBeenCalledTimes(1);
+  expect(onDock).not.toHaveBeenCalled();
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+});
+
+it('collapses a tall box pushed against the bottom edge, though the pointer is far from it', () => {
+  // Expanded: its bottom edge 24px from the bottom, its header near the top.
+  natural = { ...natural, top: 144, height: 600 };
+  render(<Floating />);
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 160, button: 0 });
+
+  // The box stops 16px down, at the gutter; pushing 54px further is not enough.
+  fireEvent.pointerMove(handle(), { clientX: 500, clientY: 230 });
+  expect(floating().style.transform).toBe('translate(0px, 16px)');
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+  // 74px past where it stopped.
+  fireEvent.pointerMove(handle(), { clientX: 500, clientY: 250 });
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ action: 'collapse' });
+
+  fireEvent.pointerUp(handle(), { clientX: 500, clientY: 250 });
+  expect(onCollapse).toHaveBeenCalledTimes(1);
+});
+
+it('does not collapse a box resting at the bottom that is moved sideways and drifts down', () => {
+  render(<Floating />);
+
+  // 54px down from where it stops, 16px down.
+  drag({ x: 500, y: 520 }, { x: 700, y: 590 });
+
+  expect(onCollapse).not.toHaveBeenCalled();
+  expect(floating().style.transform).toBe('translate(200px, 0px)');
+});
+
+it('offers no collapse while there is nothing to collapse, but still docks from the corner', () => {
+  collapsible = false;
+  render(<Floating />);
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+  fireEvent.pointerMove(handle(), { clientX: 500, clientY: 760 });
+  expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+  // In the corner the bottom would win, but there is nothing to collapse.
+  fireEvent.pointerMove(handle(), { clientX: 900, clientY: 790 });
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ action: 'dock' });
+
+  fireEvent.pointerMove(handle(), { clientX: 500, clientY: 760 });
+  fireEvent.pointerUp(handle(), { clientX: 500, clientY: 760 });
+  // It only snaps to the bottom.
+  expect(floating().style.transform).toBe('');
+  expect(onCollapse).not.toHaveBeenCalled();
+  expect(onDock).not.toHaveBeenCalled();
+});
+
+it('in the bottom-right corner, does what the harder push does', () => {
+  render(<Floating />);
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+  // 96px past the right stop and 254px past the bottom one.
+  fireEvent.pointerMove(handle(), { clientX: 900, clientY: 790 });
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ action: 'collapse' });
+
+  // 216px past the right stop and 214px past the bottom one.
+  fireEvent.pointerMove(handle(), { clientX: 1020, clientY: 750 });
+  expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ action: 'dock' });
 });
 
 it('keeps a handle that sits outside the box on the page too, and snaps by it', () => {

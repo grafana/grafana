@@ -19,8 +19,19 @@ const GUTTER = 8;
 const DRAG_THRESHOLD = 4;
 /** Let go closer than this to an edge of the page content, the container snaps to that edge. */
 const SNAP_DISTANCE = 48;
-/** A drag whose pointer reaches this close to the page content's right edge docks the sidebar when let go. */
-const DOCK_DISTANCE = 32;
+/**
+ * A drag whose pointer reaches this close to the page content's right edge, or that keeps pushing this far past
+ * where the box stopped at it, docks the sidebar when let go.
+ */
+const EDGE_ACTION_DISTANCE = 32;
+/**
+ * A drag that keeps pushing this far past where the box stopped at the bottom edge collapses the sidebar when let
+ * go. Larger than the dock's, and the pointer's closeness does not count: a box resting at the bottom has little
+ * room to move down, so a sideways move that drifts down a little must not collapse it.
+ */
+const COLLAPSE_PUSH_DISTANCE = 64;
+/** The collapse preview's height: about a collapsed sidebar's, which core cannot measure before it collapses. */
+const COLLAPSE_PREVIEW_HEIGHT = 56;
 const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
 /** How long the container glides to an edge it snaps to; ExtensionSidebar's transition uses it too. */
@@ -43,8 +54,12 @@ interface Placement extends Offset {
   anchor: Anchor;
 }
 
-/** Where the docked sidebar would go, in viewport coordinates, shown while a drag would dock it. */
-export interface DockPreview {
+/**
+ * What letting go would do, and where the sidebar would end up, in viewport coordinates: docked, or collapsed
+ * at the bottom edge.
+ */
+export interface EdgeActionPreview {
+  action: 'dock' | 'collapse';
   top: number;
   left: number;
   width: number;
@@ -55,6 +70,9 @@ interface FloatingDragOptions {
   /** The docked sidebar's width, for the preview. */
   dockWidth: number;
   onDock: () => void;
+  /** Whether there is anything to collapse; while not, pushing against the bottom edge only moves the box. */
+  canCollapse: () => boolean;
+  onCollapse: () => void;
 }
 
 const ORIGIN: Offset = { x: 0, y: 0 };
@@ -69,23 +87,24 @@ function reportMoved(method: 'drag' | 'reset', anchor: Anchor): void {
  * translation of `element` from that place, kept fully inside the page content (with a gutter), and
  * re-clamped when the window or the element resizes. A pointer drag follows the pointer and the container
  * stays where it is let go, unless that is near an edge of the page content: then it glides to that edge,
- * inset as far as the default place is from the bottom. Pushing the pointer to the right edge of the page
- * docks the sidebar instead: the returned preview shows where while the pointer stays there, and letting go
- * calls `onDock`. The arrow keys move it in steps without snapping or docking. Left in the top half of the
+ * inset as far as the default place is from the bottom. Pushing it against the right edge of the page docks
+ * the sidebar instead, and against the bottom edge collapses it: the returned preview shows the result while
+ * the drag keeps pushing, and letting go calls `onDock` or, after snapping to the bottom, `onCollapse`. The
+ * arrow keys move it in steps without snapping, docking or collapsing. Left in the top half of the
  * page, it keeps its top edge and grows downward; in the bottom half, it keeps its bottom edge and grows
  * upward. The placement is remembered in local storage, so floating again, or a reload, puts it back; a
  * re-clamp never overwrites it, so it returns once there is room.
  */
 export function useFloatingDrag(
   element: HTMLElement | null,
-  { dockWidth, onDock }: FloatingDragOptions
-): DockPreview | null {
+  { dockWidth, onDock, canCollapse, onCollapse }: FloatingDragOptions
+): EdgeActionPreview | null {
   const offsetRef = useRef<Offset>(ORIGIN);
   const chosenRef = useRef<Placement>(DEFAULT_PLACEMENT);
-  const [dockPreview, setDockPreview] = useState<DockPreview | null>(null);
+  const [preview, setPreview] = useState<EdgeActionPreview | null>(null);
   // The listeners are attached once per element, so they read the latest options through a ref.
-  const optionsRef = useRef({ dockWidth, onDock });
-  optionsRef.current = { dockWidth, onDock };
+  const optionsRef = useRef({ dockWidth, onDock, canCollapse, onCollapse });
+  optionsRef.current = { dockWidth, onDock, canCollapse, onCollapse };
 
   const apply = useCallback(
     (next: Offset) => {
@@ -145,7 +164,14 @@ export function useFloatingDrag(
     observer?.observe(element);
 
     let drag:
-      | { pointerId: number; x: number; y: number; from: Offset; dragging: boolean; docking: boolean }
+      | {
+          pointerId: number;
+          x: number;
+          y: number;
+          from: Offset;
+          dragging: boolean;
+          action: EdgeActionPreview['action'] | undefined;
+        }
       | undefined;
     let swallowClick = false;
     let snapTimer: number | undefined;
@@ -171,7 +197,7 @@ export function useFloatingDrag(
         y: event.clientY,
         from: offsetRef.current,
         dragging: false,
-        docking: false,
+        action: undefined,
       };
       swallowClick = false;
       handle.setPointerCapture?.(event.pointerId);
@@ -190,21 +216,26 @@ export function useFloatingDrag(
       }
       drag.dragging = true;
       element.setAttribute('data-dragging', '');
-      apply({ x: drag.from.x + dx, y: drag.from.y + dy });
-      const preview = dockPreviewAt(event.clientX, optionsRef.current.dockWidth);
-      if (Boolean(preview) !== drag.docking) {
-        drag.docking = Boolean(preview);
-        setDockPreview(preview);
+      const requested = { x: drag.from.x + dx, y: drag.from.y + dy };
+      apply(requested);
+      const pushedPast = { x: requested.x - offsetRef.current.x, y: requested.y - offsetRef.current.y };
+      const { dockWidth: width, canCollapse: collapsible } = optionsRef.current;
+      const next = edgeActionPreviewAt(element, event, pushedPast, width, collapsible());
+      // The collapse preview follows the box along the bottom edge; the dock preview never moves.
+      if (next?.action !== drag.action || next?.action === 'collapse') {
+        drag.action = next?.action;
+        setPreview(next);
       }
     };
     const onPointerEnd = (event: PointerEvent) => {
       if (!drag || event.pointerId !== drag.pointerId) {
         return;
       }
-      if (drag.docking) {
-        setDockPreview(null);
+      const action = event.type === 'pointerup' && drag.dragging ? drag.action : undefined;
+      if (drag.action) {
+        setPreview(null);
       }
-      if (drag.dragging && drag.docking && event.type === 'pointerup') {
+      if (action === 'dock') {
         swallowClick = true;
         optionsRef.current.onDock();
       } else if (drag.dragging) {
@@ -220,6 +251,9 @@ export function useFloatingDrag(
         }
         remember();
         reportMoved('drag', chosenRef.current.anchor);
+        if (action === 'collapse') {
+          optionsRef.current.onCollapse();
+        }
       }
       drag = undefined;
       element.removeAttribute('data-dragging');
@@ -267,7 +301,7 @@ export function useFloatingDrag(
     element.addEventListener('keydown', onKeyDown);
     return () => {
       endSnap();
-      setDockPreview(null);
+      setPreview(null);
       window.removeEventListener('resize', reclamp);
       observer?.disconnect();
       element.removeEventListener('pointerdown', onPointerDown);
@@ -280,17 +314,49 @@ export function useFloatingDrag(
     };
   }, [element, apply, place, remember]);
 
-  return dockPreview;
+  return preview;
 }
 
-/** Where the docked sidebar would go when the pointer is at `clientX`, or null when it is not near the right edge. */
-function dockPreviewAt(clientX: number, dockWidth: number): DockPreview | null {
+/**
+ * What letting go would do: dock when the drag pushes toward the page's right edge, collapse when it pushes toward
+ * its bottom edge (the harder push in the corner), or nothing. A drag pushes the right edge when the pointer is near
+ * it, or when it keeps going after the box has stopped at it: a large box stops long before the pointer gets there.
+ * It pushes the bottom edge only by keeping going. `pushedPast` is how far the drag has gone beyond where the box stopped. The collapse preview lines up with the
+ * bottom of the box.
+ */
+function edgeActionPreviewAt(
+  element: HTMLElement,
+  pointer: { clientX: number; clientY: number },
+  pushedPast: Offset,
+  dockWidth: number,
+  canCollapse: boolean
+): EdgeActionPreview | null {
   const page = pageRect();
-  if (clientX < page.right - DOCK_DISTANCE) {
+  const push = (pointerToEdge: number, past: number) =>
+    Math.max(EDGE_ACTION_DISTANCE - pointerToEdge, past - EDGE_ACTION_DISTANCE);
+  const pushRight = push(page.right - pointer.clientX, pushedPast.x);
+  const pushDown = canCollapse ? pushedPast.y - COLLAPSE_PUSH_DISTANCE : -Infinity;
+  if (Math.max(pushRight, pushDown) <= 0) {
     return null;
   }
-  const width = Math.min(dockWidth, page.right - page.left);
-  return { top: page.top, left: page.right - width, width, height: page.bottom - page.top };
+  if (pushRight >= pushDown) {
+    const width = Math.min(dockWidth, page.right - page.left);
+    return { action: 'dock', top: page.top, left: page.right - width, width, height: page.bottom - page.top };
+  }
+  const rect = measureWithHandles(element);
+  const bottom = rect.top + rect.height;
+  return {
+    action: 'collapse',
+    top: bottom - COLLAPSE_PREVIEW_HEIGHT,
+    left: rect.left,
+    width: rect.width,
+    height: COLLAPSE_PREVIEW_HEIGHT,
+  };
+}
+
+/** How far the default place is from the bottom of the page content: the inset edges snap to. */
+function defaultInset(rect: { top: number; height: number }, current: Offset, content: { bottom: number }): number {
+  return Math.max(GUTTER, content.bottom - (rect.top - current.y + rect.height));
 }
 
 /** A stored `{ x, y }` without an anchor predates top anchoring, and is an offset from the bottom centre. */
@@ -338,7 +404,7 @@ function snapToEdges(element: HTMLElement, current: Offset): Offset {
   const left = rect.left - current.x;
   const top = rect.top - current.y;
   const content = contentEdges();
-  const inset = Math.max(GUTTER, content.bottom - (top + rect.height));
+  const inset = defaultInset(rect, current, content);
   const snapAxis = (value: number, startGap: number, endGap: number, toStart: number, toEnd: number) => {
     if (Math.min(startGap, endGap) >= SNAP_DISTANCE) {
       return value;
