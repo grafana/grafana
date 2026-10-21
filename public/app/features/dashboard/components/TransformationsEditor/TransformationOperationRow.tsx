@@ -21,6 +21,7 @@ import {
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { interpolateConfigs } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
@@ -110,7 +111,9 @@ export const TransformationOperationRow = ({
   );
 
   useEffect(() => {
-    const config = configs[index].transformation;
+    // transformDataFrame skips variable interpolation under Scenes, so resolve them here as the panel does.
+    const resolved = interpolateConfigs(configs.map((t) => t.transformation));
+    const config = resolved[index];
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     // we need previous transformation index to get its outputs
     //    to be used in this transforms inputs
@@ -120,12 +123,12 @@ export const TransformationOperationRow = ({
     let prevOutputTransforms: Array<DataTransformerConfig<{}>> = [];
 
     if (prevTransformIndex >= 0) {
-      prevInputTransforms = configs.slice(0, prevTransformIndex).map((t) => t.transformation);
-      prevOutputTransforms = configs.slice(prevTransformIndex, index).map((t) => t.transformation);
+      prevInputTransforms = resolved.slice(0, prevTransformIndex);
+      prevOutputTransforms = resolved.slice(prevTransformIndex, index);
     }
 
-    const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
-    const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
+    const inputTransforms = resolved.slice(0, index);
+    const outputTransforms = resolved.slice(index, index + 1);
 
     const ctx: DataTransformContext = {
       interpolate: (v: string) => getTemplateSrv().replace(v),

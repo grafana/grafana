@@ -2,9 +2,18 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataTransformerID, FieldType, ReducerID, standardTransformersRegistry, toDataFrame } from '@grafana/data';
-import { ReduceTransformerMode } from '@grafana/data/internal';
+import {
+  BinaryOperationID,
+  DataTransformerID,
+  FieldMatcherID,
+  FieldType,
+  ReducerID,
+  standardTransformersRegistry,
+  toDataFrame,
+} from '@grafana/data';
+import { CalculateFieldMode, ReduceTransformerMode } from '@grafana/data/internal';
 import { setTemplateSrv } from '@grafana/runtime';
+import { ConstantVariable, EmbeddedScene, SceneCanvasText, SceneVariableSet } from '@grafana/scenes';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -106,5 +115,69 @@ describe('TransformationOperationRows', () => {
 
     expect(await screen.findByText('1 - Reduce')).toBeInTheDocument();
     expect(screen.queryByTestId('transformation-refid-div')).not.toBeInTheDocument();
+  });
+
+  describe('within a scene', () => {
+    let prevContext: typeof window.__grafanaSceneContext;
+
+    beforeEach(() => {
+      prevContext = window.__grafanaSceneContext;
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $variables: new SceneVariableSet({ variables: [new ConstantVariable({ name: 'const', value: '10' })] }),
+        body: new SceneCanvasText({ text: '' }),
+      });
+      window.__grafanaSceneContext.activate();
+    });
+
+    afterEach(() => {
+      window.__grafanaSceneContext = prevContext;
+    });
+
+    it('offers a field calculated with a variable to the next transformation', async () => {
+      setup(
+        [
+          {
+            id: 'a',
+            transformation: {
+              id: DataTransformerID.calculateField,
+              options: {
+                mode: CalculateFieldMode.BinaryOperation,
+                alias: 'plus',
+                binary: {
+                  left: { matcher: { id: FieldMatcherID.byName, options: 'value' } },
+                  operator: BinaryOperationID.Add,
+                  right: { matcher: { id: FieldMatcherID.byName, options: '$const' } },
+                },
+              },
+            },
+          },
+          {
+            id: 'b',
+            transformation: {
+              id: DataTransformerID.calculateField,
+              options: { mode: CalculateFieldMode.BinaryOperation },
+            },
+          },
+        ],
+        {
+          series: [
+            toDataFrame({
+              refId: 'A',
+              fields: [
+                { name: 'time', type: FieldType.time, values: [1, 2] },
+                { name: 'value', type: FieldType.number, values: [10, 20] },
+              ],
+            }),
+          ],
+          annotations: [],
+        }
+      );
+
+      const leftOperands = await screen.findAllByRole('combobox', { name: 'Left operand' });
+      await userEvent.click(leftOperands[1]);
+
+      const menu = await screen.findByLabelText('Select options menu');
+      expect(await within(menu).findByText('plus')).toBeInTheDocument();
+    });
   });
 });
