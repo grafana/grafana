@@ -81,6 +81,7 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
       expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
     } finally {
       unmount();
+      jest.runOnlyPendingTimers();
       validate.mockRestore();
       jest.useRealTimers();
     }
