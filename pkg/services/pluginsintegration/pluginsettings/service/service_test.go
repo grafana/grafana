@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -274,4 +276,51 @@ func TestIntegrationPluginSettings(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("UpdatePluginSetting should save JSONData at the size limit", func(t *testing.T) {
+		cmd := &pluginsettings.UpdateArgs{
+			PluginID: "at-size-limit",
+			Enabled:  true,
+			OrgID:    1,
+			JSONData: jsonDataOfSize(t, maxJSONDataBytes),
+		}
+
+		require.NoError(t, psService.UpdatePluginSetting(context.Background(), cmd))
+
+		ps, err := psService.GetPluginSettingByPluginID(context.Background(), &pluginsettings.GetByPluginIDArgs{
+			OrgID:    cmd.OrgID,
+			PluginID: cmd.PluginID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cmd.JSONData, ps.JSONData)
+	})
+}
+
+func TestService_UpdatePluginSetting_JSONDataTooLarge(t *testing.T) {
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	// A nil store proves the oversized payload is rejected before any database access.
+	psService := ProvideService(nil, secretsService)
+
+	err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
+		PluginID: "test-app",
+		OrgID:    1,
+		Enabled:  true,
+		JSONData: jsonDataOfSize(t, maxJSONDataBytes+1),
+	})
+
+	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingJSONDataTooLarge)
+}
+
+// jsonDataOfSize returns JSONData whose JSON encoding is exactly size bytes.
+func jsonDataOfSize(t *testing.T, size int) map[string]any {
+	t.Helper()
+
+	const overhead = len(`{"k":""}`)
+	data := map[string]any{"k": strings.Repeat("a", size-overhead)}
+
+	encoded, err := json.Marshal(data)
+	require.NoError(t, err)
+	require.Len(t, encoded, size)
+
+	return data
 }

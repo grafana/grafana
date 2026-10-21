@@ -284,7 +284,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		OrgID:                   cmd.OrgId,
 		EncryptedSecureJSONData: cmd.EncryptedSecureJsonData,
 	}); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update plugin setting", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update plugin setting", err)
 	}
 
 	hs.pluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)
