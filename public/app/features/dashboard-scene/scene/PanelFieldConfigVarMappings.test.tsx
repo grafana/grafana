@@ -20,7 +20,7 @@ import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // use the real standard field config registry so min/max/decimals run through the real
-// numberOverrideProcessor + allowVariables gating, not a test double
+// numberOverrideProcessor, not a test double
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 

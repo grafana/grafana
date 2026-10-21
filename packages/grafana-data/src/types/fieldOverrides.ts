@@ -96,14 +96,6 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
   hideFromOverrides?: boolean;
 
   /**
-   * Opt-in flag for `varMappings` expression support on `addNumberInput`/`addSliderInput` custom
-   * options. Only meaningful for those two builders (both register `numberOverrideProcessor`);
-   * ignored by every other builder. Defaults to `false`, so existing plugin custom options are
-   * unaffected unless the plugin explicitly opts in.
-   */
-  allowVariables?: boolean;
-
-  /**
    * Controls whether this option is offered in the "Add override property" picker, based on the
    * override editor context. Distinct from `showIf`, which is evaluated against the *default*
    * field config and so cannot decide what a per-field override may set.
@@ -170,15 +162,6 @@ export interface FieldConfigPropertyItem<
 
   /** Checks if field should be processed */
   shouldApply: (field: Field) => boolean;
-
-  /**
-   * Opt-in flag for `varMappings` expression support. Only meaningful for properties registered
-   * with `numberOverrideProcessor`; ignored otherwise. Standard numeric properties (`min`, `max`,
-   * `decimals`) set this to `true`. Plugin custom options built with `addNumberInput`/
-   * `addSliderInput` default to `false` (see `FieldConfigEditorConfig.allowVariables`) so existing
-   * plugins are unaffected unless they opt in.
-   */
-  allowVariables?: boolean;
 }
 
 export type DataLinkPostProcessorOptions = {

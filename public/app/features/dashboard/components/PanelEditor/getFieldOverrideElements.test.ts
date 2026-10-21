@@ -6,6 +6,7 @@ import {
   type FieldConfigSource,
   type DataFrame,
   FieldType,
+  identityOverrideProcessor,
   numberOverrideProcessor,
   Registry,
 } from '@grafana/data';
@@ -288,8 +289,8 @@ describe('getFieldOverrideCategories', () => {
   });
 
   describe('varMappings', () => {
-    const makeMinItem = (allowVariables = true) =>
-      makeItem('min', { isCustom: false, process: numberOverrideProcessor, allowVariables });
+    const makeMinItem = (process: FieldConfigPropertyItem['process'] = numberOverrideProcessor) =>
+      makeItem('min', { isCustom: false, process });
 
     it('shows the stored number and keeps the varMappings.<id> entry on change when the flag is off', () => {
       const registry = makeRegistry([makeMinItem()]);
@@ -525,8 +526,8 @@ describe('getFieldOverrideCategories', () => {
       });
     });
 
-    it('does not route a string onChange value into varMappings for a property without allowVariables', () => {
-      const registry = makeRegistry([makeMinItem(false)]);
+    it('does not route a string onChange value into varMappings for a non-numeric property', () => {
+      const registry = makeRegistry([makeMinItem(identityOverrideProcessor)]);
       const onFieldConfigsChange = jest.fn();
       const fieldConfig: FieldConfigSource = {
         defaults: {},

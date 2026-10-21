@@ -407,10 +407,9 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
 }
 
 /**
- * Consults `context.varMappings` for a property registered with `numberOverrideProcessor`
- * (and not opted out via `allowVariables: false`) and, if a mapping is present and resolves to a
- * finite number, returns that number in place of `rawValue`. Otherwise returns `rawValue`
- * unchanged — a failed resolution is indistinguishable from "no expression was set", which is
+ * Consults `context.varMappings` for a property registered with `numberOverrideProcessor` and,
+ * if a mapping is present and resolves to a finite number, returns that number in place of
+ * `rawValue`. Otherwise returns `rawValue` unchanged — a failed resolution is indistinguishable from "no expression was set", which is
  * exactly the fallback-to-stored-value semantics `valueExpr` established for thresholds.
  */
 function resolveVarMappingInput(

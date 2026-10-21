@@ -28,7 +28,7 @@ import {
   validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
-import { numberOverrideProcessor } from './overrides/processors';
+import { booleanOverrideProcessor, numberOverrideProcessor } from './overrides/processors';
 
 const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
@@ -74,40 +74,30 @@ const shouldApplyFalse: FieldConfigPropertyItem = {
   name: 'Should Apply False',
 };
 
-const customNumberAllowed: FieldConfigPropertyItem = {
-  id: 'custom.numberAllowed',
-  path: 'numberAllowed',
+const customNumber: FieldConfigPropertyItem = {
+  id: 'custom.number',
+  path: 'number',
   isCustom: true,
   process: numberOverrideProcessor,
-  allowVariables: true, // opted in explicitly, e.g. addNumberInput({ allowVariables: true }) (also the addNumberInput/addSliderInput default now)
   shouldApply: () => true,
   override: jest.fn(),
   editor: jest.fn(),
-  name: 'Custom Number (allowVariables: true)',
+  name: 'Custom Number',
 };
 
-const customNumberDisallowed: FieldConfigPropertyItem = {
-  id: 'custom.numberDisallowed',
-  path: 'numberDisallowed',
+const customBoolean: FieldConfigPropertyItem = {
+  id: 'custom.boolean',
+  path: 'boolean',
   isCustom: true,
-  process: numberOverrideProcessor,
-  allowVariables: false, // opted out explicitly, e.g. addNumberInput({ allowVariables: false })
+  process: booleanOverrideProcessor,
   shouldApply: () => true,
   override: jest.fn(),
   editor: jest.fn(),
-  name: 'Custom Number (opted out)',
+  name: 'Custom Boolean',
 };
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [
-    property1,
-    property2,
-    property3,
-    shouldApplyFalse,
-    customNumberAllowed,
-    customNumberDisallowed,
-    ...mockStandardProperties(),
-  ];
+  return [property1, property2, property3, shouldApplyFalse, customNumber, customBoolean, ...mockStandardProperties()];
 });
 
 locationUtil.initialize({
@@ -717,15 +707,15 @@ describe('applyFieldOverrides', () => {
       expect(config.max).toEqual(3);
     });
 
-    it('gates custom numeric properties on allowVariables: only opted-in customs resolve varMappings', () => {
+    it('resolves varMappings for custom numeric properties only', () => {
       const replaceVariables = makeReplaceVariables({ v: '9' });
 
       const data = applyFieldOverrides({
         data: [numField],
         fieldConfig: {
           defaults: {
-            custom: { numberAllowed: 1, numberDisallowed: 1 },
-            varMappings: { 'custom.numberAllowed': '$v', 'custom.numberDisallowed': '$v' },
+            custom: { number: 1, boolean: false },
+            varMappings: { 'custom.number': '$v', 'custom.boolean': '$v' },
           },
           overrides: [],
         },
@@ -735,8 +725,8 @@ describe('applyFieldOverrides', () => {
       })[0];
 
       const custom = data.fields[0].config.custom;
-      expect(custom.numberAllowed).toEqual(9); // opted in via allowVariables: true
-      expect(custom.numberDisallowed).toEqual(1); // allowVariables: false -> mapping ignored, stored value kept
+      expect(custom.number).toEqual(9);
+      expect(custom.boolean).toEqual(false);
     });
   });
 

@@ -50,11 +50,6 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
-      // Left as whatever the plugin author passed (including `undefined`): the resolution
-      // pipeline's `isVarMappingEligible` and the editor both already treat `allowVariables !== false`
-      // as eligible, so omitting it here means opted-in by default. Plugin authors opt out explicitly
-      // with `allowVariables: false`.
-      allowVariables: config.allowVariables,
     });
   }
 
@@ -69,11 +64,6 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
-      // Left as whatever the plugin author passed (including `undefined`): the resolution
-      // pipeline's `isVarMappingEligible` and the editor both already treat `allowVariables !== false`
-      // as eligible, so omitting it here means opted-in by default. Plugin authors opt out explicitly
-      // with `allowVariables: false`.
-      allowVariables: config.allowVariables,
     });
   }
 

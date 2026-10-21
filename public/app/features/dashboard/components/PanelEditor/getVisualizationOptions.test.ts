@@ -6,6 +6,7 @@ import {
   type FieldConfigSource,
   FieldType,
   getDefaultTimeRange,
+  identityOverrideProcessor,
   LoadingState,
   numberOverrideProcessor,
   type PanelOptionsEditorBuilder,
@@ -442,12 +443,13 @@ describe('getVisualizationOptions', () => {
   });
 
   describe('varMappings wiring', () => {
-    const buildMinProperty = (allowVariables = true): FieldConfigPropertyItem => ({
+    const buildMinProperty = (
+      process: FieldConfigPropertyItem['process'] = numberOverrideProcessor
+    ): FieldConfigPropertyItem => ({
       id: 'min',
       path: 'min',
       name: 'Min',
-      process: numberOverrideProcessor,
-      allowVariables,
+      process,
       shouldApply: () => true,
       override: jest.fn(),
       editor: jest.fn(),
@@ -560,8 +562,8 @@ describe('getVisualizationOptions', () => {
       expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: 42 }, overrides: [] }, true);
     });
 
-    it('does not route a string onChange value into varMappings for a property without allowVariables', () => {
-      const plugin = buildPlugin([buildMinProperty(false)]);
+    it('does not route a string onChange value into varMappings for a non-numeric property', () => {
+      const plugin = buildPlugin([buildMinProperty(identityOverrideProcessor)]);
       const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-4' });
       const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
 
@@ -580,7 +582,6 @@ describe('getVisualizationOptions', () => {
       const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
       element.props.onChange('$myVar');
 
-      // no allowVariables -> treated as a plain (if unusual) value write, never varMappings
       expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: '$myVar' }, overrides: [] }, true);
     });
 
@@ -591,7 +592,6 @@ describe('getVisualizationOptions', () => {
         name: 'Line width',
         isCustom: true,
         process: numberOverrideProcessor,
-        allowVariables: true,
         shouldApply: () => true,
         override: jest.fn(),
         editor: jest.fn(),

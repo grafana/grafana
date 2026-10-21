@@ -49,7 +49,6 @@ export const mockStandardProperties = () => {
     override: () => null,
     // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
     process: numberOverrideProcessor,
-    allowVariables: true,
 
     settings: {
       placeholder: 'auto',
@@ -67,7 +66,6 @@ export const mockStandardProperties = () => {
     override: () => null,
     // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
     process: numberOverrideProcessor,
-    allowVariables: true,
 
     settings: {
       placeholder: 'auto',
@@ -103,7 +101,6 @@ export const mockStandardProperties = () => {
     override: () => null,
     // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
     process: numberOverrideProcessor,
-    allowVariables: true,
 
     settings: {
       placeholder: 'auto',

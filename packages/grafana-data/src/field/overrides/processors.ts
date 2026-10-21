@@ -160,17 +160,12 @@ export function resolveVarMapping(expr: string, context: FieldOverrideContext): 
 }
 
 /**
- * True when a field-config property is eligible for `varMappings` expression support: it must be
- * registered with `numberOverrideProcessor` (the only processor whose stored value is a raw
- * number, so a resolved expression can safely substitute for it without touching
- * `booleanOverrideProcessor`/`selectOverrideProcessor` or any other type), and not explicitly
- * opted out via `allowVariables: false` (the `addNumberInput`/`addSliderInput` default for plugin
- * custom options - standard `min`/`max`/`decimals` set `allowVariables: true`). Shared by the
- * `applyFieldOverrides` resolution pre-pass and the defaults/override-row editor wiring so both
- * sides agree on exactly the same set of properties.
+ * Only properties processed by `numberOverrideProcessor` accept `varMappings` expressions: a
+ * resolved expression is a number, and the other processors would store it with the wrong type.
+ * Shared by the `applyFieldOverrides` resolution and the editors so both agree on the same set.
  */
-export function isVarMappingEligible(item: Pick<FieldConfigPropertyItem, 'process' | 'allowVariables'>): boolean {
-  return item.process === numberOverrideProcessor && item.allowVariables !== false;
+export function isVarMappingEligible(item: Pick<FieldConfigPropertyItem, 'process'>): boolean {
+  return item.process === numberOverrideProcessor;
 }
 
 export interface ThresholdsFieldConfigSettings {
