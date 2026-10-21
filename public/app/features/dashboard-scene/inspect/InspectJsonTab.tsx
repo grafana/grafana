@@ -368,18 +368,22 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
       const isInspectingLibraryPanel = isLibraryPanel(panel);
       const gridItem = panel.parent;
 
+      // Schema V2 dashboards lay out library panels inside AutoGridItem containers,
+      // so the legacy representation built below would throw ("LibraryPanel not
+      // child of DashboardGridItem"). vizPanelToSchemaV2 already emits a
+      // LibraryPanelKind, so handle V2 dashboards before the legacy branch.
+      if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+        objToStringify = vizPanelToSchemaV2(panel);
+        break;
+      }
+
       if (isInspectingLibraryPanel) {
         objToStringify = libraryPanelToLegacyRepresentation(panel);
         break;
       }
 
-      if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
-        objToStringify = vizPanelToSchemaV2(panel);
-        break;
-      } else {
-        if (gridItem instanceof DashboardGridItem) {
-          objToStringify = gridItemToPanel(gridItem);
-        }
+      if (gridItem instanceof DashboardGridItem) {
+        objToStringify = gridItemToPanel(gridItem);
       }
 
       break;
