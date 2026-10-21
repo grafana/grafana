@@ -377,28 +377,26 @@ describe('useProvisionedDashboardData', () => {
   });
 
   describe('enforced branch name template', () => {
-    // write-first repo: without the enforced template the default workflow would be `write`.
+    // write-first repo: without the enforced template the default ref would be the configured branch.
     const enforcedRepo: RepositoryView = {
       ...folderRepo,
       workflows: ['write', 'branch'],
       branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
     };
 
-    it('switches to the branch workflow when the template is enforced', () => {
+    it('starts on a generated branch when the template is enforced', () => {
       const { result } = renderHook(
         () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
         { wrapper }
       );
 
-      // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
-      expect(result.current.defaultValues?.workflow).toBe('branch');
-      // The ref follows the workflow: a branch default must never point at the configured branch.
+      // A branch default must never point at the configured branch; useBranchTemplate fills the actual template ref.
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
     });
 
-    it('keeps the default write workflow when enforcement has no usable template', () => {
+    it('stays on the configured branch when enforcement has no usable template', () => {
       // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so the
-      // workflow must not switch (nothing to enforce).
+      // ref must stay on the configured branch (nothing to enforce).
       const repo: RepositoryView = { ...enforcedRepo, branchOptions: { enforceTemplate: true } };
 
       const { result } = renderHook(
@@ -406,7 +404,7 @@ describe('useProvisionedDashboardData', () => {
         { wrapper }
       );
 
-      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('main');
     });
   });
 
@@ -427,7 +425,6 @@ describe('useProvisionedDashboardData', () => {
       );
 
       expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
-      expect(result.current.defaultValues?.workflow).toBe('write');
       expect(result.current.defaultValues?.ref).toBe('feature-branch');
     });
 
@@ -439,7 +436,6 @@ describe('useProvisionedDashboardData', () => {
         { wrapper: previewWrapper }
       );
 
-      expect(result.current.defaultValues?.workflow).toBe('write');
       expect(result.current.defaultValues?.ref).toBe('main');
     });
   });
@@ -459,7 +455,6 @@ describe('useProvisionedDashboardData', () => {
       );
 
       const initialRef = result.current.defaultValues?.ref;
-      expect(result.current.defaultValues?.workflow).toBe('branch');
       expect(initialRef).toMatch(/^dashboard\//);
 
       rerender();
@@ -482,7 +477,6 @@ describe('useProvisionedDashboardData', () => {
       );
 
       expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
-      expect(result.current.defaultValues?.workflow).toBe('branch');
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
       expect(result.current.defaultValues?.ref).not.toBe('feature-branch');
     });
@@ -501,7 +495,6 @@ describe('useProvisionedDashboardData', () => {
         }
       );
 
-      expect(result.current.defaultValues?.workflow).toBe('write');
       expect(result.current.defaultValues?.ref).toBe('main');
     });
   });

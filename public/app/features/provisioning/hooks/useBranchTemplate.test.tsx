@@ -3,7 +3,6 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type WorkflowOption } from '../types';
 import { type BranchTemplateVars } from '../utils/branchName';
 
 import { useBranchTemplate } from './useBranchTemplate';
@@ -16,37 +15,40 @@ const dashboardVars: BranchTemplateVars = {
   userLogin: 'ada',
 };
 
-function makeRepo(branchOptions?: RepositoryView['branchOptions']): RepositoryView {
+function makeRepo(
+  branchOptions?: RepositoryView['branchOptions'],
+  workflows: RepositoryView['workflows'] = ['branch', 'write']
+): RepositoryView {
   return {
     name: 'repo',
     title: 'Repo',
     target: 'folder',
     type: 'github',
-    workflows: ['branch', 'write'],
+    workflows,
     branchOptions,
   };
 }
 
-function Host({
-  repository,
-  vars,
-  workflow = 'branch',
-  defaultRef = '',
-  resetTo,
-}: {
+interface HostProps {
   repository?: RepositoryView;
   vars: BranchTemplateVars;
-  workflow?: WorkflowOption;
+  isNewBranch?: boolean;
   defaultRef?: string;
   /** When set, renders a button that reruns reset() with this ref, mirroring the Save drawer's
    *  reset(defaultValues, { keepDirtyValues }) overwriting the non-dirty ref on a parent re-render. */
   resetTo?: string;
-}) {
+}
+
+function Host(props: HostProps) {
+  const { repository, vars, defaultRef = '', resetTo } = props;
+  // An omitted prop defaults to a new branch; `isNewBranch={undefined}` passes the unresolved state
+  // through so a test can prove enforcement does not wait for the refs query.
+  const isNewBranch = 'isNewBranch' in props ? props.isNewBranch : true;
   const methods = useForm<{ ref?: string }>({ defaultValues: { ref: defaultRef } });
   const { locked } = useBranchTemplate({
     repository,
     vars,
-    workflow,
+    isNewBranch,
     value: methods.watch('ref') ?? '',
     setBranch: (v) => methods.setValue('ref', v, { shouldDirty: false }),
   });
@@ -71,27 +73,27 @@ function Host({
 }
 
 describe('useBranchTemplate', () => {
-  it('leaves the field untouched for the write workflow', () => {
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} workflow="write" />);
+  it('leaves the field untouched when the ref is not a new branch', () => {
+    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} isNewBranch={false} />);
 
     const input = screen.getByRole('textbox', { name: /branch/i });
     expect(input).toHaveValue('');
   });
 
-  it('applies the template when the workflow switches to branch', async () => {
-    // Entering the branch workflow (by typing a new branch name) is the only way to reach it; the
-    // template must apply on that transition, not just when the drawer opens already in branch mode.
+  it('applies the template once the ref becomes a new branch', async () => {
+    // Typing a new branch name is the only way to reach the new-branch state; the template must
+    // apply on that transition, not just when the drawer opens already on a new branch.
     const repository = makeRepo({ nameTemplate: TEMPLATE });
-    const { rerender } = render(<Host repository={repository} vars={dashboardVars} workflow="write" />);
+    const { rerender } = render(<Host repository={repository} vars={dashboardVars} isNewBranch={false} />);
 
     const input = screen.getByRole('textbox', { name: /branch/i });
     expect(input).toHaveValue('');
 
-    rerender(<Host repository={repository} vars={dashboardVars} workflow="branch" />);
+    rerender(<Host repository={repository} vars={dashboardVars} isNewBranch />);
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
   });
 
-  it('pre-fills the branch field from the rendered template on the branch workflow', async () => {
+  it('pre-fills the branch field from the rendered template when the ref is a new branch', async () => {
     render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} />);
 
     const input = screen.getByRole('textbox', { name: /branch/i });
@@ -175,6 +177,41 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
     expect(input).toHaveAttribute('readonly');
     expect(screen.getByTestId('locked')).toHaveTextContent('true');
+  });
+
+  it('applies and locks an enforced template while the ref is still resolving', async () => {
+    // Enforcement must not wait for the refs query: with isNewBranch unresolved the field is still
+    // filled from the template and locked read-only.
+    render(
+      <Host
+        repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true })}
+        vars={dashboardVars}
+        isNewBranch={undefined}
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+    expect(input).toHaveAttribute('readonly');
+    expect(screen.getByTestId('locked')).toHaveTextContent('true');
+  });
+
+  it('does not enforce the template on a write-only repository', async () => {
+    // The enforcement guard needs the branch workflow; a write-only repo never leaves the configured
+    // branch, so the field keeps its value and stays editable.
+    render(
+      <Host
+        repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true }, ['write'])}
+        vars={dashboardVars}
+        isNewBranch={false}
+        defaultRef="main"
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    expect(screen.getByTestId('locked')).toHaveTextContent('false');
+    expect(input).not.toHaveAttribute('readonly');
+    await waitFor(() => expect(input).toHaveValue('main'));
   });
 
   it('does not lock when an enforced template renders empty, leaving the field editable', async () => {

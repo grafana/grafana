@@ -34,6 +34,10 @@ jest.mock('react-redux', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
+  useGetRepositoryRefsQuery: jest.fn(() => ({
+    data: { items: [{ name: 'main' }, { name: 'develop' }] },
+    isLoading: false,
+  })),
   provisioningAPI: {
     endpoints: {
       listRepository: {
@@ -123,6 +127,7 @@ const mockRepository: RepositoryView = {
   target: 'folder' as const,
   title: 'Test Repository',
   type: 'git' as const,
+  branch: 'main',
   workflows: [],
 };
 
@@ -143,7 +148,6 @@ const mockFormData = {
   repo: 'test-repo',
   path: 'folders/test-folder.json',
   ref: 'main',
-  workflow: 'write' as const,
   comment: '',
   title: 'Test Folder',
 };
@@ -240,7 +244,7 @@ describe('DeleteProvisionedFolderForm', () => {
   });
 
   describe('form submission', () => {
-    it('should call createJob with correct parameters on form submission for write workflow', async () => {
+    it('should call createJob with correct parameters when deleting on the configured branch', async () => {
       const { mockCreateJob, clickDeleteButton } = setup();
 
       await clickDeleteButton();
@@ -252,7 +256,7 @@ describe('DeleteProvisionedFolderForm', () => {
             action: 'delete',
             message: 'Delete folder: Test Folder',
             delete: {
-              ref: undefined, // write workflow doesn't set ref
+              ref: undefined, // the configured branch omits ref
               resources: [
                 {
                   name: 'folder-uid',
@@ -266,7 +270,7 @@ describe('DeleteProvisionedFolderForm', () => {
       });
     });
 
-    it('commits the rendered commit template on the write workflow', async () => {
+    it('commits the rendered commit template on the configured branch', async () => {
       const { mockCreateJob, clickDeleteButton } = setup(
         {},
         {
@@ -289,10 +293,10 @@ describe('DeleteProvisionedFolderForm', () => {
       });
     });
 
-    it('should call deleteRepoFile with custom commit message for branch workflow', async () => {
+    it('should call deleteRepoFile with custom commit message on a new branch', async () => {
       const customFormData = {
         ...mockFormData,
-        workflow: 'branch' as const,
+        ref: 'feature-branch',
         comment: 'Custom delete message',
       };
       const { mockDeleteRepoFile, clickDeleteButton } = setup(
@@ -306,7 +310,7 @@ describe('DeleteProvisionedFolderForm', () => {
         expect(mockDeleteRepoFile).toHaveBeenCalledWith({
           name: 'test-repo',
           path: 'folders/test-folder.json',
-          ref: 'main', // branch workflow sets ref
+          ref: 'feature-branch', // a new branch sends ref through /files
           message: 'Custom delete message',
         });
       });
@@ -321,7 +325,7 @@ describe('DeleteProvisionedFolderForm', () => {
             ...defaultHookData.repository!,
             commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
           },
-          initialValues: { ...mockFormData, workflow: 'branch' as const, comment: '' },
+          initialValues: { ...mockFormData, ref: 'feature-branch', comment: '' },
         }
       );
 
@@ -334,10 +338,9 @@ describe('DeleteProvisionedFolderForm', () => {
       });
     });
 
-    it('should set ref when workflow is branch', async () => {
+    it('should set ref on a new branch', async () => {
       const branchFormData = {
         ...mockFormData,
-        workflow: 'branch' as const,
         ref: 'feature-branch',
       };
       const { mockDeleteRepoFile, clickDeleteButton } = setup(
@@ -354,6 +357,24 @@ describe('DeleteProvisionedFolderForm', () => {
           })
         );
       });
+    });
+
+    it('runs the delete job with the ref for an existing non-configured branch', async () => {
+      const { mockCreateJob, mockDeleteRepoFile, clickDeleteButton } = setup(
+        {},
+        { ...defaultHookData, initialValues: { ...mockFormData, ref: 'develop' } }
+      );
+
+      await clickDeleteButton();
+
+      await waitFor(() => {
+        expect(mockCreateJob).toHaveBeenCalledWith(
+          expect.objectContaining({
+            jobSpec: expect.objectContaining({ delete: expect.objectContaining({ ref: 'develop' }) }),
+          })
+        );
+      });
+      expect(mockDeleteRepoFile).not.toHaveBeenCalled();
     });
 
     it('should not submit if repository name is missing', async () => {
@@ -377,8 +398,8 @@ describe('DeleteProvisionedFolderForm', () => {
   });
 
   describe('success handling', () => {
-    it('should handle branch workflow success with navigation', async () => {
-      const branchFormData = { ...mockFormData, workflow: 'branch' as const, ref: 'feature-branch' };
+    it('should handle new branch success with navigation', async () => {
+      const branchFormData = { ...mockFormData, ref: 'feature-branch' };
       const { mockNavigate, onDismiss, clickDeleteButton } = setup(
         {},
         { ...defaultHookData, initialValues: branchFormData }
@@ -410,7 +431,7 @@ describe('DeleteProvisionedFolderForm', () => {
 
   describe('error handling', () => {
     it('should show the API error in an alert when the request fails', async () => {
-      const branchFormData = { ...mockFormData, workflow: 'branch' as const };
+      const branchFormData = { ...mockFormData, ref: 'feature-branch' };
       const { onDismiss, clickDeleteButton } = setup({}, { ...defaultHookData, initialValues: branchFormData });
       mockDeleteRepoFile.mockReturnValue({
         unwrap: () => Promise.reject({ status: 500, data: { message: 'API Error' } }),

@@ -26,6 +26,7 @@ import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getRequestRef, getWorkflowForRef } from '../defaults';
 
 import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
@@ -128,19 +129,19 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
     }
 
     reportInteraction('grafana_provisioning_bulk_move_submitted', {
-      workflow: data.workflow,
+      workflow: getWorkflowForRef(repository, data.ref),
       repositoryName: repository.name ?? 'unknown',
       repositoryType: repository.type ?? 'unknown',
       resourceCount: resources.length,
     });
 
-    submittedViaBranchWorkflow.current = data.workflow === 'branch';
+    submittedViaBranchWorkflow.current = getWorkflowForRef(repository, data.ref) === 'branch';
 
     const jobSpec: MoveJobSpec = {
       action: 'move',
       message,
       move: {
-        ref: data.workflow === 'write' ? undefined : data.ref,
+        ref: getRequestRef(repository, data.ref),
         targetPath: targetFolderPathInRepo,
         resources,
       },

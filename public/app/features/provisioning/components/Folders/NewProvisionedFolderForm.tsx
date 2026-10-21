@@ -17,6 +17,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { RepoViewStatus, type RepositoryViewData } from '../../hooks/useGetResourceRepositoryView';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -26,6 +27,7 @@ import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { joinPath } from '../utils/path';
@@ -57,7 +59,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const ref = watch('ref');
+  const isNewBranch = useIsNewBranch(repository, ref);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -78,12 +81,12 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const { locked: lockBranch } = useBranchTemplate({
     repository,
     vars: templateVars,
-    workflow,
+    isNewBranch,
     value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const repoLabel = repository?.title || repository?.name;
   // Rendered as React text, which escapes it already; escaping here too would show "/" as "&#x2F;"
@@ -151,7 +154,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const { handleSuccess } = useProvisionedRequestHandler<FolderDTO>({
     // No parent folder at the root, so the root list is the one to refetch
     folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
-    workflow,
+    isNewBranch,
     repository,
     resourceType: 'folder',
     handlers: {
@@ -161,7 +164,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     },
   });
 
-  const doSave = async ({ ref, title, workflow, path: basePath }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, path: basePath }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
@@ -181,14 +184,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       type: 'folder',
     };
 
-    // The branch entered in the form, before the ref is dropped for the write workflow
-    const selectedBranch = ref;
-    if (workflow === 'write') {
-      ref = undefined;
-    }
-
     reportInteraction('grafana_provisioning_folder_create_submitted', {
-      workflow,
+      workflow: getWorkflowForRef(repository, ref),
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
       source: 'new-folder-form',
@@ -196,13 +193,13 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
     try {
       const data = await create({
-        ref,
+        ref: getRequestRef(repository, ref),
         name: repoName,
         path,
         message,
         body: folderModel,
       }).unwrap();
-      handleSuccess(data, { workflow, selectedBranch });
+      handleSuccess(data, { selectedBranch: ref });
     } catch (err) {
       onError(err);
     }

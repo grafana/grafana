@@ -23,16 +23,8 @@ export function MoveProvisionedDashboardDrawer({
   onSuccess,
 }: Props) {
   const view = useDashboardRepositoryView(dashboard);
-  const {
-    defaultValues,
-    loadedFromRef,
-    readOnly,
-    canPushToConfiguredBranch,
-    isNew,
-    repository,
-    repoDataStatus,
-    error,
-  } = useProvisionedDashboardData(dashboard, view);
+  const { defaultValues, readOnly, canPushToConfiguredBranch, isNew, repository, repoDataStatus, error } =
+    useProvisionedDashboardData(dashboard, view);
 
   return (
     <ProvisionedFormGate
@@ -44,7 +36,6 @@ export function MoveProvisionedDashboardDrawer({
       <MoveProvisionedDashboardForm
         dashboard={dashboard}
         defaultValues={defaultValues!}
-        loadedFromRef={loadedFromRef}
         readOnly={readOnly}
         repository={repository}
         isNew={isNew}

@@ -5,6 +5,7 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { createJob } from '../../mocks/factories';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { DeleteProvisionedDashboardForm, type Props } from './DeleteProvisionedDashboardForm';
@@ -38,8 +39,7 @@ function setup(props: Partial<Props> = {}) {
     onDismiss: jest.fn(),
     defaultValues: {
       repo: 'test-repo',
-      ref: 'main',
-      workflow: 'branch' as const,
+      ref: 'feature/delete',
       path: 'dashboards/test.json',
       comment: '',
       title: 'Test Dashboard',
@@ -52,6 +52,7 @@ function setup(props: Partial<Props> = {}) {
       title: 'Test Repository',
       type: 'github' as const,
       workflows: ['branch', 'write'] as Array<'branch' | 'write'>,
+      branch: 'main',
     },
     ...props,
   };
@@ -90,14 +91,14 @@ describe('DeleteProvisionedDashboardForm', () => {
   });
 
   describe('Form Submission', () => {
-    it('should successfully delete dashboard with branch workflow', async () => {
+    it('deletes via /files when targeting a new branch', async () => {
       let capturedRequest: { url: URL } | null = null;
 
       server.use(
         http.delete(`${BASE}/repositories/:name/files/*`, ({ request }) => {
           capturedRequest = { url: new URL(request.url) };
           return HttpResponse.json({
-            ref: 'main',
+            ref: 'feature/delete',
             path: 'dashboards/test.json',
             urls: { newPullRequestURL: 'https://github.com/test/repo/compare/main...delete-branch' },
             resource: {
@@ -115,6 +116,7 @@ describe('DeleteProvisionedDashboardForm', () => {
       const { user, props } = setup();
 
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await waitFor(() => expect(deleteButton).toBeEnabled());
       await user.click(deleteButton);
 
       await waitFor(() => {
@@ -122,7 +124,7 @@ describe('DeleteProvisionedDashboardForm', () => {
       });
 
       expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/dashboards/test.json');
-      expect(capturedRequest!.url.searchParams.get('ref')).toBe('main');
+      expect(capturedRequest!.url.searchParams.get('ref')).toBe('feature/delete');
       expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
 
       // Branch success redirects to the dashboard list with the PR link and dismisses the drawer
@@ -150,11 +152,14 @@ describe('DeleteProvisionedDashboardForm', () => {
           title: 'Test Repository',
           type: 'github' as const,
           workflows: ['branch', 'write'] as Array<'branch' | 'write'>,
+          branch: 'main',
           commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
+      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await waitFor(() => expect(deleteButton).toBeEnabled());
+      await user.click(deleteButton);
 
       await waitFor(() => {
         expect(capturedRequest).not.toBeNull();
@@ -167,7 +172,6 @@ describe('DeleteProvisionedDashboardForm', () => {
         defaultValues: {
           repo: '',
           ref: 'main',
-          workflow: 'branch' as const,
           path: 'dashboards/test.json',
           comment: '',
           title: 'Test Dashboard',
@@ -184,6 +188,78 @@ describe('DeleteProvisionedDashboardForm', () => {
         expect(screen.getByRole('alert')).toHaveTextContent('Missing required repository for deletion');
       });
     });
+
+    it('runs a delete job against an existing branch', async () => {
+      let jobBody: { delete?: { ref?: string } } | null = null;
+      let filesDeleteHit = false;
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          jobBody = (await request.json()) as { delete?: { ref?: string } };
+          return HttpResponse.json(createJob());
+        }),
+        http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [createJob()], metadata: { resourceVersion: '1' } })),
+        http.delete(`${BASE}/repositories/:name/files/*`, () => {
+          filesDeleteHit = true;
+          return HttpResponse.json({ resource: {} });
+        })
+      );
+
+      const { user } = setup({
+        defaultValues: {
+          repo: 'test-repo',
+          ref: 'develop',
+          path: 'dashboards/test.json',
+          comment: '',
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          folder: { uid: 'test-folder', title: 'Test Folder' },
+        },
+      });
+
+      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await waitFor(() => expect(deleteButton).toBeEnabled());
+      await user.click(deleteButton);
+
+      await waitFor(() => expect(jobBody).not.toBeNull());
+      expect(jobBody!.delete?.ref).toBe('develop');
+      expect(filesDeleteHit).toBe(false);
+    });
+
+    it('runs a delete job with no ref against the configured branch', async () => {
+      let jobBody: { delete?: { ref?: string } } | null = null;
+      let filesDeleteHit = false;
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          jobBody = (await request.json()) as { delete?: { ref?: string } };
+          return HttpResponse.json(createJob());
+        }),
+        http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [createJob()], metadata: { resourceVersion: '1' } })),
+        http.delete(`${BASE}/repositories/:name/files/*`, () => {
+          filesDeleteHit = true;
+          return HttpResponse.json({ resource: {} });
+        })
+      );
+
+      const { user } = setup({
+        defaultValues: {
+          repo: 'test-repo',
+          ref: 'main',
+          path: 'dashboards/test.json',
+          comment: '',
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          folder: { uid: 'test-folder', title: 'Test Folder' },
+        },
+      });
+
+      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await waitFor(() => expect(deleteButton).toBeEnabled());
+      await user.click(deleteButton);
+
+      await waitFor(() => expect(jobBody).not.toBeNull());
+      expect(jobBody!.delete?.ref).toBeUndefined();
+      expect(filesDeleteHit).toBe(false);
+    });
   });
 
   describe('Error Handling', () => {
@@ -197,6 +273,7 @@ describe('DeleteProvisionedDashboardForm', () => {
       const { user } = setup();
 
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await waitFor(() => expect(deleteButton).toBeEnabled());
       await user.click(deleteButton);
 
       await waitFor(() => {
@@ -214,6 +291,7 @@ describe('DeleteProvisionedDashboardForm', () => {
       const { user } = setup();
 
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
+      await waitFor(() => expect(deleteButton).toBeEnabled());
       await user.click(deleteButton);
 
       await waitFor(() => {

@@ -80,7 +80,6 @@ function setup(props: Partial<Props> = {}) {
       repo: 'test-repo',
       path: 'folder1/dashboard.json',
       ref: 'main',
-      workflow: 'write',
       comment: '',
       title: 'Test Dashboard',
       description: '',
@@ -92,6 +91,7 @@ function setup(props: Partial<Props> = {}) {
       name: 'test-repo',
       title: 'Test Repo',
       workflows: ['branch', 'write'],
+      branch: 'main',
       target: 'folder',
     },
     canPushToConfiguredBranch: true,
@@ -112,7 +112,6 @@ const branchDefaultValues: Props['defaultValues'] = {
   repo: 'test-repo',
   path: 'folder1/dashboard.json',
   ref: 'feature/move',
-  workflow: 'branch',
   comment: '',
   title: 'Test Dashboard',
   description: '',
@@ -203,7 +202,9 @@ describe('MoveProvisionedDashboardForm', () => {
 
     const { user } = setup({ defaultValues: branchDefaultValues });
 
-    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+    const submitButton = await screen.findByRole('button', { name: /move dashboard/i });
+    await waitFor(() => expect(submitButton).toBeEnabled());
+    await user.click(submitButton);
 
     const moveButton = await screen.findByRole('button', { name: /moving/i });
     expect(moveButton).toBeDisabled();
@@ -266,11 +267,14 @@ describe('MoveProvisionedDashboardForm', () => {
         title: 'Test Repo',
         workflows: ['branch', 'write'],
         target: 'folder',
+        branch: 'main',
         commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
       },
     });
 
-    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+    const moveButton = await screen.findByRole('button', { name: /move dashboard/i });
+    await waitFor(() => expect(moveButton).toBeEnabled());
+    await user.click(moveButton);
 
     await waitFor(() => {
       expect(capturedMessage).toBe('chore(dashboards): move Test Dashboard');
@@ -298,7 +302,9 @@ describe('MoveProvisionedDashboardForm', () => {
 
     const { user, props } = setup({ defaultValues: branchDefaultValues });
 
-    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+    const moveButton = await screen.findByRole('button', { name: /move dashboard/i });
+    await waitFor(() => expect(moveButton).toBeEnabled());
+    await user.click(moveButton);
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
@@ -318,7 +324,9 @@ describe('MoveProvisionedDashboardForm', () => {
 
     const { user, props } = setup({ defaultValues: branchDefaultValues });
 
-    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+    const moveButton = await screen.findByRole('button', { name: /move dashboard/i });
+    await waitFor(() => expect(moveButton).toBeEnabled());
+    await user.click(moveButton);
 
     await waitFor(() => {
       expect(getAppEvents().publish).toHaveBeenCalledWith({

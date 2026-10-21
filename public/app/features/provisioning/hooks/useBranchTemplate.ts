@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type WorkflowOption } from '../types';
 import { type BranchTemplateVars, generateBranchToken, renderBranchName } from '../utils/branchName';
 
 interface UseBranchTemplateArgs {
   repository: RepositoryView | undefined;
   vars: BranchTemplateVars;
-  workflow: WorkflowOption | undefined;
+  /** The current ref creates a branch; `undefined` while unresolved. The template only names new branches. */
+  isNewBranch: boolean | undefined;
   /** Current value of the `ref` field, so the hook can detect a manual edit and stop auto-filling. */
   value: string;
   /** Must not mark the field dirty, or the auto-fill would read as a user edit. */
@@ -17,33 +17,31 @@ interface UseBranchTemplateArgs {
 
 /**
  * Pre-fills the branch ("ref") field from repository.branchOptions.nameTemplate and reports whether
- * the field is enforced (read-only). The branch name only applies to the branch (pull request)
- * workflow on git repos, so it stays inert for the write workflow.
+ * the field is enforced (read-only). The template names a branch the commit creates, so it only
+ * applies when the ref is a new branch (or the template is enforced).
  */
-export function useBranchTemplate({ repository, vars, workflow, value, setBranch }: UseBranchTemplateArgs): {
+export function useBranchTemplate({ repository, vars, isNewBranch, value, setBranch }: UseBranchTemplateArgs): {
   locked: boolean;
 } {
   // One token per drawer open; stable across re-renders so the name doesn't churn as vars change.
   const random = useMemo(() => generateBranchToken(), []);
 
-  const isBranchWorkflow = workflow === 'branch';
   const template = repository?.branchOptions?.nameTemplate;
-  const enforce = repository?.branchOptions?.enforceTemplate ?? false;
-  const hasTemplate = Boolean(template?.trim());
+  // Enforcement needs the branch workflow: a write-only repository never leaves the configured branch.
+  const enforce =
+    Boolean(repository?.branchOptions?.enforceTemplate) && Boolean(repository?.workflows?.includes('branch'));
+  // A template that sanitises to '' (e.g. an all-punctuation title) leaves the field alone and never locks it.
+  const rendered = template?.trim() ? renderBranchName(template, { ...vars, random }) : '';
+  // An enforced template always names the branch (its default ref is a generated branch, never an
+  // existing one), so it applies without waiting for the refs to confirm the ref is new.
+  const active = Boolean(rendered) && (isNewBranch === true || enforce);
+  const locked = active && enforce;
 
-  const active = isBranchWorkflow && hasTemplate;
-  const rendered = active ? renderBranchName(template, { ...vars, random }) : '';
-  // Enforcement requires an actual template AND a non-empty render: with no template (nothing to
-  // enforce) or a template that sanitises to '' (e.g. an all-punctuation or non-Latin title), the
-  // field stays editable on the auto-generated ref instead of freezing read-only on a non-template
-  // name the user could not fix.
-  const locked = active && enforce && Boolean(rendered);
-
-  // Fill the rendered name when the branch workflow is first entered, then keep it in sync with the
+  // Fill the rendered name when the ref first becomes a new branch, then keep it in sync with the
   // live template variables — but stop once the user edits the field. We can't gate on react-hook-
-  // form's dirty state: reaching the branch workflow by typing a branch name already marks `ref`
-  // dirty, which would suppress the first fill. Instead we latch as soon as the field value diverges
-  // from the value the hook last wrote itself.
+  // form's dirty state: typing a new branch name already marks `ref` dirty, which would suppress the
+  // first fill. Instead we latch as soon as the field value diverges from the value the hook last
+  // wrote itself.
   const lastApplied = useRef<string | undefined>(undefined);
   const userEdited = useRef(false);
   useEffect(() => {

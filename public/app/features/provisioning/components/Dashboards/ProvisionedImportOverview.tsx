@@ -23,10 +23,11 @@ import {
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useImportProvisionedSave } from '../../hooks/useImportProvisionedSave';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getIsReadOnlyRepo } from '../../utils/repository';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { generatePath, slugifyForFilename } from '../utils/path';
 import { generateTimestamp } from '../utils/timestamp';
 
@@ -115,7 +116,6 @@ function ProvisionedImportOverviewReady({
       title,
       uid: dashboardUid ?? '',
       folderUid,
-      workflow: getDefaultWorkflow(repository),
       ref: getDefaultRef(repository, 'import'),
       path: generatePath({ timestamp: generateTimestamp(), slug, folderPath }),
       comment: '',
@@ -127,6 +127,7 @@ function ProvisionedImportOverviewReady({
     defaultValues,
     mode: 'onChange',
   });
+  const isNewBranch = useIsNewBranch(repository, methods.watch('ref'));
 
   async function onSubmit(form: ProvisionedImportFormData) {
     const spec = isV2
@@ -143,7 +144,7 @@ function ProvisionedImportOverviewReady({
         ref: form.ref,
         path: form.path,
         comment: form.comment,
-        workflow: form.workflow,
+        isNewBranch,
       },
     });
   }

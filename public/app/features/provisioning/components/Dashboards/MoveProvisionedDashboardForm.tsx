@@ -22,6 +22,7 @@ import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type StatusInfo } from '../../types';
@@ -32,6 +33,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { joinPath } from '../utils/path';
 
 export interface Props {
@@ -40,7 +42,6 @@ export interface Props {
   readOnly: boolean;
   isNew?: boolean;
   canPushToConfiguredBranch: boolean;
-  loadedFromRef?: string;
   targetFolderUID?: string;
   targetFolderTitle?: string;
   repository?: RepositoryView;
@@ -51,7 +52,6 @@ export interface Props {
 export function MoveProvisionedDashboardForm({
   dashboard,
   defaultValues,
-  loadedFromRef,
   readOnly,
   isNew,
   canPushToConfiguredBranch,
@@ -67,7 +67,8 @@ export function MoveProvisionedDashboardForm({
   const { handleSubmit, watch } = methods;
   const appEvents = getAppEvents();
 
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const ref = watch('ref');
+  const isNewBranch = useIsNewBranch(repository, ref);
 
   const templateVars: CommitTemplateVars = {
     action: 'move',
@@ -87,12 +88,12 @@ export function MoveProvisionedDashboardForm({
   const { locked: lockBranch } = useBranchTemplate({
     repository,
     vars: templateVars,
-    workflow,
+    isNewBranch,
     value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const { data: currentFileData, isLoading: isLoadingFileData } = useGetRepositoryFilesWithPathQuery({
     name: defaultValues.repo,
@@ -150,10 +151,10 @@ export function MoveProvisionedDashboardForm({
   };
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
+    isNewBranch,
     resourceType: 'dashboard',
     repository,
-    selectedBranch: ref || loadedFromRef,
+    selectedBranch: ref,
     successMessage: t(
       'dashboard-scene.move-provisioned-dashboard-form.success-message',
       'Dashboard moved successfully'
@@ -164,7 +165,7 @@ export function MoveProvisionedDashboardForm({
     },
   });
 
-  const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
+  const handleSubmitForm = async ({ repo, path, ref }: ProvisionedDashboardFormData) => {
     if (!repo || !repository) {
       showError();
       return;
@@ -193,13 +194,14 @@ export function MoveProvisionedDashboardForm({
     }
 
     reportInteraction('grafana_provisioning_dashboard_move_submitted', {
-      workflow,
+      workflow: getWorkflowForRef(repository, ref),
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // Branch workflow: use /files API for direct file operations
-    if (workflow === 'branch') {
+    // A new branch goes through /files: its response carries the PR URLs the /dashboards banner needs.
+    // Existing branches, configured or not, run the move job.
+    if (isNewBranch) {
       if (!currentFileData?.resource?.file) {
         appEvents.publish({
           type: AppEvents.alertError.name,
@@ -231,13 +233,11 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
-    // Write workflow: use Job API
-    const effectiveRef = isNew ? undefined : loadedFromRef;
     const jobSpec = {
       action: 'move' as const,
       message,
       move: {
-        ref: effectiveRef,
+        ref: getRequestRef(repository, ref),
         targetPath: targetFolderPath,
         resources: [
           {
@@ -359,7 +359,13 @@ export function MoveProvisionedDashboardForm({
                 <Button
                   variant="primary"
                   type="submit"
-                  disabled={isLoading || readOnly || isLoadingFileData || !currentFileData?.resource?.file}
+                  disabled={
+                    isLoading ||
+                    readOnly ||
+                    isLoadingFileData ||
+                    !currentFileData?.resource?.file ||
+                    isNewBranch === undefined
+                  }
                 >
                   {isLoading
                     ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')

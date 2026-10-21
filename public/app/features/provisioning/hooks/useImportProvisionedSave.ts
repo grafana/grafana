@@ -15,6 +15,7 @@ import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { getSingleResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from 'app/features/provisioning/utils/redirect';
 
+import { getRequestRef } from '../components/defaults';
 import { getProvisionedRequestError } from '../components/utils/errors';
 
 import { useCreateOrUpdateRepositoryFile } from './useCreateOrUpdateRepositoryFile';
@@ -36,7 +37,8 @@ export interface ImportProvisionedSaveParams {
     ref: string;
     path: string;
     comment?: string;
-    workflow?: string;
+    /** The commit creates `ref`; the destination page shows the PR banner instead of a toast. */
+    isNewBranch?: boolean;
   };
 }
 
@@ -84,7 +86,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         const data = await createFile({
           name: repository.name,
           path: form.path,
-          ref: form.ref === repository.branch ? undefined : form.ref,
+          ref: getRequestRef(repository, form.ref),
           message: getSingleResourceCommitMessage({
             comment: form.comment,
             repository,
@@ -97,7 +99,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         }).unwrap();
 
         handleSuccess(data, {
-          workflow: form.workflow,
+          isNewBranch: form.isNewBranch,
           folderUID: targetFolderUid,
           selectedBranch: form.ref,
           handlers: {

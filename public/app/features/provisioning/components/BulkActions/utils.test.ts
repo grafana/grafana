@@ -168,7 +168,6 @@ describe('getBulkActionInitialValues', () => {
     const result = getBulkActionInitialValues(branchFirstRepo, 'bulk-x');
 
     expect(result.comment).toBe('');
-    expect(result.workflow).toBe('branch');
     expect(result.ref).toMatch(/^bulk-x\//);
   });
 
@@ -176,7 +175,6 @@ describe('getBulkActionInitialValues', () => {
     const result = getBulkActionInitialValues(writeFirstRepo, 'bulk-x');
 
     expect(result.comment).toBe('');
-    expect(result.workflow).toBe('write');
     expect(result.ref).toBe('main');
   });
 
@@ -184,7 +182,6 @@ describe('getBulkActionInitialValues', () => {
     const result = getBulkActionInitialValues(writeOnlyRepo, 'bulk-x');
 
     expect(result.comment).toBe('');
-    expect(result.workflow).toBe('write');
     expect(result.ref).toBe('main');
   });
 });

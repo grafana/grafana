@@ -194,11 +194,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                         {...field}
                         invalid={!!errors.ref}
                         id="provisioned-ref"
-                        onChange={(option) => {
-                          const selectedBranch = option ? option.value : '';
-                          onChange(selectedBranch);
-                          setValue('workflow', selectedBranch === repository.branch ? 'write' : 'branch');
-                        }}
+                        onChange={(option) => onChange(option ? option.value : '')}
                         placeholder={t(
                           'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
                           'Select or enter branch name'

@@ -19,6 +19,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -29,6 +30,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
@@ -56,7 +58,8 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const navigate = useNavigate();
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const ref = watch('ref');
+  const isNewBranch = useIsNewBranch(repository, ref);
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
@@ -76,12 +79,12 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const { locked: lockBranch } = useBranchTemplate({
     repository,
     vars: templateVars,
-    workflow,
+    isNewBranch,
     value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const showError = (error: unknown) => {
     setError(
@@ -107,7 +110,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   };
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
+    isNewBranch,
     resourceType: 'folder',
     repository,
     selectedBranch: ref,
@@ -121,7 +124,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     },
   });
 
-  const handleSubmitForm = async ({ repo, path }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo, path, ref }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
       showError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
@@ -129,13 +132,14 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     }
 
     reportInteraction('grafana_provisioning_folder_delete_submitted', {
-      workflow,
+      workflow: getWorkflowForRef(repository, ref),
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // Branch workflow: use /files API for direct file operations
-    if (workflow === 'branch') {
+    // A new branch goes through /files: its response carries the PR URLs the /dashboards banner needs.
+    // Existing branches, configured or not, run the delete job.
+    if (isNewBranch) {
       const branchRef = ref;
 
       try {
@@ -152,12 +156,11 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       return;
     }
 
-    // Write workflow: use Job API
     const jobSpec = {
       action: 'delete' as const,
       message,
       delete: {
-        ref: undefined,
+        ref: getRequestRef(repository, ref),
         resources: [
           {
             name: resourceId,
@@ -232,7 +235,11 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 <Button variant="secondary" fill="outline" onClick={onDismiss}>
                   <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button type="submit" disabled={isLoading || request.isLoading} variant="destructive">
+                <Button
+                  type="submit"
+                  disabled={isLoading || request.isLoading || isNewBranch === undefined}
+                  variant="destructive"
+                >
                   {isLoading || request.isLoading
                     ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}

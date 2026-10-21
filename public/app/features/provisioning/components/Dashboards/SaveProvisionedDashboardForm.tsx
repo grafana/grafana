@@ -34,6 +34,7 @@ import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
@@ -42,6 +43,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
@@ -127,7 +129,8 @@ export function SaveProvisionedDashboardForm({
     Boolean(recoverToNewBranch) ||
     isDirty ||
     Boolean(rawDashboardJSON);
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const ref = watch('ref');
+  const isNewBranch = useIsNewBranch(repository, ref);
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
   const description = watch('description');
@@ -174,12 +177,12 @@ export function SaveProvisionedDashboardForm({
   const { locked: lockBranch } = useBranchTemplate({
     repository,
     vars: templateVars,
-    workflow,
+    isNewBranch,
     value: ref ?? '',
     setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
   });
 
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
@@ -260,12 +263,6 @@ export function SaveProvisionedDashboardForm({
         handleNewDashboard(upsert);
       }
 
-      // if pushed to an existing but non-configured branch, navigate to preview page
-      if (ref !== repository?.branch && ref) {
-        navigateToPreview(ref, path, repository?.type);
-        return;
-      }
-
       // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
       // for a draft that was just saved, so go to the saved dashboard instead.
       if (recoverToNewBranch && upsert?.metadata?.name) {
@@ -278,18 +275,7 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
     },
-    [
-      isNew,
-      path,
-      ref,
-      repository?.branch,
-      repository?.type,
-      recoverToNewBranch,
-      navigate,
-      handleDismiss,
-      handleNewDashboard,
-      navigateToPreview,
-    ]
+    [isNew, recoverToNewBranch, navigate, handleDismiss, handleNewDashboard]
   );
 
   const onBranchSuccess = useCallback(
@@ -336,7 +322,7 @@ export function SaveProvisionedDashboardForm({
     const { directory, filename } = splitPath(getValues('path'));
     const folderPath = ensureFolderPathTrailingSlash(joinPath(directory, folderName));
     reportInteraction('grafana_provisioning_folder_create_submitted', {
-      workflow,
+      workflow: 'write',
       repositoryName: repository.name,
       repositoryType: repository.type ?? 'unknown',
       source: 'save-dashboard',
@@ -396,7 +382,7 @@ export function SaveProvisionedDashboardForm({
     }
     isCreatingFolderRef.current = false;
     setIsCreatingFolder(false);
-  }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder, isHeld]);
+  }, [newFolderName, repository, createFolder, setValue, getValues, selectFolder, isHeld]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
@@ -443,7 +429,7 @@ export function SaveProvisionedDashboardForm({
     savedSpecRef.current = body.spec as Dashboard | DashboardV2Spec;
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
-      workflow,
+      workflow: getWorkflowForRef(repository, ref),
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
@@ -454,15 +440,14 @@ export function SaveProvisionedDashboardForm({
 
     try {
       const data = await createOrUpdateFile({
-        // Skip adding ref to the default branch request
-        ref: ref === repository?.branch ? undefined : ref,
+        ref: getRequestRef(repository, ref),
         name: repo,
         path,
         message,
         body,
         originalPath: isRename ? originalPath : undefined,
       }).unwrap();
-      handleSuccess(data, { workflow, selectedBranch: ref });
+      handleSuccess(data, { selectedBranch: ref, isNewBranch });
     } catch (err) {
       // Release suppression so later live save/conflict events from other sessions
       // aren't hidden while the user retries or abandons the save.
@@ -531,7 +516,7 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
-              {isFolderless && workflow === 'write' && (
+              {isFolderless && canPushToConfiguredBranch && getWorkflowForRef(repository, ref) === 'write' && (
                 <>
                   {!showNewFolderForm && (
                     <div>

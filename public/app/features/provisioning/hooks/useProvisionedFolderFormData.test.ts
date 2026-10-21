@@ -14,6 +14,7 @@ const repoView = (overrides: Partial<RepositoryView> = {}): RepositoryView => ({
   title: 'My Repo',
   type: 'github',
   target: 'folder',
+  branch: 'main',
   workflows: ['branch', 'write'],
   ...overrides,
 });
@@ -79,11 +80,9 @@ describe('useProvisionedFolderFormData', () => {
 
     it('is populated from the repository once loaded', () => {
       const { result } = renderFolderFormData({ repository: repoView() }, 'My folder');
-
       expect(result.current.initialValues).toMatchObject({
         title: 'My folder',
         repo: 'my-repo',
-        workflow: 'branch',
       });
     });
   });
@@ -95,8 +94,8 @@ describe('useProvisionedFolderFormData', () => {
   });
 
   describe('enforced branch name template', () => {
-    it('switches to the branch workflow when the template is enforced', async () => {
-      // write-first repo: without the override the default workflow would be `write`.
+    it('starts on a generated branch when the template is enforced', async () => {
+      // write-first repo: without the override the default ref would be the configured branch.
       const { result } = renderFolderFormData(
         {
           repository: repoView({
@@ -107,10 +106,10 @@ describe('useProvisionedFolderFormData', () => {
         'My folder'
       );
 
-      await waitFor(() => expect(result.current.initialValues?.workflow).toBe('branch'));
+      await waitFor(() => expect(result.current.initialValues?.ref).toMatch(/^folder\//));
     });
 
-    it('keeps the default write workflow when enforcement has no usable template', async () => {
+    it('stays on the configured branch when enforcement has no usable template', async () => {
       const { result } = renderFolderFormData(
         {
           repository: repoView({ workflows: ['write', 'branch'], branchOptions: { enforceTemplate: true } }),
@@ -119,7 +118,7 @@ describe('useProvisionedFolderFormData', () => {
       );
 
       // enforceTemplate without a nameTemplate: useBranchTemplate stays inactive, so no switch.
-      await waitFor(() => expect(result.current.initialValues?.workflow).toBe('write'));
+      await waitFor(() => expect(result.current.initialValues?.ref).toBe('main'));
     });
   });
 });

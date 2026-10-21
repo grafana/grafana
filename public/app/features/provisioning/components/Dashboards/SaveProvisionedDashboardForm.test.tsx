@@ -159,6 +159,7 @@ function setup(props: Partial<Props> = {}) {
       name: 'test-repo',
       title: 'Test Repo',
       workflows: ['branch', 'write'],
+      branch: 'main',
       target: 'folder',
     },
     defaultValues: {
@@ -169,7 +170,6 @@ function setup(props: Partial<Props> = {}) {
       folder: { uid: 'folder-uid', title: '' },
       title: 'Test Dashboard',
       description: 'Test Description',
-      workflow: 'write',
     },
     readOnly: false,
     canPushToConfiguredBranch: true,
@@ -188,15 +188,18 @@ function setupFolderless(
     repository?: Partial<NonNullable<Props['repository']>>;
     defaultValues?: Partial<Props['defaultValues']>;
     isHeld?: boolean;
+    canPushToConfiguredBranch?: boolean;
   } = {}
 ) {
   return setup({
     isHeld: overrides.isHeld ?? false,
+    canPushToConfiguredBranch: overrides.canPushToConfiguredBranch ?? true,
     repository: {
       type: 'github',
       name: 'test-repo',
       title: 'Test Repo',
       workflows: ['write'],
+      branch: 'main',
       target: 'folderless',
       ...overrides.repository,
     },
@@ -208,7 +211,6 @@ function setupFolderless(
       folder: { uid: '', title: '' },
       title: 'Test Dashboard',
       description: '',
-      workflow: 'write',
       ...overrides.defaultValues,
     },
   });
@@ -244,6 +246,8 @@ function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | n
 // Minimal ResourceWrapper body the real useProvisionedRequestHandler can consume
 function saveSuccessResponse(name: string, title: string) {
   return HttpResponse.json({
+    ref: 'dashboard/2023-01-01-abcde',
+    path: 'test-dashboard.json',
     resource: {
       upsert: {
         apiVersion: 'v1',
@@ -768,7 +772,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
       dashboard: {
         state: {
@@ -857,7 +860,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
       dashboard: {
         state: {
@@ -921,7 +923,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
       dashboard: {
         state: {
@@ -1134,7 +1135,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'branch',
       },
     });
 
@@ -1189,7 +1189,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
     });
 
@@ -1203,6 +1202,72 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
     expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
+  });
+
+  it('sends the ref and lands on the preview when saving to an existing non-configured branch', async () => {
+    let savedUrl: URL | null = null;
+    const handler = async ({ request }: { request: Request }) => {
+      savedUrl = new URL(request.url);
+      return HttpResponse.json({
+        ref: 'develop',
+        path: 'test-dashboard.json',
+        resource: {
+          upsert: {
+            apiVersion: 'v1',
+            kind: 'Dashboard',
+            metadata: { name: 'test-dashboard', uid: 'test-dashboard' },
+            spec: { title: 'Test Dashboard' },
+          },
+        },
+      });
+    };
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, handler),
+      http.post(`${BASE}/repositories/:name/files/*`, handler)
+    );
+
+    const dashboard = makeNotDirtyDashboard();
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    });
+
+    const { user } = setup({
+      dashboard,
+      isNew: false,
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        branch: 'main',
+        target: 'folder',
+      },
+      defaultValues: {
+        ref: 'develop',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+      },
+    });
+
+    // The scene is not dirty, so a comment change is what enables Save.
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.type(commentInput, 'Save to develop');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(savedUrl).not.toBeNull());
+    expect(savedUrl!.searchParams.get('ref')).toBe('develop');
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    const target = mockNavigate.mock.calls.at(-1)![0] as string;
+    expect(target).toContain('/preview/');
+    expect(target).toContain('ref=develop');
   });
 
   it('should properly handle read-only state for a repository without workflows', () => {
@@ -1291,7 +1356,6 @@ describe('SaveProvisionedDashboardForm', () => {
       folder: { uid: 'folder-uid', title: '' },
       title: 'Test Dashboard',
       description: 'Test Description',
-      workflow: 'branch',
     };
 
     it('sends the enforced template branch as ref to the /files endpoint on save', async () => {
@@ -1337,7 +1401,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1360,7 +1423,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1385,7 +1447,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1421,7 +1482,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1443,7 +1503,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: 'Existing Dashboard',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1548,15 +1607,15 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
-  it('does not show New folder button when workflow is branch', async () => {
-    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { workflow: 'branch' } });
+  it('does not show New folder button when the save targets a branch', async () => {
+    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { ref: 'dashboard/new-branch' } });
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
   it('does not show New folder button for read-only repos (no workflow)', async () => {
-    setupFolderless({ repository: { workflows: [] }, defaultValues: { workflow: undefined } });
+    setupFolderless({ repository: { workflows: [] }, canPushToConfiguredBranch: false });
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
@@ -1767,7 +1826,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'my-team-uid', title: 'My Team' },
         title: 'Test Dashboard',
         description: '',
-        workflow: 'write',
       },
     });
 
@@ -2184,10 +2242,9 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
     folder: { uid: 'folder-uid', title: '' },
     title: 'Test Dashboard',
     description: 'Test Description',
-    workflow: 'branch' as const,
   };
 
-  it('pre-fills the branch name from the repository template on the branch workflow', async () => {
+  it('pre-fills the branch name from the repository template for a new branch', async () => {
     setup({
       repository: {
         type: 'github',

@@ -15,6 +15,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -23,6 +24,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getRequestRef, getWorkflowForRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
@@ -45,7 +47,8 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const ref = watch('ref');
+  const isNewBranch = useIsNewBranch(repository, ref);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -66,12 +69,12 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
   const { locked: lockBranch } = useBranchTemplate({
     repository,
     vars: templateVars,
-    workflow,
+    isNewBranch,
     value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const showError = (error: unknown) => {
     setError(
@@ -116,7 +119,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
   };
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
+    isNewBranch,
     resourceType: 'folder',
     folderUID: folder.uid,
     repository,
@@ -131,7 +134,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     },
   });
 
-  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     const folderPath = initialValues.path;
@@ -141,11 +144,10 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       return;
     }
 
-    // For write workflow, write to the configured branch; otherwise use the selected branch
-    const branchRef = workflow === 'write' ? undefined : ref;
+    const branchRef = getRequestRef(repository, ref);
 
     reportInteraction('grafana_provisioning_folder_rename_submitted', {
-      workflow,
+      workflow: getWorkflowForRef(repository, ref),
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
     });
@@ -160,7 +162,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
           spec: { title },
         },
       }).unwrap();
-      handleSuccess(data, { workflow, selectedBranch: ref });
+      handleSuccess(data, { selectedBranch: ref });
     } catch (err) {
       showError(err);
     }
