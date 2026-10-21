@@ -116,6 +116,20 @@ describe('TableDataGrid', () => {
   });
 
   describe('table.refresh', () => {
+    it.each([false, true])('rounds the sidebar divider into the header with noPanelPadding=%s', (noPanelPadding) => {
+      const theme = createTheme();
+      const props = makeProps({ tableRefreshEnabled: true, showColumnSidebarBorder: true, noPanelPadding });
+      const { rerender } = render(<TableDataGrid {...props} />);
+      const gridStyle = () => window.getComputedStyle(screen.getByRole('grid'));
+
+      expect(gridStyle().borderInlineStart).toBe(`1px solid ${theme.components.table.border}`);
+      expect(gridStyle().getPropertyValue('border-start-start-radius')).toBe(theme.shape.radius.default);
+
+      rerender(<TableDataGrid {...props} tableRefreshEnabled={false} />);
+      expect(gridStyle().borderInlineStart).toBe(`1px solid ${theme.components.table.border}`);
+      expect(gridStyle().getPropertyValue('border-start-start-radius')).toBe('');
+    });
+
     it('clips the grid inside the rounded frame', () => {
       const radius = createTheme().shape.radius.default;
       const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
