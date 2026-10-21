@@ -84,8 +84,6 @@ The Azure Monitor data source provides the following query types for template va
 Custom metrics cannot be emitted against a subscription or resource group. Select specific resources when retrieving custom metric namespaces or custom metric names.
 {{< /admonition >}}
 
-**Dimensions** and **Dimension Values** chain the same way as the other query types. Both require a subscription, resource group, namespace, resource, and metric name. **Custom Namespace** is optional. **Dimension Values** also requires a dimension name. For a dimension values variable, set **Refresh** to **On time range change**, because the values are queried for the dashboard time range.
-
 ## Create cascading variables
 
 Cascading variables (also called dependent or chained variables) allow you to create dropdown menus that filter based on previous selections. This is useful for drilling down from subscription to resource group to specific resource.
@@ -112,6 +110,8 @@ Cascading variables (also called dependent or chained variables) allow you to cr
 1. Select the appropriate **Namespace** for your resources (for example, `Microsoft.Compute/virtualMachines`).
 
 Now when you change the subscription, the resource group dropdown updates automatically, and when you change the resource group, the resource name dropdown updates.
+
+**Dimensions** and **Dimension Values** cascade the same way. Both require a subscription, resource group, namespace, resource, and metric name. **Custom Namespace** is optional. **Dimension Values** also requires a dimension name. For a dimension values variable, set **Refresh** to **On time range change**, because the values are queried for the dashboard time range.
 
 ## Create a Logs variable
 
