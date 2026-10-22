@@ -67,6 +67,10 @@ describe('RowItemRepeater', () => {
         scene.onEnterEditMode();
         scene.state.sidebar.activate();
       });
+      // Edit mode lazy loads drag and drop, wait for it to settle
+      await waitFor(() =>
+        expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument()
+      );
       const repeats = rowToRepeat.state.repeatedRows!;
 
       act(() => toggleRowCollapse(rowToRepeat));
@@ -90,6 +94,10 @@ describe('RowItemRepeater', () => {
         scene.onEnterEditMode();
         scene.state.sidebar.activate();
       });
+      // Edit mode lazy loads drag and drop, wait for it to settle
+      await waitFor(() =>
+        expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument()
+      );
       const otherRow = new RowItem({ title: 'Other', layout: AutoGridLayoutManager.createEmpty() });
       act(() => rowToRepeat.getParentLayout().setState({ rows: [rowToRepeat, otherRow] }));
 
