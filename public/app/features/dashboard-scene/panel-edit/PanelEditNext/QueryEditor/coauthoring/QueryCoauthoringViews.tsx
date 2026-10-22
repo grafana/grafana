@@ -1,7 +1,19 @@
 import { cx } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import {
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  useDismiss,
+  useFloating,
+  useFocus,
+  useHover,
+  useInteractions,
+} from '@floating-ui/react';
 import {
   type ChangeEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type KeyboardEvent,
   type MutableRefObject,
   type ReactNode,
@@ -10,11 +22,12 @@ import {
   useId,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
@@ -61,7 +74,7 @@ export function QueryCoauthoringHeader({ className, children, onClose, onStop, p
   );
 }
 
-export function QueryCoauthoringLiveStatus({ children }: { children: ReactNode }) {
+function QueryCoauthoringLiveStatus({ children }: { children: ReactNode }) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <div className={styles.status} role="status" aria-live="polite" aria-atomic="true">
@@ -298,8 +311,8 @@ export function QueryCoauthoringClarificationAction({ onContinue }: { onContinue
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <div className={styles.clarificationAction}>
-      <Button size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
-        <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
+      <Button size="sm" fill="text" variant="secondary" icon="ai-sparkle" onClick={onContinue}>
+        <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
       </Button>
     </div>
   );
@@ -331,21 +344,14 @@ export function QueryCoauthoringExplain({
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <>
-      <QueryCoauthoringHeader onClose={onClose}>
-        <Text variant="body" color="secondary">
-          <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
-        </Text>
-      </QueryCoauthoringHeader>
-      <div className={styles.body}>
-        <Text variant="body">{answer.explanation}</Text>
-        <div className={styles.quickActions}>
-          {answer.followUps.map((question, index) => (
-            <Button key={index} size="sm" variant="secondary" onClick={() => onFollowUp(question)}>
-              {question}
-            </Button>
-          ))}
+      <QueryCoauthoringHeader className={styles.explanationHeader} onClose={onClose}>
+        <div className={styles.headerCopy}>
+          <Text variant="body" color="secondary">
+            <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
+          </Text>
+          <Text variant="body">{answer.explanation}</Text>
         </div>
-      </div>
+      </QueryCoauthoringHeader>
       <QueryCoauthoringPromptInput
         value={intent}
         placeholder={t('query-editor-coauthoring.follow-up-placeholder', 'Ask a follow up…')}
@@ -359,10 +365,26 @@ export function QueryCoauthoringExplain({
         cursorPosition={cursorPosition}
         onCaretChange={onCaretChange}
       />
-      <div className={styles.footer}>
-        <Button size="sm" variant="secondary" fill="text" onClick={onModify}>
+      {answer.followUps.length > 0 && (
+        <div className={styles.followUpChips}>
+          {answer.followUps.map((question, index) => (
+            <Button
+              key={index}
+              size="sm"
+              variant="secondary"
+              className={styles.followUpChip}
+              onClick={() => onFollowUp(question)}
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
+      )}
+      <div className={styles.menuActions}>
+        <button type="button" className={styles.menuAction} onClick={onModify}>
+          <Icon name="pen" size="sm" />
           <Trans i18nKey="query-editor-coauthoring.modify-query">Modify this query</Trans>
-        </Button>
+        </button>
       </div>
     </>
   );
@@ -426,26 +448,110 @@ export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContin
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <>
-      <QueryCoauthoringHeader onClose={onClose} />
-      <div className={styles.handoff}>
-        <Text variant="body">
-          <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
-            Your changes may need to span another datasource or additional queries outside the one we are focused on.
-            Continue in Assistant chat to make larger changes.
-          </Trans>
-        </Text>
-        <Text variant="body" color="secondary" italic>
-          <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Any unsaved panel edits will not be lost.</Trans>
-        </Text>
-      </div>
-      <div className={styles.footer}>
+      <QueryCoauthoringHeader className={styles.explanationHeader} onClose={onClose}>
+        <div className={styles.headerCopy}>
+          <Text variant="body">
+            <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
+              Your changes may need to span another datasource or additional queries outside the one we are focused on.
+              Open in Chat to make larger changes.
+            </Trans>
+          </Text>
+          <Text variant="body" color="secondary" italic>
+            <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Any unsaved panel edits will not be lost.</Trans>
+          </Text>
+        </div>
+      </QueryCoauthoringHeader>
+      <div className={styles.handoffActions}>
         <div className={styles.footerActions}>
           <FeedbackButtons outcome="handoff" onFeedback={onFeedback} />
         </div>
-        <Button size="sm" fill="text" icon="ai-sparkle" onClick={() => onContinue(reason)}>
-          <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
+        <Button size="sm" fill="text" variant="secondary" icon="ai-sparkle" onClick={() => onContinue(reason)}>
+          <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
         </Button>
       </div>
+    </>
+  );
+}
+
+// Grafana's Tooltip makes its trigger tabbable, which would break the roving tabindex of the option tabs.
+function QueryCoauthoringOptionChip({
+  title,
+  peeking,
+  optionIndex,
+  selected,
+  className,
+  hidden,
+  onPointerDown,
+  onLostPointerCapture,
+  onClick,
+  children,
+}: {
+  title: string;
+  peeking: boolean;
+  optionIndex: number;
+  selected: boolean;
+  className: string;
+  hidden: boolean;
+  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onLostPointerCapture: () => void;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  children: ReactNode;
+}) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  const [open, setOpen] = useState(false);
+  const isOpen = open && !peeking;
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setOpen,
+    placement: 'top',
+    strategy: 'fixed',
+    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  const hover = useHover(context, { delay: { open: 100 }, move: false });
+  const focus = useFocus(context, { visibleOnly: true });
+  const dismiss = useDismiss(context, { referencePress: true });
+  const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss]);
+  const tooltipId = useId();
+  return (
+    <>
+      <Button
+        ref={refs.setReference}
+        {...getReferenceProps({ onPointerDown, onClick })}
+        className={className}
+        style={hidden ? { display: 'none' } : undefined}
+        size="sm"
+        variant="secondary"
+        role="tab"
+        data-option-index={optionIndex}
+        aria-selected={selected}
+        aria-describedby={isOpen ? tooltipId : undefined}
+        tabIndex={selected ? 0 : -1}
+        onLostPointerCapture={onLostPointerCapture}
+      >
+        {children}
+      </Button>
+      {isOpen && (
+        <Portal>
+          <div
+            ref={refs.setFloating}
+            id={tooltipId}
+            role="tooltip"
+            className={styles.optionTooltip}
+            style={floatingStyles}
+            {...getFloatingProps()}
+          >
+            <Text variant="bodySmall" weight="medium">
+              {title}
+            </Text>
+            {selected && (
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.hold-to-peek">Hold to peek</Trans>
+              </Text>
+            )}
+          </div>
+        </Portal>
+      )}
     </>
   );
 }
@@ -457,6 +563,8 @@ interface ProposalProps {
   diff: QueryCoauthoringDiffHunk[];
   unconfirmedValues?: string[];
   optionCount: number;
+  optionTitles: Array<string | undefined>;
+  peeking: boolean;
   selectedIndex: number;
   onSelect: (index: number, source?: 'keyboard') => void;
   onPeek?: (index: number) => void;
@@ -476,6 +584,8 @@ export function QueryCoauthoringProposal({
   diff,
   unconfirmedValues,
   optionCount,
+  optionTitles,
+  peeking,
   selectedIndex,
   onSelect,
   onPeek,
@@ -488,8 +598,12 @@ export function QueryCoauthoringProposal({
   onAccept,
 }: ProposalProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
-  const narrow = width !== undefined && width < 420;
-  const tiny = width !== undefined && width < 280;
+  const theme = useTheme2();
+  // The group adds one grid unit of backdrop padding on each side; breakpoints apply to the cards.
+  const cardWidth = width === undefined ? undefined : width - theme.spacing.gridSize * 2;
+  const compact = cardWidth !== undefined && cardWidth < 560;
+  const narrow = cardWidth !== undefined && cardWidth < 420;
+  const tiny = cardWidth !== undefined && cardWidth < 280;
   const hasPreviewCallout =
     previewOutcome &&
     previewOutcome.kind !== 'loading' &&
@@ -503,6 +617,12 @@ export function QueryCoauthoringProposal({
     }
   }, [selectedIndex]);
   const chipPeek = useQueryCoauthoringChipPeek(onPeek, onStopPeek);
+  const previousIndex = selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1;
+  const nextIndex = selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1;
+  const previewLabel = (index: number) =>
+    index < 0
+      ? t('query-editor-coauthoring.preview-original', 'Preview original query')
+      : t('query-editor-coauthoring.preview-option', 'Preview option {{rank}}', { rank: index + 1 });
   const acceptButton = (
     <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept} disabled={selectedIndex < 0}>
       <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
@@ -546,27 +666,36 @@ export function QueryCoauthoringProposal({
             onSelect(next, 'keyboard');
           }}
         >
-          <Button
-            className={tiny ? styles.compactOptionPill : undefined}
-            size="sm"
-            variant="secondary"
-            icon="arrow-left"
-            aria-label={t('query-editor-coauthoring.previous-option', 'Previous option')}
-            style={tiny ? undefined : { display: 'none' }}
-            onClick={() => onSelect(selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1)}
-          />
-          {Array.from({ length: optionCount + 1 }, (_, rank) => (
+          <Tooltip content={previewLabel(previousIndex)}>
             <Button
-              key={rank}
-              className={narrow ? styles.compactOptionPill : undefined}
-              style={tiny && selectedIndex !== rank - 1 ? { display: 'none' } : undefined}
+              className={tiny ? styles.compactOptionPill : undefined}
               size="sm"
               variant="secondary"
-              role="tab"
-              data-option-index={rank - 1}
-              aria-selected={selectedIndex === rank - 1}
-              tabIndex={selectedIndex === rank - 1 ? 0 : -1}
-              onPointerDown={(event) => chipPeek.start(event, rank - 1)}
+              icon="arrow-left"
+              aria-label={t('query-editor-coauthoring.previous-option', 'Previous option')}
+              style={tiny ? undefined : { display: 'none' }}
+              onClick={() => onSelect(previousIndex)}
+            />
+          </Tooltip>
+          {Array.from({ length: optionCount + 1 }, (_, rank) => (
+            <QueryCoauthoringOptionChip
+              key={rank}
+              title={
+                rank === 0
+                  ? t('query-editor-coauthoring.original-query', 'Original query')
+                  : (optionTitles[rank - 1] ??
+                    t('query-editor-coauthoring.preview-option', 'Preview option {{rank}}', { rank }))
+              }
+              peeking={peeking}
+              optionIndex={rank - 1}
+              selected={selectedIndex === rank - 1}
+              className={styles.compactOptionPill}
+              hidden={tiny && selectedIndex !== rank - 1}
+              onPointerDown={(event) => {
+                if (selectedIndex === rank - 1) {
+                  chipPeek.start(event, rank - 1);
+                }
+              }}
               onLostPointerCapture={chipPeek.stop}
               onClick={(event) => {
                 if (!chipPeek.consumeClick(event)) {
@@ -577,104 +706,106 @@ export function QueryCoauthoringProposal({
               {rank === 0
                 ? t('query-editor-coauthoring.original', 'Original')
                 : t('query-editor-coauthoring.option', 'Option {{rank}}', { rank })}
-            </Button>
+            </QueryCoauthoringOptionChip>
           ))}
-          <Button
-            className={tiny ? styles.compactOptionPill : undefined}
-            size="sm"
-            variant="secondary"
-            icon="arrow-right"
-            aria-label={t('query-editor-coauthoring.next-option', 'Next option')}
-            style={tiny ? undefined : { display: 'none' }}
-            onClick={() => onSelect(selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1)}
-          />
+          <Tooltip content={previewLabel(nextIndex)}>
+            <Button
+              className={tiny ? styles.compactOptionPill : undefined}
+              size="sm"
+              variant="secondary"
+              icon="arrow-right"
+              aria-label={t('query-editor-coauthoring.next-option', 'Next option')}
+              style={tiny ? undefined : { display: 'none' }}
+              onClick={() => onSelect(nextIndex)}
+            />
+          </Tooltip>
         </div>
-        <QueryCoauthoringHeader
-          className={narrow ? styles.hidden : undefined}
-          onClose={onClose}
-          pulse={isPreviewRunning}
-        >
+        <div className="sr-only">
           <QueryCoauthoringLiveStatus>
-            {isPreviewRunning ? (
-              <>
-                <Icon name="ai-sparkle" size="sm" />
-                <Text variant="bodySmall" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.running-updated-query">Running updated query...</Trans>
-                </Text>
-              </>
-            ) : (
-              <Badge color="blue" text={t('query-editor-coauthoring.previewing-query', 'Previewing query')} />
-            )}
+            {isPreviewRunning
+              ? t('query-editor-coauthoring.running-updated-query', 'Running updated query...')
+              : t('query-editor-coauthoring.previewing-query', 'Previewing query')}
           </QueryCoauthoringLiveStatus>
-        </QueryCoauthoringHeader>
+        </div>
         <div
-          className={styles.scrollBody}
-          style={narrow && !hasPreviewCallout && !unconfirmedValues?.length ? { display: 'none' } : undefined}
-          data-testid={selectors.components.QueryEditorCoauthoring.container}
-          role="region"
-          aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+          className={cx(
+            styles.collapsible,
+            styles.collapsibleBody,
+            narrow && !hasPreviewCallout && !unconfirmedValues?.length && styles.collapsed
+          )}
         >
-          <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
-            <Text variant="body" color="secondary" hidden={narrow}>
-              {selectedIndex < 0
-                ? t('query-editor-coauthoring.original-query', 'Original query')
-                : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
-            </Text>
-            <div style={narrow ? { display: 'none' } : undefined}>
-              {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
-            </div>
-            <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
-              <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
-            </div>
-            <div style={narrow ? { display: 'none' } : undefined}>
-              {why.map((reason, index) => (
-                <Text variant="body" key={index}>
-                  {reason}
-                </Text>
+          <div
+            className={styles.scrollBody}
+            data-testid={selectors.components.QueryEditorCoauthoring.container}
+            role="region"
+            aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+          >
+            <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
+              <div className={cx(styles.collapsible, narrow && styles.collapsed)}>
+                <div className={styles.collapsibleContent}>
+                  {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
+                </div>
+              </div>
+              <div className={cx(styles.collapsible, narrow && styles.collapsed)}>
+                <div className={cx(styles.collapsibleContent, styles.whyList)}>
+                  {why.map((reason, index) => (
+                    <Text element="p" variant="body" key={index}>
+                      {reason}
+                    </Text>
+                  ))}
+                </div>
+              </div>
+              <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
+                <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
+              </div>
+              {unconfirmedValues?.map((value, index) => (
+                <div key={index} className={styles.unconfirmedValue}>
+                  <Icon name="exclamation-triangle" size="sm" aria-hidden />{' '}
+                  <Text variant="bodySmall" color="secondary">
+                    {t('query-editor-coauthoring.unconfirmed-prefix', 'Unconfirmed:')}
+                  </Text>{' '}
+                  <Text variant="body">{value}</Text>
+                </div>
               ))}
             </div>
-            {unconfirmedValues?.map((value, index) => (
-              <div key={index} className={styles.unconfirmedValue}>
-                <Icon name="exclamation-triangle" size="sm" aria-hidden />{' '}
-                <Text variant="bodySmall" color="secondary">
-                  {t('query-editor-coauthoring.unconfirmed-prefix', 'Unconfirmed:')}
-                </Text>{' '}
-                <Text variant="body">{value}</Text>
-              </div>
-            ))}
           </div>
         </div>
       </div>
       <div className={cx(styles.footer, styles.actionsCard, tiny && styles.tinyActionsCard)}>
-        <div className={styles.footerActions} style={narrow ? { display: 'none' } : undefined}>
+        <div className={styles.footerActions} style={compact ? { display: 'none' } : undefined}>
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
         </div>
-        <div className={cx(styles.footerActions, tiny && styles.tinyActionsRow)}>
-          <Button
-            className={tiny ? styles.tinyIconAction : undefined}
-            size="sm"
-            fill="text"
-            variant="secondary"
-            onClick={onClose}
-            icon={tiny ? 'times' : undefined}
-            aria-label={t('query-editor-coauthoring.cancel', 'Cancel')}
-          >
-            <span className={tiny ? styles.hidden : undefined}>
-              <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
-            </span>
-          </Button>
-          <Button
-            className={cx(styles.compactButton, tiny && styles.tinyIconAction)}
-            size="sm"
-            fill="text"
-            icon="ai-sparkle"
-            onClick={onContinue}
-            aria-label={t('query-editor-coauthoring.open-in-chat', 'Open in Chat')}
-          >
-            <span className={tiny ? styles.hidden : undefined}>
-              <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
-            </span>
-          </Button>
+        <div className={cx(styles.footerActions, styles.proposalActions, tiny && styles.tinyActionsRow)}>
+          <Tooltip content={t('query-editor-coauthoring.cancel', 'Cancel')} show={tiny ? undefined : false}>
+            <Button
+              className={tiny ? styles.tinyIconAction : undefined}
+              size="sm"
+              fill="text"
+              variant="secondary"
+              onClick={onClose}
+              icon={tiny ? 'times' : undefined}
+              aria-label={t('query-editor-coauthoring.cancel', 'Cancel')}
+            >
+              <span className={tiny ? styles.hidden : undefined}>
+                <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
+              </span>
+            </Button>
+          </Tooltip>
+          <Tooltip content={t('query-editor-coauthoring.open-in-chat', 'Open in Chat')} show={tiny ? undefined : false}>
+            <Button
+              className={cx(styles.compactButton, tiny && styles.tinyIconAction)}
+              size="sm"
+              fill="text"
+              variant="secondary"
+              icon="ai-sparkle"
+              onClick={onContinue}
+              aria-label={t('query-editor-coauthoring.open-in-chat', 'Open in Chat')}
+            >
+              <span className={tiny ? styles.hidden : undefined}>
+                <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
+              </span>
+            </Button>
+          </Tooltip>
           {selectedIndex < 0 ? (
             <Tooltip content={t('query-editor-coauthoring.select-to-accept', 'Select an option to accept')}>
               <span>{acceptButton}</span>

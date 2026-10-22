@@ -1,6 +1,7 @@
 import { css, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 const surfaceEnter = keyframes({
   from: { opacity: 0, transform: 'translateY(-2px) scale(0.98)' },
@@ -47,7 +48,7 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       transformOrigin: 'top center',
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${surfaceEnter} 140ms ${theme.transitions.easing.easeOut}`,
-        transition: theme.transitions.create('max-height', {
+        transition: theme.transitions.create(['max-height', 'width'], {
           duration: theme.transitions.duration.short,
           easing: theme.transitions.easing.easeOut,
         }),
@@ -60,9 +61,9 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       borderColor: 'transparent',
       boxShadow: 'none',
-      paddingTop: theme.spacing(2),
+      padding: theme.spacing(3, 1, 1),
       overflow: 'visible',
-      '&:hover': { background: theme.colors.background.secondary },
+      '&:hover': { background: theme.components.overlay.background },
       '&:hover [data-proposal-drag-handle]': { opacity: 1 },
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${groupEnter} 140ms ${theme.transitions.easing.easeOut}`,
@@ -71,11 +72,15 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
     dragHandle: css({
       position: 'absolute',
       top: 0,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      height: theme.spacing(2),
+      left: theme.spacing(1),
+      right: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: theme.spacing(3),
       cursor: 'grab',
       opacity: 0,
+      svg: { transform: 'rotate(90deg)' },
     }),
     resizeHandle: css({
       position: 'absolute',
@@ -98,16 +103,16 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z2,
       overflow: 'hidden',
+      padding: theme.spacing(1.5),
     }),
     narrowExplanationCard: css({ padding: theme.spacing(1.5) }),
     tinyExplanationCard: css({ padding: theme.spacing(0.5) }),
     actionsCard: css({ border: `1px solid ${theme.colors.border.weak}`, boxShadow: theme.shadows.z2 }),
     tinyActionsCard: css({
-      alignSelf: 'flex-end',
-      width: 'fit-content',
       minHeight: 0,
       padding: theme.spacing(0.5, 1.5),
     }),
+    proposalActions: css({ marginLeft: 'auto' }),
     tinyActionsRow: css({ gap: theme.spacing(1.5) }),
     tinyIconAction: css({
       width: theme.spacing(3.5),
@@ -116,7 +121,9 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0.75),
     }),
     dimmed: css({ opacity: 0.04, [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
-    frozenGroup: css({ [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
+    frozenGroup: css({
+      [theme.transitions.handleMotion('no-preference')]: { animation: 'none', transition: 'none' },
+    }),
     header: css({
       display: 'flex',
       flex: '0 0 auto',
@@ -140,6 +147,11 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     close: css({ flex: '0 0 auto' }),
+    explanationHeader: css({
+      flex: '0 1 auto',
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
+    }),
     pulsingStatus: css({
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${statusPulse} 900ms ease-in-out infinite`,
@@ -205,13 +217,34 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-end',
       paddingInline: theme.spacing(1),
     }),
-    quickActions: css({
+    followUpChips: css({
       display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
+      flex: '0 0 auto',
+      flexWrap: 'wrap',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0, 1, 0.5),
-      button: { maxWidth: '100%', whiteSpace: 'normal', height: 'auto', textAlign: 'left' },
+      minWidth: 0,
+      paddingInline: theme.spacing(1),
+    }),
+    followUpChip: css({ maxWidth: '100%' }),
+    menuActions: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      flexDirection: 'column',
+    }),
+    menuAction: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0.75, 1),
+      color: theme.colors.text.primary,
+      background: 'transparent',
+      border: 0,
+      borderRadius: theme.shape.radius.default,
+      textAlign: 'left',
+      cursor: 'pointer',
+      '&:hover:not(:disabled)': { background: theme.colors.action.hover },
+      '&:focus-visible': getFocusStyles(theme),
+      '&:disabled': { color: theme.colors.text.disabled, cursor: 'not-allowed' },
     }),
     status: css({
       display: 'flex',
@@ -276,7 +309,7 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       flex: '0 0 auto',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0.5, 1),
+      padding: 0,
       overflowX: 'auto',
     }),
     narrowOptionTabs: css({ padding: 0 }),
@@ -296,10 +329,22 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
         color: theme.colors.info.text,
       },
     }),
+    optionTooltip: css({
+      display: 'flex',
+      flexDirection: 'column',
+      maxWidth: theme.spacing(30),
+      padding: theme.spacing(0.5, 1),
+      color: theme.components.tooltip.text,
+      background: theme.components.tooltip.background,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      zIndex: theme.zIndex.tooltip,
+    }),
     compactPreviewResult: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 1),
       whiteSpace: 'nowrap',
       '&[data-kind="error"]': { color: theme.colors.error.text },
       '&[data-kind="no-data"]': { color: theme.colors.warning.text },
@@ -333,8 +378,24 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(0.5),
       minHeight: 0,
-      padding: theme.spacing(0, 1.5, 1),
+      paddingTop: theme.spacing(1.5),
     }),
+    // Animating grid rows between 1fr and 0fr collapses content without measuring its height.
+    collapsible: css({
+      display: 'grid',
+      gridTemplateRows: '1fr',
+      opacity: 1,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['grid-template-rows', 'opacity', 'visibility'], {
+          duration: theme.transitions.duration.shorter,
+          easing: theme.transitions.easing.easeInOut,
+        }),
+      },
+    }),
+    collapsed: css({ gridTemplateRows: '0fr', opacity: 0, visibility: 'hidden' }),
+    collapsibleBody: css({ flex: '1 1 auto', minHeight: 0 }),
+    collapsibleContent: css({ minHeight: 0, overflow: 'hidden' }),
+    whyList: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(0.5) }),
     compactProposalBody: css({ padding: 0, paddingTop: theme.spacing(1.5) }),
     footer: css({
       display: 'flex',
@@ -362,11 +423,13 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       paddingTop: theme.spacing(1),
     }),
     iterationCopy: css({ padding: theme.spacing(1, 1.5) }),
-    handoff: css({
+    handoffActions: css({
       display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-      padding: theme.spacing(1, 1.5, 0),
+      flex: '0 0 auto',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      paddingInline: theme.spacing(1),
     }),
   };
 }

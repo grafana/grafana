@@ -449,7 +449,7 @@ describe('useQueryCoauthoringSession', () => {
     initial.readInvocation.mockReturnValueOnce(invocation.promise);
 
     render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Query coauthor' }), { key: 'Escape' });
 
     await act(async () => {
       invocation.resolve({ baseline: initial.baseline, context: initial.context });
@@ -530,7 +530,7 @@ describe('useQueryCoauthoringSession', () => {
 
     expect(mockGenerate).toHaveBeenCalledTimes(1);
     act(() => mockGenerate.mock.calls[0][0].onComplete('Should I preserve the current range?'));
-    fireEvent.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Chat' }));
 
     expect(mockOpenAssistant.mock.calls[0][0].context[0].node.data.data.intentHistory).toEqual(['Use increase']);
   });
@@ -596,7 +596,6 @@ describe('useQueryCoauthoringSession', () => {
     expect(onAccept).not.toHaveBeenCalled();
     expect(stagePreview).toHaveBeenCalledWith('1', 'increase(http_requests_total[5m])');
     expect(onPreview).toHaveBeenCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
-    expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
     expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
     expect(screen.getByText('increase')).toBeInTheDocument();
     const proposalDetails = screen.getByRole('region', { name: 'Query proposal details' });
@@ -728,7 +727,6 @@ describe('useQueryCoauthoringSession', () => {
     rerender(<QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning />);
     const proposalStatus = screen.getByRole('status');
     expect(proposalStatus).toHaveTextContent('Running updated query...');
-    expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
 
     rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
     expect(screen.getByRole('status')).toBe(proposalStatus);
@@ -887,7 +885,7 @@ describe('useQueryCoauthoringSession', () => {
     });
 
     expect(onPreview).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onRevertPreview).toHaveBeenCalledTimes(1);
   });
 
@@ -1155,7 +1153,7 @@ describe('useQueryCoauthoringSession', () => {
     act(() => mockGenerate.mock.calls[0][0].onComplete('Should I group by handler, route, or both?'));
 
     await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
 
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1185,10 +1183,10 @@ describe('useQueryCoauthoringSession', () => {
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     act(() => mockGenerate.mock.calls[0][0].onComplete(unavailableDataResponse));
 
-    expect(screen.getByText(/Continue in Assistant chat to make larger changes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Open in Chat to make larger changes/i)).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'Add extra detail' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: 'Help me continue this PromQL query edit. Goal: Group by the highest-cardinality label.',
@@ -1211,7 +1209,7 @@ describe('useQueryCoauthoringSession', () => {
     expect(screen.getByText(/may need to span another datasource or additional queries/i)).toBeInTheDocument();
     expect(screen.getByText(/unsaved panel edits will not be lost/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
         origin: 'grafana/panel-edit-next/query-coauthoring',
