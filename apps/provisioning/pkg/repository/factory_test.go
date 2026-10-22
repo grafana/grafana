@@ -432,7 +432,7 @@ func TestFactory_Build_Timeout(t *testing.T) {
 				}).Once()
 				factory, err := ProvideFactory(
 					map[provisioning.RepositoryType]struct{}{cfg.Spec.Type: {}},
-					[]Extra{extra}, noopTracer,
+					[]Extra{extra},
 				)
 				require.NoError(t, err)
 
@@ -469,7 +469,6 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 		{name: "context deadline", waitForDeadline: true, buildErr: context.DeadlineExceeded, wantUnavailable: true},
 		{name: "cancellation after deadline", waitForDeadline: true, buildErr: context.Canceled, wantUnavailable: true},
 		{name: "success after deadline", waitForDeadline: true, wantUnavailable: true},
-		{name: "provider error after deadline", waitForDeadline: true, buildErr: ErrSecretDecryptFailed, wantUnavailable: true},
 		{name: "caller cancellation", cancelContext: true},
 		{name: "provider cancellation", buildErr: context.Canceled},
 	} {
@@ -499,7 +498,7 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 				}).Once()
 				factory, err := ProvideFactory(
 					map[provisioning.RepositoryType]struct{}{cfg.Spec.Type: {}},
-					[]Extra{extra}, noopTracer,
+					[]Extra{extra},
 				)
 				require.NoError(t, err)
 

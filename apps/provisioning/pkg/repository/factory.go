@@ -80,9 +80,7 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 	for _, e := range f.extras {
 		if e.Type() == r.Spec.Type {
 			if _, enabled := f.enabled[e.Type()]; !enabled {
-				err := fmt.Errorf("repository type %q is not enabled", e.Type())
-				span.RecordError(err)
-				return nil, err
+				return nil, fmt.Errorf("repository type %q is not enabled", e.Type())
 			}
 
 			repo, err := e.Build(ctx, r)
@@ -93,16 +91,14 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 				err = fmt.Errorf("repository build timed out: %w: %w", ErrServerUnavailable, err)
 			}
 			if err != nil {
-				span.RecordError(err)
 				return nil, err
 			}
+
 			return repo, nil
 		}
 	}
 
-	err := fmt.Errorf("repository type %q is not supported", r.Spec.Type)
-	span.RecordError(err)
-	return nil, err
+	return nil, fmt.Errorf("repository type %q is not supported", r.Spec.Type)
 }
 
 func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
