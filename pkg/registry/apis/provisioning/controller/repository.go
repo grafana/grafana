@@ -555,7 +555,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	deletion := &provisioning.DeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
-		Cause:   provisioning.DeletionCause(classifyTokenErrorCause(err)),
+		Cause:   provisioning.DeletionCause(classifyDeletionErrorCause(err)),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -565,7 +565,6 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	if errors.As(err, &folderErr) {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
 		deletion.Message = folderErr.Error()
-		deletion.Cause = provisioning.DeletionCauseUser
 	}
 	return deletion
 }
@@ -1592,7 +1591,12 @@ func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repositor
 // and exclude cause=user.
 func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 	cause := reconcileCauseSystem
-	if rc.isUserCaused(err) {
+	switch {
+	case phase == reconcilePhaseDelete:
+		// Delete failures share the finalizer metric's classification so both
+		// agree on which deletion blockers the user must fix.
+		cause = classifyDeletionErrorCause(err)
+	case rc.isUserCaused(err):
 		cause = reconcileCauseUser
 	}
 	rc.reconcileMetrics.RecordReconcileError(phase, cause)
