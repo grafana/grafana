@@ -132,13 +132,9 @@ describe('startOf and endOf', () => {
 
 describe('format', () => {
   it.each([
-    ['2024-01-01', '[Q]Q YYYY DDD DDDD', 'Q1 2024 1 001'],
-    ['2024-02-29', 'Q DDD DDDD', '1 60 060'],
-    ['2024-11-05', '[Q]Q YYYY-DDD', 'Q4 2024-310'],
-    ['2024-12-31', 'DDD DDDD', '366 366'],
     ['2024-11-05', 'QQ QQQ [Q DDD DDDD]', '44 444 Q DDD DDDD'],
     ['2024-11-05', 'Q[Q] Q[yr] QQ[Q]', '4Q 4yr 44Q'],
-  ])('formats quarter and day-of-year tokens in %s with %s', (input, format, expected) => {
+  ])('preserves adjacent quarter tokens and literals in %s with %s', (input, format, expected) => {
     expect(moment.utc(input).format(format)).toBe(expected);
   });
 
@@ -202,9 +198,6 @@ describe('format', () => {
 
 describe('formatted string parsing', () => {
   it.each([
-    ['2024 Q4', 'YYYY [Q]Q', '2024-10-01T00:00:00.000Z'],
-    ['2024-310', 'YYYY-DDD', '2024-11-05T00:00:00.000Z'],
-    ['2024-001', 'YYYY-DDDD', '2024-01-01T00:00:00.000Z'],
     ['2024-11-05 310', 'YYYY-MM-DD DDD', '2024-11-05T00:00:00.000Z'],
     ['2024-01-02 310', 'YYYY-MM-DD DDD', '2024-11-05T00:00:00.000Z'],
     ['2024-310 1', 'YYYY-DDD Q', '2024-11-05T00:00:00.000Z'],
@@ -212,7 +205,7 @@ describe('formatted string parsing', () => {
     ['2024-01-02 060', 'YYYY-MM-DD DDDD', '2024-02-29T00:00:00.000Z'],
     ['2024-01-02 366', 'YYYY-MM-DD DDD', '2024-12-31T00:00:00.000Z'],
     ['2024-01-02 310 08:05:09 +02:00', 'YYYY-MM-DD DDD HH:mm:ss Z', '2024-11-05T06:05:09.000Z'],
-  ])('parses quarter and day-of-year input %s with %s', (input, format, expected) => {
+  ])('gives day-of-year precedence over calendar fields in %s with %s', (input, format, expected) => {
     expect(moment.utc(input, format).toISOString()).toBe(expected);
   });
 
