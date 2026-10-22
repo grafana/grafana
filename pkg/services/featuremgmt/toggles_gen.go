@@ -91,10 +91,6 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
-	// FlagProvisioningUserAttribution
-	// Author Git Sync commits as the acting Grafana user
-	FlagProvisioningUserAttribution = "provisioning.userAttribution"
-
 	// FlagGrafanaFrontendLegacyFeatureToggleHandling
 	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
 	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
@@ -817,10 +813,6 @@ const (
 	// FlagApppluginsLoadAppManifest
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
-
-	// FlagApppluginsLoadAppManifestAndKeepSettings
-	// Continue to expose settings when a manifest exists
-	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
 
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint

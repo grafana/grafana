@@ -1,11 +1,11 @@
 package testutils
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math"
 	"slices"
-	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -298,11 +298,12 @@ func (m *ModelGsm) Read(namespace, name string) (*secretv1beta1.SecureValue, err
 }
 
 func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
+	// Match the candidate query's order, including equal creation timestamps.
 	slices.SortStableFunc(m.SecureValues, func(a, b *ModelSecureValue) int {
-		if c := a.created.Compare(b.created); c != 0 {
-			return c
+		if order := a.created.Compare(b.created); order != 0 {
+			return order
 		}
-		return strings.Compare(string(a.UID), string(b.UID))
+		return cmp.Compare(a.UID, b.UID)
 	})
 
 	out := make([]*ModelSecureValue, 0)

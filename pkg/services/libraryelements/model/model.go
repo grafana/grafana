@@ -136,6 +136,10 @@ var (
 	ErrLibraryElementProvisionedFolder = errors.New("resource type not supported in repository-managed folders")
 	// ErrLibraryElementInsufficientPermissions is returned when the caller lacks permission to perform a library element operation in a folder.
 	ErrLibraryElementInsufficientPermissions = errors.New("insufficient permissions for library element operation")
+	// ErrConnectedDashboardsFinderNotConfigured is returned when the folder-delete path needs to
+	// check for library elements still connected to a dashboard, but no ConnectedDashboardsFinder
+	// was configured on the service.
+	ErrConnectedDashboardsFinderNotConfigured = errors.New("connected dashboards finder not configured")
 )
 
 // Commands

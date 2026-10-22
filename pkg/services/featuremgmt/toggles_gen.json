@@ -995,7 +995,8 @@
       "metadata": {
         "name": "appplugins.loadAppManifestAndKeepSettings",
         "resourceVersion": "1789622340153",
-        "creationTimestamp": "2026-09-17T09:00:35Z"
+        "creationTimestamp": "2026-09-17T09:00:35Z",
+        "deletionTimestamp": "2026-10-22T05:23:31Z"
       },
       "spec": {
         "description": "Continue to expose settings when a manifest exists",
@@ -2871,6 +2872,24 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
         "expression": "off"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.geomapProtomapsBasemap",
+        "resourceVersion": "1792544486351",
+        "creationTimestamp": "2026-10-21T00:37:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-21 01:01:26.351546 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds an experimental Protomaps vector basemap to the geomap panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -4942,7 +4961,8 @@
       "metadata": {
         "name": "provisioning.userAttribution",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-10T09:02:18Z"
+        "creationTimestamp": "2026-07-10T09:02:18Z",
+        "deletionTimestamp": "2026-10-12T06:52:55Z"
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
