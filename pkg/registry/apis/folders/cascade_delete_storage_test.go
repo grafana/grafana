@@ -400,7 +400,7 @@ func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
 	ctx, _ := identity.WithServiceIdentity(apirequest.WithNamespace(context.Background(), "default"), 1)
 
 	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
-	require.Error(t, err)
+	require.True(t, apierrors.IsForbidden(err), "must be a 403, not a generic error: %v", err)
 	require.Empty(t, store.deleted, "folder must not be deleted when the requester is the enumeration identity")
 	require.Empty(t, deleter.folders)
 }

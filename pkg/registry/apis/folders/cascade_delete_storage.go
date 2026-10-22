@@ -193,7 +193,8 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		return nil, false, err
 	}
 	if user.GetUID() == enumUser.GetUID() {
-		return nil, false, fmt.Errorf("cascade delete requester must not be the ctx enumeration identity")
+		return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name,
+			fmt.Errorf("cascade delete requester must not be the ctx enumeration identity: %w", folder.ErrAccessDenied))
 	}
 
 	// Authorize the requester to delete this folder's contained resources, mirroring the per-folder
