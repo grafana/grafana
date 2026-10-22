@@ -30,10 +30,8 @@ import { useLogListContext } from './LogListContext';
 import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel, getNormalizedFieldName } from './processing';
 
-// A log line can carry an arbitrarily large number of fields (e.g. OTel attributes mapped to
-// structured metadata). Rendering them all at once is not virtualized, so without a page size
-// cap a wide-enough row can mount tens of thousands of DOM nodes and freeze the tab.
-const FIELDS_PAGE_SIZE = 200;
+// Paginate fields above this number.
+const FIELDS_PAGE_SIZE = 50;
 
 export function usePagedItems<T>(items: T[]) {
   const [page, setPage] = useState(1);
