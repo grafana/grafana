@@ -3,11 +3,11 @@ import { type ReactNode, useState } from 'react';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FilterInput, Icon, IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
+import { FilterInput, Icon, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 
 import { type FolderNode, type useFolderSidebar } from '../hooks/useFolderSidebar';
 import { TEAM_FOLDER_ICON } from '../hooks/useTeamFolders';
-import { NO_FOLDER, ROOT_LEVEL } from '../hooks/useUrvState';
+import { ALL_FOLDERS, NO_FOLDER, ROOT_LEVEL } from '../hooks/useUrvState';
 
 interface Props {
   sidebar: ReturnType<typeof useFolderSidebar>;
@@ -203,13 +203,18 @@ export function FolderSidebar({ sidebar, filter, onFilterChange, selected, onSel
         italic: true,
       })}
 
-      <Link href="/dashboards" className={styles.browse}>
+      <button
+        type="button"
+        className={cx(styles.browse, selected === ALL_FOLDERS && styles.selected)}
+        onClick={() => onSelect(selected === ALL_FOLDERS ? undefined : ALL_FOLDERS)}
+        aria-current={selected === ALL_FOLDERS ? 'true' : undefined}
+      >
         {t('urv.sidebar.browse', 'Browse all folders')}
         <span className={styles.browseEnd}>
           {totals.folders !== undefined && <span className={styles.count}>{totals.folders.toLocaleString()}</span>}
           <Icon name="angle-right" size="sm" />
         </span>
-      </Link>
+      </button>
     </aside>
   );
 }
@@ -317,9 +322,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 30,
     marginTop: theme.spacing(1),
     padding: theme.spacing(0.5, 1, 0.5, 2.5),
+    border: 'none',
+    borderRadius: theme.shape.radius.default,
+    background: 'none',
     color: theme.colors.text.link,
+    font: 'inherit',
+    textAlign: 'left',
+    cursor: 'pointer',
     '&:hover': {
       textDecoration: 'underline',
     },

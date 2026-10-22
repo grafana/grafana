@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
 import { ManagerKind } from 'app/features/apiserver/types';
 
@@ -30,6 +30,8 @@ export const FIELD = {
   managerKind: 'manager.kind',
   managerId: 'manager.id',
 } as const;
+
+export const MANAGER_FIELDS: string[] = [FIELD.managerKind, FIELD.managerId];
 
 export const FOLDER_GROUP_RESOURCE = 'folder.grafana.app/folders';
 
@@ -181,6 +183,30 @@ export async function globalSearch(query: SearchQuery): Promise<GlobalSearchResu
     showErrorAlert: false,
   });
   return { ...results, items: results.items ?? [] };
+}
+
+interface StatusCause {
+  reason?: string;
+  message?: string;
+}
+
+/**
+ * Search servers on an older release reject the manager fields instead of skipping them.
+ * Cloud runs search on its own release, so the page can get there first.
+ */
+export function isUnknownManagerFieldError(err: unknown): boolean {
+  if (!isFetchError(err) || err.status !== 422) {
+    return false;
+  }
+  const causes: unknown = err.data?.details?.causes;
+  if (!Array.isArray(causes)) {
+    return false;
+  }
+  return causes.some(
+    (cause: StatusCause) =>
+      cause.reason === 'FieldValueInvalid' &&
+      MANAGER_FIELDS.some((name) => cause.message === `Invalid value: "${name}": unknown field`)
+  );
 }
 
 export function groupResourceOf(ref: Pick<ResourceRef, 'group' | 'resource'>): string {

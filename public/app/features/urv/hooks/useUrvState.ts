@@ -29,17 +29,19 @@ export function updatedSince(updated: UrvUpdated | undefined): number | undefine
 export const NO_FOLDER = '~none';
 /** Folder value for "Root level": top-level folders and everything else at the root. */
 export const ROOT_LEVEL = '~root';
+/** Folder value for "Browse all folders": the whole folder tree instead of results. */
+export const ALL_FOLDERS = '~folders';
 
 /** The folder uid, or undefined for the places that aren't a real folder. */
 export function folderUID(folder: string | undefined): string | undefined {
-  return folder && folder !== NO_FOLDER && folder !== ROOT_LEVEL ? folder : undefined;
+  return folder && folder !== NO_FOLDER && folder !== ROOT_LEVEL && folder !== ALL_FOLDERS ? folder : undefined;
 }
 
 export interface UrvState {
   query: string;
   /** One `group/resource`, or unset for the All tab. */
   type?: string;
-  /** A folder uid, NO_FOLDER, ROOT_LEVEL, or unset for everything. */
+  /** A folder uid, NO_FOLDER, ROOT_LEVEL, ALL_FOLDERS, or unset for everything. */
   folder?: string;
   place: UrvPlace;
   tags: string[];

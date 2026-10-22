@@ -4,6 +4,7 @@ import { useDebounce } from 'react-use';
 import {
   FIELD,
   FOLDER_GROUP_RESOURCE,
+  MANAGER_FIELDS,
   type FacetTerm,
   type GlobalSearchFilters,
   type GlobalSearchResults,
@@ -14,6 +15,7 @@ import {
   buildWhere,
   globalSearch,
   groupResourceOf,
+  isUnknownManagerFieldError,
   toRequestBody,
 } from '../api/globalSearchApi';
 
@@ -42,9 +44,10 @@ const ITEM_FIELDS = [
   FIELD.updated,
   FIELD.createdBy,
   FIELD.description,
-  FIELD.managerKind,
-  FIELD.managerId,
 ];
+
+// Remembered for the session, so every visit doesn't start with a failed search.
+let serverHasManagerFields = true;
 
 function sortFields(sort: UrvSort): SortField[] | undefined {
   switch (sort) {
@@ -99,6 +102,7 @@ interface SearchInput {
   provisioned: boolean;
   sort: UrvSort;
   grouped: boolean;
+  managerFields: boolean;
 }
 
 function toFilters(input: SearchInput): GlobalSearchFilters {
@@ -125,6 +129,7 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
   useDebounce(() => setDebouncedQuery(state.query), 300, [state.query]);
 
   const grouped = !state.type && state.group === 'type';
+  const [managerFields, setManagerFields] = useState(serverHasManagerFields);
   const input: SearchInput = {
     text: debouncedQuery,
     type: state.type,
@@ -134,9 +139,10 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
     tags: state.tags,
     owners: state.owners,
     updated: state.updated,
-    provisioned: state.provisioned,
+    provisioned: state.provisioned && managerFields,
     sort: state.sort,
     grouped,
+    managerFields,
   };
   const inputKey = JSON.stringify(input);
 
@@ -174,7 +180,7 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
     const itemQuery = (overrides: Partial<GlobalSearchFilters>, limit: number): SearchQuery => ({
       where: buildWhere({ ...filters, ...overrides }),
       sort: sortFields(parsed.sort),
-      fields: ITEM_FIELDS,
+      fields: parsed.managerFields ? [...ITEM_FIELDS, ...MANAGER_FIELDS] : ITEM_FIELDS,
       limit,
     });
 
@@ -269,10 +275,22 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
         ? runGroup(parsed.type, itemQuery({ types: [parsed.type] }, PAGE_SIZE)).then((group) => [group])
         : runUngrouped();
 
+    let retrying = false;
     groupsPromise
       .then((next) => isCurrent() && setGroups(next))
-      .catch((err) => isCurrent() && setError(err))
-      .finally(() => isCurrent() && setIsLoading(false));
+      .catch((err) => {
+        if (!isCurrent()) {
+          return;
+        }
+        if (parsed.managerFields && isUnknownManagerFieldError(err)) {
+          serverHasManagerFields = false;
+          retrying = true;
+          setManagerFields(false);
+          return;
+        }
+        setError(err);
+      })
+      .finally(() => isCurrent() && !retrying && setIsLoading(false));
     // The list still works without counts.
     countsPromise.catch(() => {});
   }, [inputKey, reloadKey, scope.isLoading]);
@@ -347,6 +365,8 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
     removeItem,
     folderTitles,
     debug,
+    /** False when the search server doesn't know the manager fields, so rows carry no provisioning info. */
+    managerFieldsSupported: managerFields,
   };
 }
 

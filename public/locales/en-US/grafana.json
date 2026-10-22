@@ -18216,7 +18216,13 @@
     },
     "alerts": {
       "error": "Search failed",
-      "skipped": "Some types were left out of the search"
+      "no-manager": "Git-synced items aren't marked or locked, so Move and Delete stay on for them.",
+      "no-manager-title": "This search server doesn't return provisioning info yet",
+      "skipped": "Some types were left out of the search",
+      "starred-wip": "We're looking into letting you star everything.",
+      "starred-wip-title": "Starred is a work in progress",
+      "tree-wip": "We're still working on it.",
+      "tree-wip-title": "You're viewing all folders in tree view"
     },
     "debug": {
       "title": "Debug"
@@ -18232,6 +18238,7 @@
       "option-count": "{{name}} ({{total}})",
       "owner": "Owner",
       "placeholder": "Filter by type, tag, owner, updated or provisioned",
+      "placeholder-no-provisioned": "Filter by type, tag, owner or updated",
       "provisioned": "Provisioned only",
       "provisioned-description": "Synced from a Git repository",
       "remove": "Remove {{filter}}",
@@ -18258,8 +18265,11 @@
       "view-all": "View all {{total}} {{type}}"
     },
     "heading": {
+      "all-folders": "All folders",
       "count_one": "{{total}} resource",
       "count_other": "{{total}} resources",
+      "folder-count_one": "{{total}} folder",
+      "folder-count_other": "{{total}} folders",
       "no-folder": "No folder",
       "root": "Root level"
     },
@@ -18322,6 +18332,7 @@
       "unknown": "Couldn't load the repository, so this can't be changed here"
     },
     "search": {
+      "folders-placeholder": "Search folders",
       "placeholder": "Search all resources"
     },
     "selection": {
@@ -18386,6 +18397,16 @@
       "all": "All",
       "more": "More ({{total}})",
       "more-item": "{{type}} ({{total}})"
+    },
+    "tree": {
+      "collapse-all": "Collapse all",
+      "empty": "No folders yet",
+      "error": "Couldn't load folders",
+      "expand-all": "Expand all",
+      "label": "All folders",
+      "no-matches": "No folders match",
+      "truncated_one": "Showing the first {{total}} folder",
+      "truncated_other": "Showing the first {{total}} folders"
     }
   },
   "user-orgs": {

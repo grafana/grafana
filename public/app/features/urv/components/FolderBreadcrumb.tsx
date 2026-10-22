@@ -10,7 +10,7 @@ import { type Breadcrumb } from 'app/core/components/Breadcrumbs/types';
 import { folderHref } from '../hooks/useUrvState';
 
 export interface FolderCrumb {
-  /** A folder uid, NO_FOLDER or ROOT_LEVEL. */
+  /** A folder uid, NO_FOLDER, ROOT_LEVEL or ALL_FOLDERS. */
   folder: string;
   title: string;
 }

@@ -14,7 +14,7 @@ export interface FolderNode {
 const MAX_FOLDERS_PER_LEVEL = 200;
 const MAX_FILTER_MATCHES = 30;
 
-function toNode(item: ResultItem): FolderNode {
+export function toFolderNode(item: ResultItem): FolderNode {
   const title = item.fields?.[FIELD.title];
   const parent = item.fields?.[FIELD.folder];
   return {
@@ -31,7 +31,7 @@ async function listFolders(parentUid: string): Promise<FolderNode[]> {
     fields: [FIELD.title, FIELD.folder],
     limit: MAX_FOLDERS_PER_LEVEL,
   });
-  return res.items.map(toNode);
+  return res.items.map(toFolderNode);
 }
 
 async function countWhere(where: ReturnType<typeof buildWhere>): Promise<number> {
@@ -110,7 +110,7 @@ export function useFolderSidebar(filter: string) {
       fields: [FIELD.title, FIELD.folder],
       limit: MAX_FILTER_MATCHES,
     })
-      .then((res) => !cancelled && setMatches(res.items.map(toNode)))
+      .then((res) => !cancelled && setMatches(res.items.map(toFolderNode)))
       .catch(() => !cancelled && setMatches([]));
     return () => {
       cancelled = true;
@@ -135,7 +135,7 @@ export function useFolderSidebar(filter: string) {
       .then((res) =>
         setParentTitles((prev) => ({
           ...prev,
-          ...Object.fromEntries(res.items.map((i) => [i.resource.name, toNode(i).title])),
+          ...Object.fromEntries(res.items.map((i) => [i.resource.name, toFolderNode(i).title])),
         }))
       )
       .catch(() => {});

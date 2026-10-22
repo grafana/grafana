@@ -32,6 +32,7 @@ interface Props {
   tags: FacetTerm[];
   owners: OwnerOption[];
   ownerName: (createdBy: string) => string;
+  canFilterProvisioned: boolean;
 }
 
 export function updatedLabel(updated: UrvUpdated): string {
@@ -66,7 +67,7 @@ function groupLabel(group: UrvGroup): string {
   }[group];
 }
 
-export function FilterBar({ state, update, types, tags, owners, ownerName }: Props) {
+export function FilterBar({ state, update, types, tags, owners, ownerName, canFilterProvisioned }: Props) {
   const styles = useStyles2(getStyles);
 
   const chips: Array<{ key: string; label: string; onRemove: () => void }> = [];
@@ -166,14 +167,16 @@ export function FilterBar({ state, update, types, tags, owners, ownerName }: Pro
           />
         ))}
       />
-      <Menu.Item
-        label={t('urv.filters.provisioned', 'Provisioned only')}
-        description={t('urv.filters.provisioned-description', 'Synced from a Git repository')}
-        icon={state.provisioned ? 'check' : 'exchange-alt'}
-        role="menuitemcheckbox"
-        ariaChecked={state.provisioned}
-        onClick={() => update({ provisioned: !state.provisioned })}
-      />
+      {canFilterProvisioned && (
+        <Menu.Item
+          label={t('urv.filters.provisioned', 'Provisioned only')}
+          description={t('urv.filters.provisioned-description', 'Synced from a Git repository')}
+          icon={state.provisioned ? 'check' : 'exchange-alt'}
+          role="menuitemcheckbox"
+          ariaChecked={state.provisioned}
+          onClick={() => update({ provisioned: !state.provisioned })}
+        />
+      )}
     </Menu>
   );
 
@@ -200,7 +203,9 @@ export function FilterBar({ state, update, types, tags, owners, ownerName }: Pro
           <Icon name="filter" className={styles.fieldIcon} />
           {chips.length === 0 && (
             <span className={styles.placeholder}>
-              {t('urv.filters.placeholder', 'Filter by type, tag, owner, updated or provisioned')}
+              {canFilterProvisioned
+                ? t('urv.filters.placeholder', 'Filter by type, tag, owner, updated or provisioned')
+                : t('urv.filters.placeholder-no-provisioned', 'Filter by type, tag, owner or updated')}
             </span>
           )}
           {chips.map((chip) => (
