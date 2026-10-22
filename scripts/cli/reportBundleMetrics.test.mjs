@@ -96,7 +96,7 @@ async function writeRspackFixture(buildDirectory) {
     writeAsset(buildDirectory, 'rspack/admin.css', 'RSPACK-ADMIN-CSS'),
   ]);
   await writeFile(
-    join(buildDirectory, 'rspack', 'assets-manifest.json'),
+    join(buildDirectory, 'assets-manifest.json'),
     JSON.stringify({
       entrypoints: {
         esModule: true,
@@ -248,21 +248,9 @@ describe('reportBundleMetrics', () => {
     });
   });
 
-  it('ignores a stale webpack manifest', async (t) => {
-    const buildDirectory = await createBuildFixture(t);
-    await writeFile(join(buildDirectory, 'assets-manifest.json'), '{not JSON', 'utf8');
-
-    assert.deepEqual(await readBundleSizes(buildDirectory), {
-      'default.entrypoints.app.js': 42,
-      'default.entrypoints.app.css': 12,
-      'default.entrypoints.admin.js': 44,
-      'default.entrypoints.admin.css': 28,
-    });
-  });
-
   it('rejects malformed Rspack manifests and referenced Rspack assets that are missing', async (t) => {
     const buildDirectory = await createBuildFixture(t);
-    const manifestPath = join(buildDirectory, 'rspack', 'assets-manifest.json');
+    const manifestPath = join(buildDirectory, 'assets-manifest.json');
 
     await writeFile(manifestPath, '{not JSON', 'utf8');
     await assert.rejects(readBundleSizes(buildDirectory));
@@ -277,7 +265,6 @@ describe('reportBundleMetrics', () => {
 
   it('reports Rspack size metrics without a profile and reports profile metrics independently', async (t) => {
     const buildDirectory = await createBuildFixture(t);
-    await writeReport(join(buildDirectory, '.rsdoctor'), rsdoctorReport());
 
     let result = spawnSync(process.execPath, [cliPath, buildDirectory], {
       cwd: buildDirectory,
@@ -287,7 +274,7 @@ describe('reportBundleMetrics', () => {
     assert.equal(result.stdout, bundleSizeOutput);
     assert.equal(result.stderr, '');
 
-    await writeReport(join(buildDirectory, 'rspack', '.rsdoctor'), rsdoctorReport());
+    await writeReport(join(buildDirectory, '.rsdoctor'), rsdoctorReport());
 
     result = spawnSync(process.execPath, [cliPath, buildDirectory], {
       cwd: buildDirectory,
@@ -306,7 +293,7 @@ describe('reportBundleMetrics', () => {
 
   it('emits size rows from Rspack with a positional build directory despite a corrupt profile', async (t) => {
     const buildDirectory = await createBuildFixture(t);
-    const profileDirectory = join(buildDirectory, 'rspack', '.rsdoctor');
+    const profileDirectory = join(buildDirectory, '.rsdoctor');
     await mkdir(profileDirectory, { recursive: true });
     await writeFile(join(profileDirectory, 'manifest.json'), '{not JSON', 'utf8');
 

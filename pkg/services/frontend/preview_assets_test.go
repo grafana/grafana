@@ -18,9 +18,10 @@ import (
 // previewTestNamespace is allowlisted in setupPreviewTestMux.
 const previewTestNamespace = "stacks-123456"
 
-// The mock bucket serves distinct webpack and Rspack manifests at the CI upload paths.
+// The mock bucket serves the selected build manifest at the CI upload path.
 const previewTestManifest = `{
 	"entrypoints": {
+		"esModule": true,
 		"app": {
 			"assets": {
 				"js": ["public/build/runtime.preview.js", "public/build/app.preview.js"],
@@ -30,41 +31,19 @@ const previewTestManifest = `{
 		"dark": { "assets": { "css": ["public/build/grafana.dark.preview.css"] } },
 		"light": { "assets": { "css": ["public/build/grafana.light.preview.css"] } }
 	},
-	"runtime.js": { "src": "public/build/runtime.preview.js", "integrity": "sha256-webpack-runtime" },
-	"app.js": { "src": "public/build/app.preview.js", "integrity": "sha256-webpack-app" }
-}`
-
-const rspackPreviewTestManifest = `{
-	"entrypoints": {
-		"esModule": true,
-		"app": {
-			"assets": {
-				"js": ["public/build/rspack/runtime.preview.js", "public/build/rspack/app.preview.js"],
-				"css": ["public/build/rspack/grafana.app.preview.css"]
-			}
-		},
-		"dark": { "assets": { "css": ["public/build/rspack/grafana.dark.preview.css"] } },
-		"light": { "assets": { "css": ["public/build/rspack/grafana.light.preview.css"] } }
-	},
-	"runtime.js": { "src": "public/build/rspack/runtime.preview.js", "integrity": "sha256-rspack-runtime" },
-	"app.js": { "src": "public/build/rspack/app.preview.js", "integrity": "sha256-rspack-app" }
+	"runtime.js": { "src": "public/build/runtime.preview.js", "integrity": "sha256-rspack-runtime" },
+	"app.js": { "src": "public/build/app.preview.js", "integrity": "sha256-rspack-app" }
 }`
 
 func newPreviewBucketServer(t *testing.T, folder string) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var manifest string
-		switch r.URL.Path {
-		case "/" + folder + "/public/build/assets-manifest.json":
-			manifest = previewTestManifest
-		case "/" + folder + "/public/build/rspack/assets-manifest.json":
-			manifest = rspackPreviewTestManifest
-		default:
+		if r.URL.Path != "/"+folder+"/public/build/assets-manifest.json" {
 			http.NotFound(w, r)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(manifest))
+		_, _ = w.Write([]byte(previewTestManifest))
 	}))
 	t.Cleanup(server.Close)
 	return server
@@ -202,7 +181,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		return mux, csrfCookie.Value
 	}
 
-	t.Run("should set the preview cookie when the selected rspack preview exists", func(t *testing.T) {
+	t.Run("should set the preview cookie when the selected preview exists", func(t *testing.T) {
 		mux, token := setup(t)
 
 		req := newPreviewRequest(confirmURL(token))
@@ -223,32 +202,6 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		csrfCookie := getCookie(t, recorder.Result(), previewCSRFCookieName)
 		require.NotNil(t, csrfCookie)
 		assert.Equal(t, -1, csrfCookie.MaxAge, "CSRF cookie should be cleared")
-	})
-
-	t.Run("should reject confirmation when webpack exists but selected rspack preview is missing", func(t *testing.T) {
-		bucket := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != "/"+folder+"/public/build/assets-manifest.json" {
-				http.NotFound(w, r)
-				return
-			}
-			_, _ = w.Write([]byte(previewTestManifest))
-		}))
-		t.Cleanup(bucket.Close)
-		mux := setupPreviewTestMux(t, bucket.URL+"/")
-
-		req := newPreviewRequest("/-/set-preview-assets?assets=" + folder)
-		recorder := httptest.NewRecorder()
-		mux.ServeHTTP(recorder, req)
-		require.Equal(t, http.StatusOK, recorder.Code)
-		token := getCookie(t, recorder.Result(), previewCSRFCookieName).Value
-
-		req = newPreviewRequest(confirmURL(token))
-		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
-		recorder = httptest.NewRecorder()
-		mux.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusBadGateway, recorder.Code)
-		assert.Nil(t, getCookie(t, recorder.Result(), previewAssetsCookieName))
 	})
 
 	t.Run("should reject a confirmation without the CSRF cookie", func(t *testing.T) {

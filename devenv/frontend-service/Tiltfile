@@ -15,7 +15,7 @@ port_goff     = base_port + 6   # +6  go feature flag
 
 # --- Core build
 use_rspack = True
-build_dir = 'build/rspack' if use_rspack else 'build'
+build_dir = 'build'
 manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
 

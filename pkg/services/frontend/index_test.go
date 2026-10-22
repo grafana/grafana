@@ -23,7 +23,6 @@ func setupTestWebAssets(tb testing.TB) string {
 	publicDir := tb.TempDir()
 
 	writeTestWebAssets(tb, publicDir, "build")
-	writeTestWebAssets(tb, publicDir, "build/rspack")
 
 	return publicDir
 }
@@ -40,8 +39,8 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 
 	// Create test assets manifest
 	urlPrefix := "public/" + dir
-	// Mirrors real builds: only the rspack manifest declares esModule.
-	esModule := dir == "build/rspack"
+	// The selected Rspack manifest declares esModule.
+	esModule := true
 
 	manifest := fmt.Sprintf(`{
 		"entrypoints": {
@@ -117,15 +116,14 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		// The response should contain references to the assets
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
-		assert.Contains(t, body, "src=\"public/build/rspack/app.js\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/app.js\"")
 		assert.Contains(t, body, `integrity="sha256-test123"`)
 		assert.Contains(t, body, "type=\"module\"")
-		assert.Contains(t, body, "// test boot stub for build/rspack")
-		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "// test boot stub for build")
 	})
 
-	t.Run("should serve the rspack preview when legacy preview assets also exist", func(t *testing.T) {
+	t.Run("should serve the selected preview build", func(t *testing.T) {
 		const folder = "pr_grafana_123456"
 		bucket := newPreviewBucketServer(t, folder)
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
@@ -138,15 +136,13 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		require.Equal(t, http.StatusOK, recorder.Code)
 		body := recorder.Body.String()
 		assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
-		assert.Contains(t, body, previewURL+"public/build/rspack/runtime.preview.js")
-		assert.Contains(t, body, previewURL+"public/build/rspack/app.preview.js")
-		assert.Contains(t, body, previewURL+"public/build/rspack/grafana.app.preview.css")
+		assert.Contains(t, body, previewURL+"public/build/runtime.preview.js")
+		assert.Contains(t, body, previewURL+"public/build/app.preview.js")
+		assert.Contains(t, body, previewURL+"public/build/grafana.app.preview.css")
 		assert.Contains(t, body, `integrity="sha256-rspack-runtime"`)
 		assert.Contains(t, body, `integrity="sha256-rspack-app"`)
 		assert.Contains(t, body, `type="module"`)
-		assert.Contains(t, body, "// test boot stub for build/rspack")
-		assert.NotContains(t, body, previewURL+"public/build/runtime.preview.js")
-		assert.NotContains(t, body, "sha256-webpack")
+		assert.Contains(t, body, "// test boot stub for build")
 	})
 
 	t.Run("should fall back to default assets when the preview build cannot be loaded", func(t *testing.T) {
@@ -161,8 +157,8 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
-		assert.Contains(t, body, "href=\"public/build/rspack/img/fav32.png\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -179,7 +175,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -204,13 +200,13 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
-	t.Run("should start without an rspack build and fail the request", func(t *testing.T) {
-		publicDir := t.TempDir()
-		writeTestWebAssets(t, publicDir, "build") // legacy assets only
+	t.Run("should fail the request when the selected build's manifest is missing", func(t *testing.T) {
+		publicDir := setupTestWebAssets(t)
+		require.NoError(t, os.Remove(filepath.Join(publicDir, "build", "assets-manifest.json")))
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),
 			HTTPPort:       "3000",

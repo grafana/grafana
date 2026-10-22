@@ -25,7 +25,8 @@ func TestGetWebAssetsBuildDir(t *testing.T) {
 	assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
 	require.NoError(t, err)
 	require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
-	require.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
+	require.True(t, assets.ESModule)
+	require.Equal(t, "public/build/grafana.dark.722d809dba5a31f57d49.css", assets.Dark)
 }
 
 func TestGetWebAssetsSwagger(t *testing.T) {
@@ -162,8 +163,7 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		buildDir string
 		expected string
 	}{
-		{buildDir: BuildDir, expected: "public/build/"},
-		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
+		{buildDir: RspackBuildDir, expected: "public/build/"},
 		{buildDir: "build-swagger", expected: "public/build-swagger/"},
 	}
 
@@ -180,7 +180,7 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 
 		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
 		require.NoError(t, err)
-		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+		require.Equal(t, "public/build/", assets.PublicPath)
 	})
 }
 
@@ -203,9 +203,9 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
 		require.NoError(t, err)
 
-		require.Equal(t, "/public/build/rspack/"+AssetsManifestFile, gotPath)
+		require.Equal(t, "/public/build/"+AssetsManifestFile, gotPath)
 		require.Equal(t, devServer.URL+"/", assets.ContentDeliveryURL)
-		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+		require.Equal(t, "public/build/", assets.PublicPath)
 		require.Equal(t, devServer.URL+"/public/build/runtime.js", assets.JSFiles[0].FilePath)
 	})
 
@@ -243,17 +243,5 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 				require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
 			})
 		}
-	})
-
-	t.Run("is ignored for the webpack build, which has no dev server", func(t *testing.T) {
-		devServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-			t.Error("the webpack build must not read its manifest from the dev server")
-		}))
-		defer devServer.Close()
-
-		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
-		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
-		require.NoError(t, err)
-		require.Empty(t, assets.ContentDeliveryURL)
 	})
 }

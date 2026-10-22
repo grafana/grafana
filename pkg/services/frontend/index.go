@@ -109,9 +109,9 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
-	// Either build may be absent; selecting one that is fails the request, not startup.
-	bootScripts := make(map[string]template.JS, 2)
-	for _, dir := range []string{webassets.BuildDir, webassets.RspackBuildDir} {
+	// Load the selected build's boot script.
+	bootScripts := make(map[string]template.JS, 1)
+	for _, dir := range []string{webassets.RspackBuildDir} {
 		//nolint:gosec
 		raw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, dir, "boot.js"))
 		if err != nil {

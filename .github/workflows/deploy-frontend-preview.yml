@@ -183,8 +183,8 @@ jobs:
       # Upload the assets manifest last to help make uploads more atomic.
       - name: Stage manifests to upload last
         run: |
-          mkdir -p preview-manifest/rspack
-          mv public/build/rspack/assets-manifest*.json preview-manifest/rspack/
+          mkdir -p preview-manifest
+          mv public/build/assets-manifest*.json preview-manifest/
 
       - name: Upload assets (manifests excluded)
         uses: grafana/shared-workflows/actions/push-to-gcs@main

@@ -309,7 +309,7 @@ func TestSourceMapStore_ResolvesEitherBundlerFromURL(t *testing.T) {
 		{
 			desc:        "rspack asset",
 			sourceURL:   "http://localhost:3000/public/build/rspack/foo.js",
-			expectedMap: filepath.Join(webassets.RspackBuildDir, "foo.js.map"),
+			expectedMap: filepath.Join(webassets.BuildDir, "rspack", "foo.js.map"),
 		},
 	}
 

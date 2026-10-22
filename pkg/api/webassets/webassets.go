@@ -29,7 +29,7 @@ var logger = log.New("webassets")
 const (
 	// BuildDir is served at the public/build URL prefix; both bundlers write inside it.
 	BuildDir       = "build"
-	RspackBuildDir = BuildDir + "/rspack"
+	RspackBuildDir = BuildDir
 
 	AssetsManifestFile = "assets-manifest.json"
 )

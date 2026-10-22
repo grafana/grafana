@@ -2,7 +2,7 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const PUBLIC_PATH = 'public/build/';
-const MANIFESTS = [{ name: 'default', fileName: 'rspack/assets-manifest.json' }];
+const MANIFESTS = [{ name: 'default', fileName: 'assets-manifest.json' }];
 
 interface Entrypoint {
   assets: Record<string, string[]>;
