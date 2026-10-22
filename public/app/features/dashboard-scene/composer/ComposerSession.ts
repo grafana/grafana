@@ -33,7 +33,7 @@ import {
 } from './types';
 
 /** Left out of region captures: Composer's own layer and the extension sidebar. */
-export const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
+const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
 
 /** A rectangle in CSS pixels; relative to the overlay unless said otherwise. */
 export interface Box {

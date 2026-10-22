@@ -26,7 +26,7 @@ export interface DashboardMutationAPI {
  *
  * @alpha
  */
-export interface ComposerAPI {
+interface ComposerAPI {
   readonly version: 1;
   canEnter(target?: {
     resource: 'dashboard' | 'notebook';

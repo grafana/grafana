@@ -16,7 +16,7 @@ export interface ComposerTarget {
   uid: string;
 }
 
-export interface ComposerEnterOptions {
+interface ComposerEnterOptions {
   /**
    * 'floating' (the default) floats the extension sidebar over the document when the session starts, even
    * with `grafana.extensionSidebarFloating` off. The user may dock it and stay in Composer. When the session
