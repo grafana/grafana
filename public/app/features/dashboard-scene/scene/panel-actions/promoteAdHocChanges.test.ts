@@ -10,6 +10,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { AD_HOC_TRANSFORMATIONS_OWNER, promoteAdHocChanges } from './promoteAdHocChanges';
 
 const hideColumn = [{ id: 'organize', options: { excludeByName: { a: true } } }];
+const context = { elementKey: 'panel-1', transformations: hideColumn };
 
 const promotions: Record<string, jest.Mock> = {
   first: jest.fn(),
@@ -42,7 +43,7 @@ async function buildScene(version: 'v1' | 'v2' = 'v2') {
   activateFullSceneTree(dashboard);
   await new Promise((r) => setTimeout(r, 1));
   panel.getRuntimeTransformations().set(AD_HOC_TRANSFORMATIONS_OWNER, hideColumn);
-  return panel;
+  return { panel, dashboard };
 }
 
 describe('promoteAdHocChanges', () => {
@@ -51,32 +52,32 @@ describe('promoteAdHocChanges', () => {
     promotions.second.mockReset().mockImplementation((json) => json);
   });
 
-  it('passes the v2 dashboard JSON and the current ad hoc transformations to the first promotion path', async () => {
-    const panel = await buildScene();
+  it('passes the v2 dashboard JSON, the panel element key and its ad hoc transformations to the first promotion path', async () => {
+    const { panel } = await buildScene();
 
     promoteAdHocChanges(panel);
 
     expect(promotions.first).toHaveBeenCalledTimes(1);
     expect(promotions.first).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'My dashboard', elements: expect.any(Object) }),
-      hideColumn
+      context
     );
   });
 
   it('feeds each promotion the JSON returned by the previous one and returns the last result', async () => {
-    const panel = await buildScene();
+    const { panel } = await buildScene();
 
     const result = promoteAdHocChanges(panel);
 
     expect(promotions.second).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'My dashboard (promoted)' }),
-      hideColumn
+      context
     );
     expect(result).toMatchObject({ title: 'My dashboard (promoted)' });
   });
 
   it('does not promote into a v1 dashboard', async () => {
-    const panel = await buildScene('v1');
+    const { panel } = await buildScene('v1');
 
     const result = promoteAdHocChanges(panel);
 

@@ -455,6 +455,7 @@ export {
   type PanelScreenshotHandler,
   type PanelInteraction,
   type PanelInteractions,
+  type PanelInteractionPromotionContext,
 } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,

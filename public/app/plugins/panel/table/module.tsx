@@ -1,10 +1,4 @@
-import {
-  identityOverrideProcessor,
-  FieldConfigProperty,
-  type PanelInteraction,
-  PanelPlugin,
-  standardEditorsRegistry,
-} from '@grafana/data';
+import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -13,6 +7,7 @@ import {
   TableCellTooltipPlacement,
   defaultTableFieldOptions,
 } from '@grafana/schema';
+import { type TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
@@ -153,7 +148,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     addTableCustomPanelOptions(builder);
   })
   .setSuggestionsSupplier(tableSuggestionsSupplier)
-  // Prototype: settings and promotionPath are placeholders until promotion is implemented.
   .setPanelInteractions({
     interactions: [
       {
@@ -163,18 +157,43 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         mutates: 'TRANSFORMATION',
         // Hidden and reordered columns share one organize fields transformation per frame.
         settings: ['hiddenColumns', 'reindexedColumns'],
-        // Will append the organize fields transformations to the panel's saved transformations.
-        promotionPath: placeholderPromotion('organize'),
+        // Appends the ad hoc transformations to the panel's saved transformations. They go last because ad hoc
+        // transformations run after the saved ones and refer to their output.
+        promotionPath: (dashboard, { elementKey, transformations }) => {
+          const element = dashboard.elements[elementKey];
+
+          // Library panels keep their queries and transformations in the library panel, not the dashboard.
+          if (element?.kind !== 'Panel' || transformations.length === 0) {
+            return dashboard;
+          }
+
+          const data = element.spec.data;
+          const promoted: TransformationKind[] = transformations.map(({ id, ...spec }) => ({
+            kind: 'Transformation',
+            group: id,
+            spec,
+          }));
+
+          return {
+            ...dashboard,
+            elements: {
+              ...dashboard.elements,
+              [elementKey]: {
+                ...element,
+                spec: {
+                  ...element.spec,
+                  data: {
+                    ...data,
+                    spec: { ...data.spec, transformations: [...data.spec.transformations, ...promoted] },
+                  },
+                },
+              },
+            },
+          };
+        },
       },
     ],
   });
-
-function placeholderPromotion(name: string): PanelInteraction['promotionPath'] {
-  return (dashboard) => {
-    console.log(`Promoting table interaction: ${name}`);
-    return dashboard;
-  };
-}
 
 // `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
 // rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.

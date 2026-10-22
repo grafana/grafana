@@ -4,6 +4,7 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
 
@@ -32,9 +33,12 @@ export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefine
   }
 
   const interactions = panel.getPlugin()?.panelInteractions?.interactions ?? [];
-  const transformations = panel.getRuntimeTransformations().get(AD_HOC_TRANSFORMATIONS_OWNER);
+  const context = {
+    elementKey: dashboardSceneGraph.getElementIdentifierForVizPanel(panel),
+    transformations: panel.getRuntimeTransformations().get(AD_HOC_TRANSFORMATIONS_OWNER),
+  };
 
   // Panels declare one interaction today. Once applied interactions are tracked (URL or local storage),
   // only those will be promoted.
-  return interactions.reduce((json, interaction) => interaction.promotionPath(json, transformations), dashboard);
+  return interactions.reduce((json, interaction) => interaction.promotionPath(json, context), dashboard);
 }

@@ -1,6 +1,7 @@
 import { defaultsDeep, set } from 'lodash';
 import { type ComponentClass, type ComponentType } from 'react';
 
+import { type DataTransformerConfig } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
@@ -191,7 +192,19 @@ export interface PanelInteraction {
   mutates: 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
   settings: unknown[];
   /** Writes the interaction into the v2 dashboard JSON and returns the updated JSON. */
-  promotionPath: (dashboard: DashboardV2Spec, settings: unknown) => DashboardV2Spec;
+  promotionPath: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
+}
+
+/**
+ * What a {@link PanelInteraction} promotion path needs to find and update its panel in the dashboard JSON.
+ *
+ * @alpha
+ */
+export interface PanelInteractionPromotionContext {
+  /** Key of the panel in the dashboard JSON's `elements`. */
+  elementKey: string;
+  /** The panel's ad hoc transformations, in the same shape as saved transformations. */
+  transformations: readonly DataTransformerConfig[];
 }
 
 /**

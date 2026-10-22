@@ -13737,6 +13737,8 @@
   },
   "panel-adhoc-changes": {
     "button": "View changes",
+    "remove-changes": "Remove changes",
+    "save-failed": "Could not save view changes to the dashboard",
     "save-to-dashboard": "Save to dashboard",
     "tooltip": "This panel has view changes that are not saved with the dashboard"
   },
