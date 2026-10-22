@@ -160,6 +160,9 @@ function buildAppLink(app: AppPluginConfig): {
     // whatever addToNav says — plugins should not lean on that, a page meant for
     // the nav sets addToNav.
     const pathConfig = appNavPathConfigFor(include.path);
+    if (pathConfig?.hidden) {
+      continue;
+    }
     if (pathConfig) {
       standalonePages.push({
         sectionId: pathConfig.sectionId,
@@ -251,6 +254,11 @@ function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModel
  */
 function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: NavModelItem): NavModelItem[] {
   const navConfig = appNavConfigFor(app.id);
+  // A hidden app leaves no node behind, but its pages are placed on their own
+  // terms: Cloud hides the Collector app and lists three of its pages directly
+  if (navConfig?.hidden) {
+    return tree;
+  }
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
   const sectionChildren = navConfig?.hoistPages ? hoistAppPages(appLink, navConfig.hoistPages) : [appLink];

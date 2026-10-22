@@ -32,6 +32,13 @@ export interface AppNavConfig {
   hoistPages?: { slotWeightByPath?: Record<string, number> };
   /** Drops the `includes` that the app should not show in this deployment, on top of the RBAC checks */
   filterInclude?: (include: PluginInclude) => boolean;
+  /**
+   * Keeps the app, or the page, out of the nav altogether — for something a
+   * deployment installs but does not surface, or surfaces only through pages
+   * placed individually (hiding an app does not hide those). The INI overrides
+   * express this by naming a section that does not exist; here it is explicit.
+   */
+  hidden?: boolean;
 }
 
 export const ASSERTS_SERVICES_PATH = `/a/${ASSERTS_APP_ID}/services`;

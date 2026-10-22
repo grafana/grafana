@@ -630,6 +630,47 @@ describe('applyPluginNav', () => {
 
       expect(childTexts(merged, 'some-app')).toEqual(['Page']);
       expect(findById(merged, 'standalone-plugin-page-/a/some-app/hidden')).toBeUndefined();
+      expect(findById(merged, NavID.cfgAccess)?.children ?? []).toHaveLength(0);
+    });
+
+    // The typed equivalent of an operator naming a section that does not exist.
+    // Hiding an app leaves its individually placed pages alone, which is how
+    // Cloud lists Collector's pages without the Collector app itself
+    it('keeps a hidden app out of the nav while still placing its configured page', () => {
+      jest.spyOn(appNavConfig, 'appNavConfigFor').mockReturnValue({
+        sectionId: NavID.apps,
+        sortWeight: 0,
+        hidden: true,
+      });
+
+      const merged = merge(
+        app('grafana-auth-app', 'Cloud access policies', [
+          page('Access policies', '/a/grafana-auth-app'),
+          page('Other', '/a/grafana-auth-app/other'),
+        ])
+      );
+
+      expect(findById(merged, 'plugin-page-grafana-auth-app')).toBeUndefined();
+      expect(moreApps(merged)).toBeUndefined();
+      // the page carries its own placement, so it is still lifted into the section
+      expect(ids(findById(merged, NavID.cfgAccess)?.children ?? [])).toEqual([
+        'standalone-plugin-page-/a/grafana-auth-app',
+      ]);
+    });
+
+    it('keeps a hidden page out of the nav entirely', () => {
+      jest
+        .spyOn(appNavConfig, 'appNavPathConfigFor')
+        .mockImplementation((includePath) =>
+          includePath === '/a/some-app/hidden' ? { sectionId: NavID.cfgAccess, sortWeight: 0, hidden: true } : undefined
+        );
+
+      const merged = merge(
+        app('some-app', 'Some app', [page('Page', '/a/some-app/page'), page('Hidden', '/a/some-app/hidden')])
+      );
+
+      expect(childTexts(merged, 'some-app')).toEqual(['Page']);
+      expect(findById(merged, 'standalone-plugin-page-/a/some-app/hidden')).toBeUndefined();
     });
 
     it('replaces a core page the operator points at a plugin page', () => {
