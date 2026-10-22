@@ -112,6 +112,9 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 // mechanism (e.g. a standalone folder apiserver's cascade delete). orgID is explicit since it
 // isn't guaranteed to match signedInUser.GetOrgID() for every caller.
 func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
+	if err := folder.RequireUncheckedDeleteAuthorized(c, orgID, signedInUser); err != nil {
+		return err
+	}
 	// Attach the requester so a routed LegacyDatabaseProvider can resolve the target database.
 	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), orgID, folderUID)
 }
