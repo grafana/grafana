@@ -325,7 +325,7 @@ func BenchmarkGrafanaRouterAggregatedDiscovery(b *testing.B) {
 				if err := svc.router.reconcile(b.Context()); err != nil {
 					b.Fatal(err)
 				}
-				next := http.Handler(http.NotFoundHandler())
+				next := http.NotFoundHandler()
 				if mode == "middleware" {
 					next = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						w.Header().Set("Content-Type", aggregatedDiscoveryJSON)
