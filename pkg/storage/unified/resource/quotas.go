@@ -20,6 +20,7 @@ const DEFAULT_RESOURCE_LIMIT = 1000
 
 type QuotasConfig struct {
 	EnforcedResources map[string]bool // group/resource keys to enforce, e.g. {"dashboard.grafana.app/dashboards": true}
+	LoggedResources   map[string]bool // group/resource keys to check without blocking writes
 	SupportMessage    string
 }
 
@@ -27,6 +28,12 @@ type QuotasConfig struct {
 // the given group/resource pair.
 func (c QuotasConfig) ShouldEnforce(group, resource string) bool {
 	return c.EnforcedResources[group+"/"+resource]
+}
+
+// ShouldCheck avoids opening search indexes for quotas that are neither enforced nor logged.
+func (c QuotasConfig) ShouldCheck(group, resource string) bool {
+	key := group + "/" + resource
+	return c.EnforcedResources[key] || c.LoggedResources[key]
 }
 
 type QuotaExceededError struct {
