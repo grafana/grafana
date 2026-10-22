@@ -21,7 +21,11 @@ export function DeleteNotebookModal({ title, isDeleting, onConfirm, onDismiss }:
     <ConfirmModal
       isOpen
       title={t('notebooks.delete.title', 'Delete')}
-      body={t('notebooks.delete.body', 'Are you sure you want to delete "{{title}}"?', { title })}
+      body={t('notebooks.delete.body', 'Are you sure you want to delete "{{title}}"?', {
+        title,
+        // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
+        interpolation: { escapeValue: false },
+      })}
       confirmText={
         isDeleting ? t('notebooks.delete.in-progress', 'Deleting...') : t('notebooks.delete.confirm', 'Delete')
       }

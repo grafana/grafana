@@ -30,7 +30,11 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
       <Card.Heading
         aria-label={
           isSelected
-            ? t('notebooks.add-panel.card-selected', '{{title}} (selected)', { title: notebook.title })
+            ? t('notebooks.add-panel.card-selected', '{{title}} (selected)', {
+                title: notebook.title,
+                // An escaped apostrophe would be read out as `&#39;`.
+                interpolation: { escapeValue: false },
+              })
             : undefined
         }
       >
@@ -40,7 +44,11 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
       <Card.Meta separator="·">
         {[
           t('notebooks.add-panel.card-updated', 'Updated {{when}}', { when: dateTimeFormatTimeAgo(notebook.updated) }),
-          t('notebooks.add-panel.card-author', 'By {{author}}', { author: notebook.authorName }),
+          t('notebooks.add-panel.card-author', 'By {{author}}', {
+            author: notebook.authorName,
+            // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
+            interpolation: { escapeValue: false },
+          }),
         ]}
       </Card.Meta>
       {/* The Description slot rather than Card.Tags: Tags is a right-hand column of the card's grid,

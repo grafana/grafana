@@ -151,7 +151,13 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
             onClick={onTagClick}
             // A clickable Tag renders a button, whose only accessible name would otherwise be the tag
             // itself — "cost, button" says nothing about what pressing it does.
-            getAriaLabel={(tag) => t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', { tag })}
+            getAriaLabel={(tag) =>
+              t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', {
+                tag,
+                // An escaped apostrophe would be read out as `&#39;`.
+                interpolation: { escapeValue: false },
+              })
+            }
           />
         ),
       },
