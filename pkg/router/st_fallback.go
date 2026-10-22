@@ -29,6 +29,16 @@ type loaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }
 
+// singleTenantDiscoveryRule serves a stack's request to skip stacks: the
+// router's own groups only, without the stacks' defaults or the stack itself.
+func singleTenantDiscoveryRule() discoveryRule {
+	return discoveryRule{
+		Header:     skipSTHeader,
+		SkipSource: true,
+		Exclude:    func(e servingEntry) bool { return e.callerScoped },
+	}
+}
+
 const (
 	// Bound stale routing after a rename, move, or deletion; cache hits do not extend this TTL.
 	singleTenantCacheTTL = 6 * time.Hour
@@ -431,6 +441,10 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			rewriteOutbound(pr, host.url)
+			// A stack's discovery is its own, without the router's view of stacks.
+			if group == "" {
+				pr.Out.Header.Set(skipMTHeader, skipValue)
+			}
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},

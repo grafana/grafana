@@ -38,6 +38,15 @@ const (
 	stFallbackHeader = "X-Grafana-ST-To-Router-Fallback"
 	stFallbackValue  = "true"
 
+	// skipSTHeader, sent by a stack on its discovery poll of the multi-tenant
+	// router, asks for the groups the router itself serves, with nothing from
+	// stacks. skipMTHeader, sent by the router on the discovery it forwards to
+	// a stack, asks for the groups the stack itself serves, with nothing from
+	// the router. Together they stop discovery from recursing.
+	skipSTHeader = "X-Grafana-Discovery-Skip-ST"
+	skipMTHeader = "X-Grafana-Discovery-Skip-MT"
+	skipValue    = "true"
+
 	// mtBreakerCacheSize bounds breakers, which are keyed by a client-supplied group.
 	mtBreakerCacheSize = 1000
 )
