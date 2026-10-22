@@ -114,7 +114,7 @@
 /apps/logsdrilldown/ @grafana/observability-logs
 /apps/annotation/ @grafana/grafana-backend-services-squad
 /apps/dashvalidator/ @grafana/sharing-squad
-/apps/dashboardviews/ @grafana/dashboards-squad
+/apps/dashboardviews/ @grafana/sharing-squad
 /apps/dashboard/kinds/notebook.cue @grafana/sharing-squad
 /apps/dashboard/kinds/v2beta1/notebook_spec.cue @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-services-squad
@@ -1306,6 +1306,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apps/annotation @grafana/grafana-backend-services-squad
 /pkg/registry/apps/plugins @grafana/grafana-catalog
 /pkg/registry/apps/dashvalidator @grafana/sharing-squad
+/pkg/registry/apps/dashboardviews @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code

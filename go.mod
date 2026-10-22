@@ -156,7 +156,7 @@ require (
 	github.com/grafana/grafana/apps/collections v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/dashboardviews v0.0.0 // @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/dashboardviews v0.0.0 // @grafana/sharing-squad
 	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // @grafana/sharing-squad
 	github.com/grafana/grafana/apps/example v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-app-platform-squad
