@@ -221,6 +221,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/responsesize"
 	_ "github.com/grafana/grafana/pkg/plugins/config"
 	_ "github.com/grafana/grafana/pkg/plugins/definition"
 	_ "github.com/grafana/grafana/pkg/plugins/httpresponsesender"
