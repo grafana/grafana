@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -156,6 +157,9 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 	}
 
 	if err != nil {
+		if apierrors.IsForbidden(err) {
+			return response.Error(http.StatusForbidden, "Access denied", err)
+		}
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
 
