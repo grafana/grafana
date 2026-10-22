@@ -1,6 +1,8 @@
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
+import { getVariableName } from '../variables/utils';
+
 import { getPredefinedOrigin } from './predefinedVariables';
 
 export type PredefinedVariableResolutionInput = {
@@ -324,7 +326,76 @@ export function resolvePredefinedVariablesForDashboard(
   if (selection === undefined) {
     return [];
   }
-  return applyUseCrossDashboardVariables(variables, selection);
+  return withReferencedDatasourceVariables(applyUseCrossDashboardVariables(variables, selection), variables);
+}
+
+/**
+ * Adds the variables that selected ones name as their datasource (`${ds}`), so opting into
+ * a predefined query variable doesn't leave its datasource unresolved. `available` only holds
+ * global and the dashboard's own folder variables, so other folders are never pulled in.
+ */
+function withReferencedDatasourceVariables(selected: VariableKind[], available: VariableKind[]): VariableKind[] {
+  const included = new Set([...selected, ...collectRequiredVariables(selected, available).keys()]);
+
+  // Keep the fetched order (globals then folder, by name) rather than appending dependencies.
+  return available.filter((variable) => included.has(variable));
+}
+
+/**
+ * Predefined variables injected only because a selected variable uses them as its datasource,
+ * each mapped to the names of the variables that require it.
+ */
+export function getRequiredPredefinedVariables(
+  variables: VariableKind[],
+  selection: UseCrossDashboardVariables | undefined
+): Map<VariableKind, string[]> {
+  if (selection === undefined) {
+    return new Map();
+  }
+  return collectRequiredVariables(applyUseCrossDashboardVariables(variables, selection), variables);
+}
+
+function collectRequiredVariables(selected: VariableKind[], available: VariableKind[]): Map<VariableKind, string[]> {
+  const byName = new Map(available.map((variable) => [variable.spec.name, variable]));
+  const selectedSet = new Set(selected);
+  const visited = new Set(selected);
+  const pending = [...selected];
+  const requiredBy = new Map<VariableKind, string[]>();
+
+  while (pending.length > 0) {
+    const variable = pending.pop()!;
+    const name = getDatasourceVariableName(variable);
+    const dependency = name ? byName.get(name) : undefined;
+    if (!dependency || dependency === variable || selectedSet.has(dependency)) {
+      continue;
+    }
+    requiredBy.set(dependency, [...(requiredBy.get(dependency) ?? []), variable.spec.name]);
+    if (!visited.has(dependency)) {
+      visited.add(dependency);
+      pending.push(dependency);
+    }
+  }
+
+  for (const names of requiredBy.values()) {
+    names.sort();
+  }
+  return requiredBy;
+}
+
+function getDatasourceVariableName(variable: VariableKind): string | undefined {
+  switch (variable.kind) {
+    case 'QueryVariable':
+      return getVariableNameFromRef(variable.spec.query.datasource?.name);
+    case 'AdhocVariable':
+    case 'GroupByVariable':
+      return getVariableNameFromRef(variable.datasource?.name);
+    default:
+      return undefined;
+  }
+}
+
+function getVariableNameFromRef(ref: string | undefined): string | undefined {
+  return ref ? getVariableName(ref) : undefined;
 }
 
 /**
