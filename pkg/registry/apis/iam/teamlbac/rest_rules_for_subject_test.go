@@ -354,6 +354,7 @@ func TestRulesForSubjectRESTTeamListErrorsReturnNoPartialPolicy(t *testing.T) {
 			require.Empty(t, outcome)
 			require.Equal(t, 2, calls)
 			require.Zero(t, testutil.ToFloat64(handler.metrics.missingTeams), "incomplete listings must not count missing teams")
+			require.Equal(t, float64(1), testutil.ToFloat64(handler.metrics.listedTeamsWithoutLegacyID), "count returned Teams even if a later page fails")
 		})
 	}
 }
@@ -401,7 +402,8 @@ func TestRulesForSubjectRESTNumericKeysUseLegacyMetadata(t *testing.T) {
 			ruleGetter := getterFunc(func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
 				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{tt.key: {`foo="bar"`}}}}, nil
 			})
-			lister := listerFunc(func(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+			lister := listerFunc(func(_ context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+				require.Nil(t, options.LabelSelector, "unresolved numeric references must not trigger another lookup")
 				// A numeric-looking UID must not match a numeric legacy rule key.
 				team := teamWithMembers(tt.key, "user-a")
 				team.Labels = map[string]string{apiutils.LabelKeyDeprecatedInternalID: tt.id} //nolint:staticcheck // legacy rule compatibility
@@ -435,6 +437,7 @@ func TestRulesForSubjectRESTMissingTeamsAfterCompleteListing(t *testing.T) {
 			var handler *RulesForSubjectREST
 			calls := 0
 			lister := listerFunc(func(_ context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+				require.Nil(t, options.LabelSelector, "unresolved numeric references must not trigger another lookup")
 				calls++
 				require.Zero(t, testutil.ToFloat64(handler.metrics.missingTeams), "do not count before all pages are read")
 				if calls == 1 {
@@ -458,6 +461,46 @@ func TestRulesForSubjectRESTMissingTeamsAfterCompleteListing(t *testing.T) {
 				require.Empty(t, response.TeamFilters)
 			}
 		})
+	}
+}
+
+func TestRulesForSubjectRESTCountsListedTeamsWithoutLegacyIDs(t *testing.T) {
+	for _, namespace := range []string{"org-1", "stacks-27821"} {
+		for _, ruleTeamKey := range []string{"team-a", "42"} {
+			t.Run(namespace+"/"+ruleTeamKey, func(t *testing.T) {
+				filters := map[string][]string{ruleTeamKey: {`foo="bar"`}}
+				ruleGetter := getterFunc(func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+					return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: filters}}, nil
+				})
+				team := teamWithMembers("team-a", "user-a")
+				team.Labels = map[string]string{apiutils.LabelKeyDeprecatedInternalID: "42"} //nolint:staticcheck // legacy rule compatibility
+				malformed := teamWithMembers("unrelated-team", "user-a")
+				malformed.Labels = map[string]string{apiutils.LabelKeyDeprecatedInternalID: "invalid"} //nolint:staticcheck // observe malformed legacy IDs
+				calls := 0
+				lister := listerFunc(func(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+					require.Equal(t, namespace, k8srequest.NamespaceValue(ctx))
+					require.Nil(t, options.LabelSelector)
+					calls++
+					if options.Continue == "" {
+						return &iamv0.TeamList{ListMeta: metav1.ListMeta{Continue: "next"}, Items: []iamv0.Team{
+							*team, *teamWithMembers("non-member-team", "other-user"),
+						}}, nil
+					}
+					require.Equal(t, "next", options.Continue)
+					return &iamv0.TeamList{Items: []iamv0.Team{*malformed}}, nil
+				})
+				handler := NewRulesForSubjectREST(ruleGetter, lister, tracing.NewNoopTracerService(), prometheus.NewRegistry())
+				for request := 1; request <= 2; request++ {
+					response, outcome, err := handler.getRulesForUser(k8srequest.WithNamespace(t.Context(), namespace), "prometheus.datasource-a", "user-a")
+					require.NoError(t, err)
+					require.Equal(t, filters, response.TeamFilters)
+					require.Equal(t, forSubjectOutcomeFiltersReturned, outcome)
+					require.Equal(t, 2*request, calls)
+					require.Equal(t, float64(2*request), testutil.ToFloat64(handler.metrics.listedTeamsWithoutLegacyID), "count observations across pages and requests, not unique Teams or only matching Teams")
+					require.Zero(t, testutil.ToFloat64(handler.metrics.missingTeams))
+				}
+			})
+		}
 	}
 }
 
