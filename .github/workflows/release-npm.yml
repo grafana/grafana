@@ -157,12 +157,18 @@ jobs:
           GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
         run: |
           yarn run packages:build
-          yarn lerna version "$VERSION" \
-            --exact \
-            --no-git-tag-version \
-            --no-push \
-            --force-publish \
-            --yes
+          # This workflow runs from main against grafana_commit, which may be on a release
+          # branch cut before lerna was replaced with nx release.
+          if [ -f lerna.json ]; then
+            yarn lerna version "$VERSION" \
+              --exact \
+              --no-git-tag-version \
+              --no-push \
+              --force-publish \
+              --yes
+          else
+            yarn nx release version "$VERSION"
+          fi
           # packages:pack runs each package's prepack (scripts/prepare-npm-package.js),
           # which stamps GRAFANA_COMMIT as gitHead into the packed manifest. npm doesn't
           # record gitHead for tarball publishes, and the nightly change-detection reads

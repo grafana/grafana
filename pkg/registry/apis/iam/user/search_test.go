@@ -120,7 +120,7 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "test", Group: userGR.Group, Resource: userGR.Resource}
 	index, err := backend.BuildIndex(t.Context(), key, 0, "test", func(resource.ResourceIndex) (int64, error) {
 		return 0, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	const (

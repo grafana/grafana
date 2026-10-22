@@ -152,7 +152,8 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	backends, err := loader.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
-	require.Equal(t, []shadowedGroup{{Group: "shared", Source: sourceSingleTenant, By: "aggregate:baas_apiserver"}}, loader.shadowedGroups())
+	// The aggregate target overriding the fallback is expected, not shadowing.
+	require.Empty(t, loader.shadowedGroups())
 
 	statuses := loader.sourceStatuses()
 	require.Len(t, statuses, 2)

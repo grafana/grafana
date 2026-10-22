@@ -2,9 +2,16 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneObjectBase, type VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { createNotebook, notebookResourceFor, updateNotebook } from '../../api/notebookResource';
+import {
+  createNotebook,
+  notebookResourceFor,
+  readNotebookResourceVersion,
+  updateNotebook,
+} from '../../api/notebookResource';
 import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
@@ -25,6 +32,7 @@ jest.mock('../../api/notebookResource', () => ({
   ...jest.requireActual('../../api/notebookResource'),
   updateNotebook: jest.fn(),
   createNotebook: jest.fn(),
+  readNotebookResourceVersion: jest.fn(),
 }));
 
 setPluginImportUtils({
@@ -41,6 +49,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     jest.mocked(updateNotebook).mockReset().mockResolvedValue({ generation: 2 });
     jest.mocked(createNotebook).mockReset();
+    jest.mocked(readNotebookResourceVersion).mockReset().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -285,15 +294,15 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   });
 
   it('keeps auto-refresh running after the rebuild swaps the refresh picker', async () => {
-    // With the time controls hidden nothing renders the picker, so NotebookScene activates it itself.
-    const scene = notebookScene(notebookSpec({ hideTimepicker: true, autoRefresh: '30s' }));
+    // Nothing here renders the picker, so NotebookScene activates it itself.
+    const scene = notebookScene(notebookSpec({ autoRefresh: '30s' }));
     const before = scene.state.refreshPicker;
     expect(before.isActive).toBe(true);
 
     const client = new NotebookMutationClient(scene);
     await client.execute({
       type: 'APPLY_NOTEBOOK_SPEC',
-      payload: { spec: notebookSpec({ hideTimepicker: true, autoRefresh: '1m' }) },
+      payload: { spec: notebookSpec({ autoRefresh: '1m' }) },
     });
 
     expect(scene.state.refreshPicker).not.toBe(before);
@@ -605,6 +614,115 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('The notebook was changed by someone else.');
+  });
+
+  describe('when someone else saved the notebook since it was opened', () => {
+    const spec = () => notebookSpec({ elements: { summary: markdownCell('## Resolved') }, cells: ['summary'] });
+
+    function staleScene() {
+      const scene = notebookScene();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue('6');
+      return scene;
+    }
+
+    it('refuses before touching the notebook, naming onConflict, and raises no modal', async () => {
+      const scene = staleScene();
+      const before = cellNamesOf(scene);
+      const publish = jest.spyOn(appEvents, 'publish');
+      const client = new NotebookMutationClient(scene);
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: spec() } });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('onConflict');
+      expect(result.data).toMatchObject({ applied: false, conflict: true });
+      expect(cellNamesOf(scene)).toEqual(before);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(updateNotebook).not.toHaveBeenCalled();
+      expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+    });
+
+    it('saves over the other version when retried with onConflict overwrite', async () => {
+      const scene = staleScene();
+      jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '7' });
+      const client = new NotebookMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: spec(), onConflict: 'overwrite' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(cellNamesOf(scene)).toEqual(['summary']);
+      // No resourceVersion precondition on the forced write, and no need to ask the server first.
+      expect(jest.mocked(updateNotebook).mock.calls[0][2]).toBeUndefined();
+      expect(readNotebookResourceVersion).not.toHaveBeenCalled();
+    });
+
+    it('applies normally when the server still holds the version this notebook saved', async () => {
+      const scene = notebookScene();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue('5');
+      jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '6' });
+
+      const result = await new NotebookMutationClient(scene).execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: spec() },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('does not read this scene’s own save, landing during the check, as someone else’s', async () => {
+      const scene = notebookScene();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      // The scene's own autosave finishes while the server is being asked: both versions move to 6.
+      jest.mocked(readNotebookResourceVersion).mockImplementation(async () => {
+        scene.autosave.setState({ savedResourceVersion: '6' });
+        return '6';
+      });
+      jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '7' });
+
+      const result = await new NotebookMutationClient(scene).execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: spec() },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('does not save a waiting manual edit while checking, so the modal and the chat never both ask', async () => {
+      const scene = staleScene();
+      const publish = jest.spyOn(appEvents, 'publish');
+      // The person's own edit, still inside the autosave debounce when the assistant's request arrives.
+      scene.onEnterEditMode();
+      scene.state.body.setCellContent(scene.state.body.state.cells[0], {
+        kind: 'Markdown',
+        spec: { text: 'typed by hand' },
+      });
+      const client = new NotebookMutationClient(scene);
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: spec() } });
+
+      expect(result.data).toMatchObject({ conflict: true });
+      expect(updateNotebook).not.toHaveBeenCalled();
+      expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+    });
+
+    it('applies when the server version cannot be read, leaving the save to carry its own precondition', async () => {
+      const scene = notebookScene();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue(undefined);
+      jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '6' });
+
+      const result = await new NotebookMutationClient(scene).execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: spec() },
+      });
+
+      expect(result.success).toBe(true);
+    });
   });
 
   it('is refused without dashboard write permission', async () => {

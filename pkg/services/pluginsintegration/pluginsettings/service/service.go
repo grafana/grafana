@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"maps"
 	"sync"
 	"time"
@@ -11,6 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
+
+// maxJSONDataBytes is the MySQL TEXT size of plugin_setting.json_data, used as the limit on all databases.
+// Grafana's MySQL connection is not in strict mode, so a longer value is silently truncated and the row
+// can no longer be read.
+const maxJSONDataBytes = 65535
 
 func ProvideService(db db.DB,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -90,6 +97,10 @@ func (s *Service) GetPluginSettingByPluginID(ctx context.Context, args *pluginse
 }
 
 func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.UpdateArgs) error {
+	if err := validateJSONDataSize(args.JSONData); err != nil {
+		return err
+	}
+
 	encryptedSecureJsonData, err := s.secretsService.EncryptJsonData(ctx, args.SecureJSONData, secrets.WithoutScope())
 	if err != nil {
 		return err
@@ -232,4 +243,15 @@ func (s *Service) updatePluginSettingVersion(ctx context.Context, cmd *pluginset
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err
 	})
+}
+
+func validateJSONDataSize(jsonData map[string]any) error {
+	encoded, err := json.Marshal(jsonData)
+	if err != nil {
+		return fmt.Errorf("failed to encode plugin jsonData: %w", err)
+	}
+	if len(encoded) > maxJSONDataBytes {
+		return pluginsettings.ErrPluginSettingJSONDataTooLarge.Errorf("plugin jsonData is %d bytes, the limit is %d bytes", len(encoded), maxJSONDataBytes)
+	}
+	return nil
 }

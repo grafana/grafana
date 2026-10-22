@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -103,6 +104,23 @@ func newPluginManifestsTarget(
 	return t, nil
 }
 
+// validatePluginID checks an entry's plugin ID before any backend is built for
+// it. Tokens the router sends a plugin name its ID as their audience, so the ID
+// must have the shape of an app plugin ID, as local plugins must. Core APIs may
+// have no ID; their tokens name their API group instead.
+func (t *pluginManifestsTarget) validatePluginID(id string) error {
+	if id == "" {
+		if t.source == sourceCoreURL {
+			return nil
+		}
+		return errors.New("missing plugin ID")
+	}
+	if !isAppPluginID(id) {
+		return fmt.Errorf("invalid app plugin ID %q", id)
+	}
+	return nil
+}
+
 // Backends returns the current polled-and-filtered backend snapshot. Safe
 // to call from any goroutine.
 func (t *pluginManifestsTarget) Backends() []Backend {
@@ -148,6 +166,13 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	keys := make(map[string]struct{}, len(deployment.Plugins))
 	skipped := 0
 	for _, entry := range deployment.Plugins {
+		if err := t.validatePluginID(entry.Definition.JSONData.ID); err != nil {
+			if len(entry.Definition.Manifests) > 0 {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+			}
+			continue
+		}
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
 				continue
@@ -175,6 +200,8 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			}
 
 			backend.info = entry.Definition.JSONData.Info
+			// Without a host, the deployment has no backend to call.
+			backend.hasBackend = entry.Host != ""
 
 			// The host is outside PluginDefinition, but changing it must reload the backend.
 			key, keyErr := pluginDeploymentKey(t.keyPrefix, entry, manifest)
@@ -320,3 +347,21 @@ type pluginDeploymentBackend struct {
 
 func (b *pluginDeploymentBackend) Key() string    { return b.key }
 func (b *pluginDeploymentBackend) Source() string { return b.source }
+
+// PluginStatus implements [PluginStatusProvider]; the embedded Backend
+// interface does not promote it.
+func (b *pluginDeploymentBackend) PluginStatus() (PluginStatus, bool) {
+	if p, ok := b.Backend.(PluginStatusProvider); ok {
+		return p.PluginStatus()
+	}
+	return PluginStatus{}, false
+}
+
+// Manifest implements [ManifestProvider]; the embedded Backend interface does
+// not promote it.
+func (b *pluginDeploymentBackend) Manifest() (*app.ManifestData, bool) {
+	if p, ok := b.Backend.(ManifestProvider); ok {
+		return p.Manifest()
+	}
+	return nil, false
+}
