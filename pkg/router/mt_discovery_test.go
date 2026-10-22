@@ -110,6 +110,15 @@ func TestStackServesTheRoutersGroups(t *testing.T) {
 	require.Equal(t, []string{discoveryGroup, "local.grafana.app", "mt.grafana.app"}, legacyGroupsVia(t, svc, local, ""))
 	require.Equal(t, []string{discoveryGroup, "local.grafana.app"}, legacyGroupsVia(t, svc, local, skipMTHeader))
 
+	// Its OpenAPI document comes from the router, and the stack's index lists it.
+	doc := get("/openapi/v3/apis/mt.grafana.app/v1", "", "")
+	require.Equal(t, http.StatusOK, doc.Code, doc.Body.String())
+	require.Contains(t, doc.Body.String(), `"title":"mt"`)
+	index := get("/openapi/v3", "", "")
+	require.Equal(t, http.StatusOK, index.Code)
+	require.Contains(t, index.Body.String(), "apis/mt.grafana.app/v1")
+	require.NotContains(t, get("/openapi/v3", "", skipMTHeader).Body.String(), "apis/mt.grafana.app/v1")
+
 	// The proxied request is the router's own, so it has the real group as its metric label.
 	families, err := reg.Gather()
 	require.NoError(t, err)

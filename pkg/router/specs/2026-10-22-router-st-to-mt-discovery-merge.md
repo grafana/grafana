@@ -1,6 +1,6 @@
 # Router: Merged discovery for the ST→MT fallback
 
-Status: proposed
+Status: implemented in the stacked PR on #135752 (see "As built")
 Package: `pkg/router`
 
 A cloud single-tenant (ST) Grafana forwards requests for API groups its embedded apiserver does
@@ -56,19 +56,19 @@ With both legs marked, discovery cannot recurse in either direction.
 
 ### Where the rule lives
 
-The rule is one per-request view, not a check in each handler. Only
-`discoverySource(next)` is not enough, since it controls (1) and not (2). A router helper,
-`discoveryView(req)`, returns the snapshot, the source and whether the source is caller-scoped,
-and every discovery handler reads it. A request that asks for the caller-independent view gets
-the snapshot without its callerScoped entries and no fallback source. One rule means one test, and
-a handler cannot be added later that forgets it. A per-handler check was rejected because the
-three merge loops would have to stay in step, and a miss is silent: generic ST groups leak.
+The rule is one per-request view, not a check in each handler. Only `discoverySource(next)` is not
+enough, since it controls (1) and not (2). A router helper, `discoveryView(req)`, returns whether
+the request narrows discovery, whether to skip the source, and which entries to leave out, and
+every discovery handler reads it. One rule means one test, and a handler cannot be added later that
+forgets it. A per-handler check was rejected because the three merge loops would have to stay in
+step, and a miss is silent: generic ST groups leak.
 
 `AGENTS.md` keeps deployment-specific knowledge out of the engine files (`router.go`,
-`discovery*.go`), and a header name is deployment-specific. The engine therefore never reads the
-header. It has a field, `discoveryFlat func(*http.Request) bool`, set from the source files
-(`mt_fallback.go` for `Skip-ST`, `st_fallback.go` for `Skip-MT`), and `discoveryView` asks it. The
-engine only learns that this request wants the caller-independent view.
+`discovery*.go`), and a header name is deployment-specific. The engine therefore never reads a
+header name of its own. It holds `discoveryRules`, a list of `{Header, SkipSource, Exclude}` that
+the source files supply: `st_fallback.go` supplies the `Skip-ST` rule on the MT router (skip the
+source, leave out caller-scoped entries), and `mt_routes.go` supplies the `Skip-MT` rule on a stack
+(leave out the entries whose source is the MT router).
 
 ### Caching
 
@@ -118,12 +118,13 @@ target (`aggregate_poller.go`): poll it, and expose what it serves as `Backend`s
 
 ## Authentication
 
-The MT router's `/apis` needs credentials. The poll is made as a service, not on behalf of a
-user: the ST uses its own access policy, exchanging its CAP token for a signed access token per
-request, exactly as aggregate targets do (`aggregateTokenWrapper`, `authnlib.TokenExchangeClient`).
-It reuses `[cloud_router] cap_token` and `token_exchange_url`, and adds `mt_router_audience`,
-required whenever the address is set. Proxied requests are separate: they carry the caller's own
-credentials through `rewriteOutbound`, as they do today.
+The MT router's `/apis` needs credentials. The poll is made as a service, not on behalf of a user:
+the ST uses its own access policy, the one it uses for its other service calls
+(`[grpc_client_authentication] token` and `token_exchange_url`), exchanged per request for a token
+with the audience `[cloud_router] mt_router_audience`, exactly as aggregate targets do
+(`aggregateTokenWrapper`, which sends the token in `X-Access-Token`, as the router reads it). All
+three are required whenever `mt_router_address` is set. Proxied requests are separate: they carry
+the caller's own credentials through `rewriteOutbound`, as before.
 
 ## Staleness
 
@@ -161,6 +162,21 @@ earlier gate could not do this without labelling every forward `unknown`.
 
 ## Decisions
 
-- The marked-request rule is one `discoveryView(req)` helper, with the header check injected as a
-  predicate so the engine stays free of deployment-specific names (see "Where the rule lives").
+- The marked-request rule is one `discoveryView(req)` helper over `discoveryRules` the source files
+  supply, so the engine stays free of deployment-specific names (see "Where the rule lives").
 - The reverse marker is `X-Grafana-Discovery-Skip-MT`. A skipped contribution is not counted.
+
+## As built
+
+- `discovery_view.go`: `discoveryRule`, `discoveryView` and the cache and `Vary` handling, used by
+  the aggregated and legacy `/apis` and the `/openapi/v3` index.
+- `mt_routes.go`: `mtRoutes`, a `RoutesLoader` that adds the MT router's polled groups (an
+  `aggregateTarget` named `mt-router`, with 10% jitter) to the inner loader's routes. It offers
+  none until the local groups are known, and leaves out groups an inner source or the embedded
+  apiserver serves. Its backends refuse a request that is already marked, and mark what they
+  forward.
+- `loader_factory.go`: `ProvideRoutesLoader` composes it on a cloud stack (`stack_id` set) with
+  router middleware enabled, never on the standalone router. `ProvideService` starts the local
+  groups read and adds the `Skip-MT` rule.
+- The per-request gate in `Service.HandleFunc` and its own proxy are gone.
+- The MT router honors `Skip-ST` and sends `Skip-MT` on the discovery it forwards to a stack.

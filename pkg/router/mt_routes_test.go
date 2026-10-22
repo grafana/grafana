@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -49,6 +50,11 @@ func newFakeMTRouter(t *testing.T, groups ...string) *fakeMTRouter {
 			return
 		}
 		f.proxiedToken.Store(r.Header.Get("X-Access-Token"))
+		if strings.HasPrefix(r.URL.Path, openapiV3Prefix+"/apis/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"openapi":"3.0.0","info":{"title":"mt","version":"v1"},"paths":{}}`))
+			return
+		}
 		w.WriteHeader(http.StatusAccepted)
 	}))
 	t.Cleanup(f.Close)
