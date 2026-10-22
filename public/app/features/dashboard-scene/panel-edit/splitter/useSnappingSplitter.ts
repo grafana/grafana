@@ -1,13 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useLayoutEffect, useRef } from 'react';
 
 import { type ComponentSize, type DragHandlePosition, useSplitter } from '@grafana/ui';
 
 export interface UseSnappingSplitterOptions {
   /**
    * The initial size of the primary pane between 0-1, defaults to 0.5
-   * If `usePixels` is true, this is the initial size in pixels of the second pane.
+   * If `usePixels` is true, this is the initial size in pixels of the pinned pane.
    */
   initialSize?: number;
+  /** The size a double-click on the handle restores. See `UseSplitterOptions.resetSize`. */
+  resetSize?: number;
   direction: 'row' | 'column';
   dragPosition?: DragHandlePosition;
   collapsed?: boolean;
@@ -15,10 +17,31 @@ export interface UseSnappingSplitterOptions {
   // pushing the left pane content left.
   handleSize?: ComponentSize;
   usePixels?: boolean;
+  /**
+   * Which pane is pinned to pixels and collapses past the threshold. Defaults to `'secondary'`
+   * (right/bottom); use `'primary'` for a left/top pane such as a sidebar.
+   */
+  pixelPane?: 'primary' | 'secondary';
   collapseBelowPixels: number;
 
   /* Disables the splitter, hiding all of its styles */
   disabled?: boolean;
+
+  /**
+   * Width/height reserved for the pane that fills the remaining space. Only meaningful with
+   * `usePixels`, which pins the other pane against shrinking: without a reserve, a container too
+   * narrow for both leaves the filling pane with whatever is left, down to nothing. Must exceed the
+   * drag handle, which `useSplitter` already reserves on its own. The pinned pane never yields below
+   * `collapseBelowPixels`, so a narrower container still cuts into the reserve.
+   */
+  minFillingPixels?: number;
+
+  /**
+   * Persist hook: called when a resize ends above the threshold, with the collapsing pane's settled
+   * size in pixels and the primary pane's share of the container (0-1). Use `flexSize` for a
+   * flex-sized splitter, whose size is otherwise only stored on the DOM and lost on remount.
+   */
+  onPaneSizeChanged?: (sizePixels: number, flexSize: number) => void;
 }
 
 interface PaneState {
@@ -29,17 +52,27 @@ interface PaneState {
 export function useSnappingSplitter({
   direction,
   initialSize,
+  resetSize,
   dragPosition,
   collapseBelowPixels,
   collapsed,
   handleSize,
   usePixels,
+  pixelPane = 'secondary',
   disabled,
+  minFillingPixels,
+  onPaneSizeChanged,
 }: UseSnappingSplitterOptions) {
   const [state, setState] = useState<PaneState>({
     collapsed: collapsed ?? false,
     snapSize: collapsed ? 0 : undefined,
   });
+
+  // The pinned pane is also the one that collapses; the logic below targets it either way.
+  const collapsePrimary = pixelPane === 'primary';
+
+  // The size the drag in progress last wrote to the DOM, or null between gestures.
+  const liveResize = useRef<{ flexSize: number; panePixels: number } | null>(null);
 
   const onResizing = useCallback(
     (flexSize: number, firstPanePixels: number, secondPanePixels: number) => {
@@ -47,53 +80,104 @@ export function useSnappingSplitter({
         return;
       }
 
-      if (state.collapsed && secondPanePixels > collapseBelowPixels) {
-        setState({ collapsed: false });
-      }
+      const panePixels = collapsePrimary ? firstPanePixels : secondPanePixels;
+      liveResize.current = { flexSize, panePixels };
 
-      if (!state.collapsed && secondPanePixels < collapseBelowPixels) {
-        setState({ collapsed: true });
-      }
+      // Derived from the latest state, not a captured one: the final pointermove and the pointerup
+      // of a single gesture land in the same commit, so a snapshot would be stale by then.
+      setState((prev) => {
+        if (prev.collapsed && panePixels > collapseBelowPixels) {
+          return { collapsed: false };
+        }
+
+        if (!prev.collapsed && panePixels < collapseBelowPixels) {
+          return { collapsed: true };
+        }
+
+        return prev;
+      });
     },
-    [state, collapseBelowPixels]
+    [collapseBelowPixels, collapsePrimary]
   );
 
   const onSizeChanged = useCallback(
     (flexSize: number, firstPanePixels: number, secondPanePixels: number) => {
+      liveResize.current = null;
+
       if (flexSize <= 0 && firstPanePixels <= 0 && secondPanePixels <= 0) {
         return;
       }
 
-      const isSnappedClosed = state.snapSize === 0;
+      const panePixels = collapsePrimary ? firstPanePixels : secondPanePixels;
 
-      if (state.collapsed && !isSnappedClosed) {
-        setState({ snapSize: 0, collapsed: state.collapsed });
-      } else if (state.collapsed && isSnappedClosed) {
-        if (usePixels) {
-          const snapSize = Math.max(secondPanePixels, initialSize ?? 200);
-          setState({ snapSize, collapsed: !state.collapsed });
-        } else {
-          const snapSize = Math.max(1 - (initialSize ?? 0.5), 1 - flexSize);
-          setState({ snapSize, collapsed: !state.collapsed });
+      setState((prev) => {
+        const isSnappedClosed = prev.snapSize === 0;
+
+        if (prev.collapsed && !isSnappedClosed) {
+          return { snapSize: 0, collapsed: prev.collapsed };
         }
+
+        if (prev.collapsed && isSnappedClosed) {
+          if (usePixels) {
+            return { snapSize: Math.max(panePixels, initialSize ?? 200), collapsed: !prev.collapsed };
+          }
+
+          return { snapSize: Math.max(1 - (initialSize ?? 0.5), 1 - flexSize), collapsed: !prev.collapsed };
+        }
+
+        // Settled while open: release the forced size. `snapSize` pins the pane on every render, so
+        // leaving it set would let the next render — including the one the persist call below
+        // triggers — snap the pane back to it and undo the resize the user just made.
+        if (prev.snapSize !== undefined) {
+          return { collapsed: prev.collapsed };
+        }
+
+        return prev;
+      });
+
+      // Only persist while open, so collapsing doesn't overwrite the restore size with ~0.
+      if (panePixels >= collapseBelowPixels) {
+        onPaneSizeChanged?.(panePixels, flexSize);
       }
     },
-    [state, initialSize, usePixels]
+    [initialSize, usePixels, collapsePrimary, collapseBelowPixels, onPaneSizeChanged]
   );
-
-  const onToggleCollapse = useCallback(() => {
-    setState({ collapsed: !state.collapsed });
-  }, [state.collapsed]);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: direction,
     dragPosition: dragPosition,
     handleSize: handleSize,
     initialSize: initialSize,
+    resetSize: resetSize,
     usePixels: usePixels,
+    pixelPane: pixelPane,
     onResizing,
     onSizeChanged,
   });
+
+  // Reopening mid-drag drops the closed-pane override, so the render puts back the configured size
+  // over the one the drag already wrote, and the pane jumps until the next move. Write the drag's
+  // size again before paint.
+  useLayoutEffect(() => {
+    const live = liveResize.current;
+    const primary = primaryProps.ref.current;
+    const secondary = secondaryProps.ref.current;
+    if (state.collapsed || !live || !primary || !secondary) {
+      return;
+    }
+
+    if (usePixels) {
+      (collapsePrimary ? primary : secondary).style.flexBasis = `${live.panePixels}px`;
+    } else {
+      primary.style.flexGrow = `${live.flexSize}`;
+      secondary.style.flexGrow = `${1 - live.flexSize}`;
+    }
+  }, [state.collapsed, usePixels, collapsePrimary, primaryProps.ref, secondaryProps.ref]);
+
+  const onToggleCollapse = useCallback(() => {
+    liveResize.current = null;
+    setState((prev) => ({ collapsed: !prev.collapsed }));
+  }, []);
 
   // This does cause the loss of the adjustment position when toggling disabled on and off again.
   // Fixing this properly would require changing how useSplitter works to not both pass and
@@ -115,38 +199,71 @@ export function useSnappingSplitter({
     };
   }
 
-  // This is to allow resizing it beyond the content dimensions
-  secondaryProps.style.overflow = 'hidden';
-  secondaryProps.style.minWidth = 'unset';
-  secondaryProps.style.minHeight = 'unset';
+  // Override styles on the collapsing pane; the other fills the remaining space.
+  const collapsingProps = collapsePrimary ? primaryProps : secondaryProps;
+  const fillingProps = collapsePrimary ? secondaryProps : primaryProps;
 
+  // This is to allow resizing it beyond the content dimensions
+  collapsingProps.style.overflow = 'hidden';
+  collapsingProps.style.minWidth = 'unset';
+  collapsingProps.style.minHeight = 'unset';
+
+  // Only a pixel-sized pane has a size of its own to keep. A flex-sized one starts from a basis of 0
+  // and divides the container by ratio, so it can neither overflow nor be squeezed.
   if (usePixels) {
-    // Otherwise this pane can only grow until the primary one hits its `min-content` floor. A literal 0
-    // is required: `unset` resolves to `auto`, still the content minimum for a flex item whose own
+    // `useSplitter` floors both panes at `min-content`, so once the container is narrower than the
+    // two of them together, neither gives and the flex line overflows — and the container's
+    // `overflow: hidden` clips whatever sits on the trailing edge. That is this pane, open or shut:
+    // measured at a 1150px window, a 330px options pane laid out at full width with 340px of it cut
+    // off, and once collapsed, its 53px expand affordance pushed off screen with no way to get the
+    // pane back. Letting the pane beside it shrink keeps the line inside the container, so that pane
+    // is the one that clips. It is also what lets this pane be dragged wider than that pane's
+    // content: without it, this one stops growing the moment that one hits its floor. A literal 0 is
+    // required — `unset` resolves to `auto`, still the content minimum for a flex item whose own
     // overflow is visible.
-    primaryProps.style[direction === 'row' ? 'minWidth' : 'minHeight'] = 0;
+    fillingProps.style[direction === 'row' ? 'minWidth' : 'minHeight'] = 0;
+
+    if (!state.collapsed) {
+      // `overflow: hidden` above zeroes this pane's own automatic minimum, so with the pane beside
+      // it now able to shrink, it would be the one absorbing every shortfall instead — measured at
+      // 40px against a configured 330px. It is either at the size it was given or deliberately
+      // closed, never a useless in between. Closed is deliberate, so it is free to sit at 0.
+      collapsingProps.style.flexShrink = 0;
+
+      // Not shrinking means the shortfall lands entirely on the pane beside it, which `minWidth: 0`
+      // above lets run all the way to zero. Cap this pane so that pane keeps its reserve instead —
+      // but never below the threshold. A cap under it leaves the pane open at a size too small to use,
+      // with no expand affordance, and any drag collapses it the moment it starts. Any cap
+      // `useSplitter` set still applies on top, so the drag handle stays inside the container.
+      if (minFillingPixels !== undefined) {
+        const maxDim = direction === 'row' ? 'maxWidth' : 'maxHeight';
+        const reserveCap = `max(${collapseBelowPixels}px, calc(100% - ${minFillingPixels}px))`;
+        const handleCap = collapsingProps.style[maxDim];
+        collapsingProps.style[maxDim] = handleCap ? `min(${handleCap}, ${reserveCap})` : reserveCap;
+      }
+    }
   }
 
   if (state.snapSize) {
     if (usePixels) {
-      secondaryProps.style.flexBasis = `${state.snapSize}px`;
+      collapsingProps.style.flexBasis = `${state.snapSize}px`;
     } else {
-      primaryProps.style = {
-        ...primaryProps.style,
+      fillingProps.style = {
+        ...fillingProps.style,
         flexGrow: 1 - state.snapSize,
       };
-      secondaryProps.style.flexGrow = state.snapSize;
+      collapsingProps.style.flexGrow = state.snapSize;
     }
   } else if (state.snapSize === 0) {
-    secondaryProps.style.minWidth = 'min-content';
-    secondaryProps.style.minHeight = 'min-content';
-    secondaryProps.style.overflow = 'unset';
+    collapsingProps.style.minWidth = 'min-content';
+    collapsingProps.style.minHeight = 'min-content';
+    collapsingProps.style.overflow = 'unset';
 
     if (usePixels) {
-      secondaryProps.style.flexBasis = '0px';
+      collapsingProps.style.flexBasis = '0px';
     } else {
-      primaryProps.style.flexGrow = 1;
-      secondaryProps.style.flexGrow = 0;
+      fillingProps.style.flexGrow = 1;
+      collapsingProps.style.flexGrow = 0;
     }
   }
 
