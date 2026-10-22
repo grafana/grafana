@@ -62,10 +62,7 @@ func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client, proxyTra
 	// A trailing slash would turn "/apis" into "//apis".
 	base.Path = strings.TrimRight(base.Path, "/")
 
-	patterns, err := compileGroupPatterns(cfg.GroupPatterns)
-	if err != nil {
-		return nil, err
-	}
+	patterns := compileGroupPatterns(cfg.GroupPatterns)
 	interval := cfg.PollInterval
 	if interval == 0 {
 		interval = defaultAggregatePollInterval

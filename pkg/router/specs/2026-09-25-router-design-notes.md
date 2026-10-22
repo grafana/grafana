@@ -102,5 +102,5 @@ which allows only 2 idle connections per host.
 `*` is the only special character, and everything else goes through `regexp.QuoteMeta`. An earlier
 version escaped only `.`, which left `+`, `(`, `[` and the rest live. That *widened* matches: for
 example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_regex` is a narrowing allowlist, so
-over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail in
-practice, although `compileGroupPatterns` still returns an error.
+over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail, so
+`compileGroupPatterns` returns no error.

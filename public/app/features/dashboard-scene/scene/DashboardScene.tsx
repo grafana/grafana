@@ -740,7 +740,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     ) {
       return false;
     }
-    if ((mode === 'view' && isNewDashboard(this.state)) || (mode !== 'view' && !this.state.editable)) {
+    if (mode === 'view' && isNewDashboard(this.state)) {
+      if (trigger === 'picker') {
+        this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+      }
+      return false;
+    }
+    if (mode !== 'view' && !this.state.editable) {
       return false;
     }
     const previous = getDashboardMode(this.state);
@@ -749,7 +755,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     if (
       trigger === 'picker' &&
-      previous === 'edit' &&
+      previous !== 'view' &&
       mode === 'view' &&
       this.state.isDirty &&
       hasActualSaveChanges(this)

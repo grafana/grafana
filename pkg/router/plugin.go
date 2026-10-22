@@ -74,7 +74,6 @@ type PluginLoaderDependencies struct {
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
-	AccessClient   types.AccessClient
 }
 
 func ProvidePluginLoaderDependencies(
@@ -102,7 +101,6 @@ func ProvidePluginLoaderDependencies(
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
-		AccessClient:   accessClient,
 		PluginDependencies: PluginDependencies{
 			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,

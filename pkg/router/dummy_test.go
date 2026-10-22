@@ -8,6 +8,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// sourceDummy is the source of the dummy backends tests serve.
+const sourceDummy = "dummy"
+
+// dummyRoutesLoader serves static groups, each answering with a fixed body.
 type dummyRoutesLoader struct {
 	groups []string
 }
