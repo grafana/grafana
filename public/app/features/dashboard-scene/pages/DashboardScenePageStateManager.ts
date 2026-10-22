@@ -595,7 +595,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
     const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
-    if (scene && !isRenderTarget(options.route)) {
+    if (scene && savedViewsEnabled && !isRenderTarget(options.route)) {
       // Writes ?viewFilter= into the URL if the viewer has a stored default for this dashboard
       // and the URL doesn't already name one -- see applyDefaultSavedViewToUrl's own comment for
       // why this happens before the scene mounts rather than applying the view's state directly.
