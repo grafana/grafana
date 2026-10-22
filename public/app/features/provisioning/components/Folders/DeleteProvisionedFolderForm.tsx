@@ -1,6 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -14,15 +13,15 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
+import { useResourceJob } from '../../hooks/useResourceJob';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { getJobListRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
-import { type DeleteJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type DeleteJobSpec } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { type JobSuccess, ResourceJobStatus } from '../Shared/ResourceJobStatus';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getProvisionedRequestError } from '../utils/errors';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
@@ -39,13 +38,7 @@ interface DeleteProvisionedFolderFormProps {
 function FormContent({ initialValues, parentFolder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
 
-  // state
-  const [submitted, setSubmitted] = useState<SubmittedJob>();
   const [error, setError] = useState<string | undefined>(undefined);
-
-  // hooks
-  const { createBulkJob, isLoading } = useBulkActionJob();
-  const navigate = useNavigate();
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
   const ref = watch('ref') ?? '';
@@ -71,6 +64,14 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     ref,
     isRefDirty: Boolean(methods.formState.dirtyFields.ref),
     setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
+    repository,
+    target: { workflow, prTitle },
+    ref,
+    action: 'delete',
+    onBeforeLeave: onDismiss,
   });
 
   const showError = (error: unknown) => {
@@ -105,43 +106,16 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     };
 
     try {
-      const result = await createBulkJob(repository, jobSpec);
-      if (!result.success) {
-        showError(result.error);
-        return;
-      }
-
-      if (result.job) {
-        setSubmitted({ job: result.job, workflow, prTitle });
-      }
+      await submit(repo, jobSpec);
     } catch (error) {
       showError(error);
     }
   };
 
-  const handleJobSuccess = useCallback(
-    ({ urls }: JobSuccess) => {
-      if (!submitted) {
-        return;
-      }
-      onDismiss?.();
-      navigate(
-        getJobListRedirectUrl({
-          workflow: submitted.workflow,
-          urls,
-          repoType: repository?.type,
-          action: 'delete',
-          prTitle: submitted.prTitle,
-        })
-      );
-    },
-    [onDismiss, navigate, submitted, repository?.type]
-  );
-
   return (
     <>
       {submitted ? (
-        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleJobSuccess} />
+        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -179,8 +153,8 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 <Button variant="secondary" fill="outline" onClick={onDismiss}>
                   <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button type="submit" disabled={isLoading || isResolving} variant="destructive">
-                  {isLoading
+                <Button type="submit" disabled={isCreating || isResolving} variant="destructive">
+                  {isCreating
                     ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
                 </Button>

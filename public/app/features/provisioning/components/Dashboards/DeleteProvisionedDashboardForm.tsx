@@ -1,6 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -11,15 +10,15 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
+import { useResourceJob } from '../../hooks/useResourceJob';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { getJobListRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
-import { type DeleteJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type DeleteJobSpec } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { type JobSuccess, ResourceJobStatus } from '../Shared/ResourceJobStatus';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getProvisionedRequestError } from '../utils/errors';
 
 export interface Props {
@@ -45,15 +44,8 @@ export function DeleteProvisionedDashboardForm({
   repository,
   onDismiss,
 }: Props) {
-  // State
-  const [submitted, setSubmitted] = useState<SubmittedJob>();
   const [submitError, setSubmitError] = useState<string | undefined>(undefined);
-
-  // Hooks
-  const navigate = useNavigate();
   const { editPanel: panelEditor } = dashboard.useState();
-  const { createBulkJob, isLoading } = useBulkActionJob();
-  // Form
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch } = methods;
   const ref = watch('ref') ?? '';
@@ -79,6 +71,19 @@ export function DeleteProvisionedDashboardForm({
     ref,
     isRefDirty: Boolean(methods.formState.dirtyFields.ref),
     setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
+    repository,
+    target: { workflow, prTitle },
+    ref,
+    action: 'delete',
+    onBeforeLeave: () => {
+      // Nothing is left to save once the file is deleted, so the redirect must not trip the
+      // unsaved-changes prompt.
+      dashboard.setState({ isDirty: false });
+      panelEditor?.onDiscard();
+    },
   });
 
   const showError = (error: unknown) => {
@@ -124,41 +129,11 @@ export function DeleteProvisionedDashboardForm({
     };
 
     try {
-      const result = await createBulkJob(repository, jobSpec);
-      if (!result.success) {
-        showError(result.error);
-        return;
-      }
-
-      if (result.job) {
-        setSubmitted({ job: result.job, workflow, prTitle });
-      }
+      await submit(repo, jobSpec);
     } catch (error) {
       showError(error);
     }
   };
-
-  const handleJobSuccess = useCallback(
-    ({ urls }: JobSuccess) => {
-      if (!submitted) {
-        return;
-      }
-      // Nothing is left to save once the file is deleted, so the redirect must not trip the
-      // unsaved-changes prompt.
-      dashboard.setState({ isDirty: false });
-      panelEditor?.onDiscard();
-      navigate(
-        getJobListRedirectUrl({
-          workflow: submitted.workflow,
-          urls,
-          repoType: repository?.type,
-          action: 'delete',
-          prTitle: submitted.prTitle,
-        })
-      );
-    },
-    [dashboard, panelEditor, navigate, submitted, repository?.type]
-  );
 
   return (
     <Drawer
@@ -167,7 +142,7 @@ export function DeleteProvisionedDashboardForm({
       onClose={onDismiss}
     >
       {submitted ? (
-        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleJobSuccess} />
+        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -194,8 +169,8 @@ export function DeleteProvisionedDashboardForm({
               {submitError && <ProvisioningAlert error={submitError} />}
 
               <Stack gap={2}>
-                <Button variant="destructive" type="submit" disabled={isLoading || isResolving || readOnly}>
-                  {isLoading
+                <Button variant="destructive" type="submit" disabled={isCreating || isResolving || readOnly}>
+                  {isCreating
                     ? t('dashboard-scene.delete-provisioned-dashboard-form.deleting', 'Deleting...')
                     : t('dashboard-scene.delete-provisioned-dashboard-form.delete-action', 'Delete dashboard')}
                 </Button>

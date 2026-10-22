@@ -1,7 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -9,19 +7,20 @@ import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
+import { useResourceJob } from '../../hooks/useResourceJob';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { getJobListRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
-import { type MoveJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type MoveJobSpec } from '../BulkActions/useBulkActionJob';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { type JobSuccess, ResourceJobStatus } from '../Shared/ResourceJobStatus';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -79,13 +78,18 @@ export function MoveProvisionedDashboardForm({
   const targetFolderPath = getTargetFolderPathInRepo({ targetFolderUID, targetFolder, repoName: repository?.name });
   const targetPath = targetFolderPath ? getResourceTargetPath(defaultValues.path, targetFolderPath) : '';
 
-  const { createBulkJob, isLoading } = useBulkActionJob();
-  const [submitted, setSubmitted] = useState<SubmittedJob>();
-
-  const navigate = useNavigate();
+  const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
+    repository,
+    target: { workflow, prTitle },
+    ref,
+    onBeforeLeave: () => {
+      dashboard.setState({ isDirty: false });
+      panelEditor?.onDiscard();
+    },
+  });
 
   // Helper function to show error messages
-  const showError = (error?: unknown) => {
+  const showError = (error?: string) => {
     const payload = [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error];
 
     appEvents.publish({
@@ -133,38 +137,16 @@ export function MoveProvisionedDashboardForm({
     };
 
     try {
-      const result = await createBulkJob(repository, jobSpec);
-      if (!result.success) {
-        showError(result.error);
-        return;
-      }
-
-      if (result.job) {
-        setSubmitted({ job: result.job, workflow, prTitle });
-      }
+      await submit(repo, jobSpec);
     } catch (error) {
-      showError(error);
+      showError(
+        extractErrorMessage(
+          error,
+          t('browse-dashboards.bulk-actions.error-generic', 'Unexpected error happened when creating job')
+        )
+      );
     }
   };
-
-  const handleJobSuccess = useCallback(
-    ({ urls }: JobSuccess) => {
-      if (!submitted) {
-        return;
-      }
-      dashboard.setState({ isDirty: false });
-      panelEditor?.onDiscard();
-      navigate(
-        getJobListRedirectUrl({
-          workflow: submitted.workflow,
-          urls,
-          repoType: repository?.type,
-          prTitle: submitted.prTitle,
-        })
-      );
-    },
-    [dashboard, panelEditor, navigate, submitted, repository?.type]
-  );
 
   return (
     <Drawer
@@ -173,7 +155,7 @@ export function MoveProvisionedDashboardForm({
       onClose={onDismiss}
     >
       {submitted ? (
-        <ResourceJobStatus job={submitted.job} jobType="move" onSuccess={handleJobSuccess} />
+        <ResourceJobStatus job={submitted.job} jobType="move" onSuccess={handleSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -211,8 +193,8 @@ export function MoveProvisionedDashboardForm({
               />
 
               <Stack gap={2}>
-                <Button variant="primary" type="submit" disabled={isLoading || isResolving || readOnly}>
-                  {isLoading
+                <Button variant="primary" type="submit" disabled={isCreating || isResolving || readOnly}>
+                  {isCreating
                     ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
                     : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}
                 </Button>

@@ -4,10 +4,8 @@ import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../../Job/JobStatus';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { type StepStatusInfo } from '../../Wizard/types';
+import { type JobSuccess, type StepStatusInfo } from '../../Wizard/types';
 import { type JobType } from '../../types';
-
-export type JobSuccess = Extract<StepStatusInfo, { status: 'success' }>;
 
 interface ResourceJobStatusProps {
   job: Job;
@@ -23,13 +21,18 @@ interface ResourceJobStatusProps {
  * blank the watcher leaves when its lookup fails, and success either shows an alert or hands off.
  */
 export function ResourceJobStatus({ job, jobType, successTitle, onSuccess }: ResourceJobStatusProps) {
-  // Keep the first terminal status so the longer retry path re-emitting the same
-  // status does not flip the alert back and forth in a render loop.
+  // Keep a finished status so the longer retry path re-emitting it does not flip the alert in a
+  // render loop. An error is not kept: the watcher reports a failed job lookup the same way as a
+  // failed job, and the lookup can recover into a finished job.
   const [status, setStatus] = useState<StepStatusInfo>();
 
   const onStatusChange = useCallback((info: StepStatusInfo) => {
     if (['error', 'warning', 'success'].includes(info.status)) {
-      setStatus((prev) => prev ?? info);
+      setStatus((prev) => {
+        // A job that finished is final; nothing can follow it.
+        const finished = prev?.status === 'success' || prev?.status === 'warning';
+        return finished || prev?.status === info.status ? prev : info;
+      });
     }
   }, []);
 

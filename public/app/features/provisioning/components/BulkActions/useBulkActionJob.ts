@@ -7,8 +7,6 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { type CommitTarget } from '../../hooks/useCommitTarget';
-
 // Reuse the generated ResourceRef but require every field: a bulk delete/move job
 // needs a fully-specified ref, whereas the generated fields are all optional.
 export type ResourceRef = Required<GeneratedResourceRef>;
@@ -36,13 +34,6 @@ export interface MoveJobSpec {
 }
 
 type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
-
-/**
- * A created job with the commit target it was submitted for. Creating the job refetches the refs,
- * which can reclassify the branch as existing and clear the live PR title, so completion handlers
- * read this snapshot instead of the form's current state.
- */
-export type SubmittedJob = Pick<CommitTarget, 'workflow' | 'prTitle'> & { job: Job };
 
 interface UseBulkActionJobResult {
   createBulkJob: (

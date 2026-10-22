@@ -1,6 +1,7 @@
 import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { store } from '@grafana/data';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -194,6 +195,8 @@ describe('DeleteProvisionedDashboardForm', () => {
         );
       });
       expect(props.dashboard.state.isDirty).toBe(false);
+      // The next form offers this branch as "last used", as the /files-based forms do
+      expect(store.get('grafana.provisioning.lastBranch.test-repo')).toBe('feature/delete');
     });
 
     it('redirects to the dashboard list once a configured-branch delete job finishes', async () => {
