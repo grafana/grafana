@@ -137,10 +137,10 @@ func NewConnectionController(
 func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
+			cc.enqueue(obj, cc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
+			cc.enqueue(newObj, cc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
 		},
 	}
 }
@@ -185,15 +185,6 @@ func (cc *ConnectionController) popTrigger(key string) (usinformer.ProcessTrigge
 		delete(cc.triggers, key)
 	}
 	return trigger, ok
-}
-
-// connectionResourceVersion returns the resource version of a delivered
-// Connection, or "" for a minimal NATS live event or a delete tombstone.
-func connectionResourceVersion(obj any) string {
-	if conn, ok := obj.(*provisioning.Connection); ok {
-		return conn.ResourceVersion
-	}
-	return ""
 }
 
 // connSpanAttrs returns the resource-identifying attributes stamped on every
@@ -282,6 +273,9 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	start := time.Now()
 	err := cc.processFn(ctx, key)
 	logger = logger.With("duration", time.Since(start))
+	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// so this counter is the denominator for the reconcile error rate.
+	cc.processed.RecordReconcile(err)
 	if err == nil {
 		// Finished: drop from inflight before reading lag so queue_lag reflects
 		// the remaining backlog, not the key just completed.
@@ -351,7 +345,11 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found")
+		// Nothing to reconcile; see the matching branch in RepositoryController.
+		// process for why the error this used to return recovered nothing, and
+		// where a read that lags its triggering event is counted instead.
+		logger.Warn("connection not found; nothing to reconcile")
+		return nil
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err

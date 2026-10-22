@@ -83,6 +83,26 @@ type Metrics interface {
 	ObserveLiveSubscription(open bool)
 }
 
+// Announcements observes which object each live notification was about and at
+// what resource version, so a consumer can tell whether the read its reconcile
+// then performs actually observed that write. It is recorded before the event
+// is dispatched, so it is in place by the time a handler has enqueued the key.
+//
+// This is instrumentation, not a gate: the informer never reads it back and
+// nothing in the delivery or reconcile path depends on it. Announce carries a
+// committed write's version (ADDED/MODIFIED); Forget drops the key on a DELETED,
+// whose object is already gone from storage, so a reader cannot mistake the
+// correct NotFound that follows for a read that lagged an announcement. Both
+// carry the notification's version, because arrival order does not follow it:
+// notifications for one key can come from different storage replicas, so a
+// delete can land after the re-create that superseded it.
+//
+// Implementations must not block: observations are made on the delivery path.
+type Announcements interface {
+	Announce(namespace, name string, rv int64)
+	Forget(namespace, name string, rv int64)
+}
+
 // defaultResync is the fallback re-list cadence when a caller passes a
 // non-positive interval.
 const defaultResync = 5 * time.Minute
@@ -139,6 +159,11 @@ type Informer struct {
 	// metrics observes delivered events and reconnects; nil disables observation.
 	// See SetMetrics.
 	metrics Metrics
+
+	// announcements records the identity and version of each live notification
+	// for the read-freshness instrumentation; nil disables it. See
+	// SetAnnouncements.
+	announcements Announcements
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
@@ -227,6 +252,10 @@ func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
 // SetMetrics registers the observer for delivered events and reconnects; a nil
 // observer (the default) disables observation. Call before Run.
 func (n *Informer) SetMetrics(m Metrics) { n.metrics = m }
+
+// SetAnnouncements registers the observer for live notification identities and
+// versions; a nil observer (the default) disables it. Call before Run.
+func (n *Informer) SetAnnouncements(a Announcements) { n.announcements = a }
 
 // registration implements cache.ResourceEventHandlerRegistration by deferring to
 // the informer's sync state, so a NATS informer registration is interchangeable
@@ -444,6 +473,20 @@ func (n *Informer) onNotification() nats.MessageHandler {
 
 		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
 
+		// Record what this notification announced before anything is dispatched:
+		// a handler enqueues the key synchronously, so a read taken by the worker
+		// that picks it up must be judged against an announcement that was already
+		// in place when that read started. A DELETED forgets the key instead —
+		// the object is gone from storage by then, so the NotFound a re-fetch
+		// returns is the truth, not a lagging read.
+		if n.announcements != nil {
+			if evt.Type == resourcepb.WatchNotification_DELETED {
+				n.announcements.Forget(evt.Namespace, evt.Name, evt.ResourceVersion)
+			} else {
+				n.announcements.Announce(evt.Namespace, evt.Name, evt.ResourceVersion)
+			}
+		}
+
 		obj := n.newObject(evt.Namespace, evt.Name)
 		// The handlers key off namespace/name and re-fetch the object in their
 		// reconcile, so the minimal object and old == new are both fine.
@@ -455,8 +498,8 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// the relist metrics and re-dispatching OnAdd. MODIFIED is deliberately not
 			// written through: it carries only namespace/name, so a soft-delete
 			// (delivered as MODIFIED with a deletionTimestamp) would overwrite the
-			// stored object's real deletionTimestamp with a nil one and mislead the
-			// staleness-tolerant readers of the snapshot (the repository quota count).
+			// stored object's real deletionTimestamp with a nil one and mislead any
+			// reader of the snapshot that relies on it.
 			//
 			// Stamp the notification's resource version onto the minimal object so
 			// the store records it: a re-list whose snapshot predates this add must

@@ -2,21 +2,23 @@ import { css } from '@emotion/css';
 
 import type { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Field, RadioButtonList, Tooltip, Select, Combobox, useStyles2 } from '@grafana/ui';
+import { Button, Field, RadioButtonList, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 
 import { SORT_OPTIONS } from '../constants';
 
+import { ChipSelect } from './ChipSelect';
+
 interface FilterState {
   groupBy: string;
-  categoryFilter: string;
-  typeFilter: string;
+  categoryFilter: string[];
+  typeFilter: string[];
   filterBy: string;
   sortBy: string;
 }
 
 interface FilterHandlers {
-  onCategoryFilterChange: (value: SelectableValue<string>) => void;
-  onTypeFilterChange: (value: SelectableValue<string>) => void;
+  onCategoryFilterChange: (values: string[]) => void;
+  onTypeFilterChange: (values: string[]) => void;
   onFilterByChange: (value: string) => void;
   onSortByChange: (value: SelectableValue<string>) => void;
 }
@@ -51,15 +53,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   feedbackButton: css({
     width: '100%',
     justifyContent: 'center',
-  }),
-  selectOptionLabel: css({
-    whiteSpace: 'normal',
-    wordBreak: 'break-word',
-  }),
-  selectValueLabel: css({
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
   }),
   activeDot: css({
     position: 'absolute',
@@ -121,41 +114,37 @@ export function FilterSidebar({
       </div>
       {/* Filter by category */}
       <div className={styles.filterField}>
-        {state.categoryFilter !== 'all' && <div className={styles.activeDot} />}
+        {state.categoryFilter.length > 0 && <div className={styles.activeDot} />}
         <Field
           label={<span className={styles.filterLabel}>{t('connections.add-new-connection.category', 'Category')}</span>}
           noMargin
         >
-          <Select
+          <ChipSelect
             aria-label={t('connections.add-new-connection.filter-by-category', 'Filter by category')}
-            value={state.categoryFilter}
-            onChange={handlers.onCategoryFilterChange}
             options={categoryFilterOptions}
-            formatOptionLabel={(option, meta) => (
-              <span className={meta.context === 'value' ? styles.selectValueLabel : styles.selectOptionLabel}>
-                {option.label}
-              </span>
-            )}
+            selected={state.categoryFilter}
+            onChange={handlers.onCategoryFilterChange}
+            placeholder={t('connections.add-new-connection.all-categories', 'All categories')}
+            addPlaceholder={t('connections.add-new-connection.add-category', 'Add category')}
+            listLabel={t('connections.add-new-connection.selected-categories', 'Selected categories')}
           />
         </Field>
       </div>
       {/* Filter by type */}
       <div className={styles.filterField}>
-        {state.typeFilter !== 'all' && <div className={styles.activeDot} />}
+        {state.typeFilter.length > 0 && <div className={styles.activeDot} />}
         <Field
           label={<span className={styles.filterLabel}>{t('connections.add-new-connection.type', 'Type')}</span>}
           noMargin
         >
-          <Select
+          <ChipSelect
             aria-label={t('connections.add-new-connection.filter-by-type', 'Filter by type')}
-            value={state.typeFilter}
-            onChange={handlers.onTypeFilterChange}
             options={typeFilterOptions}
-            formatOptionLabel={(option, meta) => (
-              <span className={meta.context === 'value' ? styles.selectValueLabel : styles.selectOptionLabel}>
-                {option.label}
-              </span>
-            )}
+            selected={state.typeFilter}
+            onChange={handlers.onTypeFilterChange}
+            placeholder={t('connections.add-new-connection.all-types', 'All types')}
+            addPlaceholder={t('connections.add-new-connection.add-type', 'Add type')}
+            listLabel={t('connections.add-new-connection.selected-types', 'Selected types')}
           />
         </Field>
       </div>

@@ -73,19 +73,42 @@ func (s *remoteSettingService) Delete(ctx context.Context, section, key string) 
 		return fmt.Errorf("missing namespace in context")
 	}
 
-	// Server-assigned names, so delete by (section, key) labels (idempotent).
+	// The apiserver does not allow DeleteCollection and assigns the names,
+	// so list by (section, key) labels and delete each by name.
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
-		MatchLabels: map[string]string{"section": section, "key": key},
+		// source=us pins the list to stored overrides, skipping the defaults merge.
+		MatchLabels: map[string]string{"section": section, "key": key, "source": "us"},
 	})
 	if err != nil {
 		return fmt.Errorf("delete setting %s/%s: %w", section, key, err)
 	}
-	if err := s.restClient.Delete().
+	raw, err := s.restClient.Get().
 		Resource(resource).
 		Namespace(namespace).
 		Param("labelSelector", selector.String()).
-		Do(ctx).Error(); err != nil {
-		return fmt.Errorf("delete setting %s/%s: %w", section, key, err)
+		Do(ctx).Raw()
+	if err != nil {
+		return fmt.Errorf("delete setting %s/%s: list: %w", section, key, err)
+	}
+	var list struct {
+		Items []struct {
+			Metadata struct {
+				Name string `json:"name"`
+			} `json:"metadata"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(raw, &list); err != nil {
+		return fmt.Errorf("delete setting %s/%s: decode list: %w", section, key, err)
+	}
+	for _, item := range list.Items {
+		err := s.restClient.Delete().
+			Resource(resource).
+			Namespace(namespace).
+			Name(item.Metadata.Name).
+			Do(ctx).Error()
+		if err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("delete setting %s/%s: %w", section, key, err)
+		}
 	}
 	return nil
 }

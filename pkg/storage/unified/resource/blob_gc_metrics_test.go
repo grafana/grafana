@@ -27,6 +27,13 @@ func TestBlobGCMetrics(t *testing.T) {
 	require.Equal(t, float64(1), testutil.ToFloat64(sql.Errors))
 	require.Equal(t, float64(3), testutil.ToFloat64(sql.Runs))
 	require.Zero(t, testutil.ToFloat64(kv.Deleted))
+
+	kv.RecordSkippedWithoutAge(4, nil)
+	require.Equal(t, float64(4), testutil.ToFloat64(kv.SkippedWithoutAge))
+	kv.RecordSkippedWithoutAge(1, errors.New("list failed"))
+	require.Equal(t, float64(4), testutil.ToFloat64(kv.SkippedWithoutAge), "partial count must not overwrite")
+	require.Zero(t, testutil.ToFloat64(sql.SkippedWithoutAge))
+	(*BlobGCMetrics)(nil).RecordSkippedWithoutAge(1, nil)
 	_, err := reg.Gather()
 	require.NoError(t, err)
 }

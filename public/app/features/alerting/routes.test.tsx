@@ -151,3 +151,38 @@ describe('data source managed route proxies', () => {
     }
   });
 });
+
+describe('GMA-only Alert rules route', () => {
+  const previousPermissions = contextSrv.user.permissions;
+
+  afterEach(() => {
+    setTestFlags();
+    contextSrv.user.permissions = previousPermissions;
+  });
+
+  function getRoutes(flag: boolean) {
+    setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: flag });
+    return getAlertingRoutes();
+  }
+
+  it('registers /alerting/rules/alert only with the flag on and adds no other route', () => {
+    const routesOff = getRoutes(false);
+    const routesOn = getRoutes(true);
+
+    expect(routesOff.map((route) => route.path)).not.toContain('/alerting/rules/alert');
+    expect(routesOn.map((route) => route.path)).toEqual([
+      ...routesOff.map((route) => route.path),
+      '/alerting/rules/alert',
+    ]);
+  });
+
+  it('denies a user with only data source-managed read and admits a Grafana-managed reader', () => {
+    const guard = getRoutes(true).find((route) => route.path === '/alerting/rules/alert')?.roles;
+
+    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleExternalRead]: true };
+    expect(guard?.()).toEqual(['Reject']);
+
+    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
+    expect(guard?.()).toEqual([]);
+  });
+});

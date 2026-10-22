@@ -1,0 +1,146 @@
+[
+  {
+    "label": "Run Server",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": ["server", "--homepath", "$ZED_WORKTREE_ROOT", "--packaging", "dev", "cfg:app_mode=development"]
+  },
+  {
+    "label": "Attach to Go Process",
+    "adapter": "Delve",
+    "request": "attach",
+    "mode": "remote",
+    "tcp_connection": { "host": "127.0.0.1", "port": 2345 }
+  },
+  {
+    "label": "Attach to Test Process",
+    "adapter": "Delve",
+    "request": "attach",
+    "mode": "remote",
+    "tcp_connection": { "host": "127.0.0.1", "port": 50480 }
+  },
+  {
+    "label": "Run API Server (testdata)",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": ["apiserver", "--secure-port=8443", "--runtime-config=testdata.datasource.grafana.app/v0alpha1=true"]
+  },
+  {
+    "label": "Run API Server (query-localhost)",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": [
+      "apiserver",
+      "--secure-port=8443",
+      "--runtime-config=query.grafana.app/v0alpha1=true",
+      "--grafana.authn.signing-keys-url=http://localhost:3000/api/signing-keys/keys",
+      "--hg-url=http://localhost:3000",
+      "--hg-key=$HGAPIKEY"
+    ]
+  },
+  {
+    "label": "Run Server (query GRPC Storage Server)",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "env": { "GF_GRAFANA_APISERVER_STORAGE_TYPE": "unified-grpc" },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": ["server", "--homepath", "$ZED_WORKTREE_ROOT", "--packaging", "dev"]
+  },
+  {
+    "label": "Run Storage Server",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "env": { "GF_DEFAULT_TARGET": "storage-server", "GF_SERVER_HTTP_PORT": "3001" },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": ["server", "target", "--homepath", "$ZED_WORKTREE_ROOT", "--packaging", "dev"]
+  },
+  {
+    "label": "Run Authz server",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "env": { "GF_DEFAULT_TARGET": "zanzana-server", "GF_SERVER_HTTP_PORT": "3001" },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": ["server", "target", "--homepath", "$ZED_WORKTREE_ROOT", "--packaging", "dev"]
+  },
+  {
+    "label": "Run Frontend Server",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "env": { "GF_DEFAULT_TARGET": "frontend-server", "GF_SERVER_HTTP_PORT": "3003" },
+    "args": ["server", "target", "--homepath", "$ZED_WORKTREE_ROOT", "--packaging", "dev"]
+  },
+  {
+    "label": "Run Router Server",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    "program": "$ZED_WORKTREE_ROOT/pkg/cmd/grafana/",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "env": { "GF_DEFAULT_TARGET": "router", "GF_SERVER_HTTP_PORT": "3004" },
+    "args": ["server", "target", "--homepath", "$ZED_WORKTREE_ROOT", "--packaging", "dev"]
+  },
+  {
+    "label": "Attach to Chrome",
+    "adapter": "JavaScript",
+    "port": 9222,
+    "request": "attach",
+    "type": "chrome",
+    "webRoot": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "Debug UI test",
+    "adapter": "JavaScript",
+    "type": "node",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "runtimeExecutable": "yarn",
+    "runtimeArgs": ["run", "jest", "--runInBand", "$ZED_FILE"],
+    "console": "integratedTerminal",
+    "env": { "NODE_ENV": "test" }
+  },
+  {
+    "label": "Debug ESLint",
+    "adapter": "JavaScript",
+    "type": "node",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "runtimeExecutable": "yarn",
+    "runtimeArgs": ["run", "eslint", "$ZED_FILE"],
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Debug ESLint with stats reporter",
+    "adapter": "JavaScript",
+    "type": "node",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "runtimeExecutable": "yarn",
+    "runtimeArgs": ["run", "eslint", "$ZED_FILE", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Debug Go test",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "test",
+    "program": "$ZED_DIRNAME"
+  }
+]
