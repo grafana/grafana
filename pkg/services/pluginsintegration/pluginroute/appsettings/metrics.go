@@ -1,4 +1,4 @@
-package appplugin
+package appsettings
 
 import (
 	"errors"
@@ -43,18 +43,16 @@ func registerSubresourceMetrics(reg prometheus.Registerer) {
 	}
 }
 
-// connectMetric tracks a single request across the Connect (setup) and
-// handler (serve) phases.  Call Record() explicitly after Connect errors,
-// or use defer m.Record() inside the handler.
-type connectMetric struct {
+// subresourceMetric tracks a single subresource request; defer Record in the handler.
+type subresourceMetric struct {
 	endpoint string
 	pluginID string
 	start    time.Time
 	status   string
 }
 
-func newConnectMetric(endpoint, pluginID string) *connectMetric {
-	return &connectMetric{
+func newSubresourceMetric(endpoint, pluginID string) *subresourceMetric {
+	return &subresourceMetric{
 		endpoint: endpoint,
 		pluginID: pluginID,
 		start:    time.Now(),
@@ -62,11 +60,10 @@ func newConnectMetric(endpoint, pluginID string) *connectMetric {
 	}
 }
 
-func (m *connectMetric) SetError()    { m.status = "error" }
-func (m *connectMetric) SetNotFound() { m.status = "not_found" }
+func (m *subresourceMetric) SetError() { m.status = "error" }
 
 // Record emits the counter and duration histogram once per request.
-func (m *connectMetric) Record() {
+func (m *subresourceMetric) Record() {
 	appSubresourceRequests.WithLabelValues(m.endpoint, m.pluginID, m.status).Inc()
 	appSubresourceRequestDuration.WithLabelValues(m.endpoint, m.pluginID).Observe(time.Since(m.start).Seconds())
 }

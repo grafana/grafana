@@ -1,4 +1,4 @@
-package appplugin
+package pluginauth
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -130,10 +129,10 @@ func TestClientV3TokenExchangerWithoutAppManifests(t *testing.T) {
 // decision for cfg, as Wire provides it.
 func exchangerFor(t *testing.T, cfg *setting.Cfg, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
 	t.Helper()
-	var pluginAuth *pluginauth.Config
+	var pluginAuth *Config
 	if cfg != nil {
 		var err error
-		pluginAuth, err = pluginauth.ProvideConfig(cfg)
+		pluginAuth, err = ProvideConfig(cfg)
 		require.NoError(t, err)
 	}
 	return ClientV3TokenExchanger(cfg, pluginAuth, pluginID, exchanger)

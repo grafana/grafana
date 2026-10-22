@@ -1,4 +1,4 @@
-package appplugin
+package appsettings
 
 import (
 	"net/http"

@@ -11,29 +11,31 @@ same API's spec offline; see [Rendering the spec offline](#rendering-the-spec-of
 
 Manifest handlers serve only the manifest's declared kinds, routes, and served
 versions. Settings and their subresources are served exclusively at
-`/apis/{plugin-id}/v0alpha1`. The embedded appplugin API server handles settings; the router prepares one
-backend per manifest. Settings never appear under the manifest's
-`ext.grafana.app` group, even when `appplugins.loadAppManifestAndKeepSettings` is enabled.
+`/apis/{plugin-id}/v0alpha1` by `NewAppSettingsHandler`, which wraps the
+[`appsettings`](appsettings/README.md) builder: the single `app` resource, always
+named `instance`, with its `health`, `resources` and `proxy` subresources. The
+router prepares one backend per manifest, and one settings backend per app plugin.
+Settings never appear under the manifest's `ext.grafana.app` group.
 
-The router loads plugin APIs and manifests independently of
-`appplugins.registerAPIServer` and `appplugins.loadAppManifest`.
-`appplugins.registerAPIServer` controls shared-server settings registration only.
-Manifest APIs require the router.
+The router loads manifests independently of `appplugins.loadAppManifest`.
+`appplugins.registerAPIServer` controls whether it serves settings, and in
+single-tenant Grafana also turns on the router middleware. Both APIs require the
+router.
 
 Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for
 parent-folder lookups. The router supplies the embedded server's provider so folder
 existence and repository-manager consistency checks run for routed plugin kinds.
-Settings migration remains the responsibility of the embedded settings server.
+Settings use the dual-write service the caller passes in `Options.DualWrite`,
+with the legacy store in `Options.Settings.LegacyStore`.
 
 The caller owns authentication and must populate `identity.Requester` in the
 request context. The handler then checks namespace access, plugin access, and
 manifest kind policies. Resource and folder permissions remain enforced by
-unified storage. During the transition, `appplugin.RegisterAPIService` still
-declares manifest roles and resolves wildcard settings storage configuration at
-startup, including for plugins whose API is served by the router. Callers outside
-that registration path must provision roles and configure their dual-write service
-for the plugin's settings resource before constructing a handler.
+unified storage. The router declares manifest roles and resolves wildcard settings
+storage configuration at startup. Other callers must provision roles and configure
+their dual-write service for the plugin's settings resource before constructing a
+handler.
 
 A manifest that declares no kinds has nothing to store, so no API server is built
 for it. The handler serves its routes, its group and version discovery, and its
