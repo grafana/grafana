@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, six labels, one border, one road */
+/** Trimmed from a generated Protomaps style: one fill, six labels, one border, two roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -75,6 +75,13 @@ const STYLE = {
         'line-color': '#ebebeb',
         'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 0, 6, 1.1, 12, 1.6, 15, 5, 18, 15],
       },
+    },
+    {
+      id: 'roads_major',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      paint: { 'line-color': '#292929' },
     },
     {
       id: 'boundaries_country',
@@ -332,6 +339,7 @@ describe('Protomaps basemap', () => {
     expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual([
       'earth',
       'roads_highway',
+      'roads_major',
       'boundaries_country',
     ]);
   });
@@ -373,6 +381,25 @@ describe('Protomaps basemap', () => {
       ['exponential', 1.6],
       ['zoom'],
       ...[3, 0, 6, 0.5, 7, 0.7, 8, 0.8, 10, 1.3, 12, 1.6, 15, 5, 18, 15],
+    ]);
+  });
+
+  it('draws secondary roads in Dark Matter’s blue-grey at every zoom, unlike primary roads', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Black });
+
+    const major = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_major');
+    const bySecondary = (primary: string) => [
+      'match',
+      ['get', 'kind_detail'],
+      ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'],
+      '#414758',
+      primary,
+    ];
+    expect(major.paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      ...[5, bySecondary('#1a1a1a'), 12, bySecondary('#232323'), 15, bySecondary('#535666')],
     ]);
   });
 
