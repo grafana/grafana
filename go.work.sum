@@ -876,7 +876,6 @@ github.com/envoyproxy/protoc-gen-validate v1.2.1/go.mod h1:d/C80l/jxXLdfEIhX1W2T
 github.com/envoyproxy/protoc-gen-validate v1.3.0/go.mod h1:HvYl7zwPa5mffgyeTUHA9zHIH36nmrm7oCbo4YKoSWA=
 github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 h1:R/ZjJpjQKsZ6L/+Gf9WHbt31GG8NMVcpRqUE+1mMIyo=
 github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731/go.mod h1:M9R1FoZ3y//hwwnJtO51ypFGwm8ZfpxPT/ZLtO1mcgQ=
-github.com/evanphx/json-patch v4.13.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/expr-lang/expr v1.17.8 h1:W1loDTT+0PQf5YteHSTpju2qfUfNoBt4yw9+wOEU9VM=
 github.com/expr-lang/expr v1.17.8/go.mod h1:8/vRC7+7HBzESEqt5kKpYXxrxkr31SaO8r40VO/1IT4=
 github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
@@ -1085,12 +1084,9 @@ github.com/gorilla/handlers v1.5.2 h1:cLTUSsNkgcwhgRqvCNmdbRWG0A3N4F+M2nWKdScwyE
 github.com/gorilla/handlers v1.5.2/go.mod h1:dX+xVpaxdSw+q0Qek8SSsl3dfMk3jNddUkMzo0GtH0w=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d/go.mod h1:1y/QFuWzHw/S70DfBTA9odWcmqd/r/YuCUylNXohIrI=
 github.com/grafana/authlib/types v0.0.0-20260304161757-e152786a5bb4/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
-github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85/go.mod h1:kImsvJ1xnmeT9Z6StK+RdEKLzlpzBsKwJbEQfmBJdFs=
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e/go.mod h1:Tl9i4F2CPp3cOiXo06JObTh05tENG/NV/ombn2XOY7Y=
-github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745/go.mod h1:dLUEt5k1Zv21//kvSk8ZR4kXjCq5oALBLu2LupLhj5k=
 github.com/grafana/grafana-app-sdk v0.60.0/go.mod h1:fbA8qt86WsvXrUpwCsInvOZzArnDMbpfrl4a21g0BQA=
 github.com/grafana/grafana-app-sdk v0.60.2/go.mod h1:W/M7GzbUdfuMefNicvaXv7z+pzwR8mrZDi4mFXs6plo=
 github.com/grafana/grafana-app-sdk v0.60.3/go.mod h1:sI7/5QkOrkd5sYVl03UcOQAC76zBTO1cdFF7b20TF1M=
@@ -1109,7 +1105,6 @@ github.com/grafana/grafana-app-sdk/logging v0.60.6/go.mod h1:uOj20cIKXKJccxLN/ah
 github.com/grafana/grafana-app-sdk/logging v0.60.9/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana-app-sdk/logging v0.60.10/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana-app-sdk/logging v0.60.12/go.mod h1:AvOi0e4Vh1J6wUAhGRI+4y5bv+vHcrVhWOwQjZ6vIJ0=
-github.com/grafana/grafana-app-sdk/logging v0.60.16/go.mod h1:AvOi0e4Vh1J6wUAhGRI+4y5bv+vHcrVhWOwQjZ6vIJ0=
 github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20260928014939-0c93a558d9a8 h1:zn8Ve1hy/3mSzyu35TGjDHksJerhzUrBBCxZBxwtLhA=
 github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20260928014939-0c93a558d9a8/go.mod h1:pz2SDW+6GxureV3DN4lPc4dYk/ZOXe4dKVeiPlPKBX4=
 github.com/grafana/grafana-app-sdk/plugin v0.60.0/go.mod h1:mk+b9l1/cQrJYCc1oLIp+duAP2R0NoljfYmJOkDSwvI=
@@ -1217,6 +1212,7 @@ github.com/klauspost/compress v1.18.6/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl
 github.com/klauspost/compress v1.19.1/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/klauspost/compress v1.19.2/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/klauspost/compress v1.20.0/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+github.com/klauspost/compress v1.20.1/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/klauspost/cpuid v1.3.1 h1:5JNjFYYQrZeKRJ0734q51WCEEn2huer72Dc7K+R/b6s=
 github.com/klauspost/cpuid v1.3.1/go.mod h1:bYW4mA6ZgKPob1/Dlai2LviZJO7KGI3uoWLd42rAQw4=
 github.com/klauspost/cpuid/v2 v2.0.10/go.mod h1:g2LTdtYhdyuGPqyWyv7qRAmj1WBqxuObKfj5c0PQa7c=
