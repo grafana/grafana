@@ -128,8 +128,17 @@ func (s *Service) stopping(failureReason error) error {
 	return s.shutdown(context.Background())
 }
 
+// awaitStartup only waits while the store is starting. Once it is running, AwaitRunning would make dskit pick
+// randomly between an expired context and the closed running channel, so loaded plugins would look missing.
+func (s *Service) awaitStartup(ctx context.Context) error {
+	if s.State() == services.Running {
+		return nil
+	}
+	return s.AwaitRunning(ctx)
+}
+
 func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
-	if err := s.AwaitRunning(ctx); err != nil {
+	if err := s.awaitStartup(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugin", "error", err)
 		return Plugin{}, false
 	}
@@ -142,7 +151,7 @@ func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
 }
 
 func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin {
-	if err := s.AwaitRunning(ctx); err != nil {
+	if err := s.awaitStartup(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugins", "error", err)
 		return []Plugin{}
 	}
@@ -196,7 +205,7 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 }
 
 func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
-	if err := s.AwaitRunning(ctx); err != nil {
+	if err := s.awaitStartup(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get routes", "error", err)
 		return []*plugins.StaticRoute{}
 	}
