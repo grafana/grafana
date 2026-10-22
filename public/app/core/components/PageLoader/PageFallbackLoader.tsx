@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -50,11 +51,15 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   const navTree = useSelector((state) => state.navBarTree);
   const navIndex = useSelector((state) => state.navIndex);
 
-  const matchedNavItem = useMemo(() => findNavItemForPath(navTree, location.pathname), [navTree, location.pathname]);
+  const matchedNavItem = useMemo(
+    () => findNavItemForPath(navTree, location.pathname, config.appSubUrl),
+    [navTree, location.pathname]
+  );
   const pageTitle = matchedNavItem?.text;
 
   useLayoutEffect(() => {
-    if (matchedNavItem?.id) {
+    const isIndexedNavItem = matchedNavItem?.id ? Boolean(navIndex[matchedNavItem.id]) : false;
+    if (isIndexedNavItem && matchedNavItem?.id) {
       const navModel = getNavModel(navIndex, matchedNavItem.id);
       chrome.update({ sectionNav: navModel, pageNav: navModel.node });
     } else {
@@ -121,10 +126,7 @@ const DotFieldBackdrop = () => {
   );
 };
 
-// Parametric lemniscate of Bernoulli at LEMNISCATE_SAMPLE_COUNT samples:
-//   x(t) = cos(t) / (1 + sin²(t)),  y(t) = sin(t)cos(t) / (1 + sin²(t)),  t ∈ [0, 2π]
-// Computed values are normalized half-amplitudes applied to LEMNISCATE_WIDTH / _HEIGHT. The curve's
-// natural ~2.83:1 x:y aspect ratio is reflected in the designer-chosen clamps for those constants.
+// Lemniscate of Bernoulli:  x(t) = cos(t) / (1 + sin²(t)),  y(t) = sin(t)·cos(t) / (1 + sin²(t))
 const LEMNISCATE_SAMPLE_COUNT = 16;
 const LEMNISCATE_SAMPLES = Array.from({ length: LEMNISCATE_SAMPLE_COUNT }, (_, i) => {
   const t = (i / LEMNISCATE_SAMPLE_COUNT) * 2 * Math.PI;
@@ -134,8 +136,7 @@ const LEMNISCATE_SAMPLES = Array.from({ length: LEMNISCATE_SAMPLE_COUNT }, (_, i
     y: (Math.sin(t) * Math.cos(t)) / denom / 2,
   };
 });
-// Phase offsets space the blobs evenly around the loop (thirds of a cycle, rounded to the sample
-// grid). Bloberto leads, Blobigail chases, Blobathan trails.
+// Bloberto leads, Blobigail chases, Blobathan trails.
 const BLOB_PHASE_OFFSETS = BLOBS.map((_, i) => Math.round((i * LEMNISCATE_SAMPLE_COUNT) / BLOBS.length));
 
 const blobPositionsAt = (sample: number): string =>
@@ -219,7 +220,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.action.hover,
       pointerEvents: 'none',
       zIndex: -1,
-      // translate3d keeps the fill on the compositor thread so long-duration animations stay smooth.
       transform: 'translate3d(-100%, 0, 0)',
       willChange: 'transform',
       [theme.transitions.handleMotion('no-preference')]: {

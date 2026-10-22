@@ -123,4 +123,25 @@ describe('PageFallbackLoader', () => {
     expect(state.sectionNav.node.text).toBe('Explore');
     expect(state.pageNav?.text).toBe('Explore');
   });
+
+  it('skips chrome breadcrumbs when the matched item has no entry in navIndex', () => {
+    // Items from navBarTree may be absent from navIndex (bookmarks, starred, runtime-added
+    // entries). getNavModel's fallback would otherwise write "Page not found" into chrome state.
+    const chrome = new AppChromeService();
+    const store = configureStore({
+      navBarTree: [{ id: 'bookmarked-thing', text: 'Bookmarked', url: '/bookmarked-thing' }],
+      navIndex: {},
+    });
+    const wrapper = getWrapper({
+      store,
+      grafanaContext: { chrome },
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/bookmarked-thing'] },
+    });
+    render(<PageFallbackLoader />, { wrapper });
+
+    const state = chrome.state.getValue();
+    expect(state.pageNav).toBeUndefined();
+    expect(state.sectionNav.node.text).not.toBe('Page not found');
+  });
 });
