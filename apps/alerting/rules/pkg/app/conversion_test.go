@@ -88,7 +88,7 @@ func TestRuleConverter(t *testing.T) {
 	t.Run("takes the kind from the RawKind", func(t *testing.T) {
 		out, err := ruleConverter{}.Convert(k8s.RawKind{Kind: "RuleSequence", Raw: []byte(`{"spec":{"alertingRules":[{"name":"a"}]}}`)}, v1)
 		require.NoError(t, err)
-		assert.JSONEq(t, `{"apiVersion":"`+v1+`","spec":{"alertRules":[{"name":"a"}]}}`, string(out))
+		assert.JSONEq(t, `{"apiVersion":"`+v1+`","kind":"RuleSequence","spec":{"alertRules":[{"name":"a"}]}}`, string(out))
 	})
 
 	t.Run("does not rename fields of other kinds", func(t *testing.T) {

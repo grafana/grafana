@@ -42,6 +42,12 @@ func TestHub(t *testing.T) {
 		assert.Empty(t, in.Spec.NotificationSettings.SimplifiedRouting.Type, "the source is not modified")
 	})
 
+	t.Run("sets the TypeMeta of the converted object", func(t *testing.T) {
+		got, err := Hub[*v1beta1.AlertRule](alphaRule())
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.AlertRuleKind().GroupVersionKind(), got.GroupVersionKind())
+	})
+
 	t.Run("converts the other rule kinds", func(t *testing.T) {
 		rr, err := Hub[*v1beta1.RecordingRule](&v0alpha1.RecordingRule{Spec: v0alpha1.RecordingRuleSpec{Metric: "m"}})
 		require.NoError(t, err)
@@ -87,6 +93,7 @@ func TestLike(t *testing.T) {
 		require.True(t, ok, "got %T", got)
 		assert.Equal(t, "t", rule.Spec.Title)
 		assert.Equal(t, "f", rule.Labels[v0alpha1.FolderLabelKey])
+		assert.Equal(t, v0alpha1.AlertRuleKind().GroupVersionKind(), rule.GroupVersionKind())
 	})
 
 	t.Run("rejects another kind", func(t *testing.T) {
