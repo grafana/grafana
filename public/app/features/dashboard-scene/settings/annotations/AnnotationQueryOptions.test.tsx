@@ -16,7 +16,17 @@ const editedAnnotation: AnnotationQuery = { name: 'Anno', enable: true, iconColo
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  useDataSourceInstance: (ref?: { uid?: string }) => ({ dataSource: { uid: ref?.uid, annotations: {} } }),
+  // Like the real hook, it keeps returning the previous instance for a render after the ref changes
+  useDataSourceInstance: (ref?: { uid?: string }) => {
+    const { useEffect, useState } = jest.requireActual('react');
+    const [dataSource, setDataSource] = useState({ uid: ref?.uid, annotations: {} });
+    useEffect(() => {
+      setDataSource((current: { uid?: string }) =>
+        current.uid === ref?.uid ? current : { uid: ref?.uid, annotations: {} }
+      );
+    }, [ref?.uid]);
+    return { dataSource };
+  },
   useDataSourceInstanceSettings: () => ({ settings: {} }),
 }));
 
@@ -35,6 +45,7 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
 }));
 
 let mockPreparedAnnotation: AnnotationQuery | undefined;
+let mockPrepare: ((annotation: AnnotationQuery, dataSourceUid?: string) => AnnotationQuery) | undefined;
 
 jest.mock('app/features/annotations/components/StandardAnnotationQueryEditor', () => {
   const { useEffect } = jest.requireActual('react');
@@ -43,15 +54,23 @@ jest.mock('app/features/annotations/components/StandardAnnotationQueryEditor', (
     default: function MockEditor({
       onChange,
       annotation,
+      datasource,
     }: {
       onChange: (annotation: AnnotationQuery) => void;
       annotation: AnnotationQuery;
+      datasource: { uid?: string };
     }) {
       useEffect(() => {
         if (mockPreparedAnnotation) {
           onChange(mockPreparedAnnotation);
         }
       }, [onChange]);
+      useEffect(() => {
+        const prepared = mockPrepare?.(annotation, datasource.uid);
+        if (prepared && prepared !== annotation) {
+          onChange(prepared);
+        }
+      }, [annotation, datasource, onChange]);
       return (
         <>
           <button onClick={() => onChange({ name: 'Anno', enable: true, iconColor: 'red', expr: 'original' })}>
@@ -96,6 +115,7 @@ describe('AnnotationQueryEditorButton', () => {
     act(() => deactivate?.());
     jest.clearAllMocks();
     mockPreparedAnnotation = undefined;
+    mockPrepare = undefined;
   });
 
   it('does not record the query preparation done by the editor when the modal opens', async () => {
@@ -175,6 +195,29 @@ describe('AnnotationQueryEditorButton', () => {
 
     act(() => sidebar.redoAction());
     expect(layer.state.query).toBe(savedQueryAnnotation);
+  });
+
+  it('does not record the previous data source preparing the query after a data source change', async () => {
+    // The data source the layer starts with adds its own target to queries that have none
+    mockPrepare = (annotation, dataSourceUid) =>
+      dataSourceUid === undefined && !annotation.target ? { ...annotation, target: { refId: 'first' } } : annotation;
+    const { layer, sidebar, user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Open query editor' }));
+    await screen.findByRole('button', { name: 'Edit query' });
+    const preparedQuery = layer.state.query;
+
+    await user.click(screen.getByRole('button', { name: 'Switch data source' }));
+    await user.click(screen.getByText('Close'));
+
+    expect(layer.state.query).toEqual({
+      datasource: { uid: 'second', type: 'test' },
+      name: 'Anno',
+      enable: true,
+      iconColor: 'red',
+    });
+    expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual(['annotation.changeDataSource']);
+    act(() => sidebar.undoAction());
+    expect(layer.state.query).toBe(preparedQuery);
   });
 
   it('undoes and redoes edits on both sides of a data source change in order', async () => {
