@@ -2439,6 +2439,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref common.Reference
 							Format:      "",
 						},
 					},
+					"varMappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maps field-config property ids (e.g. `min`, `unit`, `custom.lineWidth`, or `thresholds.steps.<index>` for a threshold step) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -6246,6 +6261,21 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfig(ref common.ReferenceC
 							Description: "How null values should be handled when calculating field stats \"null\" - Include null values, \"connected\" - Ignore nulls, \"null as zero\" - Treat nulls as zero",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"varMappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maps field-config property ids (e.g. `min`, `unit`, `custom.lineWidth`, or `thresholds.steps.<index>` for a threshold step) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 				},

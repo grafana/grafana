@@ -2385,6 +2385,21 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfig(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"varMappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maps field-config property ids (e.g. `min`, `unit`, `custom.lineWidth`, or `thresholds.steps.<index>` for a threshold step) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
