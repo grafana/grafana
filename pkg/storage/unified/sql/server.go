@@ -374,8 +374,13 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	for _, r := range opts.Cfg.EnforcedQuotaResources {
 		enforced[r] = true
 	}
+	logged := make(map[string]bool, len(opts.Cfg.LoggedQuotaResources))
+	for _, r := range opts.Cfg.LoggedQuotaResources {
+		logged[r] = true
+	}
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
+		LoggedResources:   logged,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
 	return nil

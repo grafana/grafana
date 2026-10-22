@@ -859,6 +859,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool

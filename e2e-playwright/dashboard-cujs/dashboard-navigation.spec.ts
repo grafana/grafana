@@ -6,7 +6,11 @@ test.use({
   featureToggles: {
     scopeFilters: true,
     groupByVariable: true,
-    reloadDashboardsOnParamsChange: true,
+  },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+    },
   },
   openFeature: { flags: { 'grafana.scopesDashboardsMegaMenu': false } },
 });
