@@ -598,7 +598,11 @@ abstract class DashboardScenePageStateManagerBase<T>
     // sync runs (see loadSavedViews.ts) -- otherwise every dashboard load would pay for a fetch
     // most dashboards never use. The Saved Views pane fetches lazily on its own if opened without
     // this having already run.
-    if (scene && typeof locationService.getSearchObject().viewFilter === 'string') {
+    if (
+      scene &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&
+      typeof locationService.getSearchObject().viewFilter === 'string'
+    ) {
       await loadSavedViews(scene);
     }
 

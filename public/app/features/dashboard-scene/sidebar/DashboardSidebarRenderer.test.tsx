@@ -204,6 +204,8 @@ describe('DashboardSidebarRenderer', () => {
       return scene;
     }
 
+    beforeEach(() => setTestFlags({ 'grafana.savedDashboardViews': true }));
+
     it('shows for a normal dashboard with a uid', async () => {
       const scene = buildTestSceneWithUid();
       act(() => activateFullSceneTree(scene));
@@ -218,6 +220,16 @@ describe('DashboardSidebarRenderer', () => {
       // source dashboard's saved views, and an anonymous snapshot recipient has no permission on
       // that dashboard's saved views at all.
       const scene = buildTestSceneWithUid({ isSnapshot: true });
+      act(() => activateFullSceneTree(scene));
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+
+      await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
+      expect(screen.queryByRole('button', { name: 'Views' })).not.toBeInTheDocument();
+    });
+
+    it('is hidden when the grafana.savedDashboardViews flag is off', async () => {
+      setTestFlags({});
+      const scene = buildTestSceneWithUid();
       act(() => activateFullSceneTree(scene));
       render(<DashboardSidebarSplitter dashboard={scene} />);
 

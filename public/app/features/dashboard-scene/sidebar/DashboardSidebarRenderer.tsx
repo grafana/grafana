@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   useFlagDashboardUndoRedo,
+  useFlagGrafanaSavedDashboardViews,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
@@ -53,6 +54,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const feedbackButton = useFlagFeedbackButton();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const dashboardUndoRedo = useFlagDashboardUndoRedo();
+  const savedViewsEnabled = useFlagGrafanaSavedDashboardViews();
 
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
@@ -159,7 +161,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
         )}
         <div className={styles.viewGroup}>
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
-          {hasUid && !isEmbedded && !meta.isSnapshot && (
+          {savedViewsEnabled && hasUid && !isEmbedded && !meta.isSnapshot && (
             <SavedViewsSidebarButton sidebar={sidebar} openPane={openPane} />
           )}
           <Sidebar.Button

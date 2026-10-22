@@ -1,5 +1,6 @@
 import { Subscription, type Unsubscribable } from 'rxjs';
 
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
@@ -81,12 +82,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
+    const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
     // Captured once, on this scene's very first url-sync pass -- before this pass's own
     // $timeRange/variable updateFromUrl calls run (see the ordering note below), so this reflects
     // the dashboard exactly as authored, untouched by any URL param or saved view. Every later
     // apply of a saved view falls back to this for anything the view itself doesn't capture.
-    if (!savedViewBaseline) {
+    if (savedViewsEnabled && !savedViewBaseline) {
       update.savedViewBaseline = captureSavedViewState(this._scene);
     }
 
@@ -100,7 +102,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // sync pass doesn't re-read the URL mid-walk, so a synchronous mutation here is invisible to it
     // and gets clobbered a few lines later in the very same call stack. Deferring to a new tick
     // lets that pass finish first.
-    if (typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
+    if (savedViewsEnabled && typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
       const view = savedViews?.find((v) => v.metadata.name === values.viewFilter);
       if (view) {
         const scene = this._scene;

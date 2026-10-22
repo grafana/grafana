@@ -4,6 +4,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, SceneTimeRange, UrlSyncManager, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
@@ -115,10 +116,23 @@ describe('DashboardSceneUrlSync', () => {
 
     beforeEach(() => {
       jest.useFakeTimers();
+      setTestFlags({ 'grafana.savedDashboardViews': true });
     });
 
     afterEach(() => {
       jest.useRealTimers();
+      setTestFlags({});
+    });
+
+    it('ignores viewFilter and skips the baseline capture when the grafana.savedDashboardViews flag is off', () => {
+      setTestFlags({});
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+
+      expect(scene.state.viewFilter).toBeUndefined();
+      expect(scene.state.savedViewBaseline).toBeUndefined();
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
     });
 
     it('records the selection synchronously, but defers applying it', () => {
