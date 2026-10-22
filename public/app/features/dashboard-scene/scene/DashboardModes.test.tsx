@@ -242,57 +242,76 @@ it('switches modes directly from the main button and describes the next mode in 
   ).toEqual([]);
 });
 
-it('disables the mode picker until the first successful save while keeping Save available', async () => {
-  const dashboard = setup(false, true);
-  dashboard.onEnterEditMode();
-  render(
-    <TestProvider>
-      <DashboardModePicker dashboard={dashboard} />
-      <SaveDashboard dashboard={dashboard} />
-    </TestProvider>
-  );
-  const user = userEvent.setup();
-  const editingButton = screen.getByRole('button', { name: 'Dashboard mode: Editing' });
-  expect(editingButton).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
-  await user.hover(editingButton);
-  expect(await screen.findByRole('tooltip')).toHaveTextContent('Save the dashboard before switching to Viewing.');
-  await user.unhover(editingButton);
-  const dropdownButton = screen.getByRole('button', { name: 'Change dashboard mode' });
-  expect(dropdownButton).toBeDisabled();
-  await user.hover(dropdownButton);
-  expect(await screen.findByRole('tooltip')).toHaveTextContent('Save the dashboard before switching to Viewing.');
-  await user.unhover(dropdownButton);
-  await user.click(dropdownButton);
-  expect(screen.queryByRole('menu', { name: 'Dashboard mode' })).not.toBeInTheDocument();
-  expect(getDashboardMode(dashboard.state)).toBe('edit');
+describe('switching an unsaved new dashboard to Viewing', () => {
+  async function chooseViewing() {
+    const dashboard = setup(false, true);
+    dashboard.onEnterEditMode();
+    render(
+      <TestProvider>
+        <DashboardModePicker dashboard={dashboard} />
+      </TestProvider>
+    );
+    const user = userEvent.setup();
+    const editingButton = screen.getByRole('button', { name: 'Dashboard mode: Editing' });
+    await user.hover(editingButton);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Save the dashboard before switching to Viewing.');
+    await user.click(editingButton);
+    await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+    expect(getDashboardMode(dashboard.state)).toBe('edit');
+    const drawer = dashboard.state.overlay;
+    if (!(drawer instanceof SaveDashboardDrawer)) {
+      throw new Error('Expected the save drawer');
+    }
+    return { dashboard, drawer };
+  }
 
-  const { result } = renderHook(() => useSaveDashboard(), { wrapper: TestProvider });
-  mockSaveDashboard.mockResolvedValue({ error: { status: 500, data: { message: 'Save failed' } } });
-  await act(async () => {
-    await result.current.onSaveDashboard(dashboard, { isNew: true, saveAsCopy: true });
-  });
-  expect(editingButton).toBeDisabled();
-  expect(dropdownButton).toBeDisabled();
-  mockSaveDashboard.mockResolvedValue({
-    data: { uid: 'saved-dashboard', version: 1, url: '/d/saved-dashboard', status: 'success' },
-  });
-  await act(async () => {
-    await result.current.onSaveDashboard(dashboard, { isNew: true, saveAsCopy: true });
-  });
-  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeEnabled();
-  expect(screen.getByRole('button', { name: 'Change dashboard mode' })).toBeEnabled();
-  await user.click(screen.getByRole('button', { name: 'Change dashboard mode' }));
-  expect(screen.getByRole('menuitemradio', { name: /Viewing/ })).toBeEnabled();
-  await user.click(screen.getByRole('menuitemradio', { name: /Viewing/ }));
-  expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeInTheDocument();
-});
+  async function save(dashboard: ReturnType<typeof setup>, drawer: SaveDashboardDrawer, response: unknown) {
+    const { result } = renderHook(() => useSaveDashboard(), { wrapper: TestProvider });
+    mockSaveDashboard.mockResolvedValue(response);
+    await act(async () => {
+      const saved = await result.current.onSaveDashboard(dashboard, { isNew: true, saveAsCopy: true });
+      if (saved?.status === 'success') {
+        drawer.state.onSaveSuccess?.();
+      }
+    });
+  }
 
-it.each(['picker', 'navigation', 'restore'] as const)('refuses Viewing for an unsaved dashboard via %s', (trigger) => {
-  const dashboard = setup(false, true);
-  dashboard.onEnterEditMode();
-  expect(dashboard.setDashboardMode('view', trigger)).toBe(false);
-  expect(getDashboardMode(dashboard.state)).toBe('edit');
+  it('opens the save drawer and switches to Viewing after the first successful save', async () => {
+    const { dashboard, drawer } = await chooseViewing();
+    await save(dashboard, drawer, {
+      data: { uid: 'saved-dashboard', version: 1, url: '/d/saved-dashboard', status: 'success' },
+    });
+    expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeInTheDocument();
+  });
+
+  it('stays in Editing when the first save fails', async () => {
+    const { dashboard, drawer } = await chooseViewing();
+    await save(dashboard, drawer, { error: { status: 500, data: { message: 'Save failed' } } });
+    expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
+  });
+
+  it('opens the same save drawer from the Viewing option in the mode menu', async () => {
+    const dashboard = setup(false, true);
+    dashboard.onEnterEditMode();
+    render(
+      <TestProvider>
+        <DashboardModePicker dashboard={dashboard} />
+      </TestProvider>
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Change dashboard mode' }));
+    await user.click(screen.getByRole('menuitemradio', { name: /Save the dashboard before switching to Viewing/ }));
+    await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+    expect(getDashboardMode(dashboard.state)).toBe('edit');
+  });
+
+  it.each(['navigation', 'restore'] as const)('refuses Viewing without a save prompt via %s', (trigger) => {
+    const dashboard = setup(false, true);
+    dashboard.onEnterEditMode();
+    expect(dashboard.setDashboardMode('view', trigger)).toBe(false);
+    expect(getDashboardMode(dashboard.state)).toBe('edit');
+    expect(dashboard.state.overlay).toBeUndefined();
+  });
 });
 
 describe('switching from Agent editing to Viewing with an unsaved Assistant draft', () => {
@@ -330,7 +349,7 @@ describe('switching from Agent editing to Viewing with an unsaved Assistant draf
   });
 });
 
-it('takes over Agent editing from the main button on a new dashboard, which cannot be viewed', async () => {
+it('asks to save a new dashboard before leaving Agent editing for Viewing', async () => {
   const dashboard = setup(false, true);
   await assistantChangesTitle(dashboard, 'Agent draft');
   render(
@@ -339,8 +358,9 @@ it('takes over Agent editing from the main button on a new dashboard, which cann
     </TestProvider>
   );
   await userEvent.click(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
-  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
-  expect(isFullDashboardEditing(dashboard.state)).toBe(true);
+  await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+  expect(getDashboardMode(dashboard.state)).toBe('agent');
+  expect(dashboard.state.title).toBe('Agent draft');
 });
 
 describe('switching from Editing to Viewing with unsaved changes', () => {
