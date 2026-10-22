@@ -13720,6 +13720,13 @@
       "save-tooltip": "Save"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "Page loading progress",
+    "step": {
+      "preparing": "Preparing page",
+      "preparing-named": "Preparing {{pageTitle}}"
+    }
+  },
   "page-loader": {
     "default": "Loading ..."
   },
