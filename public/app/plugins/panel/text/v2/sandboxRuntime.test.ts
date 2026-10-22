@@ -1,3 +1,4 @@
+import { MAX_BLOCKED_URL_CHARS } from './sandboxPolicy';
 import { CSP_CHECK_URL, TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
 
 const parentOrigin = 'https://grafana.test';
@@ -82,7 +83,7 @@ describe('sandbox runtime', () => {
 
   test('legacy content renders without policy verification and keeps measuring', async () => {
     initialize();
-    expectNotification('ready');
+    expectNotification('ready', { document: expect.any(String) });
     violation('https://external.test/image');
     message();
     await flush();
@@ -108,7 +109,7 @@ describe('sandbox runtime', () => {
     violation(CSP_CHECK_URL);
     violation(new URL(CSP_CHECK_URL).origin);
     await flush();
-    expectNotification('ready');
+    expectNotification('ready', { document: expect.any(String) });
     expect(document.querySelector('img')).toBeNull();
     message();
     await flush();
@@ -116,7 +117,7 @@ describe('sandbox runtime', () => {
     expectNotification('rendered');
   });
 
-  test('deduplicates resource origins and continues reporting later violations', async () => {
+  test('groups blocked URLs by origin and keeps reporting later violations', async () => {
     initialize(policy);
     violation(CSP_CHECK_URL);
     await flush();
@@ -124,25 +125,91 @@ describe('sandbox runtime', () => {
     await flush();
     violation('https://external.test/one?secret=1');
     violation('https://external.test/two?secret=2');
-    await flush();
-    const resources = [{ directive: 'img-src', origin: 'https://external.test' }];
-    expectNotification('blocked', { resources });
-    postMessage.mockClear();
-    violation('https://external.test/three');
-    await flush();
-    expect(postMessage).not.toHaveBeenCalled();
-    violation('https://other.test/image', { originalPolicy: 'deployment policy' });
-    violation('inline', { effectiveDirective: 'script-src' });
+    violation('https://external.test/one?secret=1');
     await flush();
     expectNotification('blocked', {
       resources: [
-        ...resources,
-        { directive: 'img-src', origin: undefined },
-        { directive: 'script-src', origin: undefined },
+        {
+          directive: 'img-src',
+          origin: 'https://external.test',
+          urls: [
+            { url: 'https://external.test/one?secret=1', count: 2 },
+            { url: 'https://external.test/two?secret=2', count: 1 },
+          ],
+        },
       ],
     });
+    postMessage.mockClear();
+    violation('https://other.test/image', { originalPolicy: 'deployment policy' });
+    violation('inline', { effectiveDirective: 'script-src' });
+    violation('inline', { effectiveDirective: 'script-src' });
+    await flush();
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(postMessage.mock.calls[0][0].resources.slice(1)).toEqual([
+      { directive: 'img-src', origin: undefined },
+      { directive: 'script-src', origin: undefined },
+    ]);
     expect(document.querySelector('p')).toBeVisible();
     expect(disconnect).not.toHaveBeenCalled();
+  });
+
+  test('counts every element using a blocked URL, since browsers may report a repeated image once', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    const url = 'https://external.test/avatar.png';
+    message({ ...command, html: `<img src="${url}"><img src="${url}"><img src="${url}">` });
+    await flush();
+    violation(url);
+    await flush();
+    expectNotification('blocked', {
+      resources: [{ directive: 'img-src', origin: 'https://external.test', urls: [{ url, count: 3 }] }],
+    });
+  });
+
+  test('counts references with a fragment and video posters, which CSP reports without the fragment', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    const url = 'https://external.test/avatar.png';
+    message({ ...command, html: `<img src="${url}#a"><img src="${url}#b"><video poster="${url}"></video>` });
+    await flush();
+    violation(url);
+    await flush();
+    expectNotification('blocked', {
+      resources: [{ directive: 'img-src', origin: 'https://external.test', urls: [{ url, count: 3 }] }],
+    });
+  });
+
+  test('reports a long URL in full', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    message();
+    await flush();
+    const long = `https://external.test/collect?d=${'x'.repeat(10_000)}`;
+    violation(long);
+    await flush();
+    const [resource] = postMessage.mock.calls.at(-1)![0].resources;
+    expect(resource.urls).toEqual([{ url: long, count: 1 }]);
+    expect(resource.truncated).toBeUndefined();
+  });
+
+  test('marks the report as truncated once the URLs go over the budget', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    message();
+    await flush();
+    const url = (index: number) => `https://external.test/${index}?d=${'x'.repeat(1000)}`;
+    const fits = Math.floor(MAX_BLOCKED_URL_CHARS / url(0).length);
+    for (let index = 0; index <= fits; index++) {
+      violation(url(index));
+    }
+    await flush();
+    const [resource] = postMessage.mock.calls.at(-1)![0].resources;
+    expect(resource.urls).toHaveLength(fits);
+    expect(resource.truncated).toBe(true);
   });
 
   test('ignores unauthenticated, malformed, and duplicate render commands', async () => {

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"slices"
 	"strings"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -28,14 +29,17 @@ type discoveredGroup struct {
 // for the aggregated format first: the standalone apiextensions apiserver lists
 // CRD-backed groups only there, never in its plain /apis response. Servers
 // without it fall back to the classic APIGroupList. Each group keeps its
-// resources when the target served the aggregated format.
+// resources when the target served the aggregated format. The reserved
+// discovery group is left out.
 func discoverGroupResources(ctx context.Context, client *http.Client, baseURL string) ([]discoveredGroup, error) {
 	// A trailing slash would produce "//apis", which servers route differently.
+	// #nosec G704 -- baseURL is operator-controlled configuration: an aggregate target's url or st_discovery_url.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
 	}
 	req.Header.Set("Accept", aggregatedDiscoveryJSON+", application/json")
+	// #nosec G704 -- req targets the operator-configured base URL above.
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("router: discovery request to %s failed: %w", baseURL, err)
@@ -45,7 +49,10 @@ func discoverGroupResources(ctx context.Context, client *http.Client, baseURL st
 		return nil, fmt.Errorf("router: discovery request to %s returned status %d", baseURL, resp.StatusCode)
 	}
 
-	return decodeDiscoveryResponse(resp, baseURL)
+	groups, err := decodeDiscoveryResponse(resp, baseURL)
+	// A target that is itself a router always lists the discovery group,
+	// which this router serves itself; drop it quietly, since it is expected.
+	return slices.DeleteFunc(groups, func(g discoveredGroup) bool { return g.group.Name == discoveryGroup }), err
 }
 
 // decodeLimitedJSON decodes a JSON body of at most limit bytes into v. A

@@ -9,6 +9,10 @@ import (
 
 const defaultKeepPluginAliveTickerDuration = time.Second
 
+// maxKeepPluginAliveBackoff bounds the wait between restarts of a plugin whose
+// start keeps failing.
+const maxKeepPluginAliveBackoff = time.Minute
+
 type Service struct {
 	keepPluginAliveTickerDuration time.Duration
 }
@@ -67,6 +71,10 @@ func (s *Service) startPluginAndKeepItAlive(ctx context.Context, p *plugins.Plug
 func (s *Service) keepPluginAlive(p *plugins.Plugin) error {
 	ticker := time.NewTicker(s.keepPluginAliveTickerDuration)
 
+	// A plugin whose start keeps failing is retried with exponential backoff,
+	// so it isn't started again on every tick.
+	failures := 0
+	var nextAttempt time.Time
 	for {
 		<-ticker.C
 		if p.IsDecommissioned() {
@@ -77,12 +85,20 @@ func (s *Service) keepPluginAlive(p *plugins.Plugin) error {
 		if !p.Exited() {
 			continue
 		}
+		if time.Now().Before(nextAttempt) {
+			continue
+		}
 
 		p.Logger().Debug("Restarting plugin")
 		if err := p.Start(context.Background()); err != nil {
-			p.Logger().Error("Failed to restart plugin", "error", err)
+			failures++
+			delay := min(s.keepPluginAliveTickerDuration<<min(failures, 6), maxKeepPluginAliveBackoff)
+			nextAttempt = time.Now().Add(delay)
+			p.Logger().Error("Failed to restart plugin", "error", err, "retryIn", delay)
 			continue
 		}
+		failures = 0
+		nextAttempt = time.Time{}
 		p.Logger().Debug("Plugin restarted")
 	}
 }

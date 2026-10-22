@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type IconName, type NavModelItem } from '@grafana/data';
 
-import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { getInitialNavTree } from '../navtree/buildNavTree';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
@@ -40,10 +40,6 @@ const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState: () => translateNav(getInitialNavTree()),
   reducers: {
-    // Rebuilds the tree from the current permissions. The frontend service loads
-    // permissions asynchronously after the store is configured, so the tree built
-    // at store-init sees an empty permission set and must be rebuilt once they land.
-    navTreeInitialized: () => translateNav(getInitialNavTree()),
     setStarred: (state, action: PayloadAction<StarredNavItem & { isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       const { id, title, url, icon, sortWeight, isStarred } = action.payload;
@@ -145,12 +141,6 @@ const navTreeSlice = createSlice({
   },
 });
 
-export const {
-  navTreeInitialized,
-  setStarred,
-  setStarredItems,
-  removePluginFromNavTree,
-  updateDashboardName,
-  setBookmark,
-} = navTreeSlice.actions;
+export const { setStarred, setStarredItems, removePluginFromNavTree, updateDashboardName, setBookmark } =
+  navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

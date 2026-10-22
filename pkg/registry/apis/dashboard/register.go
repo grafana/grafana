@@ -1065,9 +1065,15 @@ func (b *DashboardsAPIBuilder) dashboardStorageOpts() apistore.StorageOptions {
 // is rejected with "folders are not supported". The folder is optional (panels may live
 // at the root), so RequireFolder stays false.
 func (b *DashboardsAPIBuilder) libraryPanelStorageOpts() apistore.StorageOptions {
+	deprecatedID := apistore.DeprecatedID_None
+	if !b.isStandalone {
+		// The embedded dual writer copies the legacy SQL ID into unified storage.
+		deprecatedID = apistore.DeprecatedID_Optional
+	}
 	return apistore.StorageOptions{
-		Index:               b.unified,
-		EnableFolderSupport: true,
+		Index:                b.unified,
+		EnableFolderSupport:  true,
+		DeprecatedInternalID: deprecatedID,
 	}
 }
 
@@ -1381,14 +1387,14 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		b.snapshotBlobs = b.unified
-		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
+		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions, b.accessControl, b.snapshotBlobs)
 		storage[snapshots.StoragePath()] = snapshotWrapper
 		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite, b.snapshotBlobs)
 		if err != nil {
 			return err
 		}
-		storage[snapshots.StoragePath("deletekey")], err = snapshot.NewDeleteKeyREST(snapshotDualWrite)
+		storage[snapshots.StoragePath("deletekey")], err = snapshot.NewDeleteKeyREST(snapshotDualWrite, b.accessControl, b.snapshotBlobs)
 		if err != nil {
 			return err
 		}

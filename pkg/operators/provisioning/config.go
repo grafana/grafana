@@ -21,11 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -38,9 +40,11 @@ import (
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 var registeredConfigOptions = []ConfigOption{}
@@ -66,6 +70,8 @@ type ControllerConfig struct {
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
+	relistProjection      *informer.RelistProjectionMetrics
+	freshness             *informer.FreshnessMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
 	RepositoryExtrasFunc  func() ([]repository.Extra, error)
@@ -443,6 +449,45 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	return c.registry
 }
 
+// RelistProjectionMetrics returns the process's re-list projection metrics.
+// Memoized because the collectors register on first call; building them twice
+// would panic on the duplicate.
+func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
+	if c.relistProjection == nil {
+		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
+	}
+
+	return c.relistProjection
+}
+
+// FreshnessMetrics returns the process's reconcile read-freshness metrics.
+// Memoized for the same reason as RelistProjectionMetrics.
+func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
+	if c.freshness == nil {
+		c.freshness = informer.NewFreshnessMetrics(c.Registry())
+	}
+
+	return c.freshness
+}
+
+// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
+// keys_only_relist is set, and nil otherwise, which keeps the full-object
+// re-list.
+func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
+	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
+		return nil, nil
+	}
+
+	restClient, err := c.ProvisioningRESTClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
+	}
+
+	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
+
+	return keysapi.NewHTTPLister(restClient, gvr), nil
+}
+
 func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 	if c.tracer != nil {
 		return c.tracer, nil
@@ -452,7 +497,7 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
 	}
-	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
+	tracingConfig, err := tracingsetting.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
@@ -785,7 +830,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, registry
 	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
 	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
 
-	client, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
+	client, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage client: %w", err)
 	}

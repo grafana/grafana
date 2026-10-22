@@ -28,8 +28,10 @@ import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { InstanceSilenceForm } from '../../components/silences/InstanceSilenceForm';
 import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
+import { useIsStateHistoryAvailable } from '../../utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -38,7 +40,6 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
-import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
@@ -105,16 +106,21 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return { dataQueries: [], thresholds: {} };
   }, [rule]);
 
+  const stateHistoryAvailable = useIsStateHistoryAvailable();
+
   // Fetch state history for this specific instance
   const {
     data: stateHistoryData,
     isFetching: stateHistoryFetching,
     isError: stateHistoryError,
-  } = useGetRuleHistoryQuery({
-    ruleUid: ruleUID,
-    matchers: labelsToMatchersParam(instanceLabels),
-    timeRange: { from: timeRange.from, to: timeRange.to },
-  });
+  } = useGetRuleHistoryQuery(
+    {
+      ruleUid: ruleUID,
+      matchers: labelsToMatchersParam(instanceLabels),
+      timeRange: { from: timeRange.from, to: timeRange.to },
+    },
+    { skip: !stateHistoryAvailable }
+  );
 
   // Convert state history to LogRecords and filter by instance labels
   const { historyRecords, annotations } = useMemo(() => {
@@ -270,33 +276,38 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
             historyRecords={historyRecords}
             stateHistoryFetching={stateHistoryFetching}
             stateHistoryError={stateHistoryError}
+            stateHistoryAvailable={stateHistoryAvailable}
             loadingBarRef={ref}
           />
         ) : (
-          <Box ref={ref}>
-            <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
-            {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
-            {stateHistoryError && (
-              <Alert
-                severity="error"
-                title={t('alerting.instance-details.history-error', 'Failed to load state history')}
-              >
-                {t(
-                  'alerting.instance-details.history-error-desc',
-                  'Unable to fetch state transition history for this instance.'
-                )}
-              </Alert>
-            )}
-            {!stateHistoryFetching && !stateHistoryError && (
-              <Stack direction="column" gap={1}>
-                {historyRecords.length > 0 ? (
-                  <InstanceStateTransitions records={historyRecords} maxItems={10} />
-                ) : (
-                  <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
-                )}
-              </Stack>
-            )}
-          </Box>
+          stateHistoryAvailable && (
+            <Box ref={ref}>
+              <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
+              {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
+              {stateHistoryError && (
+                <Alert
+                  severity="error"
+                  title={t('alerting.instance-details.history-error', 'Failed to load state history')}
+                >
+                  {t(
+                    'alerting.instance-details.history-error-desc',
+                    'Unable to fetch state transition history for this instance.'
+                  )}
+                </Alert>
+              )}
+              {!stateHistoryFetching && !stateHistoryError && (
+                <Stack direction="column" gap={1}>
+                  {historyRecords.length > 0 ? (
+                    <InstanceStateTransitions records={historyRecords} maxItems={10} />
+                  ) : (
+                    <Text color="secondary">
+                      {t('alerting.instance-details.no-history', 'No recent state changes')}
+                    </Text>
+                  )}
+                </Stack>
+              )}
+            </Box>
+          )
         )}
       </Stack>
     );

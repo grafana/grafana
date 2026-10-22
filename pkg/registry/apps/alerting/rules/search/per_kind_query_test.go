@@ -80,13 +80,24 @@ func TestPerKindSortRules(t *testing.T) {
 		{Title: "banana", UID: "u0"},
 	}
 
-	perKindSortRules(rules, fieldTitle, false)
-	assert.Equal(t, []string{"apple", "banana", "Banana"}, perKindTitles(rules))
-	assert.Equal(t, []string{"u1", "u0", "u2"}, []string{rules[0].UID, rules[1].UID, rules[2].UID})
+	uids := func() []string { return []string{rules[0].UID, rules[1].UID, rules[2].UID} }
 
-	perKindSortRules(rules, fieldTitle, true)
+	perKindSortRules(rules, nil)
+	assert.Equal(t, []string{"apple", "banana", "Banana"}, perKindTitles(rules))
+	assert.Equal(t, []string{"u1", "u0", "u2"}, uids())
+
+	perKindSortRules(rules, []searchv0.SortField{{Field: fieldTitle, Direction: sortDescending}})
 	assert.Equal(t, []string{"banana", "Banana", "apple"}, perKindTitles(rules))
-	assert.Equal(t, []string{"u0", "u2", "u1"}, []string{rules[0].UID, rules[1].UID, rules[2].UID})
+	assert.Equal(t, []string{"u0", "u2", "u1"}, uids())
+
+	perKindSortRules(rules, []searchv0.SortField{{Field: fieldName}})
+	assert.Equal(t, []string{"u0", "u1", "u2"}, uids())
+
+	perKindSortRules(rules, []searchv0.SortField{{Field: fieldName, Direction: sortDescending}})
+	assert.Equal(t, []string{"u2", "u1", "u0"}, uids())
+
+	perKindSortRules(rules, []searchv0.SortField{{Field: fieldTitle}, {Field: fieldName, Direction: sortDescending}})
+	assert.Equal(t, []string{"u1", "u2", "u0"}, uids())
 }
 
 // TestTranslateQuery_targetsTheEndpointsKind asserts each endpoint searches only
@@ -134,8 +145,7 @@ func TestPerKindTranslateQuery_extractRoundTrip(t *testing.T) {
 	assert.Equal(t, "slack", f.receiver)
 	require.NotNil(t, f.paused)
 	assert.True(t, *f.paused)
-	assert.Equal(t, fieldTitle, f.sortField)
-	assert.True(t, f.sortDesc)
+	assert.Equal(t, []searchv0.SortField{{Field: fieldTitle, Direction: sortDescending}}, tr.Sort)
 	// The labels filter leaf flows into the indexed spec-labels field.
 	assert.ElementsMatch(t, []labelMatcher{
 		// NotIn of an existence matcher negates to a not-exists matcher.

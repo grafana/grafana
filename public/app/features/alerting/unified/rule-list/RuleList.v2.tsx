@@ -9,11 +9,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { WatchersBanner } from '../components/WatchersBanner';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
-import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
-import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
-import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
@@ -32,7 +30,6 @@ import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
-  const showImportToGMABanner = useShowImportToGMARulesBanner();
   const [hideEmptyDataSources, setHideEmptyDataSources] = useLocalStorage(
     `grafana.unifiedalerting.hideEmptyDataSources-org-${config.bootData.user.orgId}`,
     true
@@ -40,7 +37,8 @@ function RuleList() {
 
   return (
     <Stack direction="column">
-      {showImportToGMABanner && <ImportToGMABanner />}
+      {/* The Import to GMA banner is intentionally not rendered here while the Watchers promo runs */}
+      <WatchersBanner />
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
@@ -87,9 +85,9 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const canImportRulesToGMA = hasImportToGMAPermissions;
-
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && hasImportToGMAPermissions;
+  // The migration wizard replaces the rules-only import tool, so only offer the old one without it.
+  const canImportRulesToGMA = hasImportToGMAPermissions && !canAccessMigrationWizardUI;
 
   const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
 
@@ -172,7 +170,6 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
-      {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary" data-testid={selectors.pages.Alerting.RuleList.moreMenu.triggerButton}>
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />

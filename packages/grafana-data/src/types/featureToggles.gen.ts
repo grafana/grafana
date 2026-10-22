@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   queryServiceRewrite?: boolean;
   /**
-  * Routes requests to the new query service
-  * @default false
-  */
-  queryServiceFromUI?: boolean;
-  /**
   * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
@@ -430,11 +425,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Renders ad hoc filters and group by in a single unified control
-  * @default true
-  */
-  dashboardUnifiedDrilldownControls?: boolean;
-  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -621,16 +611,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enables SRI checks for plugin assets
-  * @default false
-  */
-  pluginsSriChecks?: boolean;
-  /**
-  * Enables time pickers sync
-  * @default false
-  */
-  timeRangeProvider?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -660,21 +640,6 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorEnableUserAuth?: boolean;
-  /**
-  * Enable AI-generated alert rules.
-  * @default false
-  */
-  alertingAIGenAlertRules?: boolean;
-  /**
-  * Enable AI-generated feedback from the Grafana UI.
-  * @default false
-  */
-  alertingAIFeedback?: boolean;
-  /**
-  * Enable AI-improve alert rules labels and annotations.
-  * @default false
-  */
-  alertingAIImproveAlertRules?: boolean;
   /**
   * Enable AI-generated alerting templates.
   * @default false
@@ -867,7 +832,7 @@ export interface FeatureToggles {
   kubernetesAuthzRolesApi?: boolean;
   /**
   * Registers AuthZ TeamLBACRule /apis endpoint
-  * @default false
+  * @default true
   */
   kubernetesAuthzTeamLBACRuleApi?: boolean;
   /**
@@ -931,16 +896,6 @@ export interface FeatureToggles {
   */
   newInfluxDSConfigPageDesign?: boolean;
   /**
-  * Set this to true to enable all app chrome extensions registered by plugins.
-  * @default false
-  */
-  enableAppChromeExtensions?: boolean;
-  /**
-  * Set this to true to enable all dashboard empty state extensions registered by plugins.
-  * @default false
-  */
-  enableDashboardEmptyExtensions?: boolean;
-  /**
   * Enables use of app platform API for folders
   * @default true
   */
@@ -966,11 +921,6 @@ export interface FeatureToggles {
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
-  * Enables sharing a list of APIs with a list of plugins
-  * @default true
-  */
-  restrictedPluginApis?: boolean;
-  /**
   * Enable favorite datasources
   * @default false
   */
@@ -986,8 +936,9 @@ export interface FeatureToggles {
   */
   interactiveLearning?: boolean;
   /**
-  * Enables the alerting triage feature
-  * @default false
+  * Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
+  * @deprecated
+  * @default true
   */
   alertingTriage?: boolean;
   /**
