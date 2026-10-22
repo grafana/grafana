@@ -62,7 +62,7 @@ describe('extensionSidebarApi', () => {
     const unsubscribe = extensionSidebarApi.subscribeToCollapse('listener' as unknown as () => void);
 
     expect(() => collapseFloatingExtensionSidebar()).not.toThrow();
-    expect(unsubscribe).toEqual(expect.any(Function));
+    expect(() => unsubscribe()).not.toThrow();
   });
 
   describe('with grafana.extensionSidebarFloating off', () => {
