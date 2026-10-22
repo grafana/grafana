@@ -122,7 +122,7 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 1. When you've finished making changes, click **View** in the toolbar to leave edit mode.
 
-You can also create a notebook from Grafana's **New** menu or by searching for **New notebook** in the command palette.
+You can also create a notebook from the **New** menu in Grafana or by searching for **New notebook** in the command palette.
 
 Notebooks save your changes automatically. For save status and reverting edits, refer to [Save and undo changes](#save-and-undo-changes).
 
@@ -256,10 +256,10 @@ To declare an incident from a notebook, follow these steps:
 1. Open the notebook you want to use.
 1. Click **More actions** in the notebook toolbar.
 1. Select **IRM > Declare incident**.
-1. Review the prefilled **Incident title**. The title starts with the notebook's title, but you can change it.
+1. Review the **Incident title**, which starts with the notebook's title. You can change it.
 1. Complete the fields required by your organization. Add an **Initial update**, select a **Severity**, or add **Labels** as needed.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-declare-incident-v13.3.png" max-width="750px" alt="Declare incident dialog opened from a notebook with the incident title prefilled from the notebook title" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-declare-incident-v13.3.png" max-width="750px" alt="Declare incident dialog with the notebook title entered as the incident title" >}}
 
 1. Click **Declare incident**.
 
