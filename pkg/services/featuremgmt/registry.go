@@ -691,7 +691,7 @@ var (
 			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
-			Owner:       grafanaDashboardsSquad,
+			Owner:       grafanaSharingSquad,
 			Expression:  "false",
 		},
 		{
