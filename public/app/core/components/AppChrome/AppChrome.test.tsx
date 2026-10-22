@@ -513,8 +513,7 @@ describe('AppChrome', () => {
     });
 
     it('never opens the mega menu in kiosk mode, even with content', async () => {
-      // AppChrome only mounts AutoOpenMegaMenuForScopedContent when !chromeless, so kiosk mode
-      // (chromeless: true) must prevent the auto-open effect from ever running at all.
+      // The effect itself checks `!chromeless` (not a conditional mount - see the next test for why).
       mockUseScopesServices.mockReturnValue(
         makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
       );
@@ -523,6 +522,75 @@ describe('AppChrome', () => {
       act(() => {
         context.chrome.update({ kioskMode: KioskMode.Full });
       });
+
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('leaving kiosk mode does not reopen a menu the user closed', async () => {
+      // Regression test: AutoOpenMegaMenuForScopedContent used to be mounted conditionally on
+      // !chromeless, so entering/leaving kiosk mode unmounted and remounted it, resetting
+      // lastContentKeyRef and making already-seen content look new again on the way out.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+
+      act(() => {
+        context.chrome.update({ kioskMode: KioskMode.Full });
+      });
+      act(() => {
+        context.chrome.update({ kioskMode: undefined });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('does not re-open a closed menu when the same content key is re-emitted unchanged', async () => {
+      // Protects the `scopeContentKey !== lastContentKeyRef.current` comparison specifically: a
+      // fresh mock return value here has the same forScopeNames/dashboards values (same computed
+      // scopeContentKey string) but a different object reference, so the effect's deps genuinely
+      // change and it re-runs - without the seen-key comparison, that re-run would force the menu
+      // back open even though this is the exact same content already shown once.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('does not open the mega menu when scopes are not enabled on the current page', async () => {
+      // e.g. a page that never mounts a ScopesVariable (Explore) while content is still lingering in
+      // ScopesDashboardsService from a scope applied earlier via the URL - opening here would show
+      // an empty section, since ScopesDashboardsMegaMenuSection also gates on (debounced) enabled.
+      mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      const { context } = setup(<Page navId="child1">Children</Page>);
 
       mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
       act(() => {
