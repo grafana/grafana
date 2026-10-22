@@ -1799,7 +1799,9 @@
         "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",
         "datasource-autosync-badge": "Auto-sync",
+        "embedded-yaml-parse-error": "The YAML in \"alertmanager_config\" has a syntax error: {{message}}",
         "heading": "Import Notification Resources",
+        "invalid-alertmanager-config": "The \"alertmanager_config\" key must be an Alertmanager configuration object or a YAML string",
         "next-disabled-tooltip": "Complete the required fields before continuing.",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
@@ -15493,11 +15495,6 @@
       "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Add query",
-      "expression": "Expression",
-      "title-data-source-help": "Data source help"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -17450,6 +17447,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Remove parts of the query results using a regex pattern."
       },
+      "deselect-all": "Deselect all",
       "label-from-variable": "From variable",
       "label-identifier": "Identifier",
       "label-use-variable": "Use variable",
@@ -17457,7 +17455,8 @@
       "name": {
         "filter-fields-by-name": "Filter fields by name"
       },
-      "placeholder-regular-expression-pattern": "Regular expression pattern"
+      "placeholder-regular-expression-pattern": "Regular expression pattern",
+      "select-all": "Select all"
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

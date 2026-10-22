@@ -1,9 +1,10 @@
 import { sql } from '@codemirror/lang-sql';
-import { EditorSelection, EditorState } from '@codemirror/state';
+import { EditorSelection, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, highlightActiveLine, highlightActiveLineGutter, lineNumbers } from '@codemirror/view';
 
 import { colorManipulator, createTheme, type GrafanaTheme2 } from '@grafana/data';
 
+import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
 function normalizeColor(color: string): string {
@@ -15,13 +16,17 @@ function normalizeColor(color: string): string {
   return normalizedColor;
 }
 
-function createEditor(theme: GrafanaTheme2): EditorView {
+function createEditor(
+  theme: GrafanaTheme2,
+  doc = 'SELECT value_with_underscores FROM metrics',
+  language: Extension = sql()
+): EditorView {
   return new EditorView({
     parent: document.body,
     state: EditorState.create({
-      doc: 'SELECT value_with_underscores FROM metrics',
+      doc,
       extensions: [
-        sql(),
+        language,
         lineNumbers(),
         highlightActiveLine(),
         highlightActiveLineGutter(),
@@ -105,6 +110,71 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
 
     editor.destroy();
     editor.dom.remove();
+  });
+
+  it.each([
+    ['plain', 'title: plain value', 'plain value'],
+    ['number', 'count: 3', '3'],
+    ['boolean', 'enabled: true', 'true'],
+    ['single-quoted', "'title': 'single quoted'", "'single quoted'"],
+    ['double-quoted', '"title": "double quoted"', '"double quoted"'],
+    ['literal block', 'title: |\n  literal content', 'literal content'],
+    ['folded block', 'title: >\n  folded content', 'folded content'],
+  ])('uses the string token for read-only YAML %s scalars', async (_name, doc, value) => {
+    const theme = createTheme({ colors: { mode } });
+    const language = await loadLanguageExtension('yaml');
+    const editor = createEditor(theme, doc, [language!, EditorState.readOnly.of(true)]);
+
+    try {
+      const valueElement = Array.from(editor.contentDOM.querySelectorAll('span')).find(
+        (span) => span.textContent?.trim() === value
+      );
+
+      expect(valueElement).toHaveStyle({ color: theme.components.codeEditor.string });
+      expect(editor.contentDOM.querySelector('span')).toHaveStyle({ color: theme.components.codeEditor.variable });
+    } finally {
+      editor.destroy();
+      editor.dom.remove();
+    }
+  });
+
+  it.each(['&a key', '!!str key', '&a !!str key', '!!str &a key'])(
+    'keeps the read-only YAML key %s in the foreground color',
+    async (key) => {
+      const theme = createTheme({ colors: { mode } });
+      const language = await loadLanguageExtension('yaml');
+      const editor = createEditor(theme, `${key}: value`, [language!, EditorState.readOnly.of(true)]);
+
+      try {
+        const spans = Array.from(editor.contentDOM.querySelectorAll('span'));
+        const keyElement = spans.find((span) => span.textContent === 'key');
+        const valueElement = spans.find((span) => span.textContent === 'value');
+
+        expect(keyElement).toHaveStyle({ color: theme.components.codeEditor.variable });
+        expect(valueElement).toHaveStyle({ color: theme.components.codeEditor.string });
+      } finally {
+        editor.destroy();
+        editor.dom.remove();
+      }
+    }
+  );
+
+  it.each(['markdown', 'html', 'xml'] as const)('keeps %s prose in the normal foreground color', async (languageId) => {
+    const theme = createTheme({ colors: { mode } });
+    const doc = languageId === 'markdown' ? 'plain prose' : '<p>plain prose</p>';
+    const language = await loadLanguageExtension(languageId);
+    const editor = createEditor(theme, doc, language!);
+
+    try {
+      const text = Array.from(editor.contentDOM.querySelector('.cm-line')!.childNodes).find(
+        (node) => node.textContent === 'plain prose'
+      )!;
+      expect(text.nodeType).toBe(Node.TEXT_NODE);
+      expect(editor.dom).toHaveStyle({ color: theme.components.input.text });
+    } finally {
+      editor.destroy();
+      editor.dom.remove();
+    }
   });
 
   it('keeps syntax colors above the WCAG AA text contrast threshold', () => {
