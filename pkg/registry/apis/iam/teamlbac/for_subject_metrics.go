@@ -90,9 +90,9 @@ func forSubjectDatasourceType(name string) string {
 	}
 }
 
-func (m *forSubjectMetrics) incMissingTeam() {
+func (m *forSubjectMetrics) addMissingTeams(count int) {
 	if m != nil {
-		m.missingTeams.Inc()
+		m.missingTeams.Add(float64(count))
 	}
 }
 

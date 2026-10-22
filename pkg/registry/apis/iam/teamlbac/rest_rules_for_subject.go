@@ -13,7 +13,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -21,7 +20,6 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 )
 
@@ -39,10 +37,8 @@ var (
 // representation.
 type RulesForSubjectREST struct {
 	ruleGetter rest.Getter
-	teamGetter rest.Getter
 	teamLister teamLister
 	tracer     trace.Tracer
-	logger     log.Logger
 	metrics    *forSubjectMetrics
 }
 
@@ -50,13 +46,11 @@ type teamLister interface {
 	List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error)
 }
 
-func NewRulesForSubjectREST(ruleGetter rest.Getter, teamGetter rest.Getter, teamLister teamLister, tracer trace.Tracer, reg prometheus.Registerer) *RulesForSubjectREST {
+func NewRulesForSubjectREST(ruleGetter rest.Getter, teamLister teamLister, tracer trace.Tracer, reg prometheus.Registerer) *RulesForSubjectREST {
 	return &RulesForSubjectREST{
 		ruleGetter: ruleGetter,
-		teamGetter: teamGetter,
 		teamLister: teamLister,
 		tracer:     tracer,
-		logger:     log.New("teamlbac.for-subject"),
 		metrics:    newForSubjectMetrics(reg),
 	}
 }
@@ -123,8 +117,6 @@ func (s *RulesForSubjectREST) Connect(ctx context.Context, datasourceName string
 func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceName, userUID string) (*iamv0.GetTeamLBACRulesForSubjectResponse, forSubjectOutcome, error) {
 	// TeamLBACRule metadata.name identifies the datasource as
 	// "<datasource type>.<datasource UID>".
-	logger := s.logger.FromContext(ctx)
-	namespace := k8srequest.NamespaceValue(ctx)
 	response := iamv0.NewGetTeamLBACRulesForSubjectResponse()
 	response.TeamFilters = make(map[string][]string)
 
@@ -151,44 +143,90 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		return response, forSubjectOutcomeEmptyRule, nil
 	}
 
-	// Looking up only the teams referenced by this rule keeps work proportional
-	// to the datasource policy and works through the same mode-aware Team store.
-	// The tradeoff is one Team read, including its full membership list, per key.
-	// A reverse membership lookup can therefore be cheaper when a rule references
-	// many teams, but it returns every team for the user and legacy numeric rule
-	// keys would still need separate resolution.
-	missingTeamKeys := make([]string, 0)
-	matchedTeam, returnedFilters := false, false
-	for teamKey, filters := range allRules.Spec.TeamFilters {
-		if _, err := strconv.ParseInt(teamKey, 10, 64); err == nil {
-			// Numeric keys are retained only for rules written before team UIDs
-			// were normalized. Keep each compatibility lookup visible until those
-			// rules have been migrated.
-			logger.Warn("TeamLBACRule contains numeric team key; using legacy-ID compatibility lookup",
-				"namespace", namespace, "datasource", datasourceName, "teamKey", teamKey)
+	// Listing through the existing Team store batches legacy membership reads
+	// and retains storage-mode selection without requiring the public Team API.
+	// Both UID and numeric references can be resolved from each listed Team.
+	ruleTeamKeysByUID := make(map[string]struct{})
+	ruleTeamKeysByLegacyID := make(map[int64][]string)
+	for teamKey := range allRules.Spec.TeamFilters {
+		if id, err := strconv.ParseInt(teamKey, 10, 64); err == nil {
+			ruleTeamKeysByLegacyID[id] = append(ruleTeamKeysByLegacyID[id], teamKey)
+		} else {
+			ruleTeamKeysByUID[teamKey] = struct{}{}
 		}
-		team, err := s.getTeam(storageCtx, teamKey)
+	}
+	hasLegacyTeamRules := len(ruleTeamKeysByLegacyID) > 0
+
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.Int("rule_team_count", len(allRules.Spec.TeamFilters)))
+	listedTeams, listPages := 0, 0
+	defer func() {
+		span.SetAttributes(attribute.Int("listed_team_count", listedTeams), attribute.Int("team_list_page_count", listPages))
+	}()
+	matchedTeam, returnedFilters := false, false
+	resolvedRuleTeamKeys := make(map[string]struct{}, len(allRules.Spec.TeamFilters))
+	seenLegacyIDs := make(map[int64]string)
+	seenCursors := make(map[string]struct{})
+	options := &metainternalversion.ListOptions{Limit: common.MaxListLimit}
+	for {
+		obj, err := s.teamLister.List(storageCtx, options)
 		if err != nil {
 			return nil, "", err
 		}
-		if team == nil {
-			s.metrics.incMissingTeam()
-			missingTeamKeys = append(missingTeamKeys, teamKey)
-			continue
+		teams, ok := obj.(*iamv0.TeamList)
+		if !ok || teams == nil {
+			return nil, "", apierrors.NewInternalError(fmt.Errorf("unexpected Team list object type %T", obj))
 		}
-		if !hasMember(team, userUID) {
-			continue
+		listPages++
+		listedTeams += len(teams.Items)
+		for i := range teams.Items {
+			team := &teams.Items[i]
+			var matchingRuleTeamKeys []string
+			if _, ok := ruleTeamKeysByUID[team.Name]; ok {
+				matchingRuleTeamKeys = append(matchingRuleTeamKeys, team.Name)
+			}
+			if hasLegacyTeamRules {
+				meta, err := apiutils.MetaAccessor(team)
+				if err != nil {
+					return nil, "", err
+				}
+				id := meta.GetDeprecatedInternalID() //nolint:staticcheck // compatibility for pre-normalization TeamLBACRules
+				if legacyRuleTeamKeys := ruleTeamKeysByLegacyID[id]; id > 0 && len(legacyRuleTeamKeys) > 0 {
+					// Unified Storage checks legacy-ID uniqueness through an
+					// eventually consistent index, so ambiguity must still fail
+					// here to avoid applying another team's policy.
+					if previous, ok := seenLegacyIDs[id]; ok && previous != team.Name {
+						return nil, "", apierrors.NewInternalError(fmt.Errorf("legacy team ID %d resolved to more than one team", id))
+					}
+					seenLegacyIDs[id] = team.Name
+					matchingRuleTeamKeys = append(matchingRuleTeamKeys, legacyRuleTeamKeys...)
+				}
+			}
+			for _, ruleTeamKey := range matchingRuleTeamKeys {
+				resolvedRuleTeamKeys[ruleTeamKey] = struct{}{}
+			}
+			if len(matchingRuleTeamKeys) == 0 || !hasMember(team, userUID) {
+				continue
+			}
+			matchedTeam = true
+			for _, ruleTeamKey := range matchingRuleTeamKeys {
+				filters := allRules.Spec.TeamFilters[ruleTeamKey]
+				returnedFilters = returnedFilters || len(filters) > 0
+				response.TeamFilters[ruleTeamKey] = append([]string(nil), filters...)
+			}
 		}
-		matchedTeam = true
-		returnedFilters = returnedFilters || len(filters) > 0
-		response.TeamFilters[teamKey] = append([]string(nil), filters...)
+		if teams.Continue == "" {
+			break
+		}
+		if _, ok := seenCursors[teams.Continue]; ok {
+			return nil, "", apierrors.NewInternalError(fmt.Errorf("team list returned a repeated continue token"))
+		}
+		seenCursors[teams.Continue] = struct{}{}
+		options = &metainternalversion.ListOptions{Limit: common.MaxListLimit, Continue: teams.Continue}
 	}
-	if len(missingTeamKeys) > 0 {
-		// Admission removes references to missing teams, so seeing one here
-		// means the stored rule predates cleanup or bypassed normal writes.
-		logger.Warn("TeamLBACRule references teams that do not exist",
-			"namespace", namespace, "datasource", datasourceName, "teamKeys", missingTeamKeys)
-	}
+	// Only a complete listing establishes which references are missing;
+	// existing teams without this user's membership still count as resolved.
+	s.metrics.addMissingTeams(len(allRules.Spec.TeamFilters) - len(resolvedRuleTeamKeys))
 	if !matchedTeam {
 		return response, forSubjectOutcomeNoTeamMembership, nil
 	}
@@ -196,46 +234,6 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		return response, forSubjectOutcomeNoApplicableFilters, nil
 	}
 	return response, forSubjectOutcomeFiltersReturned, nil
-}
-
-func (s *RulesForSubjectREST) getTeam(ctx context.Context, teamKey string) (*iamv0.Team, error) {
-	// Non-numeric keys are canonical Team UIDs, which are also the Team resource names.
-	if _, err := strconv.ParseInt(teamKey, 10, 64); err != nil {
-		obj, err := s.teamGetter.Get(ctx, teamKey, &metav1.GetOptions{})
-		if apierrors.IsNotFound(err) {
-			return nil, nil
-		}
-		if err != nil {
-			return nil, err
-		}
-		team, ok := obj.(*iamv0.Team)
-		if !ok {
-			return nil, apierrors.NewInternalError(fmt.Errorf("unexpected Team object type %T", obj))
-		}
-		return team, nil
-	}
-
-	selector := labels.SelectorFromSet(labels.Set{
-		apiutils.LabelKeyDeprecatedInternalID: teamKey, //nolint:staticcheck // compatibility for pre-normalization TeamLBACRules
-	})
-	obj, err := s.teamLister.List(ctx, &metainternalversion.ListOptions{
-		LabelSelector: selector,
-		Limit:         2,
-	})
-	if err != nil {
-		return nil, err
-	}
-	teams, ok := obj.(*iamv0.TeamList)
-	if !ok {
-		return nil, apierrors.NewInternalError(fmt.Errorf("unexpected Team list object type %T", obj))
-	}
-	if len(teams.Items) == 0 {
-		return nil, nil
-	}
-	if len(teams.Items) > 1 {
-		return nil, apierrors.NewInternalError(fmt.Errorf("legacy team ID %q resolved to more than one team", teamKey))
-	}
-	return &teams.Items[0], nil
 }
 
 func hasMember(team *iamv0.Team, userUID string) bool {
