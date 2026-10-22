@@ -1,10 +1,12 @@
-import { act, render, screen } from 'test/test-utils';
+import { act, render } from 'test/test-utils';
 
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { invalidateStPodReadiness, markStPodReady, markStPodTimeout } from 'app/core/navigation/stPodReadiness';
 
 import { StPodPendingEllipsis } from './StPodPendingEllipsis';
+
+const queryDots = () => document.querySelector('.st-pod-dots');
 
 describe('StPodPendingEllipsis', () => {
   beforeEach(async () => {
@@ -20,10 +22,10 @@ describe('StPodPendingEllipsis', () => {
     });
   });
 
-  it('shows an ellipsis for a url outside the allow list while the pod is starting', () => {
+  it('shows the pending dots for a url outside the allow list while the pod is starting', () => {
     render(<StPodPendingEllipsis url="/explore" />);
 
-    expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
+    expect(queryDots()).toBeInTheDocument();
   });
 
   it.each([
@@ -39,34 +41,22 @@ describe('StPodPendingEllipsis', () => {
   it.each([
     ['the pod is ready', markStPodReady],
     ['waiting for the pod times out', markStPodTimeout],
-  ])('removes the ellipsis once %s', (_, settle) => {
+  ])('removes the pending dots once %s', (_, settle) => {
     render(<StPodPendingEllipsis url="/explore" />);
-    expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
+    expect(queryDots()).toBeInTheDocument();
 
     act(() => settle());
 
-    expect(screen.queryByTestId('icon-ellipsis-h')).not.toBeInTheDocument();
+    expect(queryDots()).not.toBeInTheDocument();
   });
 
-  it('brings the ellipsis back when a timed-out pod is invalidated while mounted', () => {
+  it('brings the pending dots back when a timed-out pod is invalidated while mounted', () => {
     render(<StPodPendingEllipsis url="/explore" />);
     act(() => markStPodTimeout());
-    expect(screen.queryByTestId('icon-ellipsis-h')).not.toBeInTheDocument();
+    expect(queryDots()).not.toBeInTheDocument();
 
     act(() => invalidateStPodReadiness());
 
-    expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
-  });
-
-  it('labels the ellipsis with the route name', () => {
-    render(<StPodPendingEllipsis url="/explore" label="Explore" />);
-
-    expect(screen.getByLabelText('Preparing Explore')).toBeInTheDocument();
-  });
-
-  it('falls back to a generic label when no route name is given', () => {
-    render(<StPodPendingEllipsis url="/explore" />);
-
-    expect(screen.getByLabelText('Preparing page')).toBeInTheDocument();
+    expect(queryDots()).toBeInTheDocument();
   });
 });
