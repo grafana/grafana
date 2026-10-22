@@ -18,7 +18,7 @@ interface UseCommitTargetArgs {
   setRef: (value: string) => void;
 }
 
-interface CommitTarget {
+export interface CommitTarget {
   /** The backend's workflow for `ref`: a direct `write` to the configured branch, or a `branch` push. */
   workflow: WorkflowOption;
   /** The commit creates `ref`; the destination page shows the PR banner, so no success toast. */

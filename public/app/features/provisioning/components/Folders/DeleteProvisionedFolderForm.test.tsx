@@ -4,7 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
-import { type RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositoryView,
+  useCreateRepositoryJobsMutation,
+  useGetRepositoryRefsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -31,10 +35,7 @@ jest.mock('react-redux', () => {
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useCreateRepositoryJobsMutation: jest.fn(),
-  useGetRepositoryRefsQuery: jest.fn(() => ({
-    data: { items: [{ name: 'main' }, { name: 'develop' }] },
-    isLoading: false,
-  })),
+  useGetRepositoryRefsQuery: jest.fn(),
   provisioningAPI: {
     endpoints: {
       listRepository: {
@@ -82,6 +83,7 @@ jest.mock('app/features/provisioning/Job/JobStatus', () => ({
 const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
   typeof useCreateRepositoryJobsMutation
 >;
+const mockUseGetRepositoryRefsQuery = useGetRepositoryRefsQuery as jest.Mock;
 const mockUseProvisionedFolderFormData = useProvisionedFolderFormData as jest.MockedFunction<
   typeof useProvisionedFolderFormData
 >;
@@ -197,6 +199,11 @@ describe('DeleteProvisionedFolderForm', () => {
     jest.clearAllMocks();
     mockNavigate.mockClear();
     mockJobStatusInfo = { status: 'running' };
+    // The hook reads `currentData`, the refs of the repository currently selected
+    mockUseGetRepositoryRefsQuery.mockReturnValue({
+      currentData: { items: [{ name: 'main' }, { name: 'develop' }] },
+      isLoading: false,
+    });
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -376,6 +383,40 @@ describe('DeleteProvisionedFolderForm', () => {
 
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboards'));
       expect(onDismiss).toHaveBeenCalled();
+    });
+
+    it('redirects with the PR title captured at submission after the refs list the new branch', async () => {
+      // Creating the job refetches the refs. Once they include the branch the live PR title clears
+      // (the branch is no longer "new"), so the redirect must use what the form was submitted with.
+      mockJobStatusInfo = { status: 'success', urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } };
+      mockUseGetRepositoryRefsQuery.mockReturnValue({ currentData: { items: [{ name: 'main' }] }, isLoading: false });
+      const { mockNavigate, clickDeleteButton } = setup(
+        {},
+        {
+          ...defaultHookData,
+          repository: {
+            ...mockRepository,
+            workflows: ['branch', 'write'],
+            pullRequest: { titleTemplate: '{{action}}: {{title}}' },
+          },
+          initialValues: { ...mockFormData, ref: 'feature-branch' },
+        }
+      );
+      mockCreateJob.mockReturnValue({
+        unwrap: async () => {
+          mockUseGetRepositoryRefsQuery.mockReturnValue({
+            currentData: { items: [{ name: 'main' }, { name: 'feature-branch' }] },
+            isLoading: false,
+          });
+          return { metadata: { name: 'job-1' } };
+        },
+      });
+
+      await clickDeleteButton();
+
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+      const url: string = mockNavigate.mock.calls.at(-1)[0];
+      expect(new URLSearchParams(url.split('?')[1]).get('pr_title')).toBe('delete: Test Folder');
     });
   });
 

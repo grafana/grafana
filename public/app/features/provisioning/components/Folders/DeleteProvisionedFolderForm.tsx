@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
@@ -21,7 +21,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getJobListRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
-import { type DeleteJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type DeleteJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -41,9 +41,8 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const resourceId = parentFolder?.uid || '';
 
   // state
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<SubmittedJob>();
   const [error, setError] = useState<string | undefined>(undefined);
-  const [job, setJob] = useState<Job>();
 
   // hooks
   const { createBulkJob, isLoading } = useBulkActionJob();
@@ -111,33 +110,35 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       }
 
       if (result.job) {
-        setJob(result.job);
-        setHasSubmitted(true);
+        setSubmitted({ job: result.job, workflow, prTitle });
       }
     } catch (error) {
       showError(error);
     }
   };
 
-  const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'success') {
-      onDismiss?.();
-      navigate(
-        getJobListRedirectUrl({
-          workflow,
-          urls: statusInfo.urls,
-          repoType: repository?.type,
-          action: 'delete',
-          prTitle,
-        })
-      );
-    }
-  };
+  const handleJobStatusChange = useCallback(
+    (statusInfo: StepStatusInfo) => {
+      if (statusInfo.status === 'success' && submitted) {
+        onDismiss?.();
+        navigate(
+          getJobListRedirectUrl({
+            workflow: submitted.workflow,
+            urls: statusInfo.urls,
+            repoType: repository?.type,
+            action: 'delete',
+            prTitle: submitted.prTitle,
+          })
+        );
+      }
+    },
+    [onDismiss, navigate, submitted, repository?.type]
+  );
 
   return (
     <>
-      {hasSubmitted && job ? (
-        <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />
+      {submitted ? (
+        <JobStatus watch={submitted.job} jobType="delete" onStatusChange={handleJobStatusChange} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>

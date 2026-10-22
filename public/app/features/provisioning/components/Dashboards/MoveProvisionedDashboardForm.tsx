@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
@@ -22,7 +22,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getJobListRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
-import { type MoveJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { type MoveJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -83,8 +83,7 @@ export function MoveProvisionedDashboardForm({
   const targetPath = targetFolderPath ? getResourceTargetPath(defaultValues.path, targetFolderPath) : '';
 
   const { createBulkJob, isLoading } = useBulkActionJob();
-  const [job, setJob] = useState<Job>();
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<SubmittedJob>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
 
   const navigate = useNavigate();
@@ -135,8 +134,7 @@ export function MoveProvisionedDashboardForm({
       }
 
       if (result.job) {
-        setJob(result.job);
-        setHasSubmitted(true);
+        setSubmitted({ job: result.job, workflow, prTitle });
       }
     } catch (error) {
       showError(error);
@@ -145,17 +143,24 @@ export function MoveProvisionedDashboardForm({
 
   const handleJobStatusChange = useCallback(
     (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success') {
+      if (statusInfo.status === 'success' && submitted) {
         dashboard.setState({ isDirty: false });
         panelEditor?.onDiscard();
-        navigate(getJobListRedirectUrl({ workflow, urls: statusInfo.urls, repoType: repository?.type, prTitle }));
+        navigate(
+          getJobListRedirectUrl({
+            workflow: submitted.workflow,
+            urls: statusInfo.urls,
+            repoType: repository?.type,
+            prTitle: submitted.prTitle,
+          })
+        );
       }
 
       if (statusInfo.status === 'error' && statusInfo.error) {
         setJobError(statusInfo.error);
       }
     },
-    [dashboard, panelEditor, navigate, workflow, repository?.type, prTitle]
+    [dashboard, panelEditor, navigate, submitted, repository?.type]
   );
 
   return (
@@ -164,10 +169,10 @@ export function MoveProvisionedDashboardForm({
       subtitle={dashboard.state.title}
       onClose={onDismiss}
     >
-      {hasSubmitted && job ? (
+      {submitted ? (
         <>
           <ProvisioningAlert error={jobError} />
-          <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
+          <JobStatus watch={submitted.job} jobType="move" onStatusChange={handleJobStatusChange} />
         </>
       ) : (
         <FormProvider {...methods}>
