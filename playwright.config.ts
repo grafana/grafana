@@ -196,8 +196,10 @@ export default defineConfig<PluginOptions>({
       name: 'journey-tracking',
       testDir: path.join(testDirRoot, '/journey-tracking'),
       use: {
-        featureToggles: {
-          cujTracking: true,
+        openFeature: {
+          flags: {
+            cujTracking: true,
+          },
         },
       },
     }),

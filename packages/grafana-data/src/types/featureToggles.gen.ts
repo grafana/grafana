@@ -425,11 +425,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Renders ad hoc filters and group by in a single unified control
-  * @default true
-  */
-  dashboardUnifiedDrilldownControls?: boolean;
-  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -925,11 +920,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
-  /**
-  * Enables sharing a list of APIs with a list of plugins
-  * @default true
-  */
-  restrictedPluginApis?: boolean;
   /**
   * Enable favorite datasources
   * @default false

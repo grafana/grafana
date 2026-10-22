@@ -851,6 +851,29 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: UIDs of the recording rules in the sequence
+        name: recordingRuleUIDs
+        path: spec.recordingRules[*].name
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: UIDs of the alert rules in the sequence
+        name: alertingRuleUIDs
+        path: spec.alertingRules[*].name
+        type: string
+      - capabilities:
+        - retrieve
+        description: The evaluation interval of the sequence
+        name: interval
+        path: spec.trigger.interval
+        type: string
       userReadable: false
     - admission:
         validation:

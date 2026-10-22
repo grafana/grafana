@@ -1888,8 +1888,11 @@ func TestUnownedIndexIdleTimeout(t *testing.T) {
 			idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
-			now := time.Now().Truncate(time.Millisecond)
-			require.NotNil(t, backend.getCachedIndex(key, now))
+			beforeUse := time.Now().Truncate(time.Millisecond)
+			require.NotNil(t, backend.getCachedIndex(key, beforeUse.Add(-tc.timeout)))
+			require.Same(t, idx, backend.GetIndex(key))
+			now := time.UnixMilli(backend.peekCachedIndex(key).lastFetchedFromCache.Load())
+			require.GreaterOrEqual(t, now.UnixMilli(), beforeUse.UnixMilli())
 			accessedAt := now.Add(tc.timeout / 2)
 			backend.runEvictExpiredOrUnownedIndexes(accessedAt)
 			require.NotNil(t, backend.getCachedIndex(key, accessedAt))
@@ -1902,6 +1905,70 @@ func TestUnownedIndexIdleTimeout(t *testing.T) {
 
 			backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
 			require.Nil(t, backend.peekCachedIndex(key))
+			_, err = idx.DocCount(t.Context(), "", nil)
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+			checkOpenIndexes(t, reg, 0, 0)
+		})
+	}
+}
+
+func TestNewUnownedIndexIdleTimeout(t *testing.T) {
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
+		return false, nil
+	}))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	beforeBuild := time.Now().UnixMilli()
+	idx, err := backend.BuildIndex(t.Context(), key, defaultFileThreshold, "test", indexTestDocs(key, defaultFileThreshold, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	cached := backend.peekCachedIndex(key)
+	require.GreaterOrEqual(t, cached.lastFetchedFromCache.Load(), beforeBuild)
+
+	deadline := time.UnixMilli(cached.lastFetchedFromCache.Load()).Add(unownedIndexIdleTimeout)
+	backend.runEvictExpiredOrUnownedIndexes(deadline)
+	require.Same(t, idx, backend.PeekIndex(key))
+	backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
+func TestBackgroundInspectionDoesNotPreventUnownedIndexEviction(t *testing.T) {
+	for _, scan := range []struct {
+		name string
+		run  func(*testing.T, *bleveBackend, resource.NamespacedResource)
+	}{
+		{
+			name: "cached lookup",
+			run: func(t *testing.T, backend *bleveBackend, key resource.NamespacedResource) {
+				require.NotNil(t, backend.PeekIndex(key))
+			},
+		},
+		{
+			name: "document counts",
+			run: func(t *testing.T, backend *bleveBackend, _ resource.NamespacedResource) {
+				require.Equal(t, int64(defaultFileThreshold), backend.TotalDocs())
+			},
+		},
+	} {
+		t.Run(scan.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
+				return false, nil
+			}))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			idx, err := backend.BuildIndex(t.Context(), key, defaultFileThreshold, "test", indexTestDocs(key, defaultFileThreshold, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			lastAccess := time.Now().Add(-time.Minute).Truncate(time.Millisecond)
+			cached := backend.getCachedIndex(key, lastAccess)
+			require.Equal(t, indexStorageFile, cached.indexStorage)
+
+			for i := range 3 {
+				scan.run(t, backend, key)
+				require.Equal(t, lastAccess.UnixMilli(), cached.lastFetchedFromCache.Load())
+				backend.runEvictExpiredOrUnownedIndexes(lastAccess.Add(time.Duration(i) * 5 * time.Minute))
+				require.Same(t, idx, backend.PeekIndex(key))
+			}
+
+			backend.runEvictExpiredOrUnownedIndexes(lastAccess.Add(unownedIndexIdleTimeout + time.Millisecond))
+			require.Nil(t, backend.PeekIndex(key), "idle unowned file index must be evicted despite repeated scans")
 			_, err = idx.DocCount(t.Context(), "", nil)
 			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 			checkOpenIndexes(t, reg, 0, 0)
@@ -2545,6 +2612,86 @@ func TestIndexUpdate(t *testing.T) {
 	require.Equal(t, 10, docCount(t, idx))
 	require.Equal(t, int64(0), searchTitle(t, idx, "gen_1", 10, ns).TotalHits)
 	require.Equal(t, int64(5), searchTitle(t, idx, "gen_2", 10, ns).TotalHits)
+}
+
+func TestIndexUpdateRVPersistInterval(t *testing.T) {
+	tests := []struct {
+		name          string
+		interval      time.Duration
+		docs          int
+		wantPersisted bool
+	}{
+		{name: "no interval persists every update", interval: 0, docs: 0, wantPersisted: true},
+		{name: "no changes inside interval stay in memory", interval: time.Hour, docs: 0, wantPersisted: false},
+		{name: "changes inside interval persist", interval: time.Hour, docs: 3, wantPersisted: true},
+		{name: "no changes after interval persist", interval: time.Nanosecond, docs: 0, wantPersisted: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "index")
+			index, err := bleve.New(dir, bleve.NewIndexMapping())
+			require.NoError(t, err)
+
+			idx := &bleveIndex{
+				index:             index,
+				logger:            log.NewNopLogger(),
+				rvPersistInterval: tc.interval,
+				updaterFn: func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+					return 20, tc.docs, nil
+				},
+			}
+			idx.updaterCond = sync.NewCond(&idx.updaterMu)
+			require.NoError(t, idx.updateResourceVersion(10))
+
+			rv, err := idx.UpdateIndex(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, int64(20), rv)
+			require.Equal(t, int64(20), idx.resourceVersion.Load())
+
+			persisted, err := getRV(index)
+			require.NoError(t, err)
+			if tc.wantPersisted {
+				require.Equal(t, int64(20), persisted)
+			} else {
+				require.Equal(t, int64(10), persisted)
+			}
+
+			// Close leaves the RV as persisted; a reopen replays from there.
+			require.NoError(t, idx.stopUpdaterAndCloseIndex())
+			reopened, err := bleve.Open(dir)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, reopened.Close()) }()
+			reopenedRV, err := getRV(reopened)
+			require.NoError(t, err)
+			require.Equal(t, persisted, reopenedRV)
+		})
+	}
+}
+
+func TestReopenedIndexDoesNotPersistItsFirstUnchangedUpdate(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	root := t.TempDir()
+	updater := func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+		return 200, 0, nil
+	}
+	build := func() (*bleveBackend, *bleveIndex) {
+		backend, err := NewBleveBackend(BleveOptions{Root: root, FileThreshold: 1, Logger: log.NewNopLogger()}, nil)
+		require.NoError(t, err)
+		idx, err := backend.BuildIndex(t.Context(), key, 3, "test", indexTestDocs(key, 3, 100), updater, false, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		return backend, idx.(*bleveIndex)
+	}
+	first, _ := build()
+	first.Stop()
+
+	// A restart reopens many indexes at once; their first updates should not each write a checkpoint.
+	second, reopened := build()
+	t.Cleanup(second.Stop)
+	_, err := reopened.UpdateIndex(t.Context())
+	require.NoError(t, err)
+	persisted, err := getRV(reopened.index)
+	require.NoError(t, err)
+	require.Equal(t, int64(100), persisted)
 }
 
 func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {

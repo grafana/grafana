@@ -193,10 +193,21 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	}
 
 	var singleTenantFallback *singleTenantFallback
+	var singleTenantResources map[string][]singleTenantResource
 	if singleTenantDiscoveryURL != "" {
 		discoURL, err := url.Parse(singleTenantDiscoveryURL)
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+
+		// An explicitly empty st_resources disables the defaults.
+		rawResources := defaultSingleTenantResources
+		if section.HasKey("st_resources") {
+			rawResources = section.Key("st_resources").String()
+		}
+		singleTenantResources, err = parseSingleTenantResources(rawResources)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
@@ -213,7 +224,12 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	loader, err := newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	if err != nil {
+		return nil, err
+	}
+	loader.singleTenantResources = singleTenantResources
+	return loader, nil
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -237,6 +253,10 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
+
+	// singleTenantResources are, by group, the resources that stay on the
+	// single-tenant stacks when another source serves the rest of the group.
+	singleTenantResources map[string][]singleTenantResource
 
 	shadowed atomic.Pointer[[]shadowedGroup]
 }
@@ -301,9 +321,11 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	var discoveryErr error
 	var shadowed []shadowedGroup
 	// put adds b, recording any backend for the same group it overrides.
+	// Overriding the single-tenant fallback is the expected migration path,
+	// not a conflict, so it is not recorded.
 	put := func(b Backend) {
 		group := b.Group().Name
-		if previous, ok := lookup[group]; ok {
+		if previous, ok := lookup[group]; ok && previous.Source() != sourceSingleTenant {
 			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
 		}
 		lookup[group] = b
@@ -341,6 +363,14 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		}
 	}
 	l.recordShadowed(ctx, shadowed)
+
+	if l.singleTenantFallback != nil {
+		for group, resources := range l.singleTenantResources {
+			if b, ok := lookup[group]; ok && b.Source() != sourceSingleTenant {
+				lookup[group] = &singleTenantResourcesBackend{Backend: b, resources: resources, st: l.singleTenantFallback}
+			}
+		}
+	}
 
 	if len(lookup) == 0 && discoveryErr != nil {
 		return nil, discoveryErr

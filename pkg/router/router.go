@@ -300,7 +300,11 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 	case r.authn == nil:
 		err = apierrors.NewUnauthorized("token authenticator is not configured")
 	default:
-		info, err = r.authn.AuthenticateToken(ctx, token)
+		if requestAuth, ok := r.authn.(authn.RequestTokenAuthenticator); ok {
+			info, err = requestAuth.AuthenticateTokenForRequest(ctx, token, req)
+		} else {
+			info, err = r.authn.AuthenticateToken(ctx, token)
+		}
 		if err == nil && info == nil {
 			err = apierrors.NewUnauthorized("token has no requester")
 		}
