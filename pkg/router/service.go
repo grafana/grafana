@@ -93,8 +93,8 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 		next = http.NotFoundHandler()
 	}
 
-	// NOTE: this is not enabled when running as middleware, otherwise this could be internal to the router
-	if st, ok := s.router.loader.(LoaderWithSingleTenantFallback); ok && !s.middleware {
+	// The standalone router is never middleware, so the fallback always applies.
+	if st, ok := s.router.loader.(LoaderWithSingleTenantFallback); ok {
 		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
 	}
 

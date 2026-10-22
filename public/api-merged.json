@@ -20103,9 +20103,13 @@
           "type": "string"
         },
         "id": {
-          "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+          "description": "Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence.",
           "type": "string",
           "format": "int64"
+        },
+        "uid": {
+          "description": "UID of the report. Can send either ID or UID. If both are present, UID takes precedence.",
+          "type": "string"
         },
         "useEmailsFromReport": {
           "description": "Send the report to the emails specified in the report. Required if emails is not present.",

@@ -160,6 +160,7 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
+    | "assistant.dashboard.artifacts"
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"

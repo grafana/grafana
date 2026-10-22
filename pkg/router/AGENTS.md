@@ -7,7 +7,7 @@ manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 
 This file holds the current rules. For the reasoning and history behind them, see `specs/`,
 especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
-`specs/2026-10-10-router-review-plan.md`.
+`specs/2026-10-23-router-review-plan.md`.
 
 ## Rules
 
@@ -191,8 +191,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `singleTenantDiscoveryCacheTTL`.
   - It stores only a 200 that `cacheableOpenAPIResponse` accepts, so a refused caller never
     replaces a good entry, and a stack's private or per-caller answer is never shared.
-  - Callers choose the keys, so it caches only requests whose query is empty or a single `hash`,
-    and its `st_discovery_cache_bytes` budget counts each entry's key, headers and a fixed
+  - The OpenAPI `hash` is never sent to a stack: a stack redirects a hash that is no longer its
+    document's, and the router would turn that redirect into a 502.
+  - Callers choose the keys, so it caches only requests whose query is empty once `hash` is
+    stripped, and its `st_discovery_cache_bytes` budget counts each entry's key, headers and a fixed
     overhead (`stackDiscoveryEntryOverhead`) as well as its body.
   - Concurrent misses share one fetch (`discoveryFetches`), bounded by
     `singleTenantDiscoveryFetchTimeout`; each caller stops waiting when its own request ends. Only
@@ -303,8 +305,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
-  `appplugins.registerAPIServer` turns middleware mode on too, except in the standalone router
-  (`middlewareEnabled`): app plugin settings are only served by the router.
+  `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
+  by the router. The standalone router is never in middleware mode, whatever the flags
+  (`middlewareEnabled`), so a flag that also reaches its deployment can't drop its cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
   `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
@@ -413,4 +416,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 - `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
-- `specs/2026-10-10-router-review-plan.md`: open work.
+- `specs/2026-10-23-router-review-plan.md`: open work.

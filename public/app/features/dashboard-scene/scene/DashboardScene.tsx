@@ -70,6 +70,8 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
+import { getPendingChangePreview, previewedDashboardUid } from '../lifecycle/pendingChangePreview';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -1158,6 +1160,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
+    // A new dashboard's preview has no uid yet: its page is the uid it is proposed under.
+    const previewedUid = previewedDashboardUid(this.state);
     // Trailing slash enforces a path-segment match so unrelated prefixes (e.g. `/dashboard/provisioning-foo/...`) don't match.
     const isProvisioningPreview = location.pathname.startsWith(PROVISIONING_PREVIEW_URL + '/');
     const clearPanelView = {
@@ -1171,11 +1175,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     let pageNav: NavModelItem = {
       text: title,
+      highlightText: getLifecycleBreadcrumbLabel(getPendingChangePreview('page', previewedUid)),
       url: isProvisioningPreview
         ? locationUtil.getUrlForPartial(location, clearPanelView)
         : locationUtil.assureBaseUrl(
             getDashboardUrl({
-              uid,
+              uid: uid || previewedUid,
               slug: meta.slug,
               currentQueryParams: location.search,
               updateQuery: clearPanelView,
