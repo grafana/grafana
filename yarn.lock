@@ -13241,7 +13241,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base64id@npm:2.0.0, base64id@npm:~2.0.0":
+"base64id@npm:~2.0.0":
   version: 2.0.0
   resolution: "base64id@npm:2.0.0"
   checksum: 10/e3312328429e512b0713469c5312f80b447e71592cae0a5bddf3f1adc9c89d1b2ed94156ad7bb9f529398f310df7ff6f3dbe9550735c6a759f247c088ea67364
@@ -16273,20 +16273,19 @@ __metadata:
   linkType: hard
 
 "engine.io@npm:~6.6.0":
-  version: 6.6.9
-  resolution: "engine.io@npm:6.6.9"
+  version: 6.6.11
+  resolution: "engine.io@npm:6.6.11"
   dependencies:
     "@types/cors": "npm:^2.8.12"
     "@types/node": "npm:>=10.0.0"
     "@types/ws": "npm:^8.5.12"
     accepts: "npm:~1.3.4"
-    base64id: "npm:2.0.0"
     cookie: "npm:~0.7.2"
     cors: "npm:~2.8.5"
     debug: "npm:~4.4.1"
     engine.io-parser: "npm:~5.2.1"
     ws: "npm:~8.21.0"
-  checksum: 10/604c1d0d7180b67689ccb9bf8d5faca3255cdeed63c05eae92960df2f1c0c016fe37f492d2c015efa9082af5addf553ee9923113649d593cd09ee3e19cefa5f4
+  checksum: 10/9a0c538de41b6e77da86723153e43d5843b8c82925be23278c3effd2c4bff601f9d1cab88e13a9fc9ca0d6a146055565e31397f4f73e4d5c1a79079b7aa23045
   languageName: node
   linkType: hard
 
@@ -22586,12 +22585,12 @@ __metadata:
   linkType: hard
 
 "launch-editor@npm:^2.13.2":
-  version: 2.13.2
-  resolution: "launch-editor@npm:2.13.2"
+  version: 2.14.2
+  resolution: "launch-editor@npm:2.14.2"
   dependencies:
     picocolors: "npm:^1.1.1"
-    shell-quote: "npm:^1.8.3"
-  checksum: 10/2b718ae4d3494526c9493a8c8f32e3824a79885e3b3be2e7e0db5ff74811b12af41760c4b904692cb43ddbd815ce65be245910e7ae84c3cc8ecbad4923657115
+    shell-quote: "npm:^1.10.0"
+  checksum: 10/8a3a82314ed6705d8f6795c409ea31ed2a106d0f0bc0528a60f8b53ec972cce1db9088bb4647987b2ef4bb16b804fcc85e54529acaa26aae22f39eaba704401b
   languageName: node
   linkType: hard
 
@@ -31684,20 +31683,20 @@ __metadata:
   linkType: hard
 
 "uuid@npm:^11.0.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
+  version: 11.1.1
+  resolution: "uuid@npm:11.1.1"
   bin:
     uuid: dist/esm/bin/uuid
-  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
+  checksum: 10/16411d3dc12a08d6691616c09a75e66a7f900ba1beef6628a76fe0602f82fae2ee537b564d0b7bc95c24f58d059ca9b58c75a1e806118efb50e17822ff00ddd2
   languageName: node
   linkType: hard
 
 "uuid@npm:^11.1.0 || ^12 || ^13 || ^14.0.0, uuid@npm:^14.0.0":
-  version: 14.0.2
-  resolution: "uuid@npm:14.0.2"
+  version: 14.0.3
+  resolution: "uuid@npm:14.0.3"
   bin:
     uuid: dist-node/bin/uuid
-  checksum: 10/e8263a76ad7b2d1f246df5a48a5bdf30d886eedbb1d3d74c75356d02b2966f5fffd7790b85afdb3682e4e732d13fca7974626419814f45de6847f78ce03c745e
+  checksum: 10/a6ab4e6ef84ff77b574846215c425c915de035395710e09f083f3bc1d4744df63db78598da0d04619a0a60a15a9cce2bc7c1ef10bf302349e761838816d798a7
   languageName: node
   linkType: hard
 
