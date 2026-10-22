@@ -5884,6 +5884,13 @@
           "role": {
             "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
             "type": "string"
+          },
+          "teams": {
+            "description": "The user teams",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

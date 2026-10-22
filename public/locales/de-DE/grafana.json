@@ -357,10 +357,6 @@
     },
     "ai": {
       "error-boundary": {
-        "alert-rule-button": "Die Schaltfläche für KI-Warnregeln wurde nicht geladen",
-        "feedback-button": "Die Schaltfläche für KI-Feedback wurde nicht geladen",
-        "improve-annotations-button": "Die Schaltfläche zur Verbesserung der Anmerkungen mit KI wurde nicht geladen",
-        "improve-labels-button": "Die Schaltfläche zur Verbesserung der Labels mit KI wurde nicht geladen",
         "template-button": "Die Schaltfläche für KI-Vorlagen wurde nicht geladen",
         "triage-button": "Die Schaltfläche für die KI-Triage wurde nicht geladen"
       }
@@ -453,6 +449,11 @@
       "text-loading-rules": "Regeln werden geladen …",
       "title-search-alert-rule": "Warnregel suchen",
       "title-select-alert-instances": "Warnungsinstanzen auswählen"
+    },
+    "alert-instance-silence-action": {
+      "silence": "",
+      "subtitle": "",
+      "title": ""
     },
     "alert-instance-state-filter": {
       "state": "Status"
@@ -1143,6 +1144,8 @@
       }
     },
     "editor": {
+      "duplicate-alert-rule": "",
+      "duplicate-recording-rule": "",
       "edit-alert-rule": "Warnregel bearbeiten",
       "edit-recording-rule": "Aufnahmeregel bearbeiten",
       "new-alert-rule": "Neue Warnregel",
@@ -1763,7 +1766,7 @@
         "datasource": "Alertmanager-Datenquelle",
         "datasource-autosync-badge": "Automatische Synchronisierung",
         "heading": "Benachrichtigungsressourcen importieren",
-        "next-disabled-tooltip": "Füllen Sie die Pflichtfelder aus und warten Sie, bis die Validierung erfolgreich ist, bevor Sie fortfahren.",
+        "next-disabled-tooltip": "",
         "no-datasources": "Keine Alertmanager-Datenquellen gefunden",
         "no-permission-desc": "Sie haben keine Berechtigung zum Importieren von Benachrichtigungsressourcen. Sie benötigen die Berechtigung <strong>alerting.notifications:write</strong>. Sie können diesen Schritt überspringen.",
         "no-permission-title": "Unzureichende Berechtigungen",
@@ -1801,6 +1804,7 @@
         "yaml-desc": "Zulässige Dateitypen: {{extensions}}",
         "yaml-file": "Alertmanager-Konfigurations-YAML",
         "yaml-invalid-type": "Die Datei muss eine YAML-Datei sein ({{extensions}})",
+        "yaml-parse-error": "",
         "yaml-remove": "{{name}} entfernen",
         "templates-added-title_one": "Vorlagendatei hinzugefügt",
         "templates-added-title_other": "Vorlagendateien hinzugefügt"
@@ -2114,8 +2118,8 @@
       "add-matcher": "Matcher hinzufügen",
       "aria-label-operator": "Operator",
       "aria-label-remove-matcher": "Matcher entfernen",
-      "label-alert-rule": "Warnregel",
       "label-label": "Label",
+      "label-matching-labels": "",
       "label-operator": "Bediener",
       "label-refine-affected-alerts": "Betroffene Warnungen optimieren",
       "label-value": "Wert",
@@ -3419,6 +3423,7 @@
       "schedule": "Planen"
     },
     "silence-grafana-rule-drawer": {
+      "subtitle": "",
       "title-silence-alert-rule": "Warnregel stummschalten"
     },
     "silence-period": {
@@ -3467,7 +3472,11 @@
       "preview-affected-instances": "Zeigen Sie eine Vorschau der Warninstanzen an, die von dieser Stummschaltung betroffen sind."
     },
     "silences-editor": {
+      "alert-rule-unavailable": "",
       "comment-placeholder-details-about-the-silence": "Details zur Stummschaltung",
+      "description-alert-rule-scope": "",
+      "description-alert-rule-unavailable": "",
+      "label-alert-rule": "",
       "label-comment": "Kommentar",
       "label-created-by": "Erstellt von",
       "label-duration": "Dauer",
@@ -4673,6 +4682,7 @@
       "empty-message": "Fügen Sie eine README-Datei hinzu, um zu beschreiben, was dieser Ordner enthält und wo die richtigen Dashboards zu finden sind.",
       "load-error-retry": "Erneut versuchen",
       "load-error-title": "Dieses Dokument konnte nicht geladen werden",
+      "metadata-label": "",
       "panel-label": "Ordnerdokumentation",
       "parse-error": "Dieses Dokument kann nicht angezeigt werden.",
       "tab-contributing": "Beitragend",
@@ -5073,6 +5083,9 @@
         "auto": "Auto"
       }
     },
+    "tooltip": {
+      "dialog-label": ""
+    },
     "tooltip-options": {
       "label-disable-one-click": "",
       "name-tooltip-mode": "Tooltip-Modus",
@@ -5166,6 +5179,7 @@
       "more-panels_one": "{{count}} weiteres passendes Panel",
       "more-panels_other": "{{count}} weitere passende Panels"
     },
+    "dialog-label": "",
     "empty-state": {
       "button-title": "Mit Grafana Assistant suchen",
       "message": "Keine Ergebnisse gefunden"
@@ -5214,6 +5228,10 @@
   },
   "connections": {
     "add-new-connection": {
+      "add-category": "",
+      "add-type": "",
+      "all-categories": "",
+      "all-types": "",
       "category": "Kategorie",
       "clear": "Löschen",
       "filter-by-category": "Nach Kategorie filtern",
@@ -5242,7 +5260,10 @@
         "by-published-date": "Nach Veröffentlichungsdatum",
         "by-updated-date": "Nach Aktualisierungsdatum"
       },
+      "remove-filter-value": "",
       "reset-filters": "Filter zurücksetzen",
+      "selected-categories": "",
+      "selected-types": "",
       "sort": "Sortieren",
       "sort-list": "Plugin-Liste sortieren",
       "state": "Status",
@@ -6139,6 +6160,17 @@
     },
     "panel-editor": {
       "ad-hoc-transformations-disabled": ""
+    },
+    "plan-building-overlay": {
+      "quip-corners": "",
+      "quip-green": "",
+      "quip-gridlines": "",
+      "quip-legend": "",
+      "quip-metrics": "",
+      "quip-pie-charts": "",
+      "quip-points": "",
+      "quip-series": "",
+      "title": ""
     },
     "plan-placeholder-badge": {
       "text": "Beispieldaten",
@@ -8015,7 +8047,10 @@
     "support-bundle": "Sie können im <1>Abschnitt „Support-Bundles“</1> auch ein Support-Bundle abrufen, das Informationen zu Ihrer Grafana-Instanz und zu Ihren konfigurierten Datenquellen enthält."
   },
   "dashboard-schema-editor": {
+    "editor-label": "",
     "json-disabled-tooltip": "YAML-Syntaxfehler beheben, um zu JSON zu wechseln",
+    "schema-load-error": "",
+    "schema-load-error-description": "",
     "yaml-disabled-tooltip": "JSON-Syntaxfehler beheben, um zu YAML zu wechseln"
   },
   "dashboard-settings": {
@@ -8435,6 +8470,7 @@
     },
     "resource-picker-popover": {
       "cancel": "Abbrechen",
+      "dialog-label": "",
       "folder": "Ordner",
       "select": "Auswählen",
       "url": "URL"
@@ -8857,6 +8893,9 @@
       "unknown-type-tooltip": "Diese Datenquelle hat keinen erkannten Typ für diese Metrik gemeldet"
     },
     "metrics-list": {
+      "add-label-to-query": "",
+      "add-metric-to-query": "",
+      "add-value-to-query": "",
       "collapse-metric": "{{name}} einklappen",
       "error": "Die Metriken konnten nicht geladen werden",
       "expand-metric": "{{name}} ausklappen ",
@@ -9059,6 +9098,7 @@
       "jump-to-query-label": "Zur Abfrage {{refId}} ({{datasourceName}}) springen"
     },
     "signal-explorer": {
+      "add-to-query": "",
       "empty-text": "Fügen Sie eine Abfrage hinzu, um ihre Datenquelle zu durchsuchen.",
       "section-label-queries": "Abfragen",
       "title-datasource-explorer": "Datenquellen-Explorer",
@@ -9697,6 +9737,9 @@
       "placeholder-feature-property": "Funktionseigenschaft",
       "placeholder-numeric-value": "Numerischer Wert",
       "placeholder-value": "Wert"
+    },
+    "tooltip": {
+      "dialog-label": ""
     },
     "tooltip-options": {
       "description-details": "Pop-up bei Hover anzeigen",
@@ -10424,7 +10467,8 @@
       "option": "Option"
     },
     "carousel": {
-      "aria-label-open-image": "Bildvorschau öffnen"
+      "aria-label-open-image": "Bildvorschau öffnen",
+      "dialog-label": ""
     },
     "cascader": {
       "clear-button": "Auswahl löschen"
@@ -10556,6 +10600,7 @@
       "apply": "Anwenden",
       "calendar-icon-label": "Zeitauswahl",
       "cancel": "Abbrechen",
+      "dialog-label": "",
       "next-label": "Nächster Monat",
       "previous-label": "Vorheriger Monat",
       "select-placeholder": "Datum/Uhrzeit auswählen"
@@ -10915,6 +10960,7 @@
       "close": "Schließen"
     },
     "toolbar-button-row": {
+      "dialog-label": "",
       "show-more": "Mehr Einträge anzeigen"
     },
     "u-plot": {
@@ -11203,22 +11249,17 @@
     },
     "dashboard-tabs": {
       "most-used": "Am häufigsten genutzt",
-      "most-used-active": "Am häufigsten genutzte Dashboards",
       "recent": "Zuletzt",
-      "recent-active": "Neue Dashboards",
       "retry": "Erneut versuchen",
       "starred": "Mit Stern markiert",
-      "starred-active": "Mit Stern markierte Dashboards"
-    },
-    "dashboards": {
-      "title": "Dashboards",
-      "view-all": "Alles anzeigen"
+      "title": "",
+      "view-all-dashboards": ""
     },
     "firing-alerts-card": {
       "create": "Warnregel erstellen",
-      "empty": "Sie haben keine ausgelösten Warnungen.",
+      "empty": "",
       "empty-selected-label": "",
-      "empty-teams": "Keine ausgelösten Warnungen für Ihre Teams.",
+      "empty-teams": "",
       "error-title": "Es konnten keine ausgelösten Warnungen geladen werden",
       "severity-critical": "Kritisch",
       "severity-high": "Hoch",
@@ -11254,8 +11295,8 @@
     },
     "incidents-card": {
       "declare": "Vorfall angeben",
-      "empty": "Keine aktiven Vorfälle.",
-      "empty-selected-team": "Keine aktiven Incidents für {{team}}.",
+      "empty": "",
+      "empty-selected-team": "",
       "error-title": "Es konnten keine aktiven Vorfälle geladen werden",
       "title": "Aktive Vorfälle",
       "view-all": "Alle Vorfälle anzeigen"
@@ -11389,15 +11430,25 @@
       },
       "title": "Ihre Observability-Stack-Übersicht"
     },
-    "recent-dashboards-tab": {
-      "browse": "Dashboards durchsuchen",
-      "clear": "Verlauf löschen",
-      "create": "Erstellen Sie Ihr erstes Dashboard",
-      "empty": "Dashboards, die Sie kürzlich angesehen haben, werden hier angezeigt.",
-      "empty-description": "Nachdem Sie Daten verbunden haben, können Sie Dashboards nutzen, um Ihre Daten mit Diagrammen, Statistiken und Tabellen abzufragen und zu visualisieren oder Listen, Markdowns und andere Widgets zu erstellen.",
-      "error-title": "Zuletzt angesehene Dashboards konnten nicht geladen werden",
-      "loading": "Zuletzt angesehene Dashboards werden geladen …",
-      "reset": "Neue Dashboards zurücksetzen"
+    "recent-activity-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "error-title": "",
+      "filter-alerting": "",
+      "filter-all": "",
+      "filter-apps": "",
+      "filter-dashboards": "",
+      "filter-explore": "",
+      "filter-label": "",
+      "filter-pages": "",
+      "kind-alerting": "",
+      "kind-app": "",
+      "kind-dashboard": "",
+      "kind-explore": "",
+      "kind-page": "",
+      "loading": ""
     },
     "recommendations": {
       "application-observability": {
@@ -11986,6 +12037,9 @@
     "signup": {
       "button-label": "Registrieren",
       "new-to-question": "Neu bei Grafana?"
+    },
+    "title": {
+      "sign-in": ""
     }
   },
   "logs": {
@@ -12129,7 +12183,8 @@
         "loading-message": ""
       },
       "trace-section": "",
-      "unpin-line": "Log nicht mehr anheften"
+      "unpin-line": "Log nicht mehr anheften",
+      "view-in-traces-drilldown": ""
     },
     "log-line-menu": {
       "copy-link": "Link zur Protokollzeile kopieren",
@@ -12871,6 +12926,9 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "new-notebook": {
+      "title": ""
+    },
     "notebooks": {
       "subtitle": "Erstellen und verwalten Sie Notizbücher, um mit Ihren Daten eine Geschichte zu erzählen",
       "title": "Notebooks"
@@ -13202,6 +13260,7 @@
       "visualization": "Visualisierung"
     },
     "cell": {
+      "block-actions": "",
       "code": {
         "aria-label-editor": "Code",
         "aria-label-language": "Codesprache",
@@ -13238,8 +13297,10 @@
       },
       "time-range": {
         "button": "Zeitbereich aktualisieren",
+        "dialog": "",
+        "dialog-label": "",
         "locked": "Gesperrt: {{range}}",
-        "sync-back": "Wieder auf den Zeitbereich des Notizbuchs zurücksetzen",
+        "remove-lock": "",
         "tooltip-default": "Panel-Zeitbereich sperren"
       }
     },
@@ -13342,6 +13403,7 @@
       "add-block": "Block hinzufügen",
       "add-query": "Abfrage hinzufügen",
       "add-tag": "Tag hinzufügen",
+      "change-visualization": "",
       "delete-block": "Block löschen",
       "duplicate-block": "Block duplizieren",
       "duplicate-query": "Abfrage duplizieren",
@@ -13353,13 +13415,16 @@
       "remove-query": "Abfrage entfernen",
       "remove-tag": "Tag entfernen",
       "rename": "",
+      "rename-panel": "",
       "reset-cell-time-range": "Zeitbereich des Notizbuchs verwenden",
       "select-query": "Abfrage auswählen",
       "set-cell-time-range": "Panel-Zeitbereich einstellen",
       "split-block": "Block aufteilen",
       "switch-datasource": "Datenquelle wechseln",
       "undo": "Rückgängig machen",
-      "undo-action": "Rückgängig machen: {{action}}"
+      "undo-action": "Rückgängig machen: {{action}}",
+      "visualization-replay-error": "",
+      "visualization-rollback-error": ""
     },
     "incidents": {
       "attach-title": "An Incident anhängen",
@@ -13404,6 +13469,19 @@
     },
     "new": {
       "default-title-with-date": "Notizbuch {{date}}"
+    },
+    "panel": {
+      "add-title": "",
+      "change-visualization": "",
+      "edit-query": "",
+      "hide-query": "",
+      "open-explore": "",
+      "rename": "",
+      "suggestions-empty": "",
+      "suggestions-error": "",
+      "suggestions-no-data": "",
+      "title-label": "",
+      "visualization-error": ""
     },
     "save-status": {
       "failed": "Speichern gescheitert",
@@ -13471,6 +13549,7 @@
         "category": "Standardoptionen",
         "category-thresholds": "Schwellenwerte",
         "category-value-mappings": "Wertezuordnungen",
+        "description-ad-hoc": "",
         "description-display-name": "Feld- oder Reihenname ändern",
         "description-field-min-max": "Min. Max. pro Feld berechnen",
         "description-max": "Leer lassen, um anhand aller Werte zu berechnen",
@@ -13478,7 +13557,7 @@
         "description-no-value": "Was angezeigt wird, wenn kein Wert vorhanden ist",
         "description-value-mappings": "Ändern Sie den Anzeigetext je nach Eingabewert",
         "name-actions": "Aktionen",
-        "name-ad-hoc": "Filterbar",
+        "name-ad-hoc": "",
         "name-color-scheme": "Farbschema",
         "name-data-links": "Datenlinks",
         "name-decimals": "Dezimalstellen",
@@ -16962,6 +17041,7 @@
     "range-picker": {
       "backwards-time-aria-label": "Zeitbereich nach hinten verschieben",
       "current-time-selected": "Ausgewählter Zeitbereich: {{currentTimeRange}}",
+      "dialog-label": "",
       "forwards-time-aria-label": "Zeitbereich nach vorne verschieben",
       "to": "bis",
       "zoom-out-button": "Zeitbereich verkleinern",
@@ -16971,6 +17051,7 @@
       "apply": "Zeitbereich anwenden",
       "aria-role": "Zeitbereichauswahl",
       "default-title": "Zeitbereiche",
+      "dialog-label": "",
       "example-title": "Zeitbereiche-Beispiel",
       "from-label": "Ab",
       "from-to": "{{timeOptionFrom}} bis {{timeOptionTo}}",
