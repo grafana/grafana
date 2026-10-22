@@ -522,6 +522,7 @@
         "save": "Save"
       },
       "error-title": "Failed to save alert rule",
+      "form-errors": "There are errors in the form. Please correct them and try again!",
       "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
@@ -1459,7 +1460,6 @@
         "must-be-a-positive-integer": "Must be a positive integer."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"

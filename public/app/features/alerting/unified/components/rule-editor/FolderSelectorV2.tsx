@@ -54,11 +54,12 @@ export function FolderSelectorV2() {
             </Label>
           }
           error={errors.folder?.message}
+          invalid={!!errors.folder?.message}
           data-testid={selectors.components.AlertRules.folderPicker}
         >
-          <Stack direction="column" alignItems="flex-start" gap={1}>
-            <Controller
-              render={({ field: { ref, ...field } }) => (
+          <Controller
+            render={({ field: { ref, ...field } }) => (
+              <Stack direction="column" alignItems="flex-start" gap={1}>
                 <div style={{ width: 420 }}>
                   <NestedFolderPicker
                     permission="view"
@@ -77,17 +78,17 @@ export function FolderSelectorV2() {
                     }}
                   />
                 </div>
-              )}
-              name="folder"
-              rules={{
-                required: {
-                  value: true,
-                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
-                },
-              }}
-            />
-            <CreateNewFolder onCreate={handleFolderCreation} fill="solid" size="sm" />
-          </Stack>
+                <CreateNewFolder onCreate={handleFolderCreation} fill="solid" size="sm" />
+              </Stack>
+            )}
+            name="folder"
+            rules={{
+              required: {
+                value: true,
+                message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
+              },
+            }}
+          />
         </Field>
       }
     </Stack>

@@ -5,7 +5,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Field, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { type RuleFormValues } from '../../types/rule-form';
@@ -124,23 +124,18 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
             />
           </Field>
         </div>
-        <Box gap={1} display={'flex'} alignItems={'center'}>
-          <Text color="secondary">
-            <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-          </Text>
-          <Button
-            onClick={onOpenEvaluationGroupCreationModal}
-            type="button"
-            icon="plus"
-            fill="outline"
-            variant="secondary"
-            disabled={!folder?.uid}
-            tooltip={!folder?.uid ? noFolderTooltip : undefined}
-            data-testid={'new-evaluation-group-button'}
-          >
-            <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
-          </Button>
-        </Box>
+        <Button
+          onClick={onOpenEvaluationGroupCreationModal}
+          type="button"
+          icon="plus"
+          fill="outline"
+          variant="secondary"
+          disabled={!folder?.uid}
+          tooltip={!folder?.uid ? noFolderTooltip : undefined}
+          data-testid={'new-evaluation-group-button'}
+        >
+          <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
+        </Button>
         {isCreatingEvaluationGroup && (
           <EvaluationGroupCreationModal
             onCreate={handleEvalGroupCreation}

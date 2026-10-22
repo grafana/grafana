@@ -367,6 +367,15 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     expect(screen.queryByRole('radio', { name: /use groups \(legacy\)/i })).not.toBeInTheDocument();
   });
 
+  it('shows the folder validation message when saving without a folder', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Select a folder')).toBeInTheDocument();
+  });
+
   it('requires a group and POSTs to the legacy ruler API only', async () => {
     const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
     const appPlatformRequests = captureRequests(

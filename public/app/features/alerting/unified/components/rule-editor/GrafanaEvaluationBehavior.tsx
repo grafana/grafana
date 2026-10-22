@@ -8,7 +8,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
-  Box,
   Button,
   Divider,
   Field,
@@ -369,23 +368,18 @@ export function GrafanaEvaluationBehaviorStep({
                   />
                 </Field>
               </div>
-              <Box gap={1} display={'flex'} alignItems={'center'}>
-                <Text color="secondary">
-                  <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-                </Text>
-                <Button
-                  onClick={onOpenEvaluationGroupCreationModal}
-                  type="button"
-                  icon="plus"
-                  fill="outline"
-                  variant="secondary"
-                  disabled={!folder?.uid}
-                  tooltip={!folder?.uid ? noFolderTooltip : undefined}
-                  data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
-                >
-                  <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
-                </Button>
-              </Box>
+              <Button
+                onClick={onOpenEvaluationGroupCreationModal}
+                type="button"
+                icon="plus"
+                fill="outline"
+                variant="secondary"
+                disabled={!folder?.uid}
+                tooltip={!folder?.uid ? noFolderTooltip : undefined}
+                data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
+              >
+                <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
+              </Button>
               {isCreatingEvaluationGroup && (
                 <EvaluationGroupCreationModal
                   onCreate={handleEvalGroupCreation}

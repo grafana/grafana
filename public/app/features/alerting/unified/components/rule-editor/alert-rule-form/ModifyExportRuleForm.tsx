@@ -62,7 +62,9 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
 
   const onInvalid = (): void => {
-    notifyApp.error('There are errors in the form. Please correct them and try again!');
+    notifyApp.error(
+      t('alerting.alert-rule-form.form-errors', 'There are errors in the form. Please correct them and try again!')
+    );
   };
 
   const checkAlertCondition = (msg = '') => {
