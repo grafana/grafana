@@ -1,4 +1,4 @@
-package appplugin
+package appsettings
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func TestGetSettingsDecryptsFromSharedGroup(t *testing.T) {
 		Spec:       apppluginV0.SettingsSpec{Enabled: true},
 		Secure:     common.InlineSecureValues{"token": {Name: "secret-token"}},
 	}
-	b := &AppPluginAPIBuilder{
+	b := &Builder{
 		group: "example-app",
 		getter: func(_ context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
 			require.Equal(t, "example-app", gvr.Group)

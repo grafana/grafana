@@ -995,7 +995,8 @@
       "metadata": {
         "name": "appplugins.loadAppManifestAndKeepSettings",
         "resourceVersion": "1789622340153",
-        "creationTimestamp": "2026-09-17T09:00:35Z"
+        "creationTimestamp": "2026-09-17T09:00:35Z",
+        "deletionTimestamp": "2026-10-22T05:23:31Z"
       },
       "spec": {
         "description": "Continue to expose settings when a manifest exists",
