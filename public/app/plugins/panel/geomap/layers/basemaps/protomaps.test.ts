@@ -104,6 +104,7 @@ const STYLE = {
       type: 'symbol',
       source: 'protomaps',
       'source-layer': 'places',
+      filter: ['==', 'kind', 'locality'],
       layout: { 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
     },
   ],
@@ -298,6 +299,25 @@ describe('Protomaps basemap', () => {
       9,
       8,
     ]);
+  });
+
+  it('starts roads and labels at the zooms CARTO starts them', async () => {
+    await initLayer({ showLabels: true });
+
+    const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('roads_highway')).toMatchObject({ minzoom: 5 });
+    expect(layer('places_region')).toMatchObject({ minzoom: 5, maxzoom: 10 });
+    expect(layer('boundaries_country').minzoom).toBeUndefined();
+  });
+
+  it('keeps the generator’s legacy filter working when it adds CARTO’s classes', async () => {
+    await initLayer({ showLabels: true });
+
+    const locality = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_locality');
+    const [all, generated, byClass] = locality.filter;
+    expect([all, generated]).toEqual(['all', ['==', ['get', 'kind'], 'locality']]);
+    expect(byClass[0]).toBe('any');
+    expect(byClass[2].slice(0, 3)).toEqual(['match', ['get', 'kind_detail'], 'city']);
   });
 
   it('leaves out house numbers, which CARTO never shows', async () => {
