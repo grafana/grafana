@@ -159,7 +159,6 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           <MultipleDataSourcePicker
             key={dataSourceKey}
             alerting
-            noDefault
             placeholder={t('alerting.rules-filter.placeholder-all-data-sources', 'All data sources')}
             current={filterState.dataSourceNames}
             onChange={handleDataSourceChange}
