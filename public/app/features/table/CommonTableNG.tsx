@@ -9,7 +9,11 @@ import { TableNG } from '@grafana/ui/unstable';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled' | 'timeZone'
+  | 'tableRefreshEnabled'
+  | 'contentAwareWidthsEnabled'
+  | 'jsonSyntaxHighlightingEnabled'
+  | 'rangeFiltersEnabled'
+  | 'timeZone'
 > & { timeZone: string };
 
 /**
@@ -29,6 +33,7 @@ export function CommonTableNG(props: CommonTableNGProps) {
       tableRefreshEnabled={tableRefreshEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
       jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
+      rangeFiltersEnabled={jsonSyntaxHighlightingEnabled}
     />
   );
 }

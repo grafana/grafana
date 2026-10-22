@@ -11,6 +11,7 @@ import { StringMatchingFilter } from './StringMatchingFilter';
 
 export interface FilterPopupProps {
   stateKey?: string;
+  rangeFiltersEnabled?: boolean;
   onApplyValues: (values: SelectableValue[]) => void;
   onApplyRange?: (range: { min?: number; max?: number; includeMissing: boolean }) => void;
   onClear: () => void;
@@ -72,7 +73,7 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
     };
   }, [onClose]);
 
-  if (!filterValue && field) {
+  if (props.rangeFiltersEnabled && !filterValue && field) {
     const rangeProps = {
       field,
       rows,

@@ -109,6 +109,7 @@ describe('FilterPopup', () => {
     const field: Field = { name: 'Value', type, values: [0, 10], config: {} };
     const { onClear, onClose } = renderPopup({
       field,
+      rangeFiltersEnabled: true,
       rows: makeRows('Value', ['0', '10']),
       range: { min: 0, max: 10, includeMissing: false },
     });
@@ -121,11 +122,37 @@ describe('FilterPopup', () => {
 
   it('mounts the date range editor for time fields', () => {
     const field: Field = { name: 'Time', type: FieldType.time, values: [Date.UTC(2026, 8, 17)], config: {} };
-    renderPopup({ field, rows: makeRows('Time', ['2026-09-17']) });
+    renderPopup({ field, rows: makeRows('Time', ['2026-09-17']), rangeFiltersEnabled: true });
 
     expect(screen.getByRole('textbox', { name: 'Start' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'End' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Filter values')).not.toBeInTheDocument();
+  });
+
+  it.each([FieldType.number, FieldType.time])(
+    'uses the string editor for %s fields without the new-features flag',
+    (type) => {
+      const field: Field = { name: 'Value', type, values: [0, 10], config: {} };
+      renderPopup({ field, rows: makeRows('Value', ['0', '10']) });
+
+      expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: '0' })).toBeInTheDocument();
+      expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Start' })).not.toBeInTheDocument();
+    }
+  );
+
+  it('keeps an existing value filter in the string editor with range filters enabled', () => {
+    const field: Field = { name: 'Value', type: FieldType.number, values: [0, 10], config: {} };
+    renderPopup({
+      field,
+      rows: makeRows('Value', ['0', '10']),
+      rangeFiltersEnabled: true,
+      filterValue: [{ value: '0', label: '0' }],
+    });
+
+    expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '0' })).toBeChecked();
   });
 
   describe('Ok button', () => {
@@ -176,7 +203,7 @@ describe('FilterPopup', () => {
   it('keeps the numeric filter open when a slider drag ends outside, then closes on a separate outside click', async () => {
     const user = userEvent.setup();
     const field: Field = { name: 'Value', type: FieldType.number, values: [0, 10], config: {} };
-    const { onClose } = renderPopup({ field, rows: makeRows('Value', ['0', '10']) });
+    const { onClose } = renderPopup({ field, rows: makeRows('Value', ['0', '10']), rangeFiltersEnabled: true });
     const popup = screen.getByRole('group', { name: 'Filter Value' });
 
     await user.pointer([

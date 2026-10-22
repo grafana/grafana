@@ -178,6 +178,8 @@ interface BaseTableProps {
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
+  /** Enables numeric and date range filter editors (table.refreshNewFeatures). */
+  rangeFiltersEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
   /** Initial sidebar state. Later prop changes also update the sidebar. */

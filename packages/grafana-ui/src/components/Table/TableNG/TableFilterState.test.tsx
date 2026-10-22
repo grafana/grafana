@@ -204,7 +204,7 @@ it('interprets a new time range bound in the panel timezone', async () => {
     timeZone,
     replaceVariables: (s) => s,
   })[0];
-  render(<TableNG {...props} timeZone={timeZone} />);
+  render(<TableNG {...props} timeZone={timeZone} rangeFiltersEnabled />);
   await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
   await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 13:00:00.000');
   await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 13:00:00.000');
@@ -236,7 +236,7 @@ it('keeps time range bounds editable after the panel timezone changes', async ()
       replaceVariables: (s) => s,
     })[0];
   props.data = makeFrame('UTC');
-  const { rerender } = render(<TableNG {...props} timeZone="UTC" />);
+  const { rerender } = render(<TableNG {...props} timeZone="UTC" rangeFiltersEnabled />);
 
   await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
   await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 00:00:00.000');
@@ -245,7 +245,7 @@ it('keeps time range bounds editable after the panel timezone changes', async ()
   expect(screen.getAllByRole('row')).toHaveLength(2);
 
   props.data = makeFrame('Pacific/Auckland');
-  rerender(<TableNG {...props} timeZone="Pacific/Auckland" />);
+  rerender(<TableNG {...props} timeZone="Pacific/Auckland" rangeFiltersEnabled />);
   await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
   expect(screen.getByRole('textbox', { name: 'Start' })).toHaveValue('2026-01-01 13:00:00.000');
   expect(screen.getByRole('textbox', { name: 'End' })).toHaveValue('2026-01-01 13:00:00.000');
