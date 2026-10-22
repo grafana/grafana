@@ -12,17 +12,15 @@ import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
+import { getJobListRedirectUrl } from '../../utils/redirect';
+import { getRequestRef } from '../../utils/workflow';
 import { type DeleteJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -52,9 +50,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const navigate = useNavigate();
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const ref = watch('ref');
-  const workflow = getWorkflowForRef(repository, ref);
-  const isNewBranch = useIsNewBranch(repository, ref);
+  const ref = watch('ref') ?? '';
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
@@ -71,15 +67,13 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    isNewBranch,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(methods.formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const showError = (error: unknown) => {
     setError(
@@ -128,17 +122,14 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
     if (statusInfo.status === 'success') {
       onDismiss?.();
-      // A branch commit leaves the folder in place; the list page shows the PR banner for it.
       navigate(
-        workflow === 'branch'
-          ? buildResourceBranchRedirectUrl({
-              paramName: 'new_pull_request_url',
-              paramValue: statusInfo.urls?.newPullRequestURL,
-              repoType: repository?.type,
-              action: 'delete',
-              prTitle,
-            })
-          : '/dashboards'
+        getJobListRedirectUrl({
+          workflow,
+          urls: statusInfo.urls,
+          repoType: repository?.type,
+          action: 'delete',
+          prTitle,
+        })
       );
     }
   };

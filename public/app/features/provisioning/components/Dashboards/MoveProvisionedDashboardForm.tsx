@@ -14,16 +14,14 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { useIsNewBranch } from '../../hooks/useIsNewBranch';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
+import { getJobListRedirectUrl } from '../../utils/redirect';
+import { getRequestRef } from '../../utils/workflow';
 import { type MoveJobSpec, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -35,10 +33,8 @@ export interface Props {
   isNew?: boolean;
   canPushToConfiguredBranch: boolean;
   targetFolderUID?: string;
-  targetFolderTitle?: string;
   repository?: RepositoryView;
   onDismiss: () => void;
-  onSuccess: (folderUID: string, folderTitle: string) => void;
 }
 
 export function MoveProvisionedDashboardForm({
@@ -57,9 +53,7 @@ export function MoveProvisionedDashboardForm({
   const { handleSubmit, watch } = methods;
   const appEvents = getAppEvents();
 
-  const ref = watch('ref');
-  const workflow = getWorkflowForRef(repository, ref);
-  const isNewBranch = useIsNewBranch(repository, ref);
+  const ref = watch('ref') ?? '';
 
   const templateVars: CommitTemplateVars = {
     action: 'move',
@@ -76,15 +70,13 @@ export function MoveProvisionedDashboardForm({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    isNewBranch,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(methods.formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID! } : skipToken);
   const targetFolderPath = getTargetFolderPathInRepo({ targetFolderUID, targetFolder, repoName: repository?.name });
@@ -156,17 +148,7 @@ export function MoveProvisionedDashboardForm({
       if (statusInfo.status === 'success') {
         dashboard.setState({ isDirty: false });
         panelEditor?.onDiscard();
-        // A branch commit leaves the dashboard in place; the list page shows the PR banner for it.
-        navigate(
-          workflow === 'branch'
-            ? buildResourceBranchRedirectUrl({
-                paramName: 'new_pull_request_url',
-                paramValue: statusInfo.urls?.newPullRequestURL,
-                repoType: repository?.type,
-                prTitle,
-              })
-            : '/dashboards'
-        );
+        navigate(getJobListRedirectUrl({ workflow, urls: statusInfo.urls, repoType: repository?.type, prTitle }));
       }
 
       if (statusInfo.status === 'error' && statusInfo.error) {

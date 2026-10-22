@@ -14,21 +14,19 @@ import {
 } from 'app/features/apiserver/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
-import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -150,8 +148,7 @@ function FormContent({
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
-  const ref = watch('ref');
-  const isNewBranch = useIsNewBranch(repository, ref);
+  const ref = watch('ref') ?? '';
 
   // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
   // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
@@ -175,16 +172,14 @@ function FormContent({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  // Pre-fill the branch from the repository's name template and lock the field when the repository
-  // enforces it; render the PR title from the title template for the PR banner.
-  const { locked: lockBranch } = useBranchTemplate({
+  // Branch-name template fill/lock and the PR title for the banner follow from the target branch.
+  const { workflow, isNewBranch, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    isNewBranch,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const showError = (err: unknown) => {
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
@@ -226,7 +221,7 @@ function FormContent({
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
       resourceType,
-      workflow: getWorkflowForRef(repository, ref),
+      workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
     });

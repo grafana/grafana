@@ -12,17 +12,15 @@ import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -48,8 +46,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const ref = watch('ref');
-  const isNewBranch = useIsNewBranch(repository, ref);
+  const ref = watch('ref') ?? '';
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -67,15 +64,13 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, isNewBranch, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    isNewBranch,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   const showError = (error: unknown) => {
     setError(
@@ -146,7 +141,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     }
 
     reportInteraction('grafana_provisioning_folder_rename_submitted', {
-      workflow: getWorkflowForRef(repository, ref),
+      workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
     });

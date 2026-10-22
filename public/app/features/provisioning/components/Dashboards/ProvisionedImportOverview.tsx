@@ -140,12 +140,8 @@ function ProvisionedImportOverviewReady({
       uid: form.uid || undefined,
       folderUid: form.folderUid,
       title: form.title,
-      form: {
-        ref: form.ref,
-        path: form.path,
-        comment: form.comment,
-        isNewBranch,
-      },
+      isNewBranch,
+      form: { ref: form.ref, path: form.path, comment: form.comment },
     });
   }
 

@@ -1,6 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRequestRef, getWorkflowForRef } from './workflow';
+import { getRequestRef, getWorkflowForRef, isKnownRef } from './workflow';
 
 const repo: RepositoryView = {
   name: 'repo',
@@ -35,5 +35,16 @@ describe('getRequestRef', () => {
 
   it('keeps the ref for a branch commit', () => {
     expect(getRequestRef(repo, 'feature/x')).toBe('feature/x');
+  });
+});
+
+describe('isKnownRef', () => {
+  const refs = { items: [{ name: 'main' }, { name: 'develop' }] };
+
+  it('is true only for a ref present in the listed refs', () => {
+    expect(isKnownRef(refs, 'develop')).toBe(true);
+    expect(isKnownRef(refs, 'feature/x')).toBe(false);
+    expect(isKnownRef(refs, '')).toBe(false);
+    expect(isKnownRef(undefined, 'main')).toBe(false);
   });
 });

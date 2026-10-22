@@ -8,8 +8,8 @@ import { renderPullRequestTitle } from '../utils/pullRequestTitle';
 interface UsePullRequestTitleArgs {
   repository: RepositoryView | undefined;
   vars: BranchTemplateVars;
-  /** The current ref creates a branch; `undefined` while unresolved. */
-  isNewBranch: boolean | undefined;
+  /** The current ref creates a branch. */
+  isNewBranch: boolean;
 }
 
 /** Renders repository.pullRequest.titleTemplate for the pull request a new branch opens.
@@ -24,7 +24,7 @@ export function usePullRequestTitle({ repository, vars, isNewBranch }: UsePullRe
   // read-only") is intentionally NOT honored here: this hook renders no PR-title input — the title
   // only pre-fills the provider's PR page — so there is nothing to lock. Wire it up if/when a
   // PR-title field is added to the Save drawer.
-  const active = isNewBranch === true && Boolean(template?.trim());
+  const active = isNewBranch && Boolean(template?.trim());
   const prTitle = active ? renderPullRequestTitle(template, { ...vars, random }) : '';
   return { prTitle };
 }

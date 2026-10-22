@@ -117,7 +117,8 @@ describe('useImportProvisionedSave', () => {
           apiVersion: 'v2',
           folderUid: 'folder-xyz',
           title: 'V2 Dash',
-          form: { ref: 'feat-branch', path: 'v2-dash.json', isNewBranch: true },
+          isNewBranch: true,
+          form: { ref: 'feat-branch', path: 'v2-dash.json' },
         })
       );
     });
@@ -286,7 +287,8 @@ describe('useImportProvisionedSave', () => {
       await act(async () => {
         await result.current.save(
           makeSaveParams({
-            form: { ref: 'feat-branch', path: 'dash.json', isNewBranch: true },
+            isNewBranch: true,
+            form: { ref: 'feat-branch', path: 'dash.json' },
           })
         );
       });

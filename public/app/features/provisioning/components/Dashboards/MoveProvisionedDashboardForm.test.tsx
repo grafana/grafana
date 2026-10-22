@@ -97,9 +97,7 @@ function setup(props: Partial<Props> = {}) {
     },
     canPushToConfiguredBranch: true,
     targetFolderUID: 'target-folder-uid',
-    targetFolderTitle: 'Target Folder',
     onDismiss: jest.fn(),
-    onSuccess: jest.fn(),
     ...props,
   };
 

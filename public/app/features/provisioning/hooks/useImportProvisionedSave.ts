@@ -32,13 +32,13 @@ export interface ImportProvisionedSaveParams {
   folderUid: string;
   /** Dashboard title — used for the default commit message and post-save URL slug. */
   title: string;
+  /** The commit creates `form.ref`; the destination page shows the PR banner instead of a toast. */
+  isNewBranch?: boolean;
   /** Form values from the provisioning fields. */
   form: {
     ref: string;
     path: string;
     comment?: string;
-    /** The commit creates `ref`; the destination page shows the PR banner instead of a toast. */
-    isNewBranch?: boolean;
   };
 }
 
@@ -62,7 +62,15 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   });
 
   const save = useCallback(
-    async ({ spec, apiVersion, uid, folderUid: targetFolderUid, title, form }: ImportProvisionedSaveParams) => {
+    async ({
+      spec,
+      apiVersion,
+      uid,
+      folderUid: targetFolderUid,
+      title,
+      isNewBranch,
+      form,
+    }: ImportProvisionedSaveParams) => {
       if (!repository) {
         return;
       }
@@ -99,7 +107,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         }).unwrap();
 
         handleSuccess(data, {
-          isNewBranch: form.isNewBranch,
+          isNewBranch,
           folderUID: targetFolderUid,
           handlers: {
             onWriteSuccess: (upsert) => {

@@ -32,20 +32,20 @@ describe('useIsNewBranch', () => {
     expect(result.current).toBe(false);
   });
 
-  it('resolves to false for an existing remote branch', async () => {
+  it('stays false for an existing remote branch', async () => {
     const { result } = render(repo, 'develop');
-    // Unresolved until the refs load, then confirmed existing.
-    expect(result.current).toBeUndefined();
+    expect(result.current).toBe(false);
+    // Still false once the refs confirm the branch exists.
     await waitFor(() => expect(result.current).toBe(false));
   });
 
-  it('resolves to true for a branch absent from the refs', async () => {
+  it('becomes true only once the refs confirm the branch is absent', async () => {
     const { result } = render(repo, 'feature/x');
-    expect(result.current).toBeUndefined();
+    expect(result.current).toBe(false);
     await waitFor(() => expect(result.current).toBe(true));
   });
 
-  it('goes back to unresolved while a newly selected repository loads its refs', async () => {
+  it('falls back to false while a newly selected repository loads its refs', async () => {
     // Refs differ per repository: the first repo knows `feature/x`, the second does not and is slow.
     server.use(
       http.get(`${BASE}/repositories/:name/refs`, async ({ params }) => {
@@ -65,21 +65,21 @@ describe('useIsNewBranch', () => {
 
     // The first repository's answer must not stand in for the second while it loads.
     rerender({ repository: { ...repo, name: 'other' } });
-    expect(result.current).toBeUndefined();
+    expect(result.current).toBe(false);
     await waitFor(() => expect(result.current).toBe(true));
   });
 
-  it('stays unresolved when the refs request fails', async () => {
+  it('stays false when the refs request fails', async () => {
     server.use(http.get(`${BASE}/repositories/:name/refs`, () => HttpResponse.json({}, { status: 500 })));
 
-    // Observe the query alongside the hook: its own return value is `undefined` both while loading
-    // and after a failure, so only the query's error state proves the failure was reached.
+    // Observe the query alongside the hook: its own return value is false both while loading and
+    // after a failure, so only the query's error state proves the failure was reached.
     const { result } = renderHook(
       () => ({ isNew: useIsNewBranch(repo, 'feature/x'), refs: useGetRepositoryRefsQuery({ name: repo.name }) }),
       { wrapper: getWrapper({}) }
     );
     await waitFor(() => expect(result.current.refs.isError).toBe(true));
-    expect(result.current.isNew).toBeUndefined();
+    expect(result.current.isNew).toBe(false);
   });
 
   it('returns false for a non-git repository without hitting the refs query', () => {

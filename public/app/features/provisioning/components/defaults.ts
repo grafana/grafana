@@ -1,5 +1,7 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isBranchTemplateEnforced } from '../utils/branchName';
+
 import { generateNewBranchName } from './utils/newBranchName';
 
 export function getCanPushToConfiguredBranch(repository?: RepositoryView) {
@@ -12,10 +14,9 @@ export function getDefaultRef(
   loadedFromRef?: string
 ): string {
   const canBranch = repository?.workflows?.includes('branch') ?? false;
-  const { enforceTemplate, nameTemplate } = repository?.branchOptions ?? {};
   // An enforced name template only ever names a new branch, so start on one; useBranchTemplate
   // replaces this placeholder with the rendered template. It wins over an explicit preview ref.
-  if (canBranch && enforceTemplate && nameTemplate?.trim()) {
+  if (isBranchTemplateEnforced(repository)) {
     return generateNewBranchName(branchPrefix);
   }
   // Opened from a branch preview: keep saving to that branch.

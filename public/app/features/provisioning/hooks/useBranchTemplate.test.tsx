@@ -39,17 +39,14 @@ interface HostProps {
   resetTo?: string;
 }
 
-function Host(props: HostProps) {
-  const { repository, vars, defaultRef = '', resetTo } = props;
-  // An omitted prop defaults to a new branch; `isNewBranch={undefined}` passes the unresolved state
-  // through so a test can prove enforcement does not wait for the refs query.
-  const isNewBranch = 'isNewBranch' in props ? props.isNewBranch : true;
+function Host({ repository, vars, isNewBranch = true, defaultRef = '', resetTo }: HostProps) {
   const methods = useForm<{ ref?: string }>({ defaultValues: { ref: defaultRef } });
   const { locked } = useBranchTemplate({
     repository,
     vars,
     isNewBranch,
     value: methods.watch('ref') ?? '',
+    isDirty: Boolean(methods.formState.dirtyFields.ref),
     setBranch: (v) => methods.setValue('ref', v, { shouldDirty: false }),
   });
   // Mirror the shared field's `ref` Controller: a single controlled input whose value lives in the
@@ -81,8 +78,8 @@ describe('useBranchTemplate', () => {
   });
 
   it('applies the template once the ref becomes a new branch', async () => {
-    // Typing a new branch name is the only way to reach the new-branch state; the template must
-    // apply on that transition, not just when the drawer opens already on a new branch.
+    // The fill is not limited to mount: a ref that is classified as new later (e.g. once the refs
+    // load) gets the template, as long as the user has not edited the field.
     const repository = makeRepo({ nameTemplate: TEMPLATE });
     const { rerender } = render(<Host repository={repository} vars={dashboardVars} isNewBranch={false} />);
 
@@ -93,12 +90,12 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
   });
 
-  it('keeps an edit made while the ref was still resolving', async () => {
-    // The drawer opens on a generated branch whose refs lookup is still pending. An edit in that
-    // window must survive the lookup resolving to "new": the template may not reclaim the field.
+  it('keeps a branch name the user typed once the ref becomes a new branch', async () => {
+    // Typing a name is how the user enters new-branch mode, and it may happen before the refs
+    // lookup confirms the name is new. The template is a default, so it never replaces an edit.
     const repository = makeRepo({ nameTemplate: TEMPLATE });
     const { rerender, user } = render(
-      <Host repository={repository} vars={dashboardVars} isNewBranch={undefined} defaultRef="dashboard/2026-abc" />
+      <Host repository={repository} vars={dashboardVars} isNewBranch={false} defaultRef="dashboard/2026-abc" />
     );
 
     const input = screen.getByRole('textbox', { name: /branch/i });
@@ -116,7 +113,7 @@ describe('useBranchTemplate', () => {
   it('fills the generated branch once the pending lookup confirms it is new', async () => {
     const repository = makeRepo({ nameTemplate: TEMPLATE });
     const { rerender } = render(
-      <Host repository={repository} vars={dashboardVars} isNewBranch={undefined} defaultRef="dashboard/2026-abc" />
+      <Host repository={repository} vars={dashboardVars} isNewBranch={false} defaultRef="dashboard/2026-abc" />
     );
 
     const input = screen.getByRole('textbox', { name: /branch/i });
@@ -124,20 +121,6 @@ describe('useBranchTemplate', () => {
 
     rerender(<Host repository={repository} vars={dashboardVars} isNewBranch defaultRef="dashboard/2026-abc" />);
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-  });
-
-  it('fills the template again after the field returns to a known branch and leaves it', async () => {
-    const repository = makeRepo({ nameTemplate: TEMPLATE });
-    const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-    await user.type(input, 'x');
-
-    // Back on an existing branch the edit latch releases; the next new branch gets the template.
-    rerender(<Host repository={repository} vars={dashboardVars} isNewBranch={false} />);
-    rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Next' }} isNewBranch />);
-    await waitFor(() => expect(input).toHaveValue('grafana/create-next'));
   });
 
   it('pre-fills the branch field from the rendered template when the ref is a new branch', async () => {
@@ -226,14 +209,14 @@ describe('useBranchTemplate', () => {
     expect(screen.getByTestId('locked')).toHaveTextContent('true');
   });
 
-  it('applies and locks an enforced template while the ref is still resolving', async () => {
-    // Enforcement must not wait for the refs query: with isNewBranch unresolved the field is still
+  it('applies and locks an enforced template before the refs confirm the ref is new', async () => {
+    // Enforcement must not wait for the refs query: with isNewBranch still false the field is
     // filled from the template and locked read-only.
     render(
       <Host
         repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true })}
         vars={dashboardVars}
-        isNewBranch={undefined}
+        isNewBranch={false}
       />
     );
 

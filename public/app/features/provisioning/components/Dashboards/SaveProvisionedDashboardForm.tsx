@@ -32,15 +32,13 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { useIsNewBranch } from '../../hooks/useIsNewBranch';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -129,9 +127,7 @@ export function SaveProvisionedDashboardForm({
     Boolean(recoverToNewBranch) ||
     isDirty ||
     Boolean(rawDashboardJSON);
-  const ref = watch('ref');
-  const workflow = getWorkflowForRef(repository, ref);
-  const isNewBranch = useIsNewBranch(repository, ref);
+  const ref = watch('ref') ?? '';
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
   const description = watch('description');
@@ -175,15 +171,13 @@ export function SaveProvisionedDashboardForm({
     setComment: (value) => setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, isNewBranch, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    isNewBranch,
-    value: ref ?? '',
-    setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(dirtyFields.ref),
+    setRef: (value) => setValue('ref', value, { shouldDirty: false }),
   });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, isNewBranch });
 
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
@@ -458,6 +452,9 @@ export function SaveProvisionedDashboardForm({
     }
   };
 
+  // Creating a folder from here writes it to the configured branch, which the repository must allow.
+  const isDirectWrite = canPushToConfiguredBranch && workflow === 'write';
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
@@ -518,7 +515,7 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
-              {isFolderless && canPushToConfiguredBranch && workflow === 'write' && (
+              {isFolderless && isDirectWrite && (
                 <>
                   {!showNewFolderForm && (
                     <div>
