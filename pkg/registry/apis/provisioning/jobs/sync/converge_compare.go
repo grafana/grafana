@@ -66,7 +66,6 @@ func compareViaConverge(
 		dir := safepath.EnsureTrailingSlash(item.Path)
 		if md, ok := metadata[dir]; ok && !md.Valid {
 			md.Held = item.Name
-			md.HeldFingerprint = item.Hash
 			metadata[dir] = md
 		}
 	}

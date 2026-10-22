@@ -33,21 +33,10 @@ type ensurePathConfig struct {
 	// that reuses a relocating ancestor's UID).
 	relocatingUIDs map[string]string
 	forceWalk      bool
-
-	// resolvedIdentities maps a folder path to the identity a caller has
-	// already decided it should have. Without it, a caller that resolved a
-	// conflicting metadata claim — picking a fallback because another folder
-	// already owns the claimed UID — has that decision undone here: the walk
-	// re-reads the _folder.json, takes the claimed UID again, and the
-	// duplicate guard refuses the folder the caller authorised.
-	resolvedIdentities map[string]string
 }
 
 func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
-	cfg := ensurePathConfig{
-		relocatingUIDs:     make(map[string]string),
-		resolvedIdentities: make(map[string]string),
-	}
+	cfg := ensurePathConfig{relocatingUIDs: make(map[string]string)}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
@@ -64,22 +53,6 @@ func (c *ensurePathConfig) isRelocatingTo(path, uid string) bool {
 		return false
 	}
 	return safepath.EnsureTrailingSlash(expected) == safepath.EnsureTrailingSlash(path)
-}
-
-// identityFor reports the identity a caller already decided this path should
-// have, if any.
-func (c *ensurePathConfig) identityFor(path string) (string, bool) {
-	id, ok := c.resolvedIdentities[safepath.EnsureTrailingSlash(path)]
-	return id, ok
-}
-
-// WithResolvedIdentity records that a folder path has already been resolved to
-// an identity, so the walk applies that decision rather than re-deriving one
-// from metadata it has no reason to trust more.
-func WithResolvedIdentity(folderPath, identity string) EnsurePathOption {
-	return func(cfg *ensurePathConfig) {
-		cfg.resolvedIdentities[safepath.EnsureTrailingSlash(folderPath)] = identity
-	}
 }
 
 // WithRelocatingUIDs marks uids as legitimately relocating to targetPath so that
@@ -252,9 +225,6 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	if err != nil {
 		return "", err
 	}
-	if id, ok := epCfg.identityFor(f.Path); ok {
-		f.ID = id
-	}
 
 	// ParentID is only resolved during the walk below, so we skip it here
 	// to avoid a false mismatch against the already-resolved tree entry.
@@ -279,11 +249,6 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f, err := fm.resolveFolderForPath(ctx, traverse, ref)
-		if ok := err == nil; ok {
-			if id, has := epCfg.identityFor(f.Path); has {
-				f.ID = id
-			}
-		}
 		if err != nil {
 			return err
 		}

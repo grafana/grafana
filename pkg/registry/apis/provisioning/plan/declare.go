@@ -52,14 +52,6 @@ type FolderMetadata struct {
 	UID   string
 	Valid bool
 
-	// HeldFingerprint is the content Grafana currently records for the folder.
-	// An unusable claim falls back to it for the same reason it falls back to
-	// Held: folder application keeps the existing folder, metadata hash
-	// included, so declaring the new file's hash would compare against a value
-	// the ensure can never persist — and report the same folder update on
-	// every sync, for ever.
-	HeldFingerprint string
-
 	// Held is the identity Grafana currently has for the folder, if any. It is
 	// what an unusable claim falls back to.
 	//
@@ -123,13 +115,8 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 				switch {
 				case md.Valid:
 					d.Identity = converge.Identity(md.UID)
-				default:
-					// The claim is unusable, so neither the identity nor the
-					// content it states can be applied.
-					if md.Held != "" {
-						d.Identity = converge.Identity(md.Held)
-					}
-					d.Fingerprint = converge.Fingerprint(md.HeldFingerprint)
+				case md.Held != "":
+					d.Identity = converge.Identity(md.Held)
 				}
 			}
 			out = append(out, d)

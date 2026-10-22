@@ -90,12 +90,6 @@ func applyChangesViaConverge(
 	// exempts from the duplicate-UID guard along its own ancestor chain.
 	folderMoves := collectFolderMoves(changes)
 
-	// Identities the plan already resolved, so folder application applies that
-	// decision instead of re-reading the metadata and re-deciding — which would
-	// refuse the fallback folder the plan authorised when two _folder.json
-	// files claim one UID.
-	resolved := resolvedFolderIdentities(ops)
-
 	// Folders are serial: ensuring one walks its ancestors, so concurrent
 	// ensures race on a shared parent.
 	res, err := apply.Run(ctx, p, apply.ActuatorFunc(func(ctx context.Context, op converge.Op) error {
@@ -114,11 +108,10 @@ func applyChangesViaConverge(
 		}
 
 		moves := folderMoves
-		ensureOpts := resolved
 		if op.Kind != converge.OpEnsureContainer && (op.Kind != converge.OpMove || !op.Key.IsContainer()) {
-			moves, ensureOpts = nil, nil
+			moves = nil
 		}
-		if blocked := applyChange(ctx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, moves, ensureOpts...); blocked {
+		if blocked := applyChange(ctx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, moves); blocked {
 			// Quota blocked it before any write was attempted. Capacity freed
 			// by the writes that do succeed is not knowable from here, so the
 			// retry is the helper's to schedule.
@@ -396,19 +389,6 @@ func oldFolderRemovals(changes []ResourceFileChange) []converge.Op {
 			Group:     converge.GroupID("rename:" + string(key)),
 			Container: key.Parent(),
 		})
-	}
-	return out
-}
-
-// resolvedFolderIdentities collects the identity the plan settled on for each
-// folder it ensures.
-func resolvedFolderIdentities(ops []converge.Op) []resources.EnsurePathOption {
-	var out []resources.EnsurePathOption
-	for _, op := range ops {
-		if op.Kind != converge.OpEnsureContainer || op.Identity == "" {
-			continue
-		}
-		out = append(out, resources.WithResolvedIdentity(string(op.Key), string(op.Identity)))
 	}
 	return out
 }
