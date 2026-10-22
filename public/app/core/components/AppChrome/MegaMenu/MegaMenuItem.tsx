@@ -238,7 +238,7 @@ export function MegaMenuItem({
               <Text truncate element="p">
                 {link.text}
               </Text>
-              <StPodPendingEllipsis url={link.url} />
+              <StPodPendingEllipsis url={link.url} label={link.text} />
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>

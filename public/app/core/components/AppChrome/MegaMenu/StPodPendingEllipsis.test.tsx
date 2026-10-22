@@ -57,4 +57,16 @@ describe('StPodPendingEllipsis', () => {
 
     expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
   });
+
+  it('labels the ellipsis with the route name', () => {
+    render(<StPodPendingEllipsis url="/explore" label="Explore" />);
+
+    expect(screen.getByLabelText('Preparing Explore')).toBeInTheDocument();
+  });
+
+  it('falls back to a generic label when no route name is given', () => {
+    render(<StPodPendingEllipsis url="/explore" />);
+
+    expect(screen.getByLabelText('Preparing page')).toBeInTheDocument();
+  });
 });

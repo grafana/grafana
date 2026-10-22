@@ -13241,7 +13241,11 @@
       "aria-label": "New",
       "new-template-dashboard-button": "Use template"
     },
-    "rss-button": "Latest from the blog"
+    "rss-button": "Latest from the blog",
+    "st-pod-pending-ellipsis": {
+      "preparing": "Preparing page",
+      "preparing-named": "Preparing {{label}}"
+    }
   },
   "news": {
     "category-news": "News",
