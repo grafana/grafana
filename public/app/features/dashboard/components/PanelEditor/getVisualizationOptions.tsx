@@ -123,7 +123,17 @@ function getDefaultsEditing(
   const writeValue = (config: FieldConfigSource, v: unknown) =>
     updateDefaultFieldConfigValue(config, fieldOption.path, v, fieldOption.isCustom);
 
-  if (varMappingsEnabled && fieldOption.id === FieldConfigProperty.Thresholds) {
+  if (!varMappingsEnabled && fieldOption.id === FieldConfigProperty.Thresholds) {
+    return {
+      Editor: fieldOption.editor,
+      storedValue,
+      value: storedValue,
+      // Step expressions can't be shown with the flag off, and an edit may move steps, so drop them
+      toFieldConfig: (v: unknown) => writeValue(updateDefaultThresholdStepVarMappings(fieldConfig, {}), v),
+    };
+  }
+
+  if (fieldOption.id === FieldConfigProperty.Thresholds) {
     return {
       Editor: fieldOption.editor,
       storedValue,

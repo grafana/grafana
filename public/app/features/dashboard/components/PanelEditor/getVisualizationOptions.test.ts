@@ -684,17 +684,21 @@ describe('getVisualizationOptions', () => {
         );
       });
 
-      it('passes the stored thresholds through with the flag off', () => {
+      it('shows the stored thresholds with the flag off, and an edit drops the step expressions', () => {
         const { element, onFieldConfigChange } = renderThresholds(false);
 
         expect(element.props.value).toEqual(thresholds);
 
-        const edited = { ...thresholds, steps: [{ value: -Infinity, color: 'green' }] };
+        // a valueExpr from the thresholdsInterpolation editor is kept as on main
+        const edited = {
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: 'orange', valueExpr: '$other' },
+          ],
+        };
         element.props.onChange(edited);
-        expect(onFieldConfigChange).toHaveBeenCalledWith(
-          { defaults: { thresholds: edited, varMappings: { 'thresholds.steps.1': '$warn' } }, overrides: [] },
-          true
-        );
+        expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { thresholds: edited }, overrides: [] }, true);
       });
     });
 

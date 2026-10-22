@@ -344,7 +344,7 @@ export function getFieldOverrideCategories(
         // flag off this is the only way to get rid of an expression saved with the flag on.
         const properties = override.properties
           .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
-          .filter((p) => p.id !== varMappingId);
+          .filter((p) => p.id !== varMappingId && !(isThresholds && isThresholdStepVarMappingProp(p)));
 
         onOverrideChange(idx, { ...override, properties });
       };

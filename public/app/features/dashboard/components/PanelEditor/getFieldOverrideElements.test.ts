@@ -628,17 +628,23 @@ describe('getFieldOverrideCategories', () => {
         expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([]);
       });
 
-      it('passes the stored thresholds through with the flag off', () => {
+      it('shows the stored thresholds with the flag off, and an edit drops the rule step entries', () => {
         const onFieldConfigsChange = jest.fn();
         const element = renderRow(false, onFieldConfigsChange);
 
         expect(element.props.property).toEqual({ id: 'thresholds', value: thresholds });
 
-        const edited = { ...thresholds, steps: [{ value: -Infinity, color: 'green' }] };
+        // a valueExpr from the thresholdsInterpolation editor is kept as on main
+        const edited = {
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: 'orange', valueExpr: '$other' },
+          ],
+        };
         element.props.onChange(edited);
         expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([
           { id: 'thresholds', value: edited },
-          { id: 'varMappings.thresholds.steps.1', value: '$warn' },
         ]);
       });
     });
