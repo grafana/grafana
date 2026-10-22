@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, four labels, one border */
+/** Trimmed from a generated Protomaps style: one fill, four labels, one border, one road */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -66,6 +66,16 @@ const STYLE = {
       paint: { 'text-color': '#30C573', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 },
     },
     { id: 'address_label', type: 'symbol', source: 'protomaps', 'source-layer': 'buildings', minzoom: 18 },
+    {
+      id: 'roads_highway',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      paint: {
+        'line-color': '#ebebeb',
+        'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 0, 6, 1.1, 12, 1.6, 15, 5, 18, 15],
+      },
+    },
     {
       id: 'boundaries_country',
       type: 'line',
@@ -226,7 +236,11 @@ describe('Protomaps basemap', () => {
   it('drops label layers when labels are off', async () => {
     await initLayer({ showLabels: false });
 
-    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual(['earth', 'boundaries_country']);
+    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual([
+      'earth',
+      'roads_highway',
+      'boundaries_country',
+    ]);
   });
 
   it.each([
@@ -243,6 +257,30 @@ describe('Protomaps basemap', () => {
     expect(borders['line-color'].slice(0, 5)).toEqual(['interpolate', ['linear'], ['zoom'], 4, border]);
     // CARTO draws country borders solid
     expect(borders).not.toHaveProperty('line-dasharray');
+  });
+
+  it('draws highways as thin and light as CARTO’s further out, where they would compete with data', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.White });
+
+    const highway = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_highway');
+    expect(highway.paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      5,
+      '#e6e6e6',
+      12,
+      '#dddddd',
+      15,
+      '#ffffff',
+    ]);
+    // Under a pixel until zoom 8, then Protomaps' own widths from zoom 12
+    expect(highway.paint['line-width']).toEqual([
+      'interpolate',
+      ['exponential', 1.6],
+      ['zoom'],
+      ...[3, 0, 6, 0.5, 7, 0.7, 8, 0.8, 10, 1.3, 12, 1.6, 15, 5, 18, 15],
+    ]);
   });
 
   it('paints only colors, leaving which labels show and from which zoom as they were', async () => {

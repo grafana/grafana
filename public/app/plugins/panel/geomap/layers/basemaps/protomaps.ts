@@ -101,39 +101,51 @@ type Paint = Record<string, GlValue | undefined>;
 
 type RoadClass = 'highway' | 'major' | 'minor' | 'other';
 
+/** Road colors at zoom 5, 12 and 15 */
+type RoadColors = [far: string, outer: string, inner: string];
+
 /**
- * CARTO draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14.
- * Protomaps' casings are a thin edge, so each fill fades from the color CARTO shows further out.
+ * CARTO draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14,
+ * and further out draws them in a lighter casing color. ol-mapbox-style ignores `line-gap-width`, so
+ * Protomaps' casings draw as a plain line under the fill, and both take the color CARTO shows at
+ * each zoom.
  */
-function cartoRoads(casing: string, fills: Record<RoadClass, [outer: string, inner: string]>) {
-  const fill = ([outer, inner]: [string, string]) => ({ 'line-color': zoomRamp([12, outer], [15, inner]) });
+function cartoRoads(fills: Record<RoadClass, RoadColors>) {
+  const color = ([far, outer, inner]: RoadColors) => zoomRamp([5, far], [12, outer], [15, inner]);
+  const casingColor = ([far, outer]: RoadColors) => zoomRamp([5, far], [12, outer]);
   const paint: Record<string, Paint> = {};
   for (const prefix of ['roads_', 'roads_bridges_']) {
-    paint[`${prefix}highway`] = fill(fills.highway);
-    paint[`${prefix}major`] = fill(fills.major);
-    paint[`${prefix}link`] = fill(fills.major);
-    paint[`${prefix}minor`] = fill(fills.minor);
-    paint[`${prefix}other`] = fill(fills.other);
+    paint[`${prefix}highway`] = { 'line-color': color(fills.highway), 'line-width': HIGHWAY_WIDTH };
+    paint[`${prefix}major`] = { 'line-color': color(fills.major) };
+    paint[`${prefix}link`] = { 'line-color': color(fills.major) };
+    paint[`${prefix}minor`] = { 'line-color': color(fills.minor) };
+    paint[`${prefix}other`] = { 'line-color': color(fills.other) };
   }
-  paint.roads_minor_service = fill(fills.other);
-  for (const id of [
-    'roads_minor_service_casing',
-    'roads_minor_casing',
-    'roads_link_casing',
-    'roads_major_casing_early',
-    'roads_major_casing_late',
-    'roads_highway_casing_early',
-    'roads_highway_casing_late',
-    'roads_bridges_other_casing',
-    'roads_bridges_link_casing',
-    'roads_bridges_minor_casing',
-    'roads_bridges_major_casing',
-    'roads_bridges_highway_casing',
-  ]) {
-    paint[id] = { 'line-color': casing };
+  paint.roads_minor_service = { 'line-color': color(fills.other) };
+  for (const [id, roadClass] of [
+    ['roads_minor_service_casing', 'other'],
+    ['roads_minor_casing', 'minor'],
+    ['roads_link_casing', 'major'],
+    ['roads_major_casing_early', 'major'],
+    ['roads_major_casing_late', 'major'],
+    ['roads_highway_casing_early', 'highway'],
+    ['roads_highway_casing_late', 'highway'],
+    ['roads_bridges_other_casing', 'other'],
+    ['roads_bridges_link_casing', 'major'],
+    ['roads_bridges_minor_casing', 'minor'],
+    ['roads_bridges_major_casing', 'major'],
+    ['roads_bridges_highway_casing', 'highway'],
+  ] as const) {
+    paint[id] = { 'line-color': casingColor(fills[roadClass]) };
   }
   return paint;
 }
+
+/**
+ * CARTO's motorways are under a pixel wide until zoom 8, where Protomaps' are already over one. From
+ * zoom 10 the width follows Protomaps' own ramp.
+ */
+const HIGHWAY_WIDTH = roadWidthRamp([3, 0], [6, 0.5], [7, 0.7], [8, 0.8], [10, 1.3], [12, 1.6], [15, 5], [18, 15]);
 
 /** CARTO fades a building's roof in over its footprint between zoom 13 and 16 */
 function cartoBuildings(footprint: string, roof: string): Paint {
@@ -154,11 +166,11 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_stream: { 'line-color': '#d1dbdf' },
     water_river: { 'line-color': '#d1dbdf' },
     buildings: cartoBuildings('#dfdfdf', '#ededed'),
-    ...cartoRoads('#dddddd', {
-      highway: ['#dddddd', '#ffffff'],
-      major: ['#dddddd', '#ffffff'],
-      minor: ['#dddddd', '#fdfdfd'],
-      other: ['#dddddd', '#fdfdfd'],
+    ...cartoRoads({
+      highway: ['#e6e6e6', '#dddddd', '#ffffff'],
+      major: ['#e6e6e6', '#dddddd', '#ffffff'],
+      minor: ['#dddddd', '#dddddd', '#fdfdfd'],
+      other: ['#dddddd', '#dddddd', '#fdfdfd'],
     }),
     boundaries_country: {
       'line-color': zoomRamp([4, '#f2e6e7'], [5, '#ebd6d8']),
@@ -191,11 +203,11 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_stream: { 'line-color': '#3f5a6d' },
     water_river: { 'line-color': '#3f5a6d' },
     buildings: cartoBuildings('#0e0e0e', '#393939'),
-    ...cartoRoads('#232323', {
-      highway: ['#232323', '#494949'],
-      major: ['#232323', '#535666'],
-      minor: ['#414758', '#414758'],
-      other: ['#1c1c1c', '#1c1c1c'],
+    ...cartoRoads({
+      highway: ['#1a1a1a', '#232323', '#494949'],
+      major: ['#1a1a1a', '#232323', '#535666'],
+      minor: ['#414758', '#414758', '#414758'],
+      other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
     }),
     boundaries_country: {
       'line-color': zoomRamp([4, '#5c5e5e'], [5, '#606060'], [6, '#666666']),
@@ -331,6 +343,11 @@ function adaptLayer<T extends GlLayer>(layer: T): T {
     };
   }
   return adapted;
+}
+
+/** Protomaps widens roads exponentially with zoom, so they keep the same width on the ground */
+function roadWidthRamp(...stops: Array<[number, number]>): GlValue {
+  return ['interpolate', ['exponential', 1.6], ['zoom'], ...stops.flat()];
 }
 
 function zoomRamp(...stops: Array<[number, GlValue]>): GlValue {
