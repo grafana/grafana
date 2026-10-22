@@ -2,8 +2,9 @@ package router
 
 import (
 	"context"
+	crand "crypto/rand"
+	"encoding/binary"
 	"fmt"
-	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"slices"
@@ -242,7 +243,7 @@ func buildMTRoutes(inner RoutesLoader, c mtRoutesConfig) (*mtRoutes, error) {
 	if err != nil {
 		return nil, err
 	}
-	target.cooldown.withJitter(mtDiscoveryJitter, rand.Float64) // #nosec G404 -- spreads polls; not security-sensitive
+	target.cooldown.withJitter(mtDiscoveryJitter, randomFraction)
 	return newMTRoutes(inner, target, newLocalGroups()), nil
 }
 
@@ -281,4 +282,13 @@ func (s *Service) WatchLocalGroups(ctx context.Context, cfg *rest.Config) error 
 	client.Timeout = singleTenantLookupTimeout
 	go s.mtRoutes.local.run(ctx, client, cfg.Host)
 	return nil
+}
+
+// randomFraction returns a uniform value in [0, 1).
+func randomFraction() float64 {
+	var b [8]byte
+	if _, err := crand.Read(b[:]); err != nil {
+		return 0
+	}
+	return float64(binary.BigEndian.Uint64(b[:])>>11) / (1 << 53)
 }

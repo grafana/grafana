@@ -270,3 +270,14 @@ func TestNewMTRoutesFromConfig(t *testing.T) {
 		require.ErrorContains(t, err, "grpc_client_authentication")
 	})
 }
+
+func TestRandomFractionIsInRange(t *testing.T) {
+	seen := map[float64]struct{}{}
+	for range 100 {
+		f := randomFraction()
+		require.GreaterOrEqual(t, f, 0.0)
+		require.Less(t, f, 1.0)
+		seen[f] = struct{}{}
+	}
+	require.Greater(t, len(seen), 1, "the value must vary")
+}
