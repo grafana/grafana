@@ -43,6 +43,15 @@ type StorageMetrics struct {
 	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
 	SecureValueLeaseInactiveDuration           *prometheus.HistogramVec
 
+	KVSecureValueMetadataCreateDuration          *prometheus.HistogramVec
+	KVSecureValueMetadataGetDuration             *prometheus.HistogramVec
+	KVSecureValueMetadataListDuration            *prometheus.HistogramVec
+	KVSecureValueSetExternalIDDuration           *prometheus.HistogramVec
+	KVSecureValueDeleteDuration                  *prometheus.HistogramVec
+	KVSecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
+	KVSecureValueLeaseInactiveDuration           *prometheus.HistogramVec
+	KVSecureValueIncGCAttemptCount               *prometheus.HistogramVec
+
 	DecryptDuration *prometheus.HistogramVec
 }
 
@@ -191,6 +200,16 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
+		SecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_inc_gc_attempt_count_duration_seconds",
+			Help:                            "Duration of secure value inc gc attempt count operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
 
 		// Secure value metrics (using KV store instead of SQL)
 		KVSecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -264,11 +283,14 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		KVSecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "kv_secure_value_add_to_gc_attempt_count_duration_seconds",
-			Help:      "Duration of secure value gc attempt count modification operations",
-			Buckets:   instrument.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_inc_gc_attempt_count_duration_seconds",
+			Help:                            "Duration of secure value inc gc attempt count operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 
 		// Decrypt metrics
@@ -313,6 +335,18 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueDeleteDuration,
 				m.SecureValueSetInactiveAllFromGroupDuration,
 				m.SecureValueLeaseInactiveDuration,
+				m.SecureValueIncGCAttemptCount,
+
+				// Using KV store
+				m.KVSecureValueMetadataCreateDuration,
+				m.KVSecureValueMetadataGetDuration,
+				m.KVSecureValueMetadataListDuration,
+				m.KVSecureValueSetExternalIDDuration,
+				m.KVSecureValueDeleteDuration,
+				m.KVSecureValueSetInactiveAllFromGroupDuration,
+				m.KVSecureValueLeaseInactiveDuration,
+				m.KVSecureValueIncGCAttemptCount,
+
 				m.DecryptDuration,
 			)
 		}
