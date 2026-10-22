@@ -1,4 +1,5 @@
 import {
+  type DataFrame,
   type DataQueryResponse,
   type Field,
   FieldType,
@@ -159,6 +160,67 @@ describe('combineResponses', () => {
         },
       ],
     });
+  });
+
+  it('does not silently drop a field that only exists in the newly fetched frame', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+
+    // Simulates infinite-scroll fetching an older page (logFrameB) whose documents contain a
+    // field the already-displayed page (logFrameA) doesn't have, e.g. an Elasticsearch
+    // response where only some matched documents carry a given field.
+    logFrameB.fields.push({
+      name: 'extraField',
+      type: FieldType.string,
+      config: {},
+      values: ['extraB1', 'extraB2'],
+    });
+
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(extraField).toBeDefined();
+    expect(extraField?.values).toEqual(['extraB1', 'extraB2', undefined, undefined]);
+  });
+
+  it('keeps a newly fetched field aligned by row when page sizes differ and the new row lands in the middle', () => {
+    // dest has more rows than source, and source's single new row sorts between two existing
+    // dest rows rather than at either end, so a field only present in source must be padded to
+    // dest's own row count (not source's) and spliced at the matching time-sorted position.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 3,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 22, 33] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [23] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id4'] },
+        { name: 'extraField', type: FieldType.string, config: {}, values: ['extraB1'] },
+      ],
+    };
+
+    const responseA: DataQueryResponse = { data: [dest] };
+    const responseB: DataQueryResponse = { data: [source] };
+
+    const combined = combineResponses(responseA, responseB);
+    const timeField = combined.data[0].fields.find((field: Field) => field.name === 'Time');
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(timeField?.values).toEqual([11, 22, 23, 33]);
+    expect(extraField).toBeDefined();
+    expect(extraField?.values).toEqual([undefined, undefined, 'extraB1', undefined]);
   });
 
   it('combines metric frames', () => {
