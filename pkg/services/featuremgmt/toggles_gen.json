@@ -1023,6 +1023,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboard.artifacts",
+        "resourceVersion": "1792586736293",
+        "creationTimestamp": "2026-10-21T12:45:36Z"
+      },
+      "spec": {
+        "description": "Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.dashboardPlanBuildingScreen",
         "resourceVersion": "1792049243204",
         "creationTimestamp": "2026-10-15T07:27:23Z"
@@ -3076,7 +3090,8 @@
       "metadata": {
         "name": "grafana.ofrepRootUrl",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-07T10:58:18Z"
+        "creationTimestamp": "2026-08-07T10:58:18Z",
+        "deletionTimestamp": "2026-10-22T12:08:26Z"
       },
       "spec": {
         "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
@@ -5587,6 +5602,20 @@
         "description": "Uses field-value results for generic resource search API requests",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "search.perResourceFolderTree",
+        "resourceVersion": "1792675954030",
+        "creationTimestamp": "2026-10-22T13:32:34Z"
+      },
+      "spec": {
+        "description": "Allow recursive folder filters in per-resource search APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

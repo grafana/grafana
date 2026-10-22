@@ -85,3 +85,14 @@ func TestProvideRoutesLoader_MiddlewareSkipsCloudSources(t *testing.T) {
 		})
 	}
 }
+
+// The standalone router is never middleware, so a middleware flag that also
+// reaches its deployment must not drop its cloud sources.
+func TestProvideRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+	cfg.Target = []string{"router"}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{PluginDependencies: PluginDependencies{Features: features, Cfg: cfg}})
+	require.NoError(t, err)
+	require.IsType(t, &cloudLoader{}, loader)
+}

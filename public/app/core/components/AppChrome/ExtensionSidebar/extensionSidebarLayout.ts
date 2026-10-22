@@ -147,6 +147,28 @@ export function isFloatingExtensionSidebarHeld(): boolean {
   return floatingHolds.size > 0;
 }
 
+/** Who wants to hear that the user asked to collapse the floating sidebar. Module state for the same reason. */
+const collapseListeners = new Set<() => void>();
+
+/** Subscribes to requests to collapse the floating sidebar; returns the unsubscribe. */
+export function subscribeToFloatingExtensionSidebarCollapse(listener: () => void): () => void {
+  collapseListeners.add(listener);
+  return () => {
+    collapseListeners.delete(listener);
+  };
+}
+
+/** Whether anything listens for collapse requests; extensions listen only while there is something to collapse. */
+export function canCollapseFloatingExtensionSidebar(): boolean {
+  return collapseListeners.size > 0;
+}
+
+/** Asks the floating sidebar's extension to collapse. */
+export function collapseFloatingExtensionSidebar(): void {
+  collapseListeners.forEach((listener) => listener());
+  reportInteraction('grafana_extension_sidebar_floating_collapsed', { method: 'drag' });
+}
+
 /** @internal Resets the layout between tests; `keepStorage` stands for a new page load. */
 export function resetExtensionSidebarPresentationForTests({ keepStorage = false } = {}): void {
   requested = undefined;
@@ -156,4 +178,5 @@ export function resetExtensionSidebarPresentationForTests({ keepStorage = false 
   }
   floatingHolds.clear();
   listeners.clear();
+  collapseListeners.clear();
 }
