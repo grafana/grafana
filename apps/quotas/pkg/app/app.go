@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,8 +11,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -55,8 +58,19 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 		},
 	}
 	quota, err := h.ResourceClient.GetQuotaUsage(ctx, quotaReq)
-	if err != nil {
-		return err
+	if err := resourceutil.StatusErrorFromResponse(quota.GetError(), err); err != nil {
+		var apiStatus apierrors.APIStatus
+		if !errors.As(err, &apiStatus) {
+			return err
+		}
+		// The SDK's custom route error writer drops details and causes.
+		status := apiStatus.Status()
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(int(status.Code))
+		return json.NewEncoder(writer).Encode(status)
+	}
+	if quota == nil {
+		return fmt.Errorf("GetQuotaUsage returned a nil response")
 	}
 
 	writer.Header().Set("Content-Type", "application/json")

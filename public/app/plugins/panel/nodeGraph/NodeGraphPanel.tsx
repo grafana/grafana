@@ -1,8 +1,11 @@
+import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import { useId } from 'react';
 
 import { type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
 import { useLinks } from '../../../features/explore/utils/links';
 
@@ -10,7 +13,8 @@ import { NodeGraph } from './NodeGraph';
 import { type Options as NodeGraphOptions } from './panelcfg.gen';
 import { getNodeGraphDataFrames } from './utils';
 
-export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<NodeGraphOptions>) => {
+export const NodeGraphPanel = ({ id, width, height, data, fieldConfig, options }: PanelProps<NodeGraphOptions>) => {
+  const styles = useStyles2(getStyles);
   const getLinks = useLinks(data.timeRange);
   const panelId = useId();
 
@@ -33,7 +37,19 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         panelId={panelId}
         zoomMode={options.zoomMode}
         layoutAlgorithm={options.layoutAlgorithm}
+        renderError={(message) => (
+          <div className={styles.errorWrapper}>
+            <PanelDataErrorView panelId={id} data={data} fieldConfig={fieldConfig} message={message} />
+          </div>
+        )}
       />
     </div>
   );
 };
+
+const getStyles = () => ({
+  errorWrapper: css({
+    height: '100%',
+    whiteSpace: 'pre-line',
+  }),
+});

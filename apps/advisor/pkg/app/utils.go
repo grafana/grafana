@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -21,17 +22,17 @@ import (
 
 var retryAnnotationPollingInterval = 1 * time.Second
 
-func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
+func getCheck(obj resource.Object, checkRegistry checkregistry.CheckService) (checks.Check, error) {
 	labels := obj.GetLabels()
 	objTypeLabel, ok := labels[checks.TypeLabel]
 	if !ok {
 		return nil, errors.New("missing check type as label")
 	}
-	c, ok := checkMap[objTypeLabel]
+	c, ok := checkRegistry.Check(objTypeLabel)
 	if !ok {
 		supportedTypes := ""
-		for k := range checkMap {
-			supportedTypes += k + ", "
+		for _, c := range checkRegistry.Checks() {
+			supportedTypes += c.ID() + ", "
 		}
 		return nil, fmt.Errorf("unknown check type %s. Supported types are: %s", objTypeLabel, supportedTypes)
 	}

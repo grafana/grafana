@@ -14,7 +14,6 @@ import {
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
-  hideGroupByAction?: boolean;
   isGroupByActionSupported?: boolean;
 }
 
@@ -26,10 +25,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   private _groupBySub?: Unsubscribable;
 
   constructor(state: Partial<VizPanelHeaderActionsState>) {
-    super({
-      hideGroupByAction: state.hideGroupByAction ?? false,
-      ...state,
-    });
+    super(state);
 
     this.addActivationHandler(this._onActivate);
   }
@@ -39,9 +35,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
       throw new Error('VizPanelHeaderActions must be a child of a VizPanel');
     }
 
-    if (!this.state.hideGroupByAction) {
-      this.subscribeToGroupByChanges();
-    }
+    this.subscribeToGroupByChanges();
 
     return () => {
       this._groupBySub?.unsubscribe();
@@ -161,7 +155,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 }
 
 function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
-  const { hideGroupByAction, isGroupByActionSupported } = model.useState();
+  const { isGroupByActionSupported } = model.useState();
   const variables = sceneGraph.getVariables(model);
   const groupByVariable = variables.state.variables.find(
     (variable): variable is GroupByVariable => variable instanceof GroupByVariable
@@ -175,7 +169,7 @@ function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHe
 
   return (
     <>
-      {!hideGroupByAction && isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
+      {isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
         <div className="show-on-hover">
           <PanelGroupByAction
             groupByVariable={groupByVariable}

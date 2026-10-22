@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,7 +31,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.AppURL,
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		config.Features{
-			SriChecksEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
@@ -52,6 +52,13 @@ type PluginInstanceCfg struct {
 	PluginSettings config.PluginSettings
 	// DevMode is set when Grafana runs with app_mode = development.
 	DevMode bool
+	// LocalPluginTokens is set when neither a plugin v3 token exchange nor real
+	// signing keys are configured, so Grafana signs the access tokens it sends
+	// to plugins itself.
+	LocalPluginTokens bool
+	// LocalAPIURL is where plugins reach this Grafana process directly. It is
+	// inferred from the listener or set by [plugins] local_api_url.
+	LocalAPIURL string
 
 	AWSAllowedAuthProviders          []string
 	AWSAssumeRoleEnabled             bool
@@ -88,7 +95,7 @@ type PluginInstanceCfg struct {
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
-func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
+func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles, pluginAuth *pluginauth.Config) (*PluginInstanceCfg, error) {
 	aws := settingProvider.Section("aws")
 	allowedAuth := cfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
@@ -115,6 +122,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		DevMode:                             cfg.Env == setting.Dev,
+		LocalPluginTokens:                   pluginAuth.LocalTokens(),
+		LocalAPIURL:                         pluginAuth.LocalAPIURL(),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),

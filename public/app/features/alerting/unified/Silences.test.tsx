@@ -14,6 +14,10 @@ import {
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import {
+  getAlertRuleHandler,
+  mockK8sAlertRule,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
@@ -227,6 +231,27 @@ describe('Silences', () => {
     TEST_TIMEOUT
   );
 
+  it(
+    'does not request alert instances for users with only silence read access',
+    async () => {
+      grantUserPermissions([AccessControlAction.AlertingSilenceRead]);
+
+      let alertsRequested = false;
+      server.use(
+        http.get('/api/alertmanager/grafana/api/v2/alerts', () => {
+          alertsRequested = true;
+          return HttpResponse.json({ message: 'Permissions needed: alert.instances:read' }, { status: 403 });
+        })
+      );
+
+      renderSilences();
+
+      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
+      expect(alertsRequested).toBe(false);
+    },
+    TEST_TIMEOUT
+  );
+
   it('shows creating a silence button for users with access', async () => {
     renderSilences();
 
@@ -269,6 +294,12 @@ describe('Silence create/edit', () => {
   beforeEach(() => {
     mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     setUserLogged(true);
+  });
+
+  it('labels the matchers as matching labels when the silence is not scoped to a rule', async () => {
+    renderSilences(baseUrlPath);
+    expect(await screen.findByText(/^matching labels/i)).toBeInTheDocument();
+    expect(screen.queryByText(/refine affected alerts/i)).not.toBeInTheDocument();
   });
 
   it('Should not render createdBy if user is logged in and has a name', async () => {
@@ -394,7 +425,11 @@ describe('Silence create/edit', () => {
   });
 
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
-    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
+    server.use(
+      getAlertRuleHandler([
+        mockK8sAlertRule({ uid: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, title: grafanaRulerRule.grafana_alert.title }),
+      ])
+    );
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
     expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
   });

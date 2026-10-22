@@ -2,8 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { useCallback, useMemo } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { reportInteraction, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch, useSelector } from 'app/types/store';

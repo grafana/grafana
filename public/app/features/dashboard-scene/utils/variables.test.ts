@@ -25,7 +25,9 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { adHocBuilder } from 'app/features/variables/shared/testing/builders';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
@@ -34,8 +36,8 @@ import { NEW_LINK } from '../settings/links/utils';
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
 // mock getDataSourceInstanceSettings()
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -445,7 +447,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior)],
+      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -467,6 +469,8 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       layout: 'combobox',
     });
   });
@@ -527,7 +531,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior)],
+      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -556,7 +560,30 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       layout: 'combobox',
+    });
+  });
+
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('should enable applicability on adhoc variables', () => {
+      const variable = adHocBuilder()
+        .withName('adhoc')
+        .withDatasource({ uid: 'gdev-prometheus', type: 'prometheus' })
+        .build();
+
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
+
+      expect(migrated.state.applicabilityEnabled).toBe(true);
     });
   });
 
@@ -611,6 +638,7 @@ describe('when creating variables objects', () => {
       expect(migrated).toBeInstanceOf(GroupByVariable);
       expect(groupbyVarState).toEqual({
         key: expect.any(String),
+        $behaviors: [migrated.getRecommendations()],
         description: 'GroupBy Description',
         applicabilityEnabled: false,
         hide: 0,
@@ -640,6 +668,7 @@ describe('when creating variables objects', () => {
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
         allowCustomValue: true,
+        drilldownRecommendationsEnabled: true,
       });
     });
   });

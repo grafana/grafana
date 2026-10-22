@@ -24,13 +24,13 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+	ng, _, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	const mainOrgID int64 = 1
 
-	alertRule1 := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+	alertRule1 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, mainOrgID)
 	orgID := alertRule1.OrgID
-	alertRule2 := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+	alertRule2 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, mainOrgID)
 	require.Equal(t, orgID, alertRule2.OrgID)
 
 	tests := []struct {
@@ -151,9 +151,9 @@ func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
-	alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, 1)
+	alertRule := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
 
 	instances := []models.AlertInstance{
 		*models.AlertInstanceGen(

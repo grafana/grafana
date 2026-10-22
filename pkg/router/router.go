@@ -12,39 +12,20 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
-)
-
-// drainWake consumes a wake already queued on dirty, if any. It returns nil
-// once dirty is closed, so the caller stops selecting on it.
-func drainWake(dirty <-chan struct{}) <-chan struct{} {
-	if dirty == nil {
-		return nil
-	}
-	select {
-	case _, ok := <-dirty:
-		if !ok {
-			return nil
-		}
-	default:
-	}
-	return dirty
-}
-
-// Backoff for retrying a failed reconcile.
-const (
-	reconcileRetryMin = time.Second
-	reconcileRetryMax = time.Minute
 )
 
 const (
@@ -62,20 +43,35 @@ type handlerEntry struct {
 	lastKey string
 
 	// breaker is replaced when the key changes, since the target may have
-	// moved and its old trip state no longer applies.
-	breaker *groupBreaker
+	// moved and its old trip state no longer applies. breakerView follows its
+	// state; read that instead of breaker.State, which can change it.
+	breaker     *groupBreaker
+	breakerView *breakerView
 
 	// watches scopes the watches served by this handler. reconcile ends it when
 	// the handler is replaced or removed, so those watches move to the new one.
 	watches    context.Context
 	endWatches context.CancelFunc
+
+	// loadedAt and watching are for the status page: when this handler was
+	// loaded, and how many watches it is serving.
+	loadedAt time.Time
+	watching *atomic.Int64
 }
 
 func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
 	watches, endWatches := context.WithCancel(context.Background())
+	view := &breakerView{}
+	onChange := func(group string, to gobreaker.State) {
+		view.record(to)
+		if r.onBreakerChange != nil {
+			r.onBreakerChange(group, to)
+		}
+	}
 	return &handlerEntry{
-		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, r.onBreakerChange),
+		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, onChange), breakerView: view,
 		watches: watches, endWatches: endWatches,
+		loadedAt: time.Now(), watching: &atomic.Int64{},
 	}
 }
 
@@ -83,16 +79,27 @@ func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group s
 // copies what the serving path needs from handlerEntry, which only the
 // reconcile goroutine may read.
 type servingEntry struct {
-	group   metav1.APIGroup
-	handler http.Handler
-	key     string
-	breaker *groupBreaker
-	watches context.Context
-	source  string
+	group       metav1.APIGroup
+	handler     http.Handler
+	key         string
+	breaker     *groupBreaker
+	breakerView *breakerView
+	watches     context.Context
+	source      string
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
 	discovery *apidiscoveryv2.APIGroupDiscovery
+
+	// For the status page; see handlerEntry. plugin is set when the backend
+	// serves a plugin's APIs.
+	loadedAt    time.Time
+	watching    *atomic.Int64
+	plugin      *PluginStatus
+	hasManifest bool
+
+	// callerScoped is set when the backend is a CallerScopedDiscovery.
+	callerScoped bool
 }
 
 type phase int
@@ -137,6 +144,15 @@ type GrafanaRouter struct {
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
 
+	// manifestDocs is the /discovery tree, published from served with the
+	// root documents. manifestFingerprint is the group/key set it was built
+	// from, and manifestCache each manifest's document by backend key, so
+	// unchanged manifests are not converted again. Both are owned by
+	// reconcile.
+	manifestDocs        atomic.Pointer[manifestDocs]
+	manifestFingerprint string
+	manifestCache       map[string]*cachedDoc
+
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
 	// sync.Map rather than an atomic swap. publish drops entries for groups
@@ -152,11 +168,6 @@ type GrafanaRouter struct {
 
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
-
-	// acceptGroup, when set, limits which groups reconcile will serve. Set
-	// before Run; the middleware uses it so the router never shadows a group
-	// the embedded API server owns.
-	acceptGroup func(group string) bool
 
 	// reconciles and reconcileErrors count completed reconciles, and
 	// lastReconcile is when the latest one finished (Unix nanoseconds), for
@@ -188,12 +199,19 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 	r.apiGroupList.Store(&emptyGroups)
 	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
 	r.openapiIndex.Store(&emptyIndex)
+	r.publishManifestDocs(context.Background(), nil)
 	return r
 }
 
 // HandleFunc is the single serving entry point for /apis and /openapi/v3.
 // Anything the router does not own falls through to next.
 func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
+	r.handle(w, req, next, apiGroup(req.URL.Path))
+}
+
+// handle is HandleFunc for a request whose group, apiGroup(req.URL.Path), the
+// caller has already read, so a request reads it once.
+func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
 	path := req.URL.Path
 	isOpenAPI := path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
 	isAPIs := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/")
@@ -210,8 +228,17 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 
-	req = r.authenticate(w, req)
-	if req == nil {
+	if req = r.authenticate(w, req); req == nil {
+		return
+	}
+	if !authorizeNamespace(w, req) {
+		return
+	}
+
+	// Built by the router, and checked before group dispatch so the tree is
+	// never mistaken for a group.
+	if isDiscoveryPath(path) {
+		r.serveManifestDiscovery(w, req)
 		return
 	}
 
@@ -229,7 +256,8 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		return
 	}
 
-	group := groupFromPath(path)
+	// An invalid group name gets no group, so it goes to next: no backend
+	// can serve it.
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
@@ -247,6 +275,10 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
 	}
 	if requestVerb(req) == "watch" {
+		if entry.watching != nil {
+			entry.watching.Add(1)
+			defer entry.watching.Add(-1)
+		}
 		r.serveWatch(w, req, entry.watches, serve)
 		return
 	}
@@ -260,7 +292,7 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 		return req
 	}
 
-	ctx, span := otel.Tracer("github.com/grafana/grafana/pkg/router").Start(routerTraceContext(req), "router.authenticate")
+	ctx, span := routerTracer().Start(routerTraceContext(req), "router.authenticate")
 	defer span.End()
 
 	var err error
@@ -272,7 +304,11 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 	case r.authn == nil:
 		err = apierrors.NewUnauthorized("token authenticator is not configured")
 	default:
-		info, err = r.authn.AuthenticateToken(ctx, token)
+		if requestAuth, ok := r.authn.(authn.RequestTokenAuthenticator); ok {
+			info, err = requestAuth.AuthenticateTokenForRequest(ctx, token, req)
+		} else {
+			info, err = r.authn.AuthenticateToken(ctx, token)
+		}
 		if err == nil && info == nil {
 			err = apierrors.NewUnauthorized("token has no requester")
 		}
@@ -288,7 +324,64 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 		return nil
 	}
 
+	// Not ctx: its span has ended, and must not parent the rest of the request.
 	return req.WithContext(identity.WithRequester(req.Context(), info))
+}
+
+// authorizeNamespace refuses a request for a namespace its requester may not
+// use, before any backend or stack sees it: Grafana admins may name any
+// namespace, and everyone else only their own, or any with "*". Backends
+// still authorize everything else.
+func authorizeNamespace(w http.ResponseWriter, req *http.Request) bool {
+	ns := namespaceFromPath(req.URL.Path)
+	if ns == "" {
+		return true
+	}
+
+	ctx := req.Context()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || requester == nil {
+		setRoute(req, routeUnauthenticated)
+		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing requester"), w)
+		return false
+	}
+
+	if requester.GetIsGrafanaAdmin() || types.NamespaceMatches(requester.GetNamespace(), ns) {
+		return true
+	}
+	setRoute(req, routeForbidden)
+	_ = errhttp.Write(req.Context(), apierrors.NewForbidden(
+		schema.GroupResource{}, "",
+		fmt.Errorf("the requester's namespace is not %q", ns),
+	), w)
+	return false
+}
+
+// namespaceFromPath returns the namespace a resource path names, where the
+// apiserver reads it: /apis/<group>/<version>/namespaces/<namespace>[/...].
+// That includes the namespace object itself, /apis/<g>/<v>/namespaces/<ns>.
+// Any other path names none.
+func namespaceFromPath(path string) string {
+	rest, ok := pathAfterVersion(path)
+	if !ok {
+		return ""
+	}
+	rest, ok = strings.CutPrefix(rest, "namespaces/")
+	if !ok {
+		return ""
+	}
+	namespace, _, _ := strings.Cut(rest, "/")
+	return namespace
+}
+
+// pathAfterVersion returns what follows /apis/<group>/<version>/ in path,
+// without allocating, since every request reads it.
+func pathAfterVersion(path string) (string, bool) {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	for i := 0; ok && i < 2; i++ {
+		_, rest, ok = strings.Cut(rest, "/")
+	}
+	return rest, ok
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
@@ -308,14 +401,39 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 	next.ServeHTTP(w, req)
 }
 
-// groupFromPath returns the group segment of an /apis/<group>[/...] path.
-// The caller guarantees the /apis/ prefix and a non-root path.
-func groupFromPath(path string) string {
-	rest := strings.TrimPrefix(path, apisPrefix+"/")
-	if i := strings.IndexByte(rest, '/'); i >= 0 {
-		rest = rest[:i]
+// discoverySource is where root discovery reads the groups the router does
+// not serve: the unregistered-group handler when one is set, otherwise next.
+// callerScoped reports whether the source answers for the caller, so its
+// answer replaces the defaults of caller-scoped backends. next never serves
+// those groups, so its answer must not hide them.
+func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler, callerScoped bool) {
+	if r.unregisteredGroupHandler != nil {
+		return r.unregisteredGroupHandler, true
 	}
-	return rest
+	return next, false
+}
+
+// apiGroup returns the group of an /apis/<group>[/...] path, or "" when there
+// is none or it is not a valid group name (see utils.IsAPIGroup). Unlike
+// utils.APIGroupFromRequest it reads only the first segment: the router
+// rejects a non-canonical path before it routes by group.
+func apiGroup(path string) string {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	if !ok {
+		return ""
+	}
+	group, _, _ := strings.Cut(rest, "/")
+	if !utils.IsAPIGroup(group) {
+		return ""
+	}
+	return group
+}
+
+// breakerState is the group breaker's state, read without changing it:
+// gobreaker's own State moves an open breaker whose timeout passed to
+// half-open.
+func (e servingEntry) breakerState() gobreaker.State {
+	return e.breakerView.State()
 }
 
 // owns reports whether the router answers req itself rather than passing it
@@ -323,7 +441,7 @@ func groupFromPath(path string) string {
 // rejects before routing. In
 // middleware mode everything else belongs to the embedded API server, which
 // has its own metrics.
-func (r *GrafanaRouter) owns(req *http.Request) bool {
+func (r *GrafanaRouter) owns(req *http.Request, group string) bool {
 	path := req.URL.Path
 	inTree := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/") ||
 		path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
@@ -331,24 +449,18 @@ func (r *GrafanaRouter) owns(req *http.Request) bool {
 	case inTree && !canonicalAPIPath(req.URL):
 		return true // HandleFunc rejects it before routing, so it never reaches next
 
+	case isDiscoveryPath(path):
+		return true
+
 	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
 		return true
 	case strings.HasPrefix(path, apisPrefix+"/"):
-		return r.KnownGroup(groupFromPath(path))
-	}
-	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
 		return r.KnownGroup(group)
 	}
-	return false
-}
-
-// GroupFromPath returns the group of an /apis/<group>[/...] path, or "" for
-// any other path, including the /apis root.
-func GroupFromPath(path string) string {
-	if path == apisPrefix || path == apisPrefix+"/" || (path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/")) {
-		return ""
+	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
+		return group == discoveryGroup || r.KnownGroup(group)
 	}
-	return groupFromPath(path)
+	return false
 }
 
 // KnownGroup reports whether group has a live backend in the current
@@ -364,7 +476,11 @@ func (r *GrafanaRouter) KnownGroup(group string) bool {
 // If-None-Match against the document's key-derived ETag. Shared by
 // serveAPIGroupList and the /openapi/v3 root doc.
 func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
-	w.Header().Set("Content-Type", "application/json")
+	contentType := doc.contentType
+	if contentType == "" {
+		contentType = "application/json"
+	}
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("ETag", doc.etag)
 	if req.Header.Get("If-None-Match") == doc.etag {
 		w.WriteHeader(http.StatusNotModified)
@@ -387,6 +503,10 @@ func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request,
 		next.ServeHTTP(w, req)
 		return
 	}
+	if group == discoveryGroup {
+		serveDiscoveryOpenAPI(w, req, version)
+		return
+	}
 	r.serveOpenAPIGroupVersion(w, req, next, group, version)
 }
 
@@ -407,7 +527,9 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	cacheKey := group + "/" + version
-	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
+	// A caller-scoped backend may answer each caller differently, and the
+	// cache is shared.
+	cacheableRequest := !entry.callerScoped && req.Method == http.MethodGet && req.Header.Get("Range") == ""
 	if cached, ok := r.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
 		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
@@ -424,9 +546,13 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	// Cache miss or stale key: proxy through the breaker and capture the
-	// response so it can be cached.
+	// response so it can be cached. Conditional headers are stripped only
+	// when this cache may store the response; otherwise the backend answers
+	// them, as a caller-scoped backend's own cache does.
 	proxyReq := req.Clone(req.Context())
-	stripConditionalHeaders(proxyReq)
+	if cacheableRequest {
+		stripConditionalHeaders(proxyReq)
+	}
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, w)
 	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
@@ -533,6 +659,28 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 	return nil
 }
 
+// drainWake consumes a wake already queued on dirty, if any. It returns nil
+// once dirty is closed, so the caller stops selecting on it.
+func drainWake(dirty <-chan struct{}) <-chan struct{} {
+	if dirty == nil {
+		return nil
+	}
+	select {
+	case _, ok := <-dirty:
+		if !ok {
+			return nil
+		}
+	default:
+	}
+	return dirty
+}
+
+// Backoff for retrying a failed reconcile.
+const (
+	reconcileRetryMin = time.Second
+	reconcileRetryMax = time.Minute
+)
+
 // storeServing records a completed reconcile's outcome. Errors are logged
 // here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
@@ -581,7 +729,7 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
-		// Keep serving last-known-good; a later wake retries.
+		// Keep serving last-known-good; Run retries with backoff.
 		return fmt.Errorf("router: load failed, keeping current routes: %w", err)
 	}
 
@@ -590,8 +738,19 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
-		if r.acceptGroup != nil && !r.acceptGroup(group) {
-			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
+		if group == discoveryGroup {
+			// The router serves this group itself, ahead of group dispatch, so
+			// a backend for it could never be reached. The remote sources drop
+			// it at discovery; this guards loaders that don't.
+			logging.FromContext(ctx).Warn("router: skipping backend for the reserved discovery group", "source", b.Source(), "key", b.Key())
+			continue
+		}
+		if !utils.IsAPIGroup(group) {
+			// Requests are dispatched by apiGroup, which reads no group from an
+			// invalid name, so such a backend could be advertised but never
+			// reached. Aggregate discovery, for one, reports whatever groups a
+			// target lists.
+			logging.FromContext(ctx).Warn("router: skipping backend with an invalid group name", "group", group, "source", b.Source(), "key", b.Key())
 			continue
 		}
 		if _, dup := seen[group]; dup {
@@ -609,7 +768,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		handler, err := loadBackend(ctx, b)
 		if err != nil {
 			// Keep last-known-good for this group. lastKey is not advanced, so
-			// a later wake retries.
+			// Run's retry loads it again.
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
@@ -619,8 +778,9 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			r.served[group] = r.newHandlerEntry(b, handler, group)
 			continue
 		}
-		// Changed: replace the entry. Connection pools survive through the
-		// loader's shared transports; the breaker is reset (see handlerEntry).
+		// Changed: replace the entry. Connection pools survive because each
+		// source owns its transports and connections, not the backend; the
+		// breaker is reset (see handlerEntry).
 		retired = append(retired, e)
 		r.served[group] = r.newHandlerEntry(b, handler, group)
 	}
@@ -661,7 +821,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, breakerView: e.breakerView, watches: e.watches, loadedAt: e.loadedAt, watching: e.watching}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()
@@ -671,6 +831,13 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 					entry.discovery = &d
 				}
 			}
+			if provider, ok := e.backend.(PluginStatusProvider); ok {
+				if plugin, ok := provider.PluginStatus(); ok {
+					entry.plugin = &plugin
+				}
+			}
+			_, entry.hasManifest = backendManifest(e.backend)
+			_, entry.callerScoped = e.backend.(CallerScopedDiscovery)
 		}
 		snap[group] = entry
 	}
@@ -683,6 +850,8 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 
 	index := buildOpenAPIV3Index(ctx, backends)
 	r.openapiIndex.Store(&index)
+
+	r.publishManifestDocs(ctx, backends)
 }
 
 // retainOpenAPIDocs drops cached OpenAPI documents for groups that are no

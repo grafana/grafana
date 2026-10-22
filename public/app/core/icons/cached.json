@@ -109,6 +109,7 @@
   "unicons/mobile-android",
   "unicons/monitor",
   "unicons/open-telemetry",
+  "unicons/pages",
   "unicons/pause",
   "unicons/pen",
   "unicons/play",
@@ -209,5 +210,6 @@
   "unicons/cursor-logo",
   "unicons/github-copilot-logo",
   "unicons/github-enterprise",
-  "unicons/robot"
+  "unicons/robot",
+  "unicons/workflows"
 ]

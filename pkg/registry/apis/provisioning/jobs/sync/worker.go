@@ -182,6 +182,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
 	resultReasons := progress.ResultReasons()
 	isQuotaWarning := slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded)
 
@@ -272,6 +273,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, lastRef string, syncErr error) {
 	jobStatus := progress.Complete(ctx, syncErr)
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
 	syncStatus.LastRef = lastRef
 
 	patchOperations := []map[string]interface{}{

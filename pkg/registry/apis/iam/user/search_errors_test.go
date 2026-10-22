@@ -157,7 +157,7 @@ func TestUserTeamSearchErrorStatus(t *testing.T) {
 				require.ErrorIs(t, responder.err, plainErr)
 				return
 			}
-			require.Equal(t, responsewriters.ErrorToAPIStatus(resource.GetError(failure)), responsewriters.ErrorToAPIStatus(responder.err))
+			require.Equal(t, responsewriters.ErrorToAPIStatus(resource.StatusError(failure)), responsewriters.ErrorToAPIStatus(responder.err))
 		})
 	}
 }

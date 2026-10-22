@@ -378,9 +378,6 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       gap: '4px',
       overflow: 'hidden',
     }),
-    explainItem: css({
-      cursor: 'pointer',
-    }),
     tagList: css({
       justifyContent: 'flex-start',
       flexWrap: 'nowrap',
