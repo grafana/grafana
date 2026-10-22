@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { CustomVariable, GroupByVariable } from '@grafana/scenes';
+import { CustomVariable } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
@@ -83,28 +83,13 @@ describe('V2 Transformers', () => {
     const customOptions = await customOptions$.toPromise();
     customVariable.setState({ options: customOptions });
 
-    // Find and manually set defaultOptions for GroupByVariable
-    // If defaultOptions are provided, getValueOptions will set options to defaultOptions
-    const groupByVariable = dashV2Scene.state.$variables?.state.variables.find(
-      (v) => v instanceof GroupByVariable
-    ) as GroupByVariable;
-    expect(groupByVariable).toBeDefined();
-
-    // Set default options directly in state
-    groupByVariable.setState({
-      defaultOptions: [
-        { text: 'option1', value: 'option1' },
-        { text: 'option2', value: 'option2' },
-      ],
-    });
-
-    const groupOptions$ = groupByVariable.getValueOptions({});
-    const groupOptions = await groupOptions$.toPromise();
-    groupByVariable.setState({ options: groupOptions });
-
     // Transform back to dashboard V2 spec
     const dashV2 = transformSceneToSaveModelSchemaV2(dashV2Scene);
 
-    expect(dashV2).toEqual(defaultDashboard.spec);
+    // GroupByVariables are migrated away on load, so they don't survive the round trip
+    expect(dashV2).toEqual({
+      ...defaultDashboard.spec,
+      variables: defaultDashboard.spec.variables.filter((v) => v.kind !== 'GroupByVariable'),
+    });
   });
 });

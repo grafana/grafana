@@ -19,7 +19,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `aggregate_*.go`, `plugin_manifests*.go` and `st_fallback.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
-  group in one `Load` makes the last one win, with a warning, and must never panic.
+  group in one `Load` makes the last one win, with a warning, and must never panic. The one
+  exception lives in the cloud loader: `st_resources` keeps a few resources of a routed group on the
+  single-tenant stacks (`st_resources.go`). That group is still one backend, and its discovery and
+  OpenAPI still come from the backend that owns it.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -40,6 +43,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
   plugin backends break only on plugin client calls, where only reachability errors count
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
+  handler that implements `handlerFor(*http.Request)` picks the handler for each request first,
+  and only that handler's breakers apply, so `st_resources` requests never count against the group
+  breaker. A
   rejected backend redirect is not a breaker failure. Read a group breaker's state from its
   `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
   open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
@@ -64,7 +70,11 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
   `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
   misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
-  it, never one whose data or permissions matter (dashboards, folders, IAM).
+  it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
+  loader also serves each app plugin's settings API under its plugin ID
+  (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
+  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
@@ -113,7 +123,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback, and its per-stack discovery cache | `st_fallback.go`, `st_discovery_cache.go` |
+| Single-tenant (ST) fallback, its per-stack discovery cache, and resources kept on ST | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 | Dummy loader (the default when nothing is configured) | `dummy.go` |
 
@@ -130,13 +140,19 @@ The cloud loader merges its sources by group. When sources conflict, later entri
 earlier ones:
 
 1. **ST fallback discovery** (`st_discovery_url`). Groups found on a single-tenant instance are
-   routed to the right stack by the namespace in the path.
+   routed to the right stack by the namespace in the path. Cluster-scoped requests, such as
+   `iam.grafana.app`'s `whoami`, go to the requester's own stack, and get a 404 when the
+   requester's namespace is not a stack (for example `*`).
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
 3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
    plugins, without `plugins_group_regex` filtering.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
+
+Entries from `plugins_url` must have an app plugin ID (with a hyphen and no dots), as local plugins
+must, since the tokens the router sends them name that ID as their audience. Entries from
+`core_url` may have no ID; their tokens name their API group instead.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 `managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
@@ -278,12 +294,20 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   and the `Service`. The loader is `ProvideCloudRoutesLoader` when `[cloud_router]` configures a
   source or any `[router.aggregate.<name>]` target is set, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
   migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
-  the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
-  implements `services.Service` (such as `cloudLoader`, which runs poll loops) is run
-  alongside it with `newCompositeService`, so both start and stop together.
+  the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`.
+- **Loader lifecycle:** a loader that also implements `services.Service` (such as `cloudLoader`,
+  which runs poll loops) is started, stopped and watched by the `Service`, in every mode, so both
+  start and stop together and a failed loader fails the router.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
+  `appplugins.registerAPIServer` turns middleware mode on too, except in the standalone router
+  (`middlewareEnabled`): app plugin settings are only served by the router.
+- **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
+  current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
+  `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
+  in-process storage as a `resource.ManifestDiscovery`. `ProvideService` then attaches the loader.
+  The loader depends on storage, so this order keeps the graph acyclic.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
   port.
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so
@@ -297,7 +321,6 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | Key | Meaning |
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
-| `appmanifest_apiserver_url`, `apiserver_url` | Removed. When no other source is configured, either one is a startup error rather than a silent fallback to the dummy loader. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
@@ -305,6 +328,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
+| `st_resources` | Comma-separated `group/version/resource` entries whose requests, namespaced or across namespaces, always go to the ST fallback, even when another source serves the rest of the group. Only applies with `st_discovery_url`. Default `dashboard.grafana.app/v0alpha1/librarypanels, dashboard.grafana.app/v0alpha1/snapshots`; set it empty to disable. |
 | `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in

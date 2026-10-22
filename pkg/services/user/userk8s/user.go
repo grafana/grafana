@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -22,6 +24,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -36,6 +39,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	signedInUserFetchTimeout = 10 * time.Second
+	signedInUserCacheTTL     = 5 * time.Second
+)
+
 type UserK8sService struct {
 	logger            log.Logger
 	namespaceMapper   request.NamespaceMapper
@@ -43,6 +51,8 @@ type UserK8sService struct {
 	config            *setting.Cfg
 	tracer            tracing.Tracer
 	openFeatureClient *openfeature.Client
+	cache             *localcache.CacheService
+	signedInUserSF    singleflight.Group
 }
 
 var _ user.Service = (*UserK8sService)(nil)
@@ -55,6 +65,7 @@ func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apise
 		config:            cfg,
 		tracer:            tracer,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		cache:             localcache.New(signedInUserCacheTTL, 2*signedInUserCacheTTL),
 	}
 }
 
@@ -535,6 +546,11 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	))
 	defer span.End()
 
+	// Authn already loaded this timestamp while resolving the signed-in user.
+	if !cmd.LastSeenAt.IsZero() && time.Since(cmd.LastSeenAt) <= s.config.UserLastSeenUpdateInterval {
+		return user.ErrLastSeenUpToDate
+	}
+
 	ctxLogger := s.logger.FromContext(ctx)
 
 	namespace := s.namespaceMapper(cmd.OrgID)
@@ -605,17 +621,34 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
+	found, err := s.getCachedSignedInUserResource(ctx, namespace, cmd)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	// Org context belongs to this request, not to the cached resource.
+	return toSignedInUser(found, orgID), nil
+}
+
+func (s *UserK8sService) getSignedInUserResource(ctx context.Context, namespace string, cmd *user.GetSignedInUserQuery) (*iamv0alpha1.User, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+
 	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	var found *iamv0alpha1.User
 	var lookupErr error
 	switch {
+	case cmd.UserUID != "":
+		found, lookupErr = client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UserUID})
+		if apierrors.IsNotFound(lookupErr) {
+			lookupErr = user.ErrUserNotFound
+		}
 	case cmd.UserID > 0:
 		found, lookupErr = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
 	case cmd.Login != "":
@@ -623,18 +656,86 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	case cmd.Email != "":
 		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace)
 	default:
-		span.RecordError(user.ErrNoUniqueID)
-		span.SetStatus(codes.Error, user.ErrNoUniqueID.Error())
 		return nil, user.ErrNoUniqueID
 	}
 
 	if lookupErr != nil {
-		span.RecordError(lookupErr)
-		span.SetStatus(codes.Error, lookupErr.Error())
 		return nil, lookupErr
 	}
 
-	return toSignedInUser(found, orgID), nil
+	return found, nil
+}
+
+func (s *UserK8sService) getCachedSignedInUserResource(ctx context.Context, namespace string, cmd *user.GetSignedInUserQuery) (*iamv0alpha1.User, error) {
+	if s.cache == nil || (cmd.UserUID == "" && cmd.UserID <= 0) || cmd.SkipTeamLookup {
+		return s.getSignedInUserResource(ctx, namespace, cmd)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	query := *cmd
+	needsUIDMapping := query.UserUID == "" && query.UserID > 0
+
+	// Session tokens still carry numeric IDs. Cache only their UID mapping under that ID.
+	aliasKey := fmt.Sprintf("signed-in-user-uid/%s/%d", namespace, query.UserID)
+	lookup := func() (*iamv0alpha1.User, bool) {
+		if query.UserUID == "" {
+			if uid, found := s.cache.Get(aliasKey); found {
+				query.UserUID = uid.(string)
+			}
+		}
+		if query.UserUID != "" {
+			if cached, found := s.cache.Get(signedInUserCacheKey(namespace, query.UserUID)); found {
+				return cached.(*iamv0alpha1.User), true
+			}
+		}
+		return nil, false
+	}
+	if cached, found := lookup(); found {
+		return cached.DeepCopy(), nil
+	}
+
+	flightKey := aliasKey
+	if query.UserUID != "" {
+		flightKey = signedInUserCacheKey(namespace, query.UserUID)
+	}
+
+	ch := s.signedInUserSF.DoChan(flightKey, func() (any, error) {
+		if cached, found := lookup(); found {
+			return cached, nil
+		}
+		// One cancelled caller must not cancel the shared lookup; still bound its lifetime.
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), signedInUserFetchTimeout)
+		defer cancel()
+		result, err := s.getSignedInUserResource(fetchCtx, namespace, &query)
+		if err != nil {
+			return nil, err
+		}
+		if result.Name != "" {
+			s.cache.Set(signedInUserCacheKey(namespace, result.Name), result, signedInUserCacheTTL)
+			if needsUIDMapping {
+				s.cache.Set(aliasKey, result.Name, signedInUserCacheTTL)
+			}
+		}
+		return result, nil
+	})
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result := <-ch:
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		// Never expose the cached resource to mutations by callers.
+		cached := result.Val.(*iamv0alpha1.User)
+		return cached.DeepCopy(), nil
+	}
+}
+
+func signedInUserCacheKey(namespace, uid string) string {
+	return "signed-in-user/" + namespace + "/" + uid
 }
 
 func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {

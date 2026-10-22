@@ -288,6 +288,13 @@ func (u *UnifiedAlertingStateHistorySettings) QueriesServedByLoki() bool {
 	return isStateHistoryBackend(u.Backend, stateHistoryBackendLoki)
 }
 
+// HasAlertStateMetrics returns true if a Prometheus data source is set for the alert state metrics.
+// The alert activity page reads them from there. The backend setting is not checked on purpose: on
+// Grafana Cloud a separate ruler service writes these metrics, while this Grafana only writes to Loki.
+func (u *UnifiedAlertingStateHistorySettings) HasAlertStateMetrics() bool {
+	return u.Enabled && u.PrometheusTargetDatasourceUID != ""
+}
+
 // isStateHistoryBackend normalizes the configured value the same way historian.ParseBackendType does.
 // That function cannot be reused here because the historian package imports this one.
 func isStateHistoryBackend(value, backend string) bool {

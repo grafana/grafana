@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/plugins
 
-go 1.27.2
+go 1.27.3
 
 replace github.com/grafana/grafana => ../..
 
@@ -14,12 +14,14 @@ replace github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 
 replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 
+replace github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
+
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
+	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3
+	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.60.15
 	github.com/grafana/grafana-app-sdk/logging v0.60.15
@@ -80,13 +82,12 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/getkin/kin-openapi v0.149.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -128,7 +129,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2 // indirect
+	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-app-sdk/plugin v0.60.15 // indirect
@@ -219,7 +220,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
 	github.com/trivago/tgo v1.0.7 // indirect
@@ -266,7 +267,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.2 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -274,7 +274,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.37.1 // indirect
 	k8s.io/component-base v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kms v0.37.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
 	k8s.io/streaming v0.37.1 // indirect
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
@@ -285,4 +284,4 @@ require (
 )
 
 // Use our fork of the upstream Alertmanager.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623

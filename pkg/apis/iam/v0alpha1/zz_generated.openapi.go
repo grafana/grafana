@@ -95,6 +95,20 @@ func schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"teams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The user teams",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"identity", "displayName"},
 			},
@@ -555,13 +569,12 @@ func schema_pkg_apis_iam_v0alpha1_UserPermission(ref common.ReferenceCallback) c
 					},
 					"scope": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"action", "scope"},
+				Required: []string{"action"},
 			},
 		},
 	}

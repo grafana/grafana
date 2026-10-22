@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   type AdHocFilterWithLabels,
@@ -256,7 +257,7 @@ export function transformSaveModelSchemaV2ToScene(
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange:
-            config.featureToggles.reloadDashboardsOnParamsChange &&
+            getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false) &&
             Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
           uid: metadata.name,
         }),
@@ -382,14 +383,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
+      drilldownRecommendationsEnabled: true,
       $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: false,
-      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
-      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-        ? (variable.spec.enableGroupBy ?? false)
-        : false,
+      collapsible: true,
+      enableGroupBy: variable.spec.enableGroupBy ?? false,
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
@@ -530,8 +529,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
+      drilldownRecommendationsEnabled: true,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue
@@ -614,11 +613,12 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             baseFilters: v.spec.baseFilters ?? [],
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
-            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+            applicabilityEnabled: getFeatureFlagClient().getBooleanValue(
+              FlagKeys.PerPanelNonApplicableDrilldowns,
+              false
+            ),
             supportsMultiValueOperators: false,
-            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-              ? (v.spec.enableGroupBy ?? false)
-              : false,
+            enableGroupBy: v.spec.enableGroupBy ?? false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
           applySupportsMultiValueOperators(adhocVariable, ds?.type);

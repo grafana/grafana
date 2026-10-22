@@ -1,16 +1,9 @@
-import { cloneDeep } from 'lodash';
 import { render, screen } from 'test/test-utils';
 
-import { behaviors, sceneGraph, SceneTimeRange } from '@grafana/scenes';
+import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import {
-  defaultSpec as defaultDashboardV2Spec,
-  type Spec as DashboardV2Spec,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { changeDescription } from '../actions/dashboard/changeDescription';
 import { changeTitle } from '../actions/dashboard/changeTitle';
 import * as utils from '../pages/utils';
@@ -18,7 +11,6 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
@@ -127,36 +119,6 @@ describe('GeneralSettingsEditView', () => {
       deactivateSettings();
 
       expectHistoryLength(0);
-    });
-  });
-
-  describe('Undo/redo history after a schema edit', () => {
-    it('does not revert settings stored outside the dashboard state when undoing the schema edit', () => {
-      const spec: DashboardV2Spec = { ...defaultDashboardV2Spec(), title: 'A' };
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal resource envelope for the test
-      const dto = {
-        kind: 'DashboardWithAccessInfo',
-        apiVersion: 'dashboard.grafana.app/v2beta1',
-        metadata: { name: 'dash-1', generation: 1, creationTimestamp: '2026-08-03T00:00:00Z', annotations: {} },
-        access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: true, canAdmin: true },
-        spec: cloneDeep(spec),
-      } as unknown as DashboardWithAccessInfo<DashboardV2Spec>;
-      const dashboard = transformSaveModelSchemaV2ToScene(dto);
-      dashboard.state.sidebar.activate();
-      dashboard.setState({ isEditing: true });
-
-      // The schema edit undo restores the whole previous dashboard state, including its time range
-      applyDashboardSpec({ scene: dashboard, spec: { ...spec, title: 'B' }, description: 'Schema edit' });
-
-      const settings = new GeneralSettingsEditView({});
-      dashboard.setState({ editview: settings });
-      const deactivateSettings = settings.activate();
-      settings.onTimeZoneChange('Europe/Paris');
-      deactivateSettings();
-
-      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
-      dashboard.state.sidebar.undoAction();
-      expect(sceneGraph.getTimeRange(dashboard).state.timeZone).toBe('Europe/Paris');
     });
   });
 

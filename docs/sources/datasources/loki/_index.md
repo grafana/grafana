@@ -65,6 +65,10 @@ After configuring the Loki data source, you can:
 - Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) to overlay log events on your graphs.
 - Optimize performance with [query caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching).
 
+To see the Loki data source in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Loki NGINX Service Mesh - JSON version" url="https://play.grafana.org/d/T512JVH7z/" >}}
+
 {{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
 
 For example, to query your Loki data source, use the `gcx datasources loki` commands:

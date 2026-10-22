@@ -117,6 +117,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      # make runs go while parsing the Makefile. Without the go.mod version
+      # installed, go downloads a toolchain into the read-only module cache,
+      # and the later setup-go cache restore fails.
+      - name: Install Go
+        uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Start MySQL via docker compose
         run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Setup Go
@@ -169,6 +177,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      # make runs go while parsing the Makefile. Without the go.mod version
+      # installed, go downloads a toolchain into the read-only module cache,
+      # and the later setup-go cache restore fails.
+      - name: Install Go
+        uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Start Postgres via docker compose
         run: |
           make devenv sources=postgres_tests
@@ -283,6 +299,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      # make runs go while parsing the Makefile. Without the go.mod version
+      # installed, go downloads a toolchain into the read-only module cache,
+      # and the later setup-go cache restore fails.
+      - name: Install Go
+        uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Start MySQL via docker compose
         run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Get GitHub App token
@@ -369,6 +393,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      # make runs go while parsing the Makefile. Without the go.mod version
+      # installed, go downloads a toolchain into the read-only module cache,
+      # and the later setup-go cache restore fails.
+      - name: Install Go
+        uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Start Postgres via docker compose
         run: |
           make devenv sources=postgres_tests

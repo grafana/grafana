@@ -326,7 +326,7 @@ describe('when previewing an unbuilt dashboard plan', () => {
   });
 
   // Render through the shared wrapper to cover planning behavior in both toolbar variants.
-  function setupPlanning() {
+  function setupPlanning(phase: 'preview' | 'building' = 'preview') {
     const onBuild = jest.fn();
     const onDismiss = jest.fn();
     const dashboard = new DashboardScene({
@@ -336,12 +336,10 @@ describe('when previewing an unbuilt dashboard plan', () => {
       editable: true,
       uid: 'dash-1',
       isEditing: true,
-      planning: {
-        planId: 'plan-1',
-        planTitle: 'Kafka overview',
-        onBuild,
-        onDismiss,
-      },
+      planning:
+        phase === 'preview'
+          ? { phase, planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss }
+          : { phase, planId: 'plan-1', planTitle: 'Kafka overview' },
       body: DefaultGridLayoutManager.fromVizPanels([
         new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
       ]),
@@ -375,6 +373,15 @@ describe('when previewing an unbuilt dashboard plan', () => {
     expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.settingsButton)).not.toBeInTheDocument();
+  });
+
+  it('drops the banner once the plan is building', async () => {
+    setupPlanning('building');
+
+    expect(
+      screen.queryByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Kafka overview')).not.toBeInTheDocument();
   });
 
   it('wires the banner actions to the plan callbacks', async () => {
