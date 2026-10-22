@@ -36,6 +36,10 @@ type Service struct {
 	standalone bool
 	middleware bool
 
+	// mt forwards groups the embedded API server does not serve to the
+	// multi-tenant router. It is nil unless the loader provides one.
+	mt *mtFallback
+
 	// loaderLifecycle is the routes loader's own background lifecycle (such as
 	// cloudLoader's poll loops), which this service starts, stops and watches.
 	// Both are nil for a loader without one; a nil watcher's channel never fires.
@@ -72,6 +76,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(router, reg)
 	s.standalone = standaloneRouter(cfg)
 	s.middleware = middlewareEnabled(cfg, features)
+	if l, ok := loader.(loaderWithMTFallback); ok && s.middleware && !s.standalone {
+		s.mt = l.MultiTenantFallback()
+	}
 	if lifecycle, ok := loader.(services.Service); ok {
 		s.loaderLifecycle = lifecycle
 		s.loaderFailures = services.NewFailureWatcher()
@@ -127,6 +134,10 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		// API server, which has its own metrics; don't count them as the router's.
 		group := apiGroup(req.URL.Path)
 		if !s.router.owns(req, group) {
+			if s.mt != nil && s.mt.handles(req, group) {
+				s.serveMT(w, req, group)
+				return
+			}
 			// Only the standalone router has a single-tenant fallback, and it
 			// never calls HandleFunc, so this passes the request on.
 			next.ServeHTTP(w, req)

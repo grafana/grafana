@@ -129,6 +129,8 @@ type singleTenantFallback struct {
 	cooldown  *cooldown
 	status    pollStatus
 	lookupsBy stackLookupCounts
+	// fallbackRefused counts requests refused for carrying stFallbackHeader.
+	fallbackRefused atomic.Uint64
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
 	// shares one fetch among concurrent misses for the same document.
@@ -300,6 +302,13 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// A stack forwarded this request here because it does not serve the group,
+	// so sending it back to the stack would loop; see stFallbackHeader.
+	if req.Header.Get(stFallbackHeader) != "" {
+		st.fallbackRefused.Add(1)
+		http.NotFound(w, req)
+		return
+	}
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])

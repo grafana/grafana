@@ -97,7 +97,7 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 
 // ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
 // [cloud_router], [router.aggregate.<name>] and [router.backend_grpc] sections. It returns (nil, nil) when no source is configured
-// (an aggregate target url, plugins_url, core_url or st_discovery_url), and
+// (an aggregate target url, plugins_url, core_url, st_discovery_url or mt_router_address), and
 // the caller falls back to another loader.
 //
 // Aggregate targets are polled with a CAP token exchanged for a signed access
@@ -118,7 +118,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	}
 
 	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")
-	if len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && coreTarget == nil && singleTenantDiscoveryURL == "" {
+	mtRouterAddress := section.Key(mtRouterAddressKey).MustString("")
+	if len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && coreTarget == nil && singleTenantDiscoveryURL == "" && mtRouterAddress == "" {
 		// The appmanifest apiserver source was removed. Fail loudly, or a
 		// config that still relies on it would silently fall back to the
 		// dummy loader and serve no routes.
@@ -210,7 +211,14 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	loader, err := newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	if err != nil || mtRouterAddress == "" {
+		return loader, err
+	}
+	if loader.mtFallback, err = newMTFallback(mtRouterAddress, section.Key(mtRouterCAFileKey).MustString(""), section.Key(mtRouterInsecureKey).MustBool(false)); err != nil {
+		return nil, err
+	}
+	return loader, nil
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -234,6 +242,10 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
+
+	// On a single-tenant Grafana, groups its embedded API server does not
+	// serve go to the multi-tenant router. Nil unless mt_router_address is set.
+	mtFallback *mtFallback
 
 	shadowed atomic.Pointer[[]shadowedGroup]
 }
@@ -394,6 +406,13 @@ func (l *cloudLoader) stackDiscoveryCache() map[string]uint64 {
 	return map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()}
 }
 
+func (l *cloudLoader) stackFallbackRefused() (uint64, bool) {
+	if l.singleTenantFallback == nil {
+		return 0, false
+	}
+	return l.singleTenantFallback.fallbackRefused.Load(), true
+}
+
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	var statuses []sourceStatus
 	if l.singleTenantFallback != nil {
@@ -410,6 +429,9 @@ func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	}
 	return statuses
 }
+
+// MultiTenantFallback implements [loaderWithMTFallback].
+func (l *cloudLoader) MultiTenantFallback() *mtFallback { return l.mtFallback }
 
 func (l *cloudLoader) SingleTenantFallback() http.Handler {
 	if l.singleTenantFallback == nil {
