@@ -72,6 +72,24 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
 		})
 
+	scenarioWithPanel(t, "DeleteLibraryElementsInFolderUnchecked should delete elements without consulting AccessControl",
+		func(t *testing.T, sc scenarioContext) {
+			// No permissions configured at all; DeleteLibraryElementsInFolderUnchecked must not
+			// require edit permissions on the folder the way DeleteLibraryElementsInFolder does.
+			sc.service.AccessControl = acmock.New()
+
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			var count int64
+			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
+				_, err := session.SQL("SELECT COUNT(*) FROM library_element WHERE folder_uid=?", sc.folder.UID).Get(&count)
+				return err
+			})
+			require.NoError(t, err)
+			require.Equal(t, int64(0), count)
+		})
+
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())

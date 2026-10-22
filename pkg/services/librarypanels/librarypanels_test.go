@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -54,6 +55,22 @@ func TestIntegrationLibraryPanelFolderOperations(t *testing.T) {
 	scenarioWithLibraryPanel(t, "It should delete library panels in a folder",
 		func(t *testing.T, sc scenarioContext) {
 			err := sc.lps.DeleteInFolders(context.Background(), sc.user.OrgID, []string{sc.folder.UID}, sc.user)
+			require.NoError(t, err)
+
+			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
+			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
+		})
+
+	scenarioWithLibraryPanel(t, "DeleteInFoldersUnchecked should delete library panels without consulting AccessControl",
+		func(t *testing.T, sc scenarioContext) {
+			le, ok := sc.elementService.(*libraryelements.LibraryElementService)
+			require.True(t, ok)
+			// No permissions configured at all; DeleteInFoldersUnchecked must not require edit
+			// permissions on the folder the way DeleteInFolders does.
+			le.AccessControl = acmock.New()
+
+			err := sc.lps.DeleteInFoldersUnchecked(context.Background(), sc.user.OrgID, []string{sc.folder.UID}, sc.user)
 			require.NoError(t, err)
 
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
