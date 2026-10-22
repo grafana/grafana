@@ -21,9 +21,9 @@ import {
   type ImportFormDataV2,
 } from 'app/features/manage-dashboards/types';
 
+import { useBranchStatus } from '../../hooks/useBranchStatus';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useImportProvisionedSave } from '../../hooks/useImportProvisionedSave';
-import { useIsNewBranch } from '../../hooks/useIsNewBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getIsReadOnlyRepo } from '../../utils/repository';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -127,7 +127,7 @@ function ProvisionedImportOverviewReady({
     defaultValues,
     mode: 'onChange',
   });
-  const isNewBranch = useIsNewBranch(repository, methods.watch('ref'));
+  const { isNewBranch } = useBranchStatus(repository, methods.watch('ref'));
 
   async function onSubmit(form: ProvisionedImportFormData) {
     const spec = isV2

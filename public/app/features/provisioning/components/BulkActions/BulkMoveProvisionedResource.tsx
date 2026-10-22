@@ -27,8 +27,8 @@ import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 
-import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import {
   type BulkActionFormData,
@@ -169,14 +169,14 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           {hasSubmitted && job ? (
-            <BulkActionJobStatus
+            <ResourceJobStatus
               job={job}
               jobType="move"
-              committedTitle={t(
-                'browse-dashboards.bulk-move-resources-form.success-title',
-                'Resources moved successfully'
-              )}
-              pushedToBranch={submittedViaBranchWorkflow.current}
+              successTitle={
+                submittedViaBranchWorkflow.current
+                  ? t('provisioning.bulk-action.success-title-branch', 'Requested changes were pushed to a branch')
+                  : t('browse-dashboards.bulk-move-resources-form.success-title', 'Resources moved successfully')
+              }
             />
           ) : (
             <>

@@ -1077,16 +1077,17 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
   });
 
-  it('should enable save in the deleted-branch recovery with no other changes', () => {
+  it('should enable save in the deleted-branch recovery with no other changes', async () => {
     // Recovery installs the generated branch as a default (never marks ref dirty) on an
-    // otherwise-unchanged preview, so Save must be enabled on the recovery flag alone.
+    // otherwise-unchanged preview, so Save must be enabled on the recovery flag alone once the
+    // refs have classified that branch.
     setup({
       dashboard: makeNotDirtyDashboard(),
       isNew: false,
       recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
     });
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: /save/i })).toBeEnabled());
   });
 
   it('creates (not updates) in the deleted-branch recovery when the dashboard only existed on that branch', async () => {
@@ -1574,7 +1575,7 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     const saveButton = screen.getByRole('button', { name: /save/i });
-    expect(saveButton).toBeEnabled();
+    await waitFor(() => expect(saveButton).toBeEnabled());
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);

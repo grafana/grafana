@@ -173,7 +173,7 @@ function FormContent({
   });
 
   // Branch-name template fill/lock and the PR title for the banner follow from the target branch.
-  const { workflow, isNewBranch, lockBranch, prTitle } = useCommitTarget({
+  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -253,7 +253,11 @@ function FormContent({
           {error && <ProvisioningAlert error={error} />}
 
           <Stack gap={2}>
-            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
+            <Button
+              type="submit"
+              variant={isDelete ? 'destructive' : 'primary'}
+              disabled={request.isLoading || isResolving}
+            >
               {isDelete
                 ? request.isLoading
                   ? t('provisioning.save-resource.button-deleting', 'Deleting...')

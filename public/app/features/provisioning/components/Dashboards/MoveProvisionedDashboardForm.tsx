@@ -10,13 +10,9 @@ import { Alert, Button, Drawer, Field, Input, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
-import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
-import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -25,6 +21,7 @@ import { getRequestRef } from '../../utils/workflow';
 import { type MoveJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { type JobSuccess, ResourceJobStatus } from '../Shared/ResourceJobStatus';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -70,7 +67,7 @@ export function MoveProvisionedDashboardForm({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { workflow, lockBranch, prTitle } = useCommitTarget({
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -84,7 +81,6 @@ export function MoveProvisionedDashboardForm({
 
   const { createBulkJob, isLoading } = useBulkActionJob();
   const [submitted, setSubmitted] = useState<SubmittedJob>();
-  const [jobError, setJobError] = useState<string | StatusInfo>();
 
   const navigate = useNavigate();
 
@@ -151,24 +147,21 @@ export function MoveProvisionedDashboardForm({
     }
   };
 
-  const handleJobStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success' && submitted) {
-        dashboard.setState({ isDirty: false });
-        panelEditor?.onDiscard();
-        navigate(
-          getJobListRedirectUrl({
-            workflow: submitted.workflow,
-            urls: statusInfo.urls,
-            repoType: repository?.type,
-            prTitle: submitted.prTitle,
-          })
-        );
+  const handleJobSuccess = useCallback(
+    ({ urls }: JobSuccess) => {
+      if (!submitted) {
+        return;
       }
-
-      if (statusInfo.status === 'error' && statusInfo.error) {
-        setJobError(statusInfo.error);
-      }
+      dashboard.setState({ isDirty: false });
+      panelEditor?.onDiscard();
+      navigate(
+        getJobListRedirectUrl({
+          workflow: submitted.workflow,
+          urls,
+          repoType: repository?.type,
+          prTitle: submitted.prTitle,
+        })
+      );
     },
     [dashboard, panelEditor, navigate, submitted, repository?.type]
   );
@@ -180,10 +173,7 @@ export function MoveProvisionedDashboardForm({
       onClose={onDismiss}
     >
       {submitted ? (
-        <>
-          <ProvisioningAlert error={jobError} />
-          <JobStatus watch={submitted.job} jobType="move" onStatusChange={handleJobStatusChange} />
-        </>
+        <ResourceJobStatus job={submitted.job} jobType="move" onSuccess={handleJobSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -221,7 +211,7 @@ export function MoveProvisionedDashboardForm({
               />
 
               <Stack gap={2}>
-                <Button variant="primary" type="submit" disabled={isLoading || readOnly}>
+                <Button variant="primary" type="submit" disabled={isLoading || isResolving || readOnly}>
                   {isLoading
                     ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
                     : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}

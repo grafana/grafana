@@ -21,9 +21,9 @@ import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getCanPushToConfiguredBranch } from '../defaults';
 
-import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
 import {
   type BulkActionFormData,
@@ -121,14 +121,14 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           {hasSubmitted && job ? (
-            <BulkActionJobStatus
+            <ResourceJobStatus
               job={job}
               jobType="delete"
-              committedTitle={t(
-                'browse-dashboards.bulk-delete-resources-form.success-title',
-                'Resources deleted successfully'
-              )}
-              pushedToBranch={submittedViaBranchWorkflow.current}
+              successTitle={
+                submittedViaBranchWorkflow.current
+                  ? t('provisioning.bulk-action.success-title-branch', 'Requested changes were pushed to a branch')
+                  : t('browse-dashboards.bulk-delete-resources-form.success-title', 'Resources deleted successfully')
+              }
             />
           ) : (
             <>

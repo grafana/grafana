@@ -4,8 +4,8 @@ import { type WorkflowOption } from '../types';
 import { type BranchTemplateVars } from '../utils/branchName';
 import { getWorkflowForRef } from '../utils/workflow';
 
+import { useBranchStatus } from './useBranchStatus';
 import { useBranchTemplate } from './useBranchTemplate';
-import { useIsNewBranch } from './useIsNewBranch';
 import { usePullRequestTitle } from './usePullRequestTitle';
 
 interface UseCommitTargetArgs {
@@ -23,6 +23,8 @@ export interface CommitTarget {
   workflow: WorkflowOption;
   /** The commit creates `ref`; the destination page shows the PR banner, so no success toast. */
   isNewBranch: boolean;
+  /** The refs that classify `ref` are still loading; hold submission until they land. */
+  isResolving: boolean;
   /** The repository's branch-name template is enforced, so the ref field renders read-only. */
   lockBranch: boolean;
   /** Rendered pull-request title for the PR a new branch opens; '' when none applies. */
@@ -37,7 +39,7 @@ export interface CommitTarget {
  */
 export function useCommitTarget({ repository, vars, ref, isRefDirty, setRef }: UseCommitTargetArgs): CommitTarget {
   const workflow = getWorkflowForRef(repository, ref);
-  const isNewBranch = useIsNewBranch(repository, ref);
+  const { isNewBranch, isResolving } = useBranchStatus(repository, ref);
   const { locked: lockBranch } = useBranchTemplate({
     repository,
     vars,
@@ -47,5 +49,5 @@ export function useCommitTarget({ repository, vars, ref, isRefDirty, setRef }: U
     setBranch: setRef,
   });
   const { prTitle } = usePullRequestTitle({ repository, vars, isNewBranch });
-  return { workflow, isNewBranch, lockBranch, prTitle };
+  return { workflow, isNewBranch, isResolving, lockBranch, prTitle };
 }

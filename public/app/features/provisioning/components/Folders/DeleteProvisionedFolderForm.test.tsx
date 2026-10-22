@@ -397,5 +397,16 @@ describe('DeleteProvisionedFolderForm', () => {
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
       expect(onDismiss).not.toHaveBeenCalled();
     });
+
+    it('shows the job error instead of a blank drawer when the job fails', async () => {
+      mockJobStatusInfo = { status: 'error', error: 'Error fetching active job' };
+      const { mockNavigate, onDismiss, clickDeleteButton } = setup();
+
+      await clickDeleteButton();
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Error fetching active job');
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
   });
 });

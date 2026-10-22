@@ -7,13 +7,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
-import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -22,6 +19,7 @@ import { getRequestRef } from '../../utils/workflow';
 import { type DeleteJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { type JobSuccess, ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getProvisionedRequestError } from '../utils/errors';
 
 export interface Props {
@@ -49,7 +47,6 @@ export function DeleteProvisionedDashboardForm({
 }: Props) {
   // State
   const [submitted, setSubmitted] = useState<SubmittedJob>();
-  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [submitError, setSubmitError] = useState<string | undefined>(undefined);
 
   // Hooks
@@ -76,7 +73,7 @@ export function DeleteProvisionedDashboardForm({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { workflow, lockBranch, prTitle } = useCommitTarget({
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -141,27 +138,24 @@ export function DeleteProvisionedDashboardForm({
     }
   };
 
-  const handleJobStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success' && submitted) {
-        // Nothing is left to save once the file is deleted, so the redirect must not trip the
-        // unsaved-changes prompt.
-        dashboard.setState({ isDirty: false });
-        panelEditor?.onDiscard();
-        navigate(
-          getJobListRedirectUrl({
-            workflow: submitted.workflow,
-            urls: statusInfo.urls,
-            repoType: repository?.type,
-            action: 'delete',
-            prTitle: submitted.prTitle,
-          })
-        );
+  const handleJobSuccess = useCallback(
+    ({ urls }: JobSuccess) => {
+      if (!submitted) {
+        return;
       }
-
-      if (statusInfo.status === 'error' && statusInfo.error) {
-        setJobError(statusInfo.error);
-      }
+      // Nothing is left to save once the file is deleted, so the redirect must not trip the
+      // unsaved-changes prompt.
+      dashboard.setState({ isDirty: false });
+      panelEditor?.onDiscard();
+      navigate(
+        getJobListRedirectUrl({
+          workflow: submitted.workflow,
+          urls,
+          repoType: repository?.type,
+          action: 'delete',
+          prTitle: submitted.prTitle,
+        })
+      );
     },
     [dashboard, panelEditor, navigate, submitted, repository?.type]
   );
@@ -173,10 +167,7 @@ export function DeleteProvisionedDashboardForm({
       onClose={onDismiss}
     >
       {submitted ? (
-        <>
-          <ProvisioningAlert error={jobError} />
-          <JobStatus watch={submitted.job} jobType="delete" onStatusChange={handleJobStatusChange} />
-        </>
+        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleJobSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -203,7 +194,7 @@ export function DeleteProvisionedDashboardForm({
               {submitError && <ProvisioningAlert error={submitError} />}
 
               <Stack gap={2}>
-                <Button variant="destructive" type="submit" disabled={isLoading || readOnly}>
+                <Button variant="destructive" type="submit" disabled={isLoading || isResolving || readOnly}>
                   {isLoading
                     ? t('dashboard-scene.delete-provisioned-dashboard-form.deleting', 'Deleting...')
                     : t('dashboard-scene.delete-provisioned-dashboard-form.delete-action', 'Delete dashboard')}

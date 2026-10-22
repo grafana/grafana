@@ -75,7 +75,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { workflow, isNewBranch, lockBranch, prTitle } = useCommitTarget({
+  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -278,7 +278,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
             </Button>
-            <Button type="submit" disabled={request.isLoading || !!formState?.errors.title}>
+            <Button type="submit" disabled={request.isLoading || isResolving || !!formState?.errors.title}>
               {request.isLoading
                 ? t('browse-dashboards.new-provisioned-folder-form.button-creating', 'Creating...')
                 : t('browse-dashboards.new-provisioned-folder-form.button-create', 'Create')}

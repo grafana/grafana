@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
@@ -139,6 +139,38 @@ describe('DeleteProvisionedDashboardForm', () => {
         { name: 'test-uid', group: 'dashboard.grafana.app', kind: 'Dashboard' },
       ]);
       expect(posted.body!.message).toBe('Delete dashboard: Test Dashboard');
+    });
+
+    it('holds submission until the refs classify the branch, so the job gets the template branch', async () => {
+      // The template fills only once the refs confirm the generated placeholder is new. Submitting
+      // before that would commit the placeholder instead.
+      server.use(
+        http.get(`${BASE}/repositories/:name/refs`, async () => {
+          await delay(100);
+          return HttpResponse.json({ items: [{ name: 'main' }] });
+        })
+      );
+      const posted = mockDeleteJob();
+      const { user } = setup({
+        ...withRef('dashboard/2026-10-22-abc12'),
+        repository: {
+          name: 'test-repo',
+          target: 'folder',
+          title: 'Test Repository',
+          type: 'github',
+          workflows: ['branch', 'write'],
+          branch: 'main',
+          branchOptions: { nameTemplate: 'grafana/{{action}}-{{title}}' },
+        },
+      });
+
+      const button = screen.getByRole('button', { name: /delete dashboard/i });
+      expect(button).toBeDisabled();
+      await waitFor(() => expect(button).toBeEnabled());
+      await user.click(button);
+
+      await waitFor(() => expect(posted.body).not.toBeNull());
+      expect(posted.body!.delete?.ref).toBe('grafana/delete-test-dashboard');
     });
 
     it('redirects to the dashboard list with the PR link once a branch delete job finishes', async () => {

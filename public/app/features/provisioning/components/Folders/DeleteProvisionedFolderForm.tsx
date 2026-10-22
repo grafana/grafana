@@ -7,8 +7,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -24,6 +22,7 @@ import { getRequestRef } from '../../utils/workflow';
 import { type DeleteJobSpec, type SubmittedJob, useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { type JobSuccess, ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getProvisionedRequestError } from '../utils/errors';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
@@ -66,7 +65,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { workflow, lockBranch, prTitle } = useCommitTarget({
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -120,20 +119,21 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     }
   };
 
-  const handleJobStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success' && submitted) {
-        onDismiss?.();
-        navigate(
-          getJobListRedirectUrl({
-            workflow: submitted.workflow,
-            urls: statusInfo.urls,
-            repoType: repository?.type,
-            action: 'delete',
-            prTitle: submitted.prTitle,
-          })
-        );
+  const handleJobSuccess = useCallback(
+    ({ urls }: JobSuccess) => {
+      if (!submitted) {
+        return;
       }
+      onDismiss?.();
+      navigate(
+        getJobListRedirectUrl({
+          workflow: submitted.workflow,
+          urls,
+          repoType: repository?.type,
+          action: 'delete',
+          prTitle: submitted.prTitle,
+        })
+      );
     },
     [onDismiss, navigate, submitted, repository?.type]
   );
@@ -141,7 +141,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   return (
     <>
       {submitted ? (
-        <JobStatus watch={submitted.job} jobType="delete" onStatusChange={handleJobStatusChange} />
+        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleJobSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -179,7 +179,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 <Button variant="secondary" fill="outline" onClick={onDismiss}>
                   <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button type="submit" disabled={isLoading} variant="destructive">
+                <Button type="submit" disabled={isLoading || isResolving} variant="destructive">
                   {isLoading
                     ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}

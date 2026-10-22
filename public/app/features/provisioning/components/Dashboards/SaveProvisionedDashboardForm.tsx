@@ -171,7 +171,7 @@ export function SaveProvisionedDashboardForm({
     setComment: (value) => setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { workflow, isNewBranch, lockBranch, prTitle } = useCommitTarget({
+  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -619,6 +619,7 @@ export function SaveProvisionedDashboardForm({
                 !isDirtyState ||
                 isSubmitting ||
                 isValidating ||
+                isResolving ||
                 isCreatingFolder ||
                 isHeld
               }
