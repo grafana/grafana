@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { sortBy } from 'lodash';
+import { set, sortBy } from 'lodash';
 import * as React from 'react';
 import { type JSX, useEffect, useMemo } from 'react';
 import { Controller, type FieldErrors, useFormContext } from 'react-hook-form';
@@ -91,16 +91,19 @@ export function ChannelSubForm<R extends ChannelValues>({
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
-    const subscription = watch((formValues, { name, type }) => {
-      // @ts-expect-error name is valid key for formValues
-      const value = name ? getValues(name, formValues) : '';
-      if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
+    const subscription = watch((_, { name, type }) => {
+      const changedType = name === typeFieldPath ? getValues(typeFieldPath) : undefined;
+      const changedOnCallIntegrationType =
+        name === `${settingsFieldPath}.integration_type`
+          ? getValues(`${settingsFieldPath}.integration_type`)
+          : undefined;
+      if (initialValues && name === typeFieldPath && changedType === initialValues.type && type === 'change') {
         setValue(settingsFieldPath, initialValues.settings);
         setValue(secureFieldsPath, initialValues.secureFields);
       } else if (name === typeFieldPath && type === 'change') {
         // When switching to a new notifier, set the default settings to remove all existing settings
         // from the previous notifier
-        const newNotifier = notifiers.find(({ dto: { type } }) => type === value);
+        const newNotifier = notifiers.find(({ dto: { type } }) => type === changedType);
         const defaultNotifierSettings = newNotifier ? getDefaultNotifierSettings(newNotifier) : {};
 
         // Not sure why, but verriding settingsFieldPath is not enough if notifiers have the same settings fields, like url, title
@@ -122,7 +125,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       if (
         initialValues &&
         name === `${settingsFieldPath}.integration_type` &&
-        value === OnCallIntegrationType.ExistingIntegration
+        changedOnCallIntegrationType === OnCallIntegrationType.ExistingIntegration
       ) {
         setValue(`${settingsFieldPath}.url`, initialValues.settings.url);
       }
@@ -176,7 +179,10 @@ export function ChannelSubForm<R extends ChannelValues>({
       : settingsPath;
     const fullPath = `${settingsFieldPath}.${fieldPath}` as const;
     unregister(fullPath);
-    setValue(fullPath, undefined);
+    // Saving merges existing settings; keep an explicit undefined to mask the removed value.
+    const settings = structuredClone(getValues(settingsFieldPath) ?? {});
+    set(settings, fieldPath, undefined);
+    setValue(settingsFieldPath, settings);
   };
 
   const typeOptions = useMemo((): SelectableValue[] => {

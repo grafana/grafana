@@ -8,7 +8,7 @@ import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyle
 import { type FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {
   index: number;
-  value: Record<string, string>;
+  value: { id: string; field?: string; expression?: string; mapValue?: string };
   readOnly: boolean;
   remove: (index?: number | number[]) => void;
 };
@@ -23,7 +23,7 @@ const getStyles = () => ({
 
 const TransformationEditorRow = (props: Props) => {
   const { index, value: defaultValue, readOnly, remove } = props;
-  const { control, formState, register, setValue, watch, getValues } = useFormContext<FormDTO>();
+  const { control, formState, register, setValue, getValues } = useFormContext<FormDTO>();
 
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
 
@@ -34,7 +34,7 @@ const TransformationEditorRow = (props: Props) => {
     },
   });
   const typeValue = useWatch({ name: `config.transformations.${index}.type`, control });
-
+  const transformationDetails = typeValue ? getSupportedTransTypeDetails(typeValue) : undefined;
   const styles = useStyles2(getStyles);
 
   const transformOptions = getTransformOptions();
@@ -137,7 +137,7 @@ const TransformationEditorRow = (props: Props) => {
           <Stack gap={0.5}>
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
               <Trans i18nKey="correlations.transform-row.expression-label">Expression</Trans>
-              {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
+              {transformationDetails?.expressionDetails.required
                 ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   ' *'
                 : ''}
@@ -163,14 +163,13 @@ const TransformationEditorRow = (props: Props) => {
       >
         <Input
           {...register(`config.transformations.${index}.expression`, {
-            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails
-              .required
+            required: transformationDetails?.expressionDetails.required
               ? t('correlations.transform-row.expression-required', 'Please define an expression')
               : undefined,
           })}
           defaultValue={defaultValue.expression}
           readOnly={readOnly}
-          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.show}
+          disabled={!transformationDetails?.expressionDetails.show}
           id={`config.transformations.${defaultValue.id}.expression`}
         />
       </Field>
@@ -201,7 +200,7 @@ const TransformationEditorRow = (props: Props) => {
           {...register(`config.transformations.${index}.mapValue`)}
           defaultValue={defaultValue.mapValue}
           readOnly={readOnly}
-          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).mapValueDetails.show}
+          disabled={!transformationDetails?.mapValueDetails.show}
           id={`config.transformations.${defaultValue.id}.mapValue`}
         />
       </Field>

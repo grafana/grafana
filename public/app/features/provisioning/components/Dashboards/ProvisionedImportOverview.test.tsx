@@ -459,15 +459,13 @@ describe('ProvisionedImportOverview', () => {
     });
 
     it('keeps submit disabled until initial async validation completes', async () => {
-      // RHF may call the validator multiple times (trigger + internal isValid recomputation),
-      // so track all pending promises and resolve them together.
-      const pendingResolvers: Array<(value: true | string) => void> = [];
-      mockValidateUid.mockImplementation(
-        () =>
-          new Promise<true | string>((resolve) => {
-            pendingResolvers.push(resolve);
-          })
-      );
+      // RHF can start another validation after the first one completes. Share one gate so
+      // every validation stays pending until this test releases it.
+      let resolveValidation!: (value: true | string) => void;
+      const validation = new Promise<true | string>((resolve) => {
+        resolveValidation = resolve;
+      });
+      mockValidateUid.mockImplementation(() => validation);
 
       await setup();
 
@@ -475,7 +473,7 @@ describe('ProvisionedImportOverview', () => {
       expect(submitBtn).toBeDisabled();
 
       await act(async () => {
-        pendingResolvers.forEach((r) => r(true));
+        resolveValidation(true);
       });
 
       await waitFor(() => expect(submitBtn).not.toBeDisabled());

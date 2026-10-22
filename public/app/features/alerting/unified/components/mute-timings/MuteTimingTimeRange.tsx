@@ -102,8 +102,8 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                   >
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
-                        validate: (input: string) => {
-                          const validFormat = isvalidTimeFormat(input);
+                        validate: (input) => {
+                          const validFormat = isvalidTimeFormat(input ?? '');
                           if (!validFormat) {
                             return INVALID_FORMAT_MESSAGE;
                           }
