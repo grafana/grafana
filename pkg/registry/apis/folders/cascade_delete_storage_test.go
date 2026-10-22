@@ -388,6 +388,23 @@ func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
 	}
 }
 
+func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	deleter := &recordingContentsDeleter{}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient, contentsDeleter: deleter}
+
+	// Simulates the original bug: the real requester was lost somewhere upstream and Delete
+	// captured the enumeration identity (the one WithServiceIdentityContext mints) in its place.
+	ctx, _ := identity.WithServiceIdentity(apirequest.WithNamespace(context.Background(), "default"), 1)
+
+	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
+	require.Error(t, err)
+	require.Empty(t, store.deleted, "folder must not be deleted when the requester is the enumeration identity")
+	require.Empty(t, deleter.folders)
+}
+
 func TestCascadeDelete_SkipsContentsOnDryRun(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, true)
 

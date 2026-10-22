@@ -187,6 +187,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		return nil, false, err
 	}
 
+	// user must not be ctx's wildcard-permissioned enumeration identity, or every check below runs as that instead of the real requester.
+	if enumUser, err := identity.GetRequester(ctx); err == nil && user.GetUID() == enumUser.GetUID() {
+		return nil, false, fmt.Errorf("cascade delete requester must not be the ctx enumeration identity")
+	}
+
 	// Authorize the requester to delete this folder's contained resources, mirroring the per-folder
 	// permissions legacy enforced (plus variables:delete when global variables are enabled). Runs
 	// after the NotFound skip so a stale or already-deleted child folder is skipped idempotently
