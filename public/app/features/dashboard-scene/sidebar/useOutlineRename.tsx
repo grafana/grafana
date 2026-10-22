@@ -4,6 +4,7 @@ import { type SceneObject } from '@grafana/scenes';
 
 import { renameElement } from '../actions/element/renameElement';
 import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { isSceneVariable } from '../settings/variables/utils';
 
 export interface OutlineRenameState {
   isRenaming?: boolean;
@@ -77,6 +78,7 @@ export function useOutlineRename(
 
   return {
     isRenaming: state.isRenaming,
+    renameValue: state.isRenaming ? getRawName(sceneObject, editableElement) : undefined,
     onNameDoubleClicked,
     renameInputRef,
     onChangeName,
@@ -86,9 +88,14 @@ export function useOutlineRename(
 }
 
 /**
- * The displayed name of panels, rows and tabs has variables interpolated, undo has to restore the raw title
+ * The name that onChangeName writes. The displayed name differs from it: panel, row and tab titles have variables
+ * interpolated, and variables show their label when they have one.
  */
 function getRawName(sceneObject: SceneObject, editableElement: EditableDashboardElement): string {
+  if (isSceneVariable(sceneObject)) {
+    return sceneObject.state.name;
+  }
+
   const { state } = sceneObject;
   if ('title' in state && typeof state.title === 'string') {
     return state.title;

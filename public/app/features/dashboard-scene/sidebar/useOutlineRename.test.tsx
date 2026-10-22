@@ -77,8 +77,9 @@ describe('useOutlineRename', () => {
     expect(sidebar.state.undoStack).toHaveLength(1);
   });
 
-  it('restores the raw title with variables on undo', () => {
+  it('edits the raw title with variables and restores it on undo', () => {
     const { panel, result, sidebar } = setup('CPU $host');
+    expect(result.current.renameValue).toBe('CPU $host');
 
     typeName(result.current.onChangeName, 'CPU server1 total');
     act(() => result.current.onInputBlur());
@@ -97,6 +98,47 @@ describe('useOutlineRename', () => {
 
     sidebar.undoAction();
     expect(panel.state.title).toBe('Old');
+  });
+
+  it('renames a labeled variable by its name as one undoable action', () => {
+    const variable = new CustomVariable({ name: 'env', label: 'Environment', query: 'prod,dev' });
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      $variables: new SceneVariableSet({ variables: [variable] }),
+      body: DefaultGridLayoutManager.fromVizPanels([]),
+    });
+    deactivate = activateFullSceneTree(dashboard);
+    const element = getEditableElementFor(variable)!;
+    const { result } = renderHook(() => useOutlineRename(variable, element, true));
+    act(() => result.current.onNameDoubleClicked({} as MouseEvent));
+    expect(result.current.renameValue).toBe('env');
+
+    typeName(result.current.onChangeName, 'environment');
+    act(() => result.current.onInputBlur());
+    expect(variable.state).toMatchObject({ name: 'environment', label: 'Environment' });
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => dashboard.state.sidebar.undoAction());
+    expect(variable.state.name).toBe('env');
+  });
+
+  it('restores the name of a labeled variable when an invalid rename is committed', () => {
+    const variable = new CustomVariable({ name: 'env', label: 'Environment', query: 'prod,dev' });
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      $variables: new SceneVariableSet({ variables: [variable] }),
+      body: DefaultGridLayoutManager.fromVizPanels([]),
+    });
+    deactivate = activateFullSceneTree(dashboard);
+    const element = getEditableElementFor(variable)!;
+    const { result } = renderHook(() => useOutlineRename(variable, element, true));
+    act(() => result.current.onNameDoubleClicked({} as MouseEvent));
+
+    typeName(result.current.onChangeName, 'env name');
+    act(() => result.current.onInputBlur());
+
+    expect(variable.state.name).toBe('env');
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
   });
 
   it('restores a shadowed predefined variable when undoing an outline rename', () => {
