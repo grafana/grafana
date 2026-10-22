@@ -32,7 +32,7 @@ func TestBleveRecordsIndexPhaseMetrics(t *testing.T) {
 	}
 
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "ns"})
-	_, err := backend.BuildIndex(ctx, key, 3, "test", writer, nil, true, time.Time{}, 0)
+	_, err := backend.BuildIndex(ctx, key, 3, "test", writer, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	labels := []string{resource.IndexPathBuild, key.Group, key.Resource}
@@ -61,7 +61,7 @@ func TestBleveDoesNotRecordPromoteWithoutPromotion(t *testing.T) {
 	}
 
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "ns"})
-	_, err := backend.BuildIndex(ctx, key, 3, "test", writer, nil, true, time.Time{}, 0)
+	_, err := backend.BuildIndex(ctx, key, 3, "test", writer, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	promote := testutil.ToFloat64(metrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhasePromote, resource.IndexPathBuild, key.Group, key.Resource))

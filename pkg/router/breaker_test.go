@@ -516,7 +516,7 @@ func TestRouterPreservesFlusherForWatches(t *testing.T) {
 	gr := withGroupHandler(group, backend)
 	m := newRouterMetrics(prometheus.NewRegistry())
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		m.instrument(gr, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		m.instrumentRequest(gr, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	defer srv.Close()
 	defer close(release)

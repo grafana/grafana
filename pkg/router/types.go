@@ -6,6 +6,8 @@ import (
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/app"
 )
 
 type Backend interface {
@@ -29,6 +31,42 @@ type Backend interface {
 // The result must change only when Key does.
 type DiscoveryProvider interface {
 	Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)
+}
+
+// ManifestProvider is an optional Backend interface for a backend defined by an
+// app manifest. The router publishes the manifest under /discovery. The result
+// must change only when Key does, and callers must not modify it.
+type ManifestProvider interface {
+	Manifest() (*app.ManifestData, bool)
+}
+
+// PluginStatusProvider is an optional Backend interface for a backend that
+// serves a plugin's APIs, so the router's status page can show the plugin.
+// The result must change only when Key does.
+type PluginStatusProvider interface {
+	PluginStatus() (PluginStatus, bool)
+}
+
+// PluginStatus is what the status page shows about a group's plugin. Any
+// authenticated caller can read the page, so it must hold no credentials,
+// addresses, URLs or error text.
+type PluginStatus struct {
+	ID      string `json:"id"`
+	Version string `json:"version,omitempty"`
+	// HasBackend reports whether the plugin runs a backend process for the
+	// router to call; without one, only storage-backed kinds work.
+	HasBackend bool `json:"hasBackend"`
+}
+
+// CallerScopedDiscovery is an optional Backend interface for a backend whose
+// discovery depends on the caller. What the router advertises for it is only
+// a default: when the unregistered-group handler answers root discovery for a
+// request, that answer replaces the default. next never serves these groups,
+// so its answer is merged with them instead. The router never caches its
+// discovery and OpenAPI documents across callers; the backend decides what
+// callers may share.
+type CallerScopedDiscovery interface {
+	CallerScopedDiscovery()
 }
 
 type RoutesLoader interface {

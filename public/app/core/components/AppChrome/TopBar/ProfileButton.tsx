@@ -8,6 +8,7 @@ import { config, renderLimitedComponents } from '@grafana/runtime';
 import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
+import { clearLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
@@ -61,6 +62,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
             <Menu.Divider />
             <MenuItem
               url={`${config.appSubUrl}/logout`}
+              onClick={clearLoginSectionTitle}
               label={t('nav.sign-out.title', 'Sign out')}
               icon="arrow-from-right"
               target={'_self'}
