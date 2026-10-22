@@ -1,5 +1,5 @@
-cuelabs.dev/go/oci/ociregistry v0.0.0-20260911133901-a89591e98079 h1:lRhJqmtx8QCzs2iSfHk9HceebLMjFbTLzCgt9i/80jo=
-cuelabs.dev/go/oci/ociregistry v0.0.0-20260911133901-a89591e98079/go.mod h1:WjmQxb+W6nVNCgj8nXrF24lIz95AHwnSl36tpjDZSU8=
+cuelabs.dev/go/oci/ociregistry v0.0.0-20261008151123-94f4aa6e0087 h1:Fp7iln2dYtbMfMjsewSI4jASaoRnVriKR5mUC4zvBAI=
+cuelabs.dev/go/oci/ociregistry v0.0.0-20261008151123-94f4aa6e0087/go.mod h1:ETJsQ880PrjcDPD/fN5ovoVEMYd6IzcWAuAESTZXLnU=
 cuelang.org/go v0.17.1 h1:liOkxZDqTHrzq0USJX+6bMYOZ5PSf+wzvQr15AHpDCQ=
 cuelang.org/go v0.17.1/go.mod h1:xlly/o1wSLvxOsi5vkQGieU0rLOt7TvUIizOFtnxHRU=
 github.com/andybalholm/brotli v1.2.3 h1:8H1qwOkl2LPfjf3YezB90JnCliZb6SInJ/OJkEbA5NQ=
@@ -84,8 +84,8 @@ github.com/go-openapi/swag/typeutils v0.29.2 h1:O7aVvkTs3pXwikgtrPLenigEMdQFgONK
 github.com/go-openapi/swag/typeutils v0.29.2/go.mod h1:7+GDG+uz9Ke+eVt4rClZg7wklSDp8hT/mKNh/pC26TE=
 github.com/go-openapi/swag/yamlutils v0.29.2 h1:IFKFFeDnuIwzfsuWRQU+rI8iL3g4XyAYjV/RlnlxPLM=
 github.com/go-openapi/swag/yamlutils v0.29.2/go.mod h1:7MGqtcrK73sxQ4ceiyIf8qiXS/s09JLMdR5esK5euYQ=
-github.com/go-openapi/testify/enable/yaml/v2 v2.7.0 h1:wPW6YRgx3+SID1yUy/Xwa17L8kFEaEKod2VRbJDZNUs=
-github.com/go-openapi/testify/enable/yaml/v2 v2.7.0/go.mod h1:mI1M88etYbc3PhgHsWQK2kwvNwW5aGFqMPbmib+SGIs=
+github.com/go-openapi/testify/enable/yaml/v2 v2.8.0 h1:dvOQNZ2ovOdogn902NYq7i6jUI9Dma4qyjTXABY5YTY=
+github.com/go-openapi/testify/enable/yaml/v2 v2.8.0/go.mod h1:3VwZZUT6nWcAjhIr2RypXxlsxd3mPPtXh3T8z65aRlQ=
 github.com/go-openapi/testify/v2 v2.8.0 h1:19QDx5b57p8KjO2E4sgs/woL4Akp+FGLRlVm2xn0Rho=
 github.com/go-openapi/testify/v2 v2.8.0/go.mod h1:4gUN8jC+RqOE2qjW/vDmfyTvl5BCht4qL7oca0odrak=
 github.com/go-quicktest/qt v1.102.0 h1:HSQxCeh5YZH3EL3W39ixjtyaEhcWSXQHtHnMBzSs474=
@@ -115,8 +115,8 @@ github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
-github.com/grafana/grafana-app-sdk v0.60.15 h1:nH/z+zD00ISS8+8+pG/MqUgP9s4uS4YBMsZsfydU3+I=
-github.com/grafana/grafana-app-sdk v0.60.15/go.mod h1:aX+CpdJZV6oQDGhY9aSUQR1/Euv5A5tqnzbzQ78v8S0=
+github.com/grafana/grafana-app-sdk v0.61.0 h1:Dk4+YALVNssabKuaXgOdnGFIXTTdzLIFcRZNJIETbN0=
+github.com/grafana/grafana-app-sdk v0.61.0/go.mod h1:COFcVTUKCRb1G+NVu6RN8HLzB1fElDys3bIZX2H5FKA=
 github.com/grafana/grafana-app-sdk/logging v0.61.0 h1:SP9o0BVqVOepuuYn1nKXJuoyJAcFEnJlREHWZKe07X4=
 github.com/grafana/grafana-app-sdk/logging v0.61.0/go.mod h1:vvQwiuuUX8ttu01hZtmjJVhWxky9/DHU8iv2D/XH6dE=
 github.com/grafana/grafana-plugin-sdk-go v0.297.0 h1:uZlnm720OGH0VaaF3NuuOaJDrxTYx4qu3UHkzKZ+VPM=
