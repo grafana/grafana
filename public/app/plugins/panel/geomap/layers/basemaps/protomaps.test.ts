@@ -135,6 +135,10 @@ function appliedStyle() {
   return applyStyleMock.mock.calls[0][1];
 }
 
+function appliedLayer(id: string) {
+  return appliedStyle().layers.find((layer: { id: string }) => layer.id === id);
+}
+
 describe('Protomaps basemap', () => {
   afterAll(() => setTestFlags({}));
 
@@ -219,7 +223,7 @@ describe('Protomaps basemap', () => {
   it('draws labels in Grafana’s own Inter instead of Noto Sans', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[1].layout['text-font']).toEqual([
+    expect(appliedLayer('earth_label_islands').layout['text-font']).toEqual([
       'step',
       ['zoom'],
       ['literal', ['Inter Regular']],
@@ -231,7 +235,7 @@ describe('Protomaps basemap', () => {
   it('names minor roads from zoom 16 instead of 15, and leaves paths and other roads unnamed', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[2]).toMatchObject({
+    expect(appliedLayer('roads_labels_minor')).toMatchObject({
       id: 'roads_labels_minor',
       minzoom: 16,
       filter: ['in', 'kind', 'minor_road'],
@@ -241,7 +245,7 @@ describe('Protomaps basemap', () => {
   it('labels only the places CARTO labels, from zoom 15', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[3]).toMatchObject({
+    expect(appliedLayer('pois')).toMatchObject({
       minzoom: 15,
       filter: [
         'all',
@@ -258,7 +262,8 @@ describe('Protomaps basemap', () => {
   it('keeps labels as quiet as CARTO’s, so they stay under the panel’s data', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
-    const [, , minorRoads, pois] = appliedStyle().layers;
+    const minorRoads = appliedLayer('roads_labels_minor');
+    const pois = appliedLayer('pois');
     expect(minorRoads.layout['text-size']).toBe(9);
     expect(pois.layout).toEqual({
       'text-font': ['Inter SemiBold'],
@@ -307,6 +312,15 @@ describe('Protomaps basemap', () => {
       9,
       8,
     ]);
+  });
+
+  it('uppercases capitals from zoom 7, cities from zoom 8 and hamlets from zoom 14, like CARTO', async () => {
+    await initLayer({ showLabels: true });
+
+    const [step, zoom, further, ...stops] = appliedLayer('places_locality').layout['text-transform'];
+    expect([step, zoom, further]).toEqual(['step', ['zoom'], 'none']);
+    expect(stops.filter((_: unknown, i: number) => i % 2 === 0)).toEqual([7, 8, 14]);
+    expect(stops[3]).toEqual(['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none']);
   });
 
   it('leaves out house numbers, which CARTO never shows', async () => {
@@ -419,10 +433,8 @@ describe('Protomaps basemap', () => {
   it('leaves the other flavors in their generated colors', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
-    const layers = appliedStyle().layers;
-    expect(layers[0].paint).toBeUndefined();
-    const borders = layers.find((layer: { id: string }) => layer.id === 'boundaries_country');
-    expect(borders.paint['line-color']).toBe('#adadad');
+    expect(appliedLayer('earth').paint).toBeUndefined();
+    expect(appliedLayer('boundaries_country').paint['line-color']).toBe('#adadad');
   });
 
   it('credits OpenStreetMap before the style request resolves', async () => {

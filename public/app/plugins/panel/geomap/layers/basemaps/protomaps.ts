@@ -49,6 +49,21 @@ const MIN_ZOOM: GlValue = ['coalesce', ['get', 'min_zoom'], 0];
  * class. Below zoom 8 CARTO names only cities, all at 12px.
  */
 const COUNTRY_CLASS: GlValue = ['case', ['<=', MIN_ZOOM, 3], 'major', 'minor'];
+const CAPITAL: GlValue = ['in', ['get', 'capital'], ['literal', ['yes', '2', '3', '4', '5', '6']]];
+
+/** CARTO uppercases capitals from zoom 7, every city from zoom 8, and hamlets from zoom 14 */
+const LOCALITY_CASE: GlValue = [
+  'step',
+  ['zoom'],
+  'none',
+  7,
+  ['case', CAPITAL, 'uppercase', 'none'],
+  8,
+  ['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none'],
+  14,
+  ['match', ['get', 'kind_detail'], ['city', 'hamlet'], 'uppercase', 'none'],
+];
+
 const LOCALITY_CLASS: GlValue = [
   'case',
   ['==', ['get', 'kind_detail'], 'city'],
@@ -142,6 +157,7 @@ const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Re
         ]
       ),
       'text-font': ['Inter SemiBold'],
+      'text-transform': LOCALITY_CASE,
     },
   },
   places_subplace: {
