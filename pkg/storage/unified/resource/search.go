@@ -432,8 +432,12 @@ type SearchBackend interface {
 	// WriteOpenIndexStats persists currently-open indexes to local backend state.
 	WriteOpenIndexStats(now time.Time) error
 
-	// GetIndex returns existing index, or nil.
+	// GetIndex returns an existing index, or nil, and refreshes its idle timestamp.
 	GetIndex(key NamespacedResource) ResourceIndex
+
+	// PeekIndex returns an existing index, or nil, without refreshing its idle timestamp.
+	// Background inspection must not keep unowned indexes alive.
+	PeekIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
 	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
@@ -1709,7 +1713,7 @@ func (s *searchServer) globalIndexStats(stats []ResourceStats) []ResourceStats {
 }
 
 func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats, lastImportTime time.Time) error {
-	if s.search.GetIndex(info.NamespacedResource) != nil {
+	if s.search.PeekIndex(info.NamespacedResource) != nil {
 		return nil
 	}
 	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true})
@@ -2063,7 +2067,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 
 	var completeChs []chan struct{}
 	for _, key := range keys {
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			// This can happen if index was closed in the meantime.
 			continue
@@ -2144,7 +2148,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		}
 	}()
 
-	idx := s.search.GetIndex(req.NamespacedResource)
+	idx := s.search.PeekIndex(req.NamespacedResource)
 	if idx == nil {
 		span.AddEvent("index not found")
 		l.Error("index not found")

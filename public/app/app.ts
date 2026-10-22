@@ -202,7 +202,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      if (config.featureToggles.cujTracking) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.CujTracking, false)) {
         setJourneyTracker(new JourneyTrackerImpl());
 
         // Initialize the journey registry (metadata + split triggers)

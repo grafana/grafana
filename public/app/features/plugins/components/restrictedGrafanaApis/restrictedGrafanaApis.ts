@@ -5,17 +5,11 @@ import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/
 
 import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
-// This existing flag is only generated for the legacy frontend API.
-// eslint-disable-next-line @grafana/no-config-feature-toggles
-export const restrictedApisEnabled = config.featureToggles.restrictedPluginApis;
-
-const sharedApis: RestrictedGrafanaApisContextType = restrictedApisEnabled
-  ? {
-      alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
-      // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
-      extensionSidebar: extensionSidebarApi,
-    }
-  : {};
+const sharedApis: RestrictedGrafanaApisContextType = {
+  alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
+  // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
+  extensionSidebar: extensionSidebarApi,
+};
 
 /** Every restricted API Grafana offers, before the allow and block lists pick a plugin's share. */
 export function getRestrictedGrafanaApis({

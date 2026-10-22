@@ -8,13 +8,6 @@ import { alertingAlertRuleFormSchemaApi } from './alerting/alertRuleFormSchema';
 import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 import { getRestrictedGrafanaApisAtLoad } from './restrictedGrafanaApis';
 
-// Read once at module load.
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  actual.config.featureToggles.restrictedPluginApis = true;
-  return actual;
-});
-
 const PLUGIN = 'myorg-test-app';
 
 // What an app plugin's module gets through AppPlugin.onRestrictedApis, before any of its roots mounts.

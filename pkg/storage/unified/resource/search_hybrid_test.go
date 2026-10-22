@@ -550,13 +550,14 @@ type fakeSearchBackend struct {
 func (f *fakeSearchBackend) LoadOpenIndexStats(time.Time, time.Duration) ([]ResourceStats, error) {
 	return nil, nil
 }
-func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error       { return nil }
-func (f *fakeSearchBackend) GetIndex(NamespacedResource) ResourceIndex { return f.idx }
-func (f *fakeSearchBackend) TotalDocs() int64                          { return 0 }
-func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource      { return nil }
-func (f *fakeSearchBackend) RemoveExpiredTrash(context.Context)        {}
-func (f *fakeSearchBackend) SnapshotCountThreshold() int64             { return 0 }
-func (f *fakeSearchBackend) Stop()                                     {}
+func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error        { return nil }
+func (f *fakeSearchBackend) GetIndex(NamespacedResource) ResourceIndex  { return f.idx }
+func (f *fakeSearchBackend) PeekIndex(NamespacedResource) ResourceIndex { return f.idx }
+func (f *fakeSearchBackend) TotalDocs() int64                           { return 0 }
+func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource       { return nil }
+func (f *fakeSearchBackend) RemoveExpiredTrash(context.Context)         {}
+func (f *fakeSearchBackend) SnapshotCountThreshold() int64              { return 0 }
+func (f *fakeSearchBackend) Stop()                                      {}
 func (f *fakeSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration, BuildIndexOptions) (ResourceIndex, error) {
 	return f.idx, nil
 }

@@ -4,7 +4,7 @@ import { RestrictedGrafanaApisContextProvider } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
-import { getRestrictedGrafanaApis, restrictedApisEnabled } from './restrictedGrafanaApis';
+import { getRestrictedGrafanaApis } from './restrictedGrafanaApis';
 
 // This Provider is a wrapper around `RestrictedGrafanaApisContextProvider` from `@grafana/data`.
 // The reason for this is that like this we only need to define the configuration once (here) and can use it in multiple places (app root page, extensions).
@@ -13,10 +13,7 @@ export function RestrictedGrafanaApisProvider({
   pluginId,
 }: PropsWithChildren<{ pluginId: string }>): ReactElement {
   const apis = useMemo(
-    () =>
-      getRestrictedGrafanaApis({
-        dashboardMutationAPI: restrictedApisEnabled ? createDashboardMutationApi(pluginId) : undefined,
-      }),
+    () => getRestrictedGrafanaApis({ dashboardMutationAPI: createDashboardMutationApi(pluginId) }),
     [pluginId]
   );
   return (
