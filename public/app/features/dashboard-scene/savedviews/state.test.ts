@@ -334,8 +334,53 @@ describe('getSavedViewDiff', () => {
     expect(getSavedViewDiff(changed, base)).toBe(true);
   });
 
-  it('is true when the set of variables differs', () => {
-    const changed = { ...base, variables: [] };
-    expect(getSavedViewDiff(changed, base)).toBe(true);
+  describe('for a view that only captures part of the dashboard', () => {
+    const current: SavedDashboardViewSpec = {
+      ...base,
+      timeRange: { from: 'now-6h', to: 'now', timezone: 'browser' },
+      variables: [
+        { name: 'env', type: 'query', value: 'prod' },
+        { name: 'region', type: 'query', value: ['$__all'] },
+      ],
+    };
+    const baseline: SavedDashboardViewSpec = {
+      ...base,
+      variables: [
+        { name: 'env', type: 'query', value: 'prod' },
+        { name: 'region', type: 'query', value: ['$__all'] },
+      ],
+    };
+
+    it('is false when the variables the view omits are still at the baseline', () => {
+      expect(getSavedViewDiff(current, base, baseline)).toBe(false);
+    });
+
+    it('is true when a variable the view omits has drifted from the baseline', () => {
+      const drifted = {
+        ...current,
+        variables: [current.variables[0], { name: 'region', type: 'query' as const, value: ['eu'] }],
+      };
+      expect(getSavedViewDiff(drifted, base, baseline)).toBe(true);
+    });
+
+    it('ignores the timezone when the view does not set one', () => {
+      expect(getSavedViewDiff(current, base, baseline)).toBe(false);
+      expect(getSavedViewDiff(current, { ...base, timeRange: { ...base.timeRange, timezone: 'utc' } }, baseline)).toBe(
+        true
+      );
+    });
+
+    it('skips variables the view names that no longer exist on the dashboard', () => {
+      const withRemoved = {
+        ...base,
+        variables: [...base.variables, { name: 'gone', type: 'query' as const, value: 'x' }],
+      };
+      expect(getSavedViewDiff(current, withRemoved, baseline)).toBe(false);
+    });
+  });
+
+  it('treats a single value and a one-item array as the same selection', () => {
+    const stored = { ...base, variables: [{ name: 'env', type: 'query' as const, value: ['prod'] }] };
+    expect(getSavedViewDiff(base, stored)).toBe(false);
   });
 });

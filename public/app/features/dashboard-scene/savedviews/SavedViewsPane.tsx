@@ -127,7 +127,7 @@ function SavedViewFormFields({
 function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
-  const { savedViews, viewFilter, uid } = dashboard.useState();
+  const { savedViews, viewFilter, uid, savedViewBaseline } = dashboard.useState();
   const { searchQuery, viewMode } = model.useState();
   const [pendingDelete, setPendingDelete] = useState<SavedDashboardView | undefined>();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -211,7 +211,9 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
 
   // A view is only "active" once the URL says so; its save button is enabled once the dashboard drifts from it.
   const selectedView = savedViews.find((v) => v.metadata.name === viewFilter);
-  const isDirty = selectedView ? getSavedViewDiff(captureSavedViewState(dashboard), selectedView.spec) : false;
+  const isDirty = selectedView
+    ? getSavedViewDiff(captureSavedViewState(dashboard), selectedView.spec, savedViewBaseline)
+    : false;
 
   const trimmedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredViews = trimmedSearchQuery
