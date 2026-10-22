@@ -402,3 +402,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-23,dashboards.disablePublicDashboards,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-10-28,folders.parallelDashboardDeleteConcurrency,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-20,grafana.panelActionsPopover,experimental,@grafana/dashboards-squad,false,false,true
+2026-10-21,grafana.panelOptionInterpolation,experimental,@grafana/dashboards-squad,false,false,true

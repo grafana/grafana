@@ -203,7 +203,8 @@ declare module "@openfeature/core" {
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
     | "dashboards.disablePublicDashboards"
-    | "grafana.panelActionsPopover";
+    | "grafana.panelActionsPopover"
+    | "grafana.panelOptionInterpolation";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
