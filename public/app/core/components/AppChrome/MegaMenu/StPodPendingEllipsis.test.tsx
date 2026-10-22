@@ -23,7 +23,7 @@ describe('StPodPendingEllipsis', () => {
   it('shows an ellipsis for a url outside the allow list while the pod is starting', () => {
     render(<StPodPendingEllipsis url="/explore" />);
 
-    expect(screen.getByText('...')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
   });
 
   it.each([
@@ -41,20 +41,20 @@ describe('StPodPendingEllipsis', () => {
     ['waiting for the pod times out', markStPodTimeout],
   ])('removes the ellipsis once %s', (_, settle) => {
     render(<StPodPendingEllipsis url="/explore" />);
-    expect(screen.getByText('...')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
 
     act(() => settle());
 
-    expect(screen.queryByText('...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-ellipsis-h')).not.toBeInTheDocument();
   });
 
   it('brings the ellipsis back when a timed-out pod is invalidated while mounted', () => {
     render(<StPodPendingEllipsis url="/explore" />);
     act(() => markStPodTimeout());
-    expect(screen.queryByText('...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-ellipsis-h')).not.toBeInTheDocument();
 
     act(() => invalidateStPodReadiness());
 
-    expect(screen.getByText('...')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-ellipsis-h')).toBeInTheDocument();
   });
 });
