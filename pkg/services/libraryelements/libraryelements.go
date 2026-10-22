@@ -111,6 +111,7 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 // permission check, for callers that have already authorized the requester through a different
 // mechanism (e.g. a standalone folder apiserver's cascade delete).
 func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error {
+	// Attach the requester so a routed LegacyDatabaseProvider can resolve the target database.
 	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
 }
 

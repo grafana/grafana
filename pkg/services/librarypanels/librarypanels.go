@@ -166,8 +166,11 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 
 // DeleteInFolder deletes the library panels contained in a given folder.
 //
-// All folders are permission-checked before any deletion starts, so a denial partway through
-// the list leaves every folder's library panels intact rather than only the ones checked first.
+// All folders are permission-checked before any deletion starts, so a permission denial partway
+// through the list leaves every folder's library panels intact rather than only the ones checked
+// first. This does not cover ErrFolderHasConnectedLibraryElements: that's only discovered while
+// actually deleting a folder's elements, so a later folder failing that check still leaves earlier
+// folders in the batch already deleted.
 func (lps LibraryPanelService) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
 		if err := lps.LibraryElementService.RequireEditPermissionsOnFolder(ctx, user, folderUID); err != nil {
