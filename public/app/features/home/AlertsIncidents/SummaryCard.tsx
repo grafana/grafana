@@ -6,6 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Alert, Badge, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { GrotCompleted } from '@grafana/ui/internal';
 
 import { HomeSection } from '../HomeSection';
 
@@ -25,6 +26,8 @@ interface SummaryCardProps<T> {
   emptyMessage: string;
   // Rendered in the empty state in place of emptyMessage — a call-to-action button. Caller gates it.
   emptyAction?: ReactNode;
+  // Rendered above emptyMessage in the empty state.
+  emptyImage?: ReactNode;
   items: T[];
   getItemKey: (item: T) => string;
   renderItem: (item: T) => ReactNode;
@@ -41,6 +44,7 @@ export function SummaryCard<T>({
   error,
   emptyMessage,
   emptyAction,
+  emptyImage,
   items,
   getItemKey,
   renderItem,
@@ -88,6 +92,7 @@ export function SummaryCard<T>({
 
         {!loading && !error && items.length === 0 && (
           <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
+            {emptyImage}
             <Text color="secondary">{emptyMessage}</Text>
             {emptyAction}
           </Stack>
@@ -129,6 +134,13 @@ export function SummaryCardPrefix({ children }: { children: ReactNode }) {
   return <span className={styles.prefix}>{children}</span>;
 }
 
+/** Happy Grot for an all-clear empty state, sized to fit the compact tab body. */
+export function AllClearGrot() {
+  const styles = useStyles2(getStyles);
+  // Width matches the drawing's 269:196 ratio; without it the SVG box fills the whole card width.
+  return <GrotCompleted width={88} height={64} className={styles.allClearGrot} />;
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
@@ -155,5 +167,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // so titles align across rows.
     minWidth: theme.spacing(8),
     justifyContent: 'flex-start',
+  }),
+  allClearGrot: css({
+    marginTop: theme.spacing(1),
   }),
 });

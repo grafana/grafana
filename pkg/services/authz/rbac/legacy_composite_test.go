@@ -298,12 +298,13 @@ func TestService_LegacyCheckEmptyComposites(t *testing.T) {
 							require.NoError(t, err)
 							require.Empty(t, response.GetError())
 
-							hasPermissions := subject == "render:0" || len(grants.permissions) > 0
-							require.Equal(t, hasPermissions && tc.allowedWithPermissions, response.GetAllowed())
+							hasAnyPermissions := subject == "render:0" || len(grants.permissions) > 0
+							require.Equal(t, hasAnyPermissions && tc.allowedWithPermissions, response.GetAllowed())
 							require.Nil(t, localEvaluator.user)
 
 							if subject == "render:0" {
 								require.Empty(t, permissions.queries)
+								require.Empty(t, permissions.presenceQueries)
 							}
 						})
 					}
@@ -373,6 +374,8 @@ func TestService_LegacyCheckCompositeQueries(t *testing.T) {
 		},
 	}, permissions.queries)
 
+	require.Empty(t, permissions.presenceQueries)
+
 	// Even with cache bypass, identifiers, basic role and teams are fetched once.
 	require.Equal(t, 4, f.calls)
 	require.Equal(t, 1, identityStore.calls)
@@ -405,15 +408,24 @@ func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
 
 	require.True(t, response.GetAllowed())
 
-	require.Len(t, permissions.queries, 2)
-	require.Equal(t, "dashboards:read", permissions.queries[0].Action)
-	require.Equal(t, []string{"dashboards:view", "dashboards:edit"}, permissions.queries[0].ActionSets)
-	require.Equal(t, store.PermissionsQuery{
-		UserID:        1,
-		TeamIDs:       []int64{10},
-		Role:          "Viewer",
-		IsServerAdmin: false,
-	}, permissions.queries[1])
+	require.Equal(t, []store.PermissionsQuery{
+		{
+			UserID:        1,
+			TeamIDs:       []int64{10},
+			Role:          "Viewer",
+			IsServerAdmin: false,
+			Action:        "dashboards:read",
+			ActionSets:    []string{"dashboards:view", "dashboards:edit"},
+		},
+	}, permissions.queries)
+	require.Equal(t, []store.PermissionsQuery{
+		{
+			UserID:        1,
+			TeamIDs:       []int64{10},
+			Role:          "Viewer",
+			IsServerAdmin: false,
+		},
+	}, permissions.presenceQueries)
 }
 
 func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
@@ -484,4 +496,16 @@ func (s *legacyFailingActionStore) GetUserPermissions(
 	}
 
 	return s.PermissionStore.GetUserPermissions(ctx, ns, query)
+}
+
+func (s *legacyFailingActionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	if query.Action == s.action {
+		return false, errors.New("permission store unavailable")
+	}
+
+	return s.PermissionStore.HasUserPermissions(ctx, ns, query)
 }

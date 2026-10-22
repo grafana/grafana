@@ -4682,6 +4682,7 @@
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
       "load-error-title": "Couldn't load this document",
+      "metadata-label": "Document metadata",
       "panel-label": "Folder documentation",
       "parse-error": "Unable to display this document.",
       "tab-contributing": "Contributing",
@@ -5082,6 +5083,9 @@
         "auto": "Auto"
       }
     },
+    "tooltip": {
+      "dialog-label": "Element tooltip"
+    },
     "tooltip-options": {
       "label-disable-one-click": "Disable for one-click elements",
       "name-tooltip-mode": "Tooltip mode",
@@ -5175,6 +5179,7 @@
       "more-panels_other": "{{count}} more matched panels",
       "no-matches": "No matches"
     },
+    "dialog-label": "Command palette",
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -8058,7 +8063,10 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-schema-editor": {
+    "editor-label": "Dashboard schema",
     "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
+    "schema-load-error": "Unable to load dashboard schema validation",
+    "schema-load-error-description": "Reload the page to edit this dashboard.",
     "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
   },
   "dashboard-settings": {
@@ -8478,6 +8486,7 @@
     },
     "resource-picker-popover": {
       "cancel": "Cancel",
+      "dialog-label": "Select a resource",
       "folder": "Folder",
       "select": "Select",
       "url": "URL"
@@ -8900,6 +8909,9 @@
       "unknown-type-tooltip": "This datasource reported no recognized type for this metric"
     },
     "metrics-list": {
+      "add-label-to-query": "Add label {{label}} to query",
+      "add-metric-to-query": "Add {{name}} to query",
+      "add-value-to-query": "Add value {{value}} to query",
       "collapse-metric": "Collapse {{name}}",
       "error": "Failed to load metrics",
       "expand-metric": "Expand {{name}}",
@@ -9102,6 +9114,7 @@
       "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
+      "add-to-query": "Add to query",
       "empty-text": "Add a query to browse its datasource.",
       "section-label-queries": "Queries",
       "title-datasource-explorer": "Datasource explorer",
@@ -9740,6 +9753,9 @@
       "placeholder-feature-property": "Feature property",
       "placeholder-numeric-value": "Numeric value",
       "placeholder-value": "value"
+    },
+    "tooltip": {
+      "dialog-label": "Map tooltip"
     },
     "tooltip-options": {
       "description-details": "Show popup on hover",
@@ -10469,7 +10485,8 @@
       "option": "option"
     },
     "carousel": {
-      "aria-label-open-image": "Open image preview"
+      "aria-label-open-image": "Open image preview",
+      "dialog-label": "Image preview"
     },
     "cascader": {
       "clear-button": "Clear selection"
@@ -10601,6 +10618,7 @@
       "apply": "Apply",
       "calendar-icon-label": "Time picker",
       "cancel": "Cancel",
+      "dialog-label": "Select date and time",
       "next-label": "Next month",
       "previous-label": "Previous month",
       "select-placeholder": "Select date/time"
@@ -10960,6 +10978,7 @@
       "close": "Close"
     },
     "toolbar-button-row": {
+      "dialog-label": "More items",
       "show-more": "Show more items"
     },
     "u-plot": {
@@ -11258,9 +11277,9 @@
       "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
-      "empty": "You have no firing alerts.",
-      "empty-selected-label": "No firing alerts with {{label}}.",
-      "empty-teams": "No firing alerts for your teams.",
+      "empty": "All clear! No alerts are firing.",
+      "empty-selected-label": "All clear! No alerts are firing with {{label}}.",
+      "empty-teams": "All clear! No alerts are firing for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
@@ -11294,8 +11313,8 @@
     },
     "incidents-card": {
       "declare": "Declare an incident",
-      "empty": "No active incidents.",
-      "empty-selected-team": "No active incidents for {{team}}.",
+      "empty": "All quiet! No active incidents.",
+      "empty-selected-team": "All quiet! No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"
@@ -12925,6 +12944,9 @@
     "new-folder": {
       "title": "New folder"
     },
+    "new-notebook": {
+      "title": "New notebook"
+    },
     "notebooks": {
       "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
@@ -13256,6 +13278,7 @@
       "visualization": "Visualization"
     },
     "cell": {
+      "block-actions": "Block actions",
       "code": {
         "aria-label-editor": "Code",
         "aria-label-language": "Code language",
@@ -13292,8 +13315,10 @@
       },
       "time-range": {
         "button": "Update time range",
+        "dialog": "Panel time range",
+        "dialog-label": "Cell time range",
         "locked": "Locked: {{range}}",
-        "sync-back": "Sync back to notebook time range",
+        "remove-lock": "Remove time lock",
         "tooltip-default": "Lock panel time range"
       }
     },
@@ -13404,6 +13429,7 @@
       "add-block": "Add block",
       "add-query": "Add query",
       "add-tag": "Add tag",
+      "change-visualization": "Change visualization",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13415,13 +13441,16 @@
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
       "rename": "Rename notebook",
+      "rename-panel": "Rename panel",
       "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
       "set-cell-time-range": "Set panel time range",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
-      "undo-action": "Undo: {{action}}"
+      "undo-action": "Undo: {{action}}",
+      "visualization-replay-error": "Could not restore visualization. Try selecting the visualization again.",
+      "visualization-rollback-error": "Could not restore visualization. Check the panel before saving."
     },
     "incidents": {
       "attach-title": "Attach to incident",
@@ -13466,6 +13495,19 @@
     },
     "new": {
       "default-title-with-date": "Notebook {{date}}"
+    },
+    "panel": {
+      "add-title": "Add title",
+      "change-visualization": "Change visualization",
+      "edit-query": "Edit query",
+      "hide-query": "Hide query editor",
+      "open-explore": "Open in Explore",
+      "rename": "Edit panel title",
+      "suggestions-empty": "No suggestions for this data.",
+      "suggestions-error": "Could not load suggestions.",
+      "suggestions-no-data": "Run a query to see suggestions.",
+      "title-label": "Panel title",
+      "visualization-error": "Could not change visualization. Try again."
     },
     "save-status": {
       "failed": "Save failed",
@@ -13533,6 +13575,7 @@
         "category": "Standard options",
         "category-thresholds": "Thresholds",
         "category-value-mappings": "Value mappings",
+        "description-ad-hoc": "Allow viewers to update dashboard filters by interacting with this panel.",
         "description-display-name": "Change the field or series name",
         "description-field-min-max": "Calculate min max per field",
         "description-max": "Leave empty to calculate based on all values",
@@ -13540,7 +13583,7 @@
         "description-no-value": "What to show when there is no value",
         "description-value-mappings": "Modify the display text based on input value",
         "name-actions": "Actions",
-        "name-ad-hoc": "Filterable",
+        "name-ad-hoc": "Filter from values",
         "name-color-scheme": "Color scheme",
         "name-data-links": "Data links",
         "name-decimals": "Decimals",
@@ -17024,6 +17067,7 @@
     "range-picker": {
       "backwards-time-aria-label": "Move time range backwards",
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "dialog-label": "Time range picker",
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
@@ -17033,6 +17077,7 @@
       "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
+      "dialog-label": "Relative time range picker",
       "example-title": "Example time ranges",
       "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
