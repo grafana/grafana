@@ -129,3 +129,23 @@ func BenchmarkApply(b *testing.B) {
 		})
 	}
 }
+
+// Capacity edges are per create per deletion, so a budget over a large fleet is
+// the shape that could make ordering quadratic.
+func BenchmarkNewPlanUnderBudget(b *testing.B) {
+	for _, n := range []int{1_000, 10_000} {
+		decls, _ := fleet(n)
+		_, obs := fleet(n)
+		b.Run(fmt.Sprintf("n=%d", n), func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				if _, err := converge.NewPlan(decls, obs,
+					converge.WithContainers(benchConfig()),
+					converge.WithBudget(converge.Budget{MaxEntities: n / 2}),
+				); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}

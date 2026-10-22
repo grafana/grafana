@@ -1,6 +1,9 @@
 package converge
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // Each test here is named after a failure a reviewer found, not after the fix.
 
@@ -171,5 +174,161 @@ func TestTargetedContentUpdateOnANamedContainerSurvives(t *testing.T) {
 	op, _ := findOp(t, p, OpEnsureContainer, "f/")
 	if op.Identity != "KEEP" || !op.ContainerProvenance.Trusted() {
 		t.Fatalf("a targeted update must keep the observed identity: %+v", op)
+	}
+}
+
+func TestWantedIdentityIsTheSurvivorAmongDuplicates(t *testing.T) {
+	// The key holds both the wanted identity and another. Letting identity
+	// order pick the survivor re-identifies the container *to* the identity it
+	// already has, and removes that same identity as surplus — an empty folder
+	// loses both.
+	p, err := NewPlan(
+		[]Declaration{{Key: "f/", Container: true, Identity: "Z"}},
+		[]Observation{
+			{Key: "f/", Identity: "A", Container: true},
+			{Key: "f/", Identity: "Z", Container: true},
+		},
+		WithContainers(ContainerConfig{Implied: true}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, o := range p.Ops {
+		if o.Kind == OpRemoveContainer && o.Identity == "Z" {
+			t.Fatalf("the wanted identity must survive:\n%s", p)
+		}
+	}
+	op, _ := findOp(t, p, OpRemoveContainer, "f/")
+	if op.Identity != "A" {
+		t.Fatalf("want A removed, got %q:\n%s", op.Identity, p)
+	}
+	mustNotHave(t, p, OpEnsureContainer, "f/")
+}
+
+func TestConflictingContainerClaimsAreRejected(t *testing.T) {
+	// Letting the later declaration win makes the plan depend on declaration
+	// order, which is the one thing the planner promises it does not.
+	forward := []Declaration{
+		{Key: "f/", Container: true, Identity: "ONE"},
+		{Key: "f/", Container: true, Identity: "TWO"},
+	}
+	reversed := []Declaration{forward[1], forward[0]}
+
+	for _, decls := range [][]Declaration{forward, reversed} {
+		_, err := NewPlan(decls, nil, WithContainers(hierarchy()))
+		if !errors.Is(err, ErrConflictingDeclaration) {
+			t.Fatalf("want ErrConflictingDeclaration, got %v", err)
+		}
+	}
+}
+
+func TestTargetedDeleteOfANonEmptyContainerIsNotPlanned(t *testing.T) {
+	// Keeping the removal while the operations that would empty it are dropped
+	// produces a plan that violates the empty-before-removal guarantee — and a
+	// caller that asked to delete one folder did not ask to delete its contents.
+	p, err := NewPlan(
+		nil,
+		[]Observation{
+			{Key: "f/", Identity: "F", Container: true},
+			held("f/one.json", "D1", "h1"),
+		},
+		WithContainers(ContainerConfig{Implied: true}),
+		WithHints(HintSet{Keys: []Key{"f/"}, Complete: true}),
+		WithExclusionScope(ScopeTargeted),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustNotHave(t, p, OpRemoveContainer, "f/")
+	if !p.Empty() {
+		t.Fatalf("a non-recursive delete of a non-empty folder plans nothing:\n%s", p)
+	}
+}
+
+func TestClosureFollowsAncestorsOfFingerprintMatches(t *testing.T) {
+	// A key admitted because its content matches a hinted key still needs its
+	// ancestors, or the plan treats the existing folder as missing and
+	// re-parents what is inside it.
+	decls := []Declaration{
+		entity("a/new.json", "h1"),
+		{Key: "b/", Container: true, Identity: "PINNED"},
+		entity("b/kept.json", "h1"),
+	}
+	obs := []Observation{
+		{Key: "b/", Identity: "PINNED", Container: true},
+		held("b/kept.json", "D1", "h1"),
+	}
+
+	in := HintSet{Keys: []Key{"a/new.json"}, Complete: true}.closure(decls, obs, hierarchy())
+	if !in["b/kept.json"] {
+		t.Fatal("the fingerprint match must be in the window")
+	}
+	if !in["b/"] {
+		t.Fatalf("its container must come with it: %v", in)
+	}
+}
+
+func TestClosureFollowsIdentityClaims(t *testing.T) {
+	// A declaration claiming an identity another container holds can only be
+	// demoted if both are in the window; otherwise a hinted plan accepts a
+	// claim a full plan refuses.
+	decls := []Declaration{
+		{Key: "a/", Container: true, Identity: "X"},
+		{Key: "b/", Container: true, Identity: "X"},
+	}
+	in := HintSet{Keys: []Key{"b/"}, Complete: true}.closure(decls, nil, hierarchy())
+	if !in["a/"] {
+		t.Fatalf("the other claimant of X must be in the window: %v", in)
+	}
+}
+
+func TestConvergentPlanReportsExcludedContainersOutsideTheWindow(t *testing.T) {
+	p, err := NewPlan(
+		[]Declaration{
+			entity("a.json", "h1"),
+			{Key: "bad/", Container: true, Verdict: Excluded, Reason: "unaddressable"},
+		},
+		nil,
+		WithContainers(hierarchy()),
+		WithHints(HintSet{Keys: []Key{"a.json"}, Complete: true}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found int
+	for _, e := range p.Exclusions {
+		if e.Key == "bad/" {
+			found++
+		}
+	}
+	if found != 1 {
+		t.Fatalf("want the container reported exactly once, got %d: %v", found, p.Exclusions)
+	}
+}
+
+func TestCapacityPrerequisiteIsADependencyNotAStageNumber(t *testing.T) {
+	// A floor on the stage number moves nothing else, so Restrict would leave
+	// the create executable after the deletion that frees its slot is vetoed.
+	p, err := NewPlan(
+		[]Declaration{entity("a.json", "h1")},
+		[]Observation{held("z.json", "Z", "h9")},
+		WithBudget(Budget{MaxEntities: 1}),
+		WithMoveDetection(false),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	create, _ := findOp(t, p, OpCreate, "a.json")
+	del, _ := findOp(t, p, OpDelete, "z.json")
+	if len(create.DependsOn) == 0 {
+		t.Fatalf("the create must depend on capacity being freed:\n%s", p)
+	}
+
+	restricted, err := Restrict(p, []Veto{{Ref: del.Ref(), Reason: "forbidden"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !restricted.Empty() {
+		t.Fatalf("vetoing the deletion must drop the create that waited on it:\n%s", restricted)
 	}
 }

@@ -139,6 +139,16 @@ func (r *DualReadWriter) observeAncestors(ctx context.Context, key converge.Key,
 			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
 				continue
 			}
+			// Malformed ancestor metadata is not a reason to refuse a write
+			// below it: folder application falls back to the held or derived
+			// identity and keeps the ancestor, so refusing here would reject
+			// writes the write path itself accepts. Treated as unobservable —
+			// the path refusal still stands, the folder authorisation does not
+			// get to guess.
+			if invalid, ok := errors.AsType[*InvalidFolderMetadata](err); ok {
+				_ = invalid
+				return nil, false, nil
+			}
 			return nil, false, fmt.Errorf("resolve identity of %s: %w", a, err)
 		}
 		if _, err := r.folders.GetFolder(ctx, id); err != nil {

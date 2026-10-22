@@ -171,3 +171,33 @@ func TestFilesDelete(t *testing.T) {
 	require.Equal(t, converge.OpDelete, p.Ops[0].Kind)
 	require.Equal(t, converge.Identity("d1"), p.Ops[0].Identity)
 }
+
+// A folder metadata edit asks the checker for update permission, not create:
+// an ensure is also how an existing container is re-asserted, and asking for
+// create can refuse a change the caller is allowed to make.
+func TestFilesFolderContentEditAsksForUpdate(t *testing.T) {
+	nearby := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{folderItem("team/", "m1")}}
+
+	p, err := plan.Targeted(repoName, plan.Write{Path: "team/", Hash: "m2", Folder: true}, nearby)
+	require.NoError(t, err)
+	require.NotEmpty(t, p.Ops, "the metadata change is the write that was asked for")
+
+	c := &checker{}
+	_, err = plan.Vetoes(context.Background(), p, c, refuseUntrusted)
+	require.NoError(t, err)
+	require.NotEmpty(t, c.seen)
+	for _, seen := range c.seen {
+		require.Equal(t, "update", seen.Verb, "re-asserting an existing folder is an update")
+	}
+}
+
+// Deleting an unsynced file must not plan folder creation, nor ask for
+// permission to create a folder, in order to remove something that is not there.
+func TestFilesDeleteDoesNotPlanItsAncestors(t *testing.T) {
+	p, err := plan.Targeted(repoName, plan.Write{Path: "missing/one.json", Delete: true}, nil)
+	require.NoError(t, err)
+	for _, op := range p.Ops {
+		require.NotEqual(t, converge.OpEnsureContainer, op.Kind,
+			"a delete needs no path: %s %s", op.Kind, op.Key)
+	}
+}

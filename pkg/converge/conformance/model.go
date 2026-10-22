@@ -7,6 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/converge"
 )
 
+// HeldContainer is one container the model holds.
+type HeldContainer struct {
+	Identity    converge.Identity
+	Fingerprint converge.Fingerprint
+}
+
 // Entry is one entity the model holds.
 type Entry struct {
 	Identity    converge.Identity
@@ -27,14 +33,18 @@ type Entry struct {
 type Model struct {
 	Entities map[converge.Key]Entry
 
-	// Containers maps a key to every container identity held there. It is a
+	// Containers maps a key to every container held there — identity and the
+	// content the source stated about it. Dropping the fingerprint makes the
+	// model unable to check idempotence for a metadata-bearing container:
+	// re-planning against an inventory that lost it produces another content
+	// change, for ever. It is a
 	// list rather than one identity because both states a plan has to survive
 	// put two there at once: a container taking a new identity while the old
 	// one is removed, and a target that genuinely holds duplicates at a path.
 	// Collapsing them to one identity makes a correct re-identification look
 	// like the survivor being deleted — which is a model that cannot fail the
 	// plans it most needs to check.
-	Containers map[converge.Key][]converge.Identity
+	Containers map[converge.Key][]HeldContainer
 
 	// RequireContainers enforces that an entity is only written into a
 	// container the model holds. Leave it false for a flat target.
@@ -45,7 +55,7 @@ type Model struct {
 func NewModel(requireContainers bool) *Model {
 	return &Model{
 		Entities:          map[converge.Key]Entry{},
-		Containers:        map[converge.Key][]converge.Identity{},
+		Containers:        map[converge.Key][]HeldContainer{},
 		RequireContainers: requireContainers,
 	}
 }
@@ -57,7 +67,7 @@ func (m *Model) Clone() *Model {
 		out.Entities[k] = v
 	}
 	for k, v := range m.Containers {
-		out.Containers[k] = append([]converge.Identity(nil), v...)
+		out.Containers[k] = append([]HeldContainer(nil), v...)
 	}
 	return out
 }
@@ -66,7 +76,7 @@ func (m *Model) Clone() *Model {
 // key.
 func (m *Model) holds(k converge.Key, id converge.Identity) bool {
 	for _, held := range m.Containers[k] {
-		if held == id {
+		if held.Identity == id {
 			return true
 		}
 	}
@@ -81,10 +91,11 @@ func (m *Model) Inventory() []converge.Observation {
 			Key: k, Identity: e.Identity, Fingerprint: e.Fingerprint, Parent: e.Parent,
 		})
 	}
-	for k, ids := range m.Containers {
-		for _, id := range ids {
+	for k, held := range m.Containers {
+		for _, c := range held {
 			out = append(out, converge.Observation{
-				Key: k, Identity: id, Container: true, Parent: m.parentOf(k),
+				Key: k, Identity: c.Identity, Fingerprint: c.Fingerprint,
+				Container: true, Parent: m.parentOf(k),
 			})
 		}
 	}
@@ -105,7 +116,7 @@ func (m *Model) parentOf(k converge.Key) converge.Identity {
 	if len(above) != 1 {
 		return ""
 	}
-	return above[0]
+	return above[0].Identity
 }
 
 // Apply executes a plan in order, enforcing the ordering invariants. An error
@@ -188,8 +199,14 @@ func (m *Model) applyOp(op converge.Op) error {
 			if err := m.requireContainer(op.Key); err != nil {
 				return err
 			}
+			moved := HeldContainer{Identity: op.Identity, Fingerprint: op.Fingerprint}
+			for _, c := range m.Containers[op.From] {
+				if c.Identity == op.Identity && op.Fingerprint == "" {
+					moved.Fingerprint = c.Fingerprint
+				}
+			}
 			m.removeContainer(op.From, op.Identity)
-			m.Containers[op.Key] = append(m.Containers[op.Key], op.Identity)
+			m.Containers[op.Key] = append(m.Containers[op.Key], moved)
 			return nil
 		}
 		cur, exists := m.Entities[op.From]
@@ -207,14 +224,34 @@ func (m *Model) applyOp(op converge.Op) error {
 		cur.Parent = op.ContainerIdentity
 		m.Entities[op.Key] = cur
 
+	case converge.OpEnsureContainer, converge.OpRemoveContainer:
+		return m.applyContainerOp(op)
+	}
+	return nil
+}
+
+func (m *Model) applyContainerOp(op converge.Op) error {
+	switch op.Kind {
+	case converge.OpCreate, converge.OpUpdate, converge.OpDelete, converge.OpMove:
+		return fmt.Errorf("not a container operation: %s", op.Kind)
 	case converge.OpEnsureContainer:
 		if err := m.requireContainer(op.Key); err != nil {
 			return err
 		}
 		// Idempotent by contract: the plan may ensure a container that is
-		// already there.
-		if !m.holds(op.Key, op.Identity) {
-			m.Containers[op.Key] = append(m.Containers[op.Key], op.Identity)
+		// already there, and an ensure is also how a container's own content is
+		// re-asserted — so the fingerprint is written either way.
+		updated := false
+		for i, c := range m.Containers[op.Key] {
+			if c.Identity == op.Identity {
+				m.Containers[op.Key][i].Fingerprint = op.Fingerprint
+				updated = true
+				break
+			}
+		}
+		if !updated {
+			m.Containers[op.Key] = append(m.Containers[op.Key],
+				HeldContainer{Identity: op.Identity, Fingerprint: op.Fingerprint})
 		}
 
 	case converge.OpRemoveContainer:
@@ -238,11 +275,11 @@ func (m *Model) applyOp(op converge.Op) error {
 				return fmt.Errorf("remove of a container that still holds %q", k)
 			}
 		}
-		for c, ids := range m.Containers {
+		for c, held := range m.Containers {
 			if c == op.Key || !c.Within(op.Key) {
 				continue
 			}
-			if len(ids) > 0 {
+			if len(held) > 0 {
 				return fmt.Errorf("remove of a container that still holds container %q", c)
 			}
 		}
@@ -254,7 +291,7 @@ func (m *Model) applyOp(op converge.Op) error {
 func (m *Model) removeContainer(k converge.Key, id converge.Identity) {
 	kept := m.Containers[k][:0]
 	for _, held := range m.Containers[k] {
-		if held != id {
+		if held.Identity != id {
 			kept = append(kept, held)
 		}
 	}

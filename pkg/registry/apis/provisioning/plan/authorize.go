@@ -83,7 +83,7 @@ func Vetoes(ctx context.Context, p *converge.Plan, c Checker, resolve FolderReso
 	var out []converge.Veto
 
 	for _, op := range p.Ops {
-		verb, ok := verbFor(op.Kind)
+		verb, ok := verbFor(op)
 		if !ok {
 			continue
 		}
@@ -116,9 +116,20 @@ func Vetoes(ctx context.Context, p *converge.Plan, c Checker, resolve FolderReso
 	return out, nil
 }
 
-func verbFor(k converge.OpKind) (string, bool) {
-	switch k {
-	case converge.OpCreate, converge.OpEnsureContainer:
+// verbFor derives the permission a caller needs. The kind alone is not enough:
+// an ensure brings a container into existence *and* re-asserts an existing
+// one's content or parent, and asking for create permission on an update can
+// refuse a change the caller is allowed to make.
+func verbFor(op converge.Op) (string, bool) {
+	switch op.Kind {
+	case converge.OpEnsureContainer:
+		switch op.Reason {
+		case converge.ReasonContentChanged, converge.ReasonParentChanged, converge.ReasonReparent:
+			return "update", true
+		default:
+			return "create", true
+		}
+	case converge.OpCreate:
 		return "create", true
 	case converge.OpUpdate:
 		return "update", true

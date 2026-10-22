@@ -132,8 +132,9 @@ func Restrict(p *Plan, vetoes []Veto) (*Plan, error) {
 		out.Exclusions = append(out.Exclusions, Exclusion{Key: o.Key, Reason: reason})
 	}
 	sortExclusions(out.Exclusions)
-	// A restricted plan keeps whatever budget ordering the original had: the
-	// surviving creates still need their capacity freed first.
+	// Capacity edges live in DependsOn, so vetoing a deletion already drops the
+	// creates that were waiting on it via the fixpoint above; order() rebuilds
+	// the rest from the surviving set.
 	if err := order(out, kept, len(p.Rejected) > 0 || budgetOrdered(p)); err != nil {
 		return nil, err
 	}

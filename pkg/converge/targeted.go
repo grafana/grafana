@@ -1,5 +1,28 @@
 package converge
 
+// containerHasContents reports whether the target holds anything inside the
+// container, by key or by parent identity.
+func (s *state) containerHasContents(c Key) bool {
+	for k, obs := range s.obsEntity {
+		if k.Within(c) {
+			return true
+		}
+		for _, o := range obs {
+			for _, container := range s.obsCont[c] {
+				if o.Parent != "" && o.Parent == container.Identity {
+					return true
+				}
+			}
+		}
+	}
+	for other := range s.obsCont {
+		if other.Within(c) {
+			return true
+		}
+	}
+	return false
+}
+
 // restrictToTargeted drops everything a targeted plan has no mandate to touch.
 //
 // A targeted plan is handed a subset of the source and makes no claim about the
@@ -44,7 +67,12 @@ func (s *state) restrictToTargeted(hinted []Key) {
 				// caller did not ask for.
 			}
 		case OpRemoveContainer:
-			if named[op.Key] {
+			// Only if the container is empty. Keeping the removal while the
+			// operations that would empty it are dropped below produces a plan
+			// that violates the empty-before-removal guarantee — and a caller
+			// that asked to delete one folder did not ask to delete what is in
+			// it. A recursive delete has to be an explicit request.
+			if named[op.Key] && !s.containerHasContents(op.Key) {
 				kept = append(kept, op)
 			}
 		default:

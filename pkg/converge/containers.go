@@ -65,21 +65,33 @@ func (w containerWant) identityMatters() bool { return w.identity != "" }
 // held, it cannot be held. Otherwise the stated identity and content win over
 // their absence, because a declaration that says nothing about a container is
 // only asserting that it exists.
-func mergeContainerDeclarations(existing, next Declaration) Declaration {
+func mergeContainerDeclarations(existing, next Declaration) (Declaration, error) {
 	if existing.Key == "" {
-		return next
+		return next, nil
 	}
 	if next.Verdict == Excluded {
-		return next
+		return next, nil
 	}
 	if existing.Verdict == Excluded {
-		return existing
+		return existing, nil
 	}
+
+	// Two declarations that each state something, and state something
+	// different, are a contradiction rather than a merge: letting the later one
+	// win makes the plan depend on declaration order, which is the one thing
+	// the planner promises it does not.
+	if existing.Identity != "" && next.Identity != "" && existing.Identity != next.Identity {
+		return Declaration{}, keyErr(existing.Key, ErrConflictingDeclaration)
+	}
+	if existing.Fingerprint != "" && next.Fingerprint != "" && existing.Fingerprint != next.Fingerprint {
+		return Declaration{}, keyErr(existing.Key, ErrConflictingDeclaration)
+	}
+
 	if next.Identity != "" {
 		existing.Identity = next.Identity
 	}
 	if next.Fingerprint != "" {
 		existing.Fingerprint = next.Fingerprint
 	}
-	return existing
+	return existing, nil
 }

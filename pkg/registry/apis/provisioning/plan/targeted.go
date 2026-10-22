@@ -65,14 +65,22 @@ func Targeted(repoName string, w Write, nearby *provisioning.ResourceList) (*con
 		d := declareFile(repository.FileTreeEntry{Path: w.Path, Hash: w.Hash, Blob: true})
 		if w.Folder {
 			d = declareDirectory(converge.Key(w.Path).AsContainer())
+			// The content the caller is writing about the folder. Classifying
+			// the path must not throw away what is being written, or a metadata
+			// write plans nothing — or an update to an empty fingerprint.
+			d.Fingerprint = converge.Fingerprint(w.Hash)
 		}
 		desired = append(desired, d)
 	}
 
 	// Ancestors of the destination are declared so the plan materialises the
-	// path the write needs.
-	for _, a := range converge.Key(w.Path).Ancestors() {
-		desired = append(desired, converge.Declaration{Key: a, Container: true})
+	// path a write needs. A delete needs no path: declaring them would plan
+	// folder creation, and ask for permission to create it, in order to remove
+	// something that is not there.
+	if !w.Delete {
+		for _, a := range converge.Key(w.Path).Ancestors() {
+			desired = append(desired, converge.Declaration{Key: a, Container: true})
+		}
 	}
 
 	observed, _ := Observe(nearby) // a targeted write makes no claim about rows it cannot address

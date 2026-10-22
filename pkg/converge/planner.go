@@ -58,6 +58,7 @@ func NewPlan(desired []Declaration, inventory []Observation, opts ...Option) (*P
 	if err := s.computeWantedContainers(); err != nil {
 		return nil, err
 	}
+	s.preferWantedContainerObservations()
 	s.demoteDuplicateContainerIdentities()
 	if err := s.markReidentifications(); err != nil {
 		return nil, err
@@ -106,6 +107,8 @@ type state struct {
 	// operations share, so that children emitted for re-parenting join it.
 	reidentified map[Key]GroupID
 
+	reportedExclusions map[Key]bool
+
 	ops []Op
 }
 
@@ -123,6 +126,10 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 		contDecl:     map[Key]Declaration{},
 		wantCont:     map[Key]containerWant{},
 		reidentified: map[Key]GroupID{},
+		// A container may be declared twice — by its directory entry and by its
+		// metadata file — and an exclusion is reported both window-independently
+		// and when its contents are pulled out, so each key reports once.
+		reportedExclusions: map[Key]bool{},
 	}
 
 	inWindow := func(k Key) bool { return window == nil || window[k] }
@@ -153,8 +160,15 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 		// have surveyed the source, so an excluded key elsewhere in it goes on
 		// being named on every run. Only a targeted plan, which never made
 		// that claim, reports just what it touched.
-		if d.Verdict == Excluded && !d.Container && cfg.scope == ScopeConvergent {
-			s.exclusions = append(s.exclusions, Exclusion{Key: d.Key, Reason: d.Reason})
+		if d.Verdict == Excluded && cfg.scope == ScopeConvergent {
+			key := d.Key
+			if d.Container {
+				key = key.AsContainer()
+			}
+			if !s.reportedExclusions[key] {
+				s.reportedExclusions[key] = true
+				s.exclusions = append(s.exclusions, Exclusion{Key: key, Reason: d.Reason})
+			}
 		}
 
 		if !inWindow(d.Key) {
@@ -163,6 +177,9 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 		switch {
 		case d.Verdict == Ignored:
 			// Never an entity: invisible, by contract.
+		case d.Container && d.Verdict == Excluded && cfg.scope == ScopeConvergent:
+			// Already reported above, window or not.
+			s.contDecl[d.Key] = d
 		case d.Container:
 			// A container may legitimately be declared more than once: it is
 			// implied by the keys beneath it and may also be described
@@ -171,7 +188,11 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 			// identity, content, a refusal — wins over bare existence. Making
 			// the caller collapse them first is asking it to re-implement
 			// this.
-			s.contDecl[d.Key] = mergeContainerDeclarations(s.contDecl[d.Key], d)
+			merged, mergeErr := mergeContainerDeclarations(s.contDecl[d.Key], d)
+			if mergeErr != nil {
+				return nil, mergeErr
+			}
+			s.contDecl[d.Key] = merged
 		case d.Verdict == Excluded:
 			if cfg.scope != ScopeConvergent {
 				s.exclusions = append(s.exclusions, Exclusion{Key: d.Key, Reason: d.Reason})

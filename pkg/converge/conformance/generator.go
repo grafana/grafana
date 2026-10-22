@@ -63,13 +63,18 @@ func (g *generator) next() scenario {
 				if _, ok := model.Containers[a]; ok {
 					continue
 				}
-				model.Containers[a] = []converge.Identity{g.containerIdentity(a)}
+				// No fingerprint: the generated desired set declares entities
+				// only, so an implied container states nothing about itself and
+				// giving the held one content would make every run a content
+				// change. Metadata-bearing containers are covered explicitly in
+				// TestContainerContentRoundTrips.
+				model.Containers[a] = []HeldContainer{{Identity: g.containerIdentity(a)}}
 			}
 		}
 		// A container nothing declares, so removal is exercised too.
 		if g.rng.Intn(2) == 0 {
 			orphan := converge.Key("orphan/")
-			model.Containers[orphan] = []converge.Identity{g.containerIdentity(orphan)}
+			model.Containers[orphan] = []HeldContainer{{Identity: g.containerIdentity(orphan)}}
 		}
 	}
 

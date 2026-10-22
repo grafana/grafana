@@ -36,7 +36,9 @@ func order(p *Plan, ops []Op, budgetBinds bool) error {
 	idx := indexOps(ops)
 	deps := dependencies(ops, idx)
 	level := levels(ops, deps, refs)
-	applyBudgetFloor(ops, level, budgetBinds)
+	if addCapacityEdges(ops, deps, level, budgetBinds) {
+		level = levels(ops, deps, refs)
+	}
 	assembleStages(p, ops, deps, refs, level)
 	return nil
 }
@@ -215,32 +217,50 @@ func levels(ops []Op, deps [][]int, refs []OpRef) []int {
 	return level
 }
 
-// applyBudgetFloor makes creation wait for every deletion when a budget binds.
-// It depends on capacity rather than on any one deletion, so it is a floor on
-// the creation stage instead of an edge from every create to every delete.
+// addCapacityEdges makes creation wait for deletion when a budget binds, and
+// reports whether it changed the graph.
+//
+// A create needs *capacity*, which any deletion provides, so the faithful
+// encoding is an edge from every create to every deletion — and that is
+// quadratic: a budget over ten thousand entities cost 566 MB of edges, which at
+// a hundred thousand is tens of gigabytes. Instead each create waits on one
+// representative, the deletion that finishes last, which gives the same
+// ordering for O(creates) edges.
+//
+// What that buys over a floor on the creation stage: the edges are in
+// DependsOn, so [Restrict] drops creates when the deletion they wait on is
+// vetoed, failure propagation skips them when it fails, and a create can never
+// share a stage with an operation that depends on it. What it does not buy:
+// vetoing a *different* deletion no longer holds the creates back, and vetoing
+// the representative holds back all of them. Conservative in the first
+// direction, over-conservative in the second; both are safe.
 //
 // Whether anything was rejected is the wrong trigger: a replacement under a cap
-// of one — the target holding z.json, the source declaring only a.json — rejects
-// nothing and still needs the delete first, or the target refuses the create
-// before its slot is freed.
-func applyBudgetFloor(ops []Op, level []int, binding bool) {
+// of one — the target holding z.json, the source declaring only a.json —
+// rejects nothing and still needs the delete first.
+func addCapacityEdges(ops []Op, deps [][]int, level []int, binding bool) bool {
 	if !binding {
-		return
+		return false
 	}
-	freeing := -1
+
+	representative, deepest := -1, -1
 	for i, o := range ops {
-		if o.Kind == OpDelete && level[i] > freeing {
-			freeing = level[i]
+		if o.Kind == OpDelete && level[i] > deepest {
+			representative, deepest = i, level[i]
 		}
 	}
-	if freeing < 0 {
-		return
+	if representative < 0 {
+		return false
 	}
+
+	changed := false
 	for i, o := range ops {
-		if o.Kind == OpCreate && level[i] <= freeing {
-			level[i] = freeing + 1
+		if o.Kind == OpCreate && i != representative {
+			deps[i] = append(deps[i], representative)
+			changed = true
 		}
 	}
+	return changed
 }
 
 func assembleStages(p *Plan, ops []Op, deps [][]int, refs []OpRef, level []int) {

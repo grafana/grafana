@@ -397,6 +397,21 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, fmt.Errorf("authorize %s resource: %w", verb, err)
 	}
 
+	// Before anything is written, and while the caller's identity is still the
+	// one in ctx. Below this point the repository has been mutated and ctx has
+	// been replaced with the provisioning identity, so a check there would
+	// authorise the service account and would leave the file — and any
+	// generated _folder.json — committed to Git on refusal.
+	//
+	// Only kinds that live in a folder: an org-scoped kind deliberately
+	// bypasses folder resolution, so asking for folder access would fail valid
+	// writes on permissions they never needed.
+	if parsed.FolderScoped {
+		if err := r.preflight(ctx, opts.Path, opts.Ref, safepath.IsDir(opts.Path)); err != nil {
+			return nil, err
+		}
+	}
+
 	data, err := parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
@@ -443,15 +458,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 		// Only folder-scoped kinds carry a folder annotation; org-scoped kinds (e.g. playlists)
 		// must not have one stamped onto them, or the apiserver rejects the write.
-		// Only kinds that live in a folder get the folder preflight. An
-		// org-scoped kind — a playlist, say — deliberately bypasses folder
-		// resolution, so demanding folder access before it is even parsed
-		// fails valid writes on permissions they never needed.
 		if parsed.FolderScoped {
-			if err := r.preflight(ctx, opts.Path, opts.Ref, safepath.IsDir(opts.Path)); err != nil {
-				return nil, err
-			}
-
 			parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("ensure folder path exists: %w", err)

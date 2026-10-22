@@ -150,6 +150,20 @@ func isFolderItem(item *provisioning.ResourceListItem) bool {
 	return item.Resource == resources.FolderResource.Resource
 }
 
+// coveredByResourceWarning reports whether some resource inside the directory
+// is itself reported, so the directory's warning would only repeat it.
+func coveredByResourceWarning(exclusions []converge.Exclusion, dir converge.Key) bool {
+	for _, e := range exclusions {
+		if e.Reason != plan.ReasonUnsupportedPath {
+			continue
+		}
+		if !safepath.IsDir(string(e.Key)) && e.Key.Within(dir) {
+			return true
+		}
+	}
+	return false
+}
+
 // attachActions labels each invalid-metadata warning with what the plan does
 // to the folder it concerns.
 func attachActions(invalid []*resources.InvalidFolderMetadata, changes []ResourceFileChange) []*resources.InvalidFolderMetadata {
@@ -297,13 +311,16 @@ func translatePlan(ctx context.Context, p *converge.Plan, target *provisioning.R
 		if e.Reason != plan.ReasonUnsupportedPath {
 			continue
 		}
-		// The folder is implied; the resource inside it is what the user
-		// declared and what they need named. Reporting both would make the
-		// job output longer without telling anyone anything new.
-		if safepath.IsDir(string(e.Key)) {
+		path := string(e.Key)
+		// Where a resource inside the folder is reported too, that is the one
+		// the user declared and the folder's own warning adds nothing. Where
+		// there is no such resource — a directory holding only metadata, a
+		// .keep, or a README — the folder's warning is the only explanation
+		// there is, and dropping it leaves a folder missing for no stated
+		// reason.
+		if safepath.IsDir(path) && coveredByResourceWarning(p.Exclusions, converge.Key(path)) {
 			continue
 		}
-		path := string(e.Key)
 		logger.Debug("unsupported path declared", "path", path)
 		out = append(out, ResourceFileChange{
 			Action:  repository.FileActionIgnored,

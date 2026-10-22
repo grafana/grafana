@@ -27,6 +27,12 @@ var (
 	// This error should only be used with errors.Is() for comparison.
 	ErrAmbiguousIdentity = errors.New("ambiguous container identity")
 
+	// ErrConflictingDeclaration is returned when a container is declared more
+	// than once with incompatible identities or content. Bare existence merges
+	// with a stated identity; two different stated identities do not.
+	// This error should only be used with errors.Is() for comparison.
+	ErrConflictingDeclaration = errors.New("conflicting declarations for one container")
+
 	// ErrUnknownOp is returned by [Restrict] when a veto names an operation
 	// that is not in the plan.
 	// This error should only be used with errors.Is() for comparison.

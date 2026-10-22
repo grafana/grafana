@@ -34,7 +34,43 @@ type HintSet struct {
 // from "moved" to "deleted and recreated".
 func (h HintSet) closure(decls []Declaration, obs []Observation, cc ContainerConfig) map[Key]bool {
 	in := make(map[Key]bool, len(h.Keys)*4)
+	admit := admitter(in, cc)
 	for _, k := range h.Keys {
+		admit(k)
+	}
+
+	fingerprints := seedFingerprints(in, decls, obs)
+	holders, claimed := identityHolders(in, decls, obs)
+	candidates := closureCandidates(decls, obs)
+
+	for changed := true; changed; {
+		changed = false
+		for _, c := range candidates {
+			if in[c.key] {
+				continue
+			}
+			parent := c.key.Parent()
+			if (c.fp != "" && fingerprints[c.fp]) || (parent != "" && in[parent]) {
+				admit(c.key)
+				if c.fp != "" {
+					fingerprints[c.fp] = true
+				}
+				changed = true
+			}
+		}
+		if admitIdentityLinked(in, admit, holders, claimed) {
+			changed = true
+		}
+	}
+	return in
+}
+
+// admitter adds a key to the window along with everything the planner needs in
+// order to decide it: its ancestors, and the container its content describes.
+// Admitting a key without them makes the plan treat an existing folder as
+// missing and re-parent what is inside it.
+func admitter(in map[Key]bool, cc ContainerConfig) func(Key) {
+	return func(k Key) {
 		in[k] = true
 		for _, a := range k.Ancestors() {
 			in[a] = true
@@ -45,53 +81,88 @@ func (h HintSet) closure(decls []Declaration, obs []Observation, cc ContainerCon
 			}
 		}
 	}
+}
 
-	// Rules 2 and 4 need the transitive closure, which a single pass over the
-	// inputs cannot produce: whether a key is in depends on whether its parent
-	// is, and the inputs arrive in no particular order. Iterating to a fixpoint
-	// is what keeps the window from depending on slice order — and with
-	// ReparentDescendants a window that stops short omits descendant updates
-	// the plan needs.
-	fingerprints := make(map[Fingerprint]bool)
-	noteFingerprint := func(k Key, fp Fingerprint) {
-		if fp != "" && in[k] {
-			fingerprints[fp] = true
+type closureCandidate struct {
+	key Key
+	fp  Fingerprint
+}
+
+func closureCandidates(decls []Declaration, obs []Observation) []closureCandidate {
+	out := make([]closureCandidate, 0, len(decls)+len(obs))
+	for _, d := range decls {
+		out = append(out, closureCandidate{d.Key, d.Fingerprint})
+	}
+	for _, o := range obs {
+		out = append(out, closureCandidate{o.Key, o.Fingerprint})
+	}
+	return out
+}
+
+func seedFingerprints(in map[Key]bool, decls []Declaration, obs []Observation) map[Fingerprint]bool {
+	out := make(map[Fingerprint]bool)
+	for _, d := range decls {
+		if d.Fingerprint != "" && in[d.Key] {
+			out[d.Fingerprint] = true
+		}
+	}
+	for _, o := range obs {
+		if o.Fingerprint != "" && in[o.Key] {
+			out[o.Fingerprint] = true
+		}
+	}
+	return out
+}
+
+// identityHolders indexes the containers that state or hold each identity, and
+// which of those identities are already in the window.
+//
+// Identities link containers that share no key and no fingerprint: a
+// declaration claiming an identity another container already holds can only be
+// demoted if both are in the window, so without this a hinted plan accepts a
+// claim a full plan refuses.
+func identityHolders(in map[Key]bool, decls []Declaration, obs []Observation) (map[Identity][]Key, map[Identity]bool) {
+	holders := make(map[Identity][]Key)
+	claimed := make(map[Identity]bool)
+	note := func(k Key, id Identity, container bool) {
+		if !container || id == "" {
+			return
+		}
+		holders[id] = append(holders[id], k)
+		if in[k] {
+			claimed[id] = true
 		}
 	}
 	for _, d := range decls {
-		noteFingerprint(d.Key, d.Fingerprint)
+		note(d.Key, d.Identity, d.Container)
 	}
 	for _, o := range obs {
-		noteFingerprint(o.Key, o.Fingerprint)
+		note(o.Key, o.Identity, o.Container)
 	}
+	return holders, claimed
+}
 
-	type candidate struct {
-		key Key
-		fp  Fingerprint
-	}
-	candidates := make([]candidate, 0, len(decls)+len(obs))
-	for _, d := range decls {
-		candidates = append(candidates, candidate{d.Key, d.Fingerprint})
-	}
-	for _, o := range obs {
-		candidates = append(candidates, candidate{o.Key, o.Fingerprint})
-	}
-
-	for changed := true; changed; {
-		changed = false
-		for _, c := range candidates {
-			if in[c.key] {
-				continue
-			}
-			parent := c.key.Parent()
-			if (c.fp != "" && fingerprints[c.fp]) || (parent != "" && in[parent]) {
-				in[c.key] = true
-				if c.fp != "" {
-					fingerprints[c.fp] = true
+func admitIdentityLinked(in map[Key]bool, admit func(Key), holders map[Identity][]Key, claimed map[Identity]bool) bool {
+	changed := false
+	for id, keys := range holders {
+		if !claimed[id] {
+			for _, k := range keys {
+				if in[k] {
+					claimed[id] = true
+					changed = true
+					break
 				}
+			}
+		}
+		if !claimed[id] {
+			continue
+		}
+		for _, k := range keys {
+			if !in[k] {
+				admit(k)
 				changed = true
 			}
 		}
 	}
-	return in
+	return changed
 }

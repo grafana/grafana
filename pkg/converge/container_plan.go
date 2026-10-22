@@ -51,11 +51,14 @@ func (s *state) computeWantedContainers() error {
 		// Without this the plan ensures a child inside a container it never
 		// creates, or removes the refused parent while the child survives.
 		if unreachable(c, excluded) {
-			s.exclusions = append(s.exclusions, Exclusion{
-				Key:     c,
-				Reason:  ReasonContainerExcluded,
-				Removed: len(s.obsCont[c]) > 0,
-			})
+			if !s.reportedExclusions[c] {
+				s.reportedExclusions[c] = true
+				s.exclusions = append(s.exclusions, Exclusion{
+					Key:     c,
+					Reason:  ReasonContainerExcluded,
+					Removed: len(s.obsCont[c]) > 0,
+				})
+			}
 			continue
 		}
 		if err := add(c, &d); err != nil {
@@ -150,6 +153,10 @@ func (s *state) excludeUnreachableEntities() {
 		})
 	}
 	for _, c := range excludedContainers {
+		if s.reportedExclusions[c] {
+			continue
+		}
+		s.reportedExclusions[c] = true
 		s.exclusions = append(s.exclusions, Exclusion{
 			Key:     c,
 			Reason:  s.contDecl[c].Reason,
@@ -172,6 +179,31 @@ func (s *state) excludeUnreachableEntities() {
 //
 // The first claimant in key order keeps the identity, which is what makes the
 // outcome reproducible rather than a function of map iteration.
+// preferWantedContainerObservations puts the observation whose identity the
+// source wants at the head of each key's list.
+//
+// Everything downstream reads obsCont[c][0] as the survivor: re-identification
+// compares against it, duplicate cleanup removes the rest, and parent
+// resolution reports it. Leaving that to identity order means a key holding
+// both the wanted identity and another one is re-identified *to* the identity
+// it already has while that same identity is removed as surplus — an empty
+// folder loses both, and a populated one fails cleanup.
+func (s *state) preferWantedContainerObservations() {
+	for c, want := range s.wantCont {
+		if !want.identityMatters() {
+			continue
+		}
+		obs := s.obsCont[c]
+		for i, o := range obs {
+			if o.Identity != want.identity || i == 0 {
+				continue
+			}
+			obs[0], obs[i] = obs[i], obs[0]
+			break
+		}
+	}
+}
+
 func (s *state) demoteDuplicateContainerIdentities() {
 	if len(s.wantCont) < 2 {
 		return
