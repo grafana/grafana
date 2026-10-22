@@ -5,6 +5,8 @@ import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
+import { type SavedDashboardView } from '../../savedviews/api';
+import { type SavedDashboardViewSpec } from '../../savedviews/types';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
@@ -101,6 +103,19 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * Viewing (it only asks, and there is nothing to save). Unset outside Composer.
    */
   composerEditing?: boolean;
+  /** Saved Dashboard Views for this dashboard, fetched once on load (see loadSavedViews.ts). */
+  savedViews?: SavedDashboardView[];
+  /** metadata.name of the currently-applied Saved View, if any — mirrors `?viewFilter=`. */
+  viewFilter?: string;
+  /**
+   * The dashboard's own time range + variable state, captured once on the very first url-sync
+   * pass (before that pass's own $timeRange/variable updateFromUrl calls, and before any saved
+   * view ever applies) — see DashboardSceneUrlSync.updateFromUrl. This is what a saved view falls
+   * back to for any variable (or section-scoped filter) it doesn't itself capture, so selecting a
+   * view always resets the dashboard to a clean, deterministic state rather than leaving an
+   * unrelated variable at whatever ad-hoc value it happened to have.
+   */
+  savedViewBaseline?: SavedDashboardViewSpec;
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
