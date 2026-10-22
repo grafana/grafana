@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, one label */
+/** Trimmed from a generated Protomaps style: one fill, two labels */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -35,6 +35,21 @@ const STYLE = {
       'source-layer': 'places',
       layout: {
         'text-font': ['step', ['zoom'], ['literal', ['Noto Sans Regular']], 8, ['literal', ['Noto Sans Medium']]],
+      },
+      paint: {
+        'text-color': '#888888',
+      },
+    },
+    {
+      id: 'places_country',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'places',
+      layout: {
+        'text-font': ['step', ['zoom'], ['literal', ['Noto Sans Regular']], 8, ['literal', ['Noto Sans Medium']]],
+      },
+      paint: {
+        'text-color': '#888888',
       },
     },
   ],
@@ -181,5 +196,33 @@ describe('Protomaps basemap', () => {
       new Error('404 Not Found')
     );
     expect(layer.getStyle()).toBeNull();
+  });
+
+  it.each([
+    {
+      desc: 'an explicit dark flavor',
+      flavor: ProtomapsFlavor.Dark,
+      theme: lightTheme,
+      expectedColor: '#e6e6e6',
+    },
+    {
+      desc: 'auto flavor in a dark theme',
+      flavor: ProtomapsFlavor.Auto,
+      theme: darkTheme,
+      expectedColor: '#e6e6e6',
+    },
+    {
+      desc: 'the light flavor',
+      flavor: ProtomapsFlavor.Light,
+      theme: lightTheme,
+      expectedColor: '#888888',
+    },
+  ])('adjusts only locality label color for $desc', async ({ flavor, theme, expectedColor }) => {
+    await initLayer({ flavor }, theme);
+
+    const layers = appliedStyle().layers;
+
+    expect(layers[1].paint['text-color']).toBe(expectedColor);
+    expect(layers[2].paint['text-color']).toBe('#888888');
   });
 });
