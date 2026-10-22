@@ -264,14 +264,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.userAttribution",
-			Description: "Author Git Sync commits as the acting Grafana user",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{Go: true, React: true},
-		},
-		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
 			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).`,
 			Stage:        FeatureStageExperimental,
@@ -2447,16 +2439,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:            "appplugins.loadAppManifestAndKeepSettings",
-			Description:     "Continue to expose settings when a manifest exists",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			Generate:        Generate{Go: true},
-			RequiresRestart: true,
-			Expression:      "false",
-			HideFromDocs:    true,
-		},
-		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
@@ -3436,6 +3418,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "grafana.geomapProtomapsBasemap",
+			Description:  "Adds an experimental Protomaps vector basemap to the geomap panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

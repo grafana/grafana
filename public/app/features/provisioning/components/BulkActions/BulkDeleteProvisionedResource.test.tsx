@@ -6,7 +6,6 @@ import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0al
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import * as currentUser from '../../utils/currentUser';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
@@ -517,22 +516,6 @@ describe('BulkDeleteProvisionedResource', () => {
         templateRepository,
         expect.objectContaining({ message: 'chore: delete 2 resources edited' })
       );
-    });
-
-    it('appends the saved-by trailer exactly once', async () => {
-      jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
-      const trailerRepository: RepositoryView = {
-        ...templateRepository,
-        commit: { singleResourceMessageTemplate: 'chore: {{action}}' },
-      };
-      const { user, mockCreateBulkJob } = setup(trailerRepository);
-
-      await screen.findByRole('button', { name: /Delete/i });
-      await user.click(screen.getByRole('button', { name: /Delete/i }));
-
-      const jobSpec = mockCreateBulkJob.mock.calls[0][1];
-      expect(jobSpec.message).toContain('chore: delete');
-      expect(jobSpec.message.match(/Grafana-saved-by:/g)).toHaveLength(1);
     });
   });
 });
