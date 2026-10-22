@@ -88,7 +88,7 @@ To create a notebook from the **Notebooks** page, follow these steps:
 1. Click **+ New notebook**.
 1. (Optional) Update the title of the notebook to something descriptive and searchable.
 1. (Optional) Add tags to further define the subject of your notebook.
-1. Start typing to create a text block or click one of the other options to add:
+1. Start typing to create a text block or click one of the buttons below the block to add one of the following options:
    - **Heading**: Adds an H3 heading.
    - **Paragraph**: The default. Use this to revert to paragraph text if you've previously selected another option.
    - **Code**: Adds a code block. Select a language, like Go, SQL, or plain text.
