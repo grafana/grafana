@@ -1,5 +1,3 @@
-import { isUndefined, omitBy } from 'lodash';
-
 import {
   type AppPluginConfig,
   isIconName,
@@ -11,7 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
+import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { appendIntoSection, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
@@ -50,17 +48,21 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
   for (const app of byTitle(apps)) {
     try {
       const { appLink, navChildren, standalonePages } = buildAppLink(app);
+      // Built up locally and committed in one go, so a throw part-way through
+      // leaves none of this app behind — not even its standalone pages
+      let withApp = next;
       for (const page of standalonePages) {
-        next = placeStandalonePage(next, page);
+        withApp = placeStandalonePage(withApp, page);
       }
-      // An app with no accessible nav children is not part of the tree. That is
-      // decided on navChildren, before the default nav is folded out: an app
-      // whose only page IS its default nav still belongs in the tree, as a link
-      // with no children of its own. The Go builder orders these two the same way.
-      if (navChildren.length === 0) {
-        continue;
+      // An app with no accessible nav children is not part of the tree, though
+      // its lifted pages still are. That is decided on navChildren, before the
+      // default nav is folded out: an app whose only page IS its default nav
+      // still belongs in the tree, as a link with no children of its own. The
+      // Go builder orders these two the same way.
+      if (navChildren.length > 0) {
+        withApp = placeAppInSection(withApp, app, withAppNavConfig(app, appLink));
       }
-      next = placeAppInSection(next, app, withAppNavConfig(app, appLink));
+      next = withApp;
     } catch (error) {
       // One malformed plugin meta costs its own app and nothing else: this runs
       // while the redux store is being created, so a throw would take the tree
@@ -137,14 +139,7 @@ function buildAppLink(app: AppPluginConfig): {
     if (pathConfig) {
       standalonePages.push({
         sectionId: pathConfig.sectionId,
-        link: {
-          ...link,
-          id: standalonePluginPageId(include.path),
-          sortWeight: pathConfig.sortWeight,
-          ...(pathConfig.subTitle && { subTitle: pathConfig.subTitle }),
-          ...(pathConfig.icon && { icon: toIconName(pathConfig.icon) }),
-          ...(pathConfig.isNew && { isNew: pathConfig.isNew }),
-        },
+        link: { ...withNavConfig(link, pathConfig), id: standalonePluginPageId(include.path) },
       });
       continue;
     }
@@ -187,20 +182,27 @@ function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: Standalo
   return appendIntoSection(tree, sectionId, [link]) ?? tree;
 }
 
-/** Applies the app's built-in nav config: placement, weight and display overrides */
+/**
+ * Applies a nav config's weight and display overrides to a link. Shared by apps
+ * and by the pages lifted out of them, as the Go builder shares one
+ * NavigationAppConfig between its two tables. Only the keys the config actually
+ * sets are spread, so an absent override never clobbers the plugin's own value.
+ */
+function withNavConfig(link: NavModelItem, { sortWeight, text, subTitle, isNew, icon }: AppNavConfig): NavModelItem {
+  return {
+    ...link,
+    sortWeight,
+    ...(text !== undefined && { text }),
+    ...(subTitle !== undefined && { subTitle }),
+    ...(isNew !== undefined && { isNew }),
+    ...(icon !== undefined && { icon }),
+  };
+}
+
+/** Applies the app's own nav config, if it has one */
 function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModelItem {
   const navConfig = appNavConfigFor(app.id);
-  if (!navConfig) {
-    return appLink;
-  }
-  const { sortWeight, text, subTitle, isNew, icon } = navConfig;
-  return {
-    ...appLink,
-    sortWeight,
-    // Absent overrides must not clobber the plugin's own values with undefined
-    ...omitBy({ text, subTitle, isNew }, isUndefined),
-    ...(icon && { icon: toIconName(icon) }),
-  };
+  return navConfig ? withNavConfig(appLink, navConfig) : appLink;
 }
 
 /**

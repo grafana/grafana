@@ -5,6 +5,7 @@ import { clearAppPluginMetas, getAppPluginMetas, invalidateCachedPromisesCache }
 import { setupMockServer } from '@grafana/test-utils/server';
 import { mockPluginMeta, setMockPluginMetas, type MockPluginMeta } from '@grafana/test-utils/unstable';
 
+import * as appNavConfig from './appNavConfig';
 import { buildNavTree } from './buildNavTree';
 import { applyPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
@@ -141,6 +142,33 @@ describe('applyPluginNav', () => {
         'broken-app',
         expect.any(Error)
       );
+    });
+
+    // The lifted page is written before the app is placed, so a throw in between
+    // must not leave the page in a tree the app itself never reached
+    it('leaves no trace of an app that throws after its pages are lifted', () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      // buildAppLink reads the config first, to lift the page; the throw has to
+      // come after that, where the app itself is placed
+      let assistantLookups = 0;
+      jest.spyOn(appNavConfig, 'appNavConfigFor').mockImplementation((appId) => {
+        if (appId === 'grafana-assistant-app' && assistantLookups++ > 0) {
+          throw new Error('boom');
+        }
+        return undefined;
+      });
+
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages'),
+        ]),
+        app('good-app', 'Good app', [page('Page', '/a/good-app/page')])
+      );
+
+      expect(findById(merged, 'standalone-plugin-page-/a/grafana-assistant-app/pages')).toBeUndefined();
+      expect(findById(merged, 'plugin-page-grafana-assistant-app')).toBeUndefined();
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-good-app']);
     });
   });
 

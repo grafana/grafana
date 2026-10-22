@@ -14,13 +14,13 @@ import {
   SYNTHETIC_MONITORING_APP_ID,
 } from 'app/core/appPluginIds';
 
-import { NavID, NavWeight } from './constants';
+import { NavID, type NavId, NavWeight } from './constants';
 
 export interface AppNavConfig {
-  sectionId: string;
+  sectionId: NavId;
   sortWeight: number;
   text?: string;
-  icon?: IconName | string;
+  icon?: IconName;
   subTitle?: string;
   isNew?: boolean;
   /** Drops the `includes` that the app should not show in this deployment, on top of the RBAC checks */
@@ -280,22 +280,13 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   },
 };
 
-/** Where a single app page is placed, lifted out of its app */
-export interface AppNavPathConfig {
-  sectionId: string;
-  sortWeight: number;
-  subTitle?: string;
-  icon?: IconName | string;
-  isNew?: boolean;
-}
-
 /**
  * Where an individual app page goes, keyed by its include path. A page listed
  * here is lifted out of its app and placed on its own, which is how Pages sits
  * beside Dashboards and how the auth app's single page becomes a leaf under
  * Users and access. Mirrors navigationAppPathConfig in the Go builder.
  */
-const APP_NAV_PATH_CONFIG: Record<string, AppNavPathConfig> = {
+const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
   [`/a/${ASSISTANT_APP_ID}/pages`]: {
     sectionId: NavID.root,
     sortWeight: NavWeight.dashboards + 1,
@@ -315,6 +306,6 @@ export function appNavConfigFor(appId: string): AppNavConfig | undefined {
 }
 
 /** The nav config for a standalone app page, if it has one */
-export function appNavPathConfigFor(includePath: string): AppNavPathConfig | undefined {
+export function appNavPathConfigFor(includePath: string): AppNavConfig | undefined {
   return APP_NAV_PATH_CONFIG[includePath];
 }
