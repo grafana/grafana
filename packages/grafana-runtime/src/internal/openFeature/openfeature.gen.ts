@@ -216,6 +216,8 @@ export const FlagKeys = {
   GrafanaOtelLogDetails: "grafana.otelLogDetails",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables editing numeric panel field config options as dashboard variable expressions */
+  GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Pass React elements in plugin extension props by reference */
@@ -1503,6 +1505,17 @@ export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Enables editing numeric panel field config options as dashboard variable expressions
+ *
+ * **Details:**
+ * - flag key: `grafana.panelOptionInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelOptionInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelOptionInterpolation", false, options).value;
 };
 
 /**

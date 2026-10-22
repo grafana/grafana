@@ -181,6 +181,7 @@ declare module "@openfeature/core" {
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
+    | "grafana.panelOptionInterpolation"
     | "grafana.pluginPathNesting"
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"

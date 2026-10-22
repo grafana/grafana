@@ -3098,6 +3098,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelOptionInterpolation",
+        "resourceVersion": "1792581006665",
+        "creationTimestamp": "2026-10-21T11:10:06Z"
+      },
+      "spec": {
+        "description": "Enables editing numeric panel field config options as dashboard variable expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelPluginTransformations",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-18T18:56:48Z"

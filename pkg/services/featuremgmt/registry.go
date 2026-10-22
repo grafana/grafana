@@ -3205,6 +3205,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.panelOptionInterpolation",
+			Description: "Enables editing numeric panel field config options as dashboard variable expressions",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "authz.listFoldersViaSearch",
 			Description:  "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
 			Stage:        FeatureStageExperimental,
