@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { compact, uniqueId } from 'lodash';
+import { compact, noop, uniqueId } from 'lodash';
 import type { JSX } from 'react';
 import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -7,7 +7,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import {
   type TemplatePreviewErrors,
@@ -99,17 +100,17 @@ function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }
                 <div className={styles.viewer.language}>{language}</div>
               </header>
             )}
-            <CodeEditor
-              containerStyles={styles.editorContainer}
-              language={language}
-              showLineNumbers={false}
-              showMiniMap={false}
-              value={preview.text}
-              readOnly={true}
-              monacoOptions={{
-                scrollBeyondLastLine: false,
-              }}
-            />
+            <div className={styles.editorContainer}>
+              <CodeMirrorEditor
+                height="100%"
+                language={language === 'json' ? 'json' : undefined}
+                value={preview.text}
+                onChange={noop}
+                readOnly
+                basicSetup={{ lineNumbers: false, foldGutter: false }}
+                aria-label={preview.name}
+              />
+            </div>
           </li>
         );
       })}
@@ -135,8 +136,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorContainer: css({
     width: '100%',
-    height: '100%',
-    border: 'none',
+    flex: 1,
+    minHeight: 0,
+    '> div': {
+      height: '100%',
+    },
+    '.cm-editor': {
+      border: 'none',
+    },
   }),
   viewerContainer: ({ height }: { height: number }) =>
     css({
@@ -153,6 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     box: css({
       display: 'flex',
       flexDirection: 'column',
+      flexShrink: 0,
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       height: 'inherit',
     }),
