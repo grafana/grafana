@@ -73,7 +73,7 @@ func NewKVSecureValueMetadataStorage(kv resource.KV, snowflake contracts.Snowfla
 		snowflake:    snowflake,
 		clock:        clock,
 		tracer:       tracer,
-		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_store", "secrets_kv_secure_value_store", reg,lease.WithInternalNowFunc(clock.Now)),
+		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_store", "secrets_kv_secure_value_store", reg, lease.WithInternalNowFunc(clock.Now)),
 		metrics:      metrics.NewStorageMetrics(reg),
 	}
 }
