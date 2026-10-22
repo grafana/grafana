@@ -146,6 +146,7 @@ func TestMiddlewareForwardsUnknownGroupsToMT(t *testing.T) {
 	defer mt.Close()
 
 	cfg := setting.NewCfg()
+	cfg.StackID = "1"
 	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue(mt.URL)
 	// A full server builds its loader with ProvideRoutesLoader, never the cloud one.
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
@@ -188,6 +189,7 @@ func TestMiddlewareForwardsUnknownGroupsToMT(t *testing.T) {
 
 func TestMTRouterAddressMustBeAbsoluteURL(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.StackID = "1"
 	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("mt-router:3000")
 	_, err := newMTFallbackFromConfig(cfg)
 	require.ErrorContains(t, err, mtRouterAddressKey)
@@ -207,15 +209,33 @@ func TestMTFallbackNeedsAddressAndMiddleware(t *testing.T) {
 
 	// An address without the middleware toggle does nothing.
 	cfg := setting.NewCfg()
+	cfg.StackID = "1"
 	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("http://mt-router:3000")
 	svc, err = provideTestService(cfg, featuremgmt.WithFeatures(), &mutableLoader{})
 	require.NoError(t, err)
 	require.Nil(t, svc.mt)
 }
 
+// Only a cloud stack, which has a stack ID, gets the fallback.
+func TestMTFallbackOnlyForCloudStacks(t *testing.T) {
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	cfg := setting.NewCfg()
+	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("http://mt-router:3000")
+
+	svc, err := provideTestService(cfg, features, &mutableLoader{})
+	require.NoError(t, err)
+	require.Nil(t, svc.mt, "no stack ID: not a cloud stack")
+
+	cfg.StackID = "1"
+	svc, err = provideTestService(cfg, features, &mutableLoader{})
+	require.NoError(t, err)
+	require.NotNil(t, svc.mt)
+}
+
 // The standalone router target is the multi-tenant router itself.
 func TestMTFallbackNotInStandaloneRouter(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.StackID = "1"
 	cfg.Target = []string{"router"}
 	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("http://mt-router:3000")
 	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), &mutableLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))

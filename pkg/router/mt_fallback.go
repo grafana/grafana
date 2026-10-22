@@ -215,6 +215,10 @@ func newMTFallback(address, caFile string, insecure bool) (*mtFallback, error) {
 // or returns nil when mt_router_address is not set. A full Grafana server never
 // builds the cloud routes loader, which only the standalone router does, so the
 // service reads these settings itself.
+//
+// Only a cloud stack gets the fallback: its platform sets [environment]
+// stack_id, which the rest of Grafana also reads to tell a stack from a
+// self-managed install.
 func newMTFallbackFromConfig(cfg *setting.Cfg) (*mtFallback, error) {
 	if cfg == nil {
 		return nil, nil
@@ -222,6 +226,10 @@ func newMTFallbackFromConfig(cfg *setting.Cfg) (*mtFallback, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 	address := section.Key(mtRouterAddressKey).MustString("")
 	if address == "" {
+		return nil, nil
+	}
+	if cfg.StackID == "" {
+		logging.DefaultLogger.Warn("router: ignoring " + mtRouterAddressKey + ", which applies only to a cloud stack ([environment] stack_id is not set)")
 		return nil, nil
 	}
 	return newMTFallback(address, section.Key(mtRouterCAFileKey).MustString(""), section.Key(mtRouterInsecureKey).MustBool(false))
