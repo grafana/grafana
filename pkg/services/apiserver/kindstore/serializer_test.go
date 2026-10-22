@@ -104,8 +104,8 @@ func TestConversionSerializerNamespace(t *testing.T) {
 		{name: "cluster and namespace scoped", namespaces: []string{"", "default"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var data [][]byte
-			var converted []*pluginv3.ConvertObjectsResponse_Object
+			data := make([][]byte, 0, len(tc.namespaces))
+			converted := make([]*pluginv3.ConvertObjectsResponse_Object, 0, len(tc.namespaces))
 			for _, namespace := range tc.namespaces {
 				obj := &unstructured.Unstructured{}
 				obj.SetGroupVersionKind(gvk)

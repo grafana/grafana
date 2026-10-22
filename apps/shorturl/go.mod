@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/shorturl
 go 1.27.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.61.0
+	github.com/grafana/grafana-app-sdk v0.60.15
 	github.com/grafana/grafana-app-sdk/logging v0.61.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/stretchr/testify v1.12.1
@@ -42,7 +42,6 @@ require (
 	github.com/go-openapi/swag/stringutils v0.29.2 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
-	github.com/google/cel-go v0.31.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
