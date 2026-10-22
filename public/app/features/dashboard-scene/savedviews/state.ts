@@ -195,31 +195,57 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   }
 }
 
-/** True if `current` differs from `stored` in time range or any captured variable. */
-export function getSavedViewDiff(current: SavedDashboardViewSpec, stored: SavedDashboardViewSpec): boolean {
+/**
+ * Whether applying `stored` would change the dashboard's current state, i.e. whether there is
+ * anything to save over it. Mirrors applySavedViewState: variables the view omits count as reset to
+ * `baseline`, a view without a timezone leaves the timezone alone, and variables that no longer
+ * exist on the dashboard are skipped.
+ */
+export function getSavedViewDiff(
+  current: SavedDashboardViewSpec,
+  stored: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
+): boolean {
   if (timeRangeDiffers(current.timeRange, stored.timeRange)) {
     return true;
   }
-  return variablesDiffer(current.variables, stored.variables);
+  return variablesDiffer(current.variables, mergeVariablesWithBaseline(stored.variables, baseline?.variables));
 }
 
-function timeRangeDiffers(a: SavedViewTimeRange, b: SavedViewTimeRange): boolean {
-  return a.from !== b.from || a.to !== b.to || (a.timezone ?? '') !== (b.timezone ?? '');
-}
-
-function variablesDiffer(current: SavedViewVariable[], stored: SavedViewVariable[]): boolean {
-  if (current.length !== stored.length) {
+function timeRangeDiffers(current: SavedViewTimeRange, stored: SavedViewTimeRange): boolean {
+  if (current.from !== stored.from || current.to !== stored.to) {
     return true;
   }
+  return stored.timezone !== undefined && (current.timezone ?? '') !== stored.timezone;
+}
 
-  const storedByName = new Map(stored.map((v) => [v.name, v]));
-  return current.some((variable) => {
-    const other = storedByName.get(variable.name);
-    return !other || !variableEqual(variable, other);
+function variablesDiffer(current: SavedViewVariable[], expected: SavedViewVariable[]): boolean {
+  const currentByName = new Map(current.map((v) => [v.name, v]));
+  return expected.some((variable) => {
+    const live = currentByName.get(variable.name);
+    return live !== undefined && !variableEqual(live, variable);
   });
 }
 
-// Safe because both sides come from captureVariable's fixed field order.
+// Compares only the selection, not the serialized object: stored specs come back from the server,
+// so key order and single-value shape ("a" vs ["a"]) can differ from a fresh capture.
 function variableEqual(a: SavedViewVariable | undefined, b: SavedViewVariable | undefined): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  if (!a || !b) {
+    return a === b;
+  }
+  if (a.filters || b.filters) {
+    return JSON.stringify(normalizeFilters(a.filters)) === JSON.stringify(normalizeFilters(b.filters));
+  }
+  return JSON.stringify(normalizeValue(a.value)) === JSON.stringify(normalizeValue(b.value));
+}
+
+function normalizeFilters(filters: SavedViewVariable['filters']) {
+  return (filters ?? []).map(({ key, operator, value }) => ({ key, operator, value }));
+}
+
+function normalizeValue(value: SavedViewVariable['value']): unknown[] {
+  if (value === undefined) {
+    return [];
+  }
+  return Array.isArray(value) ? value : [value];
 }

@@ -216,6 +216,32 @@ describe('SavedViewsPane', () => {
       expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled();
     });
 
+    it('stays disabled for a view that only captures part of the dashboard', () => {
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone: 'browser' }),
+        $variables: new SceneVariableSet({
+          variables: [
+            new QueryVariable({ name: 'env', query: '', value: 'prod', text: 'prod' }),
+            new QueryVariable({ name: 'region', query: '', value: 'eu', text: 'eu' }),
+          ],
+        }),
+        // No timezone, and region isn't captured at all.
+        savedViews: [buildView('view-1', { variables: [{ name: 'env', type: 'query', value: 'prod' }] })],
+        viewFilter: 'view-1',
+      });
+      const pane = new SavedViewsPane({});
+      scene.state.sidebar.openPane(pane);
+      render(
+        <WrapSidebar>
+          <pane.Component model={pane} />
+        </WrapSidebar>
+      );
+
+      expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+    });
+
     it('enables once a variable drifts from the selected view', async () => {
       const env = new QueryVariable({ name: 'env', query: '', value: 'prod', text: 'prod' });
       const scene = new DashboardScene({
