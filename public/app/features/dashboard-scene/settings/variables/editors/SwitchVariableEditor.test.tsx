@@ -246,4 +246,21 @@ describe('SwitchVariableEditor undo/redo', () => {
     expect(variable.state).toMatchObject({ value: 'active', enabledValue: 'active' });
     expect(screen.getByTestId(enabledValueInput)).toHaveValue('active');
   });
+
+  it('clears the identical values error when undo restores distinct values', async () => {
+    const variable = new SwitchVariable({ name: 'test', value: 'on', enabledValue: 'on', disabledValue: 'off' });
+    const sidebar = addToEditedDashboard(variable);
+    const user = userEvent.setup();
+    render(<SwitchVariableEditor variable={variable} inline={true} />);
+
+    await user.clear(screen.getByTestId(enabledValueInput));
+    await user.type(screen.getByTestId(enabledValueInput), 'off');
+    await user.tab();
+    expect(screen.getByText('Enabled and disabled values cannot be the same')).toBeInTheDocument();
+    expect(variable.state).toMatchObject({ enabledValue: 'of', disabledValue: 'off' });
+
+    act(() => sidebar.undoAction());
+    expect(screen.getByTestId(enabledValueInput)).toHaveValue('on');
+    expect(screen.queryByText('Enabled and disabled values cannot be the same')).not.toBeInTheDocument();
+  });
 });

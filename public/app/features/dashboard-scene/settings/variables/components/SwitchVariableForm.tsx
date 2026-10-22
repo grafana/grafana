@@ -41,10 +41,16 @@ export function SwitchVariableForm({
   const [enabledValueInput, setEnabledValueInput] = useState(enabledValue);
   const [disabledValueInput, setDisabledValueInput] = useState(disabledValue);
 
-  useEffect(() => setEnabledValueInput(enabledValue), [enabledValue]);
-  useEffect(() => setDisabledValueInput(disabledValue), [disabledValue]);
   const [enabledValueInvalid, setEnabledValueInvalid] = useState<boolean>(false);
   const [disabledValueInvalid, setDisabledValueInvalid] = useState<boolean>(false);
+
+  useEffect(() => setEnabledValueInput(enabledValue), [enabledValue]);
+  useEffect(() => setDisabledValueInput(disabledValue), [disabledValue]);
+  // Only valid values reach the state, so a stored identical-values error is stale once either value changes
+  useEffect(() => {
+    setEnabledValueInvalid(false);
+    setDisabledValueInvalid(false);
+  }, [enabledValue, disabledValue]);
   const identicalValuesErrorMessage = t(
     'dashboard-scene.switch-variable-form.same-values-error',
     'Enabled and disabled values cannot be the same'
