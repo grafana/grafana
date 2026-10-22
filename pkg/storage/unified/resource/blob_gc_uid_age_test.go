@@ -52,29 +52,21 @@ func TestBlobGCPlainKVUsesUIDAge(t *testing.T) {
 	require.ErrorIs(t, err, kv.ErrNotFound)
 }
 
-func TestBlobGCPlainKVLegacyUIDUsesFirstSeen(t *testing.T) {
+func TestBlobGCPlainKVSkipsLegacyUIDs(t *testing.T) {
 	store := setupBadgerKV(t)
 	gc := NewBlobGarbageCollector(store, 10, 0)
-	live := false
-	ref := func(context.Context, kv.BlobKey) (bool, error) { return live, nil }
-	key := saveTestBlob(t, store, uuid.NewV4().String())
-	now := time.Now()
+	unref := func(context.Context, kv.BlobKey) (bool, error) { return false, nil }
+	legacy := saveTestBlob(t, store, uuid.NewV4().String())
 
-	count, err := gc.Collect(t.Context(), now, time.Hour, false, ref)
+	// Even far beyond any grace period and across collector restarts, a blob
+	// whose age cannot be determined is never deleted.
+	for range 2 {
+		count, err := gc.Collect(t.Context(), time.Now().Add(1000*time.Hour), time.Hour, false, unref)
+		require.NoError(t, err)
+		require.Zero(t, count)
+		require.Equal(t, 1, gc.SkippedWithoutAge())
+		gc = NewBlobGarbageCollector(store, 10, 0)
+	}
+	_, err := store.Get(t.Context(), kv.BlobDataSection, legacy)
 	require.NoError(t, err)
-	require.Zero(t, count, "first sighting starts the clock")
-
-	live = true // reference resets the clock
-	_, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, ref)
-	require.NoError(t, err)
-	live = false
-	count, err = gc.Collect(t.Context(), now.Add(3*time.Hour), time.Hour, false, ref)
-	require.NoError(t, err)
-	require.Zero(t, count)
-
-	count, err = gc.Collect(t.Context(), now.Add(5*time.Hour), time.Hour, false, ref)
-	require.NoError(t, err)
-	require.Equal(t, 1, count)
-	_, err = store.Get(t.Context(), kv.BlobDataSection, key)
-	require.ErrorIs(t, err, kv.ErrNotFound)
 }

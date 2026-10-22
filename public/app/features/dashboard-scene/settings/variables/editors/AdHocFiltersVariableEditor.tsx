@@ -9,7 +9,7 @@ import {
   getDataSourceRef,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction, getDataSourceInstance } from '@grafana/runtime';
+import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -70,9 +70,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const groupByOriginFilters = useMemo(() => originalFilters.filter(isGroupByOriginFilter), [originalFilters]);
 
-  const groupByEnabled = Boolean(
-    config.featureToggles.dashboardUnifiedDrilldownControls && enableGroupBy && datasourceRef
-  );
+  const groupByEnabled = Boolean(enableGroupBy && datasourceRef);
 
   const updateOriginalFilters = useCallback(
     (filters: AdHocFilterWithLabels[], description: string, meta: DashboardActionMeta) => {
@@ -105,10 +103,6 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   );
 
   const originFiltersController = useMemo(() => {
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return undefined;
-    }
-
     return new AdHocOriginFiltersController(
       adhocOriginFilters,
       (filters) => {
@@ -171,7 +165,6 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     const dsRef = getDataSourceRef(ds);
     const dsInstance = await getDataSourceInstance(dsRef);
     const { datasource: oldDatasource, supportsMultiValueOperators, enableGroupBy: oldEnableGroupBy } = variable.state;
-    const updateEnableGroupBy = config.featureToggles.dashboardUnifiedDrilldownControls;
 
     undoableVariableEdit(inline && !isEqual(oldDatasource, dsRef), {
       meta: { actionId: 'variable.changeDataSource', scope: 'adhoc' },
@@ -181,18 +174,14 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
         variable.setState({
           datasource: dsRef,
           supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
-          ...(updateEnableGroupBy && {
-            enableGroupBy: !!dsInstance?.getGroupByKeys,
-          }),
+          enableGroupBy: !!dsInstance?.getGroupByKeys,
         });
       },
       undo: () => {
         variable.setState({
           datasource: oldDatasource,
           supportsMultiValueOperators,
-          ...(updateEnableGroupBy && {
-            enableGroupBy: oldEnableGroupBy,
-          }),
+          enableGroupBy: oldEnableGroupBy,
         });
       },
     });

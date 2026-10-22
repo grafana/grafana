@@ -1,6 +1,5 @@
 import { type PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { config, getPluginSettings } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getPluginDetails } from '../admin/api';
@@ -18,10 +17,6 @@ jest.mock('@grafana/runtime', () => ({
     buildInfo: { env: 'production' },
     enableFrontendSandboxForPlugins: [],
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
 }));
 

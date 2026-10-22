@@ -234,7 +234,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	})
 	if err != nil {
 		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-			return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", nil)
+			return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", err)
 		}
 	} else {
 		dto.Enabled = ps.Enabled
@@ -284,7 +284,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		OrgID:                   cmd.OrgId,
 		EncryptedSecureJSONData: cmd.EncryptedSecureJsonData,
 	}); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update plugin setting", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update plugin setting", err)
 	}
 
 	hs.pluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)

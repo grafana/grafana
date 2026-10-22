@@ -1,14 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
+import { useDataSourceInstance } from '@grafana/plugin-compat/datasources';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { type TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesSettings';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: jest.fn(),
+jest.mock('@grafana/plugin-compat/datasources', () => ({
+  ...jest.requireActual('@grafana/plugin-compat/datasources'),
+  useDataSourceInstance: jest.fn(),
 }));
 
 const defaultOption: DataSourceSettings<TraceToProfilesData> = {
@@ -39,7 +39,9 @@ describe('TraceToProfilesSettings', () => {
         return pyroSettings;
       },
     } as unknown as DataSourceSrv);
-    jest.mocked(getDataSourceInstance).mockResolvedValue(pyroSettings as unknown as DataSourceApi);
+    jest
+      .mocked(useDataSourceInstance)
+      .mockReturnValue({ isLoading: false, dataSource: pyroSettings as unknown as DataSourceApi });
   });
 
   it('should render without error', () => {

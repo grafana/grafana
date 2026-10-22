@@ -37,7 +37,7 @@ type hybridResourcesTestIndex struct {
 	onSearch  func(context.Context) error
 }
 
-func (h *hybridResourcesTestIndex) Search(ctx context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (h *hybridResourcesTestIndex) Search(ctx context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	key := schema.GroupResource{Group: req.Options.Key.Group, Resource: req.Options.Key.Resource}
 	h.mu.Lock()
 	response, err := h.responses[key], h.errors[key]
