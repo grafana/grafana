@@ -126,7 +126,7 @@ The Assistant builds the canvas autonomously in **Investigation** mode, or by wa
 As you work, you can add the content of a message, such as text or a visualization, from your Assistant conversation to a notebook by clicking the **Add to notebook** icon.
 When the entire canvas is worth keeping, you can direct Assistant create a notebook or click the **Create notebook** option:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-in-workspace-v13.3.png" max-width="750px" alt="Canvas with the option to create a notebook" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-workspace-notebook-v13.3.png" max-width="750px" alt="Canvas with the option to create a notebook" >}}
 
 ## Notebooks and incidents
 
