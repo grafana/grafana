@@ -60,7 +60,7 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <>
-            <STPodHealthPoller skip={isUrlAllowed} />
+            <STPodHealthPoller skip={false} />
             <Suspense fallback={<PageFallbackLoader />}>
               <STPodReadinessCheck isUrlAllowed={isUrlAllowed} />
               <Suspense fallback={<PageLoader />}>

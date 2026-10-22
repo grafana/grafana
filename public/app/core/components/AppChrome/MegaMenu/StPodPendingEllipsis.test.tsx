@@ -6,10 +6,6 @@ import { invalidateStPodReadiness, markStPodReady, markStPodTimeout } from 'app/
 
 import { StPodPendingEllipsis } from './StPodPendingEllipsis';
 
-jest.mock('app/core/navigation/STPodHealthPoller', () => ({
-  STPodHealthPoller: () => null,
-}));
-
 describe('StPodPendingEllipsis', () => {
   beforeEach(async () => {
     invalidateStPodReadiness();
