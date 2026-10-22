@@ -45,7 +45,10 @@ func nonceMiddleware(next http.Handler, logger log.Logger) http.Handler {
 func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		hosts := CSPHostLists{FormActionAdditionalHosts: cfg.FormActionAdditionalHosts}
+		hosts := CSPHostLists{
+			FrameAncestorHosts:        cfg.AllowEmbeddingHosts,
+			FormActionAdditionalHosts: cfg.FormActionAdditionalHosts,
+		}
 		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, hosts, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy", policy)
 		next.ServeHTTP(rw, req)
@@ -55,7 +58,10 @@ func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.
 func cspReportOnlyMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		hosts := CSPHostLists{FormActionAdditionalHosts: cfg.FormActionAdditionalHosts}
+		hosts := CSPHostLists{
+			FrameAncestorHosts:        cfg.AllowEmbeddingHosts,
+			FormActionAdditionalHosts: cfg.FormActionAdditionalHosts,
+		}
 		policy := ReplacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, hosts, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy-Report-Only", policy)
 		next.ServeHTTP(rw, req)
