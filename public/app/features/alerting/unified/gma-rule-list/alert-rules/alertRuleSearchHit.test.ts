@@ -1,13 +1,13 @@
-import { toAlertRuleSearchHit } from './alertRuleSearchHit';
+import { alertRuleSearchHitSchema } from './alertRuleSearchHit';
 
-function toHit(fields?: Record<string, unknown>) {
-  return toAlertRuleSearchHit({
+function toHit(fields?: unknown) {
+  return alertRuleSearchHitSchema.parse({
     resource: { group: 'rules.alerting.grafana.app', kind: 'AlertRule', resource: 'alertrules', name: 'rule-1' },
     fields,
   });
 }
 
-describe('toAlertRuleSearchHit', () => {
+describe('alertRuleSearchHitSchema', () => {
   it('reads the row fields from the search hit', () => {
     const hit = toHit({ title: 'CPU high', folder: 'folder-1', paused: true, state: 'Firing', health: 'OK' });
 
@@ -34,8 +34,11 @@ describe('toAlertRuleSearchHit', () => {
     });
   });
 
-  it('leaves status unset when the search returned no fields', () => {
-    expect(toHit()).toEqual({ uid: 'rule-1', title: 'rule-1' });
+  it.each([
+    { name: 'no fields', fields: undefined },
+    { name: 'fields that are not an object', fields: 'title=CPU high' },
+  ])('falls back to the rule UID alone when the search returned $name', ({ fields }) => {
+    expect(toHit(fields)).toEqual({ uid: 'rule-1', title: 'rule-1' });
   });
 
   it.each([

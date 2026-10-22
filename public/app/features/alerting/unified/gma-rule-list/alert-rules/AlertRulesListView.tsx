@@ -45,8 +45,8 @@ export function AlertRulesListView() {
     <Stack direction="column" gap={0.5}>
       <ResultCount kind="alert" total={total} />
       <RuleRowList>
-        {items.map((hit) => (
-          <AlertRuleListEntry key={hit.uid} hit={hit} />
+        {items.map((searchHit) => (
+          <AlertRuleListEntry key={searchHit.uid} searchHit={searchHit} />
         ))}
       </RuleRowList>
       <LoadMoreFooter

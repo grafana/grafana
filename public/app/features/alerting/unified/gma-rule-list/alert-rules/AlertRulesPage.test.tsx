@@ -151,33 +151,8 @@ describe('AlertRulesPage', () => {
     expect(callCount()).toBe(2);
   });
 
-  it('keeps loaded rows visible when Load more fails and repeats the same continuation request on Retry', async () => {
+  it('keeps loaded rows when Load more fails, and reloads them with fresh tokens on Retry', async () => {
     let failNext = true;
-    const continuations = mockPagedSearch(() => {
-      if (failNext) {
-        failNext = false;
-        return HttpResponse.json({ message: 'boom' }, { status: 500 });
-      }
-      return secondPage();
-    });
-
-    render(<AlertRulesPage />);
-
-    expect(await screen.findByText('CPU high')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
-
-    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
-    expect(screen.getByText('CPU high')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-
-    expect(await screen.findByText('Disk full')).toBeInTheDocument();
-    expect(screen.getByText('CPU high')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok', 'tok']);
-  });
-
-  it('restarts from the first page on Retry when the server rejected the continuation token', async () => {
-    let rejectNext = true;
     const continuations = mockPagedSearch((token) => {
       if (token === 'tok') {
         return HttpResponse.json({
@@ -185,8 +160,8 @@ describe('AlertRulesPage', () => {
           metadata: { continue: 'tok-2' },
         });
       }
-      if (rejectNext) {
-        rejectNext = false;
+      if (failNext) {
+        failNext = false;
         return HttpResponse.json({ message: 'expired' }, { status: 410 });
       }
       return HttpResponse.json({ items: [ruleItem('alert', 'rule-3', 'Memory high', 'folder-1')], metadata: {} });
@@ -198,13 +173,43 @@ describe('AlertRulesPage', () => {
     await screen.findByText('Disk full');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('CPU high')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    // Only the first page is fetched again; the pages after it were built on the rejected chain.
-    await waitFor(() => expect(screen.queryByText('Disk full')).not.toBeInTheDocument());
+    // Retry reloads both loaded pages from the first one; the failed page is not requested again.
+    await waitFor(() => expect(continuations).toEqual([null, 'tok', 'tok-2', null, 'tok']));
+    expect(await screen.findByRole('button', { name: 'Load more' })).toBeEnabled();
     expect(screen.getByText('CPU high')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok', 'tok-2', null]);
+    expect(screen.getByText('Disk full')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+    expect(await screen.findByText('Memory high')).toBeInTheDocument();
+  });
+
+  it('keeps loaded rows and names the refresh as failed when the reload on Retry fails too', async () => {
+    let calls = 0;
+    server.use(
+      http.post(ruleSearchUrl('alert'), () => {
+        calls += 1;
+        if (calls === 1) {
+          return HttpResponse.json({
+            items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],
+            metadata: { continue: 'tok' },
+          });
+        }
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      })
+    );
+
+    render(<AlertRulesPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
+    expect(screen.getByText('CPU high')).toBeInTheDocument();
   });
 
   it('loads one page once when Load more is double clicked', async () => {

@@ -23,7 +23,7 @@ describe('AlertRuleListEntry', () => {
 
     render(
       <ul>
-        <AlertRuleListEntry hit={{ uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1' }} />
+        <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1' }} />
       </ul>
     );
 

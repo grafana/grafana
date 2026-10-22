@@ -1,11 +1,9 @@
+import * as z from 'zod';
+
 import {
   type AlertRuleAlertRuleHealth,
   type AlertRuleAlertRuleState,
-  type ListAlertRuleSearchRulesV0Alpha1SearchResultHit,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-
-import { asBoolean, asOneOf, asString } from '../rule-search/searchHitFields';
-import { keysOf } from '../shared/keysOf';
 
 export interface AlertRuleSearchHit {
   uid: string;
@@ -17,32 +15,46 @@ export interface AlertRuleSearchHit {
   health?: AlertRuleAlertRuleHealth;
 }
 
-export function toAlertRuleSearchHit(item: ListAlertRuleSearchRulesV0Alpha1SearchResultHit): AlertRuleSearchHit {
-  const fields: Record<string, unknown> = item.fields ?? {};
-
-  return {
-    uid: item.resource.name,
-    title: asString(fields.title) ?? item.resource.name,
-    folderUid: asString(fields.folder),
-    paused: asBoolean(fields.paused),
-    state: asOneOf(fields.state, ALERT_RULE_STATES),
-    health: asOneOf(fields.health, ALERT_RULE_HEALTHS),
-  };
-}
-
 // Keyed by the generated unions, so a value the API adds or drops fails the type check here.
-const ALERT_RULE_STATES = keysOf<AlertRuleAlertRuleState>({
-  Inactive: true,
-  Healthy: true,
-  Firing: true,
-  Pending: true,
-  Recovering: true,
+const ALERT_RULE_STATES = {
+  Inactive: 'Inactive',
+  Healthy: 'Healthy',
+  Firing: 'Firing',
+  Pending: 'Pending',
+  Recovering: 'Recovering',
+} satisfies Record<AlertRuleAlertRuleState, AlertRuleAlertRuleState>;
+
+const ALERT_RULE_HEALTHS = {
+  Unknown: 'Unknown',
+  OK: 'OK',
+  Paused: 'Paused',
+  Error: 'Error',
+  NoData: 'NoData',
+} satisfies Record<AlertRuleAlertRuleHealth, AlertRuleAlertRuleHealth>;
+
+// Search fields are untyped in the API. A field that is missing or fails its check reads as absent
+// instead of failing the whole hit.
+const alertRuleSearchFieldsSchema = z.object({
+  title: z.string().optional().catch(undefined),
+  folder: z.string().optional().catch(undefined),
+  paused: z.boolean().optional().catch(undefined),
+  state: z.enum(ALERT_RULE_STATES).optional().catch(undefined),
+  health: z.enum(ALERT_RULE_HEALTHS).optional().catch(undefined),
 });
 
-const ALERT_RULE_HEALTHS = keysOf<AlertRuleAlertRuleHealth>({
-  Unknown: true,
-  OK: true,
-  Paused: true,
-  Error: true,
-  NoData: true,
-});
+/** Parses one search item straight into the row's shape. */
+export const alertRuleSearchHitSchema = z
+  .object({
+    resource: z.object({ name: z.string() }),
+    fields: alertRuleSearchFieldsSchema.catch({}),
+  })
+  .transform(
+    ({ resource, fields }): AlertRuleSearchHit => ({
+      uid: resource.name,
+      title: fields.title ?? resource.name,
+      folderUid: fields.folder,
+      paused: fields.paused,
+      state: fields.state,
+      health: fields.health,
+    })
+  );

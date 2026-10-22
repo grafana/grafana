@@ -40,4 +40,26 @@ describe('AlertRulesListView', () => {
     expect(await screen.findByText('Memory high')).toBeInTheDocument();
     expect(screen.getByText('2 alert rules')).toBeInTheDocument();
   });
+
+  it('shows a retryable error when the response is not a search result', async () => {
+    mockRuleSearch('alert', () => ({ items: [{ fields: { title: 'CPU high' } }], metadata: {} }));
+
+    render(<AlertRulesListView />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.queryByText('CPU high')).not.toBeInTheDocument();
+  });
+
+  it('lists the rules without a count when the total is not a number', async () => {
+    mockRuleSearch('alert', () => ({
+      items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],
+      metadata: { totalHits: '1000', totalHitsRelation: 'eq' },
+    }));
+
+    render(<AlertRulesListView />);
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(screen.queryByText(/alert rules?$/)).not.toBeInTheDocument();
+  });
 });

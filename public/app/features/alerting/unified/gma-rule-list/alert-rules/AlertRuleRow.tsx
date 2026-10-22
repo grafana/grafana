@@ -10,22 +10,22 @@ import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleRowProps {
-  hit: AlertRuleSearchHit;
+  searchHit: AlertRuleSearchHit;
   /** Absent while the folder path loads or when its lookup failed. */
   folderPath?: string[];
 }
 
 /** Presentation-only; missing state/health renders "unavailable", never healthy. */
-export function AlertRuleRow({ hit, folderPath }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="alert" state={hit.state} health={hit.health} paused={hit.paused} />}
+      icon={<RuleStatusIcon kind="alert" state={searchHit.state} health={searchHit.health} paused={searchHit.paused} />}
       title={
-        <TextLink id={titleId} href={grafanaRulesNav.viewLink(hit.uid)} color="primary" inline={false}>
-          {hit.title}
+        <TextLink id={titleId} href={grafanaRulesNav.viewLink(searchHit.uid)} color="primary" inline={false}>
+          {searchHit.title}
         </TextLink>
       }
       meta={[folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />]}

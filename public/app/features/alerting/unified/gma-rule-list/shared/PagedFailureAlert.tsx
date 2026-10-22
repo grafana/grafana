@@ -1,7 +1,11 @@
 import { t } from '@grafana/i18n';
 
 import { InlineRequestError } from './InlineRequestError';
-import { type PagedFailure } from './pagedQuery';
+
+export interface PagedFailure {
+  kind: 'load-more' | 'refresh';
+  error: unknown;
+}
 
 interface PagedFailureAlertProps {
   failure: PagedFailure;
