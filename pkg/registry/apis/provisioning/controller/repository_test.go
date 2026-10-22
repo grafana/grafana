@@ -2909,6 +2909,31 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 	}
 }
 
+// TestRepositoryController_process_NotFoundIsNoOp verifies that a key whose
+// repository no longer exists reconciles as a no-op rather than a failure.
+// There is nothing left to reconcile, and the error this used to return was
+// never retryable, so it recovered nothing and only recorded a failure for the
+// expected terminal state of every delete.
+func TestRepositoryController_process_NotFoundIsNoOp(t *testing.T) {
+	namespace := "default"
+	repoName := "deleted-repo"
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("Get", repoName).
+		Return(nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), repoName))
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	rc := &RepositoryController{
+		repos:  informer.NewCachedRepositoryGetter(mockLister),
+		logger: logging.DefaultLogger,
+		tracer: tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+	mockNamespaceLister.AssertExpectations(t)
+}
+
 // TestRepositoryController_process_TokenRefreshedWhileOverQuota verifies that auth token
 // refresh is not skipped when a repository is blocked due to namespace quota being exceeded.
 func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T) {

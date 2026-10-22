@@ -1,3 +1,4 @@
+import { store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -23,6 +24,8 @@ jest.mock('@grafana/runtime', () => ({
 
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
 const ASSISTANT = 'grafana-assistant-app';
+const PRESENTATION_KEY = 'grafana.navigation.extensionSidebarPresentation';
+const LEGACY_PRESENTATION_KEY = 'grafana.navigation.extensionSidebarPresentationBySurface';
 
 describe('extensionSidebarLayout', () => {
   afterEach(() => {
@@ -53,25 +56,43 @@ describe('extensionSidebarLayout', () => {
     expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('floats every page by default', () => {
-    expect(getRequestedExtensionSidebarPresentation('/d/abc/my-dashboard')).toBe('floating');
-    expect(getRequestedExtensionSidebarPresentation('/dashboard/new')).toBe('floating');
-    expect(getRequestedExtensionSidebarPresentation('/notebooks/xyz')).toBe('floating');
-    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('floating');
+  it('floats by default', () => {
+    expect(getRequestedExtensionSidebarPresentation()).toBe('floating');
   });
 
-  it('remembers the layout for dashboards and notebooks apart from other pages', () => {
+  it('remembers one layout for every page', () => {
     setTestFlags({ [FLOATING_FLAG]: true });
+    setExtensionSidebarPresentation('docked');
+    expect(store.get(PRESENTATION_KEY)).toBe('docked');
 
-    setExtensionSidebarPresentation('docked', '/d/abc');
-    expect(getRequestedExtensionSidebarPresentation('/notebooks/xyz')).toBe('docked');
-    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('floating');
+    setExtensionSidebarPresentation('floating');
+    expect(store.get(PRESENTATION_KEY)).toBe('floating');
+    // A later page load reads the same choice, wherever it opens.
+    resetExtensionSidebarPresentationForTests({ keepStorage: true });
+    expect(getRequestedExtensionSidebarPresentation()).toBe('floating');
+  });
 
-    setExtensionSidebarPresentation('docked', '/explore');
-    expect(getRequestedExtensionSidebarPresentation('/alerting/list')).toBe('docked');
-    setExtensionSidebarPresentation('floating', '/d/abc');
-    expect(getRequestedExtensionSidebarPresentation('/d/abc')).toBe('floating');
-    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('docked');
+  describe('a layout remembered per kind of page', () => {
+    it.each([
+      [{ dashboardOrNotebook: 'floating', other: 'docked' }, 'floating'],
+      [{ dashboardOrNotebook: 'docked', other: 'floating' }, 'floating'],
+      [{ dashboardOrNotebook: 'docked', other: 'docked' }, 'docked'],
+      [{ other: 'docked' }, 'docked'],
+      [{}, 'floating'],
+    ])('reads %j as %s', (legacy, expected) => {
+      store.setObject(LEGACY_PRESENTATION_KEY, legacy);
+      expect(getRequestedExtensionSidebarPresentation()).toBe(expected);
+    });
+
+    it('is replaced by the first pick', () => {
+      setTestFlags({ [FLOATING_FLAG]: true });
+      store.setObject(LEGACY_PRESENTATION_KEY, { dashboardOrNotebook: 'floating', other: 'docked' });
+
+      setExtensionSidebarPresentation('docked');
+
+      expect(store.get(PRESENTATION_KEY)).toBe('docked');
+      expect(store.get(LEGACY_PRESENTATION_KEY)).toBeUndefined();
+    });
   });
 
   it('holds the floating sidebar hidden until every hold is released, or all are released at once', () => {
@@ -112,24 +133,18 @@ describe('extensionSidebarLayout', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('reports each layout change with the surface it applies to, and nothing for an unchanged or refused one', () => {
-    setExtensionSidebarPresentation('docked', '/d/abc');
-    setExtensionSidebarPresentation('docked', '/d/abc');
+  it('reports each layout change, and nothing for an unchanged or refused one', () => {
+    setExtensionSidebarPresentation('docked');
+    setExtensionSidebarPresentation('docked');
     // Floating is refused while the flag is off.
-    setExtensionSidebarPresentation('floating', '/d/abc');
+    setExtensionSidebarPresentation('floating');
     setTestFlags({ [FLOATING_FLAG]: true });
-    setExtensionSidebarPresentation('floating', '/explore');
-    setExtensionSidebarPresentation('floating', '/d/abc');
+    setExtensionSidebarPresentation('floating');
+    setExtensionSidebarPresentation('floating');
 
     expect(jest.mocked(reportInteraction).mock.calls).toEqual([
-      [
-        'grafana_extension_sidebar_presentation_changed',
-        { from: 'floating', to: 'docked', surface: 'dashboardOrNotebook' },
-      ],
-      [
-        'grafana_extension_sidebar_presentation_changed',
-        { from: 'docked', to: 'floating', surface: 'dashboardOrNotebook' },
-      ],
+      ['grafana_extension_sidebar_presentation_changed', { from: 'floating', to: 'docked' }],
+      ['grafana_extension_sidebar_presentation_changed', { from: 'docked', to: 'floating' }],
     ]);
   });
 
