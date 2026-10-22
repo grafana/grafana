@@ -368,12 +368,10 @@ func apiGroup(path string) string {
 	return group
 }
 
-// breakerState is the group breaker's state, read without changing it. Only
-// entries built outside newHandlerEntry, in tests, lack a view.
+// breakerState is the group breaker's state, read without changing it:
+// gobreaker's own State moves an open breaker whose timeout passed to
+// half-open.
 func (e servingEntry) breakerState() gobreaker.State {
-	if e.breakerView == nil {
-		return e.breaker.State()
-	}
 	return e.breakerView.State()
 }
 

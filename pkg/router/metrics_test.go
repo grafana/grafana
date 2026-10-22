@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// metricsService serves group through a real forward proxy to upstream.
+// metricsService serves group through a real reverse proxy to upstream.
 func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend := proxyBackend(t, group, upstream, &http.Transport{})
