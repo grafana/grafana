@@ -4,9 +4,12 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1/search"
 )
 
+// Version routes rather than kind routes: a route under alertrules/ would
+// shadow the resource. The generic per-kind /search endpoint is left to the
+// unified index; these also serve rules from legacy storage.
 searchRoutes: {
 	namespaced: {
-		"/alertrules/searchRules": {
+		"/searchAlertRules": {
 			POST: {
 				// These search routes are experimental and subject to change without deprecation until stabilized
 				// Codegen requires a Kubernetes verb prefix; search is a read.
@@ -21,7 +24,7 @@ searchRoutes: {
 				}
 			}
 		}
-		"/recordingrules/searchRules": {
+		"/searchRecordingRules": {
 			POST: {
 				// These search routes are experimental and subject to change without deprecation until stabilized
 				name: "listRecordingRuleSearchRulesV0alpha1"

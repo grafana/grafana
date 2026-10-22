@@ -322,7 +322,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.All, nil)
 
 	// Register modules provided by other builds (e.g. enterprise).
-	s.moduleRegisterer.RegisterModules(m)
+	s.moduleRegisterer.RegisterModules(m, s)
 
 	return m.Run(s.context)
 }
@@ -332,24 +332,20 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer)
+	r, err := grafanarouter.ProvideGrafanaRouter(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer, r)
 	if err != nil {
 		return nil, err
 	}
 
+	// The router service runs the loader's own lifecycle, if it has one.
 	if err := routerSvc.RegisterTargetRoutes(s.httpServerRouter, s.healthNotifier); err != nil {
 		return nil, err
 	}
-
-	// Some editions' loaders own a background lifecycle of their own (e.g.
-	// informers watching a remote apiserver to feed Notify's wake signal).
-	// Run it alongside the router service under one module so it starts and
-	// stops with the router rather than leaking independently of it.
-	lifecycle, ok := loader.(services.Service)
-	if !ok {
-		return routerSvc, nil
-	}
-	return newCompositeService(routerSvc, lifecycle)
+	return routerSvc, nil
 }
 
 // newCompositeService runs several dskit services under one, so a module
@@ -516,6 +512,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 		resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 		resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
 		resourcepb.BlobStore_ServiceDesc.ServiceName,
+		resourcepb.BlobStoreStreaming_ServiceDesc.ServiceName,
 		resourcepb.BulkStore_ServiceDesc.ServiceName,
 		resourcepb.Diagnostics_ServiceDesc.ServiceName,
 		resourcepb.Quotas_ServiceDesc.ServiceName,
@@ -548,7 +545,7 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	serviceOptions := s.unifiedServiceOptions()
+	serviceOptions := append(s.unifiedServiceOptions(), sql.WithGRPCDrain(s.grpcService.Drain))
 	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err

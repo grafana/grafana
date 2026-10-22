@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"sync/atomic"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -15,6 +16,29 @@ import (
 )
 
 type routerSpanKey struct{}
+
+const routerTracerName = "github.com/grafana/grafana/pkg/router"
+
+// routerTracerCache holds the router's tracer and the provider it came from.
+type routerTracerCache struct {
+	provider trace.TracerProvider
+	tracer   trace.Tracer
+}
+
+var cachedRouterTracer atomic.Pointer[routerTracerCache]
+
+// routerTracer returns the router's tracer without taking the provider's lock
+// on every request. It follows otel.SetTracerProvider, which Grafana may call
+// more than once: a tracer from an earlier provider is never reused.
+func routerTracer() trace.Tracer {
+	provider := otel.GetTracerProvider()
+	if cached := cachedRouterTracer.Load(); cached != nil && cached.provider == provider {
+		return cached.tracer
+	}
+	tracer := provider.Tracer(routerTracerName)
+	cachedRouterTracer.Store(&routerTracerCache{provider: provider, tracer: tracer})
+	return tracer
+}
 
 func routerTraceContext(req *http.Request) context.Context {
 	ctx := req.Context()
@@ -36,7 +60,7 @@ func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group st
 	attributes = append(attributes,
 		attribute.String("grafana.router.group", group),
 		semconv.HTTPRequestMethodKey.String(traceHTTPMethod(req.Method)))
-	ctx, span := otel.Tracer("github.com/grafana/grafana/pkg/router").Start(ctx, name,
+	ctx, span := routerTracer().Start(ctx, name,
 		trace.WithSpanKind(trace.SpanKindInternal), trace.WithAttributes(attributes...))
 	ctx = context.WithValue(ctx, routerSpanKey{}, span.SpanContext())
 	rec := newStatusRecorder(w)

@@ -361,7 +361,7 @@ func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []v1.InhibitionRule)
 		}
 		ir.TargetMatchers = tm
 
-		c.InhibitRules = append(c.InhibitRules, ir.InhibitRule)
+		c.InhibitRules = append(c.InhibitRules, ir)
 	}
 
 	d, err := yaml.Marshal(c)

@@ -44,3 +44,21 @@ func TestSnapshotBlobReferenceRoundTrip(t *testing.T) {
 		})
 	}
 }
+
+func TestSnapshotGetExternalDeleteURL(t *testing.T) {
+	for _, tc := range []struct{ name, externalURL, deleteKey, want string }{
+		{"root", "https://example.com/dashboard/snapshot/public", "secret", "https://example.com/api/snapshots-delete/secret"},
+		{"subpath", "https://example.com/grafana/dashboard/snapshot/public?orgId=1#view", "secret", "https://example.com/grafana/api/snapshots-delete/secret"},
+		{"missing key", "https://example.com/dashboard/snapshot/public", "", ""},
+		{"invalid URL", ":invalid", "secret", ""},
+		{"relative URL", "/dashboard/snapshot/public", "secret", ""},
+		{"unexpected path", "https://example.com/other", "secret", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			snap := &Snapshot{Spec: SnapshotSpec{ExternalUrl: &tc.externalURL, DeleteKey: &tc.deleteKey}}
+			require.Equal(t, tc.want, snap.GetExternalDeleteURL())
+			require.Empty(t, snap.Annotations)
+		})
+	}
+	require.Empty(t, (&Snapshot{}).GetExternalDeleteURL())
+}

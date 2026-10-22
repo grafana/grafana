@@ -21,15 +21,17 @@ export function transformToOTLP(data: MutableDataFrame): {
     batches: [],
   };
 
-  // Lookup object to see which batch contains spans for which services
-  let services: { [key: string]: number } = {};
+  // Lookup object to see which batch contains spans for which resource
+  let resources: { [key: string]: number } = {};
 
   for (let i = 0; i < data.length; i++) {
     const span = data.get(i);
 
-    // Group spans based on service
-    if (services[span.serviceName] === undefined) {
-      services[span.serviceName] = result.batches.length;
+    // Group spans based on resource: spans of one service can come from several resources,
+    // e.g. replicas of the same deployment, which differ only in their service tags.
+    const resourceKey = getResourceKey(span);
+    if (resources[resourceKey] === undefined) {
+      resources[resourceKey] = result.batches.length;
       result.batches.push({
         resource: {
           attributes: [],
@@ -43,7 +45,7 @@ export function transformToOTLP(data: MutableDataFrame): {
       });
     }
 
-    let batchIndex = services[span.serviceName];
+    let batchIndex = resources[resourceKey];
 
     // Populate resource attributes from service tags
     if (result.batches[batchIndex].resource!.attributes.length === 0) {
@@ -80,6 +82,13 @@ export function transformToOTLP(data: MutableDataFrame): {
   }
 
   return result;
+}
+
+function getResourceKey(span: TraceSpanRow): string {
+  const tags = (span.serviceTags ?? [])
+    .map((tag) => [tag.key, tag.value])
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return JSON.stringify([span.serviceName, tags]);
 }
 
 type OTLPSpanKind = collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind;

@@ -6,10 +6,11 @@ import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/f
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { AllClearGrot, SummaryCard, SummaryCardPrefix } from './SummaryCard';
 import { type FilterScope, formatFilterLabel } from './filterSelection';
 import { severityLevelColor } from './severity';
 import { type FiringAlertsData } from './useFiringAlerts';
@@ -51,16 +52,16 @@ function severityLabel(level?: SeverityLevel): string {
 function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
   switch (filterScope.kind) {
     case 'all':
-      return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+      return t('home.firing-alerts-card.empty', 'All clear! No alerts are firing.');
     case 'label':
-      return t('home.firing-alerts-card.empty-selected-label', 'No firing alerts with {{label}}.', {
+      return t('home.firing-alerts-card.empty-selected-label', 'All clear! No alerts are firing with {{label}}.', {
         label: formatFilterLabel(filterScope.label),
         interpolation: { escapeValue: false },
       });
     case 'default':
       return hasTeams
-        ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-        : t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+        ? t('home.firing-alerts-card.empty-teams', 'All clear! No alerts are firing for your teams.')
+        : t('home.firing-alerts-card.empty', 'All clear! No alerts are firing.');
   }
 }
 
@@ -153,17 +154,19 @@ export function FiringAlertsCard({
                 </SummaryCardPrefix>
               )
             }
-            trailing={<SummaryCardAge date={startedAt} />}
+            trailing={<TimeAgoCell date={startedAt} />}
             href={detailHref}
             onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
           />
         );
       }}
       emptyMessage={emptyMessage(filterScope, hasTeams)}
+      emptyImage={<AllClearGrot />}
       emptyAction={
         canCreate ? (
           <LinkButton
             variant="primary"
+            size="sm"
             icon="plus"
             href={newRuleHref}
             onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' })}

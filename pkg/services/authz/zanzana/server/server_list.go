@@ -156,7 +156,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 
 	var (
 		folderRelation     = common.SubresourceRelation(relation)
-		folderListRelation = common.FolderPermissionRelation(relation) // Optimized for permission management
+		folderListRelation = common.FolderContentPermissionRelation(relation)
 		resourceCtx        = resource.Context()
 	)
 

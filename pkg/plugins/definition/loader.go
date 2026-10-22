@@ -91,7 +91,7 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, opts Options) (PluginDefi
 	}
 
 	if opts.AppManifest {
-		m, err := loadManifest(rootfs)
+		m, err := LoadManifest(rootfs)
 		if err != nil {
 			// A malformed manifest must not take down every other plugin's API:
 			// this runs during server startup via DI, so serve the plugin
@@ -124,7 +124,9 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, opts Options) (PluginDefi
 	return info, nil
 }
 
-func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
+// LoadManifest returns the app-sdk manifest a plugin ships at the root of its
+// files as app-sdk-manifest.json, or nil if it has none.
+func LoadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 	f, err := rootfs.Open(appSDKManifestFile)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -182,5 +184,6 @@ func ParseManifest(raw []byte) (*app.ManifestData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("converting AppManifestSpec to ManifestData: %w", err)
 	}
+	MigrateDeprecatedRoutes(&manifest)
 	return &manifest, nil
 }

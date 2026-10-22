@@ -69,13 +69,19 @@ const lokiQuery = (refId: string): DataQuery => ({ refId, datasource: { uid: 'lo
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
-const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi, range: TimeRange = timeRange) => (
+const explorer = (
+  queries: DataQuery[],
+  paneDatasource?: DataSourceApi,
+  range: TimeRange = timeRange,
+  onAddToQuery?: (refId: string, text: string) => void
+) => (
   <SignalExplorer
     queries={queries}
     paneDatasource={paneDatasource}
     timeRange={range}
     scroller={scrollerMock}
     toggleButton={<button type="button">Collapse outline</button>}
+    onAddToQuery={onAddToQuery}
   />
 );
 
@@ -84,7 +90,11 @@ const seedDataSources = () => {
   setDatasourcePluginMetas(pluginMetas);
 };
 
-const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
+const setup = async (
+  queries: DataQuery[],
+  paneDatasource?: DataSourceApi,
+  onAddToQuery?: (refId: string, text: string) => void
+) => {
   scrollerMock.scroll = jest.fn();
   seedDataSources();
 
@@ -116,7 +126,7 @@ const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
     ],
   });
 
-  const rendered = render(explorer(queries, paneDatasource));
+  const rendered = render(explorer(queries, paneDatasource, timeRange, onAddToQuery));
 
   // Both datasource hooks resolve a few promise turns after the first paint. Settling them here
   // keeps those state updates inside act() and means the assertions below see resolved cards.
@@ -155,7 +165,9 @@ describe('<SignalExplorer />', () => {
 
     expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
     expect(screen.getByTestId('signal-card-B')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Jump to query B (gdev-loki)' })).toBeInTheDocument();
   });
 
@@ -171,9 +183,11 @@ describe('<SignalExplorer />', () => {
     render(explorer([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]));
 
     // The list is async, so the first paint only has the ref's own fields to label the card with.
-    expect(screen.getByRole('button', { name: 'Jump to query A (prometheus)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /datasource explorer for query A \(prometheus\)$/ })).toBeInTheDocument();
 
-    expect(await screen.findByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /datasource explorer for query A \(gdev-prometheus\)$/ })
+    ).toBeInTheDocument();
   });
 
   it('takes a card logo from the plugin meta of the datasource type', async () => {
@@ -185,15 +199,18 @@ describe('<SignalExplorer />', () => {
   it('falls back to the pane datasource for queries without their own ref', async () => {
     await setup([{ refId: 'A' }], { uid: 'prom-uid', type: 'prometheus' } as DataSourceApi);
 
-    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
   });
 
   it('only makes Prometheus cards expandable', async () => {
     await setup([lokiQuery('A'), promQuery('B')]);
 
     expect(screen.queryByRole('button', { name: /datasource explorer for query A/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+    ).toBeInTheDocument();
   });
 
   it('treats Prometheus flavors as expandable', async () => {
@@ -202,14 +219,16 @@ describe('<SignalExplorer />', () => {
       { refId: 'B', datasource: { uid: 'amp-uid', type: 'grafana-amazonprometheus-datasource' } },
     ]);
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-amp)' })
+    ).toBeInTheDocument();
   });
 
   it('reveals the metrics explorer when a Prometheus card is expanded', async () => {
     const { user } = await setup([lokiQuery('A'), promQuery('B')]);
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
 
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
   });
@@ -217,22 +236,28 @@ describe('<SignalExplorer />', () => {
   it('collapses a card again without affecting the others', async () => {
     const { user } = await setup([lokiQuery('Z'), promQuery('A'), promQuery('B')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
     expect(screen.getAllByPlaceholderText('Search metrics')).toHaveLength(2);
 
-    await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    );
 
     expect(screen.getAllByPlaceholderText('Search metrics')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query B' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query B (gdev-prometheus)' })
+    ).toBeInTheDocument();
   });
 
   it('keeps multiple cards expanded independently', async () => {
     const { user } = await setup([lokiQuery('Z'), promQuery('A'), promQuery('B')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
 
     expect(screen.getAllByPlaceholderText('Search metrics')).toHaveLength(2);
     expect(screen.getAllByRole('button', { expanded: true })).toHaveLength(2);
@@ -258,11 +283,13 @@ describe('<SignalExplorer />', () => {
     rerender(explorer([promQuery('A', 'u')]));
     rerender(explorer([promQuery('A', 'up')]));
 
-    expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search metrics')).toHaveValue('node_cpu');
   });
 
-  it('scrolls to the query row when a card is clicked', async () => {
+  it('scrolls to the query row when the jump button is clicked', async () => {
     const { user } = await setup([lokiQuery('A')]);
 
     await user.click(screen.getByRole('button', { name: /^Jump to query A/ }));
@@ -273,14 +300,16 @@ describe('<SignalExplorer />', () => {
   it('forgets a deleted query, so a new one reusing its refId is not already expanded', async () => {
     const { user, rerender } = await setup([lokiQuery('A'), promQuery('B')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
 
     rerender(explorer([lokiQuery('A')]));
     // Explore assigns the lowest unused refId, so the next query added is B again.
     rerender(explorer([lokiQuery('A'), promQuery('B')]));
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
   });
 
@@ -291,14 +320,16 @@ describe('<SignalExplorer />', () => {
     rerender(explorer([lokiQuery('A')]));
     rerender(explorer([promQuery('A')]));
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
   });
 
   it('keeps the remaining cards expanded when another query is deleted', async () => {
     const { user, rerender } = await setup([promQuery('A'), promQuery('B'), promQuery('C')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query C' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query C (gdev-prometheus)' }));
 
     rerender(explorer([promQuery('A'), promQuery('C')]));
 
@@ -316,20 +347,31 @@ describe('<SignalExplorer />', () => {
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
   });
 
-  it('expanding a card does not also jump to its query, since the chevron does not bubble', async () => {
+  it('scrolls to the query row from an open Prometheus card only through its jump button', async () => {
     const { user } = await setup([lokiQuery('A'), promQuery('B')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
 
+    expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Jump to query B (gdev-prometheus)' }));
+
+    expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
+    expect(scrollerMock.scroll).toHaveBeenCalledWith({ top: -10, behavior: 'smooth' });
+    expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
   });
 
   describe('default expansion', () => {
     it('opens the first card when it is Prometheus', async () => {
       await setup([promQuery('A'), promQuery('B')]);
 
-      expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+      ).toBeInTheDocument();
     });
 
     it('keeps every card closed when the first is not Prometheus', async () => {
@@ -342,16 +384,22 @@ describe('<SignalExplorer />', () => {
     it('opens the first card once its datasource resolves', async () => {
       await setup([{ refId: 'A', datasource: { uid: 'prom-uid' } }]);
 
-      expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+      ).toBeInTheDocument();
     });
 
     it('leaves the first card closed once the user collapses it', async () => {
       const { user, rerender } = await setup([promQuery('A')]);
 
-      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+      );
       rerender(explorer([promQuery('A', 'up')]));
 
-      expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+      ).toBeInTheDocument();
     });
 
     // Its type never resolves, so waiting on it would leave the decision to whichever card leads next.
@@ -360,7 +408,9 @@ describe('<SignalExplorer />', () => {
 
       rerender(explorer([promQuery('B')]));
 
-      expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+      ).toBeInTheDocument();
     });
 
     it('does not open the card that becomes first when the first query is deleted', async () => {
@@ -368,7 +418,9 @@ describe('<SignalExplorer />', () => {
 
       rerender(explorer([promQuery('B')]));
 
-      expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+      ).toBeInTheDocument();
     });
   });
 
@@ -381,7 +433,9 @@ describe('<SignalExplorer />', () => {
       useMetricCatalogMock.mockReturnValue({ metrics: catalog, truncated: false, loading: false });
       const rendered = await setup([promQuery('A'), promQuery('B')]);
       if (refId === 'B') {
-        await rendered.user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+        await rendered.user.click(
+          screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+        );
       }
       return rendered;
     };
@@ -435,17 +489,23 @@ describe('<SignalExplorer />', () => {
       const { user } = await openCard('A');
       await selectUpIn(user, 'A');
 
-      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+      );
 
       expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
     });
 
     it('stays open when another card collapses', async () => {
       const { user } = await openCard('A');
-      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+      );
       await selectUpIn(user, 'A');
 
-      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query B' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query B (gdev-prometheus)' })
+      );
 
       expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
     });
@@ -572,6 +632,70 @@ describe('<SignalExplorer />', () => {
       rerender(explorer([promQuery('A', 'up'), promQuery('B')], promPane));
 
       expect(reportInteractionMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('adding to the query', () => {
+    const codeQuery = (refId: string): DataQuery => ({ ...promQuery(refId, 'up'), editorMode: 'code' }) as DataQuery;
+    const builderQuery = (refId: string): DataQuery =>
+      ({ ...promQuery(refId, 'up'), editorMode: 'builder' }) as DataQuery;
+
+    const expandCard = (user: UserEvent, refId: string) =>
+      user.click(
+        screen.getByRole('button', { name: `Expand datasource explorer for query ${refId} (gdev-prometheus)` })
+      );
+
+    beforeEach(() => {
+      useMetricCatalogMock.mockReturnValue({
+        metrics: [{ name: 'up', type: 'gauge' }],
+        truncated: false,
+        loading: false,
+      });
+    });
+
+    it('adds to the query of the card the row belongs to', async () => {
+      const onAddToQuery = jest.fn();
+      const { user } = await setup([codeQuery('A'), codeQuery('B')], undefined, onAddToQuery);
+      await expandCard(user, 'B');
+
+      await user.click(within(screen.getByTestId('signal-card-B')).getByRole('button', { name: 'Add up to query' }));
+
+      expect(onAddToQuery).toHaveBeenCalledTimes(1);
+      expect(onAddToQuery).toHaveBeenCalledWith('B', 'up', 'name');
+    });
+
+    it('offers the button only on cards whose query is in Code mode', async () => {
+      const { user } = await setup([codeQuery('A'), builderQuery('B')], undefined, jest.fn());
+      await expandCard(user, 'B');
+
+      expect(
+        within(screen.getByTestId('signal-card-A')).getByRole('button', { name: 'Add up to query' })
+      ).toBeInTheDocument();
+      expect(
+        within(screen.getByTestId('signal-card-B')).queryByRole('button', { name: 'Add up to query' })
+      ).not.toBeInTheDocument();
+    });
+
+    // A query with an expression and no mode of its own is what Explore holds before the user toggles.
+    it('treats a query with an expression and no mode as Code mode', async () => {
+      await setup([promQuery('A', 'up')], undefined, jest.fn());
+
+      expect(screen.getByRole('button', { name: 'Add up to query' })).toBeInTheDocument();
+    });
+
+    it('picks up a switch to Builder mode on a card that is already open', async () => {
+      const { rerender } = await setup([codeQuery('A')], undefined, jest.fn());
+      expect(screen.getByRole('button', { name: 'Add up to query' })).toBeInTheDocument();
+
+      rerender(explorer([builderQuery('A')], undefined, timeRange, jest.fn()));
+
+      expect(screen.queryByRole('button', { name: 'Add up to query' })).not.toBeInTheDocument();
+    });
+
+    it('offers no button when nothing handles it', async () => {
+      await setup([codeQuery('A')]);
+
+      expect(screen.queryByRole('button', { name: 'Add up to query' })).not.toBeInTheDocument();
     });
   });
 });

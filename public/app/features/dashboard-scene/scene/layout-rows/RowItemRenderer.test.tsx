@@ -1,9 +1,9 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -11,6 +11,8 @@ import { type DashboardPlanningState } from '../types/dashboard';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 function renderRow({
   collapse = false,
@@ -35,17 +37,6 @@ function renderRow({
 }
 
 describe('RowItemRenderer', () => {
-  beforeEach(() => {
-    // New layouts mount the sidebar extension point, which calls usePluginLinks. These tests render the scene without starting that hook.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
-  });
-
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {
     renderRow({ collapse: false });
 
@@ -113,6 +104,7 @@ describe('RowItemRenderer', () => {
   it('hides the copy link button while previewing a dashboard plan (planning)', () => {
     renderRow({
       planning: {
+        phase: 'preview',
         planId: 'plan-1',
         planTitle: 'Dashboard plan',
         onBuild: () => {},

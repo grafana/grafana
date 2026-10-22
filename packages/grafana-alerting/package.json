@@ -64,8 +64,8 @@
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
-    "@storybook/addon-docs": "10.3.6",
-    "@storybook/react": "10.3.6",
+    "@storybook/addon-docs": "10.6.2",
+    "@storybook/react": "10.6.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -86,9 +86,9 @@
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
-    "@grafana/data": ">=11.6 <= 12.x",
-    "@grafana/runtime": ">=11.6 <= 12.x",
-    "@grafana/ui": ">=11.6 <= 12.x",
+    "@grafana/data": ">=13.2 <14",
+    "@grafana/runtime": ">=13.2 <14",
+    "@grafana/ui": ">=13.2 <14",
     "msw": "^2.0.0",
     "react": ">=19",
     "react-dom": ">=19"
