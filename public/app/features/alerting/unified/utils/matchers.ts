@@ -220,21 +220,21 @@ export function unquoteWithUnescape(input: string) {
     .replace(/\\\\/g, '\\');
 }
 
-export const matcherFormatter = {
-  default: ([name, operator, value]: ObjectMatcher): string => {
+export const matcherPartsFormatter = {
+  default: ([name, operator, value]: ObjectMatcher): ObjectMatcher => {
     // Value can be an empty string which we want to display as ""
     const formattedValue = value || '';
-    return `${name} ${operator} ${formattedValue}`;
+    return [name, operator, formattedValue];
   },
-  unquote: ([name, operator, value]: ObjectMatcher): string => {
+  unquote: ([name, operator, value]: ObjectMatcher): ObjectMatcher => {
     const unquotedName = unquoteWithUnescape(name);
     // Unquoted value can be an empty string which we want to display as ""
     const unquotedValue = unquoteWithUnescape(value) || '""';
-    return `${unquotedName} ${operator} ${unquotedValue}`;
+    return [unquotedName, operator, unquotedValue];
   },
 } as const;
 
-export type MatcherFormatter = keyof typeof matcherFormatter;
+export type MatcherFormatter = keyof typeof matcherPartsFormatter;
 
 export function isPromQLStyleMatcher(input: string): boolean {
   return input.startsWith('{') && input.endsWith('}');

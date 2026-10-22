@@ -10,13 +10,6 @@ import { composerApi } from './composer/composerApi';
 import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 import { getRestrictedGrafanaApisAtLoad } from './restrictedGrafanaApis';
 
-// Read once at module load by the provider.
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  actual.config.featureToggles.restrictedPluginApis = true;
-  return actual;
-});
-
 const COMPOSER_FLAG = 'grafana.dashboardComposer';
 
 describe('RestrictedGrafanaApisProvider composer', () => {
