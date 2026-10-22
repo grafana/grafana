@@ -238,20 +238,22 @@ func BuildGlobalHybridSearch(
 	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, kinds, auth)}})
 }
 
-// manifestKinds names the kind of every namespaced resource the manifests declare.
+// manifestKinds names the kind of every namespaced resource the manifests
+// declare. A resource declared in several versions takes its kind from the
+// version the targets would pick, so the two always agree.
 func manifestKinds(manifests []*app.ManifestData) map[schema.GroupResource]string {
-	kinds := map[schema.GroupResource]string{}
+	versions := map[schema.GroupVersion]bool{}
 	for _, m := range manifests {
 		if m == nil {
 			continue
 		}
 		for _, version := range m.Versions {
-			for _, kind := range version.Kinds {
-				if kind.Scope == namespacedScope {
-					kinds[schema.GroupResource{Group: m.Group, Resource: resource.ManifestResourceName(kind)}] = kind.Kind
-				}
-			}
+			versions[schema.GroupVersion{Group: m.Group, Version: version.Name}] = true
 		}
+	}
+	kinds := map[schema.GroupResource]string{}
+	for gr, gvk := range globalHybridSearchTargets(manifests, versions) {
+		kinds[gr] = gvk.Kind
 	}
 	return kinds
 }
