@@ -6327,7 +6327,7 @@
         "color": "Color",
         "color-description": "Color to use for the annotation event markers",
         "data-source": "Data source",
-        "display": "Display",
+        "display": "Show annotation controls in",
         "display-options": {
           "controls-menu": "Controls menu",
           "controls-menu-description": "Visible when the controls menu is open",

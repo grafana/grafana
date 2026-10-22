@@ -185,7 +185,7 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
   }, [hideLabel, isHidden, placement]);
 
   return (
-    <Field label={t('dashboard.sidebar.annotation.display', 'Display')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.display', 'Show annotation controls in')} noMargin>
       <Combobox options={options} value={currentValue} onChange={onChange} width="auto" minWidth={52} />
     </Field>
   );
