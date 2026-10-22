@@ -175,6 +175,33 @@ describe('combineResponses', () => {
     });
   });
 
+  it('does not silently drop a field that only exists in the newly fetched frame', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+
+    // Simulates infinite-scroll fetching an older page (logFrameB) whose documents contain a
+    // field the already-displayed page (logFrameA) doesn't have, e.g. an Elasticsearch
+    // response where only some matched documents carry a given field.
+    logFrameB.fields.push({
+      name: 'extraField',
+      type: FieldType.string,
+      config: {},
+      values: ['extraB1', 'extraB2'],
+    });
+
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(extraField).toBeDefined();
+    expect(extraField?.values).toEqual(['extraB1', 'extraB2', undefined, undefined]);
+  });
+
   it('combines metric frames', () => {
     const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {

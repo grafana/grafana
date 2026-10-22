@@ -57,11 +57,21 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 }
 
 function combineFrames(dest: DataFrame, source: DataFrame) {
+  // Grab an uncombined reference to the original time values.
+  const destOriginalTimeValuesLength = dest.fields.find((field) => field.type === FieldType.time)?.values?.length;
   // `dest` and `source` might have more or less fields, we need to go through all of them
   const totalFields = Math.max(dest.fields.length, source.fields.length);
   for (let i = 0; i < totalFields; i++) {
     // For now, skip undefined fields that exist in the new frame
     if (!dest.fields[i]) {
+      if (destOriginalTimeValuesLength === undefined) {
+        // Without a time field we cannot fill missing undefined values on the combine frame
+        continue;
+      }
+      dest.fields[i] = {
+        ...source.fields[i],
+        values: [].concat.apply(source.fields[i].values, new Array(destOriginalTimeValuesLength).fill(undefined)),
+      };
       continue;
     }
     // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
