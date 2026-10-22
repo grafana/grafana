@@ -705,7 +705,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     if (
       trigger === 'picker' &&
-      previous === 'edit' &&
+      previous !== 'view' &&
       mode === 'view' &&
       this.state.isDirty &&
       hasActualSaveChanges(this)

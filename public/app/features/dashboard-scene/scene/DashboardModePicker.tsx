@@ -16,8 +16,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const [buttonGroup, setButtonGroup] = useState<HTMLDivElement | null>(null);
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
-  const nextMode = mode === 'edit' ? 'view' : 'edit';
   const viewingDisabled = isNewDashboard(state);
+  // New dashboards can't be viewed and the caret is disabled, so Agent editing must still lead to Editing.
+  const nextMode = mode === 'view' || (mode === 'agent' && viewingDisabled) ? 'edit' : 'view';
   const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||

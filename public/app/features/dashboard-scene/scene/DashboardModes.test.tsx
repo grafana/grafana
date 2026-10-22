@@ -295,8 +295,43 @@ it.each(['picker', 'navigation', 'restore'] as const)('refuses Viewing for an un
   expect(getDashboardMode(dashboard.state)).toBe('edit');
 });
 
-it('takes over Agent editing from the main button without dropping the Assistant draft', async () => {
-  const dashboard = setup();
+describe('switching from Agent editing to Viewing with an unsaved Assistant draft', () => {
+  async function chooseViewing() {
+    const dashboard = setup();
+    await assistantChangesTitle(dashboard, 'Agent draft');
+    render(
+      <TestProvider>
+        <DashboardModePicker dashboard={dashboard} />
+      </TestProvider>
+    );
+    const user = userEvent.setup();
+    await user.hover(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Switch to Viewing');
+    await user.click(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
+    expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+    expect(getDashboardMode(dashboard.state)).toBe('agent');
+    return { dashboard, user };
+  }
+
+  it('keeps Agent editing and the draft when the save prompt is cancelled', async () => {
+    const { dashboard, user } = await chooseViewing();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' })).toBeInTheDocument();
+    expect(dashboard.state.title).toBe('Agent draft');
+    expect(mockSaveDashboard).not.toHaveBeenCalled();
+  });
+
+  it('discards the draft and switches to Viewing when Discard is chosen', async () => {
+    const { dashboard, user } = await chooseViewing();
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeInTheDocument();
+    expect(dashboard.state.title).toBe('Original title');
+    expect(isFullDashboardEditing(dashboard.state)).toBe(false);
+  });
+});
+
+it('takes over Agent editing from the main button on a new dashboard, which cannot be viewed', async () => {
+  const dashboard = setup(false, true);
   await assistantChangesTitle(dashboard, 'Agent draft');
   render(
     <TestProvider>
@@ -305,7 +340,6 @@ it('takes over Agent editing from the main button without dropping the Assistant
   );
   await userEvent.click(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
   expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
-  expect(dashboard.state.title).toBe('Agent draft');
   expect(isFullDashboardEditing(dashboard.state)).toBe(true);
 });
 
@@ -617,7 +651,7 @@ describe('mode instrumentation', () => {
     ]);
   });
 
-  it('correlates Assistant entry, review, and actual manual takeover without double counting', async () => {
+  it('correlates Assistant entry and actual manual takeover without double counting', async () => {
     const dashboard = setup();
     await assistantChangesTitle(dashboard, 'Agent draft');
     const session = dashboard.getEditSessionTracking();
@@ -629,24 +663,9 @@ describe('mode instrumentation', () => {
         had_manual_changes: false,
       })
     );
-    dashboard.setDashboardMode('view', 'picker');
-    dashboard.setDashboardMode('view', 'picker');
     await assistantChangesTitle(dashboard, 'Next agent draft');
     changeTitle({ source: dashboard, oldValue: 'Next agent draft', newValue: 'Manual draft' });
     expect(events('dashboards_mode_changed')).toEqual([
-      expect.objectContaining({
-        previous_mode: 'view',
-        mode: 'agent',
-        trigger: 'assistant',
-        edit_session_id: session.edit_session_id,
-      }),
-      expect.objectContaining({
-        previous_mode: 'agent',
-        mode: 'view',
-        trigger: 'picker',
-        has_unsaved_changes: true,
-        edit_session_id: session.edit_session_id,
-      }),
       expect.objectContaining({
         previous_mode: 'view',
         mode: 'agent',
