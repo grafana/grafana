@@ -170,6 +170,44 @@ func TestRouterAuthorizesNamespace(t *testing.T) {
 	}
 }
 
+// The standalone router gets its requester from a verified access token, not
+// from Grafana's middleware, and must check its namespace the same way.
+func TestRouterAuthorizesTokenNamespace(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		allowed   bool
+	}{
+		{"own namespace", "stacks-1", true},
+		{"other namespace", "stacks-2", false},
+		{"wildcard", "*", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			router := NewGrafanaRouter(stubLoader{}, tokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+				return &identity.StaticRequester{Type: types.TypeAccessPolicy, UserUID: "policy", Namespace: tc.namespace}, nil
+			}))
+			served := false
+			handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				served = true
+				w.WriteHeader(http.StatusNoContent)
+			})
+			snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
+			router.snapshot.Store(&snapshot)
+			req := httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-1/widgets", nil)
+			req.Header.Set("X-Access-Token", "test-token")
+			rec := httptest.NewRecorder()
+			router.HandleFunc(rec, req, handler)
+			if tc.allowed {
+				require.Equal(t, http.StatusNoContent, rec.Code)
+				require.True(t, served)
+				return
+			}
+			require.Equal(t, http.StatusForbidden, rec.Code)
+			require.False(t, served, "a backend must not see a request for another namespace")
+		})
+	}
+}
+
 func TestNamespaceFromPath(t *testing.T) {
 	for path, want := range map[string]string{
 		"/apis/g/v1/namespaces/ns/things":          "ns",
