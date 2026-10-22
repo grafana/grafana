@@ -6,10 +6,15 @@ import { ElementSelectionContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicateAutoGridPanel } from '../../actions/layout/duplicateAutoGridPanel';
+import { duplicateDefaultGridPanel } from '../../actions/layout/duplicateDefaultGridPanel';
 import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
@@ -17,6 +22,9 @@ import { SHOW_COPIED_DURATION_MS } from './EditActions';
 import { EditActionsLayoutProvider } from './EditActionsLayoutContext';
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { PanelEditActions, PanelEditActionsWrapper } from './PanelEditActions';
+
+jest.mock('../../actions/layout/duplicateDefaultGridPanel');
+jest.mock('../../actions/layout/duplicateAutoGridPanel');
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -234,6 +242,19 @@ describe('<PanelEditActionsWrapper />', () => {
     );
   }
 
+  test('when the user clicks Settings, the edit popover source is reported', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    new DashboardScene({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+    jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    renderPanelEditActionsWrapper(panel);
+    const user = userEvent.setup();
+
+    await hoverAndRest(screen.getByTestId('reference-child'));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover');
+  });
+
   describe('when the user clicks Settings ', () => {
     test('the panel is selected via the sidebar', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
@@ -318,14 +339,28 @@ describe('<PanelEditActionsWrapper />', () => {
     );
   });
 
-  test('if the user clicks Duplicate, the panel is duplicated via its layout manager', async () => {
+  it('delegates Auto grid duplication to its edit action when Duplicate is clicked', async () => {
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+    const layout = new AutoGridLayoutManager({
+      layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }),
+    });
+    new DashboardScene({ isEditing: true, body: layout });
+    renderPanelEditActionsWrapper(panel);
+    await hoverAndRest(screen.getByTestId('reference-child'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
+
+    expect(duplicateAutoGridPanel).toHaveBeenCalledWith(layout, panel);
+    expect(duplicateAutoGridPanel).toHaveBeenCalledTimes(1);
+  });
+
+  test('if the user clicks Duplicate, the panel is duplicated via its Default grid action', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     const layoutManager = DefaultGridLayoutManager.fromVizPanels([panel]);
     new DashboardScene({
       isEditing: true,
       body: layoutManager,
     });
-    const duplicatePanel = jest.spyOn(layoutManager, 'duplicatePanel').mockImplementation();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
     renderPanelEditActionsWrapper(panel);
@@ -333,7 +368,7 @@ describe('<PanelEditActionsWrapper />', () => {
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
-    expect(duplicatePanel).toHaveBeenCalledWith(panel);
+    expect(duplicateDefaultGridPanel).toHaveBeenCalledWith(layoutManager, panel);
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover');
   });
 
@@ -359,6 +394,7 @@ describe('<PanelEditActionsWrapper />', () => {
 
     expect(removePanel).toHaveBeenCalledWith(panel);
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledTimes(1);
   });
 
   describe('when a layout provider supplies a portal root', () => {

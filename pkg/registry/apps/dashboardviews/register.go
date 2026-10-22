@@ -3,14 +3,15 @@ package dashboardviews
 import (
 	"context"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/dashboardviews/pkg/apis/manifestdata"
 	dashboardviewsapp "github.com/grafana/grafana/apps/dashboardviews/pkg/app"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -29,15 +30,18 @@ type AppInstaller struct {
 	dashboardSvc dashboards.DashboardService
 }
 
-// GetAuthorizer allows every resource request through. Real, dashboard-scoped authorization
-// (dashboards:read on spec.dashboardUID, folder-inheritance-safe) lands in the next PR, applied
-// per-object in the REST layer rather than here — see saved-views/02-authz.
+// GetAuthorizer gates the API on FlagGrafanaSavedDashboardViews, evaluated per request so it
+// can differ per tenant. Dashboard-scoped authorization happens per object in the storage
+// authorizer (storage_authorizer.go).
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(
 		ctx context.Context, attr authorizer.Attributes,
 	) (authorizer.Decision, string, error) {
 		if !attr.IsResourceRequest() {
 			return authorizer.DecisionNoOpinion, "", nil
+		}
+		if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaSavedDashboardViews, false, openfeature.TransactionContext(ctx)) {
+			return authorizer.DecisionDeny, "saved dashboard views feature is not enabled", nil
 		}
 		return authorizer.DecisionAllow, "", nil
 	})

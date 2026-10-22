@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 )
 
-// Defaults for background discovery polling. Not configurable yet.
+// Defaults for background discovery polling.
 const (
 	// defaultAggregatePollInterval is the cooldown's interval while healthy.
 	defaultAggregatePollInterval = 30 * time.Second
@@ -25,7 +25,7 @@ const (
 	defaultAggregateDiscoveryTimeout = 10 * time.Second
 )
 
-// aggregateTarget owns one fixed upstream apiserver's discovery poll loop.
+// aggregateTarget owns one configured upstream apiserver's discovery poll loop.
 // Backends() is read by cloudLoader.Load() (any goroutine); run() is the
 // sole writer of snapshot, on its own goroutine -- hence atomic.Pointer
 // rather than a mutex.
@@ -62,9 +62,10 @@ func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client, proxyTra
 	// A trailing slash would turn "/apis" into "//apis".
 	base.Path = strings.TrimRight(base.Path, "/")
 
-	patterns, err := compileGroupPatterns(cfg.GroupPatterns)
-	if err != nil {
-		return nil, err
+	patterns := compileGroupPatterns(cfg.GroupPatterns)
+	interval := cfg.PollInterval
+	if interval == 0 {
+		interval = defaultAggregatePollInterval
 	}
 	t := &aggregateTarget{
 		name:           cfg.Name,
@@ -72,7 +73,7 @@ func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client, proxyTra
 		client:         client,
 		proxyTransport: proxyTransport,
 		patterns:       patterns,
-		cooldown:       newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		cooldown:       newCooldown(interval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -125,6 +126,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 
 	backends := make([]Backend, 0, len(groups))
 	keys := make(map[string]struct{}, len(groups))
+	skipped := 0
 	for _, discovered := range groups {
 		if !matchesAnyPattern(discovered.group.Name, t.patterns) {
 			continue
@@ -132,6 +134,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 		backend, err := newDiscoveredAggregateBackend(t.name, discovered, t.base, t.proxyTransport)
 		if err != nil {
 			logging.FromContext(ctx).Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", discovered.group.Name, "err", err)
+			skipped++
 			continue
 		}
 		backends = append(backends, backend)
@@ -139,6 +142,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	}
 
 	t.snapshot.Store(&backends)
+	t.status.recordSkipped(skipped)
 
 	lastKeys := *t.lastKeys.Load()
 	if !sameKeySet(lastKeys, keys) {

@@ -13,7 +13,7 @@ import (
 
 	arq "github.com/grafana/grafana/apps/alerting/alertrulequality/pkg/apis/alertrulequality/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -25,7 +25,7 @@ func TestStorageGetLegacyAlertRuleQualityPolicy(t *testing.T) {
 	config := storagebackend.NewDefaultConfig("", codecs.LegacyCodec(arq.GroupVersion))
 	groupResource := arq.GroupVersion.WithResource("alert-rule-quality-policies").GroupResource()
 
-	client := resource.NewMockResourceClient(t)
+	client := resourceclient.NewMockResourceClient(t)
 	client.EXPECT().Read(mock.Anything, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Namespace: "stacks-1",

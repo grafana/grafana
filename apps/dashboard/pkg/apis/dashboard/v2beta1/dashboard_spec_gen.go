@@ -1276,6 +1276,7 @@ type DashboardRowsLayoutRowSpec struct {
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1614,6 +1615,7 @@ type DashboardTabsLayoutTabSpec struct {
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.

@@ -6,15 +6,15 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
+	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestReceivers(t *testing.T) {
@@ -333,13 +333,15 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
+func load(t *testing.T, raw string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
 	t.Helper()
-	orig, err := definition.LoadCompat([]byte(yaml))
+	orig := store.AMConfigDB{
+		AlertmanagerConfig: store.AlertingConfigDB{},
+	}
+	err := yaml.Unmarshal([]byte(raw), &orig.AlertmanagerConfig)
 	require.NoError(t, err)
-	cfg := v1.ToModel(&definitions.PostableUserConfig{
-		AlertmanagerConfig: *orig,
-	})
+
+	cfg := v1.ToModel(&orig)
 	for _, m := range mutate {
 		m(cfg)
 	}
@@ -367,7 +369,7 @@ var mergedSuffixedReceiverConfig string
 //go:embed testdata/merged_renamed_intervals.json
 var mergedRenamedIntervalsConfig string
 
-// assertMergedConfig serializes the merged config to its DB (PostableUserConfig) form and compares it against a
+// assertMergedConfig serializes the merged config to its DB (AMConfigDB) form and compares it against a
 // snapshot of the expected merge result.
 func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 	t.Helper()
@@ -381,7 +383,7 @@ func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 func TestMergeExtraConfig(t *testing.T) {
 	identifier := "mimir-12345"
 
-	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
+	// withExtra wraps grafana and a raw mimir YAML string into an AMConfigV1 with ExtraConfigs.
 	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
 	withExtra := func(t *testing.T, grafana *v1.AMConfigV1, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
 		t.Helper()
