@@ -152,6 +152,13 @@ export const rulesNav = {
     ),
 };
 
+/**
+ * Links to a Grafana-managed rule by its UID alone, for pages that have no rules source or group to encode.
+ */
+export const grafanaRulesNav = {
+  viewLink: (uid: string) => createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
+};
+
 export const notificationPolicies = {
   viewLink: (matchers: ObjectMatcher[], alertmanagerSourceName?: string) => {
     return createRelativeUrl('/alerting/routes', {

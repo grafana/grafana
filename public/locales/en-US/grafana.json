@@ -1440,6 +1440,36 @@
       "saving": "Saving...",
       "title-error-saving-receiver": "Error saving receiver"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "No alert rules found",
+        "rules-error": "Failed to load rules"
+      },
+      "result-count": {
+        "alert-rules_one": "{{formatted}} alert rule",
+        "alert-rules_other": "{{formatted}} alert rules",
+        "recording-rules_one": "{{formatted}} recording rule",
+        "recording-rules_other": "{{formatted}} recording rules"
+      },
+      "shared": {
+        "load-more": "Load more",
+        "load-more-error": "Failed to load more results",
+        "loading-rules": "Loading rules",
+        "refresh-error": "Failed to refresh results",
+        "retry": "Retry"
+      },
+      "status": {
+        "error": "Failed to evaluate rule",
+        "firing": "Firing",
+        "no-data": "Insufficient data",
+        "normal": "Normal",
+        "paused": "Paused",
+        "pending": "Pending",
+        "recording": "Recording",
+        "recovering": "Recovering",
+        "unavailable": "Status unavailable"
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your Administrator.",
       "admin-hint-external": "To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your Administrator.",
@@ -7739,6 +7769,7 @@
       "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-errors": {
+      "forbidden": "Ask your Grafana administrator for access.",
       "unexpected": "An unexpected error occurred while saving."
     },
     "save-library-viz-panel-modal": {
@@ -15457,11 +15488,6 @@
       "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Add query",
-      "expression": "Expression",
-      "title-data-source-help": "Data source help"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -16178,14 +16204,7 @@
       "time-range": "Lock time range"
     },
     "export": {
-      "back-button": "Back to export config",
-      "cancel-button": "Cancel",
-      "info-text": "Export this dashboard.",
-      "loading": "Loading...",
-      "save-button": "Save to file",
-      "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON",
-      "view-button-yaml": "View YAML"
+      "share-externally-label": "Export for sharing externally"
     },
     "image": {
       "actions": "Image export actions",
@@ -16243,9 +16262,6 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
-    },
-    "view-json": {
-      "copy-button": "Copy to Clipboard"
     }
   },
   "share-panel": {
@@ -17424,6 +17440,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Remove parts of the query results using a regex pattern."
       },
+      "deselect-all": "Deselect all",
       "label-from-variable": "From variable",
       "label-identifier": "Identifier",
       "label-use-variable": "Use variable",
@@ -17431,7 +17448,8 @@
       "name": {
         "filter-fields-by-name": "Filter fields by name"
       },
-      "placeholder-regular-expression-pattern": "Regular expression pattern"
+      "placeholder-regular-expression-pattern": "Regular expression pattern",
+      "select-all": "Select all"
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

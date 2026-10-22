@@ -154,9 +154,18 @@ export function applyAppSubUrl(tree: NavModelItem[]): NavModelItem[] {
   }
   return tree.map((node) => ({
     ...node,
-    url: node.url?.startsWith('/') ? `${config.appSubUrl}${node.url}` : node.url,
+    url: withAppSubUrl(node.url),
     children: node.children ? applyAppSubUrl(node.children) : node.children,
   }));
+}
+
+/**
+ * Prefixes a root-relative path with the app sub url. Absolute urls (plugin
+ * assets served from a CDN) and relative ones (which the index page's
+ * `<base href>` already resolves) are left alone.
+ */
+export function withAppSubUrl(path: string | undefined): string | undefined {
+  return path?.startsWith('/') ? `${config.appSubUrl}${path}` : path;
 }
 
 /**
@@ -200,3 +209,6 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
 
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
 export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
+
+/** Nav id of an app page placed on its own, keyed by its include path */
+export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;

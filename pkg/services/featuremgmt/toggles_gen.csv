@@ -282,7 +282,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-20,kubernetesAuthInfoRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
 2026-08-19,appplugins.loadAppManifest,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2026-09-17,appplugins.loadAppManifestAndKeepSettings,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-06,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-06,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-02-12,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
