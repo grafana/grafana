@@ -2,6 +2,7 @@ import { store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 
@@ -112,5 +113,35 @@ describe('pastePanelStyles', () => {
     pastePanelStyles(dashboard, panel);
 
     expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+});
+
+describe('pastePanelStyles (legacy layouts)', () => {
+  beforeEach(() => setTestFlags({ dashboardNewLayouts: false }));
+
+  let deactivate: (() => void) | undefined;
+
+  afterEach(() => {
+    setTestFlags({});
+    deactivate?.();
+    deactivate = undefined;
+    store.delete(LS_STYLES_COPY_KEY);
+  });
+
+  it('pastes styles without undo history, since the sidebar is not active in legacy layouts', async () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      options: { legend: { showLegend: true } },
+    });
+    const dashboard = new DashboardScene({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+    deactivate = activateFullSceneTree(dashboard.state.body);
+    await new Promise((r) => setTimeout(r, 1));
+    copyStyles(false);
+
+    pastePanelStyles(dashboard, panel);
+
+    expect(panel.state.options).toEqual({ legend: { showLegend: false } });
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
   });
 });
