@@ -134,7 +134,6 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
 | Single-tenant (ST) fallback, its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
-| Dummy loader (the default when nothing is configured) | `dummy.go` |
 
 ## Route sources
 
@@ -145,7 +144,8 @@ Exactly one loader serves:
    `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
    available.
-3. **Otherwise the dummy loader**, which serves two static dummy groups.
+3. **Otherwise no groups** (`noRoutesLoader`). The dummy loader that serves static groups is in
+   `dummy_test.go`, for tests only.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:

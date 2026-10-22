@@ -24,8 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
-type LoaderWithSingleTenantFallback interface {
+// loaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
+type loaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }
 
@@ -502,17 +502,6 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	return breaker
 }
 
-// Helper function called when the fallback is directly used as a loader (testing)
-func (st *singleTenantFallback) SingleTenantFallback() http.Handler {
-	return st
-}
-
-// Load implements [RoutesLoader]. It returns the latest discovery snapshot and
-// makes no requests.
-func (st *singleTenantFallback) Load(context.Context) ([]Backend, error) {
-	return st.Backends()
-}
-
 // Backends returns the last-known-good discovered backends, and the error from
 // the latest poll if it failed.
 func (st *singleTenantFallback) Backends() ([]Backend, error) {
@@ -548,15 +537,6 @@ func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error)
 		})
 	}
 	return backends, nil
-}
-
-func (st *singleTenantFallback) Notify(ctx context.Context) (<-chan struct{}, error) {
-	dirty := make(chan struct{}, 1)
-	go func() {
-		defer close(dirty)
-		st.run(ctx, dirty)
-	}()
-	return dirty, nil
 }
 
 // run polls discovery until ctx is done, paced only by st.cooldown, the same
@@ -620,7 +600,6 @@ func backendKeys(backends []Backend) map[string]struct{} {
 }
 
 var (
-	_ RoutesLoader          = (*singleTenantFallback)(nil)
 	_ Backend               = (*fallbackBackend)(nil)
 	_ CallerScopedDiscovery = (*fallbackBackend)(nil)
 )
