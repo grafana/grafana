@@ -2,7 +2,9 @@ package dashboardviews
 
 import (
 	"context"
+	"errors"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -39,14 +41,24 @@ func (s *savedViewStorageAuthorizer) BeforeCreate(ctx context.Context, obj runti
 	return s.checkDashboardExists(ctx, obj)
 }
 
+// BeforeUpdate rejects any change to spec.dashboardUID: a view belongs to the dashboard it was
+// created on, and checkDashboardExists only ever validated that UID at create time.
 func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
-	// Check both: dashboardUID is meant to be immutable, but nothing below this layer enforces that
-	// yet, so an update attempting to move a view to a different dashboard is only safe if the caller
-	// can view both the view's current dashboard and whichever one it's being pointed at.
 	if err := s.checkAccess(ctx, oldObj); err != nil {
 		return err
 	}
-	return s.checkAccess(ctx, obj)
+	oldView, ok := oldObj.(*dashboardviewsv0alpha1.SavedDashboardView)
+	if !ok {
+		return storewrapper.ErrUnexpectedType
+	}
+	newView, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
+	if !ok {
+		return storewrapper.ErrUnexpectedType
+	}
+	if oldView.Spec.DashboardUID != newView.Spec.DashboardUID {
+		return apierrors.NewBadRequest("spec.dashboardUID is immutable")
+	}
+	return nil
 }
 
 func (s *savedViewStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
@@ -59,7 +71,8 @@ func (s *savedViewStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.O
 
 // FilterList re-checks every item individually rather than trusting the request's fieldSelector, so an
 // unscoped LIST can't be used to enumerate Saved Views (and thus dashboard UIDs and filter values)
-// across dashboards the caller can't view.
+// across dashboards the caller can't view. Only a permission denial drops an item; a missing
+// requester or an evaluation failure fails the whole request instead of returning a silently short list.
 func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	views, ok := list.(*dashboardviewsv0alpha1.SavedDashboardViewList)
 	if !ok {
@@ -68,8 +81,15 @@ func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtim
 
 	allowed := make([]dashboardviewsv0alpha1.SavedDashboardView, 0, len(views.Items))
 	for i := range views.Items {
-		if s.checkAccess(ctx, &views.Items[i]) == nil {
+		err := s.checkAccess(ctx, &views.Items[i])
+		switch {
+		case err == nil:
 			allowed = append(allowed, views.Items[i])
+		case errors.Is(err, storewrapper.ErrUnauthorized):
+		case errors.Is(err, storewrapper.ErrUnauthenticated):
+			return nil, err
+		default:
+			return nil, apierrors.NewInternalError(err)
 		}
 	}
 	views.Items = allowed
@@ -118,8 +138,9 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 // create. checkAccess alone can't establish this: a caller with a wildcard dashboards:read scope
 // passes Evaluate without ever resolving a specific dashboard, so without this a create for a
 // deleted or made-up UID would otherwise succeed and become visible again if that UID is later
-// reused (dashboard restored, or newly created with the same UID). Update/delete/get/list all
-// operate on a record that already passed this check once, at create time, so they don't repeat it.
+// reused (dashboard restored, or newly created with the same UID). Update can't change the UID
+// (see BeforeUpdate), so update/delete/get/list all operate on a UID that already passed this
+// check at create time and don't repeat it.
 // Returns the same ErrUnauthorized as a denied permission, rather than a distinct not-found, so this
 // doesn't become an oracle for guessing which dashboard UIDs exist.
 func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, obj runtime.Object) error {
