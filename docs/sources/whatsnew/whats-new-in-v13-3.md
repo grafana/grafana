@@ -17,12 +17,10 @@ posts:
     items:
       - whats-new/2026-09-18-try-dashboard-changes-confidently-with-grafana-assistant-undo.md
       - whats-new/2026-10-06-plan-your-dashboard-before-building-it-with-grafana-assistant.md
-  - title: Alerting
-    items:
-      - whats-new/2026-09-21-import-of-alertmanager-configuration-to-grafana-alerting.md
   - title: Dashboards and visualizations
     items:
       - whats-new/2026-09-17-define-variables-once-use-them-across-dashboards.md
+      - whats-new/2026-09-22-capture-and-reuse-investigations-with-notebooks.md
       - whats-new/2026-10-09-custom-headers-and-footers-for-report-pdfs.md
       - whats-new/2026-07-29-panel-thresholds-interpolation.md
       - whats-new/2026-07-30-new-panel-query-errors-and-notices-ui.md
@@ -30,6 +28,14 @@ posts:
       - whats-new/2026-09-18-make-panels-easier-to-understand-with-subtitles.md
       - whats-new/2026-09-21-panel-time-settings-and-time-comparison-are-now-generally-available.md
       - whats-new/2026-09-22-build-data-driven-dashboards-with-the-updated-text-visualization.md
+  - title: Alerting
+    items:
+      - whats-new/2026-09-21-import-of-alertmanager-configuration-to-grafana-alerting.md
+      - whats-new/2026-09-24-improve-alert-rule-quality.md
+      - whats-new/2026-10-16-manage-alerts-for-prometheus-mimir-and-loki-with-a-dedicated-plugin.md
+  - title: Other
+    items:
+      - whats-new/2026-10-16-announcement-banners-can-now-be-dismissible.md
   - title: Breaking changes
     items:
       - whats-new/2026-10-02-role-managers-can-revoke-access-they-do-not-hold.md
