@@ -697,6 +697,24 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "field_Time", "field_host", "host"}, names)
 	})
 
+	t.Run("a label renamed for a generated column skips the name of a field", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", data.Labels{"time": "nightly"}, []float64{1}),
+				data.NewField("label_time", data.Labels{"time": "nightly"}, []string{"x"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		names := make([]string, 0, len(output[0].Fields))
+		for _, f := range output[0].Fields {
+			names = append(names, f.Name)
+		}
+		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "label_time", "label_label_time"}, names)
+	})
+
 	for name, extra := range map[string][]*data.Field{
 		"enum fields are dropped": {
 			data.NewField("state", nil, []data.EnumItemIndex{0}),
