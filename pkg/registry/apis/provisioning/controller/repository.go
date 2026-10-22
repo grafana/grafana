@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -687,6 +688,32 @@ func (rc *RepositoryController) process(key string) error {
 	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
+	// phase tracks how far reconciliation has progressed so a failure is counted
+	// under the stage it occurred in. Paths that surface an error on status and
+	// return nil (token/build/delete/hook) can't rely on the returned error,
+	// so they stash it in swallowedErr/swallowedPhase.
+	//
+	// The deferred recorder counts exactly one failure per reconcile and prefers
+	// the error actually returned to the workqueue over a swallowed one: a
+	// swallowed user-caused failure can be followed by a returned system error
+	// (e.g. the deferred status flush failing) that the worker logs, and that
+	// system failure must appear in the metric as cause="system". Registered
+	// before the span defers so it runs last, after any deferred status flush has
+	// finalized err.
+	phase := reconcilePhaseSetup
+	var (
+		swallowedErr   error
+		swallowedPhase string
+	)
+	defer func() {
+		switch {
+		case err != nil:
+			rc.recordReconcileError(phase, err)
+		case swallowedErr != nil:
+			rc.recordReconcileError(swallowedPhase, swallowedErr)
+		}
+	}()
+
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
@@ -816,8 +843,16 @@ func (rc *RepositoryController) process(key string) error {
 
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
-			logger.Error("generating token for repository", "error", err)
-			return err
+			if rc.isUserCaused(err) {
+				// Swallowed after surfacing on status: stash it so the deferred
+				// recorder counts it, since it returns nil to the workqueue.
+				patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, provisioning.ReasonAuthenticationFailed)...)
+				swallowedErr, swallowedPhase = err, reconcilePhaseToken
+				logger.Warn("unable to generate repository token, user-caused error", "error", err)
+				return repoType, nil
+			}
+
+			return repoType, err
 		}
 
 		if len(tokenOps) > 0 {
@@ -854,7 +889,14 @@ func (rc *RepositoryController) process(key string) error {
 
 			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
 			if gerr != nil {
-				return fmt.Errorf("regenerating repository token: %w", gerr)
+				if rc.isUserCaused(gerr) {
+					patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, gerr, provisioning.ReasonAuthenticationFailed)...)
+					swallowedErr, swallowedPhase = gerr, reconcilePhaseToken
+					logger.Warn("unable to regenerate repository token, user-caused error", "error", gerr)
+					return repoType, nil
+				}
+
+				return repoType, fmt.Errorf("regenerating repository token: %w", gerr)
 			}
 
 			if len(tokenOps) > 0 {
@@ -868,30 +910,17 @@ func (rc *RepositoryController) process(key string) error {
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
-			return fmt.Errorf("unable to create repository from configuration: %w", err)
-		}
-	}
+			patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
 
-	// Handle hooks - may return early if hooks fail
-	hookOps, shouldContinue, err := rc.processHooks(ctx, repo, obj)
-	if err != nil {
-		return fmt.Errorf("process hooks: %w", err)
-	}
-	if !shouldContinue {
-		return nil // Hook handling already updated status and returned early
-	}
-	if len(hookOps) > 0 {
-		patchOperations = append(patchOperations, hookOps...)
-	}
+			if rc.isUserCaused(err) {
+				// Swallowed after surfacing on status: stash it so the deferred
+				// recorder counts it, since it returns nil to the workqueue.
+				swallowedErr, swallowedPhase = err, reconcilePhaseBuild
+				logger.Warn("unable to create repository from configuration, user-caused error", "error", err)
+				return repoType, nil
+			}
 
-	// Rotate webhook secret if due.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateWebhookSecret {
-		rotateOps, err := rotateWebhookSecret(ctx, webhookRepo)
-		if err != nil {
-			logger.Warn("webhook secret rotation failed", "error", err)
-		}
-		if len(rotateOps) > 0 {
-			patchOperations = append(patchOperations, rotateOps...)
+			return repoType, fmt.Errorf("unable to create repository from configuration: %w", err)
 		}
 	}
 
@@ -902,6 +931,9 @@ func (rc *RepositoryController) process(key string) error {
 
 			defaultBranch, err := branchHandler.GetDefaultBranch(ctx)
 			if err != nil {
+				if errors.Is(err, repository.ErrServerUnavailable) {
+					patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
+				}
 				return fmt.Errorf("failed to get default branch: %w", err)
 			}
 
@@ -992,29 +1024,224 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
-	// Suppress the hook retry while the hook-failure cooldown is active. If the
-	// spec no longer expects a webhook, the cooldown does not apply: we let the
-	// hook handler run (so it can clean up any previously-created webhook) and
-	// do not block recovery from a stale HealthFailureHook on the next
-	// reconcile.
-	if shouldRunHooks && rc.healthChecker.inHookFailureCooldown(obj) {
-		shouldRunHooks = false
+	// Suppress the hook retry while the hook-failure cooldown is active, or while
+	// the repository just failed its health check (it's known inaccessible, so any
+	// create/update/delete call against it is doomed).
+	if hasHookChanges && hasWebhookToManage && (isInHookFailureCooldown || !repoAccessible) {
+		suppressWebhooks = true
 	}
 
-	if !shouldRunHooks {
-		return nil, true, nil
+	suppressionMsg := "hooks were not suppressed"
+	if suppressWebhooks {
+		suppressionMsg = "hooks were suppressed"
 	}
+	logging.FromContext(ctx).Info(suppressionMsg,
+		"hasWebhookToManage", hasWebhookToManage,
+		"webhookCapable", webhookCapable,
+		"isInHookFailureCooldown", isInHookFailureCooldown,
+		"repoAccessible", repoAccessible,
+	)
 
-	hookOps, err := rc.runHooks(ctx, repo, obj)
-	if err != nil {
-		if err := rc.healthChecker.RecordFailure(ctx, provisioning.HealthFailureHook, err, obj); err != nil {
-			return nil, false, fmt.Errorf("update status after hook failure: %w", err)
+	if hasHookChanges && !suppressWebhooks {
+		hookOps, err = rc.runHooks(ctx, repo, obj)
+		if err != nil {
+			// The failing create/update/delete is why an overdue secret can't be
+			// rotated this reconcile, so classify it onto the overdue metric here too
+			// -- otherwise a secret stuck behind a persistent hook failure (which
+			// keeps hasHookChanges true and returns before the rotation block below)
+			// would never record a cause.
+			if shouldRotateSecret {
+				rc.webhookMetrics.recordRotationOverdue(rc.rotationErrorCause(err))
+			}
+			status := rc.healthChecker.recordFailure(provisioning.HealthFailureHook, err)
+			hookOps = append(hookOps, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/health",
+				"value": status,
+			})
+			return hookOps, &status, false, err
 		}
-
-		return nil, false, err
 	}
 
-	return hookOps, true, nil
+	// Rotate the webhook secret if due, and count it on the overdue metric with
+	// the cause it stayed overdue for so alerts can page on a genuine rotation
+	// malfunction (cause=system) and ignore user-caused failures (cause=user).
+	//
+	// Skipped when runHooks already created or updated the webhook this reconcile
+	// (len(hookOps) > 0): that path rotates the secret itself, so a second rotation
+	// would be redundant and, if it failed, would falsely page. When the repository
+	// is inaccessible the rotation call would be as doomed as any other write, so it
+	// is skipped too -- but we still know why from the health check, so the overdue
+	// observation is classified from the test result (bad credentials/permissions
+	// -> user, server unavailable -> system). During the hook-failure cooldown the
+	// health check is skipped (repoAccessible reads stale), so nothing is recorded;
+	// the reconcile after the cooldown expires classifies it. A rotation that
+	// succeeds records nothing.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && len(hookOps) == 0 {
+		switch {
+		case !repoAccessible:
+			rc.webhookMetrics.recordRotationOverdue(classifyOverdueCause(classifyTestResultReason(testResults)))
+		case isInHookFailureCooldown:
+			// Transient backoff window; the post-cooldown reconcile classifies.
+		default:
+			rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
+			rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
+			rotateSpan.End()
+			if rotateErr != nil {
+				cause := rc.rotationErrorCause(rotateErr)
+				rc.webhookMetrics.recordRotationOverdue(cause)
+				logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr, "cause", cause)
+			}
+			if len(rotateOps) > 0 {
+				hookOps = append(hookOps, rotateOps...)
+			}
+		}
+	}
+
+	return hookOps, nil, suppressWebhooks, nil
+}
+
+// repositoryFailurePatchOps returns patches marking the repository unhealthy
+// and Ready=False with the supplied reason, omitting unchanged status.
+// The caller applies the patches so the failure can be persisted even when
+// reconciliation returns an error to the work queue.
+func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error, reason string) []map[string]interface{} {
+	healthStatus := provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{err.Error()},
+	}
+	ops := rc.healthPatchIfChanged(obj, healthStatus)
+	readyCondition := buildReadyConditionWithReason(healthStatus, reason)
+	return append(ops, BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+	)...)
+}
+
+func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
+	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
+		return nil
+	}
+
+	return []map[string]interface{}{{
+		"op":    "replace",
+		"path":  "/status/health",
+		"value": status,
+	}}
+}
+
+// recordReconcileError counts a reconcile failure for SLO tracking, classifying
+// it as user-caused (the user must fix it, e.g. revoked credentials) or
+// system-caused. User-caused failures are surfaced on status and not returned,
+// so this metric is how they stay visible; SLOs should alert on cause=system
+// and exclude cause=user.
+func (rc *RepositoryController) recordReconcileError(phase string, err error) {
+	cause := reconcileCauseSystem
+	if rc.isUserCaused(err) {
+		cause = reconcileCauseUser
+	}
+	rc.reconcileMetrics.RecordReconcileError(phase, cause)
+}
+
+// Returns errors that are due to user errors. Token-generation failures surface
+// connection-level sentinels (app uninstalled, permissions revoked, installation
+// gone), so classification is shared with the token metric to keep the
+// reconcile-error and token-generation-error metrics consistent.
+func (rc *RepositoryController) isUserCaused(err error) bool {
+	return classifyTokenErrorCause(err) == reconcileCauseUser
+}
+
+// classifyBuildFailureReason maps a repository Build failure to a Ready condition
+// reason. Build constructs the client and decrypts the repository's secrets after
+// the spec has already passed admission validation, so a failure to read that
+// secret (decrypt service unreachable, keeper/KMS error) is a transient
+// infrastructure issue to retry -- not an invalid configuration for the user to
+// fix. Everything else falls back to the shared classification.
+func classifyBuildFailureReason(err error) string {
+	if errors.Is(err, repository.ErrSecretDecryptFailed) {
+		return provisioning.ReasonServiceUnavailable
+	}
+	return classifyHookFailureReason(err)
+}
+
+// rotationErrorCause classifies an error that prevented a webhook secret rotation
+// (a rotation attempt or the hook operation blocking it) into an overdue cause.
+// User-caused errors (revoked credentials, permissions, app uninstalled) are
+// "user"; everything else, including unrecognized errors, defaults to "system" so
+// a genuine malfunction pages rather than being silently swallowed.
+//
+// A 404 (ErrFileNotFound) is treated as "user" to match how the rest of the
+// webhook code reads GitHub 404s (createWebhook/updateWebhook): the webhook was
+// deleted on the remote, or the token lost access to a private repo (GitHub
+// returns 404, not 403, for private repos). Either way it is the customer's to
+// resolve, not a system malfunction that should page. rotateWebhookSecret surfaces
+// this sentinel raw rather than converting it, so it is matched explicitly here.
+func (rc *RepositoryController) rotationErrorCause(err error) string {
+	if errors.Is(err, repository.ErrFileNotFound) || rc.isUserCaused(err) {
+		return reconcileCauseUser
+	}
+	return reconcileCauseSystem
+}
+
+// classifyOverdueCause maps a Ready condition reason to a webhook-secret rotation
+// overdue cause. A transient/infrastructure reason (server unavailable, rate
+// limited) is "system" and should page; everything else is the customer's to fix
+// (bad credentials, permissions, invalid spec) and is "user".
+func classifyOverdueCause(reason string) string {
+	switch reason {
+	case provisioning.ReasonServiceUnavailable, provisioning.ReasonRateLimited:
+		return reconcileCauseSystem
+	default:
+		return reconcileCauseUser
+	}
+}
+
+// classifyHookFailureReason maps a hook failure to a Ready condition reason,
+// mirroring classifyTestResultReason's approach for health-check failures so
+// an auth/permission problem is distinguishable from a generic failure
+// instead of always reporting the same reason.
+func classifyHookFailureReason(err error) string {
+	switch {
+	case errors.Is(err, repository.ErrUnauthorized), errors.Is(err, repository.ErrPermissionDenied):
+		return provisioning.ReasonAuthenticationFailed
+	case errors.Is(err, repository.ErrServerUnavailable), apierrors.IsServiceUnavailable(err):
+		return provisioning.ReasonServiceUnavailable
+	case errors.Is(err, repository.ErrTooManyRequests):
+		return provisioning.ReasonRateLimited
+	default:
+		return provisioning.ReasonInvalidSpec
+	}
+}
+
+// isRepositoryAccessible reports whether a failed health check still means the
+// repository itself is reachable and its credentials are valid -- i.e. the
+// failure is a config/permission gap on an otherwise-usable repository, not a
+// loss of access to the git server.
+//
+// It returns true for a write-permission-denied 403 (reads still work, only the
+// write was blocked) and for any status that isn't a definitive access failure.
+// It returns false for 401 (bad credentials), 404 (repository gone/hidden), 503
+// (server down), and a bare 403 -- the cases where we genuinely cannot reach or
+// authenticate to the repository.
+func isRepositoryAccessible(testResults *provisioning.TestResults) bool {
+	if testResults == nil || testResults.Success {
+		return true
+	}
+	switch testResults.Code {
+	case http.StatusForbidden:
+		// Couldn't be written to, but the repository was still accessible.
+		for _, e := range testResults.Errors {
+			if e.Detail == repository.WritePermissionDeniedDetail {
+				return true
+			}
+		}
+		return false
+	case http.StatusUnauthorized, http.StatusNotFound, http.StatusServiceUnavailable:
+		return false
+	default:
+		return true
+	}
 }
 
 // shouldRotateWebhookSecret returns true when a repository has an active webhook
