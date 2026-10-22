@@ -354,11 +354,16 @@ func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
 	}
 }
 
-// recordingContentsDeleter records the folders whose contents were requested for deletion.
-type recordingContentsDeleter struct{ folders []string }
+// recordingContentsDeleter records the folders whose contents were requested for deletion, and the
+// requester each deletion was attributed to.
+type recordingContentsDeleter struct {
+	folders   []string
+	deletedBy []identity.Requester
+}
 
-func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string) error {
+func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string, user identity.Requester) error {
 	r.folders = append(r.folders, folderUID)
+	r.deletedBy = append(r.deletedBy, user)
 	return nil
 }
 
@@ -375,6 +380,12 @@ func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"root", "child"}, deleter.folders)
+
+	requester, err := identity.GetRequester(ctxWithNamespace())
+	require.NoError(t, err)
+	for _, got := range deleter.deletedBy {
+		require.Equal(t, requester, got, "contents must be attributed to the real requester, not the service identity used to enumerate the cascade")
+	}
 }
 
 func TestCascadeDelete_SkipsContentsOnDryRun(t *testing.T) {
