@@ -295,6 +295,21 @@ describe('VariableEditableElement undo/redo', () => {
     expect(screen.getByLabelText(/^Custom all value/)).toHaveValue('all');
   });
 
+  it('does not record leaving an unset custom all value empty', async () => {
+    const variable = new CustomVariable({ name: 'service', query: 'api,web', includeAll: true });
+    const { dashboard } = buildDashboardVariableScene(variable);
+    const sidebar = dashboard.state.sidebar;
+    const user = userEvent.setup();
+    renderVariableSidebar(dashboard);
+
+    await user.click(await screen.findByLabelText(/^Custom all value/));
+    await user.tab();
+
+    expect(screen.getByLabelText(/^Custom all value/)).toHaveValue('');
+    expect(variable.state.allValue).toBeUndefined();
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+
   it('records a query variable refresh change as one undoable action', async () => {
     setTestFlags({ [FlagKeys.GrafanaQueryVarEditorRedesign]: true });
     mockBoundingClientRect();
