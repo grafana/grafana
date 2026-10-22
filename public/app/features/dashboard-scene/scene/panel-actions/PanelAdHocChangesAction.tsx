@@ -4,14 +4,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu, PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { getDashboardScenePageStateManager } from '../../pages/DashboardScenePageStateManager';
 import { useSaveDashboard } from '../../saving/useSaveDashboard';
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { AD_HOC_TRANSFORMATIONS_OWNER, canPromoteAdHocChanges, promoteAdHocChanges } from './promoteAdHocChanges';
+import { canPromoteAdHocChanges, promoteAdHocChanges } from './promoteAdHocChanges';
 
 interface Props {
   panel: VizPanel;
@@ -62,7 +62,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
     }
   };
 
-  const onRemoveChanges = () => panel.getRuntimeTransformations().set(AD_HOC_TRANSFORMATIONS_OWNER, []);
+  const onRemoveChanges = () => panel.getRuntimeTransformations().set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
 
   if (!hasChanges) {
     return null;
@@ -114,10 +114,13 @@ export function PanelAdHocChangesAction({ panel }: Props) {
 function useHasAdHocTransformations(panel: VizPanel, enabled: boolean): boolean {
   const api = panel.getRuntimeTransformations();
   const subscribe = useCallback(
-    (onChange: () => void) => (enabled ? api.subscribe(AD_HOC_TRANSFORMATIONS_OWNER, onChange) : () => {}),
+    (onChange: () => void) => (enabled ? api.subscribe(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, onChange) : () => {}),
     [api, enabled]
   );
-  const getSnapshot = useCallback(() => enabled && api.get(AD_HOC_TRANSFORMATIONS_OWNER).length > 0, [api, enabled]);
+  const getSnapshot = useCallback(
+    () => enabled && api.get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER).length > 0,
+    [api, enabled]
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }

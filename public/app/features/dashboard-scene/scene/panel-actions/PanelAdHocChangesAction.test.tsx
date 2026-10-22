@@ -4,6 +4,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DashboardScene } from '../DashboardScene';
@@ -11,7 +12,6 @@ import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { PanelAdHocChangesAction } from './PanelAdHocChangesAction';
-import { AD_HOC_TRANSFORMATIONS_OWNER } from './promoteAdHocChanges';
 
 const mockOnSaveDashboard = jest.fn();
 jest.mock('../../saving/useSaveDashboard', () => ({
@@ -28,7 +28,7 @@ jest.mock('../../pages/DashboardScenePageStateManager', () => ({
   getDashboardScenePageStateManager: () => mockPageStateManager,
 }));
 
-const OWNER = AD_HOC_TRANSFORMATIONS_OWNER;
+const OWNER = PANEL_AD_HOC_TRANSFORMATIONS_OWNER;
 const buttonTestId = selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction;
 const promotionPath = jest.fn((dashboard) => dashboard);
 

@@ -20,7 +20,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
-import { PanelContextProvider } from '@grafana/ui';
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER, PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { getPanelProps } from '../test-utils';
@@ -144,7 +144,7 @@ it('excludes override-hidden columns while retaining ad-hoc-hidden columns and p
   expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeChecked();
   expect(screen.getByRole('checkbox', { name: 'Hide C' })).toBeEnabled();
   await userEvent.click(screen.getByRole('checkbox', { name: 'Show B' }));
-  expect(set).toHaveBeenCalledWith('grafana:table-view', []);
+  expect(set).toHaveBeenCalledWith(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
 });
 
 it('shows changed upstream column order without losing ad-hoc visibility', async () => {

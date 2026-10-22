@@ -178,12 +178,6 @@ export interface PluginViewOptionsQuickToggles {
   fieldConfigProperties: string[];
 }
 
-/**
- * A viewer-only interaction a panel supports, such as hiding a table column.
- * Interactions are applied at runtime and can later be promoted into the saved panel.
- *
- * @alpha
- */
 export interface PanelInteraction {
   id: number;
   name: string;
@@ -195,11 +189,6 @@ export interface PanelInteraction {
   promotionPath: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
 }
 
-/**
- * What a {@link PanelInteraction} promotion path needs to find and update its panel in the dashboard JSON.
- *
- * @alpha
- */
 export interface PanelInteractionPromotionContext {
   /** Key of the panel in the dashboard JSON's `elements`. */
   elementKey: string;
@@ -207,9 +196,6 @@ export interface PanelInteractionPromotionContext {
   transformations: readonly DataTransformerConfig[];
 }
 
-/**
- * @alpha
- */
 export interface PanelInteractions {
   interactions: PanelInteraction[];
 }
@@ -786,11 +772,6 @@ export class PanelPlugin<
     return this;
   }
 
-  /**
-   * Declare the viewer-only interactions this panel supports.
-   *
-   * @alpha
-   */
   setPanelInteractions(interactions: PanelInteractions) {
     this._panelInteractions = interactions;
     return this;

@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
-import { type PanelContext, PanelContextProvider } from '@grafana/ui';
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER, type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import {
   useCacheFieldDisplayNames,
@@ -128,7 +128,7 @@ describe('useAdHocColumnState', () => {
 
     renderHook(() => useAdHocColumnState([], 0, true), { wrapper: wrapperWith(context) });
 
-    expect(context.adHocTransformations!.set).toHaveBeenCalledWith('grafana:table-view', []);
+    expect(context.adHocTransformations!.set).toHaveBeenCalledWith(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
   });
 
   it('calculates the catalog without mutating the source fields', () => {
@@ -156,7 +156,7 @@ describe('useAdHocColumnState', () => {
 
     expect(result.current?.columnCatalog).toEqual(['B']);
     act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
-    expect(context.adHocTransformations?.set).toHaveBeenCalledWith('grafana:table-view', [
+    expect(context.adHocTransformations?.set).toHaveBeenCalledWith(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, [
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
@@ -279,7 +279,7 @@ describe('useAdHocColumnState', () => {
     });
 
     act(() => result.current?.onColumnOrderChange(['value']));
-    expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
+    expect(set).toHaveBeenLastCalledWith(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, [
       otherFrame,
       unrelated,
       {
@@ -290,7 +290,7 @@ describe('useAdHocColumnState', () => {
     ]);
 
     act(() => result.current?.onHiddenColumnsChange(new Set(['value'])));
-    expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
+    expect(set).toHaveBeenLastCalledWith(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, [
       otherFrame,
       unrelated,
       {

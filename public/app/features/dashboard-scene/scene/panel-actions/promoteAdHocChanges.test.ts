@@ -2,12 +2,13 @@ import { type PanelInteraction } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DashboardScene } from '../DashboardScene';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
-import { AD_HOC_TRANSFORMATIONS_OWNER, promoteAdHocChanges } from './promoteAdHocChanges';
+import { promoteAdHocChanges } from './promoteAdHocChanges';
 
 const hideColumn = [{ id: 'organize', options: { excludeByName: { a: true } } }];
 const context = { elementKey: 'panel-1', transformations: hideColumn };
@@ -42,7 +43,7 @@ async function buildScene(version: 'v1' | 'v2' = 'v2') {
   );
   activateFullSceneTree(dashboard);
   await new Promise((r) => setTimeout(r, 1));
-  panel.getRuntimeTransformations().set(AD_HOC_TRANSFORMATIONS_OWNER, hideColumn);
+  panel.getRuntimeTransformations().set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, hideColumn);
   return { panel, dashboard };
 }
 

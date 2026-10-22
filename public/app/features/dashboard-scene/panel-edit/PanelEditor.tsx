@@ -20,6 +20,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { createInfoNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -27,7 +28,6 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -105,10 +105,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     const runtimeTransformations = panel.getRuntimeTransformations();
-    const tableTransformations = runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER);
+    const tableTransformations = runtimeTransformations.get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER);
     const pluginId = panel.state.pluginId;
     if (pluginId === 'table' && tableTransformations.length > 0) {
-      runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, []);
+      runtimeTransformations.set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
       dispatch(
         notifyApp(
           createInfoNotification(
@@ -152,7 +152,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       if (pluginId === panel.state.pluginId && tableTransformations.length > 0) {
-        runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, tableTransformations);
+        runtimeTransformations.set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, tableTransformations);
       }
       this.commitChanges();
       reportInteraction('panel_edit_closed', {}, { silent: true });

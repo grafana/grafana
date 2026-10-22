@@ -13,10 +13,17 @@ import {
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
-import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Combobox,
+  Field,
+  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
+  Stack,
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
-  TABLE_TRANSFORMATIONS_OWNER,
   useAdHocColumnState,
   useTableRefreshNewFeatures,
   useCacheFieldDisplayNames,
@@ -73,7 +80,7 @@ export function TablePanel(props: Props) {
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
   const sourceSeries = adHocTransformationsEnabled
-    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
+    ? panelContext.adHocTransformations?.getSourceSeries(PANEL_AD_HOC_TRANSFORMATIONS_OWNER)
     : undefined;
   const configuredSourceSeries = useMemo(
     () =>
