@@ -31,7 +31,7 @@ export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFi
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
-  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(fields);
+  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(fields);
 
   if (!fields.length) {
     return null;
@@ -39,16 +39,18 @@ export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFi
 
   return (
     <>
-      <Stack justifyContent="center">
-        <Box marginBottom={1}>
-          <Pagination
-            currentPage={currentPage}
-            numberOfPages={numberOfPages}
-            onNavigate={onNavigate}
-            hideWhenSinglePage
-          />
-        </Box>
-      </Stack>
+      {showTopPagination && (
+        <Stack justifyContent="center">
+          <Box marginBottom={1}>
+            <Pagination
+              currentPage={currentPage}
+              numberOfPages={numberOfPages}
+              onNavigate={onNavigate}
+              hideWhenSinglePage
+            />
+          </Box>
+        </Stack>
+      )}
       <div className={styles.fieldsTable}>
         {pagedItems.map((field, i) => (
           <LogLineOTelDetailsField
@@ -86,7 +88,7 @@ export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDeta
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
-  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(fields);
+  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(fields);
 
   if (!fields.length) {
     return null;
@@ -94,16 +96,18 @@ export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDeta
 
   return (
     <>
-      <Stack justifyContent="center">
-        <Box marginBottom={1}>
-          <Pagination
-            currentPage={currentPage}
-            numberOfPages={numberOfPages}
-            onNavigate={onNavigate}
-            hideWhenSinglePage
-          />
-        </Box>
-      </Stack>
+      {showTopPagination && (
+        <Stack justifyContent="center">
+          <Box marginBottom={1}>
+            <Pagination
+              currentPage={currentPage}
+              numberOfPages={numberOfPages}
+              onNavigate={onNavigate}
+              hideWhenSinglePage
+            />
+          </Box>
+        </Stack>
+      )}
       <div className={styles.fieldsTable}>
         {pagedItems.map((field, i) => (
           <LogLineOTelDetailsField
