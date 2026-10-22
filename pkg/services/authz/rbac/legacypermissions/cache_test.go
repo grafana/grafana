@@ -3,7 +3,6 @@ package legacypermissions_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 
@@ -38,8 +37,8 @@ func (m *migratedGrants) ResolveCurrentUserPermissions(context.Context, identity
 
 func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	for _, enterprise := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enterprise=%t", enterprise), func(t *testing.T) {
+	for _, mode := range []string{"oss", "licensed", "enforced"} {
+		t.Run(mode, func(t *testing.T) {
 			sql := db.NewTestStore(t)
 			a := ac.Permission{Action: "users:read", Scope: "users:*"}
 			b := ac.Permission{Action: "users:create"}
@@ -48,8 +47,12 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			z := &migratedGrants{permissions: []ac.Permission{a, b, b}}
 			loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 				resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-				loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, z,
+				loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: mode == "licensed"}, z,
 			)
+			if mode == "enforced" {
+				loader = legacypermissions.NewEnforcedLoader(sql, resourcepermissions.NewActionSetService(),
+					localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(), z)
+			}
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, want ...ac.Permission) {
 				t.Helper()

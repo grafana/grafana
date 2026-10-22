@@ -31,6 +31,8 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/rbac/leg
 type loadSettings struct {
 	enforcementEnabled                 bool
 	excludeRedundantManagedPermissions bool
+	permissionCache                    bool
+	mergeZanzana                       bool
 }
 
 // MigratedPermissions resolves only Zanzana grants, never legacy RBAC grants.
@@ -43,9 +45,7 @@ type Loader struct {
 	catalog  *RoleCatalog
 	actions  ac.ActionResolver
 	cache    *localcache.CacheService
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	license  licensing.Licensing
+	settings func() loadSettings
 	zanzana  MigratedPermissions
 	flight   singleflight.Group
 	log      log.Logger
@@ -55,14 +55,47 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
+	return newLoader(sql, catalog, actionResolver, cache, zanzana, func() loadSettings {
+		enforced := license.FeatureEnabled("accesscontrol.enforcement")
+		settings := processSettings(cfg, features)
+		settings.enforcementEnabled = enforced
+		// OSS merges Zanzana grants without enforcement; unlicensed Enterprise does not.
+		settings.mergeZanzana = enforced || license.Edition() == licensing.OpenSourceEdition
+		return settings
+	})
+}
+
+// NewEnforcedLoader uses process-level policy without a license or static role catalog.
+// The caller must supply a tenant-scoped database and an independently configured Zanzana resolver.
+// This constructor does not provide tenant isolation or register a remote service.
+func NewEnforcedLoader(sql db.DB, actionResolver ac.ActionResolver, cache *localcache.CacheService,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, zanzana MigratedPermissions,
+) *Loader {
+	return newLoader(sql, nil, actionResolver, cache, zanzana, func() loadSettings {
+		settings := processSettings(cfg, features)
+		settings.enforcementEnabled = true
+		settings.mergeZanzana = true
+		return settings
+	})
+}
+
+func processSettings(cfg *setting.Cfg, features featuremgmt.FeatureToggles) loadSettings {
+	return loadSettings{
+		permissionCache: cfg.RBAC.PermissionCache,
+		//nolint:staticcheck // Preserve the current global feature-toggle behavior.
+		excludeRedundantManagedPermissions: features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
+	}
+}
+
+func newLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
+	cache *localcache.CacheService, zanzana MigratedPermissions, settings func() loadSettings,
+) *Loader {
 	return &Loader{
 		store:    permissionStore{sql},
 		catalog:  catalog,
 		actions:  actionResolver,
 		cache:    cache,
-		cfg:      cfg,
-		features: features,
-		license:  license,
+		settings: settings,
 		zanzana:  zanzana,
 		log:      log.New("authz.legacypermissions"),
 	}
@@ -82,17 +115,13 @@ func (l *Loader) GetLocalUserPermissions(ctx context.Context, user identity.Requ
 func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester, options ac.Options) ([]ac.Permission, error) {
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.GetUserPermissions")
 	defer span.End()
-	settings := loadSettings{
-		enforcementEnabled: l.license.FeatureEnabled("accesscontrol.enforcement"),
-		//nolint:staticcheck // Preserve the current global feature-toggle behavior.
-		excludeRedundantManagedPermissions: l.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
-	}
+	settings := l.settings()
 	started := time.Now()
 	// OSS timing includes Zanzana merging; licensed Enterprise measures only RBAC loading.
 	if !settings.enforcementEnabled {
 		defer func() { metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds()) }()
 	}
-	cached := l.cfg.RBAC.PermissionCache && user.HasUniqueId()
+	cached := settings.permissionCache && user.HasUniqueId()
 	var permissions []ac.Permission
 	var err error
 	if !cached {
@@ -114,9 +143,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if err != nil {
 		return nil, err
 	}
-	// Enterprise's unlicensed fallback has no Zanzana resolver. OSS itself
-	// still merges Zanzana grants even though enforcement is always disabled.
-	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
+	if l.zanzana == nil || !settings.mergeZanzana {
 		return permissions, nil
 	}
 	resolve := func() ([]ac.Permission, error) { return l.zanzana.ResolveCurrentUserPermissions(ctx, user) }

@@ -22,6 +22,36 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+type enterpriseEnforcementLicense struct{ enforcementLicense }
+
+func (*enterpriseEnforcementLicense) Edition() string { return "Enterprise" }
+
+func TestIntegrationEmbeddedLoaderPreservesEnterpriseMergeEligibility(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	sql := db.NewTestStore(t)
+	license := &enterpriseEnforcementLicense{}
+	grant := ac.Permission{Action: "users:read"}
+	migrated := &migratedGrants{permissions: []ac.Permission{grant}}
+	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
+		resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(false),
+		featuremgmt.WithFeatures(), license, migrated)
+	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
+	shared := ac.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}
+	for _, enabled := range []bool{false, true, false} {
+		license.enabled = enabled
+		before := migrated.calls
+		got, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})
+		require.NoError(t, err)
+		if enabled {
+			require.ElementsMatch(t, []ac.Permission{shared, grant}, got)
+			require.Equal(t, before+1, migrated.calls)
+		} else {
+			require.ElementsMatch(t, []ac.Permission{shared}, got)
+			require.Equal(t, before, migrated.calls)
+		}
+	}
+}
+
 type dashboardGrantClient struct{ client.NoopClient }
 
 func (dashboardGrantClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
