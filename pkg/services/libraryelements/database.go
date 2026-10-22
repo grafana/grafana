@@ -807,6 +807,10 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 // checking folder permissions; callers must have already confirmed the folder is gone. Elements
 // still connected to a dashboard are kept and block the delete (as in the permission-checked path).
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
+	if l.ConnectedDashboardsFinder == nil {
+		return model.ErrConnectedDashboardsFinderNotConfigured
+	}
+
 	conn := l.SQLStore
 	libraryElementTable := "library_element"
 	ctx := c
@@ -828,10 +832,6 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 	})
 	if err != nil {
 		return err
-	}
-
-	if len(elements) > 0 && l.ConnectedDashboardsFinder == nil {
-		return model.ErrConnectedDashboardsFinderNotConfigured
 	}
 
 	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)

@@ -72,6 +72,16 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
 		})
 
+	testScenario(t, "When ConnectedDashboardsFinder isn't configured, deleting an empty folder should still fail rather than silently succeeding",
+		func(t *testing.T, sc scenarioContext) {
+			// The folder has no library elements, so without this the misconfiguration would go
+			// undetected until a folder with elements happened to be deleted.
+			sc.service.ConnectedDashboardsFinder = nil
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
+		})
+
 	scenarioWithPanel(t, "DeleteLibraryElementsInFolderUnchecked should delete elements without consulting AccessControl",
 		func(t *testing.T, sc scenarioContext) {
 			// A user with no permissions at all: sc.reqContext.SignedInUser carries a baked-in

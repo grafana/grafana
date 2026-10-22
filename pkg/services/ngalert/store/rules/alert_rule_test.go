@@ -750,6 +750,24 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		require.ErrorIs(t, err, folder.ErrAccessDenied)
 	})
 
+	t.Run("should not delete any folder's rules if a later folder in the batch lacks permission", func(t *testing.T) {
+		ruleA := createRule(t, store, nil)
+		ruleB := createRule(t, store, models.RuleGen.With(
+			models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval),
+			models.RuleMuts.WithNamespaceUIDNotIn(ruleA.NamespaceUID),
+		))
+		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ruleA.NamespaceUID)},
+		})
+
+		err := store.DeleteInFolders(context.Background(), ruleA.OrgID, []string{ruleA.NamespaceUID, ruleB.NamespaceUID}, &user.SignedInUser{})
+		require.ErrorIs(t, err, folder.ErrAccessDenied)
+
+		c, err := store.CountInFolders(context.Background(), ruleA.OrgID, []string{ruleA.NamespaceUID}, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), c, "ruleA's folder must not be deleted when ruleB's folder fails its permission check")
+	})
+
 	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
 			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
