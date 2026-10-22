@@ -470,10 +470,19 @@ func TestPerKindValidateQuery_sort(t *testing.T) {
 		return q
 	}
 
-	t.Run("accepts title in either direction", func(t *testing.T) {
-		for _, dir := range []string{"", sortAscending, sortDescending} {
-			assert.Empty(t, validate(t, sortQuery(searchv0.SortField{Field: fieldTitle, Direction: dir})), "direction %q", dir)
+	t.Run("accepts title and name in either direction", func(t *testing.T) {
+		for _, name := range []string{fieldTitle, fieldName} {
+			for _, dir := range []string{"", sortAscending, sortDescending} {
+				assert.Empty(t, validate(t, sortQuery(searchv0.SortField{Field: name, Direction: dir})), "field %q direction %q", name, dir)
+			}
 		}
+	})
+
+	t.Run("accepts title then name", func(t *testing.T) {
+		assert.Empty(t, validate(t, sortQuery(
+			searchv0.SortField{Field: fieldTitle},
+			searchv0.SortField{Field: fieldName, Direction: sortDescending},
+		)))
 	})
 
 	t.Run("rejects an unknown direction", func(t *testing.T) {
@@ -481,13 +490,10 @@ func TestPerKindValidateQuery_sort(t *testing.T) {
 			validate(t, sortQuery(searchv0.SortField{Field: fieldTitle, Direction: "descending"})))
 	})
 
-	// folder and name declare the sort capability, but the legacy store orders by
-	// title whatever it is asked for, so sorting on them would silently lie.
+	// folder declares the sort capability, but the legacy backend cannot order by
+	// it, so sorting on it would silently return title order.
 	t.Run("rejects fields the legacy backend cannot order by", func(t *testing.T) {
-		for _, name := range []string{fieldFolder, fieldName} {
-			assert.Equal(t, []string{"sort[0].field"},
-				validate(t, sortQuery(searchv0.SortField{Field: name})), "field %q", name)
-		}
+		assert.Equal(t, []string{"sort[0].field"}, validate(t, sortQuery(searchv0.SortField{Field: fieldFolder})))
 	})
 
 	t.Run("rejects a field that is not sortable", func(t *testing.T) {

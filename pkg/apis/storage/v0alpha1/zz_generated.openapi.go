@@ -14,7 +14,52 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyRequest": schema_pkg_apis_storage_v0alpha1_ListKeyRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyItem":     schema_pkg_apis_storage_v0alpha1_ListKeyItem(ref),
+		"github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyRequest":  schema_pkg_apis_storage_v0alpha1_ListKeyRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyResponse": schema_pkg_apis_storage_v0alpha1_ListKeyResponse(ref),
+	}
+}
+
+func schema_pkg_apis_storage_v0alpha1_ListKeyItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ListKeyItem is the identity of one object.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is set per item because a cluster-wide list spans namespaces.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resourceVersion": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Folder is absent when the object is not in a folder.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"namespace", "name", "resourceVersion"},
+			},
+		},
 	}
 }
 
@@ -63,5 +108,67 @@ func schema_pkg_apis_storage_v0alpha1_ListKeyRequest(ref common.ReferenceCallbac
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_storage_v0alpha1_ListKeyResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ListKeyResponse is one page of keys from POST .../{resource}/list-keys: identities only, with no object bodies.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resourceVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ResourceVersion is the snapshot every page is taken at. Callers need it to arbitrate list-versus-event races.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"continue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Continue is the token for the next page. Empty on the last page.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyItem"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"resourceVersion", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyItem"},
 	}
 }

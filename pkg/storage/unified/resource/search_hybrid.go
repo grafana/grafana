@@ -71,7 +71,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 	namespace := keys[0].Namespace
-	if len(keys) > 1 {
+	// Global callers can supply arbitrary resource names, including rejected targets.
+	if req.RequireHybridEnabled || len(keys) > 1 {
 		group, resource = GlobalSearchGroup, GlobalSearchResource
 	} else {
 		group, resource = keys[0].Group, keys[0].Resource
@@ -161,6 +162,9 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 			if coll.IsExternal && s.externalLexical == nil {
 				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 			}
+		}
+		if req.RequireHybridEnabled && !coll.IsExternal && !s.hybridSearchConfig.Enabled(key.Group, key.Resource) {
+			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
 		}
 		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
 			return nil, err
@@ -321,11 +325,11 @@ func lexicalUIDSet(lex []lexicalHit) map[string]struct{} {
 	return uids
 }
 
-// resolveManagedBy fills ManagedByKind/ManagedById on semantic-only hits
+// resolveSemanticMetadata fills manager fields and tags on semantic-only hits
 // (absent from lexUIDs) with one batched lookup; other hits already carry
 // these fields off the lexical leg's own document. Best-effort, like
 // resolveFolderTitles.
-func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.ResourceKey, lexUIDs map[string]struct{}, results []*resourcepb.HybridSearchResult) {
+func (s *searchServer) resolveSemanticMetadata(ctx context.Context, key *resourcepb.ResourceKey, lexUIDs map[string]struct{}, results []*resourcepb.HybridSearchResult) {
 	uids := make([]string, 0, len(results))
 	for _, r := range results {
 		if _, ok := lexUIDs[r.Key.Name]; !ok {
@@ -344,29 +348,29 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 			},
 		},
 		Limit:        int64(len(uids)),
-		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
+		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := searchCallError(resp, err); err != nil {
-		s.log.Warn("hybrid search: managed-by resolution failed", "err", err)
+		s.log.Warn("hybrid search: semantic metadata resolution failed", "err", err)
 		return
 	}
 
 	hits, err := lexicalHitsFromResponse(resp)
 	if err != nil {
-		s.log.Warn("hybrid search: managed-by response decoding failed", "err", err)
+		s.log.Warn("hybrid search: semantic metadata response decoding failed", "err", err)
 		return
 	}
 
-	type managedBy struct{ kind, id string }
-	managed := make(map[string]managedBy, len(uids))
+	metadata := make(map[string]lexicalHit, len(uids))
 	for _, hit := range hits {
-		managed[hit.uid] = managedBy{kind: hit.managerKind, id: hit.managerID}
+		metadata[hit.uid] = hit
 	}
 	for _, r := range results {
-		if m, ok := managed[r.Key.Name]; ok {
-			r.ManagedByKind = m.kind
-			r.ManagedById = m.id
+		if hit, ok := metadata[r.Key.Name]; ok {
+			r.ManagedByKind = hit.managerKind
+			r.ManagedById = hit.managerID
+			r.Tags = hit.tags
 		}
 	}
 }
@@ -585,6 +589,7 @@ type lexicalHit struct {
 	folder           string
 	managerKind      string
 	managerID        string
+	tags             []string
 	lexical          map[string]*structpb.Value
 	lexicalTruncated bool
 
@@ -630,6 +635,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		r.Folder = h.folder
 		r.ManagedByKind = h.managerKind
 		r.ManagedById = h.managerID
+		r.Tags = h.tags
 		r.Lexical = h.lexical
 		if h.chunkContent != "" {
 			if lexChunks == nil {
@@ -652,7 +658,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			seen[v.UID] = struct{}{}
 			rank++
 			r.Score += 1.0 / float64(rrfK+rank)
-			// Only fill in the title and folder when the resource wasn't found by lexical search
+			// Only fill in the title and folder when the resource wasn't found by lexical search.
 			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = titleFromChunkMetadata(v.Metadata, v.Title)
 				r.Folder = v.Folder
@@ -742,6 +748,7 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 		return nil
 	}
 	titleIdx, folderIdx, managerKindIdx, managerIDIdx := -1, -1, -1, -1
+	tagsIdx := -1
 	for i, column := range table.GetColumns() {
 		switch column.GetName() {
 		case SEARCH_FIELD_TITLE:
@@ -752,6 +759,8 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 			managerKindIdx = i
 		case SEARCH_FIELD_MANAGER_ID:
 			managerIDIdx = i
+		case SEARCH_FIELD_TAGS:
+			tagsIdx = i
 		}
 	}
 	hits := make([]lexicalHit, 0, len(table.GetRows()))
@@ -771,6 +780,9 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 		}
 		if managerIDIdx >= 0 && managerIDIdx < len(row.GetCells()) {
 			hit.managerID = string(row.GetCells()[managerIDIdx])
+		}
+		if tagsIdx >= 0 && tagsIdx < len(row.GetCells()) {
+			_ = json.Unmarshal(row.GetCells()[tagsIdx], &hit.tags)
 		}
 		hits = append(hits, hit)
 	}
@@ -799,6 +811,13 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		}
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
+		}
+		if value, ok := values[SEARCH_FIELD_TAGS]; ok {
+			var valid bool
+			hit.tags, valid = value.([]string)
+			if !valid {
+				return nil, fmt.Errorf("row %d: field %q: expected string array, got %T", i, SEARCH_FIELD_TAGS, value)
+			}
 		}
 		hit.lexical, hit.lexicalTruncated = boundedLexicalFields(values)
 		hits = append(hits, hit)
@@ -958,7 +977,7 @@ func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, key *resourcepb.R
 		Options:      &resourcepb.ListOptions{Key: key},
 		Query:        req.Query,
 		Limit:        int64(depth),
-		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
+		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	add := func(key string, values []string) {

@@ -203,6 +203,11 @@ func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error 
 	return nil
 }
 
+// requestRouter is a handler that hands each request to another handler.
+type requestRouter interface {
+	handlerFor(*http.Request) http.Handler
+}
+
 // serveThroughBreaker proxies one request to h through cb, streaming the
 // response straight to w. An open breaker (or a half-open one already running
 // its trial request) fails fast with a local 503, unless h gates its own client
@@ -212,6 +217,11 @@ func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error 
 // the body ends. A watch streams for as long as it lasts; holding its outcome
 // until then would keep a half-open breaker's only trial slot for that long.
 func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.ResponseWriter, req *http.Request) {
+	// A handler that sends some of a group's requests elsewhere picks the
+	// handler first, so only that handler's breakers see the request.
+	if router, ok := h.(requestRouter); ok {
+		h = router.handlerFor(req)
+	}
 	// A handler spanning multiple destinations must not also share a group-wide breaker.
 	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
 		h.ServeHTTP(w, req)

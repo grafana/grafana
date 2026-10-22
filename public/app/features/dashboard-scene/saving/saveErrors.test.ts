@@ -56,6 +56,40 @@ describe('getSaveDashboardErrorInfo', () => {
       expect(info?.message).toBe('dashboards.dashboard.grafana.app is forbidden');
     });
 
+    // Unified storage also sends quota and service-to-service auth failures as a 403 with a message
+    // but no reason, so that shape can't be told apart from a missing permission.
+    it('does not treat a 403 Status that has a message but no reason as forbidden', () => {
+      const info = getSaveDashboardErrorInfo(
+        k8sError({ reason: undefined, message: 'Limit reached for resource dashboards: 1000/1000' }, 403)
+      );
+
+      expect(info?.kind).toBe('unknown');
+      expect(info?.message).toBe('Limit reached for resource dashboards: 1000/1000');
+    });
+
+    it('lets a reason other than Forbidden win over the 403 status', () => {
+      const info = getSaveDashboardErrorInfo(k8sError({ reason: 'InternalError', message: undefined }, 403));
+
+      expect(info?.kind).toBe('unknown');
+    });
+
+    // The create check in unified storage sends neither a reason nor a message, and over HTTP/2 the
+    // response has no statusText either.
+    it.each(['', 'Forbidden'])(
+      'tells the user to ask for access when a 403 Status carries no message (statusText "%s")',
+      (statusText) => {
+        const error: FetchError<MetaStatus> = {
+          ...k8sError({ reason: undefined, message: undefined }, 403),
+          statusText,
+        };
+
+        const info = getSaveDashboardErrorInfo(error);
+
+        expect(info?.kind).toBe('forbidden');
+        expect(info?.message).toBe('Ask your Grafana administrator for access.');
+      }
+    );
+
     it('lists each Invalid cause as "field: message"', () => {
       const info = getSaveDashboardErrorInfo(
         k8sError(

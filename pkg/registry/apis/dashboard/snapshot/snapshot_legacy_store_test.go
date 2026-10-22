@@ -127,7 +127,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Empty(t, receivedReq.Header.Get("Authorization"))
 	})
 
-	t.Run("rebuilds URL using domain from ExternalDeleteURL even when stored path is wrong", func(t *testing.T) {
+	t.Run("preserves base path when rebuilding a legacy URL", func(t *testing.T) {
 		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		var receivedReq *http.Request
@@ -137,15 +137,54 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// Stored URL has a stale/wrong legacy path; with the toggle ON the store should
-		// extract just the domain and rebuild the new k8s path.
-		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
+		store := makeStore(t, server.URL+"/snapshots/api/snapshots-delete/"+deleteKey)
 
 		_, _, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodDelete, receivedReq.Method)
-		assert.Equal(t, "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
+		assert.Equal(t, "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
+	})
+
+	t.Run("wrapper already deleted from stored endpoint", func(t *testing.T) {
+		deleteURL := "https://snapshots.example.com/api/snapshots-delete/" + deleteKey
+		store := makeStore(t, deleteURL)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, deleteURL)
+		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+	})
+
+	t.Run("wrapper already deleted from a Kubernetes endpoint with a base path", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			t.Error("legacy store repeated deletion through a different path")
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+		deleteURL := server.URL + "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/" + deleteKey
+		store := makeStore(t, deleteURL)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, deleteURL)
+		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+	})
+
+	t.Run("wrapper deleted from a different path on the same host", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, false)
+		called := false
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+			require.Equal(t, "/old/api/snapshots-delete/"+deleteKey, r.URL.Path)
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+		store := makeStore(t, server.URL+"/old/api/snapshots-delete/"+deleteKey)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, server.URL+"/new/api/snapshots-delete/"+deleteKey)
+		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+		require.True(t, called)
 	})
 
 	t.Run("returns error on invalid ExternalDeleteURL", func(t *testing.T) {
@@ -184,6 +223,38 @@ func TestSnapshotLegacyStore_Delete_CrossOrg(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 	assert.False(t, deleted)
+}
+
+func TestSnapshotLegacyStore_List_Name(t *testing.T) {
+	for _, tc := range []struct {
+		name, namespace string
+		missing         bool
+		count           int
+	}{
+		{name: "global key lookup", count: 1},
+		{name: "same org", namespace: "org-2", count: 1},
+		{name: "other org", namespace: "default"},
+		{name: "deleted key", missing: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := dashboardsnapshots.NewMockService(t)
+			query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}
+			if tc.missing {
+				service.On("GetDashboardSnapshot", mock.Anything, query).Return(nil, dashboardsnapshots.ErrBaseNotFound)
+			} else {
+				service.On("GetDashboardSnapshot", mock.Anything, query).Return(&dashboardsnapshots.DashboardSnapshot{Key: "snapshot-key", OrgID: 2, Dashboard: simplejson.New()}, nil)
+			}
+			store := &SnapshotLegacyStore{Service: service, Namespacer: authlib.OrgNamespaceFormatter}
+			ctx := k8srequest.WithNamespace(t.Context(), tc.namespace)
+			obj, err := store.List(ctx, &internalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", "snapshot-key"), Limit: 1})
+			require.NoError(t, err)
+			list := obj.(*dashV0.SnapshotList)
+			require.Len(t, list.Items, tc.count)
+			if tc.count != 0 {
+				require.Equal(t, "snapshot-key", list.Items[0].Name)
+			}
+		})
+	}
 }
 
 func TestSnapshotLegacyStore_List_DeleteKey(t *testing.T) {
