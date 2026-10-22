@@ -91,9 +91,12 @@ target (`aggregate_poller.go`): poll it, and expose what it serves as `Backend`s
    per-group breaker, redirect rejection, the `X-Grafana-ST-To-Router-Fallback` marker, the requester's credentials. The
    backend carries the group's discovery document, so the router's existing union serves
    `/apis`, `/apis/<group>` and `/openapi/v3` without new merge code.
-3. The mt fallback implements `RoutesLoader`, as `singleTenantFallback` does, and the cloud
-   loader merges it into its `Load` at the lowest priority. The router's existing reconcile,
-   `served` map and breaker handling then apply unchanged.
+3. The mt fallback implements `RoutesLoader`, as `singleTenantFallback` does. A full Grafana
+   server builds its loader with `ProvideRoutesLoader` (local plugin backends, or none), never the
+   cloud loader, which only the standalone router builds. `ProvideRoutesLoader` therefore composes
+   the MT source with the plugin loader when `[cloud_router] mt_router_address` is set, with the
+   MT source last in priority. The router's existing reconcile, `served` map and breaker handling
+   then apply unchanged.
 4. The per-request gate in `Service.HandleFunc` goes away: a group is forwarded because it is in
    the router's snapshot, not because it is absent from a local set. Groups in neither go to
    `next` and get a local 404.
@@ -108,8 +111,8 @@ target (`aggregate_poller.go`): poll it, and expose what it serves as `Backend`s
 - **`Load` waits for the local set.** Until it exists, the MT source reports
   `errMTDiscoveryPending`, like `errSingleTenantDiscoveryPending`, so a reconcile cannot publish
   an MT group that is really local. A failed local read is retried by the existing backoff.
-- **Between sources,** a group the cloud loader's other sources serve keeps the existing priority
-  order (`cloudLoader.Load`); the MT source is last.
+- **Between sources,** a group a local plugin backend serves keeps priority over the MT source,
+  which is last.
 - **Within a group,** one backend owns every version: the discovery document of a group served by
   the MT router is taken whole, never merged with a local one.
 

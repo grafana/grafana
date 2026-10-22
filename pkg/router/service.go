@@ -37,7 +37,7 @@ type Service struct {
 	middleware bool
 
 	// mt forwards groups the embedded API server does not serve to the
-	// multi-tenant router. It is nil unless the loader provides one.
+	// multi-tenant router. It is nil unless [cloud_router] mt_router_address is set.
 	mt *mtFallback
 
 	// loaderLifecycle is the routes loader's own background lifecycle (such as
@@ -76,8 +76,12 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(router, reg)
 	s.standalone = standaloneRouter(cfg)
 	s.middleware = middlewareEnabled(cfg, features)
-	if l, ok := loader.(loaderWithMTFallback); ok && s.middleware && !s.standalone {
-		s.mt = l.MultiTenantFallback()
+	if s.middleware && !s.standalone {
+		mt, err := newMTFallbackFromConfig(cfg)
+		if err != nil {
+			return nil, err
+		}
+		s.mt = mt
 	}
 	if lifecycle, ok := loader.(services.Service); ok {
 		s.loaderLifecycle = lifecycle

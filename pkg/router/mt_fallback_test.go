@@ -147,10 +147,11 @@ func TestMiddlewareForwardsUnknownGroupsToMT(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue(mt.URL)
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	// A full server builds its loader with ProvideRoutesLoader, never the cloud one.
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{Features: features})
 	require.NoError(t, err)
-	require.NotNil(t, loader, "mt_router_address alone configures the cloud loader")
-	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
+	svc, err := provideTestService(cfg, features, loader)
 	require.NoError(t, err)
 	require.NotNil(t, svc.mt)
 	require.NoError(t, svc.router.reconcile(t.Context()))
@@ -188,8 +189,38 @@ func TestMiddlewareForwardsUnknownGroupsToMT(t *testing.T) {
 func TestMTRouterAddressMustBeAbsoluteURL(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("mt-router:3000")
-	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	_, err := newMTFallbackFromConfig(cfg)
 	require.ErrorContains(t, err, mtRouterAddressKey)
+
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	_, err = provideTestService(cfg, features, &mutableLoader{})
+	require.ErrorContains(t, err, mtRouterAddressKey, "a bad address fails the service at startup")
+}
+
+func TestMTFallbackNeedsAddressAndMiddleware(t *testing.T) {
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
+
+	// No address: no fallback, and no error.
+	svc, err := provideTestService(setting.NewCfg(), features, &mutableLoader{})
+	require.NoError(t, err)
+	require.Nil(t, svc.mt)
+
+	// An address without the middleware toggle does nothing.
+	cfg := setting.NewCfg()
+	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("http://mt-router:3000")
+	svc, err = provideTestService(cfg, featuremgmt.WithFeatures(), &mutableLoader{})
+	require.NoError(t, err)
+	require.Nil(t, svc.mt)
+}
+
+// The standalone router target is the multi-tenant router itself.
+func TestMTFallbackNotInStandaloneRouter(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
+	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("http://mt-router:3000")
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), &mutableLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
+	require.NoError(t, err)
+	require.Nil(t, svc.mt)
 }
 
 func TestMTRouterTLS(t *testing.T) {
@@ -227,31 +258,6 @@ func TestMTRouterTLSValidation(t *testing.T) {
 	require.NoError(t, os.WriteFile(bad, []byte("not pem"), 0o600))
 	_, err = newMTFallback("https://mt-router:3000", bad, false)
 	require.ErrorContains(t, err, "invalid CA PEM")
-}
-
-// Without the cloud loader, which only a configured address creates, the
-// service never forwards: the behavior is absent from OSS.
-func TestMTFallbackNeedsCloudLoader(t *testing.T) {
-	cfg := setting.NewCfg()
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.NoError(t, err)
-	require.Nil(t, loader)
-
-	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), &mutableLoader{})
-	require.NoError(t, err)
-	require.Nil(t, svc.mt)
-}
-
-// The standalone router target is the multi-tenant router itself.
-func TestMTFallbackNotInStandaloneRouter(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Target = []string{"router"}
-	cfg.Raw.Section(cloudRouterSection).Key(mtRouterAddressKey).SetValue("http://mt-router:3000")
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.NoError(t, err)
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
-	require.NoError(t, err)
-	require.Nil(t, svc.mt)
 }
 
 func TestSingleTenantFallbackRefusesForwardedRequests(t *testing.T) {

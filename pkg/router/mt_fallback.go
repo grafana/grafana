@@ -18,6 +18,7 @@ import (
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -210,11 +211,20 @@ func newMTFallback(address, caFile string, insecure bool) (*mtFallback, error) {
 	return &mtFallback{target: target, transport: newAggregateBaseTransport(tlsCfg), local: newLocalGroups(), breakers: breakers}, nil
 }
 
-// loaderWithMTFallback is implemented by a RoutesLoader that sends the groups
-// the embedded API server does not serve to the multi-tenant router. Only the
-// cloud loader does, so the behavior exists only where it is configured.
-type loaderWithMTFallback interface {
-	MultiTenantFallback() *mtFallback
+// newMTFallbackFromConfig builds the fallback from the [cloud_router] section,
+// or returns nil when mt_router_address is not set. A full Grafana server never
+// builds the cloud routes loader, which only the standalone router does, so the
+// service reads these settings itself.
+func newMTFallbackFromConfig(cfg *setting.Cfg) (*mtFallback, error) {
+	if cfg == nil {
+		return nil, nil
+	}
+	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	address := section.Key(mtRouterAddressKey).MustString("")
+	if address == "" {
+		return nil, nil
+	}
+	return newMTFallback(address, section.Key(mtRouterCAFileKey).MustString(""), section.Key(mtRouterInsecureKey).MustBool(false))
 }
 
 // handles reports whether req is for a group that is not served locally. A
