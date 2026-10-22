@@ -4,9 +4,10 @@ import { type TransformerUIProps } from '@grafana/data';
 import { type LimitTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
-import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
-import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
+import { numberOrVariableValidator } from '../utils';
 
 export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps<LimitTransformerOptions>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);

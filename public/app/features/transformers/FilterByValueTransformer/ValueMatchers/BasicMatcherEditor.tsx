@@ -3,9 +3,10 @@ import * as React from 'react';
 
 import { ValueMatcherID, type BasicValueMatcherOptions } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
-import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
+import { numberOrVariableValidator } from '../../utils';
 
 import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 

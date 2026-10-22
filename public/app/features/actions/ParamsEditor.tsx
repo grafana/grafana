@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
-
-import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 
 interface Props {
   onChange: (v: Array<[string, string]>) => void;
