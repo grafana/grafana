@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -15,15 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
-
-// UseConverge routes Compare and applyChanges through the converge planner
-// instead of the hand-rolled diff.
-//
-// It defaults on, so the planner is what the suites exercise. Set
-// PROVISIONING_CONVERGE=0 to run the hand-rolled diff instead and diff the two.
-// It exists for that comparison and is not a product setting: one of the two
-// implementations has to go before this ships.
-var UseConverge = os.Getenv("PROVISIONING_CONVERGE") != "0"
 
 // CompareViaConverge is Compare implemented on the converge planner.
 //
@@ -147,6 +137,19 @@ func readFolderMetadata(
 	return out, invalid, nil
 }
 
+// indexKey normalises a path so that the two sides agree: a folder is keyed by
+// its path with a trailing slash, an entity by its path as given.
+func indexKey(path string, container bool) string {
+	if container {
+		return safepath.EnsureTrailingSlash(path)
+	}
+	return path
+}
+
+func isFolderItem(item *provisioning.ResourceListItem) bool {
+	return item.Resource == resources.FolderResource.Resource
+}
+
 // attachActions labels each invalid-metadata warning with what the plan does
 // to the folder it concerns.
 func attachActions(invalid []*resources.InvalidFolderMetadata, changes []ResourceFileChange) []*resources.InvalidFolderMetadata {
@@ -186,18 +189,21 @@ func translatePlan(ctx context.Context, p *converge.Plan, target *provisioning.R
 	foldersByPath := make(map[string]*provisioning.ResourceListItem)
 	for i := range target.Items {
 		item := &target.Items[i]
-		byKeyIdentity[item.Path+"\x00"+item.Name] = item
+		// Folder keys carry a trailing slash on the plan side, so the index has
+		// to agree or every folder relocation loses the row that holds its old
+		// path and is mistaken for a fresh create.
+		byKeyIdentity[indexKey(item.Path, isFolderItem(item))+"\x00"+item.Name] = item
 		if item.Resource == resources.FolderResource.Resource && item.Path != "" {
 			foldersByPath[safepath.EnsureTrailingSlash(item.Path)] = item
 		}
 	}
 	// A move leaves its origin, so that is where its row is.
 	lookup := func(op converge.Op) *provisioning.ResourceListItem {
-		key := string(op.Key)
+		key := op.Key
 		if op.Kind == converge.OpMove && op.From != "" {
-			key = string(op.From)
+			key = op.From
 		}
-		return byKeyIdentity[key+"\x00"+string(op.Identity)]
+		return byKeyIdentity[indexKey(string(key), key.IsContainer())+"\x00"+string(op.Identity)]
 	}
 
 	out := make([]ResourceFileChange, 0, len(p.Ops)+len(p.Exclusions))

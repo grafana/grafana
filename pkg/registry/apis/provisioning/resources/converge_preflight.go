@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -13,9 +12,17 @@ import (
 )
 
 // useConverge routes the write path through a plan before it writes anything.
-// It mirrors the switch in the sync package so both are exercised together;
-// it is not a product setting.
-var useConverge = os.Getenv("PROVISIONING_CONVERGE") != "0"
+//
+// It is set once from the provisioningConvergePlanner feature toggle, at the
+// same wiring that chooses the sync's diff, so the interactive path and the
+// convergence path are never on different sides of the switch — a write the API
+// accepted under one and the sync deletes under the other is the exact
+// divergence this is meant to remove.
+var useConverge bool
+
+// SetConvergePreflight installs the plan-based write preflight. It is called
+// once during wiring from the resolved feature toggle.
+func SetConvergePreflight(enabled bool) { useConverge = enabled }
 
 // preflight decides, before anything is written, what a single write would do
 // and whether it is allowed.

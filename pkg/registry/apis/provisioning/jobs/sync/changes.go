@@ -74,10 +74,6 @@ func Compare(
 	ref string,
 	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
-	if UseConverge {
-		return CompareViaConverge(ctx, repo, repositoryResources, ref, folderMetadataEnabled)
-	}
-
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error listing current: %w", err)
