@@ -146,6 +146,54 @@ it("shows Composer with the Assistant sparkle in the Chat button's gradient", as
   expect(gradient?.querySelectorAll('stop')).toHaveLength(2);
 });
 
+it('marks Composer as new until it is the current mode', async () => {
+  await openPicker();
+  expect(composerItem()).toHaveTextContent('New');
+});
+
+describe('the main button', () => {
+  const mainButton = (mode: string) => screen.getByRole('button', { name: `Dashboard mode: ${mode}`, hidden: true });
+
+  it('switches Viewing to Composer, asking Assistant to enter it', async () => {
+    const listener = jest.fn();
+    const unsubscribe = addComposerEnterRequestListener(listener);
+    const { user, scene } = await openPicker();
+
+    await user.click(mainButton('Viewing'));
+
+    expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+    // Assistant enters Composer through the API; the button only asks.
+    expect(scene.state.mode).not.toBe('composer');
+    unsubscribe();
+  });
+
+  it('switches Viewing to Editing while Composer cannot start', async () => {
+    jest.mocked(canEnterComposer).mockReturnValue({ ok: false, reason: 'unsupported' });
+    const { user, scene } = await openPicker();
+
+    await user.click(mainButton('Viewing'));
+
+    expect(getDashboardMode(scene.state)).toBe('edit');
+  });
+
+  it('switches Viewing to Editing while Composer is off', async () => {
+    setTestFlags({ ...FLAGS, 'grafana.dashboardComposer': false });
+    const { user, scene } = await openPicker();
+
+    await user.click(mainButton('Viewing'));
+
+    expect(getDashboardMode(scene.state)).toBe('edit');
+  });
+
+  it('still switches Editing to Viewing', async () => {
+    const { user, scene } = await openPicker((dashboard) => dashboard.setDashboardMode('edit', 'picker'));
+
+    await user.click(mainButton('Editing'));
+
+    expect(getDashboardMode(scene.state)).toBe('view');
+  });
+});
+
 it('hides Composer when its flag is off', async () => {
   setTestFlags({ ...FLAGS, 'grafana.dashboardComposer': false });
   await openPicker();
