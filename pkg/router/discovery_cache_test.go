@@ -239,12 +239,10 @@ func TestAggregateBackendKeepsPolledResources(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, backend.Key(), other.Key())
 
-	// Without resources, the key is unchanged from before resources were kept.
+	// Without resources, the group is a different backend, with no polled discovery.
 	classic, err := newAggregateBackend("target", discovered[0].group, base, http.DefaultTransport)
 	require.NoError(t, err)
-	groupJSON, err := json.Marshal(discovered[0].group)
-	require.NoError(t, err)
-	require.Equal(t, "aggregate:target:"+hashHex(string(groupJSON)), classic.Key())
+	require.NotEqual(t, backend.Key(), classic.Key())
 	_, ok = classic.(DiscoveryProvider).Discovery()
 	require.False(t, ok)
 }

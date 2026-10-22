@@ -1,6 +1,8 @@
 package router
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -12,7 +14,15 @@ import (
 // log lines carry no cardinality cost. The trace context is resolved the same
 // way as for the router's spans, so the logger's traceID matches the trace.
 func logRequest(r *http.Request, group string, status int, duration time.Duration) {
-	logger := logging.FromContext(routerTraceContext(r))
+	ctx := routerTraceContext(r)
+	logger := logging.FromContext(ctx)
+	// Successes log at Debug, which is usually off: skip building their
+	// arguments, which would cost every request.
+	if leveled, ok := logger.(interface {
+		Enabled(context.Context, slog.Level) bool
+	}); ok && status < http.StatusBadRequest && !leveled.Enabled(ctx, slog.LevelDebug) {
+		return
+	}
 	attrs := []any{"method", r.Method, "path", r.URL.Path, "group", group, "status", status, "duration", duration}
 	switch {
 	case status >= http.StatusInternalServerError:
