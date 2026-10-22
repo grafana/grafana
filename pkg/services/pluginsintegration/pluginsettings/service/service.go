@@ -106,10 +106,6 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.
 		return err
 	}
 
-	if err := validateStoredSize("secureJsonData", encryptedSecureJsonData); err != nil {
-		return err
-	}
-
 	return s.updatePluginSetting(ctx, &pluginsettings.UpdatePluginSettingCmd{
 		Enabled:                 args.Enabled,
 		Pinned:                  args.Pinned,
@@ -216,11 +212,18 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 				Enabled:  cmd.Enabled,
 			})
 
+			if err := validateStoredSize("secureJsonData", pluginSetting.SecureJsonData); err != nil {
+				return err
+			}
+
 			_, err = sess.Insert(&pluginSetting)
 			return err
 		}
 
 		maps.Copy(pluginSetting.SecureJsonData, cmd.EncryptedSecureJsonData)
+		if err := validateStoredSize("secureJsonData", pluginSetting.SecureJsonData); err != nil {
+			return err
+		}
 
 		// add state change event on commit success
 		if pluginSetting.Enabled != cmd.Enabled {
