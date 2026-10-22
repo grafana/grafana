@@ -114,6 +114,18 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
   }
 
+  /**
+   * Drops all undo/redo entries. Use when the dashboard state changed outside the edit action pipeline,
+   * since the recorded closures would otherwise replay over (and silently revert) that change.
+   */
+  public clearHistory() {
+    if (this.state.undoStack.length === 0 && this.state.redoStack.length === 0) {
+      return;
+    }
+
+    this.setState({ undoStack: [], redoStack: [] });
+  }
+
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
 

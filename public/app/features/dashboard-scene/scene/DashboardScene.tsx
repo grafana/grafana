@@ -458,7 +458,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const wasEditing = this.state.isEditing;
 
     if (!wasEditing) {
-      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+      this.state.sidebar.clearHistory();
     }
 
     this._editSessionSource = source;
