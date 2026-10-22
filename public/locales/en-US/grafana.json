@@ -16214,14 +16214,7 @@
       "time-range": "Lock time range"
     },
     "export": {
-      "back-button": "Back to export config",
-      "cancel-button": "Cancel",
-      "info-text": "Export this dashboard.",
-      "loading": "Loading...",
-      "save-button": "Save to file",
-      "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON",
-      "view-button-yaml": "View YAML"
+      "share-externally-label": "Export for sharing externally"
     },
     "image": {
       "actions": "Image export actions",
@@ -16279,9 +16272,6 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
-    },
-    "view-json": {
-      "copy-button": "Copy to Clipboard"
     }
   },
   "share-panel": {
