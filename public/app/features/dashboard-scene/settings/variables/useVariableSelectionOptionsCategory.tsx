@@ -143,7 +143,7 @@ function CustomAllValueInput({ variable, id }: InputProps) {
     (evt: React.FocusEvent<HTMLInputElement>) => {
       const newValue = evt.currentTarget.value;
       const oldValue = variable.state.allValue;
-      if (newValue === oldValue) {
+      if (newValue === (oldValue ?? '')) {
         return;
       }
 
