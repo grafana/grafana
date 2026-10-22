@@ -15493,11 +15493,6 @@
       "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Add query",
-      "expression": "Expression",
-      "title-data-source-help": "Data source help"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
