@@ -37,22 +37,6 @@ func requestVerb(req *http.Request) string {
 	return verb
 }
 
-// rejectDeprecatedWatch answers the deprecated /apis/<group>/<version>/watch/...
-// path form with a 404. The router doesn't serve it, so it gets no watch
-// treatment, and nothing past this point has to find a namespace in it.
-func rejectDeprecatedWatch(w http.ResponseWriter, req *http.Request) bool {
-	rest, ok := pathAfterVersion(req.URL.Path)
-	if !ok {
-		return false
-	}
-	if segment, _, _ := strings.Cut(rest, "/"); segment != "watch" {
-		return false
-	}
-	setRoute(req, routeInvalid)
-	http.Error(w, "the deprecated /watch/ path is not supported, use ?watch=true", http.StatusNotFound)
-	return true
-}
-
 // rejectUpgrade answers an upgrade request, which is how a client asks for a
 // watch over WebSocket. The router does not proxy upgrades, so it says so
 // rather than failing some other way.

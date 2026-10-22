@@ -229,11 +229,10 @@ func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next ht
 		return
 	}
 
-	req = r.authenticate(w, req)
-	if req == nil {
+	if req = r.authenticate(w, req); req == nil {
 		return
 	}
-	if rejectDeprecatedWatch(w, req) {
+	if !authorizeNamespace(w, req) {
 		return
 	}
 
@@ -333,8 +332,7 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 // authorizeNamespace refuses a request for a namespace its requester may not
 // use, before any backend or stack sees it: Grafana admins may name any
 // namespace, and everyone else only their own, or any with "*". Backends
-// still authorize everything else. An allowed request carries its namespace
-// in the apiserver's request context.
+// still authorize everything else.
 func authorizeNamespace(w http.ResponseWriter, req *http.Request) bool {
 	ns := namespaceFromPath(req.URL.Path)
 	if ns == "" {
@@ -363,7 +361,7 @@ func authorizeNamespace(w http.ResponseWriter, req *http.Request) bool {
 // namespaceFromPath returns the namespace a resource path names, where the
 // apiserver reads it: /apis/<group>/<version>/namespaces/<namespace>[/...].
 // That includes the namespace object itself, /apis/<g>/<v>/namespaces/<ns>.
-// Any other path, the deprecated /watch/ form included, names none.
+// Any other path names none.
 func namespaceFromPath(path string) string {
 	rest, ok := pathAfterVersion(path)
 	if !ok {

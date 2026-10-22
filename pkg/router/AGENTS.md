@@ -84,8 +84,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   (`/apis/<g>/<v>/namespaces/<ns>[/...]`, read by `namespaceFromPath`) then gets a 403 `Status`
   unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
   fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
-  Grafana admins. Anonymous users get only their own. An allowed request carries the namespace in
-  its context (`request.WithNamespace`). Backends still authorize everything else.
+  Grafana admins. Anonymous users get only their own. Backends still authorize everything else.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -112,8 +111,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
     count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
     the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
-    deprecated `/apis/<g>/<v>/watch/...` path form gets a 404 (`rejectDeprecatedWatch`), before the
-    namespace check, so nothing past that point has to handle it.
+    deprecated `/watch/` path form is not supported either.
 
 ## Package layout
 

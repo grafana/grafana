@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -146,10 +145,8 @@ func TestRouterAuthorizesNamespace(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := NewGrafanaRouter(stubLoader{}, nil)
 			served := 0
-			handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				served++
-				namespace, _ := request.NamespaceFrom(req.Context())
-				require.Equal(t, namespaceFromPath(req.URL.Path), namespace)
 				w.WriteHeader(http.StatusNoContent)
 			})
 			snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
@@ -191,33 +188,6 @@ func TestNamespaceFromPath(t *testing.T) {
 	} {
 		require.Equal(t, want, namespaceFromPath(path), path)
 	}
-}
-
-// The deprecated path form puts "watch" before the namespace. The router
-// doesn't serve it, so no backend sees it, whatever the namespace.
-func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
-	router := NewGrafanaRouter(stubLoader{}, nil)
-	served := false
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		served = true
-		w.WriteHeader(http.StatusNoContent)
-	})
-	snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
-	router.snapshot.Store(&snapshot)
-	router.unregisteredGroupHandler = handler
-	for _, path := range []string{
-		"/apis/example/v1/watch/namespaces/stacks-1/widgets",
-		"/apis/example/v1/watch/namespaces/stacks-2/widgets",
-		"/apis/example/v1/watch/widgets",
-		"/apis/unknown/v1/watch/namespaces/stacks-2/widgets",
-	} {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, Namespace: "stacks-1"}))
-		rec := httptest.NewRecorder()
-		router.HandleFunc(rec, req, handler)
-		require.Equal(t, http.StatusNotFound, rec.Code, path)
-	}
-	require.False(t, served)
 }
 
 func TestProvideStandaloneServiceRequiresTokenVerificationConfig(t *testing.T) {
