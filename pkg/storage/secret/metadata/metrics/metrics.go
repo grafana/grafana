@@ -203,8 +203,8 @@ func newStorageMetrics() *StorageMetrics {
 		SecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       namespace,
 			Subsystem:                       subsystem,
-			Name:                            "secure_value_inc_gc_attempt_count_duration_seconds",
-			Help:                            "Duration of secure value inc gc attempt count operations",
+			Name:                            "secure_value_add_to_gc_attempt_count_duration_seconds",
+			Help:                            "Duration of secure value gc attempt count modification operations",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,

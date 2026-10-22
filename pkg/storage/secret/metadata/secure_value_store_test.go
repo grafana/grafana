@@ -357,7 +357,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		// Reactivate the selected candidate before UPDATE. The claim must use the
 		// current active flag rather than trust the state observed by SELECT.
 		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
-			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version))
+			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version, 0))
 		}}
 		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
 		require.NoError(t, err)

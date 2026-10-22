@@ -73,7 +73,7 @@ func NewKVSecureValueMetadataStorage(kv resource.KV, snowflake contracts.Snowfla
 		snowflake:    snowflake,
 		clock:        clock,
 		tracer:       tracer,
-		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_store", "storage", nil, lease.WithInternalNowFunc(clock.Now)),
+		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_store", "secrets_kv_secure_value_store", reg,lease.WithInternalNowFunc(clock.Now)),
 		metrics:      metrics.NewStorageMetrics(reg),
 	}
 }
@@ -463,9 +463,6 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 	}
 	eligible := make([]eligibleItem, 0)
 
-	// Only inactive secure values have gc keys. The gc keys are sorted by version and versions are time ordered,
-	// so the oldest inactive secure values come first.
-	// There's no limit because secure values that are not eligible would take up the batch.
 	gcKeys := make([]string, 0, maxBatchSize)
 
 	// TODO: unbounded number of entries
