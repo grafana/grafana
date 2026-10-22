@@ -219,3 +219,12 @@ export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
 
 /** Nav id of a plugin page rendered standalone inside a core section */
 export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;
+
+/**
+ * Nav id of a page hoisted out of its app. The path is flattened rather than
+ * used as-is: an id beginning `standalone-plugin-page-/` tells
+ * app/features/plugins/routes.tsx to route that page by its own url alone, and
+ * a hoisted app needs its app-wide route, since it has no node left to carry it.
+ */
+export const hoistedPluginPageId = (includePath: string) =>
+  standalonePluginPageId(includePath.replace(/^\//, '').replaceAll('/', '-'));

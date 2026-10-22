@@ -394,11 +394,33 @@ describe('applyPluginNav', () => {
 
       const observability = findById(merged, NavID.observability);
       expect(findById(merged, 'plugin-page-grafana-asserts-app')).toBeUndefined();
-      const childIds = ids(observability?.children ?? []);
-      expect(childIds).toContain('standalone-plugin-page-/a/grafana-asserts-app/services');
-      expect(childIds).toContain('standalone-plugin-page-/a/grafana-asserts-app/entities');
+      // The ids do not start with `standalone-plugin-page-/`, so routes.tsx keeps
+      // routing these by the app url and the app root keeps this section
+      expect(ids(observability?.children ?? [])).toEqual([
+        'standalone-plugin-page-a-grafana-asserts-app-entities',
+        'standalone-plugin-page-a-grafana-asserts-app-services',
+      ]);
       // The services page takes the App Observability slot
-      expect(findById(merged, 'standalone-plugin-page-/a/grafana-asserts-app/services')?.sortWeight).toBe(4);
+      expect(findById(merged, 'standalone-plugin-page-a-grafana-asserts-app-services')?.sortWeight).toBe(4);
+    });
+
+    // Mirrors the Go builder's TestAddAppLinksObservabilityAssertsOrdering: the
+    // unpinned pages sort above the section's app entries, and the services page
+    // takes the slot right after Frontend
+    it('orders hoisted pages above the section apps, with the services page in its slot', () => {
+      const merged = merge(
+        app('grafana-asserts-app', 'Asserts', [
+          page('Entity graph', '/a/grafana-asserts-app/entities'),
+          page('Service overview', '/a/grafana-asserts-app/services'),
+        ]),
+        app('grafana-kowalski-app', 'Frontend', [page('Overview', '/a/grafana-kowalski-app/overview')])
+      );
+
+      expect((findById(merged, NavID.observability)?.children ?? []).map((child) => child.text)).toEqual([
+        'Entity graph',
+        'Frontend',
+        'Service overview',
+      ]);
     });
 
     // A standalone id is a routing key: `/d/<uid>` as one would register the
@@ -414,7 +436,7 @@ describe('applyPluginNav', () => {
       const children = findById(merged, NavID.observability)?.children ?? [];
       const dashboard = children.find((child) => child.url === '/d/dash-uid');
       expect(dashboard?.id).toBeUndefined();
-      expect(ids(children)).toContain('standalone-plugin-page-/a/grafana-asserts-app/entities');
+      expect(ids(children)).toContain('standalone-plugin-page-a-grafana-asserts-app-entities');
     });
 
     it('removes the asserts Application page when App Observability is present', () => {
@@ -443,7 +465,7 @@ describe('applyPluginNav', () => {
       const slo = findById(merged, 'plugin-page-grafana-slo-app');
       const nested = findById(slo?.children ?? [], 'standalone-plugin-page-grafana-maintenancewindows-app');
       expect(nested).toBeDefined();
-      // No new badge: the Go builder dropped it in #134982
+      // No new badge: the Go builder dropped it
       expect(nested?.isNew).toBeUndefined();
       expect(findById(merged, 'plugin-page-grafana-maintenancewindows-app')).toBeUndefined();
       // Nothing else is left in More apps, so the prune pass drops the section

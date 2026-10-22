@@ -4,14 +4,23 @@ import {
   APP_OBSERVABILITY_APP_ID,
   ASSISTANT_APP_ID,
   ASSISTANT_ONBOARDING_APP_ID,
+  DOCS_PLUGIN_APP_ID,
   MAINTENANCE_WINDOWS_APP_ID,
+  PATHFINDER_APP_ID,
   SERVICECENTER_APP_ID,
   SLO_APP_ID,
 } from 'app/core/appPluginIds';
 
 import { ASSERTS_SERVICES_PATH, SLO_SERVICES_PATH } from './appNavConfig';
 import { NavID, NavWeight } from './constants';
-import { findNavById, pluginPageId, removeNavById, standalonePluginPageId, updateNavById } from './utils';
+import {
+  findNavById,
+  hoistedPluginPageId,
+  pluginPageId,
+  removeNavById,
+  standalonePluginPageId,
+  updateNavById,
+} from './utils';
 
 /**
  * A cross-plugin adjustment applied after all app plugins have been merged
@@ -61,9 +70,7 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
     apply: (tree) =>
       updateNavById(tree, NavID.observability, (section) => ({
         ...section,
-        children: (section.children ?? []).filter(
-          (child) => child.id !== standalonePluginPageId(ASSERTS_SERVICES_PATH)
-        ),
+        children: (section.children ?? []).filter((child) => child.id !== hoistedPluginPageId(ASSERTS_SERVICES_PATH)),
       })),
   },
   {
@@ -117,7 +124,7 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
   {
     // The Help entry opens the interactive learning plugin when it is installed
     when: (_, installedPluginIds) =>
-      installedPluginIds.has('grafana-pathfinder-app') || installedPluginIds.has('grafana-grafanadocsplugin-app'),
+      installedPluginIds.has(PATHFINDER_APP_ID) || installedPluginIds.has(DOCS_PLUGIN_APP_ID),
     apply: (tree) => updateNavById(tree, NavID.help, (help) => ({ ...help, hideFromTabs: true })),
   },
 ];

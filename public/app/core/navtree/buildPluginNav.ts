@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
-import { appendIntoSection, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -143,7 +143,7 @@ function buildAppLink(app: AppPluginConfig): {
       // A hoisted app has no node of its own, so its pages carry the standalone
       // id. Only pages: a dashboard include left with a `/d/<uid>` standalone id
       // would register that url as an app route and shadow the dashboard itself
-      ...(hoistPages && { id: standalonePluginPageId(include.path) }),
+      ...(hoistPages && { id: hoistedPluginPageId(include.path) }),
     };
 
     // A page with its own placement leaves the app entirely, so it is not one of
