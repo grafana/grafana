@@ -223,6 +223,46 @@ describe('combineResponses', () => {
     expect(extraField?.values).toEqual([undefined, undefined, 'extraB1', undefined]);
   });
 
+  it('does not pair a dest field with an unrelated source field when no field by that name exists in source', () => {
+    // `onlyInDest` doesn't exist in `source` at all. findSourceField's positional fallback is
+    // meant to disambiguate same-named fields, but it also fires when there are zero name
+    // matches, so it incorrectly pairs `onlyInDest` with whatever field happens to share its
+    // numeric index in `source.fields` (`id`, here) and merges that field's values into it.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22, 33] },
+        { name: 'onlyInDest', type: FieldType.string, config: {}, values: ['d1', 'd2'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1'] },
+      ],
+    };
+
+    const responseA: DataQueryResponse = { data: [dest] };
+    const responseB: DataQueryResponse = { data: [source] };
+
+    const combined = combineResponses(responseA, responseB);
+    const timeField = combined.data[0].fields.find((field: Field) => field.name === 'Time');
+    const idField = combined.data[0].fields.find((field: Field) => field.name === 'id');
+    const onlyInDest = combined.data[0].fields.find((field: Field) => field.name === 'onlyInDest');
+
+    // Sanity-check that the fields present in both frames still merge correctly; the bug is
+    // specific to the field that only exists in dest.
+    expect(timeField?.values).toEqual([11, 22, 33]);
+    expect(idField?.values).toEqual(['id1', 'id2', 'id3']);
+
+    expect(onlyInDest).toBeDefined();
+    expect(onlyInDest?.values).toEqual([undefined, 'd1', 'd2']);
+  });
+
   it('combines metric frames', () => {
     const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {

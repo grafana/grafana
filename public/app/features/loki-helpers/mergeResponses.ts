@@ -125,6 +125,7 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
       // If the field has no name, we fallback to the old index version.
       const sourceField = findSourceField(dest.fields[f], source.fields, f);
       if (!sourceField) {
+        dest.fields[f].values.splice(destIdx, 0, undefined);
         continue;
       }
       // Same value, accumulate
@@ -229,7 +230,7 @@ function findSourceField(referenceField: Field, sourceFields: Field[], index: nu
     return candidates.find((candidate) => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
   }
 
-  return sourceFields[index];
+  return candidates.length ? sourceFields[index] : undefined;
 }
 
 const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
