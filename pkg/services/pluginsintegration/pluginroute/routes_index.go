@@ -3,7 +3,7 @@ package pluginroute
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
+	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 )
 
 // routeIndex decides from a request's path alone whether it can be for a

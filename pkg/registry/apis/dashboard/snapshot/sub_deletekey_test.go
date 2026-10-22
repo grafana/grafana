@@ -13,8 +13,13 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // capturingResponder records the object/error passed by the subresource handler.
@@ -42,7 +47,7 @@ func newDeleteKeyREST(t *testing.T) *deleteKeyREST {
 		Service:      mockService,
 		Namespacer:   authlib.OrgNamespaceFormatter,
 	}
-	return &deleteKeyREST{getter: store}
+	return &deleteKeyREST{getter: store, accessControl: acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsDelete}})}
 }
 
 func TestDeleteKeyREST_Connect_SameOrg(t *testing.T) {
@@ -50,7 +55,7 @@ func TestDeleteKeyREST_Connect_SameOrg(t *testing.T) {
 	responder := &capturingResponder{}
 
 	// Caller in org 1, snapshot owned by org 1.
-	handler, err := r.Connect(ctxForOrg(1), "snap-1", nil, responder)
+	handler, err := r.Connect(identity.WithRequester(ctxForOrg(1), &user.SignedInUser{UserID: 1, OrgID: 1}), "snap-1", nil, responder)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
@@ -69,7 +74,7 @@ func TestDeleteKeyREST_Connect_CrossOrg(t *testing.T) {
 	responder := &capturingResponder{}
 
 	// Caller in org 2, snapshot owned by org 1: must not leak the deleteKey.
-	handler, err := r.Connect(ctxForOrg(2), "snap-1", nil, responder)
+	handler, err := r.Connect(identity.WithRequester(ctxForOrg(2), &user.SignedInUser{UserID: 1, OrgID: 2}), "snap-1", nil, responder)
 	require.Error(t, err)
 	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 	assert.Nil(t, handler)

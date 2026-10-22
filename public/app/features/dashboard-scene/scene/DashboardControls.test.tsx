@@ -539,6 +539,18 @@ describe('DashboardControls', () => {
 
       expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
+
+    // A draft has no uid until it's saved, but can be edited and saved like any new dashboard.
+    it('should show Edit for a draft out of edit mode, not for another dashboard without a uid', async () => {
+      const draft = buildTestSceneWithEditable({ hasUid: false, newDashboardUid: 'proposed-uid' });
+      const { unmount } = renderInGrafanaContext(<draft.Component model={draft} />, undefined);
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
+      unmount();
+
+      const unsaved = buildTestSceneWithEditable({ hasUid: false });
+      renderInGrafanaContext(<unsaved.Component model={unsaved} />, undefined);
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+    });
   });
 
   describe('DashboardControlActions save button visibility', () => {
@@ -581,8 +593,6 @@ describe('DashboardControls', () => {
 
   describe('Panel edit buttons', () => {
     beforeEach(() => {
-      // Default most tests to new layouts on; the flag-off case overrides this explicitly.
-      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });
 
@@ -853,6 +863,7 @@ function buildTestSceneWithEditable(options: {
   canSave?: boolean;
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
+  newDashboardUid?: string;
 }): DashboardControls {
   const {
     editable = true,
@@ -862,6 +873,7 @@ function buildTestSceneWithEditable(options: {
     canMakeEditable = false,
     isSnapshot = false,
     hasUid = true,
+    newDashboardUid,
   } = options;
 
   const dashboard = new DashboardScene({
@@ -873,6 +885,7 @@ function buildTestSceneWithEditable(options: {
       canSave,
       canMakeEditable,
       isSnapshot,
+      ...(newDashboardUid ? { newDashboardUid } : {}),
     },
     controls: new DashboardControls({}),
   });

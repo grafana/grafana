@@ -24,6 +24,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	SnapshotResource         = "snapshots.dashboard.grafana.app"
+	LibraryPanelResource     = "librarypanels.dashboard.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
@@ -39,6 +40,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
+	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
 	StarsResource:            false,
 	PreferencesResource:      true, // Only Mode5!
 	DataSourceResources:      false,
@@ -186,7 +188,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
-	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(false)
+	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(true)
 	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
@@ -218,6 +220,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.QOSEnabled = section.Key("qos_enabled").MustBool(false)
 	cfg.QOSNumberWorker = section.Key("qos_num_worker").MustInt(16)
 	cfg.QOSMaxSizePerTenant = section.Key("qos_max_size_per_tenant").MustInt(1000)
+	cfg.QOSMaxConcurrentPerTenant = section.Key("qos_max_concurrent_per_tenant").MustInt(0)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
 	cfg.MemberlistAdvertisePort = section.Key("memberlist_advertise_port").MustInt(7946)
@@ -237,6 +240,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Off by default: this builds a global index per namespace, holding the
 	// dashboards and folders already covered by their own indexes.
 	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
+	cfg.GlobalSearchIndexStartupBuild = section.Key("global_search_index_startup_build").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -247,7 +251,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
-	cfg.SearchBackedListResources = parseCommaSeparatedList(section.Key("search_backed_list_resources").MustString(""))
+	cfg.LoggedQuotaResources = parseCommaSeparatedList(section.Key("log_quotas_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -259,6 +263,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// search manifest watcher
 	cfg.ManifestApiServerAddress = section.Key("manifest_api_server_address").String()
+	cfg.ManifestDiscoveryAddress = section.Key("manifest_discovery_url").String()
+	cfg.ManifestDiscoveryAudience = section.Key("manifest_discovery_audience").String()
 	cfg.ManifestWatcherAllowInsecureTLS = section.Key("manifest_watcher_allow_insecure_tls").MustBool(false)
 	cfg.ManifestWatcherCAFile = section.Key("manifest_watcher_ca_file").String()
 	cfg.ManifestWatcherPollInterval = section.Key("manifest_watcher_poll_interval").MustDuration(1 * time.Hour)
@@ -271,6 +277,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(true)
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(false)
+	cfg.BlobGarbageCollectionEnabled = section.Key("blob_garbage_collection_enabled").MustBool(false)
+	cfg.BlobGarbageCollectionDryRun = section.Key("blob_garbage_collection_dry_run").MustBool(true)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)

@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sony/gobreaker/v2"
 )
 
@@ -95,8 +97,10 @@ func (m *routerMetrics) discoveryResult(group, result string) {
 // newPluginGRPCRequestDuration returns the histogram of gRPC calls to plugin
 // deployments, registered with reg unless it is nil. Local plugins are
 // measured by the plugin client's grafana_plugin_request_* metrics instead.
-func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.HistogramVec {
+// The source const label lets plugins_url and core_url register on one registry.
+func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *prometheus.HistogramVec {
 	h := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		ConstLabels:                     prometheus.Labels{"source": source},
 		Namespace:                       "grafana",
 		Subsystem:                       "router",
 		Name:                            "plugin_grpc_request_duration_seconds",
@@ -111,38 +115,77 @@ func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.Histogr
 	return h
 }
 
-// requestGroup returns the group a request is for: the group of an
-// /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
-// document, which is served by the same backend.
-func requestGroup(path string) string {
-	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
-		return group
-	}
-	return GroupFromPath(path)
+// newPluginGRPCRequestRetries returns the counter of retried unary gRPC calls
+// to plugin deployments, registered with reg unless it is nil. Like the
+// request duration, the source const label lets plugins_url and core_url
+// register on one registry.
+func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prometheus.CounterVec {
+	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		ConstLabels: prometheus.Labels{"source": source},
+		Name:        "grafana_router_plugin_grpc_request_retries_total",
+		Help:        "Retries of unary gRPC calls to plugin deployments, by plugin and gRPC method.",
+	}, []string{"plugin_id", "method"})
 }
 
-// instrument serves req through gr.HandleFunc with request metrics, then logs
-// the outcome. next is forwarded to HandleFunc unchanged.
-func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
-	group := requestGroup(req.URL.Path)
+// requestGroup returns the group a request is for: the group of an
+// /apis/<group>/... path, as apiGroup reads it, or of an
+// /openapi/v3/apis/<group>/<version> document, which is served by the same
+// backend. The /apis/discovery tree has no group.
+func requestGroup(path, group string) string {
+	if isDiscoveryPath(path) {
+		return ""
+	}
+	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
+		if group == discoveryGroup {
+			return ""
+		}
+		return group
+	}
+	return group
+}
+
+// namesGroup reports whether path has a non-empty segment after /apis/,
+// outside the discovery tree, even when that segment is not a valid group or
+// the path is not canonical. Its metrics then count under unknownGroupLabel,
+// not the root's empty group.
+func namesGroup(path string) bool {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	segment, _, _ := strings.Cut(rest, "/")
+	return ok && segment != "" && !isDiscoveryPath(path)
+}
+
+// instrument serves req through gr.handle with request metrics, then logs
+// the outcome. next and apiGroup, the request's apiGroup, are forwarded to
+// handle unchanged.
+func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler, apiGroup string) {
+	group := requestGroup(req.URL.Path, apiGroup)
 	metricGroup := group
-	if group != "" && !gr.KnownGroup(group) {
+	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
 		metricGroup = unknownGroupLabel
 	}
-	verb := metricVerb(requestVerb(req))
 	start := time.Now()
 	rec := newStatusRecorder(w)
 	req, outcome := withRequestOutcome(req)
+	// Recorded on outcome, so the router doesn't parse the request again.
+	verb := metricVerb(requestVerb(req))
 	route := func() string {
 		if outcome.route == "" {
 			return routeNext
 		}
 		return outcome.route
 	}
+	// The router rejects a non-canonical path before routing, so it is no
+	// group's request, even when its first segment names a served group.
+	resultGroup := func() string {
+		if outcome.route == routeInvalid && metricGroup != "" {
+			return unknownGroupLabel
+		}
+		return metricGroup
+	}
 	finish := func(duration time.Duration) {
-		m.requests.WithLabelValues(metricGroup, verb, route(), strconv.Itoa(rec.status)).Inc()
+		m.requests.WithLabelValues(resultGroup(), verb, route(), strconv.Itoa(rec.status)).Inc()
 		if outcome.failure != "" {
-			m.backendFailures.WithLabelValues(metricGroup, outcome.pluginID, outcome.failure).Inc()
+			m.backendFailures.WithLabelValues(resultGroup(), outcome.pluginID, outcome.failure).Inc()
 		}
 		logRequest(req, group, rec.status, duration)
 	}
@@ -151,15 +194,15 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		m.longRunning.WithLabelValues(metricGroup).Inc()
 		defer m.longRunning.WithLabelValues(metricGroup).Dec()
 		defer func() { finish(time.Since(start)) }()
-		gr.HandleFunc(rec.writer(), req, next)
+		gr.handle(rec.writer(), req, next, apiGroup)
 		return
 	}
 
 	m.inFlight.Inc()
 	defer m.inFlight.Dec()
-	gr.HandleFunc(rec.writer(), req, next)
+	gr.handle(rec.writer(), req, next, apiGroup)
 	duration := time.Since(start)
-	m.duration.WithLabelValues(metricGroup, verb, route()).Observe(duration.Seconds())
+	m.duration.WithLabelValues(resultGroup(), verb, route()).Observe(duration.Seconds())
 	finish(duration)
 }
 
@@ -197,6 +240,7 @@ type routerCollector struct {
 	lastSuccess     *prometheus.Desc
 	polls           *prometheus.Desc
 	stackLookups    *prometheus.Desc
+	stackDiscovery  *prometheus.Desc
 }
 
 func newRouterCollector(router *GrafanaRouter) *routerCollector {
@@ -216,7 +260,7 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 		breaker: prometheus.NewDesc(name("breaker_state"),
 			"Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others.", []string{"group", "state"}, nil),
 		shadowed: prometheus.NewDesc(name("shadowed_groups"),
-			"Number of API groups a source offered that a higher-priority source serves instead, in the latest load.", []string{"source"}, nil),
+			"Number of API groups a source other than the single-tenant fallback offered that a higher-priority source serves instead, in the latest load.", []string{"source"}, nil),
 		skipped: prometheus.NewDesc(name("skipped_backends"),
 			"Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.", []string{"source"}, nil),
 		lastSuccess: prometheus.NewDesc(name("source_last_success_timestamp_seconds"),
@@ -225,13 +269,15 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"Load or poll attempts of each route source, by result: success or failure.", []string{"source", "result"}, nil),
 		stackLookups: prometheus.NewDesc(name("stack_lookups_total"),
 			"Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.", []string{"result"}, nil),
+		stackDiscovery: prometheus.NewDesc(name("stack_discovery_cache_total"),
+			"Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.", []string{"result"}, nil),
 	}
 }
 
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery,
 	} {
 		ch <- d
 	}
@@ -258,7 +304,7 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 		if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination || entry.breaker == nil {
 			continue
 		}
-		current := entry.breaker.State()
+		current := entry.breakerState()
 		for _, state := range breakerStates {
 			value := 0.0
 			if state == current {
@@ -292,5 +338,8 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	for result, n := range status.stackLookups() {
 		ch <- prometheus.MustNewConstMetric(c.stackLookups, prometheus.CounterValue, float64(n), result)
+	}
+	for result, n := range status.stackDiscoveryCache() {
+		ch <- prometheus.MustNewConstMetric(c.stackDiscovery, prometheus.CounterValue, float64(n), result)
 	}
 }

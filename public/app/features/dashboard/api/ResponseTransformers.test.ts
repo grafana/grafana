@@ -1,8 +1,6 @@
-import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
+import { type DataQuery, type VariableModel, VariableRefresh } from '@grafana/schema';
 import {
-  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
-  type GridLayoutItemKind,
   type GridLayoutKind,
   type PanelKind,
   type RowsLayoutKind,
@@ -27,12 +25,7 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import {
-  getDefaultDatasource,
-  getPanelQueries,
-  ResponseTransformers,
-  transformMappingsToV1,
-} from './ResponseTransformers';
+import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -842,326 +835,77 @@ describe('ResponseTransformers', () => {
     });
   });
 
-  describe('v2 -> v1 transformation', () => {
-    it('should return the same object if it is already a DashboardDTO', () => {
-      const dashboard: DashboardDTO = {
-        dashboard: {
-          schemaVersion: 1,
-          title: 'Dashboard Title',
-          uid: 'dashboard1',
-          version: 1,
-        },
-        meta: {},
+  describe('getPanelQueries', () => {
+    it('respects targets data source', () => {
+      const panelDs = {
+        type: 'theoretical-ds',
+        uid: 'theoretical-uid',
       };
-
-      expect(ResponseTransformers.ensureV1Response(dashboard)).toBe(dashboard);
-    });
-
-    it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
-      const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2',
-        kind: 'DashboardWithAccessInfo',
-        metadata: {
-          creationTimestamp: '2023-01-01T00:00:00Z',
-          name: 'dashboard1',
-          resourceVersion: '1',
-          annotations: {
-            'grafana.app/createdBy': 'user1',
-            'grafana.app/updatedBy': 'user2',
-            'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
-            'grafana.app/folder': 'folder1',
-            'grafana.app/slug': 'dashboard-slug',
-            'grafana.app/dashboard-gnet-id': '456',
+      const targets: DataQuery[] = [
+        {
+          refId: 'A',
+          datasource: {
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
           },
         },
-        spec: {
-          title: 'Dashboard Title',
-          description: 'Dashboard Description',
-          tags: ['tag1', 'tag2'],
-          cursorSync: 'Off',
-          preload: true,
-          liveNow: false,
-          editable: true,
-          revision: 225,
-          timeSettings: {
-            from: 'now-6h',
-            to: 'now',
-            timezone: 'browser',
-            autoRefresh: '5m',
-            autoRefreshIntervals: ['5s', '10s', '30s'],
-            hideTimepicker: false,
-            quickRanges: [
-              {
-                display: 'Last 6 hours',
-                from: 'now-6h',
-                to: 'now',
-              },
-              {
-                display: 'Last 7 days',
-                from: 'now-7d',
-                to: 'now',
-              },
-            ],
-            nowDelay: '1m',
-            fiscalYearStartMonth: 1,
-            weekStart: 'monday',
-          },
-          links: [
-            {
-              title: 'Link 1',
-              url: 'https://grafana.com',
-              asDropdown: false,
-              targetBlank: true,
-              includeVars: true,
-              keepTime: true,
-              tags: ['tag1', 'tag2'],
-              icon: 'external link',
-              type: 'link',
-              tooltip: 'Link 1 Tooltip',
-            },
-            {
-              title: 'Link 2',
-              url: 'https://grafana.com',
-              asDropdown: false,
-              targetBlank: true,
-              includeVars: true,
-              keepTime: true,
-              tags: ['tag3', 'tag4'],
-              icon: 'external link',
-              type: 'link',
-              tooltip: 'Link 2 Tooltip',
-              placement: 'inControlsMenu',
-            },
-          ],
-          annotations: handyTestingSchema.annotations,
-          variables: handyTestingSchema.variables,
-          elements: handyTestingSchema.elements,
-          layout: handyTestingSchema.layout,
-        },
-        access: {
-          url: '/d/dashboard-slug',
-          canAdmin: true,
-          canDelete: true,
-          canEdit: true,
-          canSave: true,
-          canShare: true,
-          canStar: true,
-          slug: 'dashboard-slug',
-          annotationsPermissions: {
-            dashboard: { canAdd: true, canEdit: true, canDelete: true },
+        {
+          refId: 'B',
+          datasource: {
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
           },
         },
-      };
+      ];
 
-      const transformed = ResponseTransformers.ensureV1Response(dashboardV2);
+      const result = getPanelQueries(targets, panelDs);
 
-      expect(transformed.meta.created).toBe(dashboardV2.metadata.creationTimestamp);
-      expect(transformed.meta.createdBy).toBe(dashboardV2.metadata.annotations?.['grafana.app/createdBy']);
-      expect(transformed.meta.updated).toBe(dashboardV2.metadata.annotations?.['grafana.app/updatedTimestamp']);
-      expect(transformed.meta.updatedBy).toBe(dashboardV2.metadata.annotations?.['grafana.app/updatedBy']);
-      expect(transformed.meta.folderUid).toBe(dashboardV2.metadata.annotations?.['grafana.app/folder']);
-      expect(transformed.meta.slug).toBe(dashboardV2.metadata.annotations?.['grafana.app/slug']);
-      expect(transformed.meta.url).toBe(dashboardV2.access.url);
-      expect(transformed.meta.canAdmin).toBe(dashboardV2.access.canAdmin);
-      expect(transformed.meta.canDelete).toBe(dashboardV2.access.canDelete);
-      expect(transformed.meta.canEdit).toBe(dashboardV2.access.canEdit);
-      expect(transformed.meta.canSave).toBe(dashboardV2.access.canSave);
-      expect(transformed.meta.canShare).toBe(dashboardV2.access.canShare);
-      expect(transformed.meta.canStar).toBe(dashboardV2.access.canStar);
-      expect(transformed.meta.annotationsPermissions).toEqual(dashboardV2.access.annotationsPermissions);
+      expect(result).toHaveLength(targets.length);
+      // @ts-expect-error
+      expect(result[0].spec.refId).toBe('A');
+      // @ts-expect-error
+      expect(result[1].spec.refId).toBe('B');
 
-      const dashboard = transformed.dashboard;
-      expect(dashboard.uid).toBe(dashboardV2.metadata.name);
-      expect(dashboard.title).toBe(dashboardV2.spec.title);
-      expect(dashboard.description).toBe(dashboardV2.spec.description);
-      expect(dashboard.tags).toEqual(dashboardV2.spec.tags);
-      expect(dashboard.schemaVersion).toBe(40);
-      //   expect(dashboard.graphTooltip).toBe(0); // Assuming transformCursorSynctoEnum('Off') returns 0
-      expect(dashboard.preload).toBe(dashboardV2.spec.preload);
-      expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
-      expect(dashboard.editable).toBe(dashboardV2.spec.editable);
-      expect(dashboard.revision).toBe(225);
-      expect(dashboard.time?.from).toBe(dashboardV2.spec.timeSettings.from);
-      expect(dashboard.time?.to).toBe(dashboardV2.spec.timeSettings.to);
-      expect(dashboard.timezone).toBe(dashboardV2.spec.timeSettings.timezone);
-      expect(dashboard.refresh).toBe(dashboardV2.spec.timeSettings.autoRefresh);
-      expect(dashboard.timepicker?.refresh_intervals).toEqual(dashboardV2.spec.timeSettings.autoRefreshIntervals);
-      expect(dashboard.timepicker?.hidden).toBe(dashboardV2.spec.timeSettings.hideTimepicker);
-      expect(dashboard.timepicker?.nowDelay).toBe(dashboardV2.spec.timeSettings.nowDelay);
-      expect(dashboard.fiscalYearStartMonth).toBe(dashboardV2.spec.timeSettings.fiscalYearStartMonth);
-      expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
-      expect(dashboard.links).toEqual(dashboardV2.spec.links);
-      // variables
-      validateVariablesV1ToV2(dashboardV2.spec.variables[0], dashboard.templating?.list?.[0]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[1], dashboard.templating?.list?.[1]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[2], dashboard.templating?.list?.[2]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[3], dashboard.templating?.list?.[3]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[4], dashboard.templating?.list?.[4]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[5], dashboard.templating?.list?.[5]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[6], dashboard.templating?.list?.[6]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[7], dashboard.templating?.list?.[7]);
-      validateVariablesV1ToV2(dashboardV2.spec.variables[8], dashboard.templating?.list?.[8]);
-      // annotations
-      validateAnnotation(dashboard.annotations!.list![0], dashboardV2.spec.annotations[0]);
-      validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
-      validateAnnotation(dashboard.annotations!.list![2], dashboardV2.spec.annotations[2]);
-      validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
-
-      const gnetId = dashboardV2.metadata.annotations?.[AnnoKeyDashboardGnetId];
-      if (gnetId?.length) {
-        expect(dashboard.gnetId).toBe(+gnetId);
-      } else {
-        expect(dashboard.gnetId).toBeUndefined();
-      }
-
-      // panel
-      const panelKey = 'panel-1';
-      expect(dashboardV2.spec.elements[panelKey].kind).toBe('Panel');
-      const panelV2 = dashboardV2.spec.elements[panelKey] as PanelKind;
-      expect(panelV2.kind).toBe('Panel');
-      expect(dashboardV2.spec.layout.kind).toBe('GridLayout');
-      validatePanel(dashboard.panels![0], panelV2, dashboardV2.spec.layout as GridLayoutKind, panelKey);
-      // library panel
-      expect(dashboard.panels![1].libraryPanel).toEqual({
-        uid: 'uid-for-library-panel',
-        name: 'Library Panel',
+      // @ts-expect-error
+      result.forEach((query) => {
+        expect(query.kind).toBe('PanelQuery');
+        expect(query.spec.query.group).toEqual('theoretical-ds');
+        expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+        expect(query.spec.query.kind).toBe('DataQuery');
       });
     });
 
-    describe('getPanelQueries', () => {
-      it('respects targets data source', () => {
-        const panelDs = {
-          type: 'theoretical-ds',
-          uid: 'theoretical-uid',
-        };
-        const targets: DataQuery[] = [
-          {
-            refId: 'A',
-            datasource: {
-              type: 'theoretical-ds',
-              uid: 'theoretical-uid',
-            },
-          },
-          {
-            refId: 'B',
-            datasource: {
-              type: 'theoretical-ds',
-              uid: 'theoretical-uid',
-            },
-          },
-        ];
+    it('respects panel data source', () => {
+      const panelDs = {
+        type: 'theoretical-ds',
+        uid: 'theoretical-uid',
+      };
+      const targets: DataQuery[] = [
+        {
+          refId: 'A',
+        },
+        {
+          refId: 'B',
+        },
+      ];
 
-        const result = getPanelQueries(targets, panelDs);
+      const result = getPanelQueries(targets, panelDs);
 
-        expect(result).toHaveLength(targets.length);
-        // @ts-expect-error
-        expect(result[0].spec.refId).toBe('A');
-        // @ts-expect-error
-        expect(result[1].spec.refId).toBe('B');
+      expect(result).toHaveLength(targets.length);
+      // @ts-expect-error
+      expect(result[0].spec.refId).toBe('A');
+      // @ts-expect-error
+      expect(result[1].spec.refId).toBe('B');
 
-        // @ts-expect-error
-        result.forEach((query) => {
-          expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.query.group).toEqual('theoretical-ds');
-          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
-          expect(query.spec.query.kind).toBe('DataQuery');
-        });
-      });
-
-      it('respects panel data source', () => {
-        const panelDs = {
-          type: 'theoretical-ds',
-          uid: 'theoretical-uid',
-        };
-        const targets: DataQuery[] = [
-          {
-            refId: 'A',
-          },
-          {
-            refId: 'B',
-          },
-        ];
-
-        const result = getPanelQueries(targets, panelDs);
-
-        expect(result).toHaveLength(targets.length);
-        // @ts-expect-error
-        expect(result[0].spec.refId).toBe('A');
-        // @ts-expect-error
-        expect(result[1].spec.refId).toBe('B');
-
-        // @ts-expect-error
-        result.forEach((query) => {
-          expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.query.group).toEqual('theoretical-ds');
-          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
-          expect(query.spec.query.kind).toBe('DataQuery');
-        });
+      // @ts-expect-error
+      result.forEach((query) => {
+        expect(query.kind).toBe('PanelQuery');
+        expect(query.spec.query.group).toEqual('theoretical-ds');
+        expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+        expect(query.spec.query.kind).toBe('DataQuery');
       });
     });
   });
-
-  function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
-    const { spec: v2Spec } = v2;
-    expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource?.type).toBe(v2Spec.query.group);
-    expect(v1.datasource?.uid).toBe(v2Spec.query.datasource?.name);
-    expect(v1.enable).toBe(v2Spec.enable);
-    expect(v1.hide).toBe(v2Spec.hide);
-    expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn !== undefined ? (v2Spec.builtIn ? 1 : 0) : undefined);
-    expect(v1.target).toEqual(v2Spec.query.spec);
-    expect(v1.filter).toEqual(v2Spec.filter);
-  }
-
-  function validatePanel(v1: Panel, v2: PanelKind, layoutV2: GridLayoutKind, panelKey: string) {
-    const { spec: v2Spec } = v2;
-
-    expect(v1.id).toBe(v2Spec.id);
-    expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.group);
-    expect(v1.title).toBe(v2Spec.title);
-    expect(v1.description).toBe(v2Spec.description);
-    expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
-    expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
-    expect(v1.links).toEqual(v2Spec.links);
-    expect(v1.targets).toEqual(
-      v2Spec.data.spec.queries.map((q) => {
-        return {
-          refId: q.spec.refId,
-          hide: q.spec.hidden,
-          datasource: {
-            type: q.spec.query.group,
-            uid: q.spec.query.datasource?.name,
-          },
-          ...q.spec.query.spec,
-        };
-      })
-    );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
-    const layoutElement = layoutV2.spec.items.find(
-      (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
-    ) as GridLayoutItemKind;
-    expect(v1.gridPos?.x).toEqual(layoutElement?.spec.x);
-    expect(v1.gridPos?.y).toEqual(layoutElement?.spec.y);
-    expect(v1.gridPos?.w).toEqual(layoutElement?.spec.width);
-    expect(v1.gridPos?.h).toEqual(layoutElement?.spec.height);
-
-    expect(v1.repeat).toEqual(layoutElement?.spec.repeat?.value);
-    expect(v1.repeatDirection).toEqual(layoutElement?.spec.repeat?.direction);
-    expect(v1.maxPerRow).toEqual(layoutElement?.spec.repeat?.maxPerRow);
-
-    expect(v1.cacheTimeout).toBe(v2Spec.data.spec.queryOptions.cacheTimeout);
-    expect(v1.maxDataPoints).toBe(v2Spec.data.spec.queryOptions.maxDataPoints);
-    expect(v1.interval).toBe(v2Spec.data.spec.queryOptions.interval);
-    expect(v1.hideTimeOverride).toBe(v2Spec.data.spec.queryOptions.hideTimeOverride);
-    expect(v1.queryCachingTTL).toBe(v2Spec.data.spec.queryOptions.queryCachingTTL);
-    expect(v1.timeFrom).toBe(v2Spec.data.spec.queryOptions.timeFrom);
-    expect(v1.timeShift).toBe(v2Spec.data.spec.queryOptions.timeShift);
-    expect(v1.timeCompare).toBe(v2Spec.data.spec.queryOptions.timeCompare);
-    expect(v1.transparent).toBe(v2Spec.transparent);
-  }
 
   function validateVariablesV1ToV2(v2: VariableKind, v1: VariableModel | undefined) {
     if (!v1) {

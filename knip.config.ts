@@ -28,7 +28,7 @@ const nonProductionFiles = [
 
 const defaultProject = ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}!', ...nonProductionFiles];
 
-const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
+const externalisedDatasources = ['azuremonitor', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -57,7 +57,7 @@ const config: KnipConfig = {
     'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
-  ignoreBinaries: ['jq', 'make', 'nx', 'shellcheck', 'webpack'],
+  ignoreBinaries: ['jq', 'lerna', 'make', 'nx', 'shellcheck', 'webpack'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
@@ -106,6 +106,8 @@ const config: KnipConfig = {
         'public/swagger/index.tsx!',
         'public/app/api/clients/**/index.ts!',
         'public/app/extensions/index.ts!',
+        // locale extensions for enterprise translations
+        'public/app/extensions/locales/localeExtensions.ts!',
         'public/app/extensions/api/clients/**/index.ts!',
         'public/app/plugins/**/module.{ts,tsx,js}!',
         'scripts/**/*.{t,j,mt,mj,cj}s*',

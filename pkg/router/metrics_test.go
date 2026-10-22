@@ -16,23 +16,35 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // metricsService serves group through a real forward proxy to upstream.
 func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
-	backend, err := NewForwardBackend(metav1.APIGroup{Name: group}, forwardSpec(upstream), "1", &http.Transport{})
-	require.NoError(t, err)
-	svc := newService(&mutableLoader{backends: []Backend{backend}}, nil, prometheus.NewRegistry())
+	backend := proxyBackend(t, group, upstream, &http.Transport{})
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: []Backend{backend}}, nil), prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	return svc
 }
 
+// The helpers below read the request's group as the router's callers do.
+
+func (m *routerMetrics) instrumentRequest(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler) {
+	m.instrument(gr, w, req, next, apiGroup(req.URL.Path))
+}
+
+func (r *GrafanaRouter) ownsRequest(req *http.Request) bool {
+	return r.owns(req, apiGroup(req.URL.Path))
+}
+
+func requestGroupOf(req *http.Request) string {
+	return requestGroup(req.URL.Path, apiGroup(req.URL.Path))
+}
+
 func instrumented(svc *Service, target string) int {
 	recorder := httptest.NewRecorder()
-	svc.metrics.instrument(svc.router, recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	svc.metrics.instrumentRequest(svc.router, recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
 	return recorder.Code
 }
 
@@ -99,7 +111,7 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 	serve := func(target string) int {
 		recorder := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, target, nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "*"}))
 		svc.HandleFunc(recorder, req, embedded)
 		return recorder.Code
 	}
@@ -117,16 +129,21 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, serve(invalid))
 	verb := requestVerb(httptest.NewRequest(http.MethodGet, invalid, nil))
 	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
+
+	// It is no group's request, even when its first segment is a served group.
+	require.Equal(t, http.StatusBadRequest, serve("/apis/test-app/../other-app/v1/things"))
+	require.Equal(t, uint64(2), requestCount(t, svc, unknownGroupLabel, verb, routeInvalid, "400"))
+	require.Zero(t, requestCount(t, svc, "test-app", verb, routeInvalid, "400"))
 }
 
 func TestDiscoveryResultMetrics(t *testing.T) {
-	svc := newService(&mutableLoader{backends: []Backend{
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: []Backend{
 		&providerBackend{
 			fakeBackend: fakeBackend{group: metav1.APIGroup{Name: "provided.ext.grafana.app"}, key: "1"},
 			discovery:   thingsDiscovery("provided.ext.grafana.app"),
 		},
 		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
-	}}, nil, prometheus.NewRegistry())
+	}}, nil), prometheus.NewRegistry())
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
 	aggregatedDiscovery(t, svc.router)
@@ -173,24 +190,25 @@ func (l *statusLoader) sourceStatuses() []sourceStatus  { return l.sources }
 func (l *statusLoader) stackLookups() map[string]uint64 {
 	return map[string]uint64{"cache_hit": 3, "resolved": 1}
 }
+func (l *statusLoader) stackDiscoveryCache() map[string]uint64 {
+	return map[string]uint64{"hit": 5, "miss": 2}
+}
 
 func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Registry) {
 	t.Helper()
-	first, err := NewForwardBackend(metav1.APIGroup{Name: "first.ext.grafana.app"}, forwardSpec("https://first.example.com:8443/base"), "rv-1", &http.Transport{})
-	require.NoError(t, err)
-	second, err := NewForwardBackend(metav1.APIGroup{Name: "second.ext.grafana.app"}, forwardSpec("https://second.example.com"), "rv-2", &http.Transport{})
-	require.NoError(t, err)
+	first := proxyBackend(t, "first.ext.grafana.app", "https://first.example.com:8443/base", &http.Transport{})
+	second := proxyBackend(t, "second.ext.grafana.app", "https://second.example.com", &http.Transport{})
 	loader := &statusLoader{
 		backends: []Backend{first, second, &dummyBackend{group: "dummy.ext.grafana.app"}},
-		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: sourceSingleTenant, By: sourceRouteBackend}},
+		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: aggregateSource("second"), By: aggregateSource("test")}},
 		sources: []sourceStatus{
-			{Source: sourceRouteBackend, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
+			{Source: sourceCoreURL, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
 			{Source: sourceSingleTenant, Failures: 2},
 			{Source: sourcePluginsURL, Skipped: 2},
 		},
 	}
 	reg := prometheus.NewRegistry()
-	svc := newService(loader, nil, reg)
+	svc := newService(NewGrafanaRouter(loader, nil), reg)
 	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
 	return svc, loader, reg
 }
@@ -220,8 +238,8 @@ grafana_router_breaker_state{group="second.ext.grafana.app",state="open"} 1
 grafana_router_breaker_transitions_total{group="second.ext.grafana.app",state="open"} 1
 # HELP grafana_router_groups Number of API groups the router serves, by route source.
 # TYPE grafana_router_groups gauge
+grafana_router_groups{source="aggregate:test"} 2
 grafana_router_groups{source="dummy"} 1
-grafana_router_groups{source="routebackend"} 2
 # HELP grafana_router_ready Whether the router is ready to serve traffic: 1 ready, 0 not.
 # TYPE grafana_router_ready gauge
 grafana_router_ready 1
@@ -231,25 +249,29 @@ grafana_router_reconcile_errors_total 1
 # HELP grafana_router_reconciles_total Number of completed route reconciles.
 # TYPE grafana_router_reconciles_total counter
 grafana_router_reconciles_total 2
-# HELP grafana_router_shadowed_groups Number of API groups a source offered that a higher-priority source serves instead, in the latest load.
+# HELP grafana_router_shadowed_groups Number of API groups a source other than the single-tenant fallback offered that a higher-priority source serves instead, in the latest load.
 # TYPE grafana_router_shadowed_groups gauge
-grafana_router_shadowed_groups{source="single-tenant"} 1
+grafana_router_shadowed_groups{source="aggregate:second"} 1
 # HELP grafana_router_skipped_backends Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.
 # TYPE grafana_router_skipped_backends gauge
+grafana_router_skipped_backends{source="core_url"} 0
 grafana_router_skipped_backends{source="plugins_url"} 2
-grafana_router_skipped_backends{source="routebackend"} 0
 grafana_router_skipped_backends{source="single-tenant"} 0
 # HELP grafana_router_source_last_success_timestamp_seconds When each route source last loaded successfully, in seconds since the Unix epoch.
 # TYPE grafana_router_source_last_success_timestamp_seconds gauge
-grafana_router_source_last_success_timestamp_seconds{source="routebackend"} 1.7e+09
+grafana_router_source_last_success_timestamp_seconds{source="core_url"} 1.7e+09
 # HELP grafana_router_source_polls_total Load or poll attempts of each route source, by result: success or failure.
 # TYPE grafana_router_source_polls_total counter
+grafana_router_source_polls_total{result="failure",source="core_url"} 0
 grafana_router_source_polls_total{result="failure",source="plugins_url"} 0
-grafana_router_source_polls_total{result="failure",source="routebackend"} 0
 grafana_router_source_polls_total{result="failure",source="single-tenant"} 2
+grafana_router_source_polls_total{result="success",source="core_url"} 4
 grafana_router_source_polls_total{result="success",source="plugins_url"} 0
-grafana_router_source_polls_total{result="success",source="routebackend"} 4
 grafana_router_source_polls_total{result="success",source="single-tenant"} 0
+# HELP grafana_router_stack_discovery_cache_total Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.
+# TYPE grafana_router_stack_discovery_cache_total counter
+grafana_router_stack_discovery_cache_total{result="hit"} 5
+grafana_router_stack_discovery_cache_total{result="miss"} 2
 # HELP grafana_router_stack_lookups_total Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.
 # TYPE grafana_router_stack_lookups_total counter
 grafana_router_stack_lookups_total{result="cache_hit"} 3
@@ -259,7 +281,7 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 		"grafana_router_breaker_state", "grafana_router_breaker_transitions_total", "grafana_router_groups",
 		"grafana_router_ready", "grafana_router_reconcile_errors_total", "grafana_router_reconciles_total",
 		"grafana_router_shadowed_groups", "grafana_router_skipped_backends", "grafana_router_source_last_success_timestamp_seconds",
-		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
+		"grafana_router_source_polls_total", "grafana_router_stack_discovery_cache_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
 }
 
@@ -272,7 +294,7 @@ func TestRequestMetricsVerbLabelIsBounded(t *testing.T) {
 		for _, target := range []string{"/apis", "/apis/test-app/v1/namespaces/ns/things"} {
 			req := newAuthenticatedRequest(http.MethodGet, target, nil)
 			req.Method = fmt.Sprintf("FOO%d", i)
-			svc.metrics.instrument(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
+			svc.metrics.instrumentRequest(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
 		}
 	}
 	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.requests), "arbitrary methods must not create new series")
@@ -306,7 +328,7 @@ func TestRequestMetricsAuthenticationFailures(t *testing.T) {
 			req.Header.Set("X-Access-Token", tc.token)
 		}
 		recorder := httptest.NewRecorder()
-		svc.metrics.instrument(svc.router, recorder, req, next)
+		svc.metrics.instrumentRequest(svc.router, recorder, req, next)
 		require.Equal(t, http.StatusUnauthorized, recorder.Code, tc.target)
 	}
 	require.False(t, nextCalled, "a rejected request never reaches next")
@@ -326,56 +348,17 @@ func TestRejectedWatchesAreCounted(t *testing.T) {
 	target := "/apis/test-app/v1/namespaces/ns/things?watch=true"
 
 	unauthenticated := httptest.NewRequest(http.MethodGet, target, nil)
-	svc.metrics.instrument(svc.router, httptest.NewRecorder(), unauthenticated, http.NotFoundHandler())
+	svc.metrics.instrumentRequest(svc.router, httptest.NewRecorder(), unauthenticated, http.NotFoundHandler())
 
 	upgrade := newAuthenticatedRequest(http.MethodGet, target, nil)
 	upgrade.Header.Set("Connection", "Upgrade")
 	upgrade.Header.Set("Upgrade", "websocket")
-	svc.metrics.instrument(svc.router, httptest.NewRecorder(), upgrade, http.NotFoundHandler())
+	svc.metrics.instrumentRequest(svc.router, httptest.NewRecorder(), upgrade, http.NotFoundHandler())
 
 	requests := svc.metrics.requests
 	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeUnauthenticated, "401")))
 	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeBackend, "400")))
 	require.Zero(t, testutil.CollectAndCount(svc.metrics.duration), "rejected watches are still watches")
-}
-
-func TestRouteBackendSkips(t *testing.T) {
-	routeBackend := func(name string, spec v1alpha2.RouteBackendSpec) v1alpha2.RouteBackend {
-		return v1alpha2.RouteBackend{ObjectMeta: metav1.ObjectMeta{Name: name, ResourceVersion: "1"}, Spec: spec}
-	}
-	badCA := "not a certificate"
-	withBadCA := forwardSpec("https://bad-tls.example.com")
-	withBadCA.Forward.Tls.CaData = &badCA
-
-	apps := []string{"valid", "no-forward", "bad-tls", "relative-url"}
-	manifests := make([]v1alpha2.AppManifest, 0, len(apps))
-	for _, app := range apps {
-		manifests = append(manifests, v1alpha2.AppManifest{
-			ObjectMeta: metav1.ObjectMeta{Name: app, ResourceVersion: "1"},
-			Spec: v1alpha2.AppManifestSpec{
-				AppName: app, Group: app + ".grafana.app",
-				Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}},
-			},
-		})
-	}
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
-	combined := loader.combineByName(t.Context(), manifests, []v1alpha2.RouteBackend{
-		routeBackend("valid", forwardSpec("https://valid.example.com")),
-		routeBackend("no-forward", v1alpha2.RouteBackendSpec{Mode: v1alpha2.RouteBackendSpecModeOperator}),
-		routeBackend("bad-tls", withBadCA),
-		routeBackend("relative-url", forwardSpec("/relative")),
-		routeBackend("no-manifest", forwardSpec("https://no-manifest.example.com")),
-		routeBackend("also-no-manifest", forwardSpec("https://also-no-manifest.example.com")),
-	})
-
-	require.Len(t, combined, 1)
-	require.Equal(t, 5, loader.routeBackendStatus.status(sourceRouteBackend).Skipped)
-
-	// Each load replaces the counts, so a fixed backend stops being reported.
-	loader.combineByName(t.Context(), manifests[:1], []v1alpha2.RouteBackend{
-		routeBackend("valid", forwardSpec("https://valid.example.com")),
-	})
-	require.Zero(t, loader.routeBackendStatus.status(sourceRouteBackend).Skipped)
 }
 
 func TestPluginManifestsSkips(t *testing.T) {
@@ -390,7 +373,7 @@ func TestPluginManifestsSkips(t *testing.T) {
 		]}`))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))

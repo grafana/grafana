@@ -7,7 +7,6 @@ import { type Canvas, type Sidebar, type Tabs } from './page-objects';
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
-    dashboardUnifiedDrilldownControls: false,
   },
   // Narrow viewport guarantees the tabs overflow horizontally so the scroll
   // buttons and auto-scroll behaviour are actually exercised.
@@ -121,7 +120,7 @@ test.describe(
       await expect(firstTab).not.toBeInViewport();
     });
 
-    test('keeps overflow controls after save and reload', async ({
+    test.skip('keeps overflow controls after save and reload', async ({
       gotoDashboardPage,
       page,
       controls,

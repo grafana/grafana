@@ -73,6 +73,7 @@ describe('Command consistency', () => {
       'MOVE_PANEL',
       'MOVE_ROW',
       'MOVE_TAB',
+      'RELOAD_FROM_SERVER',
       'REMOVE_ANNOTATION',
       'REMOVE_PANEL',
       'REMOVE_ROW',
