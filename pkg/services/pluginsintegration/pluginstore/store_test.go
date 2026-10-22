@@ -188,6 +188,49 @@ func TestStore_Routes(t *testing.T) {
 	})
 }
 
+func TestStore_CancelledContext(t *testing.T) {
+	// The bug is a random select between ctx.Done() and the running channel, so a single call can pass by chance.
+	const iterations = 100
+
+	cancelledCtx := func() context.Context {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		return ctx
+	}
+
+	t.Run("Lookups on a running store succeed even when the context is cancelled", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource},
+			FS:       pluginfakes.NewFakePluginFS("/some/dir"),
+		}
+
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{p.ID: p},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		ctx := cancelledCtx()
+		for i := 0; i < iterations; i++ {
+			_, exists := ps.Plugin(ctx, p.ID)
+			require.True(t, exists, "Plugin: iteration %d", i)
+
+			require.NotEmpty(t, ps.Plugins(ctx), "Plugins: iteration %d", i)
+
+			require.NotEmpty(t, ps.Routes(ctx), "Routes: iteration %d", i)
+		}
+	})
+
+	t.Run("Lookups on a store that is not running yet respect the cancelled context", func(t *testing.T) {
+		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
+		ps := New(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{p.ID: p},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+
+		_, exists := ps.Plugin(cancelledCtx(), p.ID)
+		require.False(t, exists)
+	})
+}
+
 func TestProcessManager_shutdown(t *testing.T) {
 	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
 		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
