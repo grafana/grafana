@@ -198,7 +198,8 @@ declare module "@openfeature/core" {
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
-    | "grafana.geomapProtomapsBasemap";
+    | "grafana.geomapProtomapsBasemap"
+    | "reporting.sunsetLogoUrlField";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
