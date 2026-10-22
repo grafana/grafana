@@ -254,7 +254,7 @@ export function AppChrome({ children }: Props) {
       )}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <LazyFeatureControlFloating />}
-      {!state.chromeless && scopesMegaMenuEnabled && <AutoOpenMegaMenuForScopedContent chrome={chrome} />}
+      {scopesMegaMenuEnabled && <AutoOpenMegaMenuForScopedContent chrome={chrome} />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
