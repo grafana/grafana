@@ -81,6 +81,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const { viewPanel, isEditing, editPanel, editview, shareView, viewFilter, savedViews, savedViewBaseline } =
       this._scene.state;
     const update: Partial<DashboardSceneState> = {};
+    // Applied on its own, before the editview/panel handling below, whose early returns would
+    // otherwise drop it while the deferred view apply still runs.
+    const savedViewUpdate: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
     const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
@@ -89,10 +92,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // the dashboard exactly as authored, untouched by any URL param or saved view. Every later
     // apply of a saved view falls back to this for anything the view itself doesn't capture.
     if (savedViewsEnabled && !savedViewBaseline) {
-      update.savedViewBaseline = captureSavedViewState(this._scene);
+      savedViewUpdate.savedViewBaseline = captureSavedViewState(this._scene);
     }
 
-    // update.viewFilter is applied synchronously below (a plain scalar on this scene, not a
+    // savedViewUpdate.viewFilter is applied synchronously below (a plain scalar on this scene, not a
     // cross-object mutation, so it doesn't participate in the problem this comment describes).
     // The actual apply is deferred with setTimeout for the same reason the editview branch above
     // defers onEnterEditMode: $timeRange's and every variable's own updateFromUrl run right after
@@ -113,11 +116,16 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         // still overrides, per field, instead of being unconditionally clobbered by the view's own
         // values (e.g. a shared link like "?viewFilter=view-1&from=now-15m").
         const before = captureSavedViewState(scene);
-        setTimeout(() => applySavedViewStateAsDefault(scene, view.spec, before));
-        update.viewFilter = values.viewFilter;
+        const baseline = savedViewUpdate.savedViewBaseline ?? savedViewBaseline;
+        setTimeout(() => applySavedViewStateAsDefault(scene, view.spec, before, baseline));
+        savedViewUpdate.viewFilter = values.viewFilter;
       }
     } else if (viewFilter && values.viewFilter === null) {
-      update.viewFilter = undefined;
+      savedViewUpdate.viewFilter = undefined;
+    }
+
+    if (Object.keys(savedViewUpdate).length > 0) {
+      this._scene.setState(savedViewUpdate);
     }
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this

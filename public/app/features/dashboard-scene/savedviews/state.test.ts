@@ -267,6 +267,50 @@ describe('applySavedViewStateAsDefault', () => {
       expect(env.state.value).toBe('staging');
     }
   });
+
+  describe('with a baseline', () => {
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [
+        { name: 'adhocFilter', type: 'adhoc', filters: [] },
+        { name: 'env', type: 'query', value: 'prod' },
+      ],
+    };
+    const specWithoutEnv: SavedDashboardViewSpec = {
+      ...spec,
+      variables: [{ name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'saved' }] }],
+    };
+
+    it('resets a variable the view does not mention back to the baseline, like a pane click does', () => {
+      const scene = buildScene({ env: 'dev' }); // left over from a prior view or manual edit
+      const before = captureSavedViewState(scene);
+
+      applySavedViewStateAsDefault(scene, specWithoutEnv, before, baseline);
+
+      const env = scene.state.$variables?.getByName('env');
+      expect(env).toBeInstanceOf(QueryVariable);
+      if (env instanceof QueryVariable) {
+        expect(env.state.value).toBe('prod');
+      }
+    });
+
+    it('still lets an explicit var- param in the same url change override the baseline', () => {
+      const scene = buildScene({ env: 'dev' });
+      const before = captureSavedViewState(scene);
+      const env = scene.state.$variables?.getByName('env');
+      if (env instanceof QueryVariable) {
+        env.setState({ value: 'qa', text: 'qa' });
+      }
+
+      applySavedViewStateAsDefault(scene, specWithoutEnv, before, baseline);
+
+      if (env instanceof QueryVariable) {
+        expect(env.state.value).toBe('qa');
+      }
+    });
+  });
 });
 
 describe('getSavedViewDiff', () => {

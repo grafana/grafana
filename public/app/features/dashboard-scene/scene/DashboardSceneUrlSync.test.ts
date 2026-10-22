@@ -154,6 +154,15 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.$timeRange?.state.to).toBe('now-1h');
     });
 
+    it('still records viewFilter and the baseline when an editPanel param hits an early return', () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1', editPanel: 'does-not-exist' });
+
+      expect(scene.state.viewFilter).toBe('view-1');
+      expect(scene.state.savedViewBaseline).toBeDefined();
+    });
+
     it('ignores a viewFilter that does not match any saved view', () => {
       const { scene } = buildSceneWithSavedViews();
       scene.urlSync?.updateFromUrl({ viewFilter: 'does-not-exist' });
