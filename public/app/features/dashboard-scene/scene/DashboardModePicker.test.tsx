@@ -138,7 +138,7 @@ const composerItem = () => screen.queryByRole('menuitemradio', { name: /Composer
 it('offers Composer when its flag is on and Assistant can be shown', async () => {
   await openPicker();
   expect(composerItem()).toBeEnabled();
-  expect(composerItem()).toHaveTextContent('Point at panels and regions and ask Assistant to change them.');
+  expect(composerItem()).toHaveTextContent('Point at anything and ask Assistant to change it.');
 });
 
 it('offers Composer while Assistant listens for dashboards, and drops it once nothing does', async () => {

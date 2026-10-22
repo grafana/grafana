@@ -99,7 +99,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             label={t('dashboard.modes.composer', 'Composer')}
             description={
               composer.disabledReason ??
-              t('dashboard.modes.composer-description', 'Point at panels and regions and ask Assistant to change them.')
+              t('dashboard.modes.composer-description', 'Point at anything and ask Assistant to change it.')
             }
             // The Assistant sparkle in the Chat button's colours; disabled, it greys out like the others.
             icon="ai-sparkle"
