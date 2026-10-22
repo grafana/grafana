@@ -44,6 +44,8 @@
     "gauge_tests_new": (import '../dev-dashboards/panel-gauge/gauge_tests_new.json'),
     "gauge_tests_old_to_new": (import '../dev-dashboards/panel-gauge/gauge_tests_old_to_new.json'),
     "geomap-basemap-comparison": (import '../dev-dashboards/panel-geomap/geomap-basemap-comparison.json'),
+    "geomap-basemap-perf-grid": (import '../dev-dashboards/panel-geomap/geomap-basemap-perf-grid.json'),
+    "geomap-basemap-perf-single": (import '../dev-dashboards/panel-geomap/geomap-basemap-perf-single.json'),
     "geomap-color-field": (import '../dev-dashboards/panel-geomap/geomap-color-field.json'),
     "geomap-photo-layer": (import '../dev-dashboards/panel-geomap/geomap-photo-layer.json'),
     "geomap-route-layer": (import '../dev-dashboards/panel-geomap/geomap-route-layer.json'),

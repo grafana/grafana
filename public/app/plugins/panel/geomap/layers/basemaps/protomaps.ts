@@ -19,6 +19,37 @@ const SOURCE_ID = 'protomaps';
 /** Protomaps planet builds stop at zoom 15; OpenLayers overzooms the last level beyond that */
 const MAX_TILE_ZOOM = 15;
 
+/**
+ * Protomaps names minor roads, paths and roads of kind `other` from zoom 15. In dense cities that is
+ * thousands of line labels, each split into pieces that are placed and drawn every frame, which
+ * drops panning to about 15 fps. CARTO waits until zoom 16 and leaves paths unnamed.
+ */
+const MINOR_ROAD_LABELS = 'roads_labels_minor';
+const MINOR_ROAD_LABEL_MIN_ZOOM = 16;
+
+/**
+ * The light and dark flavors label shops, restaurants and street furniture from the zoom each
+ * feature allows. CARTO only names parks, plus stadiums and attractions prominent enough to appear
+ * by zoom 13, and only from zoom 15.
+ */
+const POI_LABELS = 'pois';
+const POI_LABEL_MIN_ZOOM = 15;
+const POI_LABEL_KINDS = ['park', 'stadium', 'attraction'];
+const PROMINENT_POI: GlValue = [
+  'any',
+  ['==', ['get', 'kind'], 'park'],
+  ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13],
+];
+
+/** The map sits under the panel's data, so like CARTO it shows no house numbers, shields or one-way arrows */
+const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
+
+/** Which kinds each label layer keeps */
+const LABELLED_KIND: Record<string, (kind: string) => boolean> = {
+  [MINOR_ROAD_LABELS]: (kind) => kind !== 'other' && kind !== 'path',
+  [POI_LABELS]: (kind) => POI_LABEL_KINDS.includes(kind),
+};
+
 export enum ProtomapsFlavor {
   Auto = 'auto',
   Light = 'light',
@@ -49,9 +80,16 @@ const defaultProtomapsConfig: ProtomapsConfig = {
   server: DEV_SERVER_URL,
 };
 
+/** Style filters and expressions are plain JSON */
+type GlValue = string | number | boolean | null | GlValue[] | { [key: string]: GlValue };
+
 interface GlLayer {
+  id: string;
   type: string;
+  minzoom?: number;
+  filter?: GlValue;
   layout?: Record<string, unknown>;
+  paint?: Record<string, unknown>;
 }
 
 interface GlStyle {
@@ -133,13 +171,55 @@ export function isProtomapsBasemapEnabled() {
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
   const layers = glStyle.layers
-    .filter((layer) => showLabels || layer.type !== 'symbol')
-    .map((layer) =>
-      layer.layout?.['text-font']
-        ? { ...layer, layout: { ...layer.layout, 'text-font': toGrafanaFonts(layer.layout['text-font']) } }
-        : layer
-    );
+    .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
+    .map(adaptLayer);
   return { ...glStyle, layers };
+}
+
+function adaptLayer<T extends GlLayer>(layer: T): T {
+  let adapted = layer;
+  if (adapted.layout?.['text-font']) {
+    adapted = { ...adapted, layout: { ...adapted.layout, 'text-font': toGrafanaFonts(adapted.layout['text-font']) } };
+  }
+  if (adapted.id === MINOR_ROAD_LABELS) {
+    adapted = { ...adapted, minzoom: Math.max(adapted.minzoom ?? 0, MINOR_ROAD_LABEL_MIN_ZOOM) };
+  }
+  const labelled = LABELLED_KIND[adapted.id];
+  if (labelled) {
+    adapted = { ...adapted, filter: adapted.filter === undefined ? undefined : filterKinds(adapted.filter, labelled) };
+  }
+  if (adapted.id === POI_LABELS) {
+    adapted = {
+      ...adapted,
+      minzoom: Math.max(adapted.minzoom ?? 0, POI_LABEL_MIN_ZOOM),
+      filter: adapted.filter ? ['all', adapted.filter, PROMINENT_POI] : PROMINENT_POI,
+    };
+  }
+  return adapted;
+}
+
+/**
+ * Narrows the two `in` forms the Protomaps style generator emits: the legacy
+ * `["in", "kind", ...kinds]` and the expression `["in", ["get", "kind"], ["literal", kinds]]`.
+ */
+function filterKinds(filter: GlValue, labelled: (kind: string) => boolean): GlValue {
+  if (!Array.isArray(filter)) {
+    return filter;
+  }
+  const keep = (kind: GlValue) => typeof kind !== 'string' || labelled(kind);
+  if (filter[0] === 'in' && filter[1] === 'kind') {
+    return [...filter.slice(0, 2), ...filter.slice(2).filter(keep)];
+  }
+  const [op, input, values] = filter;
+  const kinds = Array.isArray(values) && values[0] === 'literal' ? values[1] : undefined;
+  if (op === 'in' && isGetKind(input) && Array.isArray(kinds)) {
+    return [op, input, ['literal', kinds.filter(keep)]];
+  }
+  return filter.map((child) => filterKinds(child, labelled));
+}
+
+function isGetKind(value: GlValue) {
+  return Array.isArray(value) && value.length === 2 && value[0] === 'get' && value[1] === 'kind';
 }
 
 export const protomaps: MapLayerRegistryItem<ProtomapsConfig> = {
