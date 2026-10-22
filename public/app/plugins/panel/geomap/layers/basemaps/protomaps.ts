@@ -96,6 +96,132 @@ interface GlStyle {
   layers: GlLayer[];
 }
 
+/** An undefined value removes the generator's own, as for a dash CARTO draws solid */
+type Paint = Record<string, GlValue | undefined>;
+
+type RoadClass = 'highway' | 'major' | 'minor' | 'other';
+
+/**
+ * CARTO draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14.
+ * Protomaps' casings are a thin edge, so each fill fades from the color CARTO shows further out.
+ */
+function cartoRoads(casing: string, fills: Record<RoadClass, [outer: string, inner: string]>) {
+  const fill = ([outer, inner]: [string, string]) => ({ 'line-color': zoomRamp([12, outer], [15, inner]) });
+  const paint: Record<string, Paint> = {};
+  for (const prefix of ['roads_', 'roads_bridges_']) {
+    paint[`${prefix}highway`] = fill(fills.highway);
+    paint[`${prefix}major`] = fill(fills.major);
+    paint[`${prefix}link`] = fill(fills.major);
+    paint[`${prefix}minor`] = fill(fills.minor);
+    paint[`${prefix}other`] = fill(fills.other);
+  }
+  paint.roads_minor_service = fill(fills.other);
+  for (const id of [
+    'roads_minor_service_casing',
+    'roads_minor_casing',
+    'roads_link_casing',
+    'roads_major_casing_early',
+    'roads_major_casing_late',
+    'roads_highway_casing_early',
+    'roads_highway_casing_late',
+    'roads_bridges_other_casing',
+    'roads_bridges_link_casing',
+    'roads_bridges_minor_casing',
+    'roads_bridges_major_casing',
+    'roads_bridges_highway_casing',
+  ]) {
+    paint[id] = { 'line-color': casing };
+  }
+  return paint;
+}
+
+/** CARTO fades a building's roof in over its footprint between zoom 13 and 16 */
+function cartoBuildings(footprint: string, roof: string): Paint {
+  return { 'fill-color': zoomRamp([13, footprint], [16, roof]), 'fill-opacity': 1 };
+}
+
+/**
+ * White and Black stand in for CARTO's Positron and Dark Matter, the basemap panels show by default,
+ * so they take CARTO's colors, line widths and dashes. Most of the difference is CARTO's slight blue
+ * tint on water and labels where Protomaps is pure gray. Only paint changes here: which features
+ * show, and from which zoom, stays with the label rules above.
+ */
+const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
+  [ProtomapsFlavor.White]: {
+    background: { 'background-color': '#fafaf8' },
+    earth: { 'fill-color': '#fafaf8' },
+    water: { 'fill-color': '#d4dadc' },
+    water_stream: { 'line-color': '#d1dbdf' },
+    water_river: { 'line-color': '#d1dbdf' },
+    buildings: cartoBuildings('#dfdfdf', '#ededed'),
+    ...cartoRoads('#dddddd', {
+      highway: ['#dddddd', '#ffffff'],
+      major: ['#dddddd', '#ffffff'],
+      minor: ['#dddddd', '#fdfdfd'],
+      other: ['#dddddd', '#fdfdfd'],
+    }),
+    boundaries_country: {
+      'line-color': zoomRamp([4, '#f2e6e7'], [5, '#ebd6d8']),
+      'line-width': zoomRamp([3, 1], [6, 1.5]),
+      'line-dasharray': undefined,
+    },
+    // Keeps Protomaps' thinner line: unlike CARTO's state borders, this layer also draws city districts
+    boundaries: {
+      'line-color': zoomRamp([5, '#ead5d7'], [6, '#e1c5c7']),
+      'line-dasharray': ['step', ['zoom'], ['literal', [1, 0]], 7, ['literal', [2, 2]]],
+    },
+    places_country: {
+      'text-color': zoomRamp([3, '#8a99a4'], [5, '#a1adb6'], [6, '#b9c2c9']),
+      'text-halo-color': '#fafaf8',
+    },
+    places_region: { 'text-color': '#97a4ae', 'text-halo-color': '#fafaf8' },
+    places_locality: { 'text-color': '#697b89', 'text-halo-color': 'rgba(255, 255, 255, 0.5)' },
+    places_subplace: { 'text-color': '#697b89', 'text-halo-color': 'rgba(255, 255, 255, 0.5)' },
+    water_label_ocean: { 'text-color': '#abb6be', 'text-halo-color': '#d4dadc' },
+    water_label_lakes: { 'text-color': '#7a96a0', 'text-halo-color': '#f5f5f3' },
+    water_waterway_label: { 'text-color': '#7a96a0', 'text-halo-color': '#f5f5f3' },
+    roads_labels_major: { 'text-color': '#838383', 'text-halo-color': '#ffffff' },
+    roads_labels_minor: { 'text-color': '#838383', 'text-halo-color': '#ffffff' },
+    pois: { 'text-color': '#7d9c83', 'text-halo-color': '#f5f5f3' },
+  },
+  [ProtomapsFlavor.Black]: {
+    background: { 'background-color': '#0e0e0e' },
+    earth: { 'fill-color': '#0e0e0e' },
+    water: { 'fill-color': '#2c353c' },
+    water_stream: { 'line-color': '#3f5a6d' },
+    water_river: { 'line-color': '#3f5a6d' },
+    buildings: cartoBuildings('#0e0e0e', '#393939'),
+    ...cartoRoads('#232323', {
+      highway: ['#232323', '#494949'],
+      major: ['#232323', '#535666'],
+      minor: ['#414758', '#414758'],
+      other: ['#1c1c1c', '#1c1c1c'],
+    }),
+    boundaries_country: {
+      'line-color': zoomRamp([4, '#5c5e5e'], [5, '#606060'], [6, '#666666']),
+      'line-width': zoomRamp([3, 1], [6, 1.5]),
+      'line-dasharray': undefined,
+    },
+    boundaries: {
+      'line-color': '#676772',
+      'line-dasharray': ['step', ['zoom'], ['literal', [1, 0]], 7, ['literal', [2, 2]]],
+    },
+    places_country: {
+      'text-color': zoomRamp([3, '#9eb6bd'], [5, '#767e89'], [6, '#788d93']),
+      'text-halo-color': '#111111',
+    },
+    places_region: { 'text-color': '#cbe6e6', 'text-halo-color': '#111111' },
+    places_locality: { 'text-color': '#ccd0e4', 'text-halo-color': '#222222' },
+    places_subplace: { 'text-color': '#666666', 'text-halo-color': '#222222' },
+    water_label_ocean: { 'text-color': '#6d7b81', 'text-halo-color': 'rgba(0, 0, 0, 0.7)' },
+    water_label_lakes: { 'text-color': '#9b9b9b', 'text-halo-color': '#181818' },
+    water_waterway_label: { 'text-color': '#a4a4a4', 'text-halo-color': '#181818' },
+    roads_labels_major: { 'text-color': '#929292', 'text-halo-color': '#222222' },
+    roads_labels_minor: { 'text-color': '#b5b4b4', 'text-halo-color': '#111111' },
+    pois: { 'text-color': '#515151', 'text-halo-color': '#151515' },
+  },
+};
+
 /**
  * 512px vector tiles run out one level short of the view's own zoom 0, so further out every style
  * rule falls below the style's first zoom stop and the basemap collapses to its background color.
@@ -169,11 +295,20 @@ export function isProtomapsBasemapEnabled() {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGeomapProtomapsBasemap, false);
 }
 
-function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
+function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
+  const cartoPaint = CARTO_PAINT[flavor] ?? {};
   const layers = glStyle.layers
     .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
-    .map(adaptLayer);
+    .map((layer) => withPaint(adaptLayer(layer), cartoPaint[layer.id]));
   return { ...glStyle, layers };
+}
+
+function withPaint<T extends GlLayer>(layer: T, paint: Paint | undefined): T {
+  if (!paint) {
+    return layer;
+  }
+  const merged = Object.entries({ ...layer.paint, ...paint }).filter(([, value]) => value !== undefined);
+  return { ...layer, paint: Object.fromEntries(merged) };
 }
 
 function adaptLayer<T extends GlLayer>(layer: T): T {
@@ -196,6 +331,10 @@ function adaptLayer<T extends GlLayer>(layer: T): T {
     };
   }
   return adapted;
+}
+
+function zoomRamp(...stops: Array<[number, GlValue]>): GlValue {
+  return ['interpolate', ['linear'], ['zoom'], ...stops.flat()];
 }
 
 /**
@@ -244,7 +383,8 @@ function createHandler(config: ProtomapsConfig | undefined, theme: GrafanaTheme2
     init: () => {
       const cfg = { ...defaultProtomapsConfig, ...config };
       const server = resolveServer(cfg.server);
-      const styleUrl = new URL(`styles/${resolveFlavor(cfg.flavor, theme)}.json`, server).href;
+      const flavor = resolveFlavor(cfg.flavor, theme);
+      const styleUrl = new URL(`styles/${flavor}.json`, server).href;
       // A null style draws nothing, so tiles can load alongside the style request without flashing
       // OpenLayers' default blue.
       const layer = new VectorTileLayer({ declutter: true, source: createSource(cfg.delivery, server), style: null });
@@ -258,7 +398,7 @@ function createHandler(config: ProtomapsConfig | undefined, theme: GrafanaTheme2
         })
         .then((glStyle: GlStyle) => {
           // ol-mapbox-style caches paint functions per style id, and the generated styles carry none
-          const style = { ...adaptStyle(glStyle, !!cfg.showLabels), id: styleUrl };
+          const style = { ...adaptStyle(glStyle, !!cfg.showLabels, flavor), id: styleUrl };
           return Promise.all([
             applyStyle(layer, style, { source: SOURCE_ID, updateSource: false, styleUrl }),
             applyBackground(layer, style),

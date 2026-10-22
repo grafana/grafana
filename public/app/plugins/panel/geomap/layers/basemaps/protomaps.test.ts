@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, four labels */
+/** Trimmed from a generated Protomaps style: one fill, four labels, one border */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -66,6 +66,17 @@ const STYLE = {
       paint: { 'text-color': '#30C573', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 },
     },
     { id: 'address_label', type: 'symbol', source: 'protomaps', 'source-layer': 'buildings', minzoom: 18 },
+    {
+      id: 'boundaries_country',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'boundaries',
+      paint: {
+        'line-color': '#adadad',
+        'line-width': 0.7,
+        'line-dasharray': ['step', ['zoom'], ['literal', [2, 0]], 4, ['literal', [2, 1]]],
+      },
+    },
   ],
 };
 
@@ -215,7 +226,42 @@ describe('Protomaps basemap', () => {
   it('drops label layers when labels are off', async () => {
     await initLayer({ showLabels: false });
 
-    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual(['earth']);
+    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual(['earth', 'boundaries_country']);
+  });
+
+  it.each([
+    { flavor: ProtomapsFlavor.White, land: '#fafaf8', poi: '#7d9c83', border: '#f2e6e7' },
+    { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', poi: '#515151', border: '#5c5e5e' },
+  ])('paints $flavor in the colors of the CARTO basemap it stands in for', async ({ flavor, land, poi, border }) => {
+    await initLayer({ flavor, showLabels: true });
+
+    const layers = appliedStyle().layers;
+    const layer = (id: string) => layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('earth').paint).toEqual({ 'fill-color': land });
+    expect(layer('pois').paint['text-color']).toBe(poi);
+    const borders = layer('boundaries_country').paint;
+    expect(borders['line-color'].slice(0, 5)).toEqual(['interpolate', ['linear'], ['zoom'], 4, border]);
+    // CARTO draws country borders solid
+    expect(borders).not.toHaveProperty('line-dasharray');
+  });
+
+  it('paints only colors, leaving which labels show and from which zoom as they were', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.White, showLabels: true });
+    const white = appliedStyle().layers;
+    applyStyleMock.mockClear();
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+    const light = appliedStyle().layers;
+
+    const placement = ({ id, minzoom, filter, layout }: Record<string, unknown>) => ({ id, minzoom, filter, layout });
+    expect(white.map(placement)).toEqual(light.map(placement));
+  });
+
+  it('leaves the other flavors in their generated colors', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+
+    const layers = appliedStyle().layers;
+    expect(layers[0].paint).toBeUndefined();
+    expect(layers.at(-1).paint['line-color']).toBe('#adadad');
   });
 
   it('credits OpenStreetMap before the style request resolves', async () => {
