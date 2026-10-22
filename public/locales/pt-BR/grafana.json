@@ -357,10 +357,6 @@
     },
     "ai": {
       "error-boundary": {
-        "alert-rule-button": "Falha ao carregar o botão de regra de alerta de IA",
-        "feedback-button": "Falha ao carregar o botão de feedback de IA",
-        "improve-annotations-button": "Falha ao carregar o botão de melhoria de anotações de IA",
-        "improve-labels-button": "Falha ao carregar o botão de melhoria de rótulos de IA",
         "template-button": "Falha ao carregar o botão de modelo de IA",
         "triage-button": "Falha ao carregar o botão de triagem de IA"
       }
@@ -453,6 +449,11 @@
       "text-loading-rules": "Carregando regras…",
       "title-search-alert-rule": "Pesquisar regra de alerta",
       "title-select-alert-instances": "Selecionar instâncias de alerta"
+    },
+    "alert-instance-silence-action": {
+      "silence": "",
+      "subtitle": "",
+      "title": ""
     },
     "alert-instance-state-filter": {
       "state": "Estado"
@@ -1143,6 +1144,8 @@
       }
     },
     "editor": {
+      "duplicate-alert-rule": "",
+      "duplicate-recording-rule": "",
       "edit-alert-rule": "Editar regra de alerta",
       "edit-recording-rule": "Editar regra de gravação",
       "new-alert-rule": "Nova regra de alerta",
@@ -1702,8 +1705,12 @@
       },
       "preview": {
         "error": "Falha ao carregar o conteúdo: {{error}}",
+        "hide-secrets": "",
         "loading": "Carregando conteúdo…",
         "notifications-title": "Pré-visualização da configuração de notificações",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Pré-visualização das regras de alerta"
       },
       "recording-rules": "Regras de registro",
@@ -1759,7 +1766,7 @@
         "datasource": "Fonte de dados do Alertmanager",
         "datasource-autosync-badge": "Sincronização automática",
         "heading": "Importar fontes de notificação",
-        "next-disabled-tooltip": "Preencha os campos obrigatórios e aguarde a aprovação da validação antes de continuar.",
+        "next-disabled-tooltip": "",
         "no-datasources": "Nenhuma fonte de dados do Alertmanager encontrada",
         "no-permission-desc": "Você não tem permissão para importar recursos de notificação. Você precisa da permissão <strong>alerting.notifications:write</strong>. Você pode pular esta etapa.",
         "no-permission-title": "Permissões insuficientes",
@@ -1797,6 +1804,7 @@
         "yaml-desc": "Tipos de arquivos aceitos: {{extensions}}",
         "yaml-file": "YAML de configuração do Alertmanager",
         "yaml-invalid-type": "O arquivo deve ser um arquivo YAML ({{extensions}})",
+        "yaml-parse-error": "",
         "yaml-remove": "Remover {{name}}",
         "templates-added-title_one": "Arquivo de modelo adicionado",
         "templates-added-title_other": "Arquivos de modelo adicionados"
@@ -2110,8 +2118,8 @@
       "add-matcher": "Adicionar operador de correspondência",
       "aria-label-operator": "operador",
       "aria-label-remove-matcher": "Remover operador de correspondência",
-      "label-alert-rule": "Regra de alerta",
       "label-label": "Etiqueta",
+      "label-matching-labels": "",
       "label-operator": "Operador",
       "label-refine-affected-alerts": "Refinar alertas afetados",
       "label-value": "Valor",
@@ -2743,7 +2751,8 @@
     "recording-rules": {
       "description-target-data-source": "A fonte de dados do Prometheus em que as regras de gravação serão registradas",
       "label-target-data-source": "Fonte de dados de destino",
-      "target-data-source-required": "Selecione uma fonte de dados de destino"
+      "target-data-source-required": "Selecione uma fonte de dados de destino",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Selecione a Nomenclatura e o Grupo para sua regra de registro.",
@@ -3414,6 +3423,7 @@
       "schedule": "Agendar"
     },
     "silence-grafana-rule-drawer": {
+      "subtitle": "",
       "title-silence-alert-rule": "Silenciar regra de alerta"
     },
     "silence-period": {
@@ -3462,7 +3472,11 @@
       "preview-affected-instances": "Visualize as instâncias de alerta afetadas por este silenciamento."
     },
     "silences-editor": {
+      "alert-rule-unavailable": "",
       "comment-placeholder-details-about-the-silence": "Detalhes sobre o silenciamento",
+      "description-alert-rule-scope": "",
+      "description-alert-rule-unavailable": "",
+      "label-alert-rule": "",
       "label-comment": "Comentário",
       "label-created-by": "Criado por",
       "label-duration": "Duração",
@@ -3918,6 +3932,11 @@
     },
     "viz-wrapper": {
       "table": "Tabela"
+    },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "welcome-header": {
       "description-alert-activity": "Veja o que está enviando alertas no momento e analise dados históricos para investigar problemas que estão ocorrendo ou já ocorreram.",
@@ -4663,6 +4682,7 @@
       "empty-message": "Adicione um README para descrever o que está nesta pasta e onde encontrar os painéis certos.",
       "load-error-retry": "Tente novamente",
       "load-error-title": "Não foi possível carregar este documento",
+      "metadata-label": "",
       "panel-label": "Documentação da pasta",
       "parse-error": "Não é possível exibir este documento.",
       "tab-contributing": "Contribuição",
@@ -5063,6 +5083,9 @@
         "auto": "Automático"
       }
     },
+    "tooltip": {
+      "dialog-label": ""
+    },
     "tooltip-options": {
       "label-disable-one-click": "Desativar para elementos de um clique",
       "name-tooltip-mode": "Modo de dica de uso",
@@ -5156,6 +5179,7 @@
       "more-panels_one": "Mais {{count}} painel correspondente",
       "more-panels_other": "Mais {{count}} painéis correspondentes"
     },
+    "dialog-label": "",
     "empty-state": {
       "button-title": "Buscar com o Assistente da Grafana",
       "message": "Nenhum resultado encontrado"
@@ -5204,6 +5228,10 @@
   },
   "connections": {
     "add-new-connection": {
+      "add-category": "",
+      "add-type": "",
+      "all-categories": "",
+      "all-types": "",
       "category": "Categoria",
       "clear": "Limpar",
       "filter-by-category": "Filtrar por categoria",
@@ -5232,7 +5260,10 @@
         "by-published-date": "Por data de publicação",
         "by-updated-date": "Por data de atualização"
       },
+      "remove-filter-value": "",
       "reset-filters": "Redefinir filtros",
+      "selected-categories": "",
+      "selected-types": "",
       "sort": "Ordenar",
       "sort-list": "Ordenar lista de plug-ins",
       "state": "Estado",
@@ -6032,6 +6063,24 @@
       "tooltip-next": "Avançar",
       "tooltip-previous": "Anterior"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Edição do esquema do assistente"
@@ -6109,6 +6158,20 @@
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
+    "plan-building-overlay": {
+      "quip-corners": "",
+      "quip-green": "",
+      "quip-gridlines": "",
+      "quip-legend": "",
+      "quip-metrics": "",
+      "quip-pie-charts": "",
+      "quip-points": "",
+      "quip-series": "",
+      "title": ""
+    },
     "plan-placeholder-badge": {
       "text": "Dados de exemplo",
       "tooltip": "Os números mostrados são dados de exemplo para fins ilustrativos e não provêm de consultas reais."
@@ -6147,6 +6210,9 @@
           "no-template-variables-found": "Nenhuma variável de modelo encontrada"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Cancelar",
@@ -7591,6 +7657,33 @@
       "confirmText-restore-version": "Sim, restaurar para a versão {{version}}",
       "title-restore-version": "Restaurar versão"
     },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
+    },
     "save-button": {
       "save": "Salvar",
       "save-and-overwrite": "Salvar e substituir",
@@ -7954,7 +8047,10 @@
     "support-bundle": "Você também pode obter um pacote de ajuda com as informações da sua instância da Grafana e fontes de dados configuradas na <1>seção de pacotes de ajuda</1>."
   },
   "dashboard-schema-editor": {
+    "editor-label": "",
     "json-disabled-tooltip": "Corrija os erros de sintaxe YAML para mudar para JSON",
+    "schema-load-error": "",
+    "schema-load-error-description": "",
     "yaml-disabled-tooltip": "Corrija os erros de sintaxe JSON para mudar para YAML"
   },
   "dashboard-settings": {
@@ -8374,6 +8470,7 @@
     },
     "resource-picker-popover": {
       "cancel": "Cancelar",
+      "dialog-label": "",
       "folder": "Pasta",
       "select": "Selecionar",
       "url": "URL"
@@ -8796,6 +8893,9 @@
       "unknown-type-tooltip": "Esta fonte de dados não apresentou nenhum tipo reconhecido para esta métrica"
     },
     "metrics-list": {
+      "add-label-to-query": "",
+      "add-metric-to-query": "",
+      "add-value-to-query": "",
       "collapse-metric": "Recolher {{name}}",
       "error": "Erro ao carregar as métricas",
       "expand-metric": "Expandir {{name}}",
@@ -8998,6 +9098,7 @@
       "jump-to-query-label": "Ir para a consulta {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
+      "add-to-query": "",
       "empty-text": "Adicione uma consulta para navegar por sua fonte de dados.",
       "section-label-queries": "Consultas",
       "title-datasource-explorer": "Explorador de fonte de dados",
@@ -9637,6 +9738,9 @@
       "placeholder-numeric-value": "Valor numérico",
       "placeholder-value": "valor"
     },
+    "tooltip": {
+      "dialog-label": ""
+    },
     "tooltip-options": {
       "description-details": "Mostrar pop-up ao passar o cursor do mouse",
       "description-none": "Mostrar conteúdo ao clicar, não ao passar o cursor do mouse",
@@ -10081,6 +10185,7 @@
             "name-humidity": "Umidade (%H)",
             "name-locale": "Formato local",
             "name-number": "Número",
+            "name-ordinal": "",
             "name-percent-1": "Percentual (0,0-1,0)",
             "name-percent-100": "Percentual (0-100)",
             "name-pixels": "Pixels",
@@ -10206,7 +10311,9 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10360,7 +10467,8 @@
       "option": "opção"
     },
     "carousel": {
-      "aria-label-open-image": "Abrir prévia da imagem"
+      "aria-label-open-image": "Abrir prévia da imagem",
+      "dialog-label": ""
     },
     "cascader": {
       "clear-button": "Limpar seleção"
@@ -10492,6 +10600,7 @@
       "apply": "Aplicar",
       "calendar-icon-label": "Seletor de horário",
       "cancel": "Cancelar",
+      "dialog-label": "",
       "next-label": "Mês seguinte",
       "previous-label": "Mês anterior",
       "select-placeholder": "Selecione a data/hora"
@@ -10821,6 +10930,7 @@
       "no-rows": "Sem linhas",
       "no-values-label": "Sem valores",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Ordenar pela coluna {{column}}",
       "sort-by-column-ascending": "Ordenar por coluna {{column}}, em ordem crescente",
@@ -10850,6 +10960,7 @@
       "close": "Fechar"
     },
     "toolbar-button-row": {
+      "dialog-label": "",
       "show-more": "Mostrar mais itens"
     },
     "u-plot": {
@@ -11129,6 +11240,8 @@
       "incident-filter-all": "Todos os incidentes",
       "incident-filter-label": "Filtrar incidentes por rótulo",
       "incident-tab-label": "Incidentes",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Suas equipes",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11136,22 +11249,17 @@
     },
     "dashboard-tabs": {
       "most-used": "Mais usado",
-      "most-used-active": "Painéis mais usados",
       "recent": "Recente",
-      "recent-active": "Painéis recentes",
       "retry": "Tentar novamente",
       "starred": "Favoritos",
-      "starred-active": "Painéis de controle favoritos"
-    },
-    "dashboards": {
-      "title": "Painéis",
-      "view-all": "Ver tudo"
+      "title": "",
+      "view-all-dashboards": ""
     },
     "firing-alerts-card": {
       "create": "Criar uma regra de alerta",
-      "empty": "Você não tem alertas ativos.",
+      "empty": "",
       "empty-selected-label": "",
-      "empty-teams": "Não há alertas ativos para suas equipes.",
+      "empty-teams": "",
       "error-title": "Não foi possível carregar os alertas ativos",
       "severity-critical": "Crítico",
       "severity-high": "Alta",
@@ -11187,8 +11295,8 @@
     },
     "incidents-card": {
       "declare": "Comunicar um incidente",
-      "empty": "Nenhum incidente ativo.",
-      "empty-selected-team": "Nenhum incidente ativo para {{team}}.",
+      "empty": "",
+      "empty-selected-team": "",
       "error-title": "Não foi possível carregar os incidentes ativos",
       "title": "Incidentes ativos",
       "view-all": "Ver todos os incidentes"
@@ -11205,6 +11313,17 @@
       "error-title": "Não foi possível carregar as publicações recentes no blog",
       "read-more": "Leia mais no blog do Grafana Labs",
       "title": "Novidades do blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11311,15 +11430,25 @@
       },
       "title": "Visão geral do seu stack de observabilidade"
     },
-    "recent-dashboards-tab": {
-      "browse": "Navegar por painéis de controle",
-      "clear": "Limpar histórico",
-      "create": "Crie seu primeiro painel de controle",
-      "empty": "Os painéis que você visualizou recentemente aparecerão aqui.",
-      "empty-description": "Depois de conectar os dados, você pode usar os painéis para consultar e visualizar seus dados com gráficos, estatísticas e tabelas ou criar listas, markdowns e outros widgets.",
-      "error-title": "Não foi possível carregar os painéis visualizados recentemente",
-      "loading": "Carregando painéis visualizados recentemente…",
-      "reset": "Redefinir painéis recentes"
+    "recent-activity-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "error-title": "",
+      "filter-alerting": "",
+      "filter-all": "",
+      "filter-apps": "",
+      "filter-dashboards": "",
+      "filter-explore": "",
+      "filter-label": "",
+      "filter-pages": "",
+      "kind-alerting": "",
+      "kind-app": "",
+      "kind-dashboard": "",
+      "kind-explore": "",
+      "kind-page": "",
+      "loading": ""
     },
     "recommendations": {
       "application-observability": {
@@ -11908,6 +12037,9 @@
     "signup": {
       "button-label": "Inscreva-se",
       "new-to-question": "Novo no Grafana?"
+    },
+    "title": {
+      "sign-in": ""
     }
   },
   "logs": {
@@ -11967,6 +12099,11 @@
       "load-newer": "Carregando logs mais recentes...",
       "load-older": "Carregando logs mais antigos..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Recolher rótulos",
       "expand": "Expandir rótulos"
@@ -12017,6 +12154,7 @@
       "inline-mode": "Exibir em linha",
       "inline-no-scrolls": "Alternar para visualização expandida",
       "inline-with-scrolls": "Alternar para visualização resumida",
+      "link-fallback-label": "",
       "link-value-tooltip": "Valor do link",
       "links-section": "Links",
       "log-attributes-field": "Atributos de log",
@@ -12026,13 +12164,14 @@
       "move-displayed-field-up": "Mover para cima",
       "no-details": "Sem campos para exibir.",
       "open-assistant": "Acessar explicação da linha de registro no Assistente",
+      "open-value-in": "",
       "pin-line": "Fixar log",
       "prettify": "Formatar",
       "remove-displayed-field": "Remover campo",
       "remove-log": "Remover registro",
       "scroll-to-logline": "Rolar para a linha do registro",
       "search": {
-        "no-results": "Nenhum resultado para exibir."
+        "no-results": ""
       },
       "search-placeholder": "Buscar nomes e valores de campos",
       "show-context": "Exibir contexto",
@@ -12044,7 +12183,8 @@
         "loading-message": "Carregando rastro…"
       },
       "trace-section": "Rastro",
-      "unpin-line": "Desafixar log"
+      "unpin-line": "Desafixar log",
+      "view-in-traces-drilldown": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha do log",
@@ -12786,6 +12926,9 @@
     "new-folder": {
       "title": "Nova pasta"
     },
+    "new-notebook": {
+      "title": ""
+    },
     "notebooks": {
       "subtitle": "Crie e gerencie blocos de anotação para contar uma história com seus dados",
       "title": "Blocos de anotações"
@@ -13117,6 +13260,7 @@
       "visualization": "Visualização"
     },
     "cell": {
+      "block-actions": "",
       "code": {
         "aria-label-editor": "Código",
         "aria-label-language": "Linguagem de programação",
@@ -13153,8 +13297,10 @@
       },
       "time-range": {
         "button": "Atualizar intervalo de tempo",
+        "dialog": "",
+        "dialog-label": "",
         "locked": "Bloqueado: {{range}}",
-        "sync-back": "Sincronizar de volta com o intervalo de tempo do bloco de anotações",
+        "remove-lock": "",
         "tooltip-default": "Bloquear intervalo de tempo do painel"
       }
     },
@@ -13196,6 +13342,7 @@
       "created-by-me": "Criado por mim",
       "error-conflict": "Este bloco de anotações foi alterado enquanto você estava adicionando algo a ele. Tente novamente adicionar o painel à versão mais recente.",
       "error-generic": "Erro ao adicionar o painel ao bloco de anotações",
+      "error-open-conflict": "",
       "list-error": "Erro ao carregar os blocos de anotações",
       "list-error-body": "Ocorreu um erro ao carregar seus blocos de anotações. Tente novamente ou crie um novo.",
       "list-no-matches": "Nenhum bloco de anotações corresponde a esses filtros.",
@@ -13204,6 +13351,8 @@
       "list-truncated": "Nem todos os blocos de anotações são exibidos. Restrinja a busca para encontrar outros.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Pesquisar por título",
       "sort-alphabetical": "Em ordem alfabética (A-Z)",
       "sort-label": "Ordenar blocos de anotações",
@@ -13211,13 +13360,20 @@
       "sort-updated": "Atualizado recentemente",
       "submit": "Adicionar ao bloco de anotações",
       "success": "Painel adicionado a {{title}}",
+      "success-cells": "",
       "success-link": "Visualizar bloco de anotações",
       "tag-placeholder": "Filtrar por tag",
       "target-description": "Escolha onde adicionar o painel.",
       "target-existing": "Bloco de anotações existente",
       "target-label": "Bloco de anotações de destino",
       "target-new": "Novo bloco de anotações",
-      "title": "Adicionar painel ao bloco de anotações"
+      "title": "Adicionar painel ao bloco de anotações",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -13247,6 +13403,7 @@
       "add-block": "Adicionar bloco",
       "add-query": "Adicionar consulta",
       "add-tag": "Adicionar tag",
+      "change-visualization": "",
       "delete-block": "Excluir bloco",
       "duplicate-block": "Duplicar bloco",
       "duplicate-query": "Duplicar consulta",
@@ -13258,13 +13415,16 @@
       "remove-query": "Remover consulta",
       "remove-tag": "Remover tag",
       "rename": "",
+      "rename-panel": "",
       "reset-cell-time-range": "Usar intervalo de tempo do bloco de anotações",
       "select-query": "Selecionar consulta",
       "set-cell-time-range": "Definir intervalo de tempo do painel",
       "split-block": "Dividir bloco",
       "switch-datasource": "Alternar fonte de dados",
       "undo": "Desfazer",
-      "undo-action": "Desfazer: {{action}}"
+      "undo-action": "Desfazer: {{action}}",
+      "visualization-replay-error": "",
+      "visualization-rollback-error": ""
     },
     "incidents": {
       "attach-title": "Anexar ao incidente",
@@ -13309,6 +13469,19 @@
     },
     "new": {
       "default-title-with-date": "Bloco de anotações {{date}}"
+    },
+    "panel": {
+      "add-title": "",
+      "change-visualization": "",
+      "edit-query": "",
+      "hide-query": "",
+      "open-explore": "",
+      "rename": "",
+      "suggestions-empty": "",
+      "suggestions-error": "",
+      "suggestions-no-data": "",
+      "title-label": "",
+      "visualization-error": ""
     },
     "save-status": {
       "failed": "Falha ao salvar",
@@ -13376,6 +13549,7 @@
         "category": "Opções padrão",
         "category-thresholds": "Limites",
         "category-value-mappings": "Mapeamentos de valor",
+        "description-ad-hoc": "",
         "description-display-name": "Alterar o nome do campo ou da série",
         "description-field-min-max": "Calcular mínimo e máximo por campo",
         "description-max": "Deixar em branco para calcular com base em todos os valores",
@@ -13383,7 +13557,7 @@
         "description-no-value": "O que mostrar quando não há valor",
         "description-value-mappings": "Modificar o texto de exibição com base no valor de entrada",
         "name-actions": "Ações",
-        "name-ad-hoc": "Filtrável",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de cores",
         "name-data-links": "Links de dados",
         "name-decimals": "Decimais",
@@ -16586,6 +16760,7 @@
     "name-page-size": "Tamanho da página",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Mostrar cabeçalho da tabela",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Estilo do campo",
     "name-tooltip-from-field": "Dica de ferramenta do campo",
     "name-tooltip-placement": "Posicionamento da dica de ferramenta",
@@ -16866,6 +17041,7 @@
     "range-picker": {
       "backwards-time-aria-label": "Mover intervalo de tempo para trás",
       "current-time-selected": "Intervalo de tempo selecionado: {{currentTimeRange}}",
+      "dialog-label": "",
       "forwards-time-aria-label": "Avançar intervalo de tempo",
       "to": "até",
       "zoom-out-button": "Diminuir o intervalo de tempo",
@@ -16875,6 +17051,7 @@
       "apply": "Aplicar intervalo de tempo",
       "aria-role": "Intervalo de tempo selecionado",
       "default-title": "Intervalos de tempo",
+      "dialog-label": "",
       "example-title": "Exemplos de intervalos de tempo",
       "from-label": "De",
       "from-to": "{{timeOptionFrom}} até {{timeOptionTo}}",

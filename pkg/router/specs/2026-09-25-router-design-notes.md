@@ -66,7 +66,7 @@ Revisit only if a concrete client is confirmed to read the field.
 - When a backend is removed, drain its in-flight requests before tearing down what it holds, and
   never close anything eagerly on swap. Today nothing is torn down per backend: each aggregate target
   owns one proxy transport for its lifetime, and plugin gRPC connections (keyed by host and plugin
-  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-10-router-review-plan.md`.
+  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-23-router-review-plan.md`.
 
 ## Readiness: why a partial reconcile error doesn't fail `Ready`
 
@@ -83,15 +83,6 @@ The current rule: `routerState.served` records whether anything is being served.
 when there is an error **and** nothing is served. A partial error is still logged by `storeServing`.
 Both cases were found in PR review, in two passes.
 
-## Removed: the RouteBackend and AppManifest source
-
-Until #134652, the cloud loader also read `RouteBackend` and `AppManifest` resources from a
-control-plane API server, correlated them by name (`combineByName`, with a fallback to the embedded
-manifests for core groups), and watched both kinds with informers. Core APIs now come from
-`core_url` in the plugin manifests format, limited to `routableCoreGroups`. Every cloud source is
-polled, and each poll loop signals a payload-free wake only when its key set changes, so the
-level-triggered `Load` described above still applies.
-
 ## Two transports per aggregate target
 
 `ProvideCloudRoutesLoaderFactory` builds two `newAggregateBaseTransport` clones per aggregate
@@ -105,14 +96,6 @@ target:
 
 Each clone owns its connection pool instead of sharing the process-wide `http.DefaultTransport`,
 which allows only 2 idle connections per host.
-
-## Removed `appmanifest_apiserver_url` and `apiserver_url` are startup errors
-
-Both keys configured the removed AppManifest source (`apiserver_url` was its earlier name). If
-either were ignored, a deployment still relying on it would look like "nothing configured", fall
-through to the dummy loader, and report ready while serving no routes.
-`ProvideCloudRoutesLoaderFactory` therefore fails when either is set and no other cloud source is
-configured. With another source configured, they are ignored.
 
 ## Why `group_regex` patterns are globs
 

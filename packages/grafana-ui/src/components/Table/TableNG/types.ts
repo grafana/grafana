@@ -19,6 +19,7 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
+import { type CellOption } from './cellMenuOptions';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -119,6 +120,8 @@ interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
+  /** Whether all columns can be reordered from the header or sidebar. */
+  reorderable?: boolean;
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
@@ -182,6 +185,9 @@ interface BaseTableProps {
   zebraStriping?: boolean;
   /** Initial sidebar state. Later prop changes also update the sidebar. */
   showColumnsSidebar?: boolean;
+  /** Controlled column order, by display name. */
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
   /** Controlled hidden columns, by display name. */
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
@@ -221,18 +227,21 @@ export type InspectCellProps = {
   preformatted?: boolean;
 };
 
-export interface TableCellActionsProps {
+interface TableCellActionsBaseProps {
   onAddToAssistant?: () => void;
-  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
-  cellInspect: boolean;
-  showFilters: boolean;
   setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
+
+export type TableCellActionsProps = TableCellActionsBaseProps &
+  (
+    | { tableRefreshEnabled: true; groups: CellOption[][]; cellInspect?: never; showFilters?: never }
+    | { tableRefreshEnabled?: false; groups?: never; cellInspect: boolean; showFilters: boolean }
+  );
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {

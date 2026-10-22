@@ -14,9 +14,8 @@ interface UndoableVariableEditProps {
 /**
  * Applies a change made in a variable editor and records it in the undo history when `shouldRecord` is true.
  *
- * Variable editors are rendered both inline in the dashboard sidebar and in the dashboard settings page. The
- * settings page has no undo history (the sidebar that records edit actions is not active there), so editors pass
- * their `inline` flag here and changes made in the settings page are applied without being recorded.
+ * Pass false for settings-page edits or unchanged values to apply the change without recording history.
+ * The caller decides whether the edit should be recorded; false does not skip performing the change.
  */
 export function undoableVariableEdit(
   shouldRecord: boolean | undefined,

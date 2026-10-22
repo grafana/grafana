@@ -31,7 +31,14 @@ export function TextBoxVariableEditor({ variable, inline }: TextBoxVariableEdito
   };
 
   // The input is uncontrolled, remount it when the value changes outside of it (e.g. undo/redo)
-  return <TextBoxVariableForm key={value} defaultValue={value} onBlur={onTextValueChange} inline={inline} />;
+  return (
+    <TextBoxVariableForm
+      key={inline ? value : undefined}
+      defaultValue={value}
+      onBlur={onTextValueChange}
+      inline={inline}
+    />
+  );
 }
 
 export function getTextBoxVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {

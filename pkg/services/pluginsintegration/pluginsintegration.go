@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -49,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -68,6 +70,7 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	pluginconfig.ProvidePluginManagementConfig,
+	pluginauth.ProvideConfig,
 	pluginconfig.ProvidePluginInstanceConfig,
 	pluginconfig.NewEnvVarsProvider,
 	wire.Bind(new(envvars.Provider), new(*pluginconfig.EnvVarsProvider)),
@@ -220,6 +223,11 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
+	//nolint:staticcheck // Deprecated, kept for backwards compatibility of datasources moved out of core
+	middlewares = append(middlewares, clientmiddleware.NewDataProxyTimeoutMiddleware(
+		httpclientprovider.TimeoutOptionsFromConfig(cfg),
+		httpclientprovider.SDKDefaultTimeoutOptions(),
+	))
 	middlewares = append(middlewares, clientmiddleware.NewHTTPCaptureMiddleware())
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 

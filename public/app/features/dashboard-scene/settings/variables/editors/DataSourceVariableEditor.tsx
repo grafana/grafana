@@ -121,7 +121,7 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
   const onChange = (value: ComboboxOption<string>) => {
     const { pluginId: oldPluginId, value: oldValue, text: oldText } = variable.state;
 
-    undoableVariableEdit(true, {
+    undoableVariableEdit(value.value !== oldPluginId, {
       meta: { actionId: 'variable.changeDataSourceType' },
       source: variable,
       description: t('dashboard.edit-actions.variable-datasource-type', 'Change variable data source type'),
@@ -131,6 +131,7 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
       },
       undo: async () => {
         variable.setState({ pluginId: oldPluginId });
+        // Notify dependents explicitly; validation may keep the restored value and emit no change event.
         variable.changeValueTo(oldValue, oldText);
         await lastValueFrom(variable.validateAndUpdate!());
       },
@@ -166,6 +167,7 @@ function DataSourceNameFilter({ variable, id }: InputProps) {
       },
       undo: async () => {
         variable.setState({ regex: oldRegex });
+        // Notify dependents explicitly; validation may keep the restored value and emit no change event.
         variable.changeValueTo(oldValue, oldText);
         await lastValueFrom(variable.validateAndUpdate!());
       },

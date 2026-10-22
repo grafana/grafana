@@ -106,8 +106,9 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
 discovery and `/apis/discovery`, which the router builds), `next` (not the router's; passed on), `invalid` (rejected before
-routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
-router).
+routing, such as a non-canonical path), `unauthenticated` (rejected
+because the caller did not authenticate, in the standalone router) or `forbidden` (rejected because
+the path names a namespace the caller may not use).
 
 ## Plugin calls
 
