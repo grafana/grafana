@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -135,11 +136,20 @@ func (c *unifiedUserTeamsBackend) buildItems(ctx context.Context, rows []userTea
 			if !ok {
 				return nil
 			}
+			meta, err := apiutils.MetaAccessor(t)
+			if err != nil {
+				return err
+			}
+			var teamInternalID *int64
+			if id := meta.GetDeprecatedInternalID(); id > 0 { //nolint:staticcheck // compatibility for legacy numeric team references
+				teamInternalID = &id
+			}
 			items[i] = iamv0alpha1.GetUserTeamsUserTeam{
-				User:       userName,
-				Team:       row.key.Name,
-				Permission: string(m.Permission),
-				External:   m.External,
+				User:           userName,
+				Team:           row.key.Name,
+				TeamInternalId: teamInternalID,
+				Permission:     string(m.Permission),
+				External:       m.External,
 			}
 			return nil
 		})
