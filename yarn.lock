@@ -1938,7 +1938,7 @@ __metadata:
     "@types/semver": "npm:7.7.1"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    moment: "npm:2.30.1"
+    moment: "npm:2.31.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
@@ -2399,7 +2399,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     marked: "npm:16.3.0"
     marked-mangle: "npm:1.1.12"
-    moment: "npm:2.30.1"
+    moment: "npm:2.31.0"
     moment-timezone: "npm:0.5.47"
     ol: "npm:10.7.0"
     papaparse: "npm:5.5.3"
@@ -18797,7 +18797,7 @@ __metadata:
     mini-css-extract-plugin: "npm:2.9.2"
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
-    moment: "npm:2.30.1"
+    moment: "npm:2.31.0"
     moment-timezone: "npm:0.5.47"
     monaco-editor: "npm:0.34.1"
     moveable: "npm:0.53.0"
@@ -24214,7 +24214,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:^2.29.4, moment@npm:^2.30.1":
+"moment@npm:2.31.0, moment@npm:^2.29.4, moment@npm:^2.30.1":
   version: 2.31.0
   resolution: "moment@npm:2.31.0"
   checksum: 10/fd3708d46f820c64fe1e064a60747533a55ee0aefd944490e18f08b2a83a5b6418bb4f42e1de47ef1f1a29f450c7ac41edd1fa6f940db30ded247c9717301b9f
