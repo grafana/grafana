@@ -6,7 +6,7 @@ export const SAVED_DASHBOARD_VIEW_VERSION = 'v0alpha1';
 export const SAVED_DASHBOARD_VIEW_RESOURCE = 'saveddashboardviews';
 export const SAVED_DASHBOARD_VIEW_KIND = 'SavedDashboardView';
 
-export interface SavedViewFilter {
+interface SavedViewFilter {
   key: string;
   operator: string;
   value: string;
