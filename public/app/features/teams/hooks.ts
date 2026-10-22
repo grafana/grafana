@@ -134,13 +134,14 @@ export const useDeleteTeam = () => {
 /**
  * Transform a legacy TeamDto to the IAM Team (k8s) shape.
  */
-function teamDtoToTeam(dto: TeamDto): Team {
+export function teamDtoToTeam(dto: TeamDto): Team {
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Team',
     metadata: {
       name: dto.uid,
       creationTimestamp: '',
+      labels: dto.id ? { 'grafana.app/deprecatedInternalID': String(dto.id) } : undefined,
     },
     spec: {
       title: dto.name,
