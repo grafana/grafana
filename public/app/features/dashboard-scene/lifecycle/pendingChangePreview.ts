@@ -60,8 +60,8 @@ type DashboardPendingChangesLoader = (request: { uid: string; id: string }) => P
 /** The embedded view's Show original choices, which have no URL to live in. */
 const ORIGINAL_VIEW_KEY = 'grafana.dashboard.pendingChanges.showOriginal';
 
-/** The pending changes whose changes the requester asked to see highlighted, for the browser tab. */
-const HIGHLIGHT_KEY = 'grafana.dashboard.pendingChanges.highlight';
+/** The pending changes whose highlights the requester turned off, for the browser tab. */
+const UNHIGHLIGHTED_KEY = 'grafana.dashboard.pendingChanges.unhighlighted';
 
 /** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
 export type PendingChangesView = 'page' | 'embedded';
@@ -136,15 +136,15 @@ function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
 }
 
 /**
- * Whether the requester asked to see these pending changes highlighted. Kept for the tab, because
- * a new change from the plugin reloads the dashboard and its banner.
+ * Whether these pending changes are highlighted: unless the requester turned it off. Kept for the
+ * tab, because a new change from the plugin reloads the dashboard and its banner.
  */
 export function isHighlightingChanges(uid: string, id: string): boolean {
-  return storedViews(HIGHLIGHT_KEY).has(viewKey(uid, id));
+  return !storedViews(UNHIGHLIGHTED_KEY).has(viewKey(uid, id));
 }
 
 export function setHighlightingChanges(uid: string, id: string, on: boolean) {
-  setStoredView(HIGHLIGHT_KEY, uid, id, on);
+  setStoredView(UNHIGHLIGHTED_KEY, uid, id, !on);
 }
 
 /** Whether the pending changes propose a new dashboard rather than change a saved one. */
@@ -261,7 +261,7 @@ export function clearPendingChangePreview(uid: string, id: string) {
     }
   }
   setShowOriginal(uid, id, false);
-  setHighlightingChanges(uid, id, false);
+  setHighlightingChanges(uid, id, true);
 }
 
 /** A dashboard page search string without the pending changes preview. */

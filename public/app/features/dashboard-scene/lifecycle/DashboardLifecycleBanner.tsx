@@ -133,8 +133,8 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   const [currentGeneration, setCurrentGeneration] = useState<number | undefined>(undefined);
   const [comparing, setComparing] = useState(false);
   const [confirm, setConfirm] = useState<'apply' | 'discard' | undefined>(undefined);
-  // Off until the requester asks: badges the changed panels and dims the rest. Kept for the tab, as
-  // the plugin's next change reloads the dashboard and this banner.
+  // On unless the requester turns it off: badges the changed panels and dims the rest. Kept for the
+  // tab, as the plugin's next change reloads the dashboard and this banner.
   const [highlighting, setHighlighting] = useState(() => isHighlightingChanges(uid, id));
   const toggleHighlighting = () => {
     setHighlightingChanges(uid, id, !highlighting);

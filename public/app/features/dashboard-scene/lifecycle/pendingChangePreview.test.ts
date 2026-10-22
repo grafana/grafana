@@ -168,14 +168,14 @@ describe('a new dashboard proposed as pending changes', () => {
 describe('highlighting the pending changes', () => {
   beforeEach(() => window.sessionStorage.clear());
 
-  it('is remembered for the tab per dashboard and pending changes, and forgotten once they are cleared', () => {
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
-
-    setHighlightingChanges('dash', 'chat-1', true);
+  it('is on by default, keeps being turned off for the tab per dashboard and pending changes, and resets once they are cleared', () => {
     expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
-    expect(isHighlightingChanges('dash', 'chat-2')).toBe(false);
+
+    setHighlightingChanges('dash', 'chat-1', false);
+    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
+    expect(isHighlightingChanges('dash', 'chat-2')).toBe(true);
 
     clearPendingChangePreview('dash', 'chat-1');
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
+    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
   });
 });
