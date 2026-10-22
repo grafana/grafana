@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -84,6 +86,7 @@ func TestRemoteResourceClientTokenExchange(t *testing.T) {
 						return nil
 					}
 				}))
+				grpc_health_v1.RegisterHealthServer(server, health.NewServer())
 				go func() { _ = server.Serve(listener) }()
 				t.Cleanup(server.Stop)
 				return listener.Addr().String(), calls

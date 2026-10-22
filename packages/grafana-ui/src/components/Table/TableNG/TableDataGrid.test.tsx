@@ -332,10 +332,12 @@ describe('TableDataGrid', () => {
         });
         render(<TableDataGrid {...props} />);
 
-        const summaryRow = screen.getByRole('gridcell', { name: 'Total' }).closest('[role="row"]')!;
+        const summaryRow = (await screen.findByRole('gridcell', { name: 'Total' })).closest('[role="row"]')!;
         const summaryZIndex = Number(window.getComputedStyle(summaryRow).zIndex);
         for (const [idx, name] of ['Frozen value', 'Body value'].entries()) {
-          await act(async () => props.gridRef.current?.setActivePosition({ rowIdx: 0, idx }));
+          await act(async () => {
+            props.gridRef.current?.setActivePosition({ rowIdx: 0, idx });
+          });
           const cell = screen.getByRole('gridcell', { name });
           expect(cell).toHaveAttribute('aria-selected', 'true');
           expect(summaryZIndex).toBeGreaterThan(Number(window.getComputedStyle(cell).zIndex));

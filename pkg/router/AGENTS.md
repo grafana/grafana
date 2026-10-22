@@ -19,7 +19,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `aggregate_*.go`, `plugin_manifests*.go` and `st_fallback.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
-  group in one `Load` makes the last one win, with a warning, and must never panic.
+  group in one `Load` makes the last one win, with a warning, and must never panic. The one
+  exception lives in the cloud loader: `st_resources` keeps a few resources of a routed group on the
+  single-tenant stacks (`st_resources.go`). That group is still one backend, and its discovery and
+  OpenAPI still come from the backend that owns it.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -40,6 +43,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
   plugin backends break only on plugin client calls, where only reachability errors count
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
+  handler that implements `handlerFor(*http.Request)` picks the handler for each request first,
+  and only that handler's breakers apply, so `st_resources` requests never count against the group
+  breaker. A
   rejected backend redirect is not a breaker failure. Read a group breaker's state from its
   `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
   open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
@@ -113,7 +119,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback, and its per-stack discovery cache | `st_fallback.go`, `st_discovery_cache.go` |
+| Single-tenant (ST) fallback, its per-stack discovery cache, and resources kept on ST | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 | Dummy loader (the default when nothing is configured) | `dummy.go` |
 
@@ -316,6 +322,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
+| `st_resources` | Comma-separated `group/version/resource` entries whose requests, namespaced or across namespaces, always go to the ST fallback, even when another source serves the rest of the group. Only applies with `st_discovery_url`. Default `dashboard.grafana.app/v0alpha1/librarypanels, dashboard.grafana.app/v0alpha1/snapshots`; set it empty to disable. |
 | `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in

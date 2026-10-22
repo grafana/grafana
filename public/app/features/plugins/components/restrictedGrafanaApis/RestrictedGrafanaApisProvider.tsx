@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
-import { getRestrictedGrafanaApis, isComposerEnabled, restrictedApisEnabled } from './restrictedGrafanaApis';
+import { getRestrictedGrafanaApis, isComposerEnabled } from './restrictedGrafanaApis';
 
 // This Provider is a wrapper around `RestrictedGrafanaApisContextProvider` from `@grafana/data`.
 // The reason for this is that like this we only need to define the configuration once (here) and can use it in multiple places (app root page, extensions).
@@ -14,10 +14,7 @@ export function RestrictedGrafanaApisProvider({
   children,
   pluginId,
 }: PropsWithChildren<{ pluginId: string }>): ReactElement {
-  const mutationApi = useMemo(
-    () => (restrictedApisEnabled ? createDashboardMutationApi(pluginId) : undefined),
-    [pluginId]
-  );
+  const mutationApi = useMemo(() => createDashboardMutationApi(pluginId), [pluginId]);
   // Composer exists only while one of its flags is on; flipping it off removes the API (and ends open
   // sessions). Each resource still checks its own flag.
   const composerEnabled = useComposerEnabled();

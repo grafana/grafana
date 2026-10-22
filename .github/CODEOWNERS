@@ -1018,6 +1018,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/ticks.ts @grafana/grafana-catalog
 /public/app/core/utils/timePicker* @grafana/grafana-frontend-platform
 /public/app/core/utils/timeRegions* @grafana/dataviz-squad
+/public/app/core/utils/url.ts @grafana/grafana-frontend-navigation
+/public/app/core/utils/url.test.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
 /public/app/core/utils/version.ts @grafana/data-sources-plugins
 /public/app/core/utils/roles.ts @grafana/identity-access-team

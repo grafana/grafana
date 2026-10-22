@@ -178,6 +178,8 @@ export const FlagKeys = {
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
+  GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
   /** Check for the existence of logs when linking from the Trace View */
@@ -190,6 +192,8 @@ export const FlagKeys = {
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Adds an experimental Protomaps vector basemap to the geomap panel */
+  GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
   /** Offers the reserved Grafana home option in the home dashboard preference */
   GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
@@ -306,8 +310,6 @@ export const FlagKeys = {
   PreferLibraryPanelTitle: "preferLibraryPanelTitle",
   /** Enables possibility to preserve dashboard variables and time range when navigating between dashboards */
   PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
-  /** Author Git Sync commits as the acting Grafana user */
-  ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Enable export functionality for provisioned resources */
   ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
@@ -1299,6 +1301,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardVariablesMigration`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardVariablesMigration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardVariablesMigration", false, options).value;
+};
+
+/**
  * Enables the auto-height feature for dashboard panels
  *
  * **Details:**
@@ -1362,6 +1375,17 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.filterablePanels", false, options).value;
+};
+
+/**
+ * Adds an experimental Protomaps vector basemap to the geomap panel
+ *
+ * **Details:**
+ * - flag key: `grafana.geomapProtomapsBasemap`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.geomapProtomapsBasemap", false, options).value;
 };
 
 /**
@@ -2000,17 +2024,6 @@ export const useFlagPreferLibraryPanelTitle = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("preserveDashboardStateWhenNavigating", false, options).value;
-};
-
-/**
- * Author Git Sync commits as the acting Grafana user
- *
- * **Details:**
- * - flag key: `provisioning.userAttribution`
- * - default value: `true`
- */
-export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.userAttribution", true, options).value;
 };
 
 /**
