@@ -210,7 +210,10 @@ interface GlStyle {
 /** An undefined value removes the generator's own, as for a dash CARTO draws solid */
 type Paint = Record<string, GlValue | undefined>;
 
-type RoadClass = 'highway' | 'major' | 'minor' | 'other';
+type RoadClass = 'highway' | 'major' | 'secondary' | 'minor' | 'other';
+
+/** Protomaps' `major_road` kind covers these as well as trunk and primary roads */
+const SECONDARY_ROADS = ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'];
 
 /** Road colors at zoom 5, 12 and 15 */
 type RoadColors = [far: string, outer: string, inner: string];
@@ -222,17 +225,25 @@ type RoadColors = [far: string, outer: string, inner: string];
  * each zoom.
  */
 function cartoRoads(fills: Record<RoadClass, RoadColors>) {
-  const color = ([far, outer, inner]: RoadColors) => zoomRamp([5, far], [12, outer], [15, inner]);
-  const casingColor = ([far, outer]: RoadColors) => zoomRamp([5, far], [12, outer]);
+  // CARTO colors secondary and tertiary roads apart from trunk and primary ones in some flavors
+  const colorAt = (roadClass: RoadClass, i: number): GlValue => {
+    const [color, secondary] = [fills[roadClass][i], fills.secondary[i]];
+    return roadClass !== 'major' || color === secondary
+      ? color
+      : ['match', ['get', 'kind_detail'], SECONDARY_ROADS, secondary, color];
+  };
+  const ramp = (roadClass: RoadClass, zooms: number[]) =>
+    zoomRamp(...zooms.map((zoom, i): [number, GlValue] => [zoom, colorAt(roadClass, i)]));
+  const fill = (roadClass: RoadClass) => ramp(roadClass, [5, 12, 15]);
   const paint: Record<string, Paint> = {};
   for (const prefix of ['roads_', 'roads_bridges_']) {
-    paint[`${prefix}highway`] = { 'line-color': color(fills.highway), 'line-width': HIGHWAY_WIDTH };
-    paint[`${prefix}major`] = { 'line-color': color(fills.major) };
-    paint[`${prefix}link`] = { 'line-color': color(fills.major) };
-    paint[`${prefix}minor`] = { 'line-color': color(fills.minor) };
-    paint[`${prefix}other`] = { 'line-color': color(fills.other) };
+    paint[`${prefix}highway`] = { 'line-color': fill('highway'), 'line-width': HIGHWAY_WIDTH };
+    paint[`${prefix}major`] = { 'line-color': fill('major') };
+    paint[`${prefix}link`] = { 'line-color': fill('major') };
+    paint[`${prefix}minor`] = { 'line-color': fill('minor') };
+    paint[`${prefix}other`] = { 'line-color': fill('other') };
   }
-  paint.roads_minor_service = { 'line-color': color(fills.other) };
+  paint.roads_minor_service = { 'line-color': fill('other') };
   for (const [id, roadClass] of [
     ['roads_minor_service_casing', 'other'],
     ['roads_minor_casing', 'minor'],
@@ -247,7 +258,7 @@ function cartoRoads(fills: Record<RoadClass, RoadColors>) {
     ['roads_bridges_major_casing', 'major'],
     ['roads_bridges_highway_casing', 'highway'],
   ] as const) {
-    paint[id] = { 'line-color': casingColor(fills[roadClass]) };
+    paint[id] = { 'line-color': ramp(roadClass, [5, 12]) };
   }
   return paint;
 }
@@ -280,6 +291,7 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     ...cartoRoads({
       highway: ['#e6e6e6', '#dddddd', '#ffffff'],
       major: ['#e6e6e6', '#dddddd', '#ffffff'],
+      secondary: ['#e6e6e6', '#dddddd', '#ffffff'],
       minor: ['#dddddd', '#dddddd', '#fdfdfd'],
       other: ['#dddddd', '#dddddd', '#fdfdfd'],
     }),
@@ -317,6 +329,7 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     ...cartoRoads({
       highway: ['#1a1a1a', '#232323', '#494949'],
       major: ['#1a1a1a', '#232323', '#535666'],
+      secondary: ['#414758', '#414758', '#414758'],
       minor: ['#414758', '#414758', '#414758'],
       other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
     }),
