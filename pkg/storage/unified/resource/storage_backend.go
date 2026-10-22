@@ -299,20 +299,8 @@ type KVBackend interface {
 	LeaseManager() *lease.Manager
 }
 
-// ExperimentalKVOptions carries an alternative KV plus per-use-case flags
-// selecting which backend components use it.
-type ExperimentalKVOptions struct {
-	KV KV
-	// TenantMetadata stores tenant pending-delete metadata (written by
-	// the tenant watcher, read by the tenant deleter) in KV instead of KvStore.
-	TenantMetadata bool
-}
-
 type KVBackendOptions struct {
-	KvStore KV
-	// ExperimentalKV, when set, routes flagged use-cases to an alternative KV.
-	// Nil preserves existing behavior.
-	ExperimentalKV       *ExperimentalKVOptions
+	KvStore              KV
 	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
 	Reg                  prometheus.Registerer
@@ -433,11 +421,7 @@ func newLeaseHolder(instanceID string) string {
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	kv := opts.KvStore
-	pdKV := opts.KvStore
-	if opts.ExperimentalKV != nil && opts.ExperimentalKV.TenantMetadata {
-		pdKV = opts.ExperimentalKV.KV
-	}
-	pds := newPendingDeleteStore(pdKV)
+	pds := newPendingDeleteStore(kv)
 
 	logger := opts.Log
 	if opts.Log == nil {

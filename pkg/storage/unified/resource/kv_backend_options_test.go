@@ -16,7 +16,6 @@ import (
 // adding an option forces a decision about where its value comes from.
 var callerSuppliedFields = map[string]string{
 	"KvStore":                  "the store itself; chosen by the wiring",
-	"ExperimentalKV":           "an alternative store; chosen by the wiring",
 	"Reg":                      "metrics registry owned by the caller",
 	"Log":                      "logger owned by the caller",
 	"DBKeepAlive":              "reference to the caller's database provider",
