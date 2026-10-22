@@ -1,13 +1,20 @@
 package router
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // BenchmarkGrafanaRouter measures steady-state handling without network I/O or
@@ -263,4 +270,179 @@ func (w *benchmarkResponseWriter) Header() http.Header { return w.header }
 func (*benchmarkResponseWriter) WriteHeader(int)       {}
 func (*benchmarkResponseWriter) Write(p []byte) (int, error) {
 	return len(p), nil
+}
+
+// Flush lets proxies flush after each write, as they do for real clients.
+func (*benchmarkResponseWriter) Flush() {}
+
+// BenchmarkGrafanaRouterProxy measures a request proxied through an aggregate
+// backend, with outbound rewriting, the breaker, tracing and request metrics,
+// to a backend that answers from memory.
+func BenchmarkGrafanaRouterProxy(b *testing.B) {
+	for _, size := range []int{1 << 10, 1 << 20} {
+		b.Run(fmt.Sprintf("body=%d", size), func(b *testing.B) {
+			backend := newBenchmarkAggregateBackend(b, "app.ext.grafana.app", benchmarkRoundTripper{body: bytes.Repeat([]byte("x"), size)})
+			svc := newService(NewGrafanaRouter(&statusLoader{backends: []Backend{backend}}, nil), prometheus.NewRegistry())
+			svc.middleware = true
+			if err := svc.router.reconcile(b.Context()); err != nil {
+				b.Fatal(err)
+			}
+			req := newAuthenticatedRequest(http.MethodGet, "/apis/app.ext.grafana.app/v1/namespaces/default/widgets", nil)
+			req.Header.Set("Accept", "application/json")
+			w := &benchmarkResponseWriter{header: make(http.Header)}
+			b.ReportAllocs()
+			for b.Loop() {
+				clear(w.header)
+				svc.HandleFunc(w, req, http.NotFoundHandler())
+			}
+		})
+	}
+}
+
+// BenchmarkGrafanaRouterAggregatedDiscovery measures /apis in the aggregated
+// format, standalone and merged with the embedded API server's groups.
+func BenchmarkGrafanaRouterAggregatedDiscovery(b *testing.B) {
+	embeddedGroups := make([]apidiscoveryv2.APIGroupDiscovery, 50)
+	for i := range embeddedGroups {
+		embeddedGroups[i] = benchmarkGroupDiscovery(fmt.Sprintf("core-%d.grafana.app", i))
+	}
+	embedded, err := json.Marshal(apidiscoveryv2.APIGroupDiscoveryList{
+		TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
+		Items:    embeddedGroups,
+	})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for _, groups := range []int{10, 100} {
+		backends := make([]Backend, groups)
+		for i := range backends {
+			backends[i] = newBenchmarkAggregateBackend(b, fmt.Sprintf("app-%d.ext.grafana.app", i), benchmarkRoundTripper{})
+		}
+		for _, mode := range []string{"standalone", "middleware"} {
+			b.Run(fmt.Sprintf("groups=%d/%s", groups, mode), func(b *testing.B) {
+				svc := newService(NewGrafanaRouter(&statusLoader{backends: backends}, nil), prometheus.NewRegistry())
+				svc.middleware = true
+				if err := svc.router.reconcile(b.Context()); err != nil {
+					b.Fatal(err)
+				}
+				next := http.Handler(http.NotFoundHandler())
+				if mode == "middleware" {
+					next = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.Header().Set("Content-Type", aggregatedDiscoveryJSON)
+						_, _ = w.Write(embedded)
+					})
+				}
+				req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
+				req.Header.Set("Accept", aggregatedDiscoveryJSON+",application/json")
+				rec := httptest.NewRecorder()
+				svc.HandleFunc(rec, req, next)
+				if rec.Code != http.StatusOK {
+					b.Fatalf("got status %d", rec.Code)
+				}
+				w := &benchmarkResponseWriter{header: make(http.Header)}
+				b.ReportAllocs()
+				for b.Loop() {
+					clear(w.header)
+					svc.HandleFunc(w, req, next)
+				}
+			})
+		}
+	}
+}
+
+// BenchmarkServiceMiddlewareRootDiscovery measures /apis in the legacy format
+// and the /openapi/v3 index in middleware mode, merged with the embedded API
+// server's answers.
+func BenchmarkServiceMiddlewareRootDiscovery(b *testing.B) {
+	backends := make([]Backend, 100)
+	for i := range backends {
+		backends[i] = newBenchmarkAggregateBackend(b, fmt.Sprintf("app-%d.ext.grafana.app", i), benchmarkRoundTripper{})
+	}
+	groups := make([]metav1.APIGroup, 50)
+	paths := map[string]any{}
+	for i := range groups {
+		group := fmt.Sprintf("core-%d.grafana.app", i)
+		version := metav1.GroupVersionForDiscovery{GroupVersion: group + "/v1", Version: "v1"}
+		groups[i] = metav1.APIGroup{Name: group, Versions: []metav1.GroupVersionForDiscovery{version}, PreferredVersion: version}
+		paths["apis/"+group+"/v1"] = map[string]string{"serverRelativeURL": "/openapi/v3/apis/" + group + "/v1?hash=ABC"}
+	}
+	apis, err := json.Marshal(metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}, Groups: groups})
+	if err != nil {
+		b.Fatal(err)
+	}
+	index, err := json.Marshal(map[string]any{"paths": paths})
+	if err != nil {
+		b.Fatal(err)
+	}
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == apisPrefix {
+			_, _ = w.Write(apis)
+			return
+		}
+		_, _ = w.Write(index)
+	})
+	svc := newService(NewGrafanaRouter(&statusLoader{backends: backends}, nil), prometheus.NewRegistry())
+	svc.middleware = true
+	if err := svc.router.reconcile(b.Context()); err != nil {
+		b.Fatal(err)
+	}
+	for _, path := range []string{apisPrefix, openapiV3Prefix} {
+		b.Run(path, func(b *testing.B) {
+			req := newAuthenticatedRequest(http.MethodGet, path, nil)
+			req.Header.Set("Accept", "application/json")
+			w := &benchmarkResponseWriter{header: make(http.Header)}
+			b.ReportAllocs()
+			for b.Loop() {
+				clear(w.header)
+				svc.HandleFunc(w, req, next)
+			}
+		})
+	}
+}
+
+// benchmarkRoundTripper answers every request with body, from memory.
+type benchmarkRoundTripper struct{ body []byte }
+
+func (rt benchmarkRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Body != nil {
+		_ = req.Body.Close()
+	}
+	return &http.Response{
+		StatusCode: http.StatusOK, Proto: "HTTP/1.1", ProtoMajor: 1, ProtoMinor: 1,
+		Header:        http.Header{"Content-Type": {"application/json"}, "Content-Length": {strconv.Itoa(len(rt.body))}},
+		ContentLength: int64(len(rt.body)), Body: io.NopCloser(bytes.NewReader(rt.body)), Request: req,
+	}, nil
+}
+
+// newBenchmarkAggregateBackend builds an aggregate backend for group, with the
+// discovery its target's poll would have supplied.
+func newBenchmarkAggregateBackend(b testing.TB, group string, rt http.RoundTripper) Backend {
+	b.Helper()
+	base, err := url.Parse("https://backend.example.com")
+	if err != nil {
+		b.Fatal(err)
+	}
+	discovery := benchmarkGroupDiscovery(group)
+	backend, err := newDiscoveredAggregateBackend("bench", discoveredGroup{
+		group:     metav1.APIGroup{Name: group, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: group + "/v1", Version: "v1"}}},
+		discovery: &discovery,
+	}, base, rt)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return backend
+}
+
+func benchmarkGroupDiscovery(group string) apidiscoveryv2.APIGroupDiscovery {
+	return apidiscoveryv2.APIGroupDiscovery{
+		ObjectMeta: metav1.ObjectMeta{Name: group},
+		Versions: []apidiscoveryv2.APIVersionDiscovery{{
+			Version: "v1", Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent,
+			Resources: []apidiscoveryv2.APIResourceDiscovery{{
+				Resource: "widgets", Scope: apidiscoveryv2.ScopeNamespace, Verbs: []string{"get", "list", "watch", "create"},
+				ResponseKind: &metav1.GroupVersionKind{Group: group, Version: "v1", Kind: "Widget"},
+			}},
+		}},
+	}
 }

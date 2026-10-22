@@ -222,6 +222,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
+  - The document is written by `writeAggregatedDiscovery`, never through a per-request
+    `aggregated.ResourceManager`, which logs a line for every group version each time it is built.
+    It must answer exactly as that manager would: groups sorted by name, versions in order, empty
+    groups left out, and the same ETag. `TestAggregatedDiscoveryMatchesAPIServer` checks it.
 - **App manifest discovery** (`/apis/discovery`) is published in `publish` with the root documents, from
   the `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
   - Keep it cheap, since `publish` runs on every reconcile: `publishManifestDocs` does nothing when
