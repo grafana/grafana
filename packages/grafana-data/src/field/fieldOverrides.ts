@@ -407,11 +407,12 @@ export function setDynamicConfigValue(
       unset(config, item.path);
     }
   } else {
-    // Merge arrays (e.g. mappings) when multiple overrides target the same field, but only with
-    // values from earlier overrides: panel defaults are already applied to config at this point,
-    // and an override must replace them rather than add to them.
+    // Merge arrays (e.g. mappings) when multiple overrides target the same field.
+    // Panel defaults are already applied to config at this point, so an option with the 'replace'
+    // strategy only merges with values from earlier overrides, not with the inherited value.
     // Later override values come first so they take precedence (first match wins in getValueMappingResult)
-    if (Array.isArray(val) && overriddenIds?.has(item.id)) {
+    const shouldMerge = (item.arrayOverrideStrategy ?? 'merge') === 'merge' || overriddenIds?.has(item.id);
+    if (Array.isArray(val) && shouldMerge) {
       const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
 
       if (Array.isArray(existingValue)) {
