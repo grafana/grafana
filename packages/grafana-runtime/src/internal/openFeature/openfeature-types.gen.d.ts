@@ -199,7 +199,7 @@ declare module "@openfeature/core" {
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
-    | "reporting.sunsetLogoUrlField";
+    | "reporting.removeLogoUrlField";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

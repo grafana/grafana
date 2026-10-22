@@ -5433,9 +5433,24 @@
     },
     {
       "metadata": {
+        "name": "reporting.removeLogoUrlField",
+        "resourceVersion": "1792683652313",
+        "creationTimestamp": "2026-10-22T15:40:52Z"
+      },
+      "spec": {
+        "description": "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reporting.sunsetLogoUrlField",
         "resourceVersion": "1792680911466",
-        "creationTimestamp": "2026-10-22T14:55:11Z"
+        "creationTimestamp": "2026-10-22T14:55:11Z",
+        "deletionTimestamp": "2026-10-22T15:40:52Z"
       },
       "spec": {
         "description": "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",

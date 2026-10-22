@@ -3429,7 +3429,7 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "reporting.sunsetLogoUrlField",
+			Name:        "reporting.removeLogoUrlField",
 			Description: "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
