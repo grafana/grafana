@@ -22,14 +22,6 @@ import (
 )
 
 const (
-	// mtRouterAddressKey, in the [cloud_router] section, is the multi-tenant
-	// router that a single-tenant Grafana forwards groups it does not serve to.
-	mtRouterAddressKey = "mt_router_address"
-	// mtRouterCAFileKey is a PEM bundle that verifies the router's certificate,
-	// for one the system roots do not trust. mtRouterInsecureKey skips
-	// verification: use it only over a link that is trusted anyway.
-	mtRouterCAFileKey   = "mt_router_ca_file"
-	mtRouterInsecureKey = "mt_router_insecure"
 
 	// stFallbackHeader marks a request a single-tenant stack forwarded to the
 	// multi-tenant router for a group it does not serve. The router's own
@@ -59,6 +51,9 @@ type localGroups struct {
 	// groups is nil until the snapshot succeeds.
 	groups   atomic.Pointer[map[string]struct{}]
 	cooldown *cooldown
+
+	// onLoaded, when set before the first load, is called after each snapshot.
+	onLoaded func()
 }
 
 func newLocalGroups() *localGroups {
@@ -134,6 +129,9 @@ func (l *localGroups) load(ctx context.Context, client *http.Client, baseURL str
 		groups[group] = struct{}{}
 	}
 	l.groups.Store(&groups)
+	if l.onLoaded != nil {
+		l.onLoaded()
+	}
 	return nil
 }
 
