@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -224,6 +224,34 @@ describe('DashboardOutline', () => {
 
       expect(input).toHaveValue('Row level 1 renamed');
       expect(row.state).toMatchObject({ title: 'Row level 1 renamed' });
+    });
+
+    it('does not select the node when the rename input is clicked', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const outlinePane = sidebar.state.outlinePane!;
+
+      scene.onEnterEditMode();
+      sidebar.enableSelection();
+      sidebar.openPane(outlinePane);
+
+      render(
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      // A plain double click event, so the node isn't selected by the clicks of a real double click
+      fireEvent.doubleClick(await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
+      const input = screen.getByDisplayValue('Row level 1');
+      await user.click(input);
+
+      expect(input).toBeInTheDocument();
+      expect(input.closest('li')).toHaveAttribute('aria-selected', 'false');
+      expect(DashboardInteractions.outlineItemClicked).not.toHaveBeenCalled();
     });
   });
 

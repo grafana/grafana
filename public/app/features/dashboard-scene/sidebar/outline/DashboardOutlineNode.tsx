@@ -79,6 +79,12 @@ export function DashboardOutlineNode({
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
+    // The rename input sits inside the node button, so clicking it or typing a space clicks the node too.
+    // Selecting would swap the outline for the element's options and end the rename mid-typing.
+    if (outlineRename.isRenaming) {
+      return;
+    }
+
     // clicking variable, annotation, link and filter sections opens the enclosing settings
     // in the sidebar and scrolls to the category
     const settingsTarget = getOutlineSettingsTarget(sceneObject);
