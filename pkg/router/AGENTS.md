@@ -138,11 +138,13 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 ## Route sources
 
-`ProvideRoutesLoader` picks exactly one loader:
+Exactly one loader serves:
 
-1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is
-   configured (see Settings). Never in middleware mode, where the cloud sources are ignored.
-2. **Otherwise the local plugin loader**, when plugin sources are available.
+1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
+   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
+   `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
+2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
+   available.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
@@ -313,8 +315,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
   `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
-  by the router. The standalone router is never in middleware mode, whatever the flags
-  (`middlewareEnabled`), so a flag that also reaches its deployment can't drop its cloud sources.
+  by the router. Both flags are read once, at startup (`middlewareEnabled`, `settingsEnabled`), so
+  settings are served exactly when middleware mode can reach them. The standalone router is never
+  in middleware mode, whatever the flags, so a flag that also reaches its deployment can't drop its
+  cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
   `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
@@ -391,7 +395,7 @@ work without the section in the INI configuration.
 | `retry_backoff`, `retry_jitter` | Base retry backoff, doubled each attempt, and the jitter fraction (0 to 1). Default `1s` and `0.1`. |
 | `connect_timeout` | Minimum time allowed for each connection attempt. Default `5s`. |
 | `connect_base_delay`, `connect_max_delay` | Backoff between connection attempts, growing from the base delay up to the max delay. Default `1s` and `10s`. |
-| `keepalive_time`, `keepalive_timeout` | Idle time before the client pings, and how long it waits for a reply before closing the connection. Default `20s` and `10s`; a `keepalive_time` of `0` disables pings. Pings are sent on connections without active calls too, so the plugin server must allow pings at least this often and without active calls; by default, gRPC servers allow one every 5 minutes and close connections that ping more often. |
+| `keepalive_time`, `keepalive_timeout` | Time without activity on a connection with active calls before the client pings, and how long it waits for a reply before closing the connection. Default `5m` and `10s`; a `keepalive_time` of `0` disables pings. Connections without active calls are never pinged. By default, gRPC servers allow one ping every 5 minutes during calls, and close connections that ping more often (`too_many_pings`), so a shorter `keepalive_time` needs a matching server enforcement policy. |
 | `max_recv_msg_size`, `max_send_msg_size` | Largest message the router accepts from and sends to a plugin, in bytes. Default 100 MiB each. The plugin server's own limits still apply. |
 | `tls_enabled` | Connect to every plugin backend over TLS. Default `false` (plaintext). Applies to both `plugins_url` and `core_url` backends, since a manifest's `host` has no scheme to choose per plugin. |
 | `tls_ca_file`, `tls_insecure` | Same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. |
