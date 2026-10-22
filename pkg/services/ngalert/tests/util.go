@@ -103,18 +103,18 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	require.NoError(tb, err)
 
 	return ng, &store.DBstore{
-		SQLStore: ng.SQLStore,
-		Logger:   log.New("ngalert-test"),
-	}, &rulestore.RuleStore{
-		FeatureToggles: options.featureToggles,
-		SQLStore:       ng.SQLStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: baseInterval * time.Second,
-		},
-		Logger:        log.New("ngalert-test"),
-		FolderService: folderService,
-		Provenance:    provenanceStore,
-	}
+			SQLStore: ng.SQLStore,
+			Logger:   log.New("ngalert-test"),
+		}, &rulestore.RuleStore{
+			FeatureToggles: options.featureToggles,
+			SQLStore:       ng.SQLStore,
+			Cfg: setting.UnifiedAlertingSettings{
+				BaseInterval: baseInterval * time.Second,
+			},
+			Logger:        log.New("ngalert-test"),
+			FolderService: folderService,
+			Provenance:    provenanceStore,
+		}
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
