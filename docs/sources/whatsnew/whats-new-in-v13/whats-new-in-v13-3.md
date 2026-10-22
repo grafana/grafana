@@ -32,7 +32,7 @@ posts:
     items:
       - whats-new/2026-09-21-import-of-alertmanager-configuration-to-grafana-alerting.md
       - whats-new/2026-09-24-improve-alert-rule-quality.md
-      - whats-new/2026-10-16-manage-alerts-for-prometheus-mimir-and-loki-with-a-dedicated-plugin.md
+      - whats-new/2026-10-22-manage-prometheus-mimir-and-loki-alerting-with-a-dedicated-plugin.md
   - title: Other
     items:
       - whats-new/2026-10-16-announcement-banners-can-now-be-dismissible.md
