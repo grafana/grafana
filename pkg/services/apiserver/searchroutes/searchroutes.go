@@ -232,7 +232,28 @@ func BuildGlobalHybridSearch(
 	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers))
 	handler := searchapi.NewHybridHandler(index, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
-	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
+	// A process that serves none of the types, such as the standalone search API
+	// server, still names results from the manifests it has.
+	kinds := manifestKinds(manifests)
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, kinds, auth)}})
+}
+
+// manifestKinds names the kind of every namespaced resource the manifests declare.
+func manifestKinds(manifests []*app.ManifestData) map[schema.GroupResource]string {
+	kinds := map[schema.GroupResource]string{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			for _, kind := range version.Kinds {
+				if kind.Scope == namespacedScope {
+					kinds[schema.GroupResource{Group: m.Group, Resource: resource.ManifestResourceName(kind)}] = kind.Kind
+				}
+			}
+		}
+	}
+	return kinds
 }
 
 // globalHybridSearchTargets selects a registered version for API authorization

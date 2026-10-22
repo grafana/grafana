@@ -2,6 +2,7 @@ package searchroutes
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -790,6 +792,46 @@ func TestBuildGlobalHybridSearch(t *testing.T) {
 		})
 	}
 	assert.Nil(t, BuildGlobalHybridSearch(nil, nil, nil, installers, nil))
+}
+
+// hybridResultsClient answers every hybrid search with the same results.
+type hybridResultsClient struct {
+	resourcepb.ResourceIndexClient
+	results []*resourcepb.HybridSearchResult
+}
+
+func (c hybridResultsClient) HybridSearch(context.Context, *resourcepb.HybridSearchRequest, ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return &resourcepb.HybridSearchResponse{Results: c.results}, nil
+}
+
+func TestBuildGlobalHybridSearch_NamesKindsItDoesNotServe(t *testing.T) {
+	// Like the standalone search API server: no builders or installers, so no type
+	// is served here, and every result is named from the compiled-in manifests.
+	client := hybridResultsClient{results: []*resourcepb.HybridSearchResult{
+		{Key: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"}},
+		{Key: &resourcepb.ResourceKey{Group: "folder.grafana.app", Resource: "folders", Name: "f1"}},
+		{Key: &resourcepb.ResourceKey{Group: "unknown.ext.grafana.app", Resource: "things", Name: "t1"}},
+	}}
+	auth := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		t.Fatal("types this server does not serve are authorized by the search backend")
+		return authorizer.DecisionDeny, "", nil
+	})
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), client, nil, nil, auth)
+	require.Len(t, routes, 1)
+	require.Len(t, routes[0].Routes.Namespace, 1)
+
+	r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu","resources":[{"group":"dashboard.grafana.app","resource":"dashboards"},{"group":"folder.grafana.app","resource":"folders"}]}`))
+	w := httptest.NewRecorder()
+	routes[0].Routes.Namespace[0].Handler(w, r.WithContext(request.WithNamespace(r.Context(), "default")))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var response searchv0.HybridSearchResults
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
+	kinds := map[string]string{}
+	for _, item := range response.Items {
+		kinds[item.Resource.Name] = item.Resource.Kind
+	}
+	assert.Equal(t, map[string]string{"d1": "Dashboard", "f1": "Folder", "t1": ""}, kinds)
 }
 
 func TestGlobalHybridSearchTargets_LocalAPIAuthorization(t *testing.T) {
