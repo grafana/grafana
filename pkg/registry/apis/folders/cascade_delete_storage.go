@@ -180,14 +180,7 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
-	if err := s.markTerminating(ctx, name, options); err != nil {
-		if apierrors.IsNotFound(err) && !requested {
-			return nil, false, nil
-		}
-		return nil, false, err
-	}
-
-	// user must not be ctx's wildcard-permissioned enumeration identity, or every check below runs as that instead of the real requester.
+	// user must not be ctx's wildcard-permissioned enumeration identity; checked before markTerminating so a rejection doesn't stamp the folder as mid-deletion.
 	enumUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
@@ -195,6 +188,13 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	if user.GetUID() == enumUser.GetUID() {
 		return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name,
 			fmt.Errorf("cascade delete requester must not be the ctx enumeration identity: %w", folder.ErrAccessDenied))
+	}
+
+	if err := s.markTerminating(ctx, name, options); err != nil {
+		if apierrors.IsNotFound(err) && !requested {
+			return nil, false, nil
+		}
+		return nil, false, err
 	}
 
 	// Authorize the requester to delete this folder's contained resources, mirroring the per-folder

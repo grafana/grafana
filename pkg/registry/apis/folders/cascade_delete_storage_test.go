@@ -402,6 +402,7 @@ func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
 	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
 	require.True(t, apierrors.IsForbidden(err), "must be a 403, not a generic error: %v", err)
 	require.Empty(t, store.deleted, "folder must not be deleted when the requester is the enumeration identity")
+	require.Empty(t, store.stamped, "folder must not be left stamped terminating when this guard rejects the request")
 	require.Empty(t, deleter.folders)
 }
 
