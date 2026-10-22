@@ -1,0 +1,163 @@
+Thu Oct 22 09:42:25 CDT 2026
+
+Running 1 test using 1 worker
+
+GPU: ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)
+84 combinations, 3 runs each after a warm-up
+CARTO positron · No data · World z2: ttfr 847ms, tiles 24ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 39.3MB
+Protomaps white · 100k markers · World z2: ttfr 1957ms, tiles 955ms, p95 16.8ms, >50ms 1, longtask 311ms, heap 208.8MB
+Protomaps dark · 100k markers · World z2: ttfr 1952ms, tiles 949ms, p95 16.8ms, >50ms 2, longtask 457ms, heap 218.2MB
+Protomaps light · 100k markers · World z2: ttfr 1963ms, tiles 961ms, p95 16.8ms, >50ms 1, longtask 454ms, heap 219.8MB
+Protomaps white, no labels · 100k markers · World z2: ttfr 1947ms, tiles 969ms, p95 16.8ms, >50ms 1, longtask 321ms, heap 207.8MB
+Protomaps white, ZXY · 100k markers · World z2: ttfr 1889ms, tiles 9ms, p95 16.8ms, >50ms 1, longtask 272ms, heap 205.8MB
+CARTO positron · 100k heatmap · World z2: ttfr 1430ms, tiles 444ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 203.5MB
+CARTO dark-matter · 100k heatmap · World z2: ttfr 1467ms, tiles 452ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 204.5MB
+Protomaps white · 100k heatmap · World z2: ttfr 1420ms, tiles 435ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 208.6MB
+Protomaps dark · 100k heatmap · World z2: ttfr 1432ms, tiles 444ms, p95 16.8ms, >50ms 0, longtask 105ms, heap 218.1MB
+Protomaps light · 100k heatmap · World z2: ttfr 1426ms, tiles 440ms, p95 16.8ms, >50ms 0, longtask 51ms, heap 218.2MB
+CARTO dark-matter · No data · World z2: ttfr 879ms, tiles 29ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 40.1MB
+Protomaps white, no labels · 100k heatmap · World z2: ttfr 1395ms, tiles 426ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 207.3MB
+Protomaps white, ZXY · 100k heatmap · World z2: ttfr 1374ms, tiles 10ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 205.7MB
+CARTO positron · No data · USA z5: ttfr 831ms, tiles 28ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 44.4MB
+CARTO dark-matter · No data · USA z5: ttfr 841ms, tiles 28ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 44.5MB
+Protomaps white · No data · USA z5: ttfr 870ms, tiles 24ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 46.3MB
+Protomaps dark · No data · USA z5: ttfr 844ms, tiles 18ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 52.4MB
+Protomaps light · No data · USA z5: ttfr 826ms, tiles 28ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 52.5MB
+Protomaps white, no labels · No data · USA z5: ttfr 852ms, tiles 20ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 44.8MB
+Protomaps white, ZXY · No data · USA z5: ttfr 878ms, tiles 13ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 43.8MB
+CARTO positron · 100k markers · USA z5: ttfr 1996ms, tiles 995ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 209.1MB
+Protomaps white · No data · World z2: ttfr 868ms, tiles 23ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 44.6MB
+CARTO dark-matter · 100k markers · USA z5: ttfr 1975ms, tiles 992ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 209.3MB
+Protomaps white · 100k markers · USA z5: ttfr 2030ms, tiles 1018ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 211.7MB
+Protomaps dark · 100k markers · USA z5: ttfr 2049ms, tiles 1003ms, p95 16.8ms, >50ms 1, longtask 382ms, heap 218.4MB
+Protomaps light · 100k markers · USA z5: ttfr 2045ms, tiles 999ms, p95 16.8ms, >50ms 1, longtask 271ms, heap 218MB
+Protomaps white, no labels · 100k markers · USA z5: ttfr 2003ms, tiles 1002ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 210.3MB
+Protomaps white, ZXY · 100k markers · USA z5: ttfr 2005ms, tiles 10ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 208.7MB
+CARTO positron · 100k heatmap · USA z5: ttfr 1476ms, tiles 469ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 209MB
+CARTO dark-matter · 100k heatmap · USA z5: ttfr 1451ms, tiles 455ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 209.1MB
+Protomaps white · 100k heatmap · USA z5: ttfr 1476ms, tiles 453ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 211.5MB
+Protomaps dark · 100k heatmap · USA z5: ttfr 1471ms, tiles 457ms, p95 16.8ms, >50ms 0, longtask 101ms, heap 217.8MB
+Protomaps dark · No data · World z2: ttfr 888ms, tiles 25ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 55.1MB
+Protomaps light · 100k heatmap · USA z5: ttfr 1529ms, tiles 471ms, p95 16.8ms, >50ms 2, longtask 435ms, heap 219MB
+Protomaps white, no labels · 100k heatmap · USA z5: ttfr 1476ms, tiles 449ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 210.1MB
+Protomaps white, ZXY · 100k heatmap · USA z5: ttfr 1484ms, tiles 11ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 208.6MB
+CARTO positron · No data · New York z10: ttfr 905ms, tiles 51ms, p95 16.8ms, >50ms 3, longtask 232ms, heap 101.6MB
+CARTO dark-matter · No data · New York z10: ttfr 951ms, tiles 53ms, p95 16.8ms, >50ms 3, longtask 245ms, heap 94.8MB
+Protomaps white · No data · New York z10: ttfr 942ms, tiles 38ms, p95 16.8ms, >50ms 3, longtask 324ms, heap 119.1MB
+Protomaps dark · No data · New York z10: ttfr 910ms, tiles 32ms, p95 16.8ms, >50ms 3, longtask 271ms, heap 119.1MB
+Protomaps light · No data · New York z10: ttfr 916ms, tiles 38ms, p95 16.8ms, >50ms 3, longtask 276ms, heap 119.2MB
+Protomaps white, no labels · No data · New York z10: ttfr 904ms, tiles 28ms, p95 16.8ms, >50ms 3, longtask 275ms, heap 117.6MB
+Protomaps white, ZXY · No data · New York z10: ttfr 929ms, tiles 35ms, p95 16.8ms, >50ms 4, longtask 331ms, heap 99.7MB
+Protomaps light · No data · World z2: ttfr 884ms, tiles 28ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 55.8MB
+CARTO positron · 100k markers · New York z10: ttfr 2101ms, tiles 1041ms, p95 16.8ms, >50ms 5, longtask 589ms, heap 268.7MB
+CARTO dark-matter · 100k markers · New York z10: ttfr 2085ms, tiles 1077ms, p95 16.8ms, >50ms 4, longtask 610ms, heap 268.1MB
+Protomaps white · 100k markers · New York z10: ttfr 2047ms, tiles 1034ms, p95 16.8ms, >50ms 6, longtask 615ms, heap 278.8MB
+Protomaps dark · 100k markers · New York z10: ttfr 2030ms, tiles 1016ms, p95 16.8ms, >50ms 7, longtask 622ms, heap 278.9MB
+Protomaps light · 100k markers · New York z10: ttfr 1934ms, tiles 971ms, p95 16.8ms, >50ms 5, longtask 594ms, heap 279.1MB
+Protomaps white, no labels · 100k markers · New York z10: ttfr 1948ms, tiles 942ms, p95 16.8ms, >50ms 5, longtask 590ms, heap 276.5MB
+Protomaps white, ZXY · 100k markers · New York z10: ttfr 1954ms, tiles 33ms, p95 16.8ms, >50ms 5, longtask 626ms, heap 272.4MB
+CARTO positron · 100k heatmap · New York z10: ttfr 1466ms, tiles 458ms, p95 16.8ms, >50ms 3, longtask 369ms, heap 268.3MB
+CARTO dark-matter · 100k heatmap · New York z10: ttfr 1456ms, tiles 468ms, p95 16.8ms, >50ms 3, longtask 419ms, heap 268.3MB
+Protomaps white · 100k heatmap · New York z10: ttfr 1469ms, tiles 448ms, p95 16.8ms, >50ms 4, longtask 571ms, heap 271.9MB
+Protomaps white, no labels · No data · World z2: ttfr 847ms, tiles 22ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 45.6MB
+Protomaps dark · 100k heatmap · New York z10: ttfr 1428ms, tiles 442ms, p95 16.8ms, >50ms 4, longtask 566ms, heap 279.9MB
+Protomaps light · 100k heatmap · New York z10: ttfr 1455ms, tiles 452ms, p95 16.8ms, >50ms 5, longtask 424ms, heap 278.4MB
+Protomaps white, no labels · 100k heatmap · New York z10: ttfr 1438ms, tiles 454ms, p95 16.8ms, >50ms 3, longtask 454ms, heap 277MB
+Protomaps white, ZXY · 100k heatmap · New York z10: ttfr 1458ms, tiles 33ms, p95 16.8ms, >50ms 5, longtask 536ms, heap 273MB
+CARTO positron · No data · Lower Manhattan z16: ttfr 892ms, tiles 43ms, p95 16.8ms, >50ms 3, longtask 318ms, heap 80MB
+CARTO dark-matter · No data · Lower Manhattan z16: ttfr 890ms, tiles 41ms, p95 16.8ms, >50ms 1, longtask 285ms, heap 73.2MB
+Protomaps white · No data · Lower Manhattan z16: ttfr 874ms, tiles 41ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 95.4MB
+Protomaps dark · No data · Lower Manhattan z16: ttfr 848ms, tiles 40ms, p95 16.8ms, >50ms 0, longtask 55ms, heap 97.5MB
+Protomaps light · No data · Lower Manhattan z16: ttfr 864ms, tiles 39ms, p95 16.8ms, >50ms 0, longtask 55ms, heap 97.6MB
+Protomaps white, no labels · No data · Lower Manhattan z16: ttfr 877ms, tiles 40ms, p95 16.8ms, >50ms 0, longtask 103ms, heap 93.5MB
+Protomaps white, ZXY · No data · World z2: ttfr 847ms, tiles 12ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 45MB
+Protomaps white, ZXY · No data · Lower Manhattan z16: ttfr 856ms, tiles 22ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 72.9MB
+CARTO positron · 100k markers · Lower Manhattan z16: ttfr 1972ms, tiles 981ms, p95 16.8ms, >50ms 8, longtask 723ms, heap 246.8MB
+CARTO dark-matter · 100k markers · Lower Manhattan z16: ttfr 1943ms, tiles 970ms, p95 16.8ms, >50ms 8, longtask 697ms, heap 239.2MB
+Protomaps white · 100k markers · Lower Manhattan z16: ttfr 1940ms, tiles 970ms, p95 16.8ms, >50ms 1, longtask 455ms, heap 245.5MB
+Protomaps dark · 100k markers · Lower Manhattan z16: ttfr 1976ms, tiles 966ms, p95 16.8ms, >50ms 4, longtask 563ms, heap 247.8MB
+Protomaps light · 100k markers · Lower Manhattan z16: ttfr 1914ms, tiles 938ms, p95 16.8ms, >50ms 5, longtask 581ms, heap 247.9MB
+Protomaps white, no labels · 100k markers · Lower Manhattan z16: ttfr 1999ms, tiles 985ms, p95 16.8ms, >50ms 2, longtask 524ms, heap 243.5MB
+Protomaps white, ZXY · 100k markers · Lower Manhattan z16: ttfr 1936ms, tiles 28ms, p95 16.8ms, >50ms 1, longtask 400ms, heap 238.8MB
+CARTO positron · 100k heatmap · Lower Manhattan z16: ttfr 1470ms, tiles 461ms, p95 16.8ms, >50ms 5, longtask 627ms, heap 246.6MB
+CARTO dark-matter · 100k heatmap · Lower Manhattan z16: ttfr 1412ms, tiles 447ms, p95 16.8ms, >50ms 5, longtask 605ms, heap 239.8MB
+CARTO positron · 100k markers · World z2: ttfr 1876ms, tiles 919ms, p95 16.8ms, >50ms 4, longtask 391ms, heap 208.9MB
+Protomaps white · 100k heatmap · Lower Manhattan z16: ttfr 1381ms, tiles 415ms, p95 16.8ms, >50ms 1, longtask 221ms, heap 245.4MB
+Protomaps dark · 100k heatmap · Lower Manhattan z16: ttfr 1366ms, tiles 411ms, p95 16.8ms, >50ms 2, longtask 356ms, heap 247.5MB
+Protomaps light · 100k heatmap · Lower Manhattan z16: ttfr 1399ms, tiles 417ms, p95 16.8ms, >50ms 2, longtask 304ms, heap 247.6MB
+Protomaps white, no labels · 100k heatmap · Lower Manhattan z16: ttfr 1385ms, tiles 436ms, p95 16.8ms, >50ms 1, longtask 213ms, heap 243.3MB
+Protomaps white, ZXY · 100k heatmap · Lower Manhattan z16: ttfr 1513ms, tiles 31ms, p95 16.8ms, >50ms 0, longtask 225ms, heap 238.3MB
+CARTO dark-matter · 100k markers · World z2: ttfr 2039ms, tiles 1031ms, p95 16.8ms, >50ms 0, longtask 163ms, heap 209.1MB
+  ✓  1 .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance (1.3h)
+
+  Slow test file: .perf-harness/basemap-perf.spec.ts (1.3h)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 passed (1.3h)
+
+Running 1 test using 1 worker
+
+GPU: ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)
+4 combinations, 3 runs each after a warm-up
+16 × CARTO positron · No data: ttfr 1405ms, tiles 217ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 67.6MB
+16 × Protomaps white · No data: ttfr 1487ms, tiles 280ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 99.8MB
+16 × Protomaps white, ZXY · No data: ttfr 1413ms, tiles 205ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 67.3MB
+16 × Protomaps white, no labels · No data: ttfr 1437ms, tiles 238ms, p95 16.7ms, >50ms 0, longtask 0ms, heap 97.5MB
+  ✓  1 .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance (4.2m)
+
+  1 passed (4.2m)
+
+Running 1 test using 1 worker
+
+GPU: ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)
+4 combinations, 3 runs each after a warm-up
+16 × CARTO positron · 100k markers: ttfr 6316ms, tiles 4885ms, p95 16.8ms, >50ms 1, longtask 605ms, heap 736MB
+  ✘  1 .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance (3.2m)
+
+
+  1) .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance ────────────────────────────────
+
+    TimeoutError: locator.boundingBox: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.ol-viewport').first()[22m
+
+
+      177 | /** The same pan and zoom steps every run, centered on the first map */
+      178 | async function interact(page: Page) {
+    > 179 |   const box = await page.locator('.ol-viewport').first().boundingBox();
+          |                                                          ^
+      180 |   if (!box) {
+      181 |     throw new Error('No map on the page');
+      182 |   }
+        at interact (/Users/galen/projects/grafana/grafana/.perf-harness/basemap-perf.spec.ts:179:58)
+        at measure (/Users/galen/projects/grafana/grafana/.perf-harness/basemap-perf.spec.ts:232:9)
+        at /Users/galen/projects/grafana/grafana/.perf-harness/basemap-perf.spec.ts:333:17
+
+    Error Context: test-results/basemap-perf-basemap-performance/error-context.md
+
+  1 failed
+    .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance ─────────────────────────────────
+
+Running 1 test using 1 worker
+
+GPU: ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)
+2 combinations, 1 runs each after a warm-up
+CARTO dark-matter · 100k heatmap · Lower Manhattan z16: ttfr 1514ms, tiles 453ms, p95 16.8ms, >50ms 5, longtask 598ms, heap 234.6MB
+Protomaps dark · 100k heatmap · Lower Manhattan z16: ttfr 2171ms, tiles 1160ms, p95 16.8ms, >50ms 2, longtask 245ms, heap 240.8MB
+  ✓  1 .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance (10.3m)
+
+  Slow test file: .perf-harness/basemap-perf.spec.ts (10.3m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 passed (10.3m)
+Thu Oct 22 11:19:20 CDT 2026
+
+Running 1 test using 1 worker
+
+GPU: ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)
+3 combinations, 3 runs each after a warm-up
+16 × Protomaps white · 100k markers: ttfr 6056ms, tiles 4720ms, p95 16.8ms, >50ms 0, longtask 50ms, heap 772.8MB
+16 × Protomaps white, ZXY · 100k markers: ttfr 5368ms, tiles 1008ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 718.6MB
+16 × Protomaps white, no labels · 100k markers: ttfr 1463ms, tiles 3ms, p95 16.8ms, >50ms 0, longtask 0ms, heap 771.4MB
+  ✓  1 .perf-harness/basemap-perf.spec.ts:286:5 › basemap performance (4.2m)
+
+  1 passed (4.2m)
+Thu Oct 22 11:23:40 CDT 2026
