@@ -98,16 +98,21 @@ function mergeVariablesWithBaseline(
  * (time range's from/to/timezone independently, each variable by name), applies the saved spec's
  * value only where `before` and `after` are equal -- i.e. nothing explicit touched it during this
  * pass. Where they differ, the just-applied explicit value is left alone.
+ *
+ * `baseline` fills in variables the view doesn't capture, same as applySavedViewState, so a
+ * `?viewFilter=` link or back/forward navigation switches views as completely as a pane click.
  */
 export function applySavedViewStateAsDefault(
   dashboard: DashboardScene,
   spec: SavedDashboardViewSpec,
-  before: SavedDashboardViewSpec
+  before: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
 ): void {
   const after = captureSavedViewState(dashboard);
+  const variables = mergeVariablesWithBaseline(spec.variables, baseline?.variables);
 
   applyTimeRange(dashboard, mergeTimeRangeAsDefault(spec.timeRange, before.timeRange, after.timeRange));
-  applyVariables(dashboard, mergeVariablesAsDefault(spec.variables, before.variables, after.variables));
+  applyVariables(dashboard, mergeVariablesAsDefault(variables, before.variables, after.variables));
 }
 
 function mergeTimeRangeAsDefault(
