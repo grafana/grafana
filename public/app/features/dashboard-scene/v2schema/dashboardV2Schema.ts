@@ -336,7 +336,7 @@ export const supportedVariableKindSchemas = [
   switchVariableKindSchema,
 ] as const;
 
-export const variableKindSchema = z.discriminatedUnion('kind', [
+const variableKindSchema = z.discriminatedUnion('kind', [
   ...supportedVariableKindSchemas,
   groupByVariableKindSchema,
 ]) satisfies z.ZodType<VariableKind>;
