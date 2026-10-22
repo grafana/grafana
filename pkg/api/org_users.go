@@ -134,8 +134,8 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 		}
 		query.UserID = id
 	}
-	uid := c.Query("userUid")
-	if uid != "" && query.UserID != 0 {
+	query.UserUID = c.Query("userUid")
+	if query.UserUID != "" && query.UserID != 0 {
 		return response.Error(http.StatusBadRequest, "Provide either userUid or userId", nil)
 	}
 
@@ -145,16 +145,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 	if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
 		result, err = hs.searchOrgUsersUsingK8s(c, query)
 	} else {
-		if uid != "" {
-			u, lookupErr := hs.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
-			if errors.Is(lookupErr, user.ErrUserNotFound) {
-				return response.JSON(http.StatusOK, []*org.OrgUserDTO{})
-			}
-			if lookupErr != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to get user", lookupErr)
-			}
-			query.UserID = u.ID
-		}
 		result, err = hs.searchOrgUsersHelper(c, query)
 	}
 
@@ -460,7 +450,7 @@ func (hs *HTTPServer) searchOrgUsersForLookupUsingK8s(c *contextmodel.ReqContext
 }
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-	if c.Query("userUid") != "" || query.UserID != 0 {
+	if query.UserUID != "" || query.UserID != 0 {
 		return hs.getOrgUserUsingK8s(c, query)
 	}
 	// Shared across pages so the externally-synced check is resolved once per
@@ -499,8 +489,8 @@ func (hs *HTTPServer) getOrgUserUsingK8s(c *contextmodel.ReqContext, query *org.
 	ctx := c.Req.Context()
 	var u *user.User
 	var err error
-	if uid := c.Query("userUid"); uid != "" {
-		u, err = hs.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
+	if query.UserUID != "" {
+		u, err = hs.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: query.UserUID})
 	} else {
 		u, err = hs.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.UserID})
 	}

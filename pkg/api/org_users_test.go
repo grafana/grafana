@@ -1043,6 +1043,193 @@ func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 	})
 }
 
+func TestGetOrgUsersForCurrentOrg_UserID(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+	for _, value := range []string{"42", "0", "-1", "invalid"} {
+		t.Run(value, func(t *testing.T) {
+			called := false
+			hs := &HTTPServer{
+				Cfg:             setting.NewCfg(),
+				authInfoService: &authinfotest.FakeService{},
+				orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+					called = true
+					require.Equal(t, int64(42), query.UserID)
+					require.Equal(t, int64(7), query.OrgID)
+					require.True(t, query.ExcludeHiddenUsers)
+					return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 42, UID: "target"}}}, nil
+				}},
+			}
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userId="+value, nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			if value == "42" {
+				require.Equal(t, http.StatusOK, resp.Status())
+				require.True(t, called)
+			} else {
+				require.Equal(t, http.StatusBadRequest, resp.Status())
+				require.False(t, called)
+			}
+		})
+	}
+}
+
+func TestGetOrgUsersForCurrentOrg_ExactRedirectLookup(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	for _, parameter := range []string{"userUid=target", "userId=1001"} {
+		t.Run(parameter, func(t *testing.T) {
+			service := &usertest.MockService{}
+			u := &user.User{ID: 1001, UID: "target", OrgID: 7, OrgRole: "Editor", IsProvisioned: true, ExternalAuthInfo: []user.ExternalAuthInfo{{Module: login.LDAPAuthModule}}}
+			if strings.HasPrefix(parameter, "userUid") {
+				service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(u, nil).Once()
+			} else {
+				service.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 1001}).Return(u, nil).Once()
+			}
+
+			hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
+			hs.Cfg.LDAPAuthEnabled = true
+			ctx := &contextmodel.ReqContext{
+				Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?"+parameter+"&accesscontrol=true", nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1, Permissions: map[int64]map[string][]string{7: {
+					"org.users:write": {"users:id:1001"}, "org.users:remove": {"users:uid:other"},
+					"users.roles:read": {"users:uid:target"},
+				}}},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var result []org.OrgUserDTO
+			require.NoError(t, json.Unmarshal(resp.Body(), &result))
+			require.Len(t, result, 1)
+			require.Equal(t, "target", result[0].UID)
+			require.Equal(t, "Editor", result[0].Role)
+			require.True(t, result[0].IsProvisioned)
+			require.True(t, result[0].IsExternallySynced)
+			require.True(t, result[0].AccessControl["org.users:write"])
+			require.True(t, result[0].AccessControl["users.roles:read"])
+			require.False(t, result[0].AccessControl["org.users:remove"])
+			service.AssertExpectations(t)
+		})
+	}
+}
+
+func TestOrgUserSearchIgnoresUIDOnOtherEndpoints(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	service := &usertest.FakeUserService{
+		ExpectedUser: &user.User{ID: 3, UID: "viewer", OrgID: 1, OrgRole: "Viewer"},
+		ExpectedSearchUsers: user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{
+			{ID: 1, Role: "Admin"}, {ID: 2, Role: "Admin"},
+		}, TotalCount: 2, Page: 1, PerPage: 10},
+	}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service, authInfoService: &authinfotest.FakeService{}}
+	t.Run("last admin guard", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest(http.MethodPatch, "/api/org/users/1?userUid=viewer", nil)},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserID: 1},
+		}
+		other, err := hs.orgHasOtherAdmin(ctx, 1, 1)
+		require.NoError(t, err)
+		require.True(t, other)
+	})
+	t.Run("paged search", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users/search?userUid=viewer&page=1&perpage=10", nil)},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserID: 1},
+		}
+		resp := hs.SearchOrgUsersWithPaging(ctx).(*response.NormalResponse)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var result org.SearchOrgUsersQueryResult
+		require.NoError(t, json.Unmarshal(resp.Body(), &result))
+		require.Len(t, result.OrgUsers, 2)
+		require.Equal(t, 1, result.Page)
+		require.Equal(t, 10, result.PerPage)
+	})
+}
+
+func TestGetOrgUsersForCurrentOrg_UIDLegacy(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+	service := &usertest.MockService{}
+	hs := &HTTPServer{
+		Cfg: setting.NewCfg(), userService: service, authInfoService: &authinfotest.FakeService{},
+		orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+			require.Zero(t, query.UserID)
+			require.Equal(t, "target", query.UserUID)
+			require.Equal(t, int64(7), query.OrgID)
+			require.True(t, query.ExcludeHiddenUsers)
+			return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
+		}},
+	}
+	ctx := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
+		SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+	}
+	resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+	require.Equal(t, http.StatusOK, resp.Status())
+	require.JSONEq(t, "[]", string(resp.Body()))
+	service.AssertExpectations(t)
+}
+
+func TestGetOrgUsersForCurrentOrg_UIDAuthFallback(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	for _, lookupErr := range []error{nil, errors.New("auth lookup unavailable")} {
+		t.Run(fmt.Sprint(lookupErr), func(t *testing.T) {
+			auth := &authinfotest.MockAuthInfoService{}
+			auth.On("GetUsersRecentlyUsedLabel", mock.Anything, login.GetUserLabelsQuery{UserIDs: []int64{42}}).
+				Return(map[int64]string{42: login.LDAPAuthModule}, lookupErr).Once()
+			hs := &HTTPServer{Cfg: setting.NewCfg(), authInfoService: auth,
+				userService: &usertest.FakeUserService{ExpectedUser: &user.User{ID: 42, UID: "target", OrgID: 7}},
+			}
+			hs.Cfg.LDAPAuthEnabled = true
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			if lookupErr != nil {
+				require.Equal(t, http.StatusInternalServerError, resp.Status())
+			} else {
+				require.Equal(t, http.StatusOK, resp.Status())
+				var result []org.OrgUserDTO
+				require.NoError(t, json.Unmarshal(resp.Body(), &result))
+				require.Len(t, result, 1)
+				require.True(t, result[0].IsExternallySynced)
+			}
+			auth.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetOrgUsersForCurrentOrg_UIDRedirectErrors(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	for _, tc := range []struct {
+		name   string
+		user   *user.User
+		err    error
+		status int
+	}{
+		{name: "missing", err: user.ErrUserNotFound, status: http.StatusOK},
+		{name: "lookup failure", err: errors.New("unavailable"), status: http.StatusInternalServerError},
+		{name: "other organization", user: &user.User{ID: 42, OrgID: 99}, status: http.StatusOK},
+		{name: "service account", user: &user.User{ID: 42, OrgID: 7, IsServiceAccount: true}, status: http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &usertest.MockService{}
+			service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(tc.user, tc.err).Once()
+			hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			require.Equal(t, tc.status, resp.Status())
+			if tc.status == http.StatusOK {
+				require.JSONEq(t, "[]", string(resp.Body()))
+			}
+			service.AssertExpectations(t)
+		})
+	}
+}
+
 type lookupUserService struct {
 	usertest.FakeUserService
 	search func(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
@@ -1207,160 +1394,6 @@ func TestGetOrgUsersForCurrentOrgLookup_KubernetesUsersRedirect_Pagination(t *te
 			for i, u := range got {
 				require.Equal(t, users[tt.hiddenCount+i].Login, u.Login)
 			}
-		})
-	}
-}
-
-func TestGetOrgUsersForCurrentOrg_UserID(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
-	for _, value := range []string{"42", "0", "-1", "invalid"} {
-		t.Run(value, func(t *testing.T) {
-			called := false
-			hs := &HTTPServer{
-				Cfg:             setting.NewCfg(),
-				authInfoService: &authinfotest.FakeService{},
-				orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-					called = true
-					require.Equal(t, int64(42), query.UserID)
-					require.Equal(t, int64(7), query.OrgID)
-					require.True(t, query.ExcludeHiddenUsers)
-					return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 42, UID: "target"}}}, nil
-				}},
-			}
-			ctx := &contextmodel.ReqContext{
-				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userId="+value, nil)},
-				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
-			}
-			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
-			if value == "42" {
-				require.Equal(t, http.StatusOK, resp.Status())
-				require.True(t, called)
-			} else {
-				require.Equal(t, http.StatusBadRequest, resp.Status())
-				require.False(t, called)
-			}
-		})
-	}
-}
-
-func TestGetOrgUsersForCurrentOrg_ExactRedirectLookup(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
-	for _, parameter := range []string{"userUid=target", "userId=1001"} {
-		t.Run(parameter, func(t *testing.T) {
-			service := &usertest.MockService{}
-			u := &user.User{ID: 1001, UID: "target", OrgID: 7, OrgRole: "Editor", IsProvisioned: true, ExternalAuthInfo: []user.ExternalAuthInfo{{Module: login.LDAPAuthModule}}}
-			if strings.HasPrefix(parameter, "userUid") {
-				service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(u, nil).Once()
-			} else {
-				service.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 1001}).Return(u, nil).Once()
-			}
-
-			hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
-			hs.Cfg.LDAPAuthEnabled = true
-			ctx := &contextmodel.ReqContext{
-				Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?"+parameter+"&accesscontrol=true", nil)},
-				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1, Permissions: map[int64]map[string][]string{7: {
-					"org.users:write": {"users:id:1001"}, "org.users:remove": {"users:uid:other"},
-					"users.roles:read": {"users:uid:target"},
-				}}},
-			}
-			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
-			require.Equal(t, http.StatusOK, resp.Status())
-			var result []org.OrgUserDTO
-			require.NoError(t, json.Unmarshal(resp.Body(), &result))
-			require.Len(t, result, 1)
-			require.Equal(t, "target", result[0].UID)
-			require.Equal(t, "Editor", result[0].Role)
-			require.True(t, result[0].IsProvisioned)
-			require.True(t, result[0].IsExternallySynced)
-			require.True(t, result[0].AccessControl["org.users:write"])
-			require.True(t, result[0].AccessControl["users.roles:read"])
-			require.False(t, result[0].AccessControl["org.users:remove"])
-			service.AssertExpectations(t)
-		})
-	}
-}
-
-func TestGetOrgUsersForCurrentOrg_UIDLegacy(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
-	service := &usertest.MockService{}
-	service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(&user.User{ID: 42, OrgID: 99}, nil).Once()
-	hs := &HTTPServer{
-		Cfg: setting.NewCfg(), userService: service, authInfoService: &authinfotest.FakeService{},
-		orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-			require.Equal(t, int64(42), query.UserID)
-			require.Equal(t, int64(7), query.OrgID)
-			require.True(t, query.ExcludeHiddenUsers)
-			return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
-		}},
-	}
-	ctx := &contextmodel.ReqContext{
-		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
-		SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
-	}
-	resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
-	require.Equal(t, http.StatusOK, resp.Status())
-	require.JSONEq(t, "[]", string(resp.Body()))
-	service.AssertExpectations(t)
-}
-
-func TestGetOrgUsersForCurrentOrg_UIDAuthFallback(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
-	for _, lookupErr := range []error{nil, errors.New("auth lookup unavailable")} {
-		t.Run(fmt.Sprint(lookupErr), func(t *testing.T) {
-			auth := &authinfotest.MockAuthInfoService{}
-			auth.On("GetUsersRecentlyUsedLabel", mock.Anything, login.GetUserLabelsQuery{UserIDs: []int64{42}}).
-				Return(map[int64]string{42: login.LDAPAuthModule}, lookupErr).Once()
-			hs := &HTTPServer{Cfg: setting.NewCfg(), authInfoService: auth,
-				userService: &usertest.FakeUserService{ExpectedUser: &user.User{ID: 42, UID: "target", OrgID: 7}},
-			}
-			hs.Cfg.LDAPAuthEnabled = true
-			ctx := &contextmodel.ReqContext{
-				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
-				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
-			}
-			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
-			if lookupErr != nil {
-				require.Equal(t, http.StatusInternalServerError, resp.Status())
-			} else {
-				require.Equal(t, http.StatusOK, resp.Status())
-				var result []org.OrgUserDTO
-				require.NoError(t, json.Unmarshal(resp.Body(), &result))
-				require.Len(t, result, 1)
-				require.True(t, result[0].IsExternallySynced)
-			}
-			auth.AssertExpectations(t)
-		})
-	}
-}
-
-func TestGetOrgUsersForCurrentOrg_UIDRedirectErrors(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
-	for _, tc := range []struct {
-		name   string
-		user   *user.User
-		err    error
-		status int
-	}{
-		{name: "missing", err: user.ErrUserNotFound, status: http.StatusOK},
-		{name: "lookup failure", err: errors.New("unavailable"), status: http.StatusInternalServerError},
-		{name: "other organization", user: &user.User{ID: 42, OrgID: 99}, status: http.StatusOK},
-		{name: "service account", user: &user.User{ID: 42, OrgID: 7, IsServiceAccount: true}, status: http.StatusOK},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			service := &usertest.MockService{}
-			service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(tc.user, tc.err).Once()
-			hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
-			ctx := &contextmodel.ReqContext{
-				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userUid=target", nil)},
-				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
-			}
-			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
-			require.Equal(t, tc.status, resp.Status())
-			if tc.status == http.StatusOK {
-				require.JSONEq(t, "[]", string(resp.Body()))
-			}
-			service.AssertExpectations(t)
 		})
 	}
 }
