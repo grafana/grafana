@@ -302,12 +302,15 @@ func TestRulesForSubjectRESTPaginatesTeams(t *testing.T) {
 					return nil, nil
 				}
 			})
-			handler := NewRulesForSubjectREST(ruleGetter, lister, tracing.NewNoopTracerService(), nil)
+			handler := NewRulesForSubjectREST(ruleGetter, lister, tracing.NewNoopTracerService(), prometheus.NewRegistry())
 			response, outcome, err := handler.getRulesForUser(k8srequest.WithNamespace(t.Context(), namespace), "prometheus.datasource-a", "user-a")
 			require.NoError(t, err)
 			require.Equal(t, filters, response.TeamFilters)
 			require.Equal(t, forSubjectOutcomeFiltersReturned, outcome)
 			require.Equal(t, 3, calls)
+			teamEvaluationMetric := &dto.Metric{}
+			require.NoError(t, handler.metrics.teamEvaluationDurationSeconds.WithLabelValues("prometheus").(prometheus.Metric).Write(teamEvaluationMetric))
+			require.Equal(t, uint64(1), teamEvaluationMetric.GetHistogram().GetSampleCount(), "one observation for the full evaluation, not per page")
 			response.TeamFilters["team-a"][0] = "modified"
 			require.Equal(t, `a="1"`, filters["team-a"][0], "returned filters must not alias stored rules")
 		})
@@ -506,13 +509,14 @@ func TestRulesForSubjectRESTCountsListedTeamsWithoutLegacyIDs(t *testing.T) {
 
 func TestRulesForSubjectRESTMetrics(t *testing.T) {
 	tests := []struct {
-		name         string
-		ruleGetter   getterFunc
-		teamLister   listerFunc
-		parts        []string
-		outcome      string
-		errorClass   string
-		missingTeams float64
+		name                  string
+		ruleGetter            getterFunc
+		teamLister            listerFunc
+		parts                 []string
+		outcome               string
+		errorClass            string
+		missingTeams          float64
+		teamEvaluationSamples uint64
 	}{
 		{
 			name: "no stored rule", outcome: "no_rules", errorClass: "none",
@@ -528,6 +532,7 @@ func TestRulesForSubjectRESTMetrics(t *testing.T) {
 		},
 		{
 			name: "filters returned", outcome: "filters_returned", errorClass: "none",
+			teamEvaluationSamples: 1,
 			ruleGetter: func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
 				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{"team-a": {`foo="bar"`}}}}, nil
 			},
@@ -537,6 +542,7 @@ func TestRulesForSubjectRESTMetrics(t *testing.T) {
 		},
 		{
 			name: "no applicable team", outcome: "no_team_membership", errorClass: "none",
+			teamEvaluationSamples: 1,
 			ruleGetter: func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
 				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{"team-a": {`foo="bar"`}}}}, nil
 			},
@@ -546,6 +552,7 @@ func TestRulesForSubjectRESTMetrics(t *testing.T) {
 		},
 		{
 			name: "missing team", outcome: "no_team_membership", errorClass: "none", missingTeams: 1,
+			teamEvaluationSamples: 1,
 			ruleGetter: func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
 				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{"team-a": {`foo="bar"`}}}}, nil
 			},
@@ -555,11 +562,30 @@ func TestRulesForSubjectRESTMetrics(t *testing.T) {
 		},
 		{
 			name: "empty filters for member", outcome: "no_applicable_filters", errorClass: "none",
+			teamEvaluationSamples: 1,
 			ruleGetter: func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
 				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{"team-a": {}}}}, nil
 			},
 			teamLister: func(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
 				return &iamv0.TeamList{Items: []iamv0.Team{*teamWithMembers("team-a", "user-a")}}, nil
+			},
+		},
+		{
+			name: "Team lookup unavailable", outcome: "error", errorClass: "unavailable", teamEvaluationSamples: 1,
+			ruleGetter: func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{"team-a": {`foo="bar"`}}}}, nil
+			},
+			teamLister: func(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+				return nil, apierrors.NewServiceUnavailable("Team lookup unavailable")
+			},
+		},
+		{
+			name: "Team lookup canceled", outcome: "error", errorClass: "canceled", teamEvaluationSamples: 1,
+			ruleGetter: func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+				return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: map[string][]string{"team-a": {`foo="bar"`}}}}, nil
+			},
+			teamLister: func(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+				return nil, context.Canceled
 			},
 		},
 		{
@@ -605,6 +631,9 @@ func TestRulesForSubjectRESTMetrics(t *testing.T) {
 			durationMetric := &dto.Metric{}
 			require.NoError(t, handler.metrics.durationSeconds.WithLabelValues(tt.outcome, tt.errorClass, "prometheus").(prometheus.Metric).Write(durationMetric))
 			require.Equal(t, uint64(1), durationMetric.GetHistogram().GetSampleCount())
+			teamEvaluationMetric := &dto.Metric{}
+			require.NoError(t, handler.metrics.teamEvaluationDurationSeconds.WithLabelValues("prometheus").(prometheus.Metric).Write(teamEvaluationMetric))
+			require.Equal(t, tt.teamEvaluationSamples, teamEvaluationMetric.GetHistogram().GetSampleCount())
 			require.Equal(t, tt.missingTeams, testutil.ToFloat64(handler.metrics.missingTeams))
 		})
 	}

@@ -143,6 +143,9 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		return response, forSubjectOutcomeEmptyRule, nil
 	}
 
+	// Record one observation for the entire Team evaluation, not each Team/page.
+	// No-rule requests stay out of this timer; no-membership results and errors do not.
+	defer s.metrics.observeTeamEvaluation(datasourceName, time.Now())
 	evaluation := newSubjectRuleEvaluation(userUID, allRules.Spec.TeamFilters)
 
 	span := trace.SpanFromContext(ctx)

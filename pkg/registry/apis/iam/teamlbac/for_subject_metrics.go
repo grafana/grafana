@@ -17,10 +17,11 @@ import (
 )
 
 type forSubjectMetrics struct {
-	requestsTotal              *prometheus.CounterVec
-	durationSeconds            *prometheus.HistogramVec
-	missingTeams               prometheus.Counter
-	listedTeamsWithoutLegacyID prometheus.Counter
+	requestsTotal                 *prometheus.CounterVec
+	durationSeconds               *prometheus.HistogramVec
+	teamEvaluationDurationSeconds *prometheus.HistogramVec
+	missingTeams                  prometheus.Counter
+	listedTeamsWithoutLegacyID    prometheus.Counter
 }
 
 type forSubjectOutcome string
@@ -65,6 +66,14 @@ func newForSubjectMetrics(reg prometheus.Registerer) *forSubjectMetrics {
 			Help:      "IAM Team LBAC for-subject request duration in seconds",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"outcome", "error_class", "datasource_type"}),
+		// Most requests have no stored rules and never evaluate Teams. Mixing
+		// those fast requests into the same quantile hid slow membership checks,
+		// including checks that eventually returned no rules for the user.
+		teamEvaluationDurationSeconds: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_team_lbac_for_subject_team_evaluation_duration_seconds",
+			Help:    "Time spent listing Teams and selecting subject rules for non-empty policies, including evaluations returning no applicable rules or errors",
+			Buckets: prometheus.DefBuckets,
+		}, []string{"datasource_type"}),
 		missingTeams: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: "team_lbac_for_subject",
@@ -82,6 +91,12 @@ func newForSubjectMetrics(reg prometheus.Registerer) *forSubjectMetrics {
 	}
 	reg.MustRegister(m.requestsTotal, m.durationSeconds, m.missingTeams)
 	return m
+}
+
+func (m *forSubjectMetrics) observeTeamEvaluation(datasourceName string, start time.Time) {
+	if m != nil {
+		m.teamEvaluationDurationSeconds.WithLabelValues(forSubjectDatasourceType(datasourceName)).Observe(time.Since(start).Seconds())
+	}
 }
 
 func (m *forSubjectMetrics) observe(outcome forSubjectOutcome, errorClass forSubjectErrorClass, datasourceName string, start time.Time) {
