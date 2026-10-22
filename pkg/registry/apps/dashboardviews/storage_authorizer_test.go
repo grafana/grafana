@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,7 @@ import (
 	dashboardviewsv0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -143,16 +145,26 @@ func TestBeforeCreateUpdateDeleteAfterGet(t *testing.T) {
 		require.Error(t, authz.AfterGet(deniedCtx, viewWithDashboardUID(testDashboardUID)))
 	})
 
-	t.Run("BeforeUpdate checks both the old and new object", func(t *testing.T) {
+	t.Run("BeforeUpdate allows/denies same as checkAccess when the dashboard is unchanged", func(t *testing.T) {
 		require.NoError(t, authz.BeforeUpdate(allowedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)))
+		require.ErrorIs(t, authz.BeforeUpdate(deniedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)), storewrapper.ErrUnauthorized)
+	})
 
-		// Old object accessible, new one (moved to a dashboard the caller can't view) is not.
-		err := authz.BeforeUpdate(allowedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID("some-other-dash"))
-		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
-
-		// New object accessible, old one is not — still denied, since both must pass.
-		err = authz.BeforeUpdate(allowedCtx, viewWithDashboardUID("some-other-dash"), viewWithDashboardUID(testDashboardUID))
-		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+	t.Run("BeforeUpdate rejects moving a view to a different dashboard", func(t *testing.T) {
+		// Even with a grant on both dashboards: the target UID was never existence-checked.
+		bothCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			OrgRole: identity.RoleViewer,
+			UserID:  1,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsRead: {
+					dashboards.ScopeDashboardsProvider.GetResourceScopeUID(testDashboardUID),
+					dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some-other-dash"),
+				}},
+			},
+		})
+		err := authz.BeforeUpdate(withTestNamespace(bothCtx, 1), viewWithDashboardUID(testDashboardUID), viewWithDashboardUID("some-other-dash"))
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 	})
 }
 
@@ -235,6 +247,21 @@ func TestFilterList(t *testing.T) {
 	for _, item := range filtered.Items {
 		assert.Equal(t, testDashboardUID, item.Spec.DashboardUID)
 	}
+
+	t.Run("fails instead of returning an empty list when unauthenticated", func(t *testing.T) {
+		_, err := authz.FilterList(context.Background(), &dashboardviewsv0alpha1.SavedDashboardViewList{
+			Items: []dashboardviewsv0alpha1.SavedDashboardView{*viewWithDashboardUID(testDashboardUID)},
+		})
+		require.ErrorIs(t, err, storewrapper.ErrUnauthenticated)
+	})
+
+	t.Run("fails instead of returning an empty list when evaluation errors", func(t *testing.T) {
+		failing := &savedViewStorageAuthorizer{ac: actest.FakeAccessControl{ExpectedErr: errors.New("evaluator unavailable")}}
+		_, err := failing.FilterList(ctx, &dashboardviewsv0alpha1.SavedDashboardViewList{
+			Items: []dashboardviewsv0alpha1.SavedDashboardView{*viewWithDashboardUID(testDashboardUID)},
+		})
+		require.True(t, apierrors.IsInternalError(err), "expected InternalError, got %v", err)
+	})
 }
 
 func TestWatchFilterDeniesByDefault(t *testing.T) {
