@@ -70,6 +70,7 @@ import {
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { loadSavedViews } from '../savedviews/loadSavedViews';
 import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardModesEnabled } from '../scene/dashboardModes';
@@ -592,6 +593,18 @@ abstract class DashboardScenePageStateManagerBase<T>
     await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
+
+    // Only fetched eagerly here when a ?viewFilter= link needs it applied before the scene's URL
+    // sync runs (see loadSavedViews.ts) -- otherwise every dashboard load would pay for a fetch
+    // most dashboards never use. The Saved Views pane fetches lazily on its own if opened without
+    // this having already run.
+    if (
+      scene &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&
+      typeof locationService.getSearchObject().viewFilter === 'string'
+    ) {
+      await loadSavedViews(scene);
+    }
 
     return scene;
   }
