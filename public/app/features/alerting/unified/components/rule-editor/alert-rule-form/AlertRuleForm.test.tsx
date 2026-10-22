@@ -378,7 +378,7 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     await fillRuleBasics(user);
     // Save without picking a group surfaces the required-group validation message.
     await user.click(ui.buttons.save.get());
-    expect(await screen.findByText(/Must enter a group name/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Evaluation group is required/i)).toBeInTheDocument();
 
     // With the flag off the radio is not rendered, so go straight to the group select.
     const groupInput = await ui.inputs.group.find();

@@ -54,7 +54,7 @@ export function RuleDefinitionSection() {
               {...register('name', {
                 required: {
                   value: true,
-                  message: t('alerting.alert-rule-name-and-metric.message.must-enter-a-name', 'Must enter a name'),
+                  message: t('alerting.alert-rule-name-and-metric.message.name-required', 'Name is required'),
                 },
               })}
               aria-label={t('alerting.alert-rule-name-and-metric.aria-label-name', 'name')}
