@@ -1,13 +1,6 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import {
-  type CommitTemplateVars,
-  getBulkResourceCommitMessage,
-  getSingleResourceCommitMessage,
-  renderCommitMessage,
-} from '../utils/commitMessage';
+import { type CommitTemplateVars, getResourceCommitMessage, renderCommitMessage } from '../utils/commitMessage';
 
 import { useTemplateAutofill } from './useTemplateAutofill';
 
@@ -29,7 +22,7 @@ interface UseCommitMessageTemplateArgs {
  * Takes plain values rather than the form object so it stays free of generics and type assertions.
  *
  * `locked`: the field is enforced/read-only, so render `message` instead of binding it to form state.
- * `message`: the resolved commit message (with the `Grafana-saved-by` trailer) to commit.
+ * `message`: the resolved commit message to commit.
  */
 export function useCommitMessageTemplate({
   repository,
@@ -39,30 +32,19 @@ export function useCommitMessageTemplate({
   setComment,
   fallbackMessage,
 }: UseCommitMessageTemplateArgs): { locked: boolean; message: string } {
-  const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   const template = repository?.commit?.singleResourceMessageTemplate;
-  const enforce = repository?.commit?.enforceTemplate ?? false;
+  const locked = repository?.commit?.enforceTemplate ?? false;
 
-  // Enforcement activates the field even without a template.
-  const active = flagEnabled && (Boolean(template?.trim()) || enforce);
-  const locked = flagEnabled && enforce;
-  const rendered = active ? renderCommitMessage(template, vars, fallbackMessage) : '';
+  // Enforced repos commit the template, not the field, so drop the comment when locked.
+  const message = getResourceCommitMessage({ comment: locked ? '' : comment, repository, fallbackMessage, ...vars });
 
-  // Enforced repos commit the template, not the field, so drop the comment when locked. Computed
-  // unconditionally: callers commit this regardless of the flag. Bulk callers (those that pass a
-  // `fallbackMessage`) resolve via the bulk path so the no-template default stays multi-resource.
-  const resolvedComment = locked ? '' : comment;
-  const message =
-    fallbackMessage === undefined
-      ? getSingleResourceCommitMessage({ comment: resolvedComment, repository, ...vars })
-      : getBulkResourceCommitMessage({ comment: resolvedComment, repository, fallbackMessage, ...vars });
-
-  // Pre-fill only the editable field; enforced repos render `message` read-only instead. The
-  // template tracks live `vars` and the repo usually resolves after the form mounts, so a static
-  // form default would be stale. `active && !locked` because enforced commits bypass the field.
+  // Pre-fill only the editable field; enforced repos render `message` read-only instead, so there is
+  // nothing to fill. The template tracks live `vars` and the repo usually resolves after the form
+  // mounts, so a static form default would be stale.
+  const prefill = !locked && Boolean(template?.trim());
   useTemplateAutofill({
-    active: active && !locked,
-    rendered,
+    active: prefill,
+    rendered: prefill ? renderCommitMessage(template, vars, fallbackMessage) : '',
     value: comment,
     isDirty: isCommentDirty,
     setValue: setComment,

@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -290,7 +290,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			}),
 	}}
 
-	alertingStore := ngstore.DBstore{
+	alertingStore := ngrules.RuleStore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),
@@ -949,7 +949,7 @@ func TestSearchFolders(t *testing.T) {
 					}).UpdateCopyFields(),
 				}},
 			})
-		}, nil, false, time.Time{}, 0)
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 
 		// Both formats must be usable: unified storage/search may deploy separately from the API
@@ -995,6 +995,32 @@ func TestSearchFolders(t *testing.T) {
 		require.Equal(t, expected, consumed(t, fieldValues))
 		require.Equal(t, expected, consumed(t, table), "both result formats must yield the same usable values")
 	})
+}
+
+func TestFolderLookupSearchErrors(t *testing.T) {
+	id, title := int64(1), "title"
+	for name, lookup := range map[string]folder.GetFolderQuery{
+		"by ID":    {ID: &id}, //nolint:staticcheck // Exercise legacy lookup compatibility.
+		"by title": {Title: &title},
+	} {
+		for _, tc := range folderStorageFailures(t) {
+			t.Run(name+"/"+tc.name, func(t *testing.T) {
+				cli := new(client.MockK8sHandler)
+				cli.On("GetNamespace", int64(1)).Return("default").Once()
+				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+				query := lookup
+				query.OrgID = 1
+				query.SignedInUser = &user.SignedInUser{OrgID: 1}
+
+				got, err := svc.Get(t.Context(), &query)
+
+				require.Nil(t, got)
+				requireFolderStorageError(t, tc.want, err)
+				cli.AssertExpectations(t)
+			})
+		}
+	}
 }
 
 func TestGetFolderByTitle(t *testing.T) {
@@ -1166,7 +1192,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), user)
 	db, cfg := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
-	alertingStore := ngstore.DBstore{
+	alertingStore := ngrules.RuleStore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),

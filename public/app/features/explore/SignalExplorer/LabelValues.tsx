@@ -5,6 +5,9 @@ import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana
 import { t } from '@grafana/i18n';
 import { Button, IconButton, Input, Text, useStyles2 } from '@grafana/ui';
 
+import { type ExprTextKind } from '../utils/prometheus';
+
+import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
 import { dsKey, rangeKey } from './data/metricResourceClient';
 import { useLabelValues } from './data/useLabelValues';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
@@ -20,13 +23,15 @@ interface Props {
   timeRange: TimeRange;
   metric: string;
   labelKey: string;
+  /** Left out where the card's query has nowhere to put a value. */
+  onAddToQuery?: (text: string, kind: ExprTextKind) => void;
 }
 
 /**
  * Values of one expanded label key. Mounted only while that label is expanded, and renders at most
  * one batch at a time: a high-cardinality label can hold thousands of values.
  */
-export function LabelValues({ id, dsRef, timeRange, metric, labelKey }: Props) {
+export function LabelValues({ id, dsRef, timeRange, metric, labelKey, onAddToQuery }: Props) {
   const styles = useStyles2(getStyles);
   const { values, loading, error } = useLabelValues(dsRef, timeRange, metric, labelKey);
 
@@ -90,14 +95,25 @@ export function LabelValues({ id, dsRef, timeRange, metric, labelKey }: Props) {
         <ul className={styles.valueList}>
           {visible.map((value) => (
             <li key={value} className={styles.valueRow} data-testid="signal-explorer-value-row">
-              {value}
+              <span className={styles.valueText} title={value}>
+                {value}
+              </span>
+              {onAddToQuery && (
+                <AddToQueryButton
+                  text={value}
+                  kind="value"
+                  ariaLabel={t('explore.metrics-list.add-value-to-query', 'Add value {{value}} to query', { value })}
+                  onAdd={onAddToQuery}
+                />
+              )}
             </li>
           ))}
         </ul>
       )}
       {ordered.length > visible.length && (
-        // The visible text stays short for the rail, but the accessible name says which list this
-        // extends: the metric list's own "Show more" can be in the same scroll region as this one.
+        // A button rather than loading on scroll: this block sits mid-way through the metrics list, and
+        // growing it as it scrolls past would push the metrics below it out of reach. The accessible
+        // name says which list it extends, since the visible text stays short for the rail.
         <Button
           size="sm"
           variant="secondary"
@@ -143,12 +159,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   valueRow: css({
     label: 'label-values-row',
-    overflow: 'hidden',
-    maxWidth: '100%',
+    display: 'flex',
+    alignItems: 'center',
     padding: theme.spacing(0, 0.5),
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
     fontFamily: theme.typography.fontFamilyMonospace,
+    ...getAddToQueryReveal(theme),
+  }),
+  valueText: css({
+    label: 'label-values-text',
+    flex: '1 1 auto',
+    minWidth: 0,
+    overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   }),

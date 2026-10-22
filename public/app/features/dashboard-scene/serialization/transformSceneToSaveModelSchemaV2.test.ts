@@ -6,7 +6,7 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -43,6 +43,7 @@ import {
   type RowsLayoutSpec,
   type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelKind,
   type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -68,6 +69,7 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { djb2Hash } from '../utils/djb2Hash';
 
+import { buildVizPanel } from './layoutSerializers/utils';
 import {
   getPersistedDSFor,
   getElementDatasource,
@@ -2046,6 +2048,40 @@ describe('vizPanelToSchemaV2 time range fields', () => {
   });
 });
 
+describe('vizPanelToSchemaV2 subtitle', () => {
+  it('should preserve the panel subtitle', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      subtitle: 'hello',
+    });
+
+    const result = vizPanelToSchemaV2(vizPanel, undefined, false);
+
+    expect(result.kind).toBe('Panel');
+    expect((result.spec as PanelSpec).subtitle).toBe('hello');
+    expect((result.spec as PanelSpec).description).toBe('');
+  });
+
+  it('should keep the subtitle after a save/load round trip', () => {
+    const vizPanel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test', subtitle: 'hello' });
+
+    const loaded = buildVizPanel(vizPanelToSchemaV2(vizPanel, undefined, false) as PanelKind);
+
+    expect(loaded.state.subtitle).toBe('hello');
+    expect(loaded.state.description).toBe('');
+  });
+
+  it('should omit subtitle when the panel has none', () => {
+    const vizPanel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+
+    const result = vizPanelToSchemaV2(vizPanel, undefined, false);
+
+    expect((result.spec as PanelSpec).subtitle).toBeUndefined();
+  });
+});
+
 // Instead of reusing annotation layer objects, create a factory function to generate new ones each time
 function createAnnotationLayers() {
   return [
@@ -2262,42 +2298,17 @@ describe('validateDashboardSchemaV2', () => {
 });
 
 describe('normalizeDataSourceRef', () => {
-  let originalSrv: DataSourceSrv | undefined;
-  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
-
-  beforeAll(() => {
-    try {
-      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
-    } catch {
-      originalSrv = undefined;
-    }
-    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
-  });
-
-  afterAll(() => {
-    setDataSourceSrv(originalSrv as DataSourceSrv);
-  });
-
   it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
     const ref = { uid: 'abc', type: 'prometheus' };
     expect(normalizeDataSourceRef(ref)).toBe(ref);
 
     expect(normalizeDataSourceRef(undefined)).toBeUndefined();
     expect(normalizeDataSourceRef(null)).toBeUndefined();
+    expect(normalizeDataSourceRef({})).toBeUndefined();
   });
 
-  it('resolves a string datasource into a DataSourceRef', () => {
-    expect(normalizeDataSourceRef('prometheus')).toEqual({
-      uid: 'prom-uid',
-      type: 'prometheus',
-      apiVersion: 'v1',
-    });
-
-    // Falls back to a UID-only ref when the datasource is unknown.
-    getInstanceSettings.mockReturnValueOnce(undefined as never);
+  it('turns a string datasource into a UID-only ref', () => {
     expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
-
-    // Template variables short-circuit and never call getInstanceSettings.
     expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
     expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });

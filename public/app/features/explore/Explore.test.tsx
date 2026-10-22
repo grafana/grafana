@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -22,6 +22,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, type Props } from './Explore';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
+import { useMetricCatalog } from './SignalExplorer/data/useMetricCatalog';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
@@ -113,6 +114,7 @@ const dummyProps: Props = {
     dsToExplore: [],
   },
   changeDatasource: jest.fn(),
+  changeQueries: jest.fn(),
   compact: false,
   changeCompactMode: jest.fn(),
   editSavedQueryRef: undefined,
@@ -124,9 +126,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      savedQueriesRBAC: false,
-    },
   },
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({}),
@@ -156,7 +155,13 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
+// So an open query card has metric rows without a Prometheus behind it.
+jest.mock('./SignalExplorer/data/useMetricCatalog', () => ({
+  useMetricCatalog: jest.fn(() => ({ metrics: [], truncated: false, loading: false })),
+}));
+
 const usePluginLinksMock = jest.mocked(usePluginLinks);
+const useMetricCatalogMock = jest.mocked(useMetricCatalog);
 
 const setup = (overrideProps?: Partial<Props>) => {
   const store = configureStore({
@@ -255,6 +260,7 @@ describe('Explore', () => {
       act(() => {
         setTestFlags({});
       });
+      useMetricCatalogMock.mockReturnValue({ metrics: [], truncated: false, loading: false });
     });
 
     it('should retrieve the last visible state from local storage', async () => {
@@ -277,9 +283,47 @@ describe('Explore', () => {
 
       expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-
+      // A leading Prometheus card opens by default.
       expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+    });
+
+    it('appends a metric added from a query card to that card’s query only', async () => {
+      setTestFlags({ 'grafana.exploreMetricsSidebar': true });
+      useMetricCatalogMock.mockReturnValue({
+        metrics: [{ name: 'http_requests_total', type: 'counter' }],
+        truncated: false,
+        loading: false,
+      });
+      const changeQueries = jest.fn();
+      const queryA = {
+        refId: 'A',
+        datasource: { type: 'prometheus', uid: 'prom-uid' },
+        expr: 'rate(',
+        editorMode: 'code',
+      };
+      const queryB = {
+        refId: 'B',
+        datasource: { type: 'prometheus', uid: 'prom-uid' },
+        expr: 'up',
+        editorMode: 'code',
+      };
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [queryA, queryB],
+        changeQueries,
+      });
+
+      await userEvent.click(
+        within(await screen.findByTestId('signal-card-A')).getByRole('button', {
+          name: 'Add http_requests_total to query',
+        })
+      );
+
+      expect(changeQueries).toHaveBeenCalledTimes(1);
+      expect(changeQueries).toHaveBeenCalledWith({
+        exploreId: 'left',
+        queries: [{ ...queryA, expr: 'rate(http_requests_total' }, queryB],
+      });
     });
 
     it('does not show the query cards for a non-Prometheus Mixed datasource query', async () => {

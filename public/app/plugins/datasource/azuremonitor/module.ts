@@ -13,8 +13,7 @@ import { type AzureMonitorQuery } from './types/query';
 import { type AzureMonitorDataSourceJsonData } from './types/types';
 
 // skip in tests: top-level await doesn't work in jest, and tests control
-// flags via mocks or the config.featureToggles fallback rather than the
-// host's OFREP provider
+// flags via mocks rather than the host's OFREP provider
 if (process.env.NODE_ENV !== 'test') {
   await initPluginTranslations(pluginJson.id);
   initFeatureFlags();

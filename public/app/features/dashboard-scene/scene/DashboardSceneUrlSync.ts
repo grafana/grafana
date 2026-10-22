@@ -1,5 +1,6 @@
-import { type Unsubscribable } from 'rxjs';
+import { Subscription, type Unsubscribable } from 'rxjs';
 
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
@@ -13,7 +14,7 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
-import { type DashboardSceneState } from './types/dashboard';
+import { isFullDashboardEditing, type DashboardSceneState } from './types/dashboard';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -24,6 +25,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * panel whose fetch fails) loses the editor for good.
    */
   private _heldEditPanelId?: string;
+  private _editPanelRequest?: Promise<void>;
   private _libPanelSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
@@ -52,16 +54,19 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * pane and re-resolve the id against the tree it swaps in.
    */
   public retainEditPanelAcrossRebuild(panelId: string) {
+    this._editPanelRequest = undefined;
     this._heldEditPanelId = panelId;
   }
 
   private _releaseEditPanel() {
-    if (this._heldEditPanelId !== undefined) {
+    this._editPanelRequest = undefined;
+    const wasHeld = this._heldEditPanelId !== undefined;
+    this._heldEditPanelId = undefined;
+    if (wasHeld) {
       this._scene.cancelPendingViews();
     }
     this._libPanelSub?.unsubscribe();
     this._libPanelSub = undefined;
-    this._heldEditPanelId = undefined;
   }
 
   private getAutoFitPanels(): string | undefined {
@@ -77,12 +82,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
+    const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
     // Captured once, on this scene's very first url-sync pass -- before this pass's own
     // $timeRange/variable updateFromUrl calls run (see the ordering note below), so this reflects
     // the dashboard exactly as authored, untouched by any URL param or saved view. Every later
     // apply of a saved view falls back to this for anything the view itself doesn't capture.
-    if (!savedViewBaseline) {
+    if (savedViewsEnabled && !savedViewBaseline) {
       update.savedViewBaseline = captureSavedViewState(this._scene);
     }
 
@@ -96,7 +102,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // sync pass doesn't re-read the URL mid-walk, so a synchronous mutation here is invisible to it
     // and gets clobbered a few lines later in the very same call stack. Deferring to a new tick
     // lets that pass finish first.
-    if (typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
+    if (savedViewsEnabled && typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
       const view = savedViews?.find((v) => v.metadata.name === values.viewFilter);
       if (view) {
         const scene = this._scene;
@@ -118,6 +124,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
     if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
+      if (isEditing) {
+        this._scene.openFullEditor();
+      }
       update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
@@ -168,10 +177,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       // If we are not in editing (for example after full page reload)
-      if (!isEditing) {
-        // Entering edit mode publishes state before the editor exists; keep its URL through that update.
+      if (!isEditing || !isFullDashboardEditing(this._scene.state)) {
+        // Keep the editor URL while entering full editing before its view has loaded.
         this._heldEditPanelId = values.editPanel;
-        this._scene.onEnterEditMode();
+        this._scene.openFullEditor();
       }
 
       const libPanelBehavior = getLibraryPanelBehavior(panel);
@@ -236,32 +245,55 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * Temporary solution, with some refactoring of PanelEditor we can remove this
    */
   private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panelId: string, libPanel: LibraryPanelBehavior) {
+    this._editPanelRequest = undefined;
     this._libPanelSub?.unsubscribe();
     this._heldEditPanelId = panelId;
 
-    const sub = libPanel.subscribeToState((state) => {
-      if (state.isLoaded) {
-        sub.unsubscribe();
-        if (this._libPanelSub === sub) {
-          this._libPanelSub = undefined;
-          this._heldEditPanelId = undefined;
-        }
-        this._openPanelEditById(panelId);
-      }
+    void this._scene.loadView({
+      key: 'editPanel',
+      load: (signal) =>
+        new Promise<undefined>((resolve) => {
+          const sub = new Subscription(() => resolve(undefined));
+          this._libPanelSub = sub;
+          const cancel = () => sub.unsubscribe();
+          signal.addEventListener('abort', cancel, { once: true });
+          sub.add(() => signal.removeEventListener('abort', cancel));
+          sub.add(
+            libPanel.subscribeToState((state) => {
+              if (state.isLoaded) {
+                sub.unsubscribe();
+                if (this._libPanelSub === sub) {
+                  this._libPanelSub = undefined;
+                }
+                this._openPanelEditById(panelId);
+              }
+            })
+          );
+          const panel = findEditPanel(this._scene, panelId);
+          if (panel) {
+            sub.add(
+              panel.subscribeToState((state) => {
+                if (state._pluginLoadError) {
+                  sub.unsubscribe();
+                }
+              })
+            );
+          }
+          if (!panel || panel.state._pluginLoadError) {
+            sub.unsubscribe();
+            return;
+          }
+          // Keep the panel active while the loading page unmounts it; deactivation removes the error listener.
+          sub.add(panel.activate());
+        }),
     });
-
-    this._libPanelSub = sub;
   }
 
   /**
    * Open panel edit for an id resolved against the CURRENT tree.
    *
-   * The wait above outlives the panel it was started for. A scene rebuild (APPLY_SPEC, the json and
-   * code editors) replaces the whole layout tree, and `state.editPanel` is unset for the duration of
-   * the wait, so nothing else can re-open the pane afterwards. Resolving the id again is what lets
-   * the wait survive that: opening the editor on the panel it captured would instead leave the pane
-   * driving a panel the dashboard no longer contains. If the panel it lands on is itself an unloaded
-   * library panel, it waits once more, on the behavior the live tree holds.
+   * Resolve again after loading so a replaced panel cannot leave the editor attached to an old
+   * tree. Rebuilds retain the requested id and start a new wait against the replacement tree.
    */
   private _openPanelEditById(panelId: string) {
     // The pane is closed for the whole wait, so anything the user does meanwhile is the newer
@@ -296,8 +328,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._libPanelSub = undefined;
     this._heldEditPanelId = panelId;
 
-    openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID).then(() => {
-      if (this._heldEditPanelId === panelId) {
+    const request = openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
+    this._editPanelRequest = request;
+    request.then(() => {
+      // The same panel can be requested again before a superseded load completes.
+      if (this._editPanelRequest === request) {
+        this._editPanelRequest = undefined;
         this._heldEditPanelId = undefined;
       }
     });

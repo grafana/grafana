@@ -19,7 +19,94 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+type readTestAuthorizer struct {
+	Authorizer
+	authorizeResource        func(context.Context, *ParsedResource, string) error
+	authorizeResourcePreview func(context.Context, *ParsedResource) error
+}
+
+func (a readTestAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
+	return a.authorizeResource(ctx, parsed, verb)
+}
+
+func (a readTestAuthorizer) AuthorizeResourcePreview(ctx context.Context, parsed *ParsedResource) error {
+	return a.authorizeResourcePreview(ctx, parsed)
+}
+
+func TestDualReadWriter_ReadAuthorizationDispatch(t *testing.T) {
+	denied := apierrors.NewForbidden(DashboardResource.GroupResource(), "dashboard", assert.AnError)
+	for _, tt := range []struct {
+		name         string
+		ref          string
+		folder       bool
+		action       provisioning.ResourceAction
+		preview      bool
+		authorizeErr error
+	}{
+		{name: "new resource preview", ref: "feature", action: provisioning.ResourceActionCreate, preview: true},
+		{name: "existing resource preview", ref: "feature", action: provisioning.ResourceActionUpdate, preview: true},
+		{name: "commit preview", ref: "0123456789012345678901234567890123456789", preview: true},
+		{name: "configured branch", ref: "main"},
+		{name: "implicit configured branch"},
+		{name: "folder manifest on another branch", ref: "feature", folder: true},
+		{name: "preview denial does not fall back", ref: "feature", preview: true, authorizeErr: denied},
+		{name: "preview error does not fall back", ref: "feature", preview: true, authorizeErr: assert.AnError},
+		{name: "ordinary read denial is preserved", ref: "main", authorizeErr: denied},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
+			cfg := &provisioning.Repository{Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"},
+			}}
+			info := &repository.FileInfo{Path: "team/dashboard.json", Ref: tt.ref}
+			gvr := DashboardResource
+			if tt.folder {
+				info.Path = "team/_folder.json"
+				gvr = FolderResource
+			}
+			rw := repository.NewMockReaderWriter(t)
+			rw.EXPECT().Read(ctx, info.Path, tt.ref).Return(info, nil).Once()
+			rw.EXPECT().Config().Return(cfg).Once()
+			parsed := &ParsedResource{
+				Info: info, GVR: gvr, Action: tt.action, DryRunResponse: &unstructured.Unstructured{},
+			}
+			parser := NewMockParser(t)
+			parser.EXPECT().Parse(ctx, info).Return(parsed, nil).Once()
+			checks := 0
+			authorizer := readTestAuthorizer{
+				authorizeResource: func(authCtx context.Context, resource *ParsedResource, verb string) error {
+					require.False(t, tt.preview, "preview reads must use preview authorization")
+					require.Equal(t, ctx, authCtx)
+					require.Same(t, parsed, resource)
+					require.Equal(t, utils.VerbGet, verb)
+					checks++
+					return tt.authorizeErr
+				},
+				authorizeResourcePreview: func(authCtx context.Context, resource *ParsedResource) error {
+					require.True(t, tt.preview, "ordinary reads must use ordinary authorization")
+					require.Equal(t, ctx, authCtx)
+					require.Same(t, parsed, resource)
+					checks++
+					return tt.authorizeErr
+				},
+			}
+			readWriter := NewDualReadWriter(rw, parser, nil, authorizer, false)
+			result, err := readWriter.Read(ctx, info.Path, tt.ref)
+			require.Equal(t, 1, checks)
+			if tt.authorizeErr != nil {
+				require.ErrorIs(t, err, tt.authorizeErr)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.Same(t, parsed, result)
+			}
+			require.Equal(t, tt.action, parsed.Action)
+		})
+	}
+}
 
 func TestGetPathType(t *testing.T) {
 	tests := []struct {
@@ -309,7 +396,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -338,7 +425,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				t.Cleanup(func() { assert.NotEmpty(t, capturedUID, "_folder.json should have a non-empty metadata.name") })
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
@@ -353,7 +440,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config).Maybe() // AuthorizeWrite will call Config() before the IsDir check
 				accessMock := auth.NewMockAccessChecker(t)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "not-a-folder"}
 			},
 			wantErr:     true,
@@ -372,7 +459,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config).Maybe() // AuthorizeWrite will call Config()
 				accessMock := auth.NewMockAccessChecker(t)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -385,7 +472,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Config").Return(config).Maybe() // AuthorizeWrite calls Config()
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("unauthorized")).Maybe()
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -399,7 +486,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(fmt.Errorf("git error"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr:     true,
@@ -416,7 +503,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -432,7 +519,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(&repository.FileInfo{Data: existingData}, nil)
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false), folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -449,7 +536,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, fmt.Errorf("network error"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false), folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr:     true,
@@ -485,7 +572,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -525,7 +612,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "parent/child/", Ref: "new-branch"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -557,7 +644,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
 			},
 			wantErr: true,
@@ -586,7 +673,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -614,7 +701,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -638,7 +725,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -668,7 +755,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm, folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm, folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -693,7 +780,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm, folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm, folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -719,7 +806,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -789,7 +876,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: false, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: false, folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -815,7 +902,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -841,7 +928,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -881,7 +968,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(urlRepo, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: urlRepo, authorizer: NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: urlRepo, authorizer: NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -940,7 +1027,7 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 		}), "").Return(nil)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
 
 		require.NoError(t, err)
@@ -969,7 +1056,7 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 		}), "").Return(nil)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
 
 		require.NoError(t, err)
@@ -1029,7 +1116,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1069,7 +1156,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1099,7 +1186,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1119,7 +1206,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1143,7 +1230,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1171,7 +1258,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1199,7 +1286,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1226,7 +1313,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1268,7 +1355,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1322,7 +1409,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind, WithFolderMetadataEnabled(true))
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false),
 					folders:               fm,
 					folderMetadataEnabled: true,
 				}
@@ -1348,7 +1435,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(fmt.Errorf("access denied"))
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1376,7 +1463,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1425,7 +1512,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  urlRepo,
-					authorizer:            NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1466,7 +1553,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1669,5 +1756,116 @@ func TestMoveResourceAndCreateNewFolderMetadata(t *testing.T) {
 		rw.AssertNotCalled(t, "Read", mock.Anything, mock.Anything, mock.Anything)
 		rw.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		rw.AssertCalled(t, "Move", mock.Anything, "old-folder/dashboard.json", "new-folder/dashboard.json", "test-ref", "msg")
+	})
+}
+
+// stubAuthorizer satisfies Authorizer by embedding the interface and overriding only the two
+// methods createOrUpdate exercises. Any other method would panic (nil embed) if called, which
+// keeps the test honest about the write path it covers.
+type stubAuthorizer struct{ Authorizer }
+
+func (stubAuthorizer) AuthorizeWrite(context.Context, string) error { return nil }
+
+func (stubAuthorizer) AuthorizeResource(context.Context, *ParsedResource, string) error { return nil }
+
+// TestDualReadWriter_FolderScopeGuard verifies the write path stamps a grafana.app/folder
+// annotation onto a resource living in a subdirectory only when the kind is folder-scoped.
+// Org-scoped kinds (e.g. playlists) must never get one: their apiserver rejects it with
+// "folders are not supported for playlists.playlist.grafana.app". This is the regression the
+// FolderScoped gating in createOrUpdate prevents — before it, the dual writer re-stamped a
+// folder onto every resource via EnsureFolderPathExist + SetFolder.
+func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
+	const (
+		repoName = "repo"
+		subPath  = "team-a/resource.json"
+	)
+
+	playlistGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v1", Kind: "Playlist"}
+	playlistGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v1", Resource: "playlists"}
+
+	// The folder team-a/ resolves to, pre-seeded into the tree so EnsureFolderPathExist
+	// returns it without having to create folders through a client.
+	teamAFolder := ParseFolder("team-a/", repoName)
+
+	newParsed := func(t *testing.T, folderScoped bool, client *MockDynamicResourceInterface) *ParsedResource {
+		t.Helper()
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "playlist.grafana.app/v1",
+			"kind":       "Playlist",
+			"metadata":   map[string]any{"name": "res-1", "namespace": "default"},
+			"spec":       map[string]any{"title": "Res"},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+
+		return &ParsedResource{
+			Info:         &repository.FileInfo{Path: subPath},
+			Obj:          obj,
+			Meta:         meta,
+			GVK:          playlistGVK,
+			GVR:          playlistGVR,
+			Client:       client,
+			FolderScoped: folderScoped,
+			Repo:         provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default"},
+			Action:       provisioning.ResourceActionUpdate,
+			// Existing + DryRunResponse are pre-set so Run goes straight to the update call
+			// (managed by the same repo, so the ownership check passes).
+			Existing:       obj.DeepCopy(),
+			DryRunResponse: obj.DeepCopy(),
+		}
+	}
+
+	setup := func(t *testing.T, folderScoped bool) (*DualReadWriter, *ParsedResource, *repository.MockReaderWriter) {
+		t.Helper()
+
+		client := &MockDynamicResourceInterface{}
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&unstructured.Unstructured{}, nil)
+
+		parsed := newParsed(t, folderScoped, client)
+
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(newSyncEnabledConfig(repoName))
+		rw.On("Update", mock.Anything, subPath, "", mock.Anything, "msg").Return(nil)
+		rw.On("Read", mock.Anything, subPath, "").Return(&repository.FileInfo{Path: subPath, Hash: "h"}, nil)
+
+		parser := NewMockParser(t)
+		parser.On("Parse", mock.Anything, mock.Anything).Return(parsed, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(teamAFolder, "")
+		fm := NewFolderManager(rw, nil, tree, FolderKind)
+
+		dw := NewDualReadWriter(rw, parser, fm, stubAuthorizer{}, false)
+		return dw, parsed, rw
+	}
+
+	t.Run("org-scoped resource is written without a folder annotation", func(t *testing.T) {
+		dw, parsed, rw := setup(t, false)
+
+		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+			Path:       subPath,
+			Message:    "msg",
+			SkipDryRun: true,
+		})
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder(),
+			"org-scoped resource must not have a folder annotation stamped onto it")
+		// The folder resolution must be skipped entirely, so no _folder.json read happens.
+		rw.AssertNotCalled(t, "Read", mock.Anything, "team-a/_folder.json", mock.Anything)
+	})
+
+	t.Run("folder-scoped resource is written with the resolved folder annotation", func(t *testing.T) {
+		dw, parsed, _ := setup(t, true)
+
+		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+			Path:       subPath,
+			Message:    "msg",
+			SkipDryRun: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, teamAFolder.ID, parsed.Meta.GetFolder(),
+			"folder-scoped resource must be parented to the resolved subdirectory folder")
 	})
 }

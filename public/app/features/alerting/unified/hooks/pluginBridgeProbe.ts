@@ -1,6 +1,5 @@
 import { type PluginMeta } from '@grafana/data';
-import { isAppPluginInstalled, isFetchError } from '@grafana/runtime';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { getPluginSettings, isAppPluginInstalled, isFetchError } from '@grafana/runtime';
 
 import { type PluginID } from '../components/PluginBridge';
 

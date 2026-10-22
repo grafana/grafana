@@ -61,7 +61,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // to avoid a race condition when counting up , wait for react-data-grid to finish rendering.
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const longTextColIdx = await getColumnIdx(table, 'Long Text');
 
     // text wrapping is enabled by default on this panel.
@@ -158,7 +158,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const stateColumnHeader = getCell(table, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
@@ -185,7 +185,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
 
@@ -323,7 +323,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await disableAllTextWrap(page, selectors);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     // - pills column currently does not support DataLinks.
     // - we don't apply DataLinks to Actions or DataLinks columns.
@@ -346,8 +346,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
       const cell = getCell(table, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
-      expect(cell.locator('a')).toHaveAttribute('href');
-      expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+      await expect(cell.locator('a')).toHaveAttribute('href');
+      await expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
     }
 
     const headerContainer = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer);
@@ -362,7 +362,21 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      await cell.locator('a').click({ force: true });
+      // Inline links can extend past the clipping cell; click the center of their visible intersection.
+      await cell.scrollIntoViewIfNeeded();
+      const position = await cell.evaluate((element) => {
+        const cellBounds = element.getBoundingClientRect();
+        const linkBounds = element.querySelector('a')!.getBoundingClientRect();
+        return {
+          x:
+            (Math.max(cellBounds.left, linkBounds.left) + Math.min(cellBounds.right, linkBounds.right)) / 2 -
+            cellBounds.left,
+          y:
+            (Math.max(cellBounds.top, linkBounds.top) + Math.min(cellBounds.bottom, linkBounds.bottom)) / 2 -
+            cellBounds.top,
+        };
+      });
+      await cell.click({ position });
       await expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
 
       await headerContainer.click(); // convenient just to click the header to close the tooltip.
@@ -389,7 +403,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const minColumnIdx = await getColumnIdx(table, 'Min');
@@ -556,7 +570,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const dataLinkColumnIdx = await getColumnIdx(table, 'Data Link');
@@ -621,7 +635,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
     await waitForTableLoad(panelContent);
 
-    const table = panelContent.locator('.rdg');
+    const table = panelContent.locator('.rdg:not([aria-hidden="true"])');
 
     const frameCombobox = panelContent.getByRole('combobox');
     await expect(frameCombobox).toBeVisible();

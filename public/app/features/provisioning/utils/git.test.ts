@@ -1,6 +1,6 @@
 import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoEditFileUrl, getRepoFileUrl, getRepoHrefForProvider, getRepoNewFileUrl } from './git';
+import { getRepoEditFileUrl, getRepoFileUrl, getRepoHrefForProvider, getRepoNewFileUrl, withGitSuffix } from './git';
 
 // Partial specs for testing; getRepoHrefForProvider only reads type and provider url/branch/path.
 function spec(s: Partial<RepositorySpec>): RepositorySpec {
@@ -440,5 +440,44 @@ describe('getRepoNewFileUrl', () => {
         filePath: undefined,
       })
     ).toBeUndefined();
+  });
+});
+
+describe('withGitSuffix', () => {
+  const gitSpec = (url?: string) => spec({ type: 'git', git: { url, branch: 'main' } });
+
+  it.each([
+    ['https://git.example.com/owner/repo', 'https://git.example.com/owner/repo.git'],
+    ['https://git.example.com/owner/repo/', 'https://git.example.com/owner/repo.git'],
+    [' https://git.example.com/owner/repo ', 'https://git.example.com/owner/repo.git'],
+  ])('appends .git to %s', (url, expected) => {
+    expect(withGitSuffix(gitSpec(url))?.git?.url).toBe(expected);
+  });
+
+  it.each([
+    'https://git.example.com/owner/repo.git',
+    'https://git.example.com/owner/repo.GIT',
+    'https://git.example.com/owner/repo.git/',
+    '',
+    undefined,
+  ])('returns undefined for %s', (url) => {
+    expect(withGitSuffix(gitSpec(url))).toBeUndefined();
+  });
+
+  it('returns undefined for other repository types', () => {
+    expect(
+      withGitSuffix(spec({ type: 'github', github: { url: 'https://github.com/owner/repo', branch: 'main' } }))
+    ).toBeUndefined();
+  });
+
+  it('keeps the other spec fields', () => {
+    const result = withGitSuffix(
+      spec({ type: 'git', title: 'My Repo', git: { url: 'https://h/r', branch: 'dev', path: 'grafana/' } })
+    );
+    expect(result).toEqual({
+      type: 'git',
+      title: 'My Repo',
+      git: { url: 'https://h/r.git', branch: 'dev', path: 'grafana/' },
+    });
   });
 });

@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "재설정"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "보조 로그",
+      "description-auxiliary-logs": "이 기능을 활성화하면 <2>보조 로그</2>에 구성된 테이블을 쿼리하는 대시보드 패널에서 Azure Monitor 쿼리당 비용이 발생합니다. 보조 로그에는 응답 시간 SLA가 없으며, 임시 쿼리 및 데이터 탐색 전용이므로 실시간 데이터가 필요한 대시보드나 경보용으로 사용해서는 안 됩니다.",
+      "label-enable-auxiliary-logs": "보조 로그 활성화"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} 원시 쿼리",
@@ -187,47 +187,47 @@
       "tooltip-limit": "반환되는 행 수를 제한합니다(기본값은 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "보조 로그로 전환하시겠어요?",
       "body-basic-logs-queries": "기본 로그로 전환하시겠어요?",
       "confirmText-confirm": "확인",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "보조 로그 쿼리는 스캔한 데이터 양에 따라 비용이 발생합니다. 보조 로그에는 응답 시간 SLA가 없으며, 실시간 데이터가 필요한 대시보드나 경보용으로 사용해서는 안 됩니다.",
       "description-basic-logs-queries": "기본 로그 쿼리는 스캔된 데이터 양에 따라 비용이 발생합니다.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "분석",
+      "label-auxiliary": "보조",
+      "label-basic": "기본",
       "label-logs": "로그",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "보조 로그 쿼리",
       "title-basic-logs-queries": "기본 로그 쿼리",
       "tooltip-logs": "기본 또는 분석 로그 쿼리를 실행할지 여부를 지정합니다.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "분석, 기본 또는 보조 로그 쿼리를 실행할지 여부를 지정합니다.",
+      "tooltip-logs-aux": "분석 또는 보조 로그 쿼리를 실행할지 여부를 지정합니다."
     },
     "logs-query-builder": {
       "title-no-tables": "리소스를 성공적으로 불러왔지만 테이블이 없습니다"
     },
     "logs-query-editor": {
       "learn-more": "자세히 알아보기",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "보조 로그를 사용할 때는 한 번에 하나의 리소스만 선택할 수 있습니다.",
+      "notice-basic-single-resource": "기본 로그를 사용할 때는 한 번에 하나의 리소스만 선택할 수 있습니다.",
+      "notice-same-resource-type": "동일한 리소스 유형의 항목만 선택할 수 있습니다.",
+      "tier-switch-body-analytics": "<0>{{tableName}} </0>은(는) 분석 테이블입니다.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}} </0>은(는) 보조 로그 테이블입니다. 스캔한 GiB당 비용이 발생하며, 응답 시간 SLA가 없고, 실시간 또는 경보 시나리오에 적합하지 않습니다.",
+      "tier-switch-body-basic": "<0>{{tableName}} </0>은(는) 기본 로그 테이블입니다. 스캔한 GiB당 비용이 발생합니다.",
+      "tier-switch-revert": "{{fromTier}}(으)로 되돌리기",
+      "tier-switch-title": "쿼리 티어가 {{toTier}}(으)로 설정됨",
       "view-query": "Azure Portal에서 쿼리 보기",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "이 보조 로 쿼리는 실행 시 {{dataIngested}}GiB의 데이터를 처리합니다. 보조 로그에는 응답 시간 SLA가 없으며, 실시간 또는 경보 시나리오에 적합하지 않습니다. ",
+      "warning-auxiliary-raw": "이것은 보조 로그 쿼리입니다. 검색 엔드포인트를 사용하며, 스캔한 GiB당 비용이 발생하고, 응답 시간 SLA가 없으며, 실시간 또는 경보 시나리오에 적합하지 않습니다. 이 모드에서는 분석 플랜 테이블을 쿼리할 수 없습니다(이 경우 분석 티어를 사용하세요). ",
+      "warning-basic-raw": "이것은 기본 로그 쿼리입니다. 검색 엔드포인트를 사용하며 스캔한 GiB당 비용이 발생합니다. 이 모드에서는 분석 플랜 테이블을 쿼리할 수 없습니다(이 경우 분석 티어를 사용하세요). ",
+      "warning-data-ingested": "이 쿼리는 실행 시 {{dataIngested}} GiB의 데이터를 처리합니다. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "이 테이블은 보조 로그 플랜에 있습니다. 쿼리하려면 데이터 소스 설정에서 '보조 로그'를 활성화하세요.",
+      "description-auxiliary-enabled": "이 테이블을 선택하면 쿼리 모드가 보조 로그로 전환됩니다.",
+      "description-basic-disabled": "이 테이블은 기본 로그 플랜에 있습니다. 쿼리하려면 데이터 소스 설정에서 '기본 로그'를 활성화하세요.",
+      "description-basic-enabled": "이 테이블을 선택하면 쿼리 모드가 기본 로그로 전환됩니다.",
+      "description-plan-unavailable": "로그 플랜을 확인할 수 없어 이 테이블을 선택할 수 없습니다.",
+      "label-all-columns": "모든 열"
     },
     "metric-name-field": {
       "label-metric": "메트릭"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "사용자 지정 네임스페이스 선택",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "차원 이름 선택",
+      "aria-label-select-metric-name": "메트릭 이름 선택",
       "aria-label-select-namespace": "네임스페이스 선택",
       "aria-label-select-query-type": "쿼리 유형 선택",
       "aria-label-select-region": "리전 선택",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "리소스 그룹 선택",
       "aria-label-select-subscription": "구독 선택",
       "label-custom-namespace": "사용자 지정 네임스페이스",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "차원 이름",
+      "label-metric-name": "메트릭 이름",
       "label-namespace": "네임스페이스",
       "label-query-type": "쿼리 유형",
       "label-region": "리전",
