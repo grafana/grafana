@@ -44,7 +44,9 @@ const loadYaml = async (): Promise<CodeMirrorExtension> => {
       props: [
         styleTags({
           'Literal BlockLiteralContent': tags.string,
-          'Key/Literal': tags.definition(tags.propertyName),
+          // A key's scalar can be wrapped in an anchor, a tag, or both in either order.
+          'Key/Anchored/Literal Key/Tagged/Literal Key/Anchored/Tagged/Literal Key/Tagged/Anchored/Literal':
+            tags.definition(tags.propertyName),
         }),
       ],
     }),

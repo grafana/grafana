@@ -114,6 +114,8 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
 
   it.each([
     ['plain', 'title: plain value', 'plain value'],
+    ['number', 'count: 3', '3'],
+    ['boolean', 'enabled: true', 'true'],
     ['single-quoted', "'title': 'single quoted'", "'single quoted'"],
     ['double-quoted', '"title": "double quoted"', '"double quoted"'],
     ['literal block', 'title: |\n  literal content', 'literal content'],
@@ -135,6 +137,27 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
       editor.dom.remove();
     }
   });
+
+  it.each(['&a key', '!!str key', '&a !!str key', '!!str &a key'])(
+    'keeps the read-only YAML key %s in the foreground color',
+    async (key) => {
+      const theme = createTheme({ colors: { mode } });
+      const language = await loadLanguageExtension('yaml');
+      const editor = createEditor(theme, `${key}: value`, [language!, EditorState.readOnly.of(true)]);
+
+      try {
+        const spans = Array.from(editor.contentDOM.querySelectorAll('span'));
+        const keyElement = spans.find((span) => span.textContent === 'key');
+        const valueElement = spans.find((span) => span.textContent === 'value');
+
+        expect(keyElement).toHaveStyle({ color: theme.components.codeEditor.variable });
+        expect(valueElement).toHaveStyle({ color: theme.components.codeEditor.string });
+      } finally {
+        editor.destroy();
+        editor.dom.remove();
+      }
+    }
+  );
 
   it.each(['markdown', 'html', 'xml'] as const)('keeps %s prose in the normal foreground color', async (languageId) => {
     const theme = createTheme({ colors: { mode } });
