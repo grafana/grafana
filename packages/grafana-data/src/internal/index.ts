@@ -128,3 +128,4 @@ export { createFieldsOrdererAuto } from '../transformations/transformers/order';
 export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
 export { type ValueSetOptions } from '../transformations/matchers/valueMatchers/setMatchers';
 export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
+export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';

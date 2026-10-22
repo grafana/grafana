@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"slices"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -50,7 +49,7 @@ type Service struct {
 // building the router first keeps the dependency graph acyclic.
 func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 	var auth authn.TokenAuthenticator
-	if slices.Contains(cfg.Target, "router") {
+	if standaloneRouter(cfg) {
 		var err error
 		auth, err = authn.NewGrafanaTokenAuthenticator(cfg)
 		if err != nil {
@@ -93,8 +92,8 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 		next = http.NotFoundHandler()
 	}
 
-	// NOTE: this is not enabled when running as middleware, otherwise this could be internal to the router
-	if st, ok := s.router.loader.(LoaderWithSingleTenantFallback); ok && !s.middleware {
+	// The standalone router is never middleware, so the fallback always applies.
+	if st, ok := s.router.loader.(loaderWithSingleTenantFallback); ok {
 		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
 	}
 
@@ -128,13 +127,9 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		// API server, which has its own metrics; don't count them as the router's.
 		group := apiGroup(req.URL.Path)
 		if !s.router.owns(req, group) {
-			// Without a single-tenant fallback, which middleware mode doesn't
-			// set up, the router passes every request it doesn't own to next.
-			if s.router.unregisteredGroupHandler == nil {
-				next.ServeHTTP(w, req)
-				return
-			}
-			s.router.handle(w, req, next, group)
+			// Only the standalone router has a single-tenant fallback, and it
+			// never calls HandleFunc, so this passes the request on.
+			next.ServeHTTP(w, req)
 			return
 		}
 		s.metrics.instrument(s.router, w, req, next, group)

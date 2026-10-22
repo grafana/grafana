@@ -87,9 +87,6 @@ type IndexViewData struct {
 	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
 	LegacyFeatureToggleMode string
 
-	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
-	OFREPRootUrlEnabled bool
-
 	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
 	// matching <script type>.
 	ESModuleAssetsEnabled bool
@@ -187,7 +184,6 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
-	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -210,7 +206,6 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		BootScript:                            bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
 		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
-		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
 		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 
