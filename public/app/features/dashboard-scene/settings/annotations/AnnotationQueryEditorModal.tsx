@@ -13,6 +13,7 @@ import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';
 
 export function AnnotationQueryEditorModal({ layer, onClose }: { layer: AnnotationLayer; onClose: () => void }) {
+  const { query } = layer.useState();
   // The query editor applies changes live, they are recorded as a single change when the modal closes
   const committedQuery = useRef(layer.state.query);
 
@@ -55,7 +56,8 @@ export function AnnotationQueryEditorModal({ layer, onClose }: { layer: Annotati
           />
         </div>
         <div>
-          <AnnotationQueryEditor layer={layer} onQueryPrepared={onQueryPrepared} />
+          {/* A remount per data source keeps the previously loaded one from preparing the new query */}
+          <AnnotationQueryEditor key={query.datasource?.uid} layer={layer} onQueryPrepared={onQueryPrepared} />
         </div>
       </Stack>
       <Modal.ButtonRow>
