@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -9,15 +10,15 @@ import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { QueryCoauthoringFeedback } from './QueryCoauthoringFeedback';
 import {
   QueryCoauthoringClarificationAction,
+  QueryCoauthoringExplain,
   QueryCoauthoringFallback,
   QueryCoauthoringHeader,
   QueryCoauthoringIterationNudge,
-  QueryCoauthoringLiveStatus,
   QueryCoauthoringPromptInput,
   QueryCoauthoringProposal,
   QueryCoauthoringWorking,
 } from './QueryCoauthoringViews';
-import { selectionSummary } from './queryCoauthoringPrompts';
+import { useQueryCoauthoringGroup } from './useQueryCoauthoringGroup';
 import { useQueryCoauthoringSession, type QueryCoauthoringSessionOptions } from './useQueryCoauthoringSession';
 import { useQueryCoauthoringViewport } from './useQueryCoauthoringViewport';
 
@@ -30,9 +31,32 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   const promptMessageId = useId();
   const availableHeight = useQueryCoauthoringViewport(portalTarget);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mentionMenuRef = useRef<HTMLDivElement | null>(null);
   const session = useQueryCoauthoringSession(sessionOptions);
+  const group = useQueryCoauthoringGroup({
+    portalTarget,
+    containerRef,
+    isProposal: session.state.kind === 'proposal',
+    layout: session.groupLayout,
+    update: session.updateGroup,
+  });
+  const { dismissUntouched } = session;
   const focusState = session.state.kind;
   const previousFocusStateRef = useRef(focusState);
+
+  useEffect(() => {
+    const onOutsidePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !containerRef.current?.contains(event.target) &&
+        !mentionMenuRef.current?.contains(event.target)
+      ) {
+        dismissUntouched();
+      }
+    };
+    document.addEventListener('pointerdown', onOutsidePointerDown, true);
+    return () => document.removeEventListener('pointerdown', onOutsidePointerDown, true);
+  }, [dismissUntouched]);
 
   useEffect(() => {
     const previousFocusState = previousFocusStateRef.current;
@@ -72,10 +96,12 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       }
       event.preventDefault();
       event.stopPropagation();
-      if (session.feedback) {
+      if (session.mention) {
+        session.closeMention();
+      } else if (session.feedback) {
         session.closeFeedback();
       } else {
-        session.dismiss();
+        session.dismissUntouched();
       }
     },
     [session]
@@ -86,13 +112,71 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   return createPortal(
     <div
       ref={containerRef}
-      className={styles.container}
+      className={cx(
+        styles.container,
+        state.kind === 'proposal' && styles.proposalGroup,
+        session.groupLayout && styles.frozenGroup,
+        session.state.kind === 'proposal' && session.state.peekIndex !== undefined && styles.dimmed
+      )}
       role="dialog"
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
       tabIndex={-1}
       onKeyDownCapture={onKeyDownCapture}
-      style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
+      onPointerDown={group.start}
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) {
+          group.freeze();
+        }
+      }}
+      onTransitionEnd={(event) => {
+        if (event.target === event.currentTarget && event.propertyName === 'width') {
+          group.freeze();
+        }
+      }}
+      style={
+        session.groupLayout
+          ? {
+              position: 'fixed',
+              left: session.groupLayout.left,
+              top: session.groupLayout.top,
+              width: session.groupLayout.width,
+              maxHeight: Math.max(window.innerHeight - session.groupLayout.top - 8, 0),
+            }
+          : {
+              width: state.kind === 'proposal' ? group.restWidth : undefined,
+              maxHeight: availableHeight,
+            }
+      }
     >
+      {state.kind === 'proposal' && (
+        <>
+          <div className={styles.dragHandle} data-proposal-drag-handle aria-hidden>
+            <Icon name="draggabledots" />
+          </div>
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('query-editor-coauthoring.resize-left', 'Resize proposal from left')}
+            data-proposal-resize="left"
+            className={cx(
+              styles.resizeHandle,
+              styles.resizeLeft,
+              session.groupGesture?.kind === 'resize-left' && styles.resizeActive
+            )}
+          />
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('query-editor-coauthoring.resize-right', 'Resize proposal from right')}
+            data-proposal-resize="right"
+            className={cx(
+              styles.resizeHandle,
+              styles.resizeRight,
+              session.groupGesture?.kind === 'resize-right' && styles.resizeActive
+            )}
+          />
+        </>
+      )}
       {state.kind === 'assistant-loading' && (
         <QueryCoauthoringHeader onClose={session.dismiss} pulse>
           <Spinner size="sm" />
@@ -102,85 +186,54 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
         </QueryCoauthoringHeader>
       )}
       {state.kind === 'assistant-unavailable' && (
-        <>
-          <QueryCoauthoringHeader onClose={session.dismiss}>
-            <Text variant="bodySmall" weight="medium">
-              <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant is not available</Trans>
-            </Text>
-          </QueryCoauthoringHeader>
-          <Stack direction="column" gap={1}>
-            <Alert
-              severity="warning"
-              title={t('query-editor-coauthoring.assistant-unavailable', 'Assistant is not available')}
-            >
-              <Trans i18nKey="query-editor-coauthoring.assistant-unavailable-body">
-                Query coauthoring requires Grafana Assistant.
-              </Trans>
-            </Alert>
-            <Stack justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={session.dismiss}>
-                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-              </Button>
-            </Stack>
-          </Stack>
-        </>
+        <QueryCoauthoringHeader onClose={session.dismiss}>
+          <Text variant="bodySmall" weight="medium">
+            <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant unavailable</Trans>
+          </Text>
+        </QueryCoauthoringHeader>
       )}
       {state.kind === 'prompt' && (
         <>
-          <QueryCoauthoringHeader onClose={session.dismiss} pulse={!state.context || state.isIdentifying}>
-            {!state.context || state.isIdentifying ? (
-              <QueryCoauthoringLiveStatus>
-                <Icon name="ai-sparkle" size="sm" />
-                <Text variant="bodySmall" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.reading-highlighted-query">
-                    Reading highlighted query...
-                  </Trans>
-                </Text>
-              </QueryCoauthoringLiveStatus>
-            ) : state.clarification ? (
-              <Text variant="body" color="secondary">
-                <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
-              </Text>
-            ) : (
-              <Text variant="body" color="secondary">
-                <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
-              </Text>
-            )}
-          </QueryCoauthoringHeader>
-          {state.context && !state.isIdentifying && (
-            <div
-              className={styles.body}
-              data-testid={selectors.components.QueryEditorCoauthoring.container}
-              role="region"
-              aria-label={
-                state.clarification
-                  ? t('query-editor-coauthoring.clarification-message', 'Clarification message')
-                  : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
-              }
-            >
-              <Text id={promptMessageId} variant="body">
-                {state.clarification?.message ?? state.selectionExplanation ?? selectionSummary(state.context)}
-              </Text>
-            </div>
+          {/* Escape and outside clicks keep an engaged session open, so it needs a visible close action. */}
+          {!state.clarification && session.engaged && <QueryCoauthoringHeader onClose={session.dismiss} />}
+          {state.clarification && (
+            <>
+              <QueryCoauthoringHeader className={styles.explanationHeader} onClose={session.dismiss}>
+                <div className={styles.headerCopy}>
+                  <Text variant="body" color="secondary">
+                    <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
+                  </Text>
+                  <div
+                    data-testid={selectors.components.QueryEditorCoauthoring.container}
+                    role="region"
+                    aria-label={t('query-editor-coauthoring.clarification-message', 'Clarification message')}
+                  >
+                    <Text id={promptMessageId} variant="body">
+                      {state.clarification.message}
+                    </Text>
+                  </div>
+                </div>
+              </QueryCoauthoringHeader>
+            </>
           )}
           <QueryCoauthoringPromptInput
-            key={state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}
-            focusTrigger={`${state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}-${
-              state.selectionExplanation ? 'identified' : 'reading'
+            key={state.clarification ? `clarification-${state.submittedModifyCount}` : 'initial'}
+            focusTrigger={`${state.clarification ? `clarification-${state.submittedModifyCount}` : 'initial'}-${
+              state.context ? 'ready' : 'reading'
             }`}
             userGestureRef={state.promptUserGestureRef}
             value={state.intent}
             placeholder={
               state.clarification
-                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
-                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
+                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail…')
+                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change…')
             }
             ariaLabel={
               state.clarification
                 ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
                 : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
             }
-            ariaDescribedBy={state.context && !state.isIdentifying ? promptMessageId : undefined}
+            ariaDescribedBy={state.clarification ? promptMessageId : undefined}
             actionLabel={
               state.clarification
                 ? t('query-editor-coauthoring.continue', 'Continue')
@@ -189,33 +242,52 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             disabled={!state.intent.trim() || !state.context}
             onChange={state.setIntent}
             onSubmit={state.submit}
+            mention={session.mention}
+            mentionMenuRef={mentionMenuRef}
+            cursorPosition={session.cursorPosition}
+            onCaretChange={session.setCaret}
           />
+          {!state.clarification && (
+            <div className={styles.menuActions}>
+              <button type="button" className={styles.menuAction} disabled={!state.context} onClick={state.explain}>
+                <Icon name="question-circle" size="sm" />
+                <Trans i18nKey="query-editor-coauthoring.explain-query">Explain this query</Trans>
+              </button>
+            </div>
+          )}
           {state.clarification && <QueryCoauthoringClarificationAction onContinue={state.continueInAssistant} />}
         </>
       )}
-      {state.kind === 'working' && <QueryCoauthoringWorking context={state.context} onStop={state.stop} />}
+      {state.kind === 'explain' && (
+        <QueryCoauthoringExplain
+          answer={state.answer}
+          intent={state.intent}
+          onIntentChange={state.setIntent}
+          onFollowUp={state.submitFollowUp}
+          onModify={state.modify}
+          onClose={session.dismiss}
+          mention={session.mention}
+          mentionMenuRef={mentionMenuRef}
+          cursorPosition={session.cursorPosition}
+          onCaretChange={session.setCaret}
+        />
+      )}
+      {state.kind === 'working' && (
+        <QueryCoauthoringWorking context={state.context} mode={state.mode} onStop={state.stop} />
+      )}
       {state.kind === 'context-error' && (
-        <>
+        <div className={styles.contextError} role="alert">
           <QueryCoauthoringHeader onClose={session.dismiss}>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.context-error">Could not read the selected query context</Trans>
-            </Text>
+            <div className={styles.headerCopy}>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.context-error">Context failed to load</Trans>
+              </Text>
+            </div>
+            <Button size="sm" variant="secondary" onClick={state.retry}>
+              <Trans i18nKey="query-editor-coauthoring.retry-context">Retry</Trans>
+            </Button>
           </QueryCoauthoringHeader>
-          <Stack direction="column" gap={1}>
-            <Alert
-              severity="error"
-              title={t('query-editor-coauthoring.context-error', 'Could not read the selected query context')}
-            />
-            <Stack gap={1} justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={session.dismiss}>
-                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-              </Button>
-              <Button size="sm" variant="secondary" onClick={state.retry}>
-                <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
-              </Button>
-            </Stack>
-          </Stack>
-        </>
+        </div>
       )}
       {state.kind === 'error' && (
         <>
@@ -255,9 +327,20 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {state.kind === 'proposal' && (
         <QueryCoauthoringProposal
-          why={state.proposal.why}
-          changes={state.proposal.prepared.changes}
+          width={session.groupLayout?.width ?? group.restWidth}
+          why={state.proposal.options[state.proposal.selectedIndex]?.why ?? []}
+          baseline={state.proposal.context.query}
+          diff={state.proposal.options[state.proposal.selectedIndex]?.diff ?? []}
+          unconfirmedValues={state.proposal.options[state.proposal.selectedIndex]?.unconfirmedValues}
+          optionCount={state.proposal.options.length}
+          optionTitles={state.proposal.options.map((option) => option.title)}
+          peeking={state.peekIndex !== undefined}
+          selectedIndex={state.proposal.selectedIndex}
+          onSelect={state.selectOption}
+          onPeek={state.peek}
+          onStopPeek={state.stopPeek}
           isPreviewRunning={state.isPreviewRunning}
+          previewOutcome={state.previewOutcome}
           onFeedback={state.setFeedback}
           onClose={session.dismiss}
           onContinue={state.continueInAssistant}
@@ -266,6 +349,6 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {session.feedback && <QueryCoauthoringFeedback feedback={session.feedback} onClose={session.closeFeedback} />}
     </div>,
-    portalTarget
+    group.surfaceTarget
   );
 }

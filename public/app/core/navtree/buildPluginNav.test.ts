@@ -1,9 +1,13 @@
 import { type AppPluginConfig, type NavModelItem, PluginIncludeType } from '@grafana/data';
-import { getAppPluginMetas, invalidateCachedPromisesCache, clearAppPluginMetas } from '@grafana/runtime/internal';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
+import { clearAppPluginMetas, getAppPluginMetas, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { mockPluginMeta, setMockPluginMetas, type MockPluginMeta } from '@grafana/test-utils/unstable';
 
+import * as appNavConfig from './appNavConfig';
 import { buildNavTree } from './buildNavTree';
+import { applyPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
 import {
   appPage as page,
@@ -138,6 +142,244 @@ describe('applyPluginNav', () => {
         'broken-app',
         expect.any(Error)
       );
+    });
+
+    // The lifted page is written before the app is placed, so a throw in between
+    // must not leave the page in a tree the app itself never reached
+    it('leaves no trace of an app that throws after its pages are lifted', () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      // buildAppLink reads the config first, to lift the page; the throw has to
+      // come after that, where the app itself is placed
+      let assistantLookups = 0;
+      jest.spyOn(appNavConfig, 'appNavConfigFor').mockImplementation((appId) => {
+        if (appId === 'grafana-assistant-app' && assistantLookups++ > 0) {
+          throw new Error('boom');
+        }
+        return undefined;
+      });
+
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages'),
+        ]),
+        app('good-app', 'Good app', [page('Page', '/a/good-app/page')])
+      );
+
+      expect(findById(merged, 'standalone-plugin-page-/a/grafana-assistant-app/pages')).toBeUndefined();
+      expect(findById(merged, 'plugin-page-grafana-assistant-app')).toBeUndefined();
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-good-app']);
+    });
+  });
+
+  describe('configured sections', () => {
+    it('creates the Alerts & IRM section and nests core alerting inside it', () => {
+      setup({ permissions: ['alert.rules:read'] });
+
+      const merged = merge(app('grafana-irm-app', 'Grafana IRM', [page('IRM', '/a/grafana-irm-app/home')]));
+
+      const section = findById(merged, NavID.alertsAndIncidents);
+      expect(ids(section?.children ?? [])).toEqual([NavID.alerting, 'plugin-page-grafana-irm-app']);
+      expect(findById(section?.children ?? [], NavID.alerting)?.sortWeight).toBe(2);
+      expect(merged.find((node) => node.id === NavID.alerting)).toBeUndefined();
+      // IRM keeps its section-map text override
+      expect(findById(merged, 'plugin-page-grafana-irm-app')?.text).toBe('IRM');
+    });
+
+    // The absorb only happens on the creation path, so a section that already
+    // exists leaves core Alerting where it is
+    it('leaves core alerting alone when the section already exists', () => {
+      setup({ permissions: ['alert.rules:read'] });
+      const existing: NavModelItem[] = [
+        { id: NavID.alerting, text: 'Alerting', url: '/alerting' },
+        { id: NavID.alertsAndIncidents, text: 'Alerts & IRM', url: '/alerts-and-incidents', children: [] },
+      ];
+
+      const merged = applyPluginNav(existing, [
+        app('grafana-irm-app', 'Grafana IRM', [page('IRM', '/a/grafana-irm-app/home')]),
+      ]);
+
+      expect(ids(findById(merged, NavID.alertsAndIncidents)?.children ?? [])).toEqual(['plugin-page-grafana-irm-app']);
+      expect(merged.find((node) => node.id === NavID.alerting)).toBeDefined();
+    });
+
+    it('places section-mapped apps and sorts them by their configured weight', () => {
+      const merged = merge(
+        app('grafana-k8s-app', 'Kubernetes App', [page('Clusters', '/a/grafana-k8s-app/clusters')]),
+        app('grafana-sigil-app', 'Sigil', [page('AI', '/a/grafana-sigil-app/home')])
+      );
+
+      const observability = findById(merged, NavID.observability);
+      expect(ids(observability?.children ?? [])).toEqual([
+        'plugin-page-grafana-sigil-app',
+        'plugin-page-grafana-k8s-app',
+      ]);
+      expect(findById(merged, 'plugin-page-grafana-k8s-app')?.text).toBe('Kubernetes');
+    });
+
+    it('takes the Adaptive Telemetry section image from the first member app to attach', () => {
+      const merged = merge(
+        app('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+          page('Recommendations', '/a/grafana-adaptive-metrics-app/recommendations'),
+        ])
+      );
+
+      expect(findById(merged, NavID.adaptiveTelemetry)?.img).toBe('/plugins/grafana-adaptive-metrics-app/large.svg');
+    });
+
+    // Only root-relative logos take the sub url. The metas mapper leaves a local
+    // logo relative (the index page's <base href> resolves it) and a CDN one
+    // absolute, and prefixing either would corrupt it.
+    it('leaves a logo that is not root-relative alone under an app sub url', () => {
+      setup({ config: { appSubUrl: '/grafana' } });
+      const large = 'public/plugins/grafana-adaptive-metrics-app/large.svg';
+
+      const merged = merge(
+        app(
+          'grafana-adaptive-metrics-app',
+          'Adaptive Metrics',
+          [page('Recommendations', '/a/grafana-adaptive-metrics-app/recommendations')],
+          { info: { logos: { small: large, large }, description: 'Adaptive Metrics' } }
+        )
+      );
+
+      expect(findById(merged, NavID.adaptiveTelemetry)?.img).toBe(large);
+    });
+
+    // applyAppSubUrl rewrites url but not img, so the section image is prefixed
+    // by hand — which means it must not be prefixed twice
+    it('prefixes the section image with the app sub url exactly once', () => {
+      setup({ config: { appSubUrl: '/grafana' } });
+
+      const merged = merge(
+        app('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+          page('Recommendations', '/a/grafana-adaptive-metrics-app/recommendations'),
+        ])
+      );
+
+      expect(findById(merged, NavID.adaptiveTelemetry)?.img).toBe(
+        '/grafana/plugins/grafana-adaptive-metrics-app/large.svg'
+      );
+    });
+
+    // The auth app's only page carries its own placement, so the page is lifted
+    // into Users and access and the app itself leaves the tree entirely
+    it('lifts a configured page out of its app and into the named section', () => {
+      const merged = merge(
+        app('grafana-auth-app', 'Cloud access policies', [page('Access policies', '/a/grafana-auth-app')])
+      );
+
+      const access = findById(merged, NavID.cfgAccess);
+      expect(ids(access?.children ?? [])).toEqual(['standalone-plugin-page-/a/grafana-auth-app']);
+
+      const authPage = findById(merged, 'standalone-plugin-page-/a/grafana-auth-app');
+      expect(authPage?.text).toBe('Access policies');
+      expect(authPage?.sortWeight).toBe(2);
+      expect(authPage?.subTitle).toContain('Use policies to control automated access');
+
+      // the app is placed by its page alone, so it has no entry of its own
+      expect(findById(merged, 'plugin-page-grafana-auth-app')).toBeUndefined();
+      expect(moreApps(merged)).toBeUndefined();
+    });
+
+    it('lifts a configured page to the top level when it names root', () => {
+      // the assistant's own include filter hides /pages on OSS deployments
+      const namespace = config.namespace;
+      config.namespace = 'stacks-123';
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages'),
+        ])
+      );
+      config.namespace = namespace;
+
+      const pagesEntry = findById(merged, 'standalone-plugin-page-/a/grafana-assistant-app/pages');
+      expect(ids(merged)).toContain('standalone-plugin-page-/a/grafana-assistant-app/pages');
+      expect(pagesEntry?.icon).toBe('pages');
+      expect(pagesEntry?.isNew).toBe(true);
+
+      // and it is no longer one of the app's own children
+      expect(childTexts(merged, 'grafana-assistant-app')).not.toContain('Pages');
+    });
+
+    it('drops that app when its page fails the include access check', () => {
+      setup({ orgRole: 'Viewer' });
+      const merged = merge(
+        app('grafana-auth-app', 'Cloud access policies', [
+          page('Access policies', '/a/grafana-auth-app', { role: 'Admin' }),
+        ])
+      );
+
+      // Asserting on the section, not on the app node: that is absent either way,
+      // since this app is placed by its page alone
+      expect(findById(merged, NavID.cfgAccess)?.children ?? []).toHaveLength(0);
+    });
+
+    // The placement comes from APP_NAV_PATH_CONFIG, not from the plugin, so it
+    // applies whatever the include says about addToNav
+    it("lifts a configured page that is not in the plugin's own nav", () => {
+      const merged = merge(
+        app('grafana-auth-app', 'Cloud access policies', [
+          page('Access policies', '/a/grafana-auth-app', { addToNav: false }),
+        ])
+      );
+
+      expect(ids(findById(merged, NavID.cfgAccess)?.children ?? [])).toEqual([
+        'standalone-plugin-page-/a/grafana-auth-app',
+      ]);
+    });
+
+    it('places the advisor app under Administration', () => {
+      const merged = merge(app('grafana-advisor-app', 'Advisor', [page('Advisor', '/a/grafana-advisor-app/home')]));
+
+      const cfg = findById(merged, NavID.cfg);
+      expect(findById(cfg?.children ?? [], 'plugin-page-grafana-advisor-app')?.text).toBe('Advisor');
+    });
+  });
+
+  describe('assistant deployment-mode filtering', () => {
+    let buildInfo: typeof config.buildInfo;
+    let namespace: typeof config.namespace;
+
+    beforeEach(() => {
+      buildInfo = config.buildInfo;
+      namespace = config.namespace;
+    });
+
+    afterEach(() => {
+      config.buildInfo = buildInfo;
+      config.namespace = namespace;
+    });
+
+    it('limits assistant pages to the core set on OSS deployments', () => {
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.OpenSource };
+      config.namespace = 'default';
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Workspace', '/a/grafana-assistant-app/workspace'),
+          page('Settings', '/a/grafana-assistant-app/settings'),
+          page('Investigations', '/a/grafana-assistant-app/investigations'),
+        ])
+      );
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Workspace', 'Settings']);
+    });
+
+    it('shows every assistant page on cloud stacks', () => {
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.OpenSource };
+      config.namespace = 'stacks-123';
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Investigations', '/a/grafana-assistant-app/investigations'),
+        ])
+      );
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Investigations']);
     });
   });
 

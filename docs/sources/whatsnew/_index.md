@@ -1,5 +1,6 @@
 ---
 aliases:
+  - breaking-changes/
   - guides/
   - guides/whats-new-in-v2-1/
   - guides/whats-new-in-v2-5/
@@ -193,42 +194,42 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 13
 
-- [What's new in 13.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13-2)
-- [What's new in 13.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13-1)
-- [What's new in 13.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13-0)
+- [What's new in 13.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13/whats-new-in-v13-2)
+- [What's new in 13.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13/whats-new-in-v13-1)
+- [What's new in 13.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13/whats-new-in-v13-0)
 
 ## Grafana 12
 
-- [What's new in 12.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-4)
-- [What's new in 12.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-3)
-- [What's new in 12.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-2)
-- [What's new in 12.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-1)
-- [What's new in 12.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-0)
+- [What's new in 12.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12/whats-new-in-v12-4)
+- [What's new in 12.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12/whats-new-in-v12-3)
+- [What's new in 12.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12/whats-new-in-v12-2)
+- [What's new in 12.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12/whats-new-in-v12-1)
+- [What's new in 12.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12/whats-new-in-v12-0)
 
 ## Grafana 11
 
-- [What's new in 11.6](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-6)
-- [What's new in 11.5](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-5/)
-- [What's new in 11.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-4/)
-- [What's new in 11.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-3/)
-- [What's new in 11.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-2/)
-- [What's new in 11.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-1/)
-- [What's new in 11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/)
+- [What's new in 11.6](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-6)
+- [What's new in 11.5](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-5/)
+- [What's new in 11.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-4/)
+- [What's new in 11.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-3/)
+- [What's new in 11.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-2/)
+- [What's new in 11.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-1/)
+- [What's new in 11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11/whats-new-in-v11-0/)
 
 ## Grafana 10
 
-- [What's new in 10.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-4/)
-- [What's new in 10.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-3/)
-- [What's new in 10.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-2/)
-- [What's new in 10.1](whats-new-in-v10-1/)
-- [What's new in 10.0](whats-new-in-v10-0/)
+- [What's new in 10.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10/whats-new-in-v10-4/)
+- [What's new in 10.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10/whats-new-in-v10-3/)
+- [What's new in 10.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10/whats-new-in-v10-2/)
+- [What's new in 10.1](whats-new-in-v10/whats-new-in-v10-1/)
+- [What's new in 10.0](whats-new-in-v10/whats-new-in-v10-0/)
 
 ## Grafana 9
 
-- [What's new in 9.5](whats-new-in-v9-5/)
-- [What's new in 9.4](whats-new-in-v9-4/)
-- [What's new in 9.3](whats-new-in-v9-3/)
-- [What's new in 9.2](whats-new-in-v9-2/)
+- [What's new in 9.5](whats-new-in-v9/whats-new-in-v9-5/)
+- [What's new in 9.4](whats-new-in-v9/whats-new-in-v9-4/)
+- [What's new in 9.3](whats-new-in-v9/whats-new-in-v9-3/)
+- [What's new in 9.2](whats-new-in-v9/whats-new-in-v9-2/)
 - [What's new in 9.1](whats-new-in-v9-1/)
 - [What's new in 9.0](whats-new-in-v9-0/)
 
