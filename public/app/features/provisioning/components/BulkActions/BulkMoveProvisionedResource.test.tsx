@@ -131,6 +131,7 @@ function setup(repository: RepositoryView | null, job: Job = successJob()) {
   };
 
   const onDismiss = jest.fn();
+  const onJobCreated = jest.fn();
   const posted = mockMoveJob(job);
 
   mockUseGetResourceRepositoryView.mockReturnValue({
@@ -150,11 +151,17 @@ function setup(repository: RepositoryView | null, job: Job = successJob()) {
   });
 
   const renderResult = render(
-    <BulkMoveProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
+    <BulkMoveProvisionedResource
+      folderUid="test-folder"
+      selectedItems={selectedItems}
+      onDismiss={onDismiss}
+      onJobCreated={onJobCreated}
+    />
   );
 
   return {
     onDismiss,
+    onJobCreated,
     posted,
     selectedItems,
     defaultRepository,
@@ -217,7 +224,7 @@ describe('BulkMoveProvisionedResource', () => {
   });
 
   it('posts the selected resources as a move job and shows its outcome', async () => {
-    const { user, posted, defaultRepository } = setup(null);
+    const { user, posted, defaultRepository, onJobCreated } = setup(null);
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
@@ -239,11 +246,12 @@ describe('BulkMoveProvisionedResource', () => {
     );
 
     expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(onJobCreated).toHaveBeenCalledTimes(1);
   });
 
   it('handles move errors', async () => {
     const mockPublish = jest.fn();
-    const { user } = setup(null);
+    const { user, onJobCreated } = setup(null);
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, () =>
         HttpResponse.json({ message: 'Network error' }, { status: 500 })
@@ -265,6 +273,7 @@ describe('BulkMoveProvisionedResource', () => {
     });
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Move/i })).toBeInTheDocument();
+    expect(onJobCreated).not.toHaveBeenCalled();
   });
 
   it('shows the job progress in place of the form while it runs', async () => {
