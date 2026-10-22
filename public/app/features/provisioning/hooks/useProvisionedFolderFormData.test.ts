@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type RepositoryViewData, RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
