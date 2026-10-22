@@ -7,7 +7,7 @@ manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 
 This file holds the current rules. For the reasoning and history behind them, see `specs/`,
 especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
-`specs/2026-10-10-router-review-plan.md`.
+`specs/2026-10-23-router-review-plan.md`.
 
 ## Rules
 
@@ -413,4 +413,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 - `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
-- `specs/2026-10-10-router-review-plan.md`: open work.
+- `specs/2026-10-23-router-review-plan.md`: open work.
