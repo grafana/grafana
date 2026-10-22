@@ -55,7 +55,14 @@ module.exports = createNoRestrictedSyntax(
     name: 'no-config-datasources',
     selector: 'MemberExpression[object.name="config"][property.name="datasources"]',
     message:
-      'Usage of config.datasources is not allowed. Use getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from @grafana/runtime/unstable instead',
+      'Usage of config.datasources is not allowed. Use getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from @grafana/runtime instead',
+  },
+  {
+    name: 'no-config-feature-toggles',
+    // Matches on the property rather than `object.name="config"` because the receiver is not always
+    // called config - aliased imports and namespace imports reach the same map.
+    selector: 'MemberExpression[property.name="featureToggles"]',
+    message: 'Usage of legacy config.featureToggles is no longer allowed. Use OpenFeature feature flags instead.',
   },
   {
     name: 'no-direct-date-fns',
@@ -87,6 +94,6 @@ module.exports = createNoRestrictedSyntax(
       'Program:has(ImportDeclaration[source.value="@grafana/runtime"] > ImportDefaultSpecifier, ImportDeclaration[source.value="@grafana/runtime"] > ImportNamespaceSpecifier) MemberExpression[property.name="getDataSourceSrv"]',
     ].join(', '),
     message:
-      'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
+      'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
   }
 );

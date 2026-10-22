@@ -13,26 +13,30 @@ const (
 
 	// KindSearchQuery and friends are the envelope kinds carried in the
 	// request/response TypeMeta. Each endpoint accepts one request kind and
-	// rejects the other.
-	KindSearchQuery   = "SearchQuery"
-	KindSearchResults = "SearchResults"
-	KindTrashQuery    = "TrashQuery"
-	KindTrashResults  = "TrashResults"
+	// rejects the others.
+	KindSearchQuery         = "SearchQuery"
+	KindSearchResults       = "SearchResults"
+	KindGlobalSearchResults = "GlobalSearchResults"
+	KindTrashQuery          = "TrashQuery"
+	KindTrashResults        = "TrashResults"
+	KindHybridSearchQuery   = "HybridSearchQuery"
+	KindHybridSearchResults = "HybridSearchResults"
 
 	// Here rather than beside the routes because the authorization chain needs
 	// them and cannot depend on the handler package.
-	SearchPathSegment = "search"
-	TrashPathSegment  = "trash"
+	SearchPathSegment       = "search"
+	TrashPathSegment        = "trash"
+	HybridSearchPathSegment = "hybrid"
 )
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
 // the set field names the node's type. Combinators (and/or/not) compose other
-// nodes, leaves (text/filter/range/exists) are terminal predicates.
+// nodes, leaves (text/filter/range/regex/exists) are terminal predicates.
 //
 // All node types are modelled so the schema is future-proof, but v1 only
 // accepts a narrow subset (top-level single leaf or a single and of leaves;
-// text, filter and range leaves; In/NotIn/All filter operators). Everything else is
-// rejected with 422 Unprocessable Entity by the validation layer. exists is
+// text, filter, range and regex leaves; In/NotIn/All filter operators). Everything
+// else is rejected with 422 Unprocessable Entity by the validation layer. exists is
 // sketched for a future version and always rejected today.
 //
 // +k8s:deepcopy-gen=true
@@ -46,6 +50,7 @@ type WhereNode struct {
 	Text   *TextPredicate   `json:"text,omitempty"`
 	Filter *FilterPredicate `json:"filter,omitempty"`
 	Range  *RangePredicate  `json:"range,omitempty"`
+	Regex  *RegexPredicate  `json:"regex,omitempty"`
 	Exists *ExistsPredicate `json:"exists,omitempty"` // future, rejected in v1
 }
 
@@ -97,6 +102,25 @@ type RangePredicate struct {
 	LTE   *float64 `json:"lte,omitempty"`
 }
 
+// RegexPredicate matches a single field against a regular expression, one
+// pattern per leaf the way a single Prometheus matcher works. Negate turns the
+// leaf from =~ into !~.
+//
+// Matching is against the whole indexed term and is case-sensitive, so it is
+// restricted to filterable keyword string fields that keep their original case.
+// The pattern is a portable RE2 subset: literals, character classes, grouping,
+// alternation, and greedy repetition. The backend is the source of truth for
+// what the subset admits; it rejects unsupported syntax, fields that do not
+// preserve case, and patterns that expand to too many terms with a 400.
+//
+// +k8s:deepcopy-gen=true
+type RegexPredicate struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	// Negate inverts the match: the field must not match the pattern.
+	Negate bool `json:"negate,omitempty"`
+}
+
 // ExistsPredicate is a future field-existence predicate. Modelled for schema
 // stability; always rejected in v1.
 //
@@ -115,15 +139,18 @@ type SortField struct {
 	Direction string `json:"direction,omitempty"`
 }
 
-// SearchQuery is the request body for POST .../{resource}/search.
+// SearchQuery is the request body for POST .../{resource}/search, which searches
+// one kind, and for POST .../namespaces/{namespace}/global/search, which
+// searches several resource types at once.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SearchQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Where is the search predicate tree. Omitting it matches all resources of
-	// the kind (subject to labelSelector and per-item authz).
+	// Where is the search predicate tree. Omitting it matches everything the
+	// endpoint searches: all resources of the kind, or of every type the global
+	// search covers (subject to labelSelector and per-item authz).
 	Where *WhereNode `json:"where,omitempty"`
 
 	// LabelSelector filters on metadata.labels, ANDed with Where.
@@ -180,6 +207,37 @@ type SearchResults struct {
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
 }
 
+// GlobalSearchResults is the response body for POST
+// .../namespaces/{namespace}/global/search. Each item names its own resource
+// type.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Metadata GlobalResultsMetadata `json:"metadata"`
+	Items    []ResultItem          `json:"items"`
+
+	// Facets holds term counts per requested facet field. Counts are computed
+	// over a bounded sample window, so they are best-effort/approximate.
+	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalResultsMetadata carries the pagination token, the total hit count, and
+// the types the search left out.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultsMetadata struct {
+	ResultsMetadata `json:",inline"`
+
+	// SkippedTypes lists the types, as {group}/{resource}, that the search left
+	// out, so the results are incomplete. A type is left out when the calling
+	// service may not search it on the user's behalf, or when this deployment
+	// does not check its results against the user. Both are deployment problems.
+	SkippedTypes []string `json:"skippedTypes,omitempty"`
+}
+
 // TrashResults is the response body for POST .../{resource}/trash. It has the
 // same item shape as SearchResults but never carries facets.
 //
@@ -204,6 +262,9 @@ const (
 	// than or equal to it. The server falls back to this when counting exactly
 	// would be too expensive.
 	TotalHitsAtMost TotalHitsRelation = "lte"
+
+	// TotalHitsUnknown means no count is available; TotalHits is a zero placeholder.
+	TotalHitsUnknown TotalHitsRelation = "unknown"
 )
 
 // ResultsMetadata carries the pagination token and the total hit count.
@@ -213,11 +274,12 @@ type ResultsMetadata struct {
 	Continue string `json:"continue,omitempty"`
 
 	// TotalHits counts the resources matching the query. Always read it together
-	// with TotalHitsRelation, which says whether the count is exact.
+	// with TotalHitsRelation. When the relation is "unknown", this is a zero
+	// placeholder that must not be interpreted as a count.
 	TotalHits int64 `json:"totalHits"`
 
 	// TotalHitsRelation is "eq" when TotalHits is exact and "lte" when it is an
-	// upper bound.
+	// upper bound. "unknown" means no count is available and TotalHits must be ignored.
 	TotalHitsRelation TotalHitsRelation `json:"totalHitsRelation"`
 }
 

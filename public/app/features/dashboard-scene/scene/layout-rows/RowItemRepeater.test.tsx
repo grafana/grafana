@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { locationService, setPluginImportUtils } from '@grafana/runtime';
+import { locationService, setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -19,6 +19,7 @@ import {
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
+import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -38,6 +39,8 @@ setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 describe('RowItemRepeater', () => {
   beforeEach(() => {
@@ -126,6 +129,24 @@ describe('RowItemRepeater', () => {
       expect(screen.queryByText('Row C')).not.toBeInTheDocument();
       expect(rowToRepeat.state.$variables).toBe(undefined);
       expect(rowToRepeat.state.repeatedRows).toBe(undefined);
+      expect(rowToRepeat.state.repeatByVariable).toBe(undefined);
+    });
+
+    it('keeps row repeats and local variables cleared when an edit event follows disabling', async () => {
+      const { rowToRepeat } = renderScene({ variableQueryTime: 0 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Row C')).toBeInTheDocument();
+      });
+
+      act(() => {
+        rowToRepeat.onChangeRepeat(undefined);
+        rowToRepeat.publishEvent(new DashboardStateChangedEvent({ source: rowToRepeat }), true);
+      });
+
+      expect(screen.queryByText('Row C')).not.toBeInTheDocument();
+      expect(rowToRepeat.state.$variables?.state.variables.map((variable) => variable.state.name) ?? []).toEqual([]);
+      expect(rowToRepeat.state.repeatedRows?.length ?? 0).toBe(0);
       expect(rowToRepeat.state.repeatByVariable).toBe(undefined);
     });
 

@@ -1,3 +1,4 @@
+import { autoUpdate } from '@floating-ui/react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -10,6 +11,23 @@ import { Modal } from '../Modal/Modal';
 import { Combobox } from './Combobox';
 import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
+
+let mockSizeApply: ((args: { availableWidth: number; availableHeight: number }) => void) | undefined;
+
+jest.mock('@floating-ui/react', () => {
+  const actual = jest.requireActual('@floating-ui/react');
+
+  return {
+    ...actual,
+    autoUpdate: jest.fn((...args) => actual.autoUpdate(...args)),
+    size: jest.fn((options) => {
+      mockSizeApply = options.apply;
+      return actual.size(options);
+    }),
+  };
+});
+
+const mockAutoUpdate = jest.mocked(autoUpdate);
 
 // Mock data for the Combobox options
 const options: ComboboxOption[] = [
@@ -53,11 +71,57 @@ describe('Combobox', () => {
 
   afterEach(() => {
     onChangeHandler.mockReset();
+    mockAutoUpdate.mockReset();
   });
 
   it('renders without error', () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('does not observe floating element changes while hidden in collapsed details', () => {
+    const renderCombobox = () => (
+      <details>
+        <summary>Options</summary>
+        <Combobox options={options} value={null} onChange={onChangeHandler} />
+      </details>
+    );
+    const { rerender } = render(renderCombobox());
+
+    rerender(renderCombobox());
+
+    expect(mockAutoUpdate).not.toHaveBeenCalled();
+  });
+
+  it('observes floating element changes while the menu is open', async () => {
+    render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+    await user.click(screen.getByRole('combobox'));
+
+    await waitFor(() => {
+      expect(mockAutoUpdate).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not update its input for an unchanged floating size measurement', () => {
+    const removeAttribute = jest.spyOn(HTMLInputElement.prototype, 'removeAttribute');
+    render(<Combobox options={[]} value={null} onChange={onChangeHandler} aria-label="Options" />);
+
+    expect(screen.getByRole('combobox', { name: 'Options', hidden: true })).toBeInTheDocument();
+
+    act(() => {
+      mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
+    });
+    removeAttribute.mockClear();
+
+    act(() => {
+      mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
+    });
+
+    // React does `element.name = ""` + `element.removeAttribute('name')` when updating the input
+    // causing the DOM node to be updated without any visible attribute change
+    expect(removeAttribute).not.toHaveBeenCalledWith('name');
+    removeAttribute.mockRestore();
   });
 
   it('should allow selecting a value by clicking directly', async () => {
@@ -448,6 +512,68 @@ describe('Combobox', () => {
 
     // Assume that most apis only return with the value
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
+
+    it('loads async options when mounted with controlled isOpen', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(
+        <React.StrictMode>
+          <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />
+        </React.StrictMode>
+      );
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('loads async options once when opening a controlled Combobox', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+
+      function ControlledCombobox() {
+        const [isOpen, setIsOpen] = React.useState(false);
+        return (
+          <Combobox
+            options={asyncOptions}
+            value={null}
+            onChange={onChangeHandler}
+            isOpen={isOpen}
+            onIsOpenChange={setIsOpen}
+          />
+        );
+      }
+
+      render(<ControlledCombobox />);
+      await user.click(screen.getByRole('combobox'));
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('preserves the search when opening a controlled Combobox is delayed', async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        Promise.resolve(searchTerm === 'O' ? [{ value: 'Only match' }] : [{ value: 'Unfiltered option' }])
+      );
+
+      const { rerender } = render(
+        <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen={false} />
+      );
+      const input = screen.getByRole('combobox');
+      await user.type(input, 'O');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      rerender(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(input).toHaveValue('O');
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('O');
+      expect(screen.getByRole('option', { name: 'Only match' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Unfiltered option' })).not.toBeInTheDocument();
+    });
 
     it('should allow async options', async () => {
       const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));

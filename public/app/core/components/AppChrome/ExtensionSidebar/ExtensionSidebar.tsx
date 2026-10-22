@@ -1,23 +1,28 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { css as cssReact, Global } from '@emotion/react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
-import { getComponentMetaFromComponentId, useExtensionSidebarContext } from './ExtensionSidebarProvider';
-
-export const MIN_EXTENSION_SIDEBAR_WIDTH = 460;
-export const MAX_EXTENSION_SIDEBAR_WIDTH = Math.floor(window.innerWidth * (2 / 3));
-export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = MIN_EXTENSION_SIDEBAR_WIDTH;
+import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { type ExtensionSidebarPresentation } from './extensionSidebarLayout';
+import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
+import { FLOATING_DRAG_HANDLE_ATTRIBUTE, FLOATING_SNAP_DURATION_MS, useFloatingDrag } from './useFloatingDrag';
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;
+  extensionSidebarPresentation?: ExtensionSidebarPresentation;
 };
 
 export function ExtensionSidebar() {
-  const styles = getStyles(useTheme2());
-  const { dockedComponentId, props = {} } = useExtensionSidebarContext();
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const { dockedComponentId, presentation, props = {} } = useExtensionSidebarContext();
+  const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
+  const floating = presentation === 'floating';
+  useFloatingDrag(floating ? wrapper : null);
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
@@ -40,14 +45,15 @@ export function ExtensionSidebar() {
   }
 
   return (
-    <div className={styles.sidebarWrapper}>
+    <div ref={setWrapper} className={cx(styles.sidebarWrapper, floating && styles.sidebarWrapperFloating)}>
       <div className={styles.content}>
         {/* When the sidebar is open, we don't want the body to scroll */}
         {/* Need type assertion here due to the use of !important */}
         {/* see https://github.com/frenic/csstype/issues/114#issuecomment-697201978 */}
         {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
         <Global styles={[cssReact({ body: { overflowY: 'unset !important' as 'unset' } })]} />
-        <ExtensionComponent {...props} />
+        {/* The presentation is a prop, not a key: changing it re-renders the same instance. */}
+        <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
       </div>
     </div>
   );
@@ -85,6 +91,34 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       }
     ),
+    // The extension draws the floating surface itself; core adds no background, border or shadow.
+    sidebarWrapperFloating: css({
+      // The container around it ignores the pointer, so only the sidebar itself takes clicks where it is.
+      pointerEvents: 'auto',
+      [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
+      [`&[data-dragging], &[data-dragging] [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grabbing' },
+      // Only the glide to a snap point after a drag animates; the drag itself follows the pointer.
+      [theme.transitions.handleMotion('no-preference')]: {
+        '&[data-snapping]': {
+          transition: theme.transitions.create('transform', {
+            duration: FLOATING_SNAP_DURATION_MS,
+            easing: theme.transitions.easing.easeOut,
+          }),
+        },
+      },
+      backgroundColor: 'transparent',
+      border: 'none',
+      borderRadius: 'unset',
+      height: 'auto',
+      width: '100%',
+      margin: 0,
+      overflow: 'visible',
+      [theme.breakpoints.down('sm')]: {
+        height: 'auto',
+        margin: 0,
+        width: '100%',
+      },
+    }),
     content: css({
       flex: 1,
       minHeight: 0,

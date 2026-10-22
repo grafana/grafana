@@ -1,18 +1,19 @@
 import { http, HttpResponse } from 'msw';
+import { type Store } from 'redux';
 import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { AppEvents } from '@grafana/data';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { config, setAppEvents, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
-import { updateDashboardName } from 'app/core/reducers/navBarTree';
+import { folderHandlers, getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
-import {
-  useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
-  useMoveFoldersMutation as useMoveFoldersMutationLegacy,
-} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
+import { contextSrv } from 'app/core/services/context_srv';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type StoreState } from 'app/types/store';
 
 import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
@@ -23,50 +24,13 @@ import {
   getFolderByUidFacade,
   getFolderUrl,
 } from './hooks';
-import { setupCreateFolder, setupUpdateFolder } from './test-utils';
+import { getWrapperWithNotifications, setupCreateFolder, setupUpdateFolder } from './test-utils';
 
-import { useDeleteFolderMutation } from './index';
-
-// Mocks for the hooks used inside useGetFolderQueryFacade
-jest.mock('./index', () => ({
-  ...jest.requireActual('./index'),
-  useDeleteFolderMutation: jest.fn(),
-}));
-
-const publishMockFn = jest.fn();
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: jest.fn(() => ({
-    publish: publishMockFn,
-  })),
-}));
-
-jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
-  ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
-  useDeleteFoldersMutation: jest.fn(),
-  useMoveFoldersMutation: jest.fn(),
-}));
-
-const dispatchMockFn = jest.fn();
-jest.mock('../../../../types/store', () => {
-  return {
-    ...jest.requireActual('../../../../types/store'),
-    dispatch: (...args: unknown[]) => dispatchMockFn(...args),
-    useDispatch: () => dispatchMockFn,
-  };
-});
-
-// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
-// here because this test mocks the app dispatch, so stub it out.
-jest.mock('app/features/browse-dashboards/api/services', () => ({
-  ...jest.requireActual('app/features/browse-dashboards/api/services'),
-  listTeamFolders: jest.fn(async () => []),
-}));
-
+setAppEvents(appEvents);
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const [_, { folderA, folderA_folderA }] = getFolderFixtures();
+const [_, { folderA, folderA_folderA, folderB }] = getFolderFixtures();
 
 const expectedUid = folderA_folderA.item.uid;
 const expectedTitle = folderA_folderA.item.title;
@@ -133,13 +97,55 @@ const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
   );
 };
 
-const originalToggles = { ...config.featureToggles };
+const setupDeleteFolderHandler = (onDelete: jest.Mock) => {
+  server.use(
+    http.delete('/api/folders/:uid', ({ params }) => {
+      onDelete(params.uid);
+      return HttpResponse.json({});
+    })
+  );
+};
+
+const setupMoveFolderHandler = (onMove: jest.Mock) => {
+  server.use(
+    http.post('/api/folders/:uid/move', async ({ params, request }) => {
+      onMove({ uid: params.uid, body: await request.json() });
+      return HttpResponse.json({});
+    })
+  );
+};
+
+// Mutations kick off browse-tree refetches after they resolve. Waiting for the refetched collection both asserts the
+// refresh and keeps the request from being in flight when MSW resets handlers between tests.
+const expectChildrenRefetched = (store: Store<StoreState>, parentUID: string | undefined, expectedChildUid: string) =>
+  waitFor(() => {
+    const { rootItems, childrenByParentUID } = store.getState().browseDashboards;
+    const collection = parentUID ? childrenByParentUID[parentUID] : rootItems;
+    expect(collection?.items.map((item) => item.uid)).toContain(expectedChildUid);
+  });
+
+// Legacy folder mutations also refetch the virtual team folders; the default /api/user/teams handler has no teams.
+const expectTeamFoldersRefetched = (store: Store<StoreState>) =>
+  waitFor(() => expect(store.getState().browseDashboards.childrenByParentUID[TEAM_FOLDERS_UID]?.items).toEqual([]));
+
 const originalProvisioningEnabled = config.provisioningEnabled;
-config.provisioningEnabled = false;
-afterAll(() => {
-  // Restore the original feature toggle value changed during tests
-  config.featureToggles = originalToggles;
+const originalPermissions = contextSrv.user.permissions;
+
+beforeEach(() => {
+  config.provisioningEnabled = false;
+  // Browse-tree refetches skip the folder list without folders:read, which would leave the refresh assertions below
+  // passing on dashboards alone.
+  contextSrv.user.permissions = { [AccessControlAction.FoldersRead]: true };
+});
+
+afterEach(async () => {
   config.provisioningEnabled = originalProvisioningEnabled;
+  contextSrv.user.permissions = originalPermissions;
+  // setTestFlags mutates a module-level provider, so reset it for every test. The act wrap is needed
+  // because the reset fires OpenFeature events while components are still mounted.
+  await act(async () => {
+    setTestFlags({});
+  });
 });
 
 describe('useGetFolderQueryFacade', () => {
@@ -151,13 +157,12 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
     config.appSubUrl = originalAppSubUrl;
     config.sharedWithMeFolderUID = originalSharedWithMeFolderUID;
   });
 
   it('merges multiple responses into a single FolderDTO-like object if flag is true', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     const result = await renderFolderHook();
 
@@ -193,7 +198,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('runs a real access query for the root/general virtual folder', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     const { result } = renderHook(() => useGetFolderQueryFacade('general'), {
       wrapper: getWrapper({}),
@@ -224,7 +229,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('runs a real access query for the sharedwithme virtual folder (no access)', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
     config.sharedWithMeFolderUID = 'sharedwithme';
 
     const { result } = renderHook(() => useGetFolderQueryFacade('sharedwithme'), {
@@ -247,7 +252,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('returns legacy folder response if flag is false', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
     const result = await renderFolderHook();
     expect(result.current.data).toMatchObject({
       id: 791,
@@ -271,99 +276,154 @@ describe('useGetFolderQueryFacade', () => {
       },
     });
   });
+
+  it.each([true, false])(
+    'stops reporting a folder once the uid is cleared (foldersAppPlatformAPI: %s)',
+    async (foldersAppPlatformAPI) => {
+      setTestFlags({ foldersAppPlatformAPI });
+      const initialProps: { uid?: string } = { uid: folderA_folderA.item.uid };
+      const { result, rerender } = renderHook(({ uid }: { uid?: string }) => useGetFolderQueryFacade(uid), {
+        wrapper: getWrapper({}),
+        initialProps,
+      });
+      await waitFor(() => expect(result.current.data).toBeDefined());
+
+      rerender({ uid: undefined });
+
+      expect(result.current.data).toBeUndefined();
+    }
+  );
 });
 
 describe('useDeleteMultipleFoldersMutationFacade', () => {
-  const mockDeleteFolder = jest.fn(() => ({ error: undefined }));
-  const mockDeleteFolderLegacy = jest.fn(() => ({ error: undefined }));
-
+  // RTK Query logs a console.error because the legacy deleteFolders queryFn resolves { data: undefined }. Pin that one
+  // call so any other error (unhandled request, failed refetch) still fails the test.
+  let consoleErrorSpy: jest.SpyInstance;
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useDeleteFolderMutation as jest.Mock).mockReturnValue([mockDeleteFolder]);
-    (useDeleteFoldersMutationLegacy as jest.Mock).mockReturnValue([mockDeleteFolderLegacy]);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+  });
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
-  it('deletes multiple folders and publishes success alert', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
-    // Same test as for legacy as right now we always use legacy API for deletes.
+  it('deletes each folder through the legacy API when the flag is on (app platform delete is not supported yet)', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true });
+    const deleteSpy = jest.fn();
+    setupDeleteFolderHandler(deleteSpy);
+    const store = configureStore();
     const folderUIDs = ['uid1', 'uid2'];
-    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-    await deleteFolders({ folderUIDs });
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({ store }),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
 
-    // Should call deleteFolder for each UID
-    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
-    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+    expect(deleteSpy).toHaveBeenCalledTimes(2);
+    expect(deleteSpy).toHaveBeenNthCalledWith(1, 'uid1');
+    expect(deleteSpy).toHaveBeenNthCalledWith(2, 'uid2');
+    // deleted uids are unknown to the tree, so refreshParents falls back to the root
+    await expectChildrenRefetched(store, undefined, folderA.item.uid);
+    await expectTeamFoldersRefetched(store);
+    expect(consoleErrorSpy.mock.calls).toEqual([
+      [expect.stringContaining('Error encountered handling the endpoint deleteFolders'), { data: undefined }],
+    ]);
   });
 
   it('uses legacy call when flag is false', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
+    const deleteSpy = jest.fn();
+    setupDeleteFolderHandler(deleteSpy);
+    const store = configureStore();
     const folderUIDs = ['uid1', 'uid2'];
-    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-    await deleteFolders({ folderUIDs });
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({ store }),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
 
-    // Should call deleteFolder for each UID
-    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
-    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+    expect(deleteSpy).toHaveBeenCalledTimes(2);
+    expect(deleteSpy).toHaveBeenNthCalledWith(1, 'uid1');
+    expect(deleteSpy).toHaveBeenNthCalledWith(2, 'uid2');
+    // deleted uids are unknown to the tree, so refreshParents falls back to the root
+    await expectChildrenRefetched(store, undefined, folderA.item.uid);
+    await expectTeamFoldersRefetched(store);
+    expect(consoleErrorSpy.mock.calls).toEqual([
+      [expect.stringContaining('Error encountered handling the endpoint deleteFolders'), { data: undefined }],
+    ]);
   });
 });
 
 describe('useMoveMultipleFoldersMutationFacade', () => {
-  const mockMoveFolders = jest.fn(() => ({ error: undefined }));
   const patchSpy = jest.fn();
+  // RTK Query logs a console.error because the legacy moveFolders queryFn resolves { data: undefined }; the app
+  // platform path has no such noise, so each test pins what it expects on the spy.
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useMoveFoldersMutationLegacy as jest.Mock).mockReturnValue([mockMoveFolders]);
     patchSpy.mockReset();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
   });
   afterEach(() => {
+    consoleErrorSpy.mockRestore();
     folderAPIVersionResolver.reset();
   });
 
   it('moves multiple folders and publishes success alert', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
     setupUpdateFolderHandler(patchSpy);
     const folderUIDs = ['uid1', 'uid2'];
+    const destinationUID = folderA.item.uid;
+    const store = configureStore();
     const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
-      wrapper: getWrapper({}),
+      wrapper: getWrapperWithNotifications(store),
     });
     await act(async () => {
-      await result.current[0]({ folderUIDs, destinationUID: 'uid3' });
+      await result.current[0]({ folderUIDs, destinationUID });
     });
 
     expect(patchSpy).toHaveBeenCalledTimes(folderUIDs.length);
     expect(patchSpy).toHaveBeenCalledWith({
       name: 'uid1',
-      body: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+      body: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
     });
     expect(patchSpy).toHaveBeenCalledWith({
       name: 'uid2',
-      body: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+      body: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
     });
 
-    // Should publish a success alert
-    expect(publishMockFn).toHaveBeenCalledWith({
-      type: AppEvents.alertSuccess.name,
-      payload: ['Folder moved'],
-    });
+    expect(await screen.findByText('Folder moved')).toBeInTheDocument();
 
-    // Should dispatch refreshParents
-    expect(dispatchMockFn).toHaveBeenCalled();
+    // useRefreshFolders refetches the destination's children and, for the (unknown) moved uids, the root
+    await expectChildrenRefetched(store, destinationUID, folderA_folderA.item.uid);
+    await expectChildrenRefetched(store, undefined, folderB.item.uid);
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
   it('uses legacy call when flag is false', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
+    const moveSpy = jest.fn();
+    setupMoveFolderHandler(moveSpy);
     const folderUIDs = ['uid1', 'uid2'];
+    const destinationUID = folderA.item.uid;
+    const store = configureStore();
     const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
-      wrapper: getWrapper({}),
+      wrapper: getWrapper({ store }),
     });
     await act(async () => {
-      await result.current[0]({ folderUIDs, destinationUID: 'uid3' });
+      await result.current[0]({ folderUIDs, destinationUID });
     });
 
-    // Should call deleteFolder for each UID
-    expect(mockMoveFolders).toHaveBeenCalledTimes(1);
-    expect(mockMoveFolders).toHaveBeenCalledWith({ folderUIDs, destinationUID: 'uid3' });
+    expect(moveSpy).toHaveBeenCalledTimes(2);
+    expect(moveSpy).toHaveBeenNthCalledWith(1, { uid: 'uid1', body: { parentUID: destinationUID } });
+    expect(moveSpy).toHaveBeenNthCalledWith(2, { uid: 'uid2', body: { parentUID: destinationUID } });
+    await expectChildrenRefetched(store, destinationUID, folderA_folderA.item.uid);
+    await expectChildrenRefetched(store, undefined, folderB.item.uid);
+    await expectTeamFoldersRefetched(store);
+    expect(consoleErrorSpy.mock.calls).toEqual([
+      [expect.stringContaining('Error encountered handling the endpoint moveFolders'), { data: undefined }],
+    ]);
   });
 });
 
@@ -374,33 +434,38 @@ describe.each([
   false,
 ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
   beforeEach(() => {
-    config.featureToggles.foldersAppPlatformAPI = toggle;
+    setTestFlags({ foldersAppPlatformAPI: toggle });
     if (toggle) {
       folderAPIVersionResolver.set('v1beta1');
     }
   });
   afterEach(() => {
-    config.featureToggles = originalToggles;
     folderAPIVersionResolver.reset();
   });
 
   describe('useCreateFolder', () => {
     it('creates a folder at the root level', async () => {
-      const { user } = setupCreateFolder();
+      const { user, store } = setupCreateFolder();
 
       await user.click(screen.getByText(/Create Folder at root/));
 
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
-      expect(dispatchMockFn).toHaveBeenCalled();
+      await expectChildrenRefetched(store, undefined, folderA.item.uid);
+      if (!toggle) {
+        await expectTeamFoldersRefetched(store);
+      }
     });
 
     it('creates a folder in a nested folder', async () => {
-      const { user } = setupCreateFolder();
+      const { user, store } = setupCreateFolder();
 
       await user.click(screen.getByText(/Create Folder in nested folder/));
 
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
-      expect(dispatchMockFn).toHaveBeenCalled();
+      await expectChildrenRefetched(store, folderA.item.uid, folderA_folderA.item.uid);
+      if (!toggle) {
+        await expectTeamFoldersRefetched(store);
+      }
     });
 
     it('sets grant-permissions annotation when creating a root folder via the app platform API', async () => {
@@ -410,7 +475,7 @@ describe.each([
 
       const createSpy = jest.fn();
       setupCreateFolderHandler(createSpy);
-      const { user } = setupCreateFolder();
+      const { user, store } = setupCreateFolder();
 
       await user.click(screen.getByText(/Create Folder at root/));
 
@@ -422,6 +487,7 @@ describe.each([
           }),
         })
       );
+      await expectChildrenRefetched(store, undefined, folderA.item.uid);
     });
 
     it('sets folder annotation when creating a nested folder via the app platform API', async () => {
@@ -431,7 +497,7 @@ describe.each([
 
       const createSpy = jest.fn();
       setupCreateFolderHandler(createSpy);
-      const { user } = setupCreateFolder();
+      const { user, store } = setupCreateFolder();
 
       await user.click(screen.getByText(/Create Folder in nested folder/));
 
@@ -444,95 +510,106 @@ describe.each([
         })
       );
       expect(createSpy.mock.calls[0][0].metadata.annotations[AnnoKeyGrantPermissions]).toBeUndefined();
+      await expectChildrenRefetched(store, folderA.item.uid, folderA_folderA.item.uid);
     });
   });
 
   describe('useUpdateFolder', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
       setupUpdateFolderHandler();
     });
 
     it('updates a folder', async () => {
-      const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+      const { user, store } = await setupUpdateFolder(folderA_folderA.item.uid);
 
       await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
       await user.click(screen.getByText('Update Folder'));
 
       expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+      // the test component passes no parentUid, so the refresh targets the root
+      await expectChildrenRefetched(store, undefined, folderA.item.uid);
+      if (!toggle) {
+        await expectTeamFoldersRefetched(store);
+      }
     });
   });
 });
 
 describe('useUpdateFolder app-platform starred nav update', () => {
+  const originalAppSubUrl = String(config.appSubUrl);
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    config.featureToggles.foldersAppPlatformAPI = true;
+    config.appSubUrl = '';
+    setTestFlags({ foldersAppPlatformAPI: true });
     folderAPIVersionResolver.set('v1beta1');
     setupUpdateFolderHandler();
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
+    config.appSubUrl = originalAppSubUrl;
     folderAPIVersionResolver.set('v1beta1');
-    dispatchMockFn.mockReset();
   });
 
-  it('dispatches updateDashboardName with the request uid/title and folder URL on rename', async () => {
-    const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+  it('updates the starred folder title and URL after rename', async () => {
+    const uid = folderA_folderA.item.uid;
+    const store = configureStore({
+      navBarTree: [
+        { id: 'starred', text: 'Starred', children: [{ id: ID_PREFIX + uid, text: 'Old title', url: '/old' }] },
+      ],
+    });
+    const { user } = await setupUpdateFolder(uid, store);
 
     await user.clear(screen.getByLabelText('Folder Title'));
     await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
     await user.click(screen.getByText('Update Folder'));
 
     expect(await screen.findByText('Folder updated')).toBeInTheDocument();
-
-    expect(dispatchMockFn).toHaveBeenCalledWith(
-      updateDashboardName({
-        id: folderA_folderA.item.uid,
-        title: 'Updated Folder',
-        url: getStarredFolderURL(folderA_folderA.item.uid),
-      })
+    await waitFor(() =>
+      expect(store.getState().navBarTree.find((item) => item.id === 'starred')?.children).toEqual([
+        { id: ID_PREFIX + uid, text: 'Updated Folder', url: `/dashboards/f/${uid}/` },
+      ])
     );
+    await expectChildrenRefetched(store, undefined, folderA.item.uid);
   });
 });
 
 describe('getFolderByUidFacade', () => {
+  beforeEach(() => {
+    // getFolderByUidFacade dispatches on the global store, so register a fresh one per test
+    configureStore();
+    folderAPIVersionResolver.set('v1beta1');
+  });
   afterEach(() => {
-    config.featureToggles = originalToggles;
-    dispatchMockFn.mockReset();
+    folderAPIVersionResolver.reset();
   });
 
   it('throws the original error with HTTP status when folder API returns 403 and foldersAppPlatformAPI is enabled', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
+    server.use(
+      http.get(folderHandlers.FOLDER_BY_NAME, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
+    );
 
-    const fetchError = { status: 403, data: { message: 'Forbidden' } };
-    dispatchMockFn
-      .mockResolvedValueOnce({ error: fetchError, data: undefined })
-      .mockResolvedValueOnce({ error: fetchError, data: undefined })
-      .mockResolvedValueOnce({ error: fetchError, data: undefined });
-
-    await expect(getFolderByUidFacade('some-folder-uid')).rejects.toHaveProperty('status', 403);
+    await expect(getFolderByUidFacade(folderA_folderA.item.uid)).rejects.toHaveProperty('status', 403);
   });
 
   it('throws the original error with HTTP status when folder API returns 403 and foldersAppPlatformAPI is disabled', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
+    server.use(http.get('/api/folders/:uid', () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
 
-    const fetchError = { status: 403, data: { message: 'Forbidden' } };
-    dispatchMockFn.mockResolvedValueOnce({ error: fetchError, data: undefined });
-
-    await expect(getFolderByUidFacade('some-folder-uid')).rejects.toHaveProperty('status', 403);
+    await expect(getFolderByUidFacade(folderA_folderA.item.uid)).rejects.toHaveProperty('status', 403);
   });
 
-  it('throws a generic error when all responses are undefined and no error is available', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+  it('throws a generic error when the folder API returns empty bodies', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true });
+    server.use(
+      http.get(folderHandlers.FOLDER_BY_NAME, () => new HttpResponse(null)),
+      http.get(`${folderHandlers.FOLDER_BY_NAME}/access`, () => new HttpResponse(null)),
+      http.get(`${folderHandlers.FOLDER_BY_NAME}/parents`, () => new HttpResponse(null))
+    );
 
-    dispatchMockFn
-      .mockResolvedValueOnce({ data: undefined })
-      .mockResolvedValueOnce({ data: undefined })
-      .mockResolvedValueOnce({ data: undefined });
-
-    await expect(getFolderByUidFacade('some-folder-uid')).rejects.toThrow('One of the folder responses is undefined');
+    await expect(getFolderByUidFacade(folderA_folderA.item.uid)).rejects.toThrow(
+      'One of the folder responses is undefined'
+    );
   });
 });
 

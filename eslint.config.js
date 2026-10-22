@@ -80,6 +80,11 @@ const baseImportConfig = {
       importNames: ['useObservable'],
       message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
     },
+    {
+      name: 'react-use',
+      importNames: ['useCopyToClipboard'],
+      message: 'Please import copyTextToClipboard from @grafana/ui instead.',
+    },
   ],
 };
 
@@ -391,6 +396,17 @@ module.exports = [
   },
 
   {
+    name: 'grafana/e2e-selectors-serializable',
+    files: ['packages/grafana-e2e-selectors/src/selectors/**/*.ts'],
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    rules: {
+      '@grafana/serializable-e2e-selectors': 'error',
+    },
+  },
+
+  {
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,
@@ -509,7 +525,6 @@ module.exports = [
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
     ],
@@ -633,6 +648,7 @@ module.exports = [
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
       '@grafana/no-config-datasources': 'error',
+      '@grafana/no-config-feature-toggles': 'error',
     },
   },
   {

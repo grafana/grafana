@@ -10,18 +10,18 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -53,7 +53,7 @@ func newTestEnv(t *testing.T) testEnv {
 
 func uniqueTable(t *testing.T, engine *xorm.Engine) string {
 	t.Helper()
-	name := fmt.Sprintf("test_%s", uuid.New().String()[:8])
+	name := fmt.Sprintf("test_%s", uuid.NewV4().String()[:8])
 	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -559,7 +559,7 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	})
 
 	t.Run(setup.name+"/error — neither exists", func(t *testing.T) {
-		missing := "nonexistent_" + uuid.New().String()[:8]
+		missing := "nonexistent_" + uuid.NewV4().String()[:8]
 		renamer := setup.make(t)
 		err := renamer.RecoverRenamedTables([]string{missing})
 		require.Error(t, err)
@@ -621,7 +621,7 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 			RvManager:              rvMgr,
 			DBKeepAlive:            eDB,
 			DisableStorageServices: true,
-			Log:                    log.New("test.kv.retry"),
+			Log:                    logging.DefaultLogger.With("logger", "test.kv.retry"),
 		})
 		require.NoError(t, err)
 
@@ -643,7 +643,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	}
 
 	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	var callCount int32
+	var callCount atomic.Int32
 
 	openTestSearchIndex(t, client, gr)
 
@@ -654,7 +654,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-				n := atomic.AddInt32(&callCount, 1)
+				n := callCount.Add(1)
 				if n == 1 {
 					// First call: send a request to ensure the server enters its Recv()
 					// loop and holds the bulk lock, then fail to simulate a SQLite cache spill.
@@ -700,7 +700,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 
 	// The migrator func should have been called twice: once for the failed first attempt,
 	// once for the successful retry.
-	require.Equal(t, int32(2), atomic.LoadInt32(&callCount))
+	require.Equal(t, int32(2), callCount.Load())
 	require.NotNil(t, client.lastRebuildResponse, "expected real RebuildIndexes call")
 	require.Nil(t, client.lastRebuildResponse.Error)
 	if expectRebuild {
@@ -835,7 +835,7 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-				for i := 0; i < 16; i++ {
+				for i := range 16 {
 					err := stream.Send(&resourcepb.BulkRequest{
 						Key: &resourcepb.ResourceKey{
 							Namespace: opts.Namespace,
@@ -889,7 +889,7 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 	t.Run("skips already renamed", func(t *testing.T) {
-		name := fmt.Sprintf("test_crash_%s", uuid.New().String()[:8])
+		name := fmt.Sprintf("test_crash_%s", uuid.NewV4().String()[:8])
 		_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(name+legacySuffix)))
 		require.NoError(t, err)
 		t.Cleanup(func() {

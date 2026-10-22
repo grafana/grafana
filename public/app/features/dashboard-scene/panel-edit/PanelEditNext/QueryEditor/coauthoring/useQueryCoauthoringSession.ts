@@ -1,4 +1,4 @@
-import { type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
@@ -23,6 +23,12 @@ import {
   type QueryCoauthoringRequestError,
   type QueryCoauthoringRequestOutcome,
 } from './queryCoauthoringRequest';
+import {
+  createQueryCoauthoringSessionState,
+  isCurrentQueryCoauthoringRequest,
+  queryCoauthoringSessionReducer,
+  type QueryCoauthoringSessionEvent,
+} from './queryCoauthoringSessionReducer';
 import {
   type QueryCoauthoringHandoffSource,
   trackQueryCoauthoringContinuedInAssistant,
@@ -96,8 +102,6 @@ export interface QueryCoauthoringSessionOptions {
   timeRange?: { from: number; to: number };
 }
 
-const ITERATION_NUDGE_THRESHOLD = 3;
-
 export function useQueryCoauthoringSession({
   adapter,
   invocationId,
@@ -132,16 +136,51 @@ export function useQueryCoauthoringSession({
     onBaseline,
   });
   const { generate, isGenerating, cancel, reset } = useInlineAssistant();
-  const [intent, setIntent] = useState('');
-  const [proposal, setProposal] = useState<PreparedQueryProposal>();
-  const [fallback, setFallback] = useState<StagedFallback>();
-  const [clarification, setClarification] = useState<QueryClarification>();
-  const [error, setError] = useState<QueryCoauthoringRequestError>();
-  const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
-  const [submittedIterationCount, setSubmittedIterationCount] = useState(0);
-  const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
-  const generationIdRef = useRef(0);
-  const submittedIntentsRef = useRef<string[]>([]);
+  const assistantStatus = isAssistantLoading ? 'loading' : isAssistantAvailable ? 'ready' : 'unavailable';
+  const [session, dispatch] = useReducer(
+    queryCoauthoringSessionReducer,
+    assistantStatus,
+    createQueryCoauthoringSessionState
+  );
+  const sessionRef = useRef(session);
+  // Assistant tools and host callbacks may run before React commits a dispatch.
+  // Apply the same reducer synchronously so cancellation wins those races too.
+  const send = useCallback((event: QueryCoauthoringSessionEvent): boolean => {
+    const previous = sessionRef.current;
+    const next = queryCoauthoringSessionReducer(previous, event);
+    sessionRef.current = next;
+    dispatch(event);
+    return next !== previous;
+  }, []);
+  const { intent, clarification } = session.data.prompt;
+  const proposal = session.kind === 'proposal' ? session.proposal : undefined;
+  const fallback = session.kind === 'fallback' ? session.fallback : undefined;
+  const setIntent = (intent: string): void => {
+    send({ type: 'intent-changed', intent });
+  };
+  const setFeedback = (feedback: QueryCoauthoringFeedbackState): void => {
+    send({ type: 'feedback-changed', feedback });
+  };
+
+  useEffect(() => {
+    send({ type: `assistant-${assistantStatus}` });
+  }, [assistantStatus, send]);
+
+  useEffect(() => {
+    send({ type: 'invocation-updated', context, isIdentifying, selectionExplanation });
+  }, [context, isIdentifying, selectionExplanation, send]);
+
+  useEffect(() => {
+    send({ type: contextError ? 'context-failed' : 'context-retried' });
+  }, [contextError, send]);
+
+  useEffect(() => {
+    send({ type: isGenerating ? 'generation-started' : 'generation-settled' });
+  }, [isGenerating, send]);
+
+  useEffect(() => {
+    send({ type: 'preview-running-changed', isPreviewRunning });
+  }, [isPreviewRunning, send]);
   const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
   const trackedOpenRef = useRef(false);
@@ -156,24 +195,17 @@ export function useQueryCoauthoringSession({
   }, []);
 
   const clear = useCallback(() => {
-    generationIdRef.current++;
+    send({ type: 'invocation-cleared' });
     clearInvocation();
     cancel();
     reset();
     revertQueryPreview();
-    setIntent('');
-    setProposal(undefined);
-    setFallback(undefined);
-    setClarification(undefined);
-    setError(undefined);
-    setFeedback(undefined);
-    setSubmittedIterationCount(0);
-    setIterationNudgeDismissed(false);
-    submittedIntentsRef.current = [];
     promptUserGestureRef.current = false;
-  }, [cancel, clearInvocation, reset, revertQueryPreview]);
+  }, [cancel, clearInvocation, reset, revertQueryPreview, send]);
 
-  const closeFeedback = useCallback(() => setFeedback(undefined), []);
+  const closeFeedback = useCallback((): void => {
+    send({ type: 'feedback-changed' });
+  }, [send]);
   const dismiss = useCallback(() => {
     clear();
     adapter.dismiss();
@@ -195,23 +227,18 @@ export function useQueryCoauthoringSession({
       return;
     }
 
-    const generationId = generationIdRef;
     return () => {
-      generationId.current++;
+      send({ type: 'request-invalidated' });
       cancel();
       revertQueryPreview();
     };
-  }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview]);
+  }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview, send]);
 
   const stop = () => {
     trackQueryCoauthoringGenerationStopped({ datasourceType });
-    generationIdRef.current++;
+    send({ type: 'generation-stopped' });
     cancel();
     revertQueryPreview();
-    setProposal(undefined);
-    setFallback(undefined);
-    setClarification(undefined);
-    setError(undefined);
   };
 
   const submit = async (nextIntent = intent) => {
@@ -220,7 +247,8 @@ export function useQueryCoauthoringSession({
       return;
     }
     cancelIdentification();
-    const generationId = ++generationIdRef.current;
+    send({ type: 'submission-started' });
+    const requestId = sessionRef.current.data.requestId;
 
     let submittedContext: QueryEditorCoauthoringContextV1;
     try {
@@ -228,7 +256,7 @@ export function useQueryCoauthoringSession({
     } catch {
       return;
     }
-    if (generationId !== generationIdRef.current) {
+    if (!send({ type: 'submission-ready', requestId, intent: trimmedIntent })) {
       return;
     }
 
@@ -236,49 +264,35 @@ export function useQueryCoauthoringSession({
       datasourceType,
       promptStage: clarification ? 'clarification' : 'initial',
     });
-    submittedIntentsRef.current.push(trimmedIntent);
     promptUserGestureRef.current = false;
-    setSubmittedIterationCount((count) => count + 1);
-    setProposal(undefined);
-    setFallback(undefined);
-    setClarification(undefined);
-    setError(undefined);
 
     const request = createQueryCoauthoringRequest({
       adapter,
       invocationId,
       context: submittedContext,
-      isCurrent: () => generationId === generationIdRef.current,
+      isCurrent: () => isCurrentQueryCoauthoringRequest(sessionRef.current, requestId),
     });
     const handleOutcome = (outcome: QueryCoauthoringRequestOutcome) => {
-      if (outcome.status === 'ignored') {
+      if (!send({ type: 'request-completed', requestId, context: submittedContext, outcome })) {
         return;
       }
-      if (outcome.status === 'clarification') {
-        setIntent('');
-        setClarification({ message: outcome.message });
-        return;
-      }
-      if (outcome.status === 'fallback') {
-        setFallback({ ...outcome.fallback, context: submittedContext });
-        return;
-      }
-      if (outcome.status === 'error') {
-        setError(outcome.error);
+      if (outcome.status !== 'proposal') {
         return;
       }
       if (!onPreview(outcome.prepared.query)) {
-        setError({
-          message: t(
-            'query-editor-coauthoring.error-preview-failed',
-            'The query proposal could not be previewed. Try again.'
-          ),
-          retryable: true,
+        send({
+          type: 'preview-failed',
+          error: {
+            message: t(
+              'query-editor-coauthoring.error-preview-failed',
+              'The query proposal could not be previewed. Try again.'
+            ),
+            retryable: true,
+          },
         });
         return;
       }
       previewActiveRef.current = true;
-      setProposal({ ...outcome.proposal, context: submittedContext, prepared: outcome.prepared });
     };
 
     await generate({
@@ -298,12 +312,15 @@ export function useQueryCoauthoringSession({
       return;
     }
     if (!onAccept(proposal.prepared.query)) {
-      setError({
-        message: t(
-          'query-editor-coauthoring.error-accept-failed',
-          'The query proposal could not be accepted. Try again.'
-        ),
-        retryable: true,
+      send({
+        type: 'accept-failed',
+        error: {
+          message: t(
+            'query-editor-coauthoring.error-accept-failed',
+            'The query proposal could not be accepted. Try again.'
+          ),
+          retryable: true,
+        },
       });
       return;
     }
@@ -311,14 +328,14 @@ export function useQueryCoauthoringSession({
     previewActiveRef.current = false;
     trackQueryCoauthoringProposalAccepted({ datasourceType });
     dismiss();
-  }, [datasourceType, dismiss, onAccept, proposal]);
+  }, [datasourceType, dismiss, onAccept, proposal, send]);
 
   const continueInAssistant = (sourceState: QueryCoauthoringHandoffSource, reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;
     if (!activeContext || !openAvailableAssistant) {
       return;
     }
-    const intentHistory = [...submittedIntentsRef.current];
+    const intentHistory = [...session.data.submittedIntents];
     const pendingIntent = intent.trim();
     if (pendingIntent && pendingIntent !== intentHistory.at(-1)) {
       intentHistory.push(pendingIntent);
@@ -348,65 +365,59 @@ export function useQueryCoauthoringSession({
     dismiss();
   };
 
-  const showIterationNudge =
-    submittedIterationCount >= ITERATION_NUDGE_THRESHOLD &&
-    !iterationNudgeDismissed &&
-    Boolean(context) &&
-    Boolean(clarification) &&
-    !isGenerating &&
-    !proposal &&
-    !fallback &&
-    !error &&
-    !contextError;
-
   let state: QueryCoauthoringSessionState;
-  if (isAssistantLoading) {
-    state = { kind: 'assistant-loading' };
-  } else if (!isAssistantAvailable) {
-    state = { kind: 'assistant-unavailable' };
-  } else if (isGenerating) {
-    state = { kind: 'working', context, stop };
-  } else if (contextError) {
-    state = { kind: 'context-error', retry: loadContext };
-  } else if (error) {
-    state = { kind: 'error', error, retry: error.retryable ? () => setError(undefined) : undefined };
-  } else if (showIterationNudge) {
-    state = {
-      kind: 'iteration-nudge',
-      continueHere: () => setIterationNudgeDismissed(true),
-      continueInAssistant: () => continueInAssistant('iteration_nudge'),
-    };
-  } else if (fallback) {
-    state = {
-      kind: 'fallback',
-      fallback,
-      continueInAssistant: (reason) => continueInAssistant('fallback', reason),
-      setFeedback,
-    };
-  } else if (proposal) {
-    state = {
-      kind: 'proposal',
-      isPreviewRunning,
-      proposal,
-      accept,
-      continueInAssistant: () => continueInAssistant('proposal'),
-      setFeedback,
-    };
-  } else {
-    state = {
-      kind: 'prompt',
-      clarification,
-      context,
-      intent,
-      isIdentifying,
-      promptUserGestureRef,
-      selectionExplanation,
-      submittedIterationCount,
-      continueInAssistant: () => continueInAssistant('clarification', clarification?.message),
-      setIntent,
-      submit: () => void submit(),
-    };
+  switch (session.kind) {
+    case 'assistant-loading':
+    case 'assistant-unavailable':
+      state = { kind: session.kind };
+      break;
+    case 'working':
+      state = { kind: 'working', context, stop };
+      break;
+    case 'context-error':
+      state = { kind: 'context-error', retry: loadContext };
+      break;
+    case 'error':
+      state = {
+        kind: 'error',
+        error: session.error,
+        retry: session.error.retryable ? () => send({ type: 'error-retried' }) : undefined,
+      };
+      break;
+    case 'iteration-nudge':
+      state = {
+        kind: 'iteration-nudge',
+        continueHere: () => send({ type: 'iteration-continued' }),
+        continueInAssistant: () => continueInAssistant('iteration_nudge'),
+      };
+      break;
+    case 'fallback':
+      state = {
+        kind: 'fallback',
+        fallback: session.fallback,
+        continueInAssistant: (reason) => continueInAssistant('fallback', reason),
+        setFeedback,
+      };
+      break;
+    case 'proposal':
+      state = {
+        kind: 'proposal',
+        isPreviewRunning: session.isPreviewRunning,
+        proposal: session.proposal,
+        accept,
+        continueInAssistant: () => continueInAssistant('proposal'),
+        setFeedback,
+      };
+      break;
+    case 'prompt':
+      state = {
+        ...session.data.prompt,
+        promptUserGestureRef,
+        continueInAssistant: () => continueInAssistant('clarification', clarification?.message),
+        setIntent,
+        submit: () => void submit(),
+      };
   }
 
-  return { closeFeedback, dismiss: dismissPopover, feedback, state };
+  return { closeFeedback, dismiss: dismissPopover, feedback: session.data.feedback, state };
 }

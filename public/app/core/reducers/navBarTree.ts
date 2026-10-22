@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type IconName, type NavModelItem } from '@grafana/data';
 
-import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { getInitialNavTree } from '../navtree/buildNavTree';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {

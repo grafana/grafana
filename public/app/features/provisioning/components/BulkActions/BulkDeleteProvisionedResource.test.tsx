@@ -1,13 +1,11 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import * as currentUser from '../../utils/currentUser';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
@@ -137,7 +135,7 @@ describe('BulkDeleteProvisionedResource', () => {
       selectedItemsRepoUID: 'test-folder',
       isInLockedRepo: jest.fn().mockReturnValue(false),
       isCrossRepo: false,
-      isUidInReadOnlyRepo: jest.fn().mockReturnValue(false),
+      isItemInReadOnlyRepo: jest.fn().mockReturnValue(false),
     });
   });
 
@@ -350,7 +348,7 @@ describe('BulkDeleteProvisionedResource', () => {
       selectedItemsRepoUID: undefined,
       isInLockedRepo: jest.fn().mockReturnValue(false),
       isCrossRepo: false,
-      isUidInReadOnlyRepo: jest.fn().mockReturnValue(false),
+      isItemInReadOnlyRepo: jest.fn().mockReturnValue(false),
     });
 
     rerender(
@@ -458,7 +456,7 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(await screen.findByText('Resources deleted successfully')).toBeInTheDocument();
   });
 
-  describe('commit message template (provisioning.gitConventions)', () => {
+  describe('commit message template', () => {
     // selectedItems in setup() has one folder + one dashboard => "2 resources".
     const templateRepository: RepositoryView = {
       name: 'test-folder',
@@ -468,17 +466,6 @@ describe('BulkDeleteProvisionedResource', () => {
       workflows: ['branch', 'write'],
       commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}' },
     };
-
-    beforeEach(() => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-    });
-
-    afterEach(async () => {
-      // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
 
     it('pre-fills the comment from the rendered template and POSTs it', async () => {
       const { user, mockCreateBulkJob } = setup(templateRepository);
@@ -529,22 +516,6 @@ describe('BulkDeleteProvisionedResource', () => {
         templateRepository,
         expect.objectContaining({ message: 'chore: delete 2 resources edited' })
       );
-    });
-
-    it('appends the saved-by trailer exactly once', async () => {
-      jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
-      const trailerRepository: RepositoryView = {
-        ...templateRepository,
-        commit: { singleResourceMessageTemplate: 'chore: {{action}}' },
-      };
-      const { user, mockCreateBulkJob } = setup(trailerRepository);
-
-      await screen.findByRole('button', { name: /Delete/i });
-      await user.click(screen.getByRole('button', { name: /Delete/i }));
-
-      const jobSpec = mockCreateBulkJob.mock.calls[0][1];
-      expect(jobSpec.message).toContain('chore: delete');
-      expect(jobSpec.message.match(/Grafana-saved-by:/g)).toHaveLength(1);
     });
   });
 });

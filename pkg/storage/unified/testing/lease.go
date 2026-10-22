@@ -45,7 +45,7 @@ func RunLeaseTest(t *testing.T, store kv.KV) {
 
 func newLeaseManagerNoGC(store kv.KV, holder string, opts ...lease.ManagerOption) *lease.Manager {
 	opts = append(opts, lease.WithGarbageCollectionDisabled)
-	return lease.NewManager(store, holder, nil, opts...)
+	return lease.NewManager(store, holder, "test", nil, opts...)
 }
 
 func runLeaseHappyPath(t *testing.T, store kv.KV) {

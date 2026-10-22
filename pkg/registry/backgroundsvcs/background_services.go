@@ -2,7 +2,7 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -13,6 +13,7 @@ import (
 	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/tokenexchange"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -63,7 +65,7 @@ func ProvideBackgroundServiceRegistry(
 	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing *tracing.TracingService,
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
-	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
+	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metricsservice.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	StorageService store.StorageService, // nolint:staticcheck
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
@@ -71,6 +73,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboards.MetricsService,
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
+	routerService *router.Service,
 	anon *anonimpl.AnonDeviceService,
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
@@ -98,6 +101,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
 	_ cloudmigration.Service, _ authnimpl.Registration, _ *ofrep.APIBuilder,
+	_ *tokenexchange.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -131,6 +135,7 @@ func ProvideBackgroundServiceRegistry(
 		keyRetriever,
 		dynamicAngularDetectorsProvider,
 		grafanaAPIServer,
+		routerService,
 		anon,
 		ssoSettings,
 		pluginExternal,

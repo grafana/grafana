@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -89,7 +90,7 @@ func TestFuseRRF_GroupsChunksPerUID(t *testing.T) {
 
 func TestFuseRRF_ChunkCap(t *testing.T) {
 	sem := make([]vector.VectorSearchResult, 0, maxChunksPerHybridResult+5)
-	for i := 0; i < maxChunksPerHybridResult+5; i++ {
+	for i := range maxChunksPerHybridResult + 5 {
 		sem = append(sem, vector.VectorSearchResult{
 			UID: "a", Subresource: fmt.Sprintf("panel/%d", i), Content: "c", Score: float64(i),
 		})
@@ -178,83 +179,204 @@ func lexTableResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{Results: table}
 }
 
-func managerTableResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
-	table := &resourcepb.ResourceTable{
-		Columns: []*resourcepb.ResourceTableColumnDefinition{
-			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+func lexFieldValueResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
 		},
 	}
-	for _, r := range rows {
-		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Name: r[0]},
-			Cells: [][]byte{[]byte(r[1]), []byte(r[2])},
+	for _, row := range rows {
+		response.Rows = append(response.Rows, &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: row[0]},
+			Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{row[1]}},
+				{FieldIndex: 1, StringValues: []string{row[2]}},
+			},
 		})
 	}
-	return &resourcepb.ResourceSearchResponse{Results: table}
+	return response
+}
+
+func managerFieldValueResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+		},
+	}
+	for _, row := range rows {
+		response.Rows = append(response.Rows, &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: row[0]},
+			Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{row[1]}},
+				{FieldIndex: 1, StringValues: []string{row[2]}},
+			},
+		})
+	}
+	return response
+}
+
+func malformedFieldValueResponse() *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key: &resourcepb.ResourceKey{Name: "u1"},
+			Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"one", "two"}},
+			},
+		}},
+	}
 }
 
 func TestLexicalHitsFromResponse(t *testing.T) {
-	hits := lexicalHitsFromResponse(lexTableResponse(
-		[3]string{"u1", "Title One", "f1"},
-		[3]string{"u2", "Title Two", "f2"},
-	))
-	require.Len(t, hits, 2)
-	assert.Equal(t, lexicalHit{uid: "u1", title: "Title One", folder: "f1"}, hits[0])
-	assert.Equal(t, lexicalHit{uid: "u2", title: "Title Two", folder: "f2"}, hits[1])
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "resource table",
+			response: lexTableResponse(
+				[3]string{"u1", "Title One", "f1"},
+				[3]string{"u2", "Title Two", "f2"},
+			),
+		},
+		{
+			name: "field values",
+			response: lexFieldValueResponse(
+				[3]string{"u1", "Title One", "f1"},
+				[3]string{"u2", "Title Two", "f2"},
+			),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			hits, err := lexicalHitsFromResponse(test.response)
+			require.NoError(t, err)
+			require.Len(t, hits, 2)
+			for i, want := range []lexicalHit{{uid: "u1", title: "Title One", folder: "f1"}, {uid: "u2", title: "Title Two", folder: "f2"}} {
+				if test.response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+					want.lexical = map[string]*structpb.Value{
+						SEARCH_FIELD_TITLE:  structpb.NewStringValue(want.title),
+						SEARCH_FIELD_FOLDER: structpb.NewStringValue(want.folder),
+					}
+				}
+				assert.Equal(t, want, hits[i])
+			}
+		})
+	}
 }
 
 func TestLexicalHitsFromResponse_ManagerColumns(t *testing.T) {
-	resp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-		Columns: []*resourcepb.ResourceTableColumnDefinition{
-			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "resource table",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{{
+					Key:   &resourcepb.ResourceKey{Name: "u1"},
+					Cells: [][]byte{[]byte("Title"), []byte("repo"), []byte("m1")},
+				}},
+			}},
 		},
-		Rows: []*resourcepb.ResourceTableRow{{
-			Key:   &resourcepb.ResourceKey{Name: "u1"},
-			Cells: [][]byte{[]byte("Title"), []byte("repo"), []byte("m1")},
-		}},
-	}}
-	hits := lexicalHitsFromResponse(resp)
-	require.Len(t, hits, 1)
-	assert.Equal(t, lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}, hits[0])
+		{
+			name: "field values",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: &resourcepb.ResourceKey{Name: "u1"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Title"}},
+						{FieldIndex: 1, StringValues: []string{"repo"}},
+						{FieldIndex: 2, StringValues: []string{"m1"}},
+					},
+				}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			hits, err := lexicalHitsFromResponse(test.response)
+			require.NoError(t, err)
+			require.Len(t, hits, 1)
+			want := lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}
+			if test.response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+				want.lexical = map[string]*structpb.Value{
+					SEARCH_FIELD_TITLE:        structpb.NewStringValue("Title"),
+					SEARCH_FIELD_MANAGER_KIND: structpb.NewStringValue("repo"),
+					SEARCH_FIELD_MANAGER_ID:   structpb.NewStringValue("m1"),
+				}
+			}
+			assert.Equal(t, want, hits[0])
+		})
+	}
 }
 
 func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
-	assert.Empty(t, lexicalHitsFromResponse(nil))
-	assert.Empty(t, lexicalHitsFromResponse(&resourcepb.ResourceSearchResponse{}))
+	for _, response := range []*resourcepb.ResourceSearchResponse{
+		nil,
+		{},
+		{Results: &resourcepb.ResourceTable{
+			Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "u1"}}},
+		}},
+	} {
+		hits, err := lexicalHitsFromResponse(response)
+		require.NoError(t, err)
+		if response != nil && response.Results != nil {
+			require.Len(t, hits, 1)
+			assert.Equal(t, lexicalHit{uid: "u1"}, hits[0])
+		} else {
+			assert.Empty(t, hits)
+		}
+	}
+}
 
-	resp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-		Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "u1"}}},
-	}}
-	hits := lexicalHitsFromResponse(resp)
-	require.Len(t, hits, 1)
-	assert.Equal(t, lexicalHit{uid: "u1"}, hits[0])
+func TestLexicalHitsFromResponseRejectsMalformedFieldValues(t *testing.T) {
+	_, err := lexicalHitsFromResponse(malformedFieldValueResponse())
+	require.ErrorContains(t, err, `field "title": scalar has 2 values`)
 }
 
 func TestValidateHybridSearchRequest(t *testing.T) {
+	validate := func(req *resourcepb.HybridSearchRequest) error {
+		_, err := parseHybridSearchRequest(req)
+		return err
+	}
 	valid := func() *resourcepb.HybridSearchRequest {
 		return &resourcepb.HybridSearchRequest{Key: hybridKey(), Query: "q"}
 	}
 
-	assert.Nil(t, validateHybridSearchRequest(valid()))
+	assert.Nil(t, validate(valid()))
 
 	r := valid()
 	r.Key = nil
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	r = valid()
 	r.Query = "  "
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	r = valid()
 	r.Query = strings.Repeat("x", 1001)
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	r = valid()
 	r.SemanticQuery = strings.Repeat("x", 1001)
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	// All validation failures are InvalidArgument status errors, never
 	// response-embedded.
@@ -268,41 +390,41 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	// Kind-specific key checks live in validateHybridSearchFilters.
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"prod"}}}
-	assert.Nil(t, validateHybridSearchRequest(r))
-	wantInvalid(validateHybridSearchFilters(r, false), "tags")
-	assert.Nil(t, validateHybridSearchFilters(r, true))
+	assert.Nil(t, validate(r))
+	wantInvalid(validateHybridSearchFilters(r.Filters, r.Key, false), "tags")
+	assert.Nil(t, validateHybridSearchFilters(r.Filters, r.Key, true))
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "", Operator: "in", Values: []string{"x"}}}
-	wantInvalid(validateHybridSearchRequest(r), "empty")
+	wantInvalid(validate(r), "empty")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "in"}}
-	wantInvalid(validateHybridSearchRequest(r), "no values")
+	wantInvalid(validate(r), "no values")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "notin", Values: []string{"u1"}}}
-	wantInvalid(validateHybridSearchRequest(r), "operator")
+	wantInvalid(validate(r), "operator")
 
 	r = valid()
 	r.SemanticQuery = "   "
-	wantInvalid(validateHybridSearchRequest(r), "whitespace")
+	wantInvalid(validate(r), "whitespace")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{
 		{Key: "uid", Operator: "in", Values: []string{"u1"}},
 		{Key: "uid", Operator: "in", Values: []string{"u2"}},
 	}
-	wantInvalid(validateHybridSearchRequest(r), "duplicate")
+	wantInvalid(validate(r), "duplicate")
 
 	r = valid()
 	r.Key.Resource = "dashboards"
 	r.Filters = []*resourcepb.Requirement{{Key: "language", Operator: "in", Values: []string{"promql", "cypher"}}}
-	wantInvalid(validateHybridSearchFilters(r, false), "cypher")
+	wantInvalid(validateHybridSearchFilters(r.Filters, r.Key, false), "cypher")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "datasource_uid", Operator: "in", Values: []string{"d"}}}
-	wantInvalid(validateHybridSearchFilters(r, false), "dashboards")
+	wantInvalid(validateHybridSearchFilters(r.Filters, r.Key, false), "dashboards")
 
 	r = valid()
 	r.Key.Resource = "dashboards"
@@ -312,8 +434,8 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 		{Key: "datasource_uid", Operator: "in", Values: []string{"d"}},
 		{Key: "language", Operator: "in", Values: []string{"promql"}},
 	}
-	assert.Nil(t, validateHybridSearchRequest(r))
-	assert.Nil(t, validateHybridSearchFilters(r, false))
+	assert.Nil(t, validate(r))
+	assert.Nil(t, validateHybridSearchFilters(r.Filters, r.Key, false))
 
 	// External contract: no key allowlist.
 	r = valid()
@@ -323,32 +445,32 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 		{Key: "folderUid", Operator: "in", Values: []string{"f"}},
 		{Key: "labels", Operator: "in", Values: []string{"team=infra"}},
 	}
-	assert.Nil(t, validateHybridSearchFilters(r, true))
+	assert.Nil(t, validateHybridSearchFilters(r.Filters, r.Key, true))
 
 	r = valid()
 	r.MinRelevance = "low"
-	assert.Nil(t, validateHybridSearchRequest(r))
+	assert.Nil(t, validate(r))
 
 	r = valid()
 	r.MinRelevance = ""
-	assert.Nil(t, validateHybridSearchRequest(r))
+	assert.Nil(t, validate(r))
 
 	r = valid()
 	r.MinRelevance = "med"
-	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
+	wantInvalid(validate(r), "unsupported min_relevance")
 
 	r = valid()
 	r.MinRelevance = "0.5"
-	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
+	wantInvalid(validate(r), "unsupported min_relevance")
 
 	r = valid()
 	r.SkipRerank = true
-	assert.Nil(t, validateHybridSearchRequest(r))
+	assert.Nil(t, validate(r))
 
 	r = valid()
 	r.SkipRerank = true
 	r.MinRelevance = "low"
-	wantInvalid(validateHybridSearchRequest(r), "min_relevance cannot be combined with skip_rerank")
+	wantInvalid(validate(r), "min_relevance cannot be combined with skip_rerank")
 }
 
 func TestHybridLexicalRequest(t *testing.T) {
@@ -362,11 +484,12 @@ func TestHybridLexicalRequest(t *testing.T) {
 			{Key: "language", Operator: "in", Values: []string{"promql", "logql"}},
 		},
 	}
-	out := hybridLexicalRequest(req, 40)
+	out := hybridLexicalRequest(req, req.Key, 40)
 
 	assert.Equal(t, "cpu", out.Query)
 	assert.Equal(t, int64(40), out.Limit)
 	assert.Same(t, req.Key, out.Options.Key)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, out.ResultFormat)
 	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, out.Fields)
 
 	require.Len(t, out.Options.Fields, 4)
@@ -427,14 +550,15 @@ type fakeSearchBackend struct {
 func (f *fakeSearchBackend) LoadOpenIndexStats(time.Time, time.Duration) ([]ResourceStats, error) {
 	return nil, nil
 }
-func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error       { return nil }
-func (f *fakeSearchBackend) GetIndex(NamespacedResource) ResourceIndex { return f.idx }
-func (f *fakeSearchBackend) TotalDocs() int64                          { return 0 }
-func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource      { return nil }
-func (f *fakeSearchBackend) RemoveExpiredTrash(context.Context)        {}
-func (f *fakeSearchBackend) SnapshotCountThreshold() int64             { return 0 }
-func (f *fakeSearchBackend) Stop()                                     {}
-func (f *fakeSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration) (ResourceIndex, error) {
+func (f *fakeSearchBackend) WriteOpenIndexStats(time.Time) error        { return nil }
+func (f *fakeSearchBackend) GetIndex(NamespacedResource) ResourceIndex  { return f.idx }
+func (f *fakeSearchBackend) PeekIndex(NamespacedResource) ResourceIndex { return f.idx }
+func (f *fakeSearchBackend) TotalDocs() int64                           { return 0 }
+func (f *fakeSearchBackend) GetOpenIndexes() []NamespacedResource       { return nil }
+func (f *fakeSearchBackend) RemoveExpiredTrash(context.Context)         {}
+func (f *fakeSearchBackend) SnapshotCountThreshold() int64              { return 0 }
+func (f *fakeSearchBackend) Stop()                                      {}
+func (f *fakeSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration, BuildIndexOptions) (ResourceIndex, error) {
 	return f.idx, nil
 }
 
@@ -458,7 +582,7 @@ type hybridFakeIndex struct {
 	gotManagedByReq *resourcepb.ResourceSearchRequest
 }
 
-func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if req.Options.GetKey().GetResource() == "folders" {
@@ -491,7 +615,7 @@ func newHybridTestServer(lexResp *resourcepb.ResourceSearchResponse, backend *fa
 }
 
 func TestHybridSearch_FusesBothLegs(t *testing.T) {
-	lexResp := lexTableResponse(
+	lexResp := lexFieldValueResponse(
 		[3]string{"both", "Both Legs", "f1"},
 		[3]string{"lexonly", "Lex Only", "f2"},
 	)
@@ -525,6 +649,7 @@ func TestHybridSearch_FusesBothLegs(t *testing.T) {
 	idx.mu.Lock()
 	assert.Equal(t, "api latency", idx.gotReq.Query)
 	assert.Equal(t, int64(20), idx.gotReq.Limit)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotReq.ResultFormat)
 	idx.mu.Unlock()
 	assert.Equal(t, 20, backend.gotLimit)
 }
@@ -611,6 +736,149 @@ func TestHybridSearch_NotConfigured(t *testing.T) {
 	assert.Equal(t, codes.Unimplemented, status.Code(err))
 }
 
+func TestHybridSearch_LexicalOnly(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		noBackend  bool
+		noEmbedder bool
+	}{
+		{name: "no vector backend", noBackend: true},
+		{name: "no embedder", noEmbedder: true},
+		{name: "neither configured", noBackend: true, noEmbedder: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{}
+			s, idx, emb := newHybridTestServer(lexFieldValueResponse(
+				[3]string{"b", "First match", "f1"},
+				[3]string{"a", "Second match", "f1"},
+			), backend)
+			if tc.noBackend {
+				s.vectorBackend = nil
+			}
+			if tc.noEmbedder {
+				s.embedder = nil
+			}
+			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+			limiter := &recordingRateLimiter{}
+			s.rateLimiter = limiter
+			s.rateLimitPerTenant = 100
+			s.rateLimitWindow = time.Minute
+			idx.folderResp = lexFieldValueResponse([3]string{"f1", "Folder One", ""})
+
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "match", SemanticQuery: "richer semantic query",
+				MinRelevance: "high",
+				Filters: []*resourcepb.Requirement{
+					{Key: "uid", Values: []string{"a", "b"}},
+					{Key: "folder", Values: []string{"f1"}},
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, resp.Results, 2)
+			assert.Equal(t, "b", resp.Results[0].Key.Name)
+			assert.Equal(t, "a", resp.Results[1].Key.Name)
+			assert.Equal(t, "First match", resp.Results[0].Title)
+			assert.Equal(t, "f1", resp.Results[0].Folder)
+			assert.Equal(t, "Folder One", resp.Results[0].FolderTitle)
+			assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+			require.Len(t, resp.Results[0].Chunks, 1)
+			assert.Equal(t, "First match", resp.Results[0].Chunks[0].Content)
+			require.NotNil(t, idx.gotReq)
+			assert.Equal(t, "match", idx.gotReq.Query)
+			assert.Equal(t, []*resourcepb.Requirement{
+				{Key: SEARCH_FIELD_NAME, Operator: "in", Values: []string{"a", "b"}},
+				{Key: SEARCH_FIELD_FOLDER, Operator: "in", Values: []string{"f1"}},
+			}, idx.gotReq.Options.Fields)
+			assert.Zero(t, backend.resolveCalls)
+			assert.Empty(t, backend.gotEmbedding)
+			assert.Empty(t, emb.gotIn.Texts)
+			assert.False(t, limiter.called)
+		})
+	}
+}
+
+func TestHybridSearch_LexicalOnlyLimits(t *testing.T) {
+	rows := make([][3]string, 210)
+	for i := range rows {
+		rows[i] = [3]string{fmt.Sprintf("uid-%d", i), "Title", ""}
+	}
+	for _, tc := range []struct {
+		limit int64
+		want  int
+	}{
+		{limit: -1, want: 50},
+		{limit: 0, want: 50},
+		{limit: 2, want: 2},
+		{limit: 200, want: 200},
+		{limit: 201, want: 200},
+	} {
+		t.Run(fmt.Sprint(tc.limit), func(t *testing.T) {
+			s, _, _ := newHybridTestServer(lexFieldValueResponse(rows...), &fakeVectorBackend{})
+			s.vectorBackend, s.embedder = nil, nil
+
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "title", Limit: tc.limit,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resp.Results, tc.want)
+		})
+	}
+}
+
+func TestHybridSearch_LexicalOnlyErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		ctx     context.Context
+		query   string
+		filters []*resourcepb.Requirement
+		lexErr  error
+		want    codes.Code
+	}{
+		{name: "empty query", ctx: authedCtx(), want: codes.InvalidArgument},
+		{name: "unsupported filter", ctx: authedCtx(), query: "q",
+			filters: []*resourcepb.Requirement{{Key: "tags", Values: []string{"x"}}}, want: codes.InvalidArgument},
+		{name: "unauthenticated", ctx: context.Background(), query: "q", want: codes.Unauthenticated},
+		{name: "namespace mismatch", ctx: authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser}),
+			query: "q", want: codes.PermissionDenied},
+		{name: "lexical failure", ctx: authedCtx(), query: "q", lexErr: errors.New("index unavailable"), want: codes.Internal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, idx, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+			s.vectorBackend, s.embedder = nil, nil
+			idx.err = tc.lexErr
+
+			_, err := s.HybridSearch(tc.ctx, &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: tc.query, Filters: tc.filters,
+			})
+			require.Error(t, err)
+			assert.Equal(t, tc.want, status.Code(err))
+			if tc.lexErr == nil {
+				assert.Nil(t, idx.gotReq, "rejected requests must not reach the index")
+			}
+		})
+	}
+}
+
+func TestHybridSearch_LexicalOnlyReranking(t *testing.T) {
+	s, _, _ := newHybridTestServer(lexFieldValueResponse(
+		[3]string{"a", "First match", ""}, [3]string{"b", "Second match", ""},
+	), &fakeVectorBackend{})
+	s.vectorBackend, s.embedder = nil, nil
+	scorer := &fakeRerankScorer{scores: []float64{0.1, 0.9}}
+	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{High: 0.6})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "match", SemanticQuery: "richer semantic query", MinRelevance: "high", Limit: 1,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "b", resp.Results[0].Key.Name)
+	assert.Equal(t, 0.9, resp.Results[0].Score)
+	assert.Equal(t, "richer semantic query", scorer.gotQ)
+	assert.Equal(t, []string{"First match", "Second match"}, scorer.gotTexts)
+}
+
 func TestHybridSearch_ValidationErrorsAreInvalidArgument(t *testing.T) {
 	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
 
@@ -627,15 +895,25 @@ func TestHybridSearch_ValidationErrorsAreInvalidArgument(t *testing.T) {
 }
 
 func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
-	backend := &fakeVectorBackend{}
-	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
-	idx.err = fmt.Errorf("index exploded")
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+		err      error
+	}{
+		{name: "search failure", response: lexTableResponse(), err: fmt.Errorf("index exploded")},
+		{name: "malformed field values", response: malformedFieldValueResponse()},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s, idx, _ := newHybridTestServer(test.response, &fakeVectorBackend{})
+			idx.err = test.err
 
-	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Internal, status.Code(err))
+			_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
+			})
+			require.Error(t, err)
+			assert.Equal(t, codes.Internal, status.Code(err))
+		})
+	}
 }
 
 func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
@@ -750,44 +1028,6 @@ func TestHybridSearch_CollectionResolution(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "custom_partition", backend.gotResource)
 	})
-}
-
-func TestHybridSearch_NamespaceMismatchIsForbidden(t *testing.T) {
-	// A caller authenticated for one namespace must not burn another
-	// tenant's rate budget or embed quota.
-	limiter := &recordingRateLimiter{}
-	emb := &fakeTextEmbedder{dim: 4}
-	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-	s.embedder = newTestEmbedder(emb)
-	s.rateLimiter = limiter
-	s.rateLimitPerTenant = 100
-	s.rateLimitWindow = time.Minute
-
-	ctx := authlib.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser},
-	)
-	_, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.PermissionDenied, status.Code(err))
-	assert.False(t, limiter.called, "cross-tenant request must not consume rate budget")
-	assert.Empty(t, emb.gotIn.Texts, "cross-tenant request must not consume embed quota")
-}
-
-func TestHybridSearch_UnauthenticatedDoesNotConsumeRateBudget(t *testing.T) {
-	limiter := &recordingRateLimiter{}
-	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-	s.rateLimiter = limiter
-	s.rateLimitPerTenant = 100
-	s.rateLimitWindow = time.Minute
-
-	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unauthenticated, status.Code(err))
-	assert.False(t, limiter.called, "unauthenticated request must not consume rate budget")
 }
 
 func TestHybridSearch_CallerCancellationReturnsCanceled(t *testing.T) {
@@ -983,7 +1223,7 @@ func TestHybridSearch_ResolvesFolderTitlesInOneBatchedLookup(t *testing.T) {
 		[3]string{"d3", "Dash Three", "f1"}, // duplicate folder: must not repeat in the lookup
 	)
 	s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
-	idx.folderResp = lexTableResponse(
+	idx.folderResp = lexFieldValueResponse(
 		[3]string{"f1", "Folder One", ""},
 		[3]string{"f2", "Folder Two", ""},
 	)
@@ -1004,6 +1244,8 @@ func TestHybridSearch_ResolvesFolderTitlesInOneBatchedLookup(t *testing.T) {
 	defer idx.mu.Unlock()
 	require.NotNil(t, idx.gotFolderReq)
 	assert.Equal(t, "folder.grafana.app", idx.gotFolderReq.Options.Key.Group)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotFolderReq.ResultFormat)
+	assert.Equal(t, []string{SEARCH_FIELD_TITLE}, idx.gotFolderReq.Fields)
 	require.Len(t, idx.gotFolderReq.Options.Fields, 1)
 	assert.ElementsMatch(t, []string{"f1", "f2"}, idx.gotFolderReq.Options.Fields[0].Values)
 	// lexical-leg request assertions stay untouched by the folder lookup
@@ -1040,6 +1282,9 @@ func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
 				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
 			}
 		},
+		"malformed field values": func(idx *hybridFakeIndex) {
+			idx.folderResp = malformedFieldValueResponse()
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			lexResp := lexTableResponse([3]string{"d1", "Dash One", "f1"})
@@ -1065,7 +1310,7 @@ func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
 		},
 	}
 	s, idx, _ := newHybridTestServer(lexResp, backend)
-	idx.managedByResp = managerTableResponse([3]string{"semonly", "repo", "m1"})
+	idx.managedByResp = managerFieldValueResponse([3]string{"semonly", "repo", "m1"})
 
 	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: validKey(), Query: "q",
@@ -1083,6 +1328,8 @@ func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 	require.NotNil(t, idx.gotManagedByReq)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, idx.gotManagedByReq.ResultFormat)
+	assert.Equal(t, []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, idx.gotManagedByReq.Fields)
 	require.Len(t, idx.gotManagedByReq.Options.Fields, 1)
 	assert.Equal(t, []string{"semonly"}, idx.gotManagedByReq.Options.Fields[0].Values, "only the semantic-only uid is looked up")
 	assert.Equal(t, "q", idx.gotReq.Query, "lexical-leg request assertions stay untouched by the managed-by lookup")
@@ -1111,6 +1358,9 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 			idx.managedByResp = &resourcepb.ResourceSearchResponse{
 				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
 			}
+		},
+		"malformed field values": func(idx *hybridFakeIndex) {
+			idx.managedByResp = malformedFieldValueResponse()
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -1217,18 +1467,15 @@ func TestHybridSearch_RerankCallerCancellationPropagates(t *testing.T) {
 	assert.Equal(t, codes.Canceled, status.Code(err))
 }
 
-func TestHybridSearch_RerankPoolTruncatedToMaxCandidates(t *testing.T) {
-	// 200 lexical + 150 disjoint semantic hits fuse into 350 candidates —
-	// past the Vertex 200-record cap — so the scorer must only ever see
-	// maxRerankCandidates texts.
+func TestHybridSearch_ReranksFusedPoolBeforeResultLimit(t *testing.T) {
 	rows := make([][3]string, 200)
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		rows[i] = [3]string{fmt.Sprintf("lex-%03d", i), fmt.Sprintf("Lex %03d", i), "f"}
 	}
 	lexResp := lexTableResponse(rows...)
 
 	sem := make([]vector.VectorSearchResult, 150)
-	for i := 0; i < 150; i++ {
+	for i := range 150 {
 		sem[i] = vector.VectorSearchResult{
 			UID: fmt.Sprintf("sem-%03d", i), Title: fmt.Sprintf("Sem %03d", i),
 			Content: "c", Score: float64(i), Folder: "f",
@@ -1244,8 +1491,8 @@ func TestHybridSearch_RerankPoolTruncatedToMaxCandidates(t *testing.T) {
 		Key: validKey(), Query: "q", Limit: 200,
 	})
 	require.NoError(t, err)
-	assert.Len(t, scorer.gotTexts, maxRerankCandidates)
-	assert.Len(t, resp.Results, maxRerankCandidates)
+	assert.Len(t, scorer.gotTexts, len(rows)+len(sem))
+	assert.Len(t, resp.Results, 200)
 }
 
 func TestHybridSearch_RerankFallbackThenLimitTruncates(t *testing.T) {

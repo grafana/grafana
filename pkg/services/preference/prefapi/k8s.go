@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
@@ -160,15 +159,15 @@ func (h *K8sHandler) resolveHomeDashboardUID(c *contextmodel.ReqContext, uidPtr 
 // pref.Service.Save behaviour.
 func updateCmdToSpec(dto *dtos.UpdatePrefsCmd, homeDashboardUID *string) *preferences.PreferencesSpec {
 	spec := &preferences.PreferencesSpec{
-		Theme:            ptr.To(dto.Theme),
-		Timezone:         ptr.To(dto.Timezone),
-		WeekStart:        ptr.To(dto.WeekStart),
-		Language:         ptr.To(dto.Language),
+		Theme:            new(dto.Theme),
+		Timezone:         new(dto.Timezone),
+		WeekStart:        new(dto.WeekStart),
+		Language:         new(dto.Language),
 		HomeDashboardUID: homeDashboardUID,
 	}
 	if dto.QueryHistory != nil {
 		spec.QueryHistory = &preferences.PreferencesQueryHistoryPreference{
-			HomeTab: ptr.To(dto.QueryHistory.HomeTab),
+			HomeTab: new(dto.QueryHistory.HomeTab),
 		}
 	}
 	if dto.Navbar != nil {
@@ -192,7 +191,7 @@ func patchCmdToSpec(dto *dtos.PatchPrefsCmd, homeDashboardUID *string) *preferen
 	}
 	if dto.QueryHistory != nil {
 		spec.QueryHistory = &preferences.PreferencesQueryHistoryPreference{
-			HomeTab: ptr.To(dto.QueryHistory.HomeTab),
+			HomeTab: new(dto.QueryHistory.HomeTab),
 		}
 	}
 	if dto.Navbar != nil {

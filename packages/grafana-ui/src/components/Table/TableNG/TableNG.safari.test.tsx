@@ -30,9 +30,7 @@ const createBasicDataFrame = (): DataFrame =>
 
 describe('TableNG Safari 26 workaround', () => {
   it('wraps the table in a contain:strict container without breaking rendering', () => {
-    const { container } = render(
-      <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-    );
+    const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
     // The grid renders inside an extra wrapper div rather than at the container root.
     const grid = container.querySelector('[role="grid"]');

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -154,10 +155,10 @@ func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
 }
 
 func TestBuildNotebooksNavLink(t *testing.T) {
-	newService := func(canReadDashboards bool) *ServiceImpl {
+	newService := func(canReadNotebooks bool) *ServiceImpl {
 		return &ServiceImpl{
 			cfg:           setting.NewCfg(),
-			accessControl: actest.FakeAccessControl{ExpectedEvaluate: canReadDashboards},
+			accessControl: actest.FakeAccessControl{ExpectedEvaluate: canReadNotebooks},
 			features:      featuremgmt.WithFeatures(),
 		}
 	}
@@ -171,7 +172,7 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 		}
 	}
 
-	t.Run("Should show Notebooks for a signed-in user with dashboard read access when the flag is on", func(t *testing.T) {
+	t.Run("Should show Notebooks for a signed-in user with notebook read access when the flag is on", func(t *testing.T) {
 		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
 
 		link := newService(true).buildNotebooksNavLink(newReqCtx(true))
@@ -187,7 +188,7 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(true)))
 	})
 
-	t.Run("Should not show Notebooks without dashboard read access", func(t *testing.T) {
+	t.Run("Should not show Notebooks without notebook read access", func(t *testing.T) {
 		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
 
 		require.Nil(t, newService(false).buildNotebooksNavLink(newReqCtx(true)))
@@ -198,6 +199,55 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 
 		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(false)))
 	})
+
+	for _, testCase := range []struct {
+		name        string
+		permissions []ac.Permission
+		wantSection bool
+		wantCreate  bool
+	}{
+		{
+			name:        "reader has no create action",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksRead}},
+			wantSection: true,
+		},
+		{
+			name:        "creator has a create action",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksRead}, {Action: notebooks.ActionNotebooksCreate}},
+			wantSection: true,
+			wantCreate:  true,
+		},
+		{
+			name:        "create permission alone does not expose the section",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksCreate}},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
+			cfg := setting.NewCfg()
+			cfg.AppSubURL = "/grafana"
+			service := &ServiceImpl{
+				cfg:           cfg,
+				accessControl: accesscontrolmock.New().WithPermissions(testCase.permissions),
+				features:      featuremgmt.WithFeatures(),
+			}
+			link := service.buildNotebooksNavLink(newReqCtx(true))
+			if !testCase.wantSection {
+				require.Nil(t, link)
+				return
+			}
+			require.NotNil(t, link)
+			require.Equal(t, "/grafana/notebooks", link.Url)
+			if !testCase.wantCreate {
+				require.Empty(t, link.Children)
+				return
+			}
+			require.Equal(t, []*navtree.NavLink{{
+				Text: "New notebook", Id: "notebooks/new", Icon: "plus",
+				Url: "/grafana/notebooks/new?edit=true", HideFromTabs: true, IsCreateAction: true,
+			}}, link.Children)
+		})
+	}
 }
 
 func TestBuildAlertNavLinks(t *testing.T) {
@@ -273,13 +323,251 @@ func TestBuildAlertNavLinks(t *testing.T) {
 }
 
 func hasHistoryLink(alertNav *navtree.NavLink) bool {
-	if alertNav == nil {
-		return false
+	return findChildLink(alertNav, "alerts-history") != nil
+}
+
+func TestBuildAlertNavLinks_RecentlyDeleted(t *testing.T) {
+	testCases := []struct {
+		name            string
+		role            org.RoleType
+		features        []any
+		expectedVisible bool
+	}{
+		{
+			name:            "admin sees the page",
+			role:            org.RoleAdmin,
+			expectedVisible: true,
+		},
+		{
+			name:            "editor does not see the page",
+			role:            org.RoleEditor,
+			expectedVisible: false,
+		},
+		{
+			name:            "navigation V2 shows the page as a tab instead",
+			role:            org.RoleAdmin,
+			features:        []any{featuremgmt.FlagAlertingNavigationV2},
+			expectedVisible: false,
+		},
 	}
-	for _, link := range alertNav.Children {
-		if link.Id == "alerts-history" {
-			return true
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			service := ServiceImpl{
+				cfg:           setting.NewCfg(),
+				accessControl: accesscontrolmock.New(),
+				features:      featuremgmt.WithFeatures(tc.features...),
+			}
+
+			httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: tc.role},
+				IsSignedIn:   true,
+				Context:      &web.Context{Req: httpReq},
+			}
+
+			link := findChildLink(service.buildAlertNavLinks(reqCtx), "alerts/recently-deleted")
+
+			require.Equal(t, tc.expectedVisible, link != nil, "unexpected visibility of the recently deleted nav link")
+		})
+	}
+}
+
+func TestBuildAlertNavLinks_AlertActivity(t *testing.T) {
+	prometheusStateHistory := setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom-uid"}
+	permissions := []ac.Permission{
+		{Action: ac.ActionAlertingRuleRead, Scope: "*"},
+		{Action: ac.ActionAlertingInstanceRead, Scope: "*"},
+	}
+
+	testCases := []struct {
+		name               string
+		stateHistory       setting.UnifiedAlertingStateHistorySettings
+		features           []any
+		expectedActivityID string
+		expectedGroups     bool
+	}{
+		{
+			name:               "shown when state history writes to prometheus",
+			stateHistory:       prometheusStateHistory,
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "alert-alerts",
+			expectedGroups:     true,
+		},
+		{
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			name:               "shown when a target data source is set with the loki backend",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom-uid"},
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "alert-alerts",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when no target data source is set",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki"},
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when the feature flag is turned off",
+			stateHistory:       prometheusStateHistory,
+			features:           nil,
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+		{
+			name:               "navigation V2 moves alert groups into a tab of alert activity",
+			stateHistory:       prometheusStateHistory,
+			features:           []any{featuremgmt.FlagAlertingTriage, featuremgmt.FlagAlertingNavigationV2},
+			expectedActivityID: "alert-activity",
+			expectedGroups:     false,
+		},
+		{
+			name:               "navigation V2 keeps alert groups when alert activity is unavailable",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations"},
+			features:           []any{featuremgmt.FlagAlertingTriage, featuremgmt.FlagAlertingNavigationV2},
+			expectedActivityID: "",
+			expectedGroups:     true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.StateHistory = tc.stateHistory
+
+			service := ServiceImpl{
+				cfg:           cfg,
+				accessControl: accesscontrolmock.New().WithPermissions(permissions),
+				features:      featuremgmt.WithFeatures(tc.features...),
+			}
+
+			httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+				IsSignedIn:   true,
+				Context:      &web.Context{Req: httpReq},
+			}
+
+			alertNav := service.buildAlertNavLinks(reqCtx)
+
+			for _, id := range []string{"alert-alerts", "alert-activity"} {
+				require.Equal(t, id == tc.expectedActivityID, findChildLink(alertNav, id) != nil, "unexpected visibility of the %q nav link", id)
+			}
+			require.Equal(t, tc.expectedGroups, findChildLink(alertNav, "groups") != nil, "unexpected visibility of the alert groups nav link")
+		})
+	}
+}
+
+func findChildLink(nav *navtree.NavLink, id string) *navtree.NavLink {
+	if nav == nil {
+		return nil
+	}
+	for _, link := range nav.Children {
+		if link.Id == id {
+			return link
 		}
 	}
-	return false
+	return nil
+}
+
+func TestBuildAlertNavLinks_GmaOnlyListView(t *testing.T) {
+	ruleReadPermission := []ac.Permission{{Action: ac.ActionAlertingRuleRead, Scope: "*"}}
+
+	newReqCtx := func(role org.RoleType) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{OrgRole: role},
+			IsSignedIn:   true,
+			Context:      &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("flag off keeps the combined Alert rules entry and legacy Recently deleted", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: false})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(ruleReadPermission),
+			features:      featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore, featuremgmt.FlagAlertingRuleRecoverDeleted),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleAdmin))
+
+		require.NotNil(t, findChildLink(alertNav, "alert-list"), "expected the legacy combined Alert rules entry")
+		require.Nil(t, findChildLink(alertNav, "alert-rules"))
+		require.Nil(t, findChildLink(alertNav, "recording-rules"))
+		require.NotNil(t, findChildLink(alertNav, "alerts/recently-deleted"), "expected the legacy standalone Recently deleted entry")
+	})
+
+	t.Run("flag on replaces Alert rules with peer Alert/Recording entries and drops the combined Recently deleted entry", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(ruleReadPermission),
+			features:      featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore, featuremgmt.FlagAlertingRuleRecoverDeleted),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleAdmin))
+
+		require.Nil(t, findChildLink(alertNav, "alert-list"))
+		require.Nil(t, findChildLink(alertNav, "alerts/recently-deleted"), "the combined Recently deleted entry must not appear once gmaOnlyListView is on")
+
+		alertRulesLink := findChildLink(alertNav, "alert-rules")
+		require.NotNil(t, alertRulesLink, "expected a peer Alert rules entry")
+		require.Equal(t, "/alerting/rules/alert", alertRulesLink.Url)
+
+		recordingRulesLink := findChildLink(alertNav, "recording-rules")
+		require.NotNil(t, recordingRulesLink, "expected a peer Recording rules entry")
+		require.Equal(t, "/alerting/rules/recording", recordingRulesLink.Url)
+	})
+
+	t.Run("flag on gives the same peer entries when alertingNavigationV2 is enabled", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(ruleReadPermission),
+			features:      featuremgmt.WithFeatures(featuremgmt.FlagAlertingNavigationV2),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleAdmin))
+
+		require.Nil(t, findChildLink(alertNav, "alert-list"))
+		require.Nil(t, findChildLink(alertNav, "alerts/recently-deleted"))
+		require.Equal(t, "/alerting/rules/alert", findChildLink(alertNav, "alert-rules").Url)
+		require.Equal(t, "/alerting/rules/recording", findChildLink(alertNav, "recording-rules").Url)
+	})
+
+	t.Run("flag on with only data source-managed read permission shows neither entry", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{{Action: ac.ActionAlertingRuleExternalRead, Scope: "*"}}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleViewer))
+
+		require.Nil(t, findChildLink(alertNav, "alert-rules"))
+		require.Nil(t, findChildLink(alertNav, "recording-rules"))
+	})
+
+	t.Run("flag on without Grafana-managed read permission shows neither entry", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagAlertingGmaOnlyListView: true})
+
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(nil),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		alertNav := service.buildAlertNavLinks(newReqCtx(org.RoleViewer))
+
+		require.Nil(t, findChildLink(alertNav, "alert-rules"))
+		require.Nil(t, findChildLink(alertNav, "recording-rules"))
+	})
 }

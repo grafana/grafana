@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -97,7 +97,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		newRules := make([]*models.AlertRule, 0, len(initialRules))
 		// generate random and then override rule key + version
 		randomNew := gen.GenerateManyRef(len(initialRules))
-		for i := 0; i < len(initialRules); i++ {
+		for i := range initialRules {
 			rule := randomNew[i]
 			oldRule := initialRules[i]
 			rule.UID = oldRule.UID
@@ -314,7 +314,7 @@ func TestRuleSequencesNeedUpdate(t *testing.T) {
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
 	rule := models.RuleGen.GenerateRef()
-	title := uuid.NewString()
+	title := uuid.NewV4().String()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {
 		require.NotEqual(t, 0, uint64(f))
@@ -332,7 +332,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		require.Equal(t, f, f2)
 	})
 	t.Run("folder name should be used in fingerprint", func(t *testing.T) {
-		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewString()}.Fingerprint()
+		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewV4().String()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
 	t.Run("Version, Updated, IntervalSeconds, GUID, Annotations and RuleGroupIndex should be excluded from fingerprint", func(t *testing.T) {
@@ -343,7 +343,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
 		cp.RuleGroupIndex++
-		cp.GUID = uuid.NewString()
+		cp.GUID = uuid.NewV4().String()
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)
@@ -452,6 +452,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"OrgID":           {},
 			"GUID":            {},
 			"FolderFullpath":  {}, // Populated lazily from DB, not part of rule fingerprint
+			"K8sStatus":       {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()
@@ -460,13 +461,13 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 
 		dif := r1.Diff(r2)
 		nonDiffFields = make([]string, 0)
-		for j := 0; j < tp.NumField(); j++ {
-			name := tp.Field(j).Name
+		for field := range tp.Fields() {
+			name := field.Name
 			if _, ok := excludedFields[name]; ok {
 				continue
 			}
-			if len(dif.GetDiffsForField(tp.Field(j).Name)) == 0 {
-				nonDiffFields = append(nonDiffFields, tp.Field(j).Name)
+			if len(dif.GetDiffsForField(field.Name)) == 0 {
+				nonDiffFields = append(nonDiffFields, field.Name)
 			}
 		}
 		require.Emptyf(t, nonDiffFields, "cannot generate completely unique alert rule. Some fields are not randomized")

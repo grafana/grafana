@@ -1,16 +1,42 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { waitFor } from '@testing-library/react';
+import { HttpResponse, delay, http } from 'msw';
 import { type UnknownAction } from 'redux';
-import { delay, of, throwError } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { type Resource } from 'app/features/apiserver/types';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NotebookAutosave } from '../scene/NotebookAutosave';
 import { NotebookScene } from '../scene/NotebookScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
 import { NotebookPageStateManager } from './NotebookPageStateManager';
+
+jest.mock('../analytics/main', () => ({ NotebookAnalytics: { loaded: jest.fn() } }));
+
+const mockGetPanelPluginMetasMap = jest.fn();
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getPanelPluginMetasMap: (...args: unknown[]) =>
+      mockGetPanelPluginMetasMap(...args) ?? actual.getPanelPluginMetasMap(...args),
+  };
+});
+
+const NOTEBOOK_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name';
+
+/** Long enough for a request made after this one to answer first. */
+const SLOW_RESPONSE_MS = 50;
+
+// The api client issues its requests through the backend service, which msw then intercepts.
+setBackendSrv(backendSrv);
+setupMockServer();
 
 // The state manager dispatches the notebook query through the app store; route that dispatch to a
 // test store that carries the dashboard v2beta1 API so the RTK query actually runs.
@@ -60,15 +86,60 @@ function notebookResource(name = 'nb-1', generation = 1): Resource<NotebookSpec>
   };
 }
 
+/** What the network was actually asked for, so a test can show nothing was fetched. */
+let requested: string[] = [];
+
+function notebookHandler(respond: (name: string) => Response | Promise<Response>, options?: { once: boolean }) {
+  return http.get(
+    NOTEBOOK_URL,
+    async ({ params }) => {
+      const name = String(params.name);
+      requested.push(name);
+      return respond(name);
+    },
+    options
+  );
+}
+
+/** Serves whichever notebook is asked for, at generation 1 unless one is listed otherwise. */
+function serveNotebooks(generations: Record<string, number> = {}) {
+  server.use(notebookHandler((name) => HttpResponse.json(notebookResource(name, generations[name] ?? 1))));
+}
+
+/** One response per generation, in order, so a reload can see the resource move underneath it. */
+function serveGenerations(...generations: number[]) {
+  server.use(
+    ...generations.map((generation) =>
+      notebookHandler((name) => HttpResponse.json(notebookResource(name, generation)), { once: true })
+    )
+  );
+}
+
+/** Holds `nb-slow` back, so a request made after it lands first. */
+function serveNotebooksHoldingSlowOne() {
+  server.use(
+    notebookHandler(async (name) => {
+      if (name === 'nb-slow') {
+        await delay(SLOW_RESPONSE_MS);
+      }
+      return HttpResponse.json(notebookResource(name));
+    })
+  );
+}
+
 describe('NotebookPageStateManager', () => {
   beforeEach(() => {
     testStore = createTestStore();
+    requested = [];
+    jest.mocked(NotebookAnalytics.loaded).mockClear();
+    // The scene cache is module state, shared by every manager so that one notebook on screen twice
+    // is one scene and therefore one autosave. That makes it outlive a `new` manager, so each case
+    // has to start from empty or it inherits the previous one's scenes and reads as a cache hit.
+    new NotebookPageStateManager({ isLoading: false }).clearSceneCache();
   });
 
   it('fetches the notebook and builds a NotebookScene', async () => {
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
-    } as unknown as BackendSrv);
+    serveNotebooks();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -81,9 +152,7 @@ describe('NotebookPageStateManager', () => {
   });
 
   it('reuses the cached scene when the resource generation is unchanged', async () => {
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
-    } as unknown as BackendSrv);
+    serveNotebooks();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -93,12 +162,24 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).toBe(first);
   });
 
+  // Leaving a notebook and coming back to it is not a document replacement: it's the same scene,
+  // with the same editHistory, reused from the cache above. A person who navigated away by mistake
+  // should not find their undo history gone.
+  it('keeps the cached scene’s undo history across a revisit', async () => {
+    serveNotebooks();
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+  });
+
   it("reuses the cached scene when the only thing that moved the generation was this page's own save", async () => {
-    const fetch = jest
-      .fn()
-      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 1))))
-      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 2))));
-    setBackendSrv({ fetch } as unknown as BackendSrv);
+    serveGenerations(1, 2);
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -114,11 +195,7 @@ describe('NotebookPageStateManager', () => {
   });
 
   it('rebuilds the scene when the server moved past what this page saved', async () => {
-    const fetch = jest
-      .fn()
-      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 1))))
-      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 3))));
-    setBackendSrv({ fetch } as unknown as BackendSrv);
+    serveGenerations(1, 3);
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -132,13 +209,29 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).not.toBe(first);
   });
 
+  // The flip side of the cache-reuse case above: once the server moved past what this page saved,
+  // the rebuild is a genuinely different document, built fresh — its editHistory starts empty by
+  // construction, not by anything clearing the old one.
+  it('starts with an empty undo history when the scene is rebuilt rather than reused', async () => {
+    serveGenerations(1, 3);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+    testStore.dispatch(dashboardAPIv2beta1.util.resetApiState());
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(false);
+  });
+
   it('keeps the cached scene when the query layer answers from before this page saved', async () => {
     // No reset here: the query layer still holds the response from the first load, so the second one is
     // answered with the generation from before the save. Rebuilding from that would put the notebook
     // back to how it looked before the edits autosave had already persisted.
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource('nb-1', 1)))),
-    } as unknown as BackendSrv);
+    serveNotebooks();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -151,9 +244,7 @@ describe('NotebookPageStateManager', () => {
   });
 
   it('rebuilds the scene after removeSceneCache, even at an unchanged generation', async () => {
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
-    } as unknown as BackendSrv);
+    serveNotebooks();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -166,18 +257,14 @@ describe('NotebookPageStateManager', () => {
   });
 
   it('rebuilds every notebook after clearSceneCache', async () => {
-    setBackendSrv({
-      fetch: jest.fn((options: { url: string }) =>
-        of(createFetchResponse(notebookResource(options.url.endsWith('nb-2') ? 'nb-2' : 'nb-1')))
-      ),
-    } as unknown as BackendSrv);
+    serveNotebooks();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
     const firstOne = manager.state.scene?.state.key;
     await manager.loadNotebook('nb-2');
     const firstTwo = manager.state.scene?.state.key;
-    // Guards the mock: if both loads resolved to the same cache entry the test below would pass
+    // Guards the handler: if both loads resolved to the same cache entry the test below would pass
     // trivially without ever proving two entries were cleared.
     expect(firstTwo).not.toBe(firstOne);
 
@@ -190,9 +277,7 @@ describe('NotebookPageStateManager', () => {
   });
 
   it('ignores removeSceneCache for an unknown uid and leaves other entries cached', async () => {
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
-    } as unknown as BackendSrv);
+    serveNotebooks();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
@@ -204,16 +289,30 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).toBe(first);
   });
 
+  it('waits for the panel plugin metas before building the scene', async () => {
+    serveNotebooks();
+    let resolveMetas: () => void = () => {};
+    mockGetPanelPluginMetasMap.mockReturnValueOnce(new Promise<void>((resolve) => (resolveMetas = resolve)));
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    const loading = manager.loadNotebook('nb-1');
+    await waitFor(() => expect(mockGetPanelPluginMetasMap).toHaveBeenCalled());
+
+    expect(manager.state.scene).toBeUndefined();
+    expect(manager.state.isLoading).toBe(true);
+
+    resolveMetas();
+    await loading;
+
+    expect(manager.state.scene?.state.uid).toBe('nb-1');
+    expect(manager.state.isLoading).toBe(false);
+  });
+
   // `await` does not cancel, so a load started for an earlier uid still resumes. If it wrote its
   // scene the page would end up on B's URL showing A, and stay there — nothing fires afterwards.
   // The slow/fast split reproduces the ordering inversion an RTK cache hit causes in practice.
   it('ignores a superseded load so fast navigation cannot show the previous notebook', async () => {
-    setBackendSrv({
-      fetch: jest.fn((options: { url: string }) => {
-        const isSlow = options.url.endsWith('nb-slow');
-        return of(createFetchResponse(notebookResource(isSlow ? 'nb-slow' : 'nb-fast'))).pipe(delay(isSlow ? 50 : 0));
-      }),
-    } as unknown as BackendSrv);
+    serveNotebooksHoldingSlowOne();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     const slow = manager.loadNotebook('nb-slow');
@@ -225,13 +324,15 @@ describe('NotebookPageStateManager', () => {
   });
 
   it('ignores a superseded failure so a stale error cannot replace a loaded notebook', async () => {
-    setBackendSrv({
-      fetch: jest.fn((options: { url: string }) =>
-        options.url.endsWith('nb-slow')
-          ? throwError(() => ({ status: 404, data: { message: 'gone' } })).pipe(delay(50))
-          : of(createFetchResponse(notebookResource('nb-fast')))
-      ),
-    } as unknown as BackendSrv);
+    server.use(
+      notebookHandler(async (name) => {
+        if (name === 'nb-slow') {
+          await delay(SLOW_RESPONSE_MS);
+          return HttpResponse.json({ message: 'gone' }, { status: 404 });
+        }
+        return HttpResponse.json(notebookResource(name));
+      })
+    );
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     const slow = manager.loadNotebook('nb-slow');
@@ -242,35 +343,152 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
   });
 
-  describe('newNotebook', () => {
-    /** Nobody is asked for a name, so the notebook arrives with one it made up. */
-    const TITLE_PATTERN = /^Notebook #[a-z0-9]{12}$/;
+  describe('the time range of a cached notebook', () => {
+    /** Reads the notebook once and closes it, which is what gives autosave a range to go back to. */
+    function readAndClose(scene: NotebookScene) {
+      scene.activate()();
+    }
 
-    it('builds an empty notebook with no resource behind it and nothing fetched', () => {
-      const fetch = jest.fn();
-      setBackendSrv({ fetch } as unknown as BackendSrv);
+    it("puts the notebook's own range back when a reader's range is still on the cached scene", async () => {
+      serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      readAndClose(scene);
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      manager.clearState();
+
+      await manager.loadNotebook('nb-1');
+
+      expect(manager.state.scene?.state.key).toBe(scene.state.key);
+      expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-6h');
+    });
+
+    // An embed can hold the same notebook open while the route reloads it, and the scene is shared.
+    // Resetting would move the range under someone still reading it.
+    it('leaves the range alone while the notebook is open somewhere else', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      const release = scene.activate();
+
+      try {
+        scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+        await manager.loadNotebook('nb-1');
+
+        expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
+      } finally {
+        release();
+      }
+    });
+  });
+
+  describe('loaded event', () => {
+    it('fires once on a fresh load, reporting it was not cached', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false, false, 'direct');
+    });
+
+    it('fires again on a second navigation to a cached scene, reporting it was cached', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      await manager.loadNotebook('nb-1');
+
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(2);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        true,
+        false,
+        'direct'
+      );
+    });
+
+    it('does not fire when a blank notebook adopts its own uid instead of being fetched', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.newNotebook();
+      const blank = manager.state.scene!;
+      blank.setState({ uid: 'nb-new' });
+
+      await manager.loadNotebook('nb-new');
+
+      expect(jest.mocked(NotebookAnalytics.loaded)).not.toHaveBeenCalled();
+    });
+
+    it('fires only for the load that wins a superseded race', async () => {
+      serveNotebooksHoldingSlowOne();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const slow = manager.loadNotebook('nb-slow');
+      const fast = manager.loadNotebook('nb-fast');
+      await Promise.all([fast, slow]);
+
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
+      expect(manager.state.scene?.state.uid).toBe('nb-fast');
+    });
+  });
+
+  describe('newNotebook', () => {
+    /** Nobody is asked for a name, so the notebook arrives named after the moment it was made. */
+    const TITLE_PATTERN = /^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+
+    it.each([NOTEBOOK_ENTRY_POINT.QUICK_ADD, NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE])(
+      'preserves the %s entry point when the blank scene finishes loading',
+      async (source) => {
+        const setEntryPoint = jest.spyOn(NotebookAutosave.prototype, 'setEntryPoint');
+        const manager = new NotebookPageStateManager({ isLoading: false });
+
+        await manager.newNotebook(source);
+
+        expect(manager.state.isLoading).toBe(false);
+        expect(setEntryPoint).toHaveBeenCalledTimes(1);
+        expect(setEntryPoint).toHaveBeenCalledWith(source);
+        setEntryPoint.mockRestore();
+      }
+    );
+
+    it('builds an empty notebook with no resource behind it and nothing fetched', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.newNotebook();
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.scene?.state.title).toMatch(TITLE_PATTERN);
       expect(manager.state.scene?.state.body.state.cells).toEqual([]);
       expect(manager.state.isLoading).toBe(false);
       expect(manager.state.loadError).toBeUndefined();
-      expect(fetch).not.toHaveBeenCalled();
+      expect(requested).toEqual([]);
     });
 
-    // The reason for the token at all: autosave creates these without asking for a name, so two
-    // notebooks made one after the other have to be tellable apart in the list.
-    it('gives each new notebook a title of its own', () => {
-      setBackendSrv({ fetch: jest.fn() } as unknown as BackendSrv);
+    // The reason for naming them at all: autosave creates these without asking for a name, so
+    // notebooks made at different times have to be tellable apart in the list. The clock is stubbed
+    // through Date.now rather than with fake timers, which msw's delayed handlers would hang on.
+    it('names each new notebook after the time it was created', async () => {
+      serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
+      const now = jest.spyOn(Date, 'now');
 
-      manager.newNotebook();
+      now.mockReturnValue(new Date('2026-07-01T09:15:00Z').getTime());
+      await manager.newNotebook();
       const first = manager.state.scene?.state.title;
-      manager.newNotebook();
+      now.mockReturnValue(new Date('2026-07-01T11:42:00Z').getTime());
+      await manager.newNotebook();
       const second = manager.state.scene?.state.title;
+
+      now.mockRestore();
 
       expect(first).toMatch(TITLE_PATTERN);
       expect(second).toMatch(TITLE_PATTERN);
@@ -279,13 +497,13 @@ describe('NotebookPageStateManager', () => {
 
     // The scene cache is keyed by uid and a blank notebook has none, so caching it would mean every
     // blank page after the first reopened whatever the previous one was left holding.
-    it('does not keep the blank notebook, so a second one starts empty again', () => {
-      setBackendSrv({ fetch: jest.fn() } as unknown as BackendSrv);
+    it('does not keep the blank notebook, so a second one starts empty again', async () => {
+      serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene;
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene).not.toBe(first);
     });
@@ -293,17 +511,37 @@ describe('NotebookPageStateManager', () => {
     // Clicking New notebook while a notebook is still loading. `await` does not cancel, so without
     // the sequence bump the load would resolve on top of the blank page the user is now looking at.
     it('is not replaced by a load that was already in flight', async () => {
-      setBackendSrv({
-        fetch: jest.fn(() => of(createFetchResponse(notebookResource('nb-slow'))).pipe(delay(50))),
-      } as unknown as BackendSrv);
+      serveNotebooksHoldingSlowOne();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       const slow = manager.loadNotebook('nb-slow');
-      manager.newNotebook();
+      await manager.newNotebook();
       await slow;
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.loadError).toBeUndefined();
+    });
+
+    // Leaving /notebooks/new before the panel metas resolve. The page's cleanup clears the state, and
+    // without the sequence check the blank notebook lands on whatever the page moved on to.
+    it('does not put the blank notebook back after the page has moved on', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const blank = manager.newNotebook();
+      manager.clearState();
+      await blank;
+
+      expect(manager.state.scene).toBeUndefined();
+    });
+
+    it('reports the page as loading while the panel metas are still in flight', () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+
+      expect(manager.state.isLoading).toBe(true);
     });
   });
 
@@ -313,11 +551,10 @@ describe('NotebookPageStateManager', () => {
    */
   describe('the blank notebook once it has been created', () => {
     it('takes up the scene already on screen instead of fetching it', async () => {
-      const fetch = jest.fn();
-      setBackendSrv({ fetch } as unknown as BackendSrv);
+      serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       // What autosave does when the create comes back.
       blank.setState({ uid: 'nb-new' });
@@ -325,18 +562,16 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-new');
 
       expect(manager.state.scene?.state.key).toBe(blank.state.key);
-      expect(fetch).not.toHaveBeenCalled();
+      expect(requested).toEqual([]);
       expect(manager.state.isLoading).toBe(false);
       expect(manager.state.loadError).toBeUndefined();
     });
 
     it('caches it, so coming back to it later does not rebuild it either', async () => {
-      setBackendSrv({
-        fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource('nb-new')))),
-      } as unknown as BackendSrv);
+      serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
       // Both of these are what a real create produces: the uid on the scene, and the generation the
@@ -350,14 +585,29 @@ describe('NotebookPageStateManager', () => {
       expect(manager.state.scene?.state.key).toBe(blank.state.key);
     });
 
-    // Only the notebook it actually became. Anything else is a real load.
-    it('still fetches a different notebook while a blank one is held', async () => {
-      setBackendSrv({
-        fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource('nb-other')))),
-      } as unknown as BackendSrv);
+    // Adoption returns before the cache is consulted: this is the same scene they are looking at, not
+    // one being reopened, so their range stays.
+    it('keeps the range set on it while it was blank', async () => {
+      serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
+      const blank = manager.state.scene!;
+      blank.setState({ uid: 'nb-new' });
+      blank.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+
+      await manager.loadNotebook('nb-new');
+
+      expect(manager.state.scene?.state.key).toBe(blank.state.key);
+      expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
+    });
+
+    // Only the notebook it actually became. Anything else is a real load.
+    it('still fetches a different notebook while a blank one is held', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.newNotebook();
       const blank = manager.state.scene!;
 
       await manager.loadNotebook('nb-other');
@@ -367,25 +617,23 @@ describe('NotebookPageStateManager', () => {
     });
   });
 
-  it('surfaces a fetch failure as loadError instead of a scene', async () => {
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(throwError(() => new Error('nope'))),
-    } as unknown as BackendSrv);
+  // A response the query layer accepts but that carries no notebook. The manager throws its own
+  // Error for it, which is a different shape from the API failure below.
+  it('surfaces a response with no notebook in it as loadError instead of a scene', async () => {
+    server.use(notebookHandler(() => HttpResponse.json(null)));
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('missing');
 
     expect(manager.state.scene).toBeUndefined();
     expect(manager.state.isLoading).toBe(false);
-    expect(manager.state.loadError?.message).toBe('nope');
+    expect(manager.state.loadError?.message).toBe('Notebook not found');
   });
 
   // RTK rejects with { status, data } rather than an Error. Both fields have to survive: the status
   // drives the 404 not-found state and the body carries the backend message.
   it('preserves the HTTP status and backend message of an API failure', async () => {
-    setBackendSrv({
-      fetch: jest.fn().mockReturnValue(throwError(() => ({ status: 404, data: { message: 'notebook not found' } }))),
-    } as unknown as BackendSrv);
+    server.use(notebookHandler(() => HttpResponse.json({ message: 'notebook not found' }, { status: 404 })));
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('missing');

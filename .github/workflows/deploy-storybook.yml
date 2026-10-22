@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-x64
     needs: detect-changes
     # Only run in grafana/grafana
-    if: always() && github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || inputs.version != '')
+    if: ${{ !cancelled() && github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || inputs.version != '') }}
     permissions:
       contents: read
       id-token: write

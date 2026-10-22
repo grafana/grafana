@@ -117,6 +117,9 @@ const atLimitAlert = { name: /showing at most 1000 deleted dashboards/i };
 
 describe('RecentlyDeletedPage banner integration', () => {
   beforeEach(() => {
+    // This banner reads the cache the listing path fills, so it is exercised with the
+    // trash endpoint off.
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: false });
     store.delete(DISMISS_STORAGE_KEY);
     mockGetAsTable.mockReset();
     currentSearchState = defaultSearchState();

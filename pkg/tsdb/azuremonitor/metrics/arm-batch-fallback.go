@@ -255,10 +255,7 @@ func isRetryableStatus(statusCode int) bool {
 func chunkSubRequests(subRequests []armBatchSubRequest, size int) [][]armBatchSubRequest {
 	var chunks [][]armBatchSubRequest
 	for i := 0; i < len(subRequests); i += size {
-		end := i + size
-		if end > len(subRequests) {
-			end = len(subRequests)
-		}
+		end := min(i+size, len(subRequests))
 		chunks = append(chunks, subRequests[i:end])
 	}
 	return chunks

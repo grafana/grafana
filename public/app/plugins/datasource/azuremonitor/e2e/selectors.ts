@@ -148,6 +148,12 @@ export const components = {
     customNamespace: {
       input: 'data-testid custom-namespace',
     },
+    metricName: {
+      input: 'data-testid variable-metric-name',
+    },
+    dimension: {
+      input: 'data-testid variable-dimension',
+    },
   },
 };
 

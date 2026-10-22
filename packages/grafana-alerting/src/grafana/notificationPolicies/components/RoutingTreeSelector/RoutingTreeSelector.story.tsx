@@ -1,4 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-webpack5';
+import type { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useId } from 'react';
 
 import { Field } from '@grafana/ui';

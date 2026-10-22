@@ -42,7 +42,9 @@ import {
   logError,
 } from '@grafana/runtime';
 import {
-  getPanelPluginMetas,
+  getAppPluginMetas,
+  getFeatureFlagClient,
+  FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
   setExpressionDataSourceInstance,
@@ -83,6 +85,7 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { isPluginNavAvailable } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -92,6 +95,8 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { pageHistorySrv } from './core/services/pageHistory/pageHistorySrv';
+import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -100,7 +105,7 @@ import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/Dashbo
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
-import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { LazyPanelDataErrorView } from './features/panel/components/LazyPanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
@@ -108,7 +113,6 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
-import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
@@ -135,6 +139,7 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { getState } from './store/store';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -197,7 +202,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      if (config.featureToggles.cujTracking) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.CujTracking, false)) {
         setJourneyTracker(new JourneyTrackerImpl());
 
         // Initialize the journey registry (metadata + split triggers)
@@ -226,7 +231,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
-      setPanelDataErrorView(PanelDataErrorView);
+      setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
@@ -241,9 +246,30 @@ export class GrafanaApp {
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;
 
+      // configureStore builds the nav tree, so whatever that build reads has to
+      // land first. Fetched in parallel, because neither depends on the other, and
+      // each only when it is actually needed: the metas feed the plugin items, and
+      // the permissions its sections and plugin access checks are gated on — which
+      // bootdata already carries everywhere except the multi-tenant frontend
+      // service, whose reduced boot ships none.
+      const bootTasks: Array<Promise<unknown>> = [];
+      // isPluginNavAvailable covers the session too: the metas endpoint 401s
+      // without one, and a login or public dashboard boot renders chromeless anyway
+      if (isPluginNavAvailable()) {
+        bootTasks.push(getAppPluginMetas());
+      }
+      if (
+        isFrontendService() &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
+      ) {
+        bootTasks.push(contextSrv.fetchUserPermissions());
+      }
+      await Promise.all(bootTasks);
+
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+
       initExtensions();
 
       initAlerting();
@@ -317,10 +343,7 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
-        getPluginExtensionRegistries();
       }
-
-      await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
@@ -336,6 +359,8 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+      // The menu as the chrome shows it: the boot copy is empty when the client builds the nav tree.
+      pageHistorySrv.start(chromeService, () => getState().navBarTree);
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
@@ -364,7 +389,7 @@ export class GrafanaApp {
         initializeCrashDetection();
       }
 
-      if (config.featureToggles.dashboardLevelTimeMacros) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardLevelTimeMacros, false)) {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }

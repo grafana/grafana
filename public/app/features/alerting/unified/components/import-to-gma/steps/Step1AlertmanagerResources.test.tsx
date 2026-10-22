@@ -1,10 +1,11 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import React, { useCallback, useEffect } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import React, { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
@@ -22,11 +23,15 @@ import {
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues } from '../ImportToGMA';
-import { useDryRunNotifications } from '../useImport';
 
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
 const server = setupMswServer();
+
+// Toasts are reported through app notifications, so that is where drop-confirmation text has to be
+// asserted — it never reaches the DOM from here.
+jest.mock('app/core/copy/appNotification');
+const notifySuccess = jest.fn();
 
 // Wrapper to provide react-hook-form context
 function TestWrapper({
@@ -87,28 +92,7 @@ const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
 const defaultStep1Props = {
   canImport: true,
   dryRunState: 'idle' as const,
-  onTriggerDryRun: jest.fn(),
-  onResetDryRun: jest.fn(),
 };
-
-// Wires the real dry-run hook into Step1Content the way ImportWizardContent does, so the trigger
-// effect runs against the real callbacks — used to guard against a re-trigger request loop.
-function DryRunLoopHarness() {
-  const { runDryRun, reset } = useDryRunNotifications();
-  const { getValues } = useFormContext<ImportFormValues>();
-  const onTriggerDryRun = useCallback(() => {
-    const values = getValues();
-    runDryRun({
-      source: values.notificationsSource,
-      datasourceName: values.notificationsDatasourceName ?? undefined,
-      yamlFile: values.notificationsYamlFile,
-      templateFiles: values.notificationsTemplateFiles,
-      configIdentifier: values.policyTreeName,
-    });
-  }, [getValues, runDryRun]);
-
-  return <Step1Content canImport dryRunState="idle" onTriggerDryRun={onTriggerDryRun} onResetDryRun={reset} />;
-}
 
 describe('Step1AlertmanagerResources', () => {
   beforeAll(() => {
@@ -118,15 +102,25 @@ describe('Step1AlertmanagerResources', () => {
   beforeEach(() => {
     setupDataSources(alertmanagerDataSource);
     grantUserPermissions([AccessControlAction.AlertingNotificationsWrite]);
+    notifySuccess.mockClear();
+    jest.mocked(useAppNotification).mockReturnValue({
+      success: notifySuccess,
+      error: jest.fn(),
+      warning: jest.fn(),
+      info: jest.fn(),
+    });
   });
 
   describe('Step1Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
+    it('should render permission warning when canImport=false', async () => {
       render(
         <TestWrapper>
           <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
+
+      // The YAML source mounts a lazy template dropzone even without import permission.
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
@@ -161,7 +155,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(datasourceRadio).not.toBeChecked();
     });
 
-    it('should render YAML file upload field when YAML source selected', () => {
+    it('should render YAML file upload field when YAML source selected', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -169,7 +163,97 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/alertmanager config yaml/i)).toBeInTheDocument();
-      expect(screen.getByText(/upload yaml file/i)).toBeInTheDocument();
+      // FileDropzone's own hidden <small> caption carries the same text, so target the visible one.
+      expect(screen.getByText(/accepted file types: \.yaml, \.yml/i, { selector: ':not(small)' })).toBeInTheDocument();
+      // FileDropzone is lazy-loaded (React.lazy/Suspense) — wait for it to mount.
+      expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('accepts a YAML file upload and displays it as a removable row', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove am\.yaml/i })).toBeInTheDocument();
+      // The dropzone itself stays put, so a new drop can still replace the file.
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('rejects a file with a non-YAML extension', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['{}'], 'config.json', { type: 'application/json' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('config.json')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).not.toHaveBeenCalled();
+    });
+
+    it('rejects a .txt file even though its MIME type collides with the accepted .yml bucket', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['hello'], 'notes.txt', { type: 'text/plain' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).not.toHaveBeenCalled();
+    });
+
+    it('removes the YAML file when its remove button is clicked', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('am.yaml')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove am\.yaml/i }));
+
+      expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
+    });
+
+    it('shows a success toast when the YAML file is dropped', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Configuration file uploaded', 'am.yaml');
     });
 
     it('should render datasource picker when datasource source selected', () => {
@@ -185,7 +269,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
     });
 
-    it('should render the notification templates uploader for the YAML source', () => {
+    it('should render the notification templates uploader for the YAML source', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -193,7 +277,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
-      expect(screen.getByText(/drop template files here or click to upload/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
     });
 
     it('should NOT render the templates uploader for the datasource source', () => {
@@ -206,6 +290,66 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.queryByText(/drop template files here or click to upload/i)).not.toBeInTheDocument();
     });
 
+    it('shows a success toast when a single template file is dropped', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, new File(['a'], 'email.tmpl', { type: 'text/plain' }));
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Template file added', 'email.tmpl');
+    });
+
+    it('shows a single pluralized toast when multiple template files are dropped in one gesture', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, [
+        new File(['a'], 'email.tmpl', { type: 'text/plain' }),
+        new File(['b'], 'slack.tmpl', { type: 'text/plain' }),
+      ]);
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledTimes(1);
+      expect(notifySuccess).toHaveBeenCalledWith('Template files added', 'email.tmpl, slack.tmpl');
+    });
+
+    it('shows the toast for a template drop even while the dry-run banner reports an error for the config', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            policyTreeName: 'prometheus-prod',
+            notificationsYamlFile: new File(['not valid yaml'], 'am.yaml', { type: 'application/yaml' }),
+          }}
+        >
+          <Step1Content
+            {...defaultStep1Props}
+            dryRunState="error"
+            dryRunResult={{ valid: false, error: 'invalid config', renamedReceivers: [], renamedTimeIntervals: [] }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/validation failed/i)).toBeInTheDocument();
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, new File(['a'], 'email.tmpl', { type: 'text/plain' }));
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      // The dry-run error banner is unrelated to (and unaffected by) the template drop.
+      expect(screen.getByText(/validation failed/i)).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Template file added', 'email.tmpl');
+    });
+
     it('should list uploaded template files and show a duplicate-name error', async () => {
       const user = userEvent.setup();
       render(
@@ -215,7 +359,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       // The dropzone's file input inherits the Field id, so its label resolves to it
-      const input = screen.getByLabelText(/notification templates/i);
+      const input = await screen.findByLabelText(/notification templates/i);
 
       await user.upload(input, [
         new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),
@@ -376,17 +520,16 @@ describe('Step1AlertmanagerResources', () => {
 
       expect(onResult).toHaveBeenCalledWith(true);
     });
-  });
 
-  describe('dry-run trigger effect', () => {
-    it('triggers the dry-run once for a stable valid config and does not loop', async () => {
-      let dryRunCount = 0;
-      server.use(
-        http.post('/api/convert/api/v1/alerts', () => {
-          dryRunCount += 1;
-          return HttpResponse.json({ status: 'success' });
-        })
-      );
+    // isStep1Valid recomputes from the live value every render, so it needs no debounce fix.
+    it('reflects the current, still-valid name immediately without blur', async () => {
+      const user = userEvent.setup();
+      // ValidationHookWrapper above only re-notifies on change, which never happens here (isValid is
+      // true throughout) — render the live value directly instead.
+      function ValidationDisplay({ canImport }: { canImport: boolean }) {
+        const isValid = useStep1Validation(canImport);
+        return <div data-testid="step1-valid">{String(isValid)}</div>;
+      }
 
       render(
         <TestWrapper
@@ -398,19 +541,21 @@ describe('Step1AlertmanagerResources', () => {
             }),
           }}
         >
-          <DryRunLoopHarness />
+          <Step1Content {...defaultStep1Props} />
+          <ValidationDisplay canImport />
         </TestWrapper>
       );
 
-      await waitFor(() => expect(dryRunCount).toBeGreaterThanOrEqual(1));
-      const settledCount = dryRunCount;
-      // A single trigger (allow 2 for a StrictMode double-mount) — not a runaway loop.
-      expect(settledCount).toBeLessThanOrEqual(2);
-      // Give any runaway re-trigger loop time to fire more requests, then confirm it stopped.
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      });
-      expect(dryRunCount).toBe(settledCount);
+      await waitFor(() => expect(screen.getByTestId('step1-valid')).toHaveTextContent('true'));
+
+      const input = screen.getByPlaceholderText(/prometheus-prod/i);
+      // Single keystroke — see the comment on the equivalent edit above.
+      await user.type(input, '2');
+      expect(input).toHaveFocus(); // no blur happened
+      expect(input).toHaveValue('prometheus-prod2');
+
+      // No waitFor: this must already be true on the very next render, with no async settling.
+      expect(screen.getByTestId('step1-valid')).toHaveTextContent('true');
     });
   });
 
@@ -583,23 +728,20 @@ describe('Step1AlertmanagerResources', () => {
         expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeInTheDocument();
       });
 
-      it('disables Policy Tree Name and skips the dry-run once checked', async () => {
+      it('disables Policy Tree Name once checked', async () => {
         grantUserRole('Admin');
         const user = userEvent.setup();
-        const onTriggerDryRun = jest.fn();
 
         render(
           <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
-            <Step1Content {...defaultStep1Props} onTriggerDryRun={onTriggerDryRun} />
+            <Step1Content {...defaultStep1Props} />
           </TestWrapper>
         );
 
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
-        onTriggerDryRun.mockClear();
         await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
 
         expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeDisabled();
-        expect(onTriggerDryRun).not.toHaveBeenCalled();
       });
 
       it('always lists every Alertmanager datasource regardless of auto-sync checked state', async () => {

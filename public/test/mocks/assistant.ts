@@ -2,6 +2,8 @@
 // The real module tries to call getObservablePluginLinks() during initialization
 // which fails because Grafana hasn't started. This mock prevents that.
 
+import { of } from 'rxjs';
+
 export const useAssistant = jest.fn().mockReturnValue({
   isLoading: false,
   isAvailable: false,
@@ -19,7 +21,7 @@ export const AssistantPromptCardView = jest.fn().mockReturnValue(null);
 
 // Additional exports that may be used
 export const toggleAssistant = jest.fn();
-export const isAssistantAvailable = jest.fn().mockReturnValue(false);
+export const isAssistantAvailable = jest.fn(() => of(false));
 
 // Type exports (if needed
 export type AssistantHook = ReturnType<typeof useAssistant>;

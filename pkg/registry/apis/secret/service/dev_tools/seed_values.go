@@ -36,12 +36,9 @@ func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, num
 	// Value: 1–24576 bytes; use small values for seeding
 	valueLen := 24
 
-	for i := 0; i < numberOfNamespaces; i++ {
+	for range numberOfNamespaces {
 		namespace := "ns-" + randString(nsChars, 12, rng)
-		nSecrets := maxSecretsPerNamespace
-		if nSecrets < 1 {
-			nSecrets = 1
-		}
+		nSecrets := max(maxSecretsPerNamespace, 1)
 		nSecrets = rng.Intn(nSecrets) + 1 // [1, maxSecretsPerNamespace] per namespace
 		for j := 0; j < nSecrets; j++ {
 			name := "sv-" + randString(nsChars, 8, rng)

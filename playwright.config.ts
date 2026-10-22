@@ -117,10 +117,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
     }),
     withAuth({
-      name: 'cloudwatch',
-      testDir: path.join(pluginDirRoot, '/cloudwatch'),
-    }),
-    withAuth({
       name: 'azuremonitor',
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
@@ -155,6 +151,10 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'dashboards',
       testDir: path.join(testDirRoot, '/dashboards-suite'),
+    }),
+    withAuth({
+      name: 'notebooks',
+      testDir: path.join(testDirRoot, '/notebooks-suite'),
     }),
     withAuth({
       name: 'diagnostics',
@@ -196,8 +196,10 @@ export default defineConfig<PluginOptions>({
       name: 'journey-tracking',
       testDir: path.join(testDirRoot, '/journey-tracking'),
       use: {
-        featureToggles: {
-          cujTracking: true,
+        openFeature: {
+          flags: {
+            cujTracking: true,
+          },
         },
       },
     }),

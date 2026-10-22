@@ -3,7 +3,7 @@ import {
   useCreateRepositoryJobsMutation,
   type RepositoryView,
   type Job,
-  type ResourceRef as GeneratedResourceRef,
+  type ProvisioningResourceRef as GeneratedResourceRef,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -13,7 +13,6 @@ export type ResourceRef = Required<GeneratedResourceRef>;
 
 export interface DeleteJobSpec {
   action: 'delete';
-  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
   message?: string;
   delete: {
     ref?: string;
@@ -23,7 +22,6 @@ export interface DeleteJobSpec {
 
 export interface MoveJobSpec {
   action: 'move';
-  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
   message?: string;
   move: {
     ref?: string;

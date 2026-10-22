@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitScope, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -29,7 +30,9 @@ import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
-  const { isEditing, preload } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const { preload } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
@@ -62,8 +65,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // min-height floor is applied to the panel chrome (via the fit context) so
   // the chrome itself fills it — a min-height on this cell would leave the
   // chrome floating at the top.
-  // Non-fit panels stay at the row height; when row heights aren't matched they
-  // must pin to it explicitly so a tall fit sibling doesn't stretch them.
+  // Non-fit panels keep the row height as their floor. When row heights aren't
+  // matched they pin to it explicitly so a tall fit sibling doesn't stretch them.
   // When a max height bounds the cell, the cap is applied to the panel chrome
   // and the scroll lives on the chrome's content area — not on this cell — so
   // the panel header stays fixed while the body scrolls (see
@@ -75,7 +78,9 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ? { '--auto-grid-item-max-height': maxHeightCss }
       : undefined
     : matchRowHeightsOn
-      ? undefined
+      ? autoHeightPanelsEnabled
+        ? { minHeight: rowHeightPx }
+        : undefined
       : { height: rowHeightPx };
 
   const Wrapper = useMemo(

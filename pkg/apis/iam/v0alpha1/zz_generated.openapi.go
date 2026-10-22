@@ -15,6 +15,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		CurrentUserInfo{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref),
 		Display{}.OpenAPIModelName():                                      schema_pkg_apis_iam_v0alpha1_Display(ref),
 		DisplayList{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
 		IdentityRef{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
@@ -29,6 +30,91 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		UserPermissions{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_UserPermissions(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam":       schema_pkg_apis_iam_v0alpha1_UserTeam(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeamList":   schema_pkg_apis_iam_v0alpha1_UserTeamList(ref),
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"identity": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(IdentityRef{}.OpenAPIModelName()),
+						},
+					},
+					"displayName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Display name for identity.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"avatarURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AvatarURL is the url where we can get the avatar for identity",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"internalId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is the namespace of the current identity.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authenticatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthenticatedBy is the authentication provider used for the current identity.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email is the email address for the current identity.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"teams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The user teams",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"identity", "displayName"},
+			},
+		},
+		Dependencies: []string{
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -64,13 +150,6 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
 							Type:        []string{"integer"},
 							Format:      "int64",
-						},
-					},
-					"role": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 				},
@@ -120,9 +199,8 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -140,9 +218,8 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -160,8 +237,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Display{}.OpenAPIModelName()),
+										Ref: ref(Display{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -278,8 +354,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SSOSetting{}.OpenAPIModelName()),
+										Ref: ref(SSOSetting{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -358,13 +433,6 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 							Format:      "int64",
 						},
 					},
-					"role": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"external": {
 						SchemaProps: spec.SchemaProps{
 							Description: "External is set if member ship was synced from external IDP.",
@@ -421,8 +489,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
 									},
 								},
 							},
@@ -502,13 +569,12 @@ func schema_pkg_apis_iam_v0alpha1_UserPermission(ref common.ReferenceCallback) c
 					},
 					"scope": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"action", "scope"},
+				Required: []string{"action"},
 			},
 		},
 	}
@@ -532,8 +598,7 @@ func schema_pkg_apis_iam_v0alpha1_UserPermissions(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(UserPermission{}.OpenAPIModelName()),
+										Ref: ref(UserPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -614,8 +679,7 @@ func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
 									},
 								},
 							},
