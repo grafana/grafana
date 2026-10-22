@@ -105,20 +105,18 @@ func TestStackDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 
 func TestStackDiscoveryCacheKeepsRepresentationsApart(t *testing.T) {
 	st, calls := cachingFallback(t, func(req *http.Request) *http.Response {
-		return discoveryResponse(nil, req.Header.Get("Accept")+"?"+req.URL.RawQuery)
+		return discoveryResponse(nil, req.Header.Get("Accept"))
 	})
 	for range 2 {
 		for _, accept := range []string{"application/json", aggregatedDiscoveryJSON} {
-			for _, path := range []string{"/openapi/v3/apis/example/v1?hash=one", "/openapi/v3/apis/example/v1?hash=two"} {
-				req := requestAs("alice", "stacks-123", path)
-				req.Header.Set("Accept", accept)
-				res := httptest.NewRecorder()
-				st.ServeHTTP(res, req)
-				require.Equal(t, accept+"?"+req.URL.RawQuery, res.Body.String())
-			}
+			req := requestAs("alice", "stacks-123", "/openapi/v3/apis/example/v1")
+			req.Header.Set("Accept", accept)
+			res := httptest.NewRecorder()
+			st.ServeHTTP(res, req)
+			require.Equal(t, accept, res.Body.String())
 		}
 	}
-	require.Len(t, calls(), 4)
+	require.Len(t, calls(), 2)
 }
 
 func TestStackDiscoveryCacheStoresOnlySharedResponses(t *testing.T) {
@@ -243,17 +241,15 @@ func TestStackDiscoveryCacheCountsKeysAndHeaders(t *testing.T) {
 	require.LessOrEqual(t, small.bytes, small.limit)
 }
 
-func TestStackDiscoveryCacheOnlyKeysOnHash(t *testing.T) {
+func TestStackDiscoveryCacheIgnoresHash(t *testing.T) {
 	st, calls := cachingFallback(t, func(*http.Request) *http.Response { return discoveryResponse(nil, "ok") })
 	for _, tc := range []struct {
 		path   string
 		cached bool
 	}{
 		{"/apis/example/v1", true},
-		{"/openapi/v3/apis/example/v1?hash=abc", true},
 		{"/apis/example/v1?x=1", false},
 		{"/openapi/v3/apis/example/v1?hash=abc&x=1", false},
-		{"/openapi/v3/apis/example/v1?hash=a&hash=b", false},
 	} {
 		for range 2 {
 			st.ServeHTTP(httptest.NewRecorder(), requestAs("alice", "stacks-123", tc.path))
@@ -263,6 +259,43 @@ func TestStackDiscoveryCacheOnlyKeysOnHash(t *testing.T) {
 			want = 1
 		}
 		require.Len(t, calls(), want, tc.path)
+	}
+
+	// Every hash, or none, shares one entry.
+	for _, path := range []string{
+		"/openapi/v3/apis/example/v1?hash=abc",
+		"/openapi/v3/apis/example/v1?hash=def",
+		"/openapi/v3/apis/example/v1?hash=a&hash=b",
+		"/openapi/v3/apis/example/v1",
+	} {
+		st.ServeHTTP(httptest.NewRecorder(), requestAs("alice", "stacks-123", path))
+	}
+	require.Len(t, calls(), 1)
+}
+
+// A stack redirects an OpenAPI hash that is no longer its document's, as
+// kube-openapi does, and the router would reject the redirect as a 502.
+func TestStackOpenAPIStaleHashIsNotForwarded(t *testing.T) {
+	for name, cached := range map[string]bool{"cached": true, "uncached": false} {
+		t.Run(name, func(t *testing.T) {
+			st, _ := cachingFallback(t, func(req *http.Request) *http.Response {
+				if req.URL.Query().Has("hash") {
+					return &http.Response{
+						StatusCode: http.StatusMovedPermanently,
+						Header:     http.Header{"Location": {req.URL.Path + "?hash=new"}},
+						Body:       http.NoBody,
+					}
+				}
+				return discoveryResponse(nil, "doc")
+			})
+			if !cached {
+				st.discoveryDocs = nil
+			}
+			rec := httptest.NewRecorder()
+			st.ServeHTTP(rec, requestAs("alice", "stacks-123", "/openapi/v3/apis/example/v1?hash=old"))
+			require.Equal(t, http.StatusOK, rec.Code)
+			require.Equal(t, "doc", rec.Body.String())
+		})
 	}
 }
 
