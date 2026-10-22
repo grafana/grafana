@@ -251,10 +251,9 @@ const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?
     maxzoom: 16,
     visible: ['match', KIND_DETAIL, 'suburb', true, 'neighbourhood', fromZoom(14), false],
   },
-  // Oceans until zoom 5, then seas. CARTO names no bays, straits or fjords
-  water_label_ocean: {
-    visible: ['match', ['get', 'kind'], 'ocean', ['<', ['zoom'], 5], 'sea', fromZoom(5), false],
-  },
+  // Seas from zoom 5. Ocean points carry only translated names, and CARTO's style reads `name`
+  // alone, so it never draws them. Nor does it name bays, straits or fjords
+  water_label_ocean: { minzoom: 5, visible: ['==', ['get', 'kind'], 'sea'] },
   water_label_lakes: { minzoom: 4, visible: ['match', ['get', 'kind'], 'water', fromZoom(15), true] },
   roads_labels_major: {
     minzoom: 13,
