@@ -20,7 +20,7 @@ interface Props {
 
 /**
  * Shown when viewer-only interactions (such as hiding a table column) are changing how the panel looks.
- * Anyone can remove the changes; users who can save a v2 dashboard can also save them to the dashboard.
+ * Anyone can remove the changes; users who can save the dashboard can also save them to it when promotion is supported.
  */
 export function PanelAdHocChangesAction({ panel }: Props) {
   const dashboard = getDashboardSceneFor(panel);
@@ -29,7 +29,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
   panel.useState();
   const hasInteractions = Boolean(panel.getPlugin()?.panelInteractions);
   const hasChanges = useHasAdHocTransformations(panel, hasInteractions);
-  const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(dashboard);
+  const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(panel);
   const { onSaveDashboard } = useSaveDashboard();
   const notifyApp = useAppNotification();
 

@@ -5,26 +5,35 @@ import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../../utils/utils';
-import { type DashboardScene } from '../DashboardScene';
+import { getDashboardSceneFor, isLibraryPanel } from '../../utils/utils';
 
-/** Ad hoc changes can only be promoted into dashboards that use the v2 schema. */
-export function canPromoteAdHocChanges(dashboard: DashboardScene): boolean {
-  return dashboard.serializer instanceof V2DashboardSerializer;
+/**
+ * Ad hoc changes can only be promoted into v2 dashboards that are saved directly from Grafana. Provisioned and
+ * managed dashboards (for example repository-managed) have their own save flow, and a library panel's transformations
+ * live in the library panel rather than the dashboard.
+ */
+export function canPromoteAdHocChanges(panel: VizPanel): boolean {
+  const dashboard = getDashboardSceneFor(panel);
+
+  return (
+    dashboard.serializer instanceof V2DashboardSerializer &&
+    !dashboard.state.meta.provisioned &&
+    !dashboard.isManaged() &&
+    !isLibraryPanel(panel)
+  );
 }
 
 /**
  * Runs the promotion path of every interaction the panel declares, threading the v2 dashboard JSON through each one.
- * Returns the resulting dashboard JSON, or `undefined` for dashboards that are not v2; the caller decides what to do
+ * Returns the resulting dashboard JSON, or `undefined` when the changes cannot be promoted; the caller decides what to do
  * with it.
  */
 export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefined {
-  const scene = getDashboardSceneFor(panel);
-  if (!canPromoteAdHocChanges(scene)) {
+  if (!canPromoteAdHocChanges(panel)) {
     return undefined;
   }
 
-  const dashboard = scene.getSaveModel();
+  const dashboard = getDashboardSceneFor(panel).getSaveModel();
   if (!isDashboardV2Spec(dashboard)) {
     return undefined;
   }

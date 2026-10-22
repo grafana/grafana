@@ -4,10 +4,13 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardScene } from '../DashboardScene';
+import { LibraryPanelBehavior } from '../LibraryPanelBehavior';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
@@ -54,18 +57,28 @@ interface SceneOptions {
   isEditing?: boolean;
   canSave?: boolean;
   version?: 'v1' | 'v2';
+  meta?: DashboardMeta;
+  libraryPanel?: boolean;
 }
 
-async function buildScene({ isEditing = false, canSave = false, version = 'v2' }: SceneOptions = {}) {
+async function buildScene({
+  isEditing = false,
+  canSave = false,
+  version = 'v2',
+  meta = {},
+  libraryPanel = false,
+}: SceneOptions = {}) {
   const panel = new VizPanel({
     key: 'panel-1',
     pluginId: 'table',
     headerActions: new VizPanelHeaderActions({}),
+    // `isLoaded` skips fetching the library panel from the API.
+    $behaviors: libraryPanel ? [new LibraryPanelBehavior({ uid: 'lib', name: 'Lib', isLoaded: true })] : [],
   });
   const dashboard = new DashboardScene(
     {
       isEditing,
-      meta: { canSave },
+      meta: { ...meta, canSave },
       body: DefaultGridLayoutManager.fromVizPanels([panel]),
     },
     version
@@ -189,12 +202,17 @@ describe('PanelAdHocChangesAction', () => {
     });
   });
 
-  it.each`
-    desc                                     | canSave  | version
-    ${'the user cannot save the dashboard'}  | ${false} | ${'v2'}
-    ${'the dashboard is v1, even with save'} | ${true}  | ${'v1'}
-  `('offers only "Remove changes" when $desc', async ({ canSave, version }) => {
-    const { panel } = await buildScene({ canSave, version });
+  it.each([
+    { desc: 'the user cannot save the dashboard', options: { canSave: false } },
+    { desc: 'the dashboard is v1', options: { canSave: true, version: 'v1' as const } },
+    { desc: 'the dashboard is provisioned', options: { canSave: true, meta: { provisioned: true } } },
+    {
+      desc: 'the dashboard is repository-managed',
+      options: { canSave: true, meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } } } },
+    },
+    { desc: 'the panel is a library panel', options: { canSave: true, libraryPanel: true } },
+  ])('offers only "Remove changes" when $desc', async ({ options }) => {
+    const { panel } = await buildScene(options);
     addAdHocChange(panel);
 
     await userEvent.click(screen.getByTestId(buttonTestId));
