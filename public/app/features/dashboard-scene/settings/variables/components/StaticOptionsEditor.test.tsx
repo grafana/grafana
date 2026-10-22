@@ -93,3 +93,26 @@ it('refreshes external options after a commit that does not rerender the parent'
   rerender(<StaticOptionsEditor options={[{ text: 'Region', value: 'region' }]} onCommit={onCommit} />);
   expect(editor).toHaveTextContent('Region,region');
 });
+
+it('writes a key without a value as typed, so committing it again does not change the options', async () => {
+  mockBoundingClientRect();
+  const user = userEvent.setup();
+  const parse = (csv: string) => {
+    const frame = readCSV('key,value\n' + csv)[0];
+    return frame.fields[0].values.map((text, i) => ({ text, value: frame.fields[1].values[i] }));
+  };
+  let options = parse('host');
+  const onCommit = jest.fn((csv: string) => {
+    options = parse(csv);
+    rerender(<StaticOptionsEditor options={options} onCommit={onCommit} />);
+  });
+  const { rerender } = render(<StaticOptionsEditor options={options} onCommit={onCommit} />);
+  const editor = await screen.findByRole('textbox', { name: 'Static dimensions CSV' });
+
+  expect(editor).toHaveTextContent(/^host$/);
+  await user.click(editor);
+  await user.click(document.body);
+
+  expect(onCommit).toHaveBeenCalledWith('host');
+  expect(options).toEqual(parse('host'));
+});

@@ -13,8 +13,11 @@ export function StaticOptionsEditor({
   onCommit: (value: string) => void;
 }) {
   const readOnly = useOptionsPaneReadOnly();
+  // A missing value is written without the comma, so committing the draft again parses back to the same options
   const serializedOptions = options
-    .map(({ text, value }) => `${serializeField(text)},${serializeField(value)}`)
+    .map(({ text, value }) =>
+      value === undefined ? serializeField(text) : `${serializeField(text)},${serializeField(value)}`
+    )
     .join('\n');
   const [draft, setDraft] = useState(serializedOptions);
   // Undo/redo can replace options while the editor stays mounted.
