@@ -797,10 +797,7 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
-	if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
-		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return dashboards.ErrFolderNotFound
-		}
+	if err := l.RequireEditPermissionsOnFolder(c, signedInUser, folderUID); err != nil {
 		return err
 	}
 	return l.DeleteLibraryElementsInFolderUnchecked(c, signedInUser, folderUID)

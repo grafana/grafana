@@ -74,11 +74,13 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "DeleteLibraryElementsInFolderUnchecked should delete elements without consulting AccessControl",
 		func(t *testing.T, sc scenarioContext) {
-			// No permissions configured at all; DeleteLibraryElementsInFolderUnchecked must not
-			// require edit permissions on the folder the way DeleteLibraryElementsInFolder does.
+			// A user with no permissions at all: sc.reqContext.SignedInUser carries a baked-in
+			// folder.ActionFoldersWrite wildcard that would let a reintroduced permission check
+			// pass regardless of AccessControl, masking a regression.
 			sc.service.AccessControl = acmock.New()
+			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
 
-			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), noPermsUser, sc.folder.UID)
 			require.NoError(t, err)
 
 			var count int64

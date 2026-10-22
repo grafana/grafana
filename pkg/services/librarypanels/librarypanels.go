@@ -165,13 +165,16 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 }
 
 // DeleteInFolder deletes the library panels contained in a given folder.
+//
+// All folders are permission-checked before any deletion starts, so a denial partway through
+// the list leaves every folder's library panels intact rather than only the ones checked first.
 func (lps LibraryPanelService) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		if err := lps.LibraryElementService.DeleteLibraryElementsInFolder(ctx, user, folderUID); err != nil {
+		if err := lps.LibraryElementService.RequireEditPermissionsOnFolder(ctx, user, folderUID); err != nil {
 			return err
 		}
 	}
-	return nil
+	return lps.DeleteInFoldersUnchecked(ctx, orgID, folderUIDs, user)
 }
 
 // DeleteInFoldersUnchecked is DeleteInFolders without requiring edit permissions on each folder, for

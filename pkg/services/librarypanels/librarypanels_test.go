@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -77,6 +78,41 @@ func TestIntegrationLibraryPanelFolderOperations(t *testing.T) {
 				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 		})
+}
+
+// orderTrackingLibraryElementService wraps the fake libraryelements.Service to record whether
+// DeleteInFolders deletes a folder before every folder in the batch has passed its permission
+// check.
+type orderTrackingLibraryElementService struct {
+	*libraryelementsfake.LibraryElementService
+	denyFolderUID string
+	deletedUIDs   []string
+}
+
+func (f *orderTrackingLibraryElementService) RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error {
+	if folderUID == f.denyFolderUID {
+		return folder.ErrAccessDenied
+	}
+	return nil
+}
+
+func (f *orderTrackingLibraryElementService) DeleteLibraryElementsInFolderUnchecked(ctx context.Context, signedInUser identity.Requester, folderUID string) error {
+	f.deletedUIDs = append(f.deletedUIDs, folderUID)
+	return nil
+}
+
+func TestDeleteInFolders_ChecksAllFoldersBeforeDeletingAny(t *testing.T) {
+	fakeElementService := &orderTrackingLibraryElementService{
+		LibraryElementService: &libraryelementsfake.LibraryElementService{},
+		denyFolderUID:         "folder-b",
+	}
+	lps := LibraryPanelService{LibraryElementService: fakeElementService}
+	usr := &user.SignedInUser{OrgID: 1}
+
+	err := lps.DeleteInFolders(context.Background(), usr.OrgID, []string{"folder-a", "folder-b"}, usr)
+	require.ErrorIs(t, err, folder.ErrAccessDenied)
+	require.Empty(t, fakeElementService.deletedUIDs,
+		"folder-a must not be deleted when folder-b, checked later in the same batch, fails its permission check")
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {

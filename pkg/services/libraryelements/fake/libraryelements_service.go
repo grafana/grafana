@@ -103,6 +103,10 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context
 	return nil
 }
 
+func (l *LibraryElementService) RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error {
+	return nil
+}
+
 func (l *LibraryElementService) GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
 	elements := make([]model.LibraryElementDTO, 0, len(l.elements))
 

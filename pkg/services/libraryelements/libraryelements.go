@@ -55,6 +55,7 @@ type Service interface {
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
 	DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error
+	RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error
 	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
 
