@@ -1,4 +1,4 @@
-package appplugin
+package pluginauth
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +40,7 @@ func NewClientV3TokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error
 // whose tokens verify with the keys Grafana passes to the plugin processes it
 // starts (see v3.LocalSigningKeys). Plugins started elsewhere reject them.
 // Otherwise it is nil, and requests carry no identity.
-func ClientV3TokenExchanger(cfg *setting.Cfg, pluginAuth *pluginauth.Config, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
+func ClientV3TokenExchanger(cfg *setting.Cfg, pluginAuth *Config, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
 	if exchanger != nil {
 		insecure := cfg != nil && cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
 		if insecure && cfg.Env == setting.Dev {

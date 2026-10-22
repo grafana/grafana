@@ -1,4 +1,4 @@
-package appplugin
+package appsettings
 
 import (
 	"context"
@@ -11,10 +11,6 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,9 +21,10 @@ import (
 	gaprequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-type subProxyREST struct {
+type proxyHandler struct {
 	pluginID             string
 	routes               []*plugins.Route
 	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error)
@@ -40,8 +37,8 @@ type subProxyREST struct {
 	SendUserHeader   bool // from cfg
 }
 
-func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
-	return &subProxyREST{
+func newProxy(b *Builder) *proxyHandler {
+	return &proxyHandler{
 		pluginID:         b.pluginJSON.ID,
 		routes:           b.pluginJSON.Routes,
 		settingsProvider: b.getSettings,
@@ -66,80 +63,52 @@ func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
 	}
 }
 
-var _ rest.Connecter = (*subProxyREST)(nil)
-
-func (r *subProxyREST) New() runtime.Object {
-	return &metav1.Status{}
-}
-
-func (r *subProxyREST) Destroy() {}
-
-func (r *subProxyREST) ConnectMethods() []string {
-	// List all of them -- they will be hidden from openapi, and the plugin can decide which to implement
-	return []string{
-		http.MethodGet,
-		http.MethodHead,
-		http.MethodPost,
-		http.MethodPut,
-		http.MethodPatch,
-		http.MethodDelete,
-		http.MethodOptions,
-	}
-}
-
-func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, true, ""
-}
-
-func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if name != apppluginV0.INSTANCE_NAME {
-		return nil, k8serrors.NewBadRequest("name can only be: " + apppluginV0.INSTANCE_NAME)
-	}
-
+func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	ns, err := gaprequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest("missing namespace in connect context")
+		_ = errhttp.Write(ctx, k8serrors.NewBadRequest("missing namespace"), w)
+		return
 	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return nil, err
+		_ = errhttp.Write(ctx, err, w)
+		return
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		settings, secure, err := r.settingsProvider(request.WithNamespace(req.Context(), ns.Value))
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		m := newConnectMetric("proxy", r.pluginID)
-		defer m.Record()
+	settings, secure, err := r.settingsProvider(ctx)
+	if err != nil {
+		_ = errhttp.Write(ctx, err, w)
+		return
+	}
+	m := newSubresourceMetric("proxy", r.pluginID)
+	defer m.Record()
 
-		ps := &pluginsettings.DTO{
-			OrgID:    ns.OrgID, // will be 1 in cloud
-			PluginID: r.pluginID,
-			Enabled:  true,
-			JSONData: settings.Spec.JsonData.Object,
-		}
+	ps := &pluginsettings.DTO{
+		OrgID:    ns.OrgID, // will be 1 in cloud
+		PluginID: r.pluginID,
+		Enabled:  true,
+		JSONData: settings.Spec.JsonData.Object,
+	}
 
-		proxyReq, proxyPath, err := proxyRequest(ctx, req)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
+	proxyReq, proxyPath, err := proxyRequest(ctx, req)
+	if err != nil {
+		_ = errhttp.Write(ctx, err, w)
+		return
+	}
 
-		// The derive-id-token fallback is only wired for the datasource group today (see
-		// pkg/extensions/apiserver/factory.go); app plugin proxying doesn't need it in ST,
-		// where the edge still mints an id token for every requester.
-		p, err := pluginproxy.NewPluginProxy(ps, r.routes,
-			proxyReq, w, user,
-			proxyPath, r.DataProxyLogging, r.SendUserHeader,
-			secure, r.tracer, r.pluginProxyTransport, r.accessControl, r.features, nil)
-		if err != nil {
-			responder.Error(fmt.Errorf("failed to create plugin proxy: %w", err))
-			return
-		}
-		p.HandleRequest()
-	}), nil
+	// The derive-id-token fallback is only wired for the datasource group today (see
+	// pkg/extensions/apiserver/factory.go); app plugin proxying doesn't need it in ST,
+	// where the edge still mints an id token for every requester.
+	p, err := pluginproxy.NewPluginProxy(ps, r.routes,
+		proxyReq, w, user,
+		proxyPath, r.DataProxyLogging, r.SendUserHeader,
+		secure, r.tracer, r.pluginProxyTransport, r.accessControl, r.features, nil)
+	if err != nil {
+		_ = errhttp.Write(ctx, fmt.Errorf("failed to create plugin proxy: %w", err), w)
+		return
+	}
+	p.HandleRequest()
 }
 
 func proxyRequest(ctx context.Context, req *http.Request) (*http.Request, string, error) {
