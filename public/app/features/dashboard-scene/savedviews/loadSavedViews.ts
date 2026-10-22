@@ -98,5 +98,8 @@ export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Pro
  * cancellation signal through every caller.
  */
 function isStillOnDashboard(uid: string): boolean {
-  return locationService.getLocation().pathname.includes(`/d/${uid}`);
+  // Exact segment match: a substring check would treat /d/web-prod/... as still being on `web`.
+  const segments = locationService.getLocation().pathname.split('/');
+  const index = segments.indexOf('d');
+  return index !== -1 && segments[index + 1] === uid;
 }

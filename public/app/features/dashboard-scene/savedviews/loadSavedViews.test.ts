@@ -193,6 +193,19 @@ describe('applyDefaultSavedViewToUrl', () => {
     expect(partialSpy).not.toHaveBeenCalled();
   });
 
+  it('does not treat a dashboard whose uid merely starts with this one as the same dashboard', async () => {
+    mockGetDefaultSavedView.mockImplementation(async () => {
+      currentPathname = '/d/dash-1-prod/another-dashboard'; // navigated away mid-await
+      return 'view-1';
+    });
+    const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
+
+    await applyDefaultSavedViewToUrl(scene);
+
+    expect(getMock).not.toHaveBeenCalled();
+    expect(partialSpy).not.toHaveBeenCalled();
+  });
+
   it('does not write viewFilter if the viewer navigated away while the view fetch was in flight', async () => {
     mockGetDefaultSavedView.mockResolvedValue('view-1');
     getMock.mockImplementation(async () => {
