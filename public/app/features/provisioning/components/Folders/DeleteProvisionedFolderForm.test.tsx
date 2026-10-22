@@ -239,8 +239,8 @@ describe('DeleteProvisionedFolderForm', () => {
             message: 'Delete folder: Test Folder',
             delete: {
               ref: undefined, // the configured branch omits ref
-              // The form knows the folder path, so the job must not resolve it through the live folder
-              paths: ['folders/test-folder.json'],
+              // The job names the folder, so authorization runs against that resource
+              resources: [{ name: 'folder-uid', group: 'folder.grafana.app', kind: 'Folder' }],
             },
           },
         });

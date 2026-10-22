@@ -24,7 +24,10 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ),
 }));
 
-type DeleteJobBody = { message?: string; delete?: { ref?: string; paths?: string[] } };
+type DeleteJobBody = {
+  message?: string;
+  delete?: { ref?: string; resources?: Array<{ name: string; group: string; kind: string }> };
+};
 
 /** Captures the posted delete job and answers the job watch with `job`. */
 function mockDeleteJob(job = createJob()) {
@@ -43,7 +46,7 @@ function setup(props: Partial<Props> = {}) {
   const defaultDashboard = new DashboardScene({
     title: 'Test Dashboard',
     uid: 'test-uid',
-    meta: { slug: 'test-slug' },
+    meta: { slug: 'test-slug', uid: 'test-uid' },
   });
 
   const defaultProps: Props = {
@@ -131,8 +134,10 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       await waitFor(() => expect(posted.body).not.toBeNull());
       expect(posted.body!.delete?.ref).toBe(expectedRef);
-      // The form knows the file path, so the job must not resolve it through the live Grafana object
-      expect(posted.body!.delete?.paths).toEqual(['dashboards/test.json']);
+      // The job names the dashboard, so authorization runs against that resource rather than its folder
+      expect(posted.body!.delete?.resources).toEqual([
+        { name: 'test-uid', group: 'dashboard.grafana.app', kind: 'Dashboard' },
+      ]);
       expect(posted.body!.message).toBe('Delete dashboard: Test Dashboard');
     });
 

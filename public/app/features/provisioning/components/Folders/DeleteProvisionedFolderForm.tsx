@@ -83,9 +83,9 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     );
   };
 
-  const handleSubmitForm = async ({ repo, path }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo }: BaseProvisionedFormData) => {
     setError(undefined);
-    if (!repo || !path || !repository) {
+    if (!repo || !repository) {
       showError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
       return;
     }
@@ -99,7 +99,10 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
       message,
-      delete: { ref: getRequestRef(repository, ref), paths: [path] },
+      delete: {
+        ref: getRequestRef(repository, ref),
+        resources: [{ name: resourceId, group: 'folder.grafana.app', kind: 'Folder' }],
+      },
     };
 
     try {

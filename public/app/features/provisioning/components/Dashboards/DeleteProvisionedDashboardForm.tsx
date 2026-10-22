@@ -93,9 +93,9 @@ export function DeleteProvisionedDashboardForm({
     );
   };
 
-  const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
+  const handleSubmitForm = async ({ repo }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
-    if (!repo || !path || !repository) {
+    if (!repo || !repository) {
       showError(
         t(
           'dashboard-scene.delete-provisioned-dashboard-form.no-repository-selected',
@@ -114,7 +114,16 @@ export function DeleteProvisionedDashboardForm({
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
       message,
-      delete: { ref: getRequestRef(repository, ref), paths: [path] },
+      delete: {
+        ref: getRequestRef(repository, ref),
+        resources: [
+          {
+            name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+            group: 'dashboard.grafana.app',
+            kind: 'Dashboard',
+          },
+        ],
+      },
     };
 
     try {

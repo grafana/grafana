@@ -123,7 +123,17 @@ export function MoveProvisionedDashboardForm({
     const jobSpec: MoveJobSpec = {
       action: 'move',
       message,
-      move: { ref: getRequestRef(repository, ref), targetPath: targetFolderPath, paths: [path] },
+      move: {
+        ref: getRequestRef(repository, ref),
+        targetPath: targetFolderPath,
+        resources: [
+          {
+            name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+            group: 'dashboard.grafana.app',
+            kind: 'Dashboard',
+          },
+        ],
+      },
     };
 
     try {

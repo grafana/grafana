@@ -46,7 +46,10 @@ function folderResponse(sourcePath: string) {
   };
 }
 
-type MoveJobBody = { message?: string; move?: { ref?: string; targetPath?: string; paths?: string[] } };
+type MoveJobBody = {
+  message?: string;
+  move?: { ref?: string; targetPath?: string; resources?: Array<{ name: string; group: string; kind: string }> };
+};
 
 /** Captures the posted move job and answers the job watch with `job`. */
 function mockMoveJob(job = createJob()) {
@@ -209,8 +212,10 @@ describe('MoveProvisionedDashboardForm', () => {
     await waitFor(() => expect(posted.body).not.toBeNull());
     expect(posted.body!.move?.ref).toBe(expectedRef);
     expect(posted.body!.move?.targetPath).toBe('target-folder/');
-    // The form knows the file path, so the job must not resolve it through the live Grafana object
-    expect(posted.body!.move?.paths).toEqual(['folder1/dashboard.json']);
+    // The job names the dashboard, so authorization runs against that resource rather than its folder
+    expect(posted.body!.move?.resources).toEqual([
+      { name: 'dashboard-uid', group: 'dashboard.grafana.app', kind: 'Dashboard' },
+    ]);
   });
 
   it('renders the message from the repo commit template when comment is empty', async () => {

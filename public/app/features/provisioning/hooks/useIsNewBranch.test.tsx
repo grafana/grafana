@@ -46,14 +46,14 @@ describe('useIsNewBranch', () => {
   });
 
   it('falls back to false while a newly selected repository loads its refs', async () => {
-    // Refs differ per repository: the first repo knows `feature/x`, the second does not and is slow.
+    // Neither repository knows `feature/x`; the second one answers slowly. Only the first repository's
+    // confirmed `true` could leak through a stale `data` read while the second one loads.
     server.use(
       http.get(`${BASE}/repositories/:name/refs`, async ({ params }) => {
         if (params.name === 'other') {
           await delay(50);
-          return HttpResponse.json({ items: [{ name: 'main' }] });
         }
-        return HttpResponse.json({ items: [{ name: 'main' }, { name: 'feature/x' }] });
+        return HttpResponse.json({ items: [{ name: 'main' }] });
       })
     );
 
@@ -61,7 +61,7 @@ describe('useIsNewBranch', () => {
       wrapper: getWrapper({}),
       initialProps: { repository: repo },
     });
-    await waitFor(() => expect(result.current).toBe(false));
+    await waitFor(() => expect(result.current).toBe(true));
 
     // The first repository's answer must not stand in for the second while it loads.
     rerender({ repository: { ...repo, name: 'other' } });
