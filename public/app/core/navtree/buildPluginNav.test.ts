@@ -401,6 +401,22 @@ describe('applyPluginNav', () => {
       expect(findById(merged, 'standalone-plugin-page-/a/grafana-asserts-app/services')?.sortWeight).toBe(4);
     });
 
+    // A standalone id is a routing key: `/d/<uid>` as one would register the
+    // dashboard's own url as an app route and shadow the dashboard
+    it('leaves a hoisted app dashboard without a standalone id', () => {
+      const merged = merge(
+        app('grafana-asserts-app', 'Asserts', [
+          page('Entities', '/a/grafana-asserts-app/entities'),
+          { type: PluginIncludeType.dashboard, name: 'Overview dashboard', addToNav: true, uid: 'dash-uid' },
+        ])
+      );
+
+      const children = findById(merged, NavID.observability)?.children ?? [];
+      const dashboard = children.find((child) => child.url === '/d/dash-uid');
+      expect(dashboard?.id).toBeUndefined();
+      expect(ids(children)).toContain('standalone-plugin-page-/a/grafana-asserts-app/entities');
+    });
+
     it('removes the asserts Application page when App Observability is present', () => {
       const merged = merge(
         app('grafana-asserts-app', 'Asserts', [page('Service overview', '/a/grafana-asserts-app/services')]),

@@ -107,7 +107,8 @@ function buildAppLink(app: AppPluginConfig): {
   let appUrl = `/a/${app.id}`;
   const children: NavModelItem[] = [];
   const standalonePages: StandalonePage[] = [];
-  const filterInclude = appNavConfigFor(app.id)?.filterInclude;
+  const navConfig = appNavConfigFor(app.id);
+  const { filterInclude, hoistPages } = navConfig ?? {};
 
   for (const include of app.includes ?? []) {
     if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
@@ -139,6 +140,10 @@ function buildAppLink(app: AppPluginConfig): {
       icon: toIconName(include.icon),
       pluginId: app.id,
       url: include.path,
+      // A hoisted app has no node of its own, so its pages carry the standalone
+      // id. Only pages: a dashboard include left with a `/d/<uid>` standalone id
+      // would register that url as an app route and shadow the dashboard itself
+      ...(hoistPages && { id: standalonePluginPageId(include.path) }),
     };
 
     // A page with its own placement leaves the app entirely, so it is not one of
@@ -279,7 +284,6 @@ function hoistAppPages(
     return {
       ...child,
       sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
-      ...(child.url && { id: standalonePluginPageId(child.url) }),
     };
   });
 }
