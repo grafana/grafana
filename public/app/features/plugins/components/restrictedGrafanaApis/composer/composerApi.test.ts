@@ -104,11 +104,11 @@ it('refuses a dashboard that is not the mounted one', async () => {
   await expect(composerApi.enter(other)).rejects.toThrow('no_document');
 });
 
-it('refuses notebook targets, never resolving them to the mounted dashboard', async () => {
+it('never resolves a notebook target to the mounted dashboard', async () => {
   mountDashboard();
   const notebook = { resource: 'notebook', uid: 'composer-api-test' } as const;
-  expect(composerApi.canEnter(notebook)).toEqual({ ok: false, reason: 'unsupported' });
-  await expect(composerApi.enter(notebook)).rejects.toThrow('unsupported');
+  expect(composerApi.canEnter(notebook)).toEqual({ ok: false, reason: 'no_document' });
+  await expect(composerApi.enter(notebook)).rejects.toThrow('no_document');
 });
 
 describe('presentation', () => {

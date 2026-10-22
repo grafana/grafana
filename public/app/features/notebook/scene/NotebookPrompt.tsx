@@ -49,6 +49,15 @@ export function needsConfirmBeforeLeaving(scene: NotebookScene): boolean {
 }
 
 /**
+ * Composer holds its edits back until it ends. Leaving the page in the app ends it, which saves them, so
+ * only a reload or a closed tab, which never reaches that save, needs asking about.
+ */
+function holdsComposerEdits(scene: NotebookScene): boolean {
+  const { status } = scene.autosave.state;
+  return Boolean(scene.state.isComposing) && (status === 'pending' || status === 'saving');
+}
+
+/**
  * Warns before the user leaves a notebook that autosave has not finished writing, so they get a
  * chance to wait rather than find out later. Modeled on DashboardScene's own `DashboardPrompt`:
  * `history.block` for in-app navigation, `beforeunload` for a hard reload or tab close.
@@ -60,7 +69,7 @@ export const NotebookPrompt = memo(({ scene }: NotebookPromptProps) => {
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
-      if (!needsConfirmBeforeLeaving(scene)) {
+      if (!needsConfirmBeforeLeaving(scene) && !holdsComposerEdits(scene)) {
         return;
       }
       event.preventDefault();

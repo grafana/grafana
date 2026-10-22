@@ -13,14 +13,18 @@ const sharedApis: RestrictedGrafanaApisContextType = {
   extensionSidebar: extensionSidebarApi,
 };
 
-/** Whether Composer's flag is on now: Composer exists while it is. */
+/** Whether one of Composer's flags is on now: Composer exists while it is. */
 export function isComposerEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardComposer, false);
+  const flags = getFeatureFlagClient();
+  return (
+    flags.getBooleanValue(FlagKeys.GrafanaDashboardComposer, false) ||
+    flags.getBooleanValue(FlagKeys.GrafanaNotebookComposer, false)
+  );
 }
 
 /**
  * Every restricted API Grafana offers, before the allow and block lists pick a plugin's share. Composer exists
- * only while its flag is on.
+ * only while one of its flags is on; each resource still checks its own flag.
  */
 export function getRestrictedGrafanaApis({
   composerEnabled,
