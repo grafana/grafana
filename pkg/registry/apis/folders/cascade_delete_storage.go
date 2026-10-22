@@ -188,7 +188,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	// user must not be ctx's wildcard-permissioned enumeration identity, or every check below runs as that instead of the real requester.
-	if enumUser, err := identity.GetRequester(ctx); err == nil && user.GetUID() == enumUser.GetUID() {
+	enumUser, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	if user.GetUID() == enumUser.GetUID() {
 		return nil, false, fmt.Errorf("cascade delete requester must not be the ctx enumeration identity")
 	}
 
