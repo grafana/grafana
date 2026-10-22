@@ -136,21 +136,18 @@ func (c *unifiedUserTeamsBackend) buildItems(ctx context.Context, rows []userTea
 			if !ok {
 				return nil
 			}
-			meta, err := apiutils.MetaAccessor(t)
-			if err != nil {
-				return err
+			item := iamv0alpha1.GetUserTeamsUserTeam{
+				User:       userName,
+				Team:       row.key.Name,
+				Permission: string(m.Permission),
+				External:   m.External,
 			}
-			var teamInternalID *int64
-			if id := meta.GetDeprecatedInternalID(); id > 0 { //nolint:staticcheck // compatibility for legacy numeric team references
-				teamInternalID = &id
+			if meta, err := apiutils.MetaAccessor(t); err == nil {
+				if id := meta.GetDeprecatedInternalID(); id > 0 { //nolint:staticcheck // compatibility for legacy numeric team references
+					item.TeamInternalId = &id
+				}
 			}
-			items[i] = iamv0alpha1.GetUserTeamsUserTeam{
-				User:           userName,
-				Team:           row.key.Name,
-				TeamInternalId: teamInternalID,
-				Permission:     string(m.Permission),
-				External:       m.External,
-			}
+			items[i] = item
 			return nil
 		})
 	}
