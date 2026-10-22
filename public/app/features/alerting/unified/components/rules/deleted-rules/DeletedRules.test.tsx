@@ -53,13 +53,35 @@ describe('render Deleted rules page', () => {
     expect(await screen.findByText('Grafana-rule')).toBeInTheDocument();
   });
 
-  it('should render restore button', async () => {
+  it('previews the deleted rule as read-only, copyable JSON and restores it', async () => {
     const { user } = renderDeletedRules();
     const restoreButtons = await screen.findAllByRole('button', { name: /restore/i });
     await user.click(restoreButtons[0]);
     expect(
       screen.getByText(/are you sure you want to restore this deleted alert rule definition\?/i)
     ).toBeInTheDocument();
+
+    const preview = await screen.findByRole('textbox', { name: 'Deleted alert rule JSON' });
+    expect(preview.closest('.cm-editor')).toHaveStyle({ height: '600px' });
+    expect(preview.closest('.cm-editor')?.querySelector('.cm-lineNumbers')).toHaveTextContent('1');
+    expect(preview).toHaveTextContent('"title": "Grafana-rule"');
+
+    await user.click(preview);
+    await user.keyboard('{Control>}a{/Control}');
+    const clipboard = await user.copy();
+    const copiedRule = clipboard!.getData('text/plain');
+    expect(JSON.parse(copiedRule)).toEqual({
+      ...grafanaRulerRule,
+      grafana_alert: { ...grafanaRulerRule.grafana_alert, guid: '1234' },
+    });
+    expect(copiedRule).toContain('\n    "for": "5m"');
+
+    await user.keyboard('{Backspace}');
+    await user.paste('replacement');
+    await user.keyboard('edited');
+    await user.keyboard('{Control>}a{/Control}');
+    const copiedAfterEdits = await user.copy();
+    expect(copiedAfterEdits?.getData('text/plain')).toBe(copiedRule);
 
     await user.click(screen.getByText(/yes, restore deleted rule/i));
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');

@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
+import { noop } from 'lodash';
 import { type ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
@@ -105,19 +107,13 @@ function RulePreview({ rule }: { rule: RulerRuleDTO }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.content}>
-      <CodeEditor
-        width="100%"
-        height={600}
-        language={'json'}
+      <CodeMirrorEditor
+        height="600px"
+        language="json"
         value={JSON.stringify(rule, null, 4)}
-        monacoOptions={{
-          minimap: {
-            enabled: false,
-          },
-          scrollBeyondLastLine: false,
-          lineNumbers: 'on',
-          readOnly: true,
-        }}
+        onChange={noop}
+        readOnly
+        aria-label={t('alerting.deleted-rules.restore-modal.preview-aria-label', 'Deleted alert rule JSON')}
       />
     </div>
   );
