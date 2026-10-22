@@ -636,6 +636,10 @@ type NotebookFieldConfig struct {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	NullValueMode *NotebookNullValueMode `json:"nullValueMode,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `decimals`, `custom.lineWidth`) to a
+	// dashboard-variable expression resolved at render time; the property's own value is
+	// the numeric fallback when the expression cannot be resolved to a finite number.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewNotebookFieldConfig creates a new NotebookFieldConfig object.

@@ -476,6 +476,10 @@ type FieldConfig struct {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	Custom map[string]any `json:"custom,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `decimals`, `custom.lineWidth`) to a
+	// dashboard-variable expression resolved at render time; the property's own value is
+	// the numeric fallback when the expression cannot be resolved to a finite number.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewFieldConfig creates a new FieldConfig object.

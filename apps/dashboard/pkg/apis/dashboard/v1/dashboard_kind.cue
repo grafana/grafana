@@ -835,6 +835,11 @@ lineage: schemas: [{
 			// custom is specified by the FieldConfig field
 			// in panel plugin schemas.
 			custom?: {...} @grafanamaturity(NeedsExpertReview)
+
+			// Maps field-config property ids (e.g. `min`, `decimals`, `custom.lineWidth`) to a
+			// dashboard-variable expression resolved at render time; the property's own value is
+			// the numeric fallback when the expression cannot be resolved to a finite number.
+			varMappings?: {[string]: string} @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// Row panel

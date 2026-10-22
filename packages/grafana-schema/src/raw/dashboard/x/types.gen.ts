@@ -1159,6 +1159,12 @@ export interface FieldConfig {
    */
   unit?: string;
   /**
+   * Maps field-config property ids (e.g. `min`, `decimals`, `custom.lineWidth`) to a
+   * dashboard-variable expression resolved at render time; the property's own value is
+   * the numeric fallback when the expression cannot be resolved to a finite number.
+   */
+  varMappings?: Record<string, string>;
+  /**
    * True if data source can write a value to the path. Auth/authz are supported separately
    */
   writeable?: boolean;
