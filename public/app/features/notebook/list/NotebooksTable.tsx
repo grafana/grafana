@@ -154,7 +154,6 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
             getAriaLabel={(tag) =>
               t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', {
                 tag,
-                // An escaped apostrophe would be read out as `&#39;`.
                 interpolation: { escapeValue: false },
               })
             }

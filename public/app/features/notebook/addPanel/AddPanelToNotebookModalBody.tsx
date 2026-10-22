@@ -205,7 +205,6 @@ export function AddPanelToNotebookModalBody(props: Props) {
         dispatch(
           notifyApp(
             createSuccessNotification(
-              // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
               props.cells
                 ? t('notebooks.add-panel.success-cells', 'Added to {{title}}', {
                     title: added.title,

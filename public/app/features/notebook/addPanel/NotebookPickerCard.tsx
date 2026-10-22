@@ -32,7 +32,6 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
           isSelected
             ? t('notebooks.add-panel.card-selected', '{{title}} (selected)', {
                 title: notebook.title,
-                // An escaped apostrophe would be read out as `&#39;`.
                 interpolation: { escapeValue: false },
               })
             : undefined
@@ -46,7 +45,6 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
           t('notebooks.add-panel.card-updated', 'Updated {{when}}', { when: dateTimeFormatTimeAgo(notebook.updated) }),
           t('notebooks.add-panel.card-author', 'By {{author}}', {
             author: notebook.authorName,
-            // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
             interpolation: { escapeValue: false },
           }),
         ]}
