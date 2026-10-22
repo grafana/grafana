@@ -45,19 +45,23 @@ func NewResolvers(log log.Logger) Resolvers {
 	return Resolvers{
 		log:                log,
 		cache:              localcache.New(ttl, cleanInterval),
-		attributeResolvers: map[string]ScopeAttributeResolver{},
+		attributeResolvers: NewScopeResolverRegistry(),
 	}
 }
 
 type Resolvers struct {
 	log                log.Logger
 	cache              *localcache.CacheService
-	attributeResolvers map[string]ScopeAttributeResolver
+	attributeResolvers *ScopeResolverRegistry
 }
 
 func (s *Resolvers) AddScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver) {
 	s.log.Debug("Adding scope attribute resolver", "prefix", prefix)
-	s.attributeResolvers[prefix] = resolver
+	s.attributeResolvers.Register(prefix, resolver)
+}
+
+func (s *Resolvers) ScopeResolverRegistry() *ScopeResolverRegistry {
+	return s.attributeResolvers
 }
 
 func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator {
@@ -74,7 +78,7 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 		}
 
 		prefix := ScopePrefix(scope)
-		if resolver, ok := s.attributeResolvers[prefix]; ok {
+		if resolver, ok := s.attributeResolvers.Get(prefix); ok {
 			scopes, err := resolver.Resolve(ctx, orgID, scope)
 			if err != nil {
 				return nil, fmt.Errorf("could not resolve %v: %w", scope, err)

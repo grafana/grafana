@@ -33,6 +33,8 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		cfg, err := parsePluginGRPCConfig(setting.NewCfg())
 		require.NoError(t, err)
 		require.Equal(t, defaultPluginGRPCConfig(), cfg)
+		// gRPC servers' default enforcement policy closes connections that ping more often.
+		require.Equal(t, 5*time.Minute, cfg.Keepalive.Time)
 	})
 
 	t.Run("configured", func(t *testing.T) {

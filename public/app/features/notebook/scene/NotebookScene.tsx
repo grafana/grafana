@@ -32,6 +32,8 @@ import { NotebookAnalytics } from '../analytics/main';
 import {
   NOTEBOOK_EDIT_SESSION_END_REASON,
   NOTEBOOK_EDIT_SESSION_SOURCE,
+  NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION,
+  type NotebookEditSessionEndReason,
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
@@ -42,6 +44,7 @@ import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+import { claimSceneContext, releaseSceneContext } from './sceneContextStack';
 
 export interface NotebookSceneState extends SceneObjectState {
   title: string;
@@ -53,7 +56,6 @@ export interface NotebookSceneState extends SceneObjectState {
   body: NotebookLayoutManager;
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
-  hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
   /**
@@ -77,24 +79,6 @@ export interface NotebookSceneState extends SceneObjectState {
   isDraft?: boolean;
 }
 
-/**
- * Notebooks currently holding the global scene context, most recently activated last, and whatever
- * held it before the first of them.
- *
- * A stack rather than each activation remembering its own predecessor, because deactivation order is
- * not activation order: more than one notebook can be mounted at a time — an embedded one over
- * whatever else is open — and the naive version got both ends wrong. An older notebook closing used
- * to hand the context back while a newer one was still live, and the last one closing handed it to
- * an already-deactivated sibling, leaving panel interpolation and TimeSrv resolving against a dead
- * scene. Splicing by identity is correct for any order.
- *
- * Only notebooks are tracked. A dashboard deactivating still restores unconditionally and can take
- * the context from a live notebook; that is a pre-existing behaviour of DashboardScene and is
- * deliberately left alone here.
- */
-const sceneContextStack: NotebookScene[] = [];
-let beforeFirstSceneContext: SceneObject | undefined;
-
 // Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
 // coalescing, for the title instead of a cell's content.
 const TITLE_EDIT_COALESCE_MS = 800;
@@ -104,26 +88,6 @@ interface PendingTitleEdit {
   after: string;
   action: NotebookEditAction;
   timer?: ReturnType<typeof setTimeout>;
-}
-
-function claimSceneContext(scene: NotebookScene): void {
-  if (sceneContextStack.length === 0) {
-    beforeFirstSceneContext = window.__grafanaSceneContext;
-  }
-  sceneContextStack.push(scene);
-  window.__grafanaSceneContext = scene;
-}
-
-function releaseSceneContext(scene: NotebookScene): void {
-  const index = sceneContextStack.lastIndexOf(scene);
-  if (index !== -1) {
-    sceneContextStack.splice(index, 1);
-  }
-  // The newest notebook still mounted, or whatever held it before any of them.
-  window.__grafanaSceneContext = sceneContextStack[sceneContextStack.length - 1] ?? beforeFirstSceneContext;
-  if (sceneContextStack.length === 0) {
-    beforeFirstSceneContext = undefined;
-  }
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -219,19 +183,32 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // mounted. Its host decides that before handing it over.
       const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
 
+      const onPageHide = () => this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.PAGE_HIDE);
+      // A page the browser kept for Back comes back still in edit mode, with the session `pagehide`
+      // ended. Starting one again keeps every end paired with a start.
+      const onPageShow = (event: PageTransitionEvent) => {
+        if (event.persisted && this.state.isEditing && !this.editSession.isActive) {
+          this.beginEditSession(NOTEBOOK_EDIT_SESSION_SOURCE.PAGE_RESTORE);
+        }
+      };
+      window.addEventListener('pagehide', onPageHide);
+      window.addEventListener('pageshow', onPageShow);
+
       return () => {
+        window.removeEventListener('pagehide', onPageHide);
+        window.removeEventListener('pageshow', onPageShow);
+        this.commitTitleEdit();
+        stopAutosave?.();
         // A toggle-off already ended the session and turned isEditing back off; this only catches
         // the case where the page itself goes away while a session was still open.
         if (this.state.isEditing) {
-          NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
+          this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
           // Edit mode has to come off with the session. The page caches this scene and hands it back
           // on the next visit, so a scene left mid-session would report a second end when someone
           // opens the notebook just to read it, and no start when they open it to edit.
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
-        this.commitTitleEdit();
-        stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
@@ -276,10 +253,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   /**
-   * Enters edit mode for a write that is about to replace the whole document — the mutation API's
-   * own writes. Skips the prompt `onEnterEditMode` shows about a reader's own panel changes: those
-   * changes are about to be replaced by the incoming document anyway, same as
-   * `NotebookAutosave.saveDocumentChange` already treats them.
+   * Enters edit mode for a write that comes from outside the notebook's own editing: the mutation API's
+   * whole-document writes, and cells added from another surface. Skips the prompt `onEnterEditMode`
+   * shows about a reader's own panel changes: a document write replaces them anyway, same as
+   * `NotebookAutosave.saveDocumentChange` treats them, and an add leaves them out of what it saves.
    */
   public enterEditModeForDocumentWrite(source: NotebookEditSessionSource): void {
     if (this.state.isEditing || !canEditNotebooks()) {
@@ -301,10 +278,24 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // Only when a session is actually starting. A second event would read as two sessions. And
     // start() zeroes the counters, so it would throw away the edits counted so far.
     if (!wasEditing) {
-      this.editSession.start();
-      // No uid means the notebook does not exist yet. That matters more than which control the person clicked.
-      const uid = this.state.uid;
-      NotebookAnalytics.editSessionStarted(uid ?? '', uid ? source : NOTEBOOK_EDIT_SESSION_SOURCE.NEW);
+      this.beginEditSession(source);
+    }
+  }
+
+  private beginEditSession(source: NotebookEditSessionSource): void {
+    this.editSession.start();
+    // No uid means the notebook does not exist yet. That matters more than which control the person clicked.
+    const uid = this.state.uid;
+    NotebookAnalytics.editSessionStarted(uid ?? '', uid ? source : NOTEBOOK_EDIT_SESSION_SOURCE.NEW);
+  }
+
+  /**
+   * A session ends once, whichever of the toggle, the page being torn down and `pagehide` gets there
+   * first. `pagehide` leaves edit mode on, so what follows it must not report a second end.
+   */
+  private endEditSession(reason: NotebookEditSessionEndReason): void {
+    if (this.editSession.isActive) {
+      NotebookAnalytics.editSessionEnded(this, reason);
     }
   }
 
@@ -333,15 +324,33 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
         yesButtonVariant: 'destructive',
         onConfirm: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.DISCARD,
+            changed.length
+          );
           this.startEditing(source);
           this.autosave.discardVizChanges();
         },
         altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
         onAltAction: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.KEEP,
+            changed.length
+          );
           this.startEditing(source);
           this.autosave.keepVizChanges(changed);
         },
         noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
+        // The Cancel button, the close button and Escape all land here: none says more than "not this".
+        onDismiss: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.CANCEL,
+            changed.length
+          );
+        },
       })
     );
   }
@@ -361,7 +370,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // Only when a session was actually open. Otherwise a call that turns out to be a no-op (already
     // in view mode) would still end a session that never started.
     if (wasEditing) {
-      NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.TOGGLE);
+      this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.TOGGLE);
     }
   };
 
