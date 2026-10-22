@@ -1877,7 +1877,7 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: false,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
