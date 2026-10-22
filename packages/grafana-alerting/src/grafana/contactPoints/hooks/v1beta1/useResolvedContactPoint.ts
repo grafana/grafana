@@ -18,8 +18,10 @@ export interface ResolvedContactPoint {
   selectorValue: string | null;
 }
 
-/** Finds the contact point for a rule's `receiver`. A receiver is the contact point's *title*, while
- * `ContactPointSelector` options are keyed by uid-or-title, so a titled receiver is matched by title. */
+/** Finds the contact point for a rule's `receiver`. A receiver is the contact point's *title*, but the `GET`
+ * endpoint is keyed by uid, so this matches the title against the full list rather than doing a single lookup.
+ * The list call is identical to `ContactPointSelector`'s, so both share one RTK Query cache entry and no extra
+ * request is made; keep the args and options in sync or the list is fetched twice. */
 export function useResolvedContactPoint(receiver?: string): ResolvedContactPoint {
   const { currentData, isError } = useListContactPoints({}, { refetchOnFocus: true, refetchOnMountOrArgChange: true });
 
