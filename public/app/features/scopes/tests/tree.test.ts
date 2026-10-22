@@ -2,7 +2,9 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { type ScopesService } from '../ScopesService';
@@ -66,8 +68,9 @@ describe('Tree', () => {
   let scopesService: ScopesService;
   let user: ReturnType<typeof userEvent.setup>;
 
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
+
   beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 

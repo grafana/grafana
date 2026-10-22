@@ -3,6 +3,7 @@ import { last } from 'lodash';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
+import { useFlagScopeFilters } from '@grafana/runtime/internal';
 
 import { type CommandPaletteAction } from '../types';
 
@@ -33,6 +34,7 @@ export function useRegisterScopesActions(
   onApply: () => void,
   parentId?: string | null
 ): { scopesRow?: ReactNode } {
+  const scopeFiltersEnabled = useFlagScopeFilters();
   // Call hooks unconditionally to follow React Hooks rules
   const globalScopeActions = useGlobalScopesSearch(searchQuery, parentId);
   const scopeTreeActions = useScopeTreeActions(searchQuery, parentId);
@@ -40,13 +42,13 @@ export function useRegisterScopesActions(
 
   // If we have global search actions we use those. Inside the hook the search should be conditional based on where
   // in the command palette we are.
-  const nodesActions = config.featureToggles.scopeFilters ? globalScopeActions || scopeTreeActions : [];
+  const nodesActions = scopeFiltersEnabled ? globalScopeActions || scopeTreeActions : [];
 
   // Register actions unconditionally (empty array if feature toggle is off)
   useRegisterActions(nodesActions, [nodesActions]);
 
   // Returns a component to show what scopes are selected or applied (undefined if feature toggle is off)
-  return { scopesRow: config.featureToggles.scopeFilters ? scopesRow : undefined };
+  return { scopesRow: scopeFiltersEnabled ? scopesRow : undefined };
 }
 
 /**

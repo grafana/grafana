@@ -1,14 +1,26 @@
-import { waitFor, renderHook } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, waitFor, renderHook as renderHookBase, type RenderHookOptions } from '@testing-library/react';
 import { setIn } from 'immutable';
 import { useRegisterActions } from 'kbar';
 
 import { type ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type NodesMap, type TreeNode } from '../../scopes/selector/types';
 
 import { useRegisterScopesActions } from './scopeActions';
 import { useScopeServicesState } from './scopesUtils';
+
+// The scopeFilters flag is read with an OpenFeature hook, which needs a provider around the hook under test.
+const renderHook = <Result, Props>(callback: (props: Props) => Result, options?: RenderHookOptions<Props>) =>
+  renderHookBase(callback, {
+    wrapper: ({ children }) => (
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>
+    ),
+    ...options,
+  });
 
 // Mock dependencies
 jest.mock('kbar', () => ({
@@ -85,12 +97,20 @@ describe('useRegisterScopesActions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useScopeServicesState as jest.Mock).mockReturnValue(mockScopeServicesState);
-    config.featureToggles.scopeFilters = true;
+    setTestFlags({ [FlagKeys.ScopeFilters]: true });
     config.featureToggles.scopeSearchAllLevels = true;
   });
 
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
   it('should return undefined scopesRow when feature toggle is off', () => {
-    config.featureToggles.scopeFilters = false;
+    act(() => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+    });
 
     const onApply = jest.fn();
     const { result } = renderHook(() => {
