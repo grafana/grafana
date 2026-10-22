@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { autoUpdate, useFloating } from '@floating-ui/react';
-import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
@@ -35,6 +35,12 @@ interface SuggestionsInputProps {
   style?: React.CSSProperties;
   autoFocus?: boolean;
   id?: string;
+  'aria-label'?: string;
+  /** Called on every edit, before the value is committed through `onChange` */
+  onInputChange?: (value: string) => void;
+  inputRef?: React.Ref<HTMLInputElement>;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -66,6 +72,11 @@ export const SuggestionsInput = ({
   style,
   id,
   autoFocus = false,
+  'aria-label': ariaLabel,
+  onInputChange,
+  inputRef: externalInputRef,
+  prefix,
+  suffix,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -104,6 +115,10 @@ export const SuggestionsInput = ({
       inputRef.current = ref;
     },
     [refs]
+  );
+
+  useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(externalInputRef, () =>
+    inputRef.current instanceof HTMLInputElement ? inputRef.current : null
   );
 
   // Used to get the height of the suggestion elements in order to scroll to them.
@@ -167,9 +182,13 @@ export const SuggestionsInput = ({
     [showingSuggestions, suggestions, suggestionsIndex, onVariableSelect]
   );
 
-  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setVariableValue(event.currentTarget.value);
-  }, []);
+  const onValueChanged = React.useCallback(
+    (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setVariableValue(event.currentTarget.value);
+      onInputChange?.(event.currentTarget.value);
+    },
+    [onInputChange]
+  );
 
   const onBlur = React.useCallback(
     (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -190,6 +209,7 @@ export const SuggestionsInput = ({
     onBlur: onBlur,
     onKeyDown: onKeyDown,
     id,
+    'aria-label': ariaLabel,
   };
 
   return (
@@ -223,7 +243,7 @@ export const SuggestionsInput = ({
         </div>
       )}
       {type === HTMLElementType.InputElement ? (
-        <Input {...inputProps} ref={handleRef} autoFocus={autoFocus} />
+        <Input {...inputProps} ref={handleRef} autoFocus={autoFocus} prefix={prefix} suffix={suffix} />
       ) : (
         <TextArea {...inputProps} ref={handleRef} autoFocus={autoFocus} rows={5} />
       )}
