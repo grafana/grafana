@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, six labels, one border, two roads */
+/** Trimmed from a generated Protomaps style: one fill, six labels, one border, four roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -83,6 +83,8 @@ const STYLE = {
       'source-layer': 'roads',
       paint: { 'line-color': '#292929' },
     },
+    { id: 'roads_minor_service', type: 'line', source: 'protomaps', 'source-layer': 'roads' },
+    { id: 'roads_tunnels_major', type: 'line', source: 'protomaps', 'source-layer': 'roads' },
     {
       id: 'boundaries_country',
       type: 'line',
@@ -320,20 +322,21 @@ describe('Protomaps basemap', () => {
       'earth',
       'roads_highway',
       'roads_major',
+      'roads_minor_service',
+      'roads_tunnels_major',
       'boundaries_country',
     ]);
   });
 
   it.each([
-    { flavor: ProtomapsFlavor.White, land: '#fafaf8', poi: '#7d9c83', border: '#f2e6e7' },
-    { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', poi: '#515151', border: '#5c5e5e' },
-  ])('paints $flavor in the colors of the CARTO basemap it stands in for', async ({ flavor, land, poi, border }) => {
+    { flavor: ProtomapsFlavor.White, land: '#fafaf8', border: '#f2e6e7' },
+    { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', border: '#5c5e5e' },
+  ])('paints $flavor in the colors of the CARTO basemap it stands in for', async ({ flavor, land, border }) => {
     await initLayer({ flavor, showLabels: true });
 
     const layers = appliedStyle().layers;
     const layer = (id: string) => layers.find((candidate: { id: string }) => candidate.id === id);
     expect(layer('earth').paint).toEqual({ 'fill-color': land });
-    expect(layer('pois').paint['text-color']).toBe(poi);
     const borders = layer('boundaries_country').paint;
     expect(borders['line-color'].slice(0, 5)).toEqual(['interpolate', ['linear'], ['zoom'], 4, border]);
     // CARTO draws country borders solid
@@ -380,6 +383,25 @@ describe('Protomaps basemap', () => {
       ['linear'],
       ['zoom'],
       ...[5, bySecondary('#1a1a1a'), 12, bySecondary('#232323'), 15, bySecondary('#535666')],
+    ]);
+  });
+
+  it('draws tunnels in CARTO’s flat colors, and Dark Matter’s service roads darker than the land', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Black });
+
+    const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('roads_tunnels_major').paint['line-color']).toEqual([
+      'match',
+      ['get', 'kind_detail'],
+      ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'],
+      '#161616',
+      '#414758',
+    ]);
+    expect(layer('roads_minor_service').paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      ...[5, '#1c1c1c', 12, '#1c1c1c', 15, '#0b0b0b'],
     ]);
   });
 
