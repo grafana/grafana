@@ -106,16 +106,16 @@ type RoutesLoaderClients struct {
 
 // middlewareEnabled reports whether the router serves API groups inside a
 // single-tenant Grafana, ahead of the embedded API server. App plugin settings
-// are only served by the router, so enabling them enables it too, except in the
-// standalone router, which has no embedded API server to stand in front of.
+// are only served by the router, so enabling them enables it too. The
+// standalone router has no embedded API server to stand in front of, so it is
+// never middleware, whatever the flags say: otherwise a flag that also reaches
+// its deployment would drop its cloud sources.
 func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
-	if features == nil {
+	if features == nil || standaloneRouter(cfg) {
 		return false
 	}
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) { //nolint:staticcheck
-		return true
-	}
-	return !standaloneRouter(cfg) && features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
+	return features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) || //nolint:staticcheck
+		features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
 }
 
 // standaloneRouter reports whether this process runs the router target, which

@@ -346,7 +346,7 @@ func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
 
 // App plugin settings are only served by the router, so enabling them inside
 // Grafana also enables the router middleware. The standalone router has no
-// embedded API server, so the settings flag does not change it.
+// embedded API server, so no flag makes it middleware.
 func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 	grafana := setting.NewCfg()
 	standalone := setting.NewCfg()
@@ -361,7 +361,7 @@ func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
 		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true},
 		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false},
-		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
+		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tc.flags...)
