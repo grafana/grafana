@@ -36,7 +36,9 @@ func (b *Builder) SubresourceHandler(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		info, ok := request.RequestInfoFrom(r.Context())
-		if !ok || !info.IsResourceRequest || info.APIGroup != b.group || info.Resource != apppluginV0.APP_RESOURCE_NAME {
+		// Other versions are not served, so the API server answers them with a 404.
+		if !ok || !info.IsResourceRequest || info.APIGroup != b.group || info.APIVersion != apppluginV0.VERSION ||
+			info.Resource != apppluginV0.APP_RESOURCE_NAME {
 			next.ServeHTTP(w, r)
 			return
 		}

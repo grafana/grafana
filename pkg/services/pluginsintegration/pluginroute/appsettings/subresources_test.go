@@ -140,6 +140,12 @@ func TestSubresourceHandler(t *testing.T) {
 		other := info("instance", "health")
 		other.APIGroup = "other-app"
 		require.Equal(t, http.StatusNoContent, serve(http.MethodGet, base+"/health", other).Code)
+		for _, sub := range []string{"health", "resources", "proxy"} {
+			unserved := info("instance", sub)
+			unserved.APIVersion = "v1"
+			res := serve(http.MethodGet, "/apis/example-app/v1/namespaces/default/app/instance/"+sub, unserved)
+			require.Equal(t, http.StatusNoContent, res.Code, "%s under an unserved version is left to the API server", sub)
+		}
 	})
 }
 

@@ -701,6 +701,14 @@ func TestPluginSettingsBackendLoad(t *testing.T) {
 		handler.ServeHTTP(res, req)
 		require.Equal(t, http.StatusBadRequest, res.Code, res.Body.String())
 		require.Contains(t, res.Body.String(), "name can only be: instance")
+
+		for _, sub := range []string{"health", "resources/api", "proxy"} {
+			req = httptest.NewRequest(http.MethodGet, "/apis/example-app/v1/namespaces/default/app/instance/"+sub, nil).
+				WithContext(req.Context())
+			res = httptest.NewRecorder()
+			handler.ServeHTTP(res, req)
+			require.Equal(t, http.StatusNotFound, res.Code, "%s under an unserved version: %s", sub, res.Body.String())
+		}
 	})
 
 	t.Run("requires a plugin client", func(t *testing.T) {
