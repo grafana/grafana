@@ -114,6 +114,7 @@
 /apps/logsdrilldown/ @grafana/observability-logs
 /apps/annotation/ @grafana/grafana-backend-services-squad
 /apps/dashvalidator/ @grafana/sharing-squad
+/apps/dashboardviews/ @grafana/dashboards-squad
 /apps/dashboard/kinds/notebook.cue @grafana/sharing-squad
 /apps/dashboard/kinds/v2beta1/notebook_spec.cue @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-services-squad
