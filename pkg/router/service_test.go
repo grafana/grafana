@@ -310,3 +310,66 @@ func TestServiceStopsLoaderWhenStartingFails(t *testing.T) {
 	require.ErrorContains(t, services.StartAndAwaitRunning(t.Context(), svc), "notify unavailable")
 	require.Equal(t, services.Terminated, loader.State())
 }
+
+func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
+	svc := newService(NewGrafanaRouter(dummyRoutesLoader{groups: []string{"owned.grafana.app"}}, nil), prometheus.NewRegistry())
+	svc.middleware = true
+	require.NoError(t, svc.router.reconcile(t.Context()))
+
+	for _, target := range []string{
+		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards",
+		"/apis/dashboard.grafana.app",
+		"/apis/Not_A.Group/v1/things",
+		"/openapi/v3/apis/dashboard.grafana.app/v1",
+		"/openapi/v3/apis/owned.grafana.app",
+		"/api/dashboards/uid/abc",
+	} {
+		t.Run(target, func(t *testing.T) {
+			// The shortcut must answer as the router would: through next.
+			for name, serve := range map[string]func(http.ResponseWriter, *http.Request, http.Handler){
+				"service": svc.HandleFunc,
+				"router":  svc.router.HandleFunc,
+			} {
+				var called bool
+				next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					called = true
+					w.WriteHeader(http.StatusTeapot)
+				})
+				rec := httptest.NewRecorder()
+				serve(rec, newAuthenticatedRequest(http.MethodGet, target, nil), next)
+				require.True(t, called, "%s did not call next", name)
+				require.Equal(t, http.StatusTeapot, rec.Code, name)
+			}
+		})
+	}
+}
+
+// App plugin settings are only served by the router, so enabling them inside
+// Grafana also enables the router middleware. The standalone router has no
+// embedded API server, so the settings flag does not change it.
+func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
+	grafana := setting.NewCfg()
+	standalone := setting.NewCfg()
+	standalone.Target = []string{"router"}
+	for _, tc := range []struct {
+		name     string
+		cfg      *setting.Cfg
+		flags    []any
+		expected bool
+	}{
+		{"no flags", grafana, nil, false},
+		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
+		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true},
+		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false},
+		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			features := featuremgmt.WithFeatures(tc.flags...)
+			require.Equal(t, tc.expected, middlewareEnabled(tc.cfg, features))
+			svc, err := ProvideService(tc.cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, svc.middleware)
+		})
+	}
+	require.False(t, middlewareEnabled(grafana, nil))
+}

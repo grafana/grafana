@@ -32,6 +32,7 @@ export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
 export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
 
 // Matchers
+export { MatcherBadge } from './grafana/matchers/components/MatcherBadge';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
 // Data sources

@@ -25,7 +25,6 @@ declare module "@openfeature/core" {
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
     | "externalServiceAccounts"
@@ -127,6 +126,7 @@ declare module "@openfeature/core" {
     | "plugins.useMTPlugins"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
+    | "grafana.dashboardVariablesMigration"
     | "smoothingTransformation"
     | "queryWithAssistant"
     | "queryEditorNext"
@@ -145,6 +145,7 @@ declare module "@openfeature/core" {
     | "enableColorblindSafePanelOptions"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "reporting.anyPageReporting"
+    | "alerting.gmaOnlyListView"
     | "assistant.frontend.tools.dashboardTemplates"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
@@ -196,7 +197,8 @@ declare module "@openfeature/core" {
     | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
-    | "datasources.gatewayAuditPolicy";
+    | "datasources.gatewayAuditPolicy"
+    | "grafana.geomapProtomapsBasemap";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

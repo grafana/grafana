@@ -77,7 +77,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebar.closePane();
+      sidebar.closePane('explicit');
       sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },

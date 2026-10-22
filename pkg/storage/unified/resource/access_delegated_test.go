@@ -770,10 +770,12 @@ func TestAuthzLimitedClient_BatchCheckReturnsMissingResultError(t *testing.T) {
 	require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
 }
 
-// checkPermissions checks req against the types its index draws from, as Search does.
+// checkPermissions checks req as Search does, returning the types a global
+// search leaves out.
 func checkPermissions(s *searchServer, ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]string, error) {
-	key := req.Options.Key
-	return s.checkSearchServicePermissions(ctx, req, s.indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}))
+	key := NamespacedResource{Namespace: req.Options.Key.Namespace, Group: req.Options.Key.Group, Resource: req.Options.Key.Resource}
+	_, skipped, err := s.checkSearchServicePermissions(ctx, req, s.indexSources(key))
+	return skipped, err
 }
 
 func newPermissionTestSearchServer(client authlib.AccessClient) *searchServer {
@@ -798,13 +800,15 @@ func (allUncheckedClient) IsCompatibleWithRBAC(string, string) bool { return fal
 // recordingIndex answers every search with no hits and keeps the last request.
 type recordingIndex struct {
 	*MockResourceIndex
-	req *resourcepb.ResourceSearchRequest
+	req     *resourcepb.ResourceSearchRequest
+	indexes *SearchIndexes
 	// duringSearch, if set, runs while the index is searched.
 	duringSearch func()
 }
 
-func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, indexes *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	r.req = req
+	r.indexes = indexes
 	if r.duringSearch != nil {
 		r.duringSearch()
 	}

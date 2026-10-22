@@ -7,7 +7,6 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { withSavedByTrailer } from '../../utils/currentUser';
 import { type StepStatusInfo, type Target } from '../types';
 
 export interface UseCreateSyncJobParams {
@@ -71,11 +70,7 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
         const jobSpec = requiresMigration
           ? {
               action: 'migrate' as const,
-              // The Grafana-saved-by trailer rides through the top-level
-              // JobSpec.Message to the resulting git commit.
-              message: withSavedByTrailer(
-                t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
-              ),
+              message: t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository'),
               migrate: {
                 // Generate fresh folder UIDs on export so the migrated folders
                 // are created anew on the subsequent pull rather than taking
