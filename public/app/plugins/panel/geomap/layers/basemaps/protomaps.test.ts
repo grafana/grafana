@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, one label */
+/** Trimmed from a generated Protomaps style: one fill, two labels */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -36,6 +36,14 @@ const STYLE = {
       layout: {
         'text-font': ['step', ['zoom'], ['literal', ['Noto Sans Regular']], 8, ['literal', ['Noto Sans Medium']]],
       },
+    },
+    {
+      id: 'roads_labels_minor',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      minzoom: 15,
+      layout: { 'symbol-placement': 'line', 'text-font': ['Noto Sans Regular'] },
     },
   ],
 };
@@ -148,6 +156,12 @@ describe('Protomaps basemap', () => {
       8,
       ['literal', ['Inter Medium']],
     ]);
+  });
+
+  it('names minor roads from zoom 16 instead of 15', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedStyle().layers[2]).toMatchObject({ id: 'roads_labels_minor', minzoom: 16 });
   });
 
   it('drops label layers when labels are off', async () => {

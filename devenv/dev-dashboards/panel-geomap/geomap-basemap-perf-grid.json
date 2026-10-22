@@ -968,7 +968,7 @@
     },
     "links": [],
     "liveNow": false,
-    "preload": false,
+    "preload": true,
     "tags": ["gdev", "panel-tests", "geomap"],
     "timeSettings": {
       "from": "now-6h",

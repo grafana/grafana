@@ -19,6 +19,14 @@ const SOURCE_ID = 'protomaps';
 /** Protomaps planet builds stop at zoom 15; OpenLayers overzooms the last level beyond that */
 const MAX_TILE_ZOOM = 15;
 
+/**
+ * Protomaps names minor roads, paths and service roads from zoom 15. In dense cities that is
+ * thousands of line labels, each split into pieces that are placed and drawn every frame, which
+ * drops panning to about 15 fps. CARTO waits until zoom 16.
+ */
+const MINOR_ROAD_LABELS = 'roads_labels_minor';
+const MINOR_ROAD_LABEL_MIN_ZOOM = 16;
+
 export enum ProtomapsFlavor {
   Auto = 'auto',
   Light = 'light',
@@ -50,7 +58,9 @@ const defaultProtomapsConfig: ProtomapsConfig = {
 };
 
 interface GlLayer {
+  id: string;
   type: string;
+  minzoom?: number;
   layout?: Record<string, unknown>;
 }
 
@@ -132,14 +142,19 @@ export function isProtomapsBasemapEnabled() {
 }
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
-  const layers = glStyle.layers
-    .filter((layer) => showLabels || layer.type !== 'symbol')
-    .map((layer) =>
-      layer.layout?.['text-font']
-        ? { ...layer, layout: { ...layer.layout, 'text-font': toGrafanaFonts(layer.layout['text-font']) } }
-        : layer
-    );
+  const layers = glStyle.layers.filter((layer) => showLabels || layer.type !== 'symbol').map(adaptLayer);
   return { ...glStyle, layers };
+}
+
+function adaptLayer<T extends GlLayer>(layer: T): T {
+  let adapted = layer;
+  if (adapted.layout?.['text-font']) {
+    adapted = { ...adapted, layout: { ...adapted.layout, 'text-font': toGrafanaFonts(adapted.layout['text-font']) } };
+  }
+  if (adapted.id === MINOR_ROAD_LABELS) {
+    adapted = { ...adapted, minzoom: Math.max(adapted.minzoom ?? 0, MINOR_ROAD_LABEL_MIN_ZOOM) };
+  }
+  return adapted;
 }
 
 export const protomaps: MapLayerRegistryItem<ProtomapsConfig> = {
