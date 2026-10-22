@@ -85,9 +85,15 @@ function hasPanelsStillLoading(scene: SceneObject): boolean {
       }
 
       return (
-        obj instanceof VizPanel && (!obj.getPlugin() || hasUnloadedLibraryPanel(obj)) && !obj.state._pluginLoadError
+        obj instanceof VizPanel && !obj.state._pluginLoadError && (!hasRealPlugin(obj) || hasUnloadedLibraryPanel(obj))
       );
     });
+}
+
+// Compared with the panel's own `pluginId` rather than just present: once a library definition has
+// loaded, `getPlugin()` keeps returning the placeholder until the real plugin has been imported.
+function hasRealPlugin(panel: VizPanel): boolean {
+  return panel.getPlugin()?.meta.id === panel.state.pluginId;
 }
 
 function hasUnloadedLibraryPanel(panel: VizPanel): boolean {

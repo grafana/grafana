@@ -1,4 +1,4 @@
-import { LoadingState, PanelPlugin, getDefaultTimeRange } from '@grafana/data';
+import { LoadingState, PanelPlugin, type PanelPluginMeta, getDefaultTimeRange } from '@grafana/data';
 import {
   EmbeddedScene,
   SceneFlexItem,
@@ -16,6 +16,13 @@ import {
   createRenderCompleteReporter,
   watchRenderReadiness,
 } from './notebookRenderReadiness';
+
+function buildPlugin(id: string) {
+  const plugin = new PanelPlugin(() => null);
+  plugin.meta = { id } as PanelPluginMeta;
+
+  return plugin;
+}
 
 function buildScene(children: SceneFlexItem[] = []) {
   const controller = new behaviors.SceneQueryController();
@@ -114,7 +121,26 @@ describe('watchRenderReadiness', () => {
     jest.advanceTimersByTime(RENDER_SETTLE_MS * 3);
     expect(onReady).not.toHaveBeenCalled();
 
-    jest.spyOn(panel, 'getPlugin').mockReturnValue(new PanelPlugin(() => null));
+    jest.spyOn(panel, 'getPlugin').mockReturnValue(buildPlugin('timeseries'));
+    jest.advanceTimersByTime(RENDER_SETTLE_MS);
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps waiting while a loaded library panel still shows the placeholder plugin', () => {
+    const behavior = new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel', isLoaded: true });
+    const panel = new VizPanel({ pluginId: 'timeseries', $behaviors: [behavior] });
+    const { scene } = buildScene([new SceneFlexItem({ body: panel })]);
+    jest.spyOn(panel, 'isActive', 'get').mockReturnValue(true);
+    const getPlugin = jest
+      .spyOn(panel, 'getPlugin')
+      .mockReturnValue(buildPlugin(LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID));
+    const onReady = jest.fn();
+    watchRenderReadiness(scene, onReady);
+
+    jest.advanceTimersByTime(RENDER_SETTLE_MS * 3);
+    expect(onReady).not.toHaveBeenCalled();
+
+    getPlugin.mockReturnValue(buildPlugin('timeseries'));
     jest.advanceTimersByTime(RENDER_SETTLE_MS);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
@@ -124,7 +150,7 @@ describe('watchRenderReadiness', () => {
     const panel = new VizPanel({ pluginId: 'timeseries', $behaviors: [behavior] });
     const { scene } = buildScene([new SceneFlexItem({ body: panel })]);
     jest.spyOn(panel, 'isActive', 'get').mockReturnValue(true);
-    jest.spyOn(panel, 'getPlugin').mockReturnValue(new PanelPlugin(() => null));
+    jest.spyOn(panel, 'getPlugin').mockReturnValue(buildPlugin('timeseries'));
     const onReady = jest.fn();
     watchRenderReadiness(scene, onReady);
 
