@@ -1,13 +1,83 @@
-import { toAlertRuleSearchHit } from './alertRuleSearchHit';
+import { alertRuleSearchHitSchema } from './alertRuleSearchHit';
 
-function toHit(fields: Record<string, unknown>) {
-  return toAlertRuleSearchHit({
+function toHit(fields?: unknown) {
+  return alertRuleSearchHitSchema.parse({
     resource: { group: 'rules.alerting.grafana.app', kind: 'AlertRule', resource: 'alertrules', name: 'rule-1' },
     fields,
   });
 }
 
-describe('toAlertRuleSearchHit', () => {
+const NO_TOTALS = {
+  healthy: undefined,
+  firing: undefined,
+  pending: undefined,
+  recovering: undefined,
+  noData: undefined,
+  error: undefined,
+};
+
+describe('alertRuleSearchHitSchema', () => {
+  it('reads the row fields from the search hit', () => {
+    const hit = toHit({
+      title: 'CPU high',
+      folder: 'folder-1',
+      paused: true,
+      interval: '1m',
+      state: 'Firing',
+      health: 'OK',
+      lastError: 'timeout',
+      labels: ['team=infra', 'critical'],
+      datasourceUIDs: ['prom-1', 7],
+      notificationType: 'SimplifiedRouting',
+      receiver: 'ops-email',
+      routingTree: 'ops',
+    });
+
+    expect(hit).toEqual({
+      uid: 'rule-1',
+      title: 'CPU high',
+      folderUid: 'folder-1',
+      paused: true,
+      interval: '1m',
+      state: 'Firing',
+      health: 'OK',
+      lastError: 'timeout',
+      totals: NO_TOTALS,
+      summary: undefined,
+      labels: { team: 'infra', critical: '' },
+      dataSourceUids: ['prom-1'],
+      notificationType: 'SimplifiedRouting',
+      receiver: 'ops-email',
+      routingTree: 'ops',
+    });
+  });
+
+  it('falls back to the rule UID for the title and leaves fields of the wrong type unset', () => {
+    const hit = toHit({ title: 42, folder: ['folder-1'], paused: 'true', state: null, labels: 'team=infra' });
+
+    expect(hit).toMatchObject({
+      uid: 'rule-1',
+      title: 'rule-1',
+      folderUid: undefined,
+      paused: undefined,
+      state: undefined,
+      labels: {},
+    });
+  });
+
+  it.each([
+    { name: 'no fields', fields: undefined },
+    { name: 'fields that are not an object', fields: 'title=CPU high' },
+  ])('falls back to the rule UID alone when the search returned $name', ({ fields }) => {
+    expect(toHit(fields)).toEqual({
+      uid: 'rule-1',
+      title: 'rule-1',
+      totals: NO_TOTALS,
+      labels: {},
+      dataSourceUids: [],
+    });
+  });
+
   it('reads every returned instance total, keeping a returned zero', () => {
     const hit = toHit({
       totalsHealthy: 4,
@@ -24,14 +94,7 @@ describe('toAlertRuleSearchHit', () => {
   it('leaves a total undefined, never zero, when the search did not return it', () => {
     const hit = toHit({ totalsFiring: 2, totalsPending: 'many' });
 
-    expect(hit.totals).toEqual({
-      healthy: undefined,
-      firing: 2,
-      pending: undefined,
-      recovering: undefined,
-      noData: undefined,
-      error: undefined,
-    });
+    expect(hit.totals).toEqual({ ...NO_TOTALS, firing: 2 });
   });
 
   it('reads the summary from the JSON-encoded annotations', () => {
@@ -45,13 +108,6 @@ describe('toAlertRuleSearchHit', () => {
   it('leaves the summary undefined when the annotations are absent or not valid JSON', () => {
     expect(toHit({}).summary).toBeUndefined();
     expect(toHit({ annotations: '{not json' }).summary).toBeUndefined();
-  });
-
-  it('reads the state and health values the API sends', () => {
-    const hit = toHit({ state: 'Pending', health: 'NoData' });
-
-    expect(hit.state).toBe('Pending');
-    expect(hit.health).toBe('NoData');
   });
 
   it.each([

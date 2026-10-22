@@ -149,8 +149,8 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
 
   return (
     <>
-      {items.map((hit) => (
-        <AlertRuleListEntry key={hit.uid} hit={hit} showFolderPath={false} />
+      {items.map((searchHit) => (
+        <AlertRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath={false} />
       ))}
       {(hasMore || failure) && (
         <li>

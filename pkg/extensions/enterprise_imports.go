@@ -245,7 +245,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/plugins/storage"
 	_ "github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/registry/apis"
-	_ "github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	_ "github.com/grafana/grafana/pkg/registry/apis/collections"
 	_ "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard"

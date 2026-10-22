@@ -23,32 +23,32 @@ import { MetaItem } from '../shared/MetaItem';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleRowProps {
-  hit: AlertRuleSearchHit;
+  searchHit: AlertRuleSearchHit;
   fullRule: RuleResourceState<AlertRule>;
   /** List mode only. */
   folderPath?: string[];
   actions?: ReactNode;
 }
 
-function RoutingMeta({ hit }: { hit: AlertRuleSearchHit }) {
-  if (hit.notificationType === 'SimplifiedRouting' && hit.receiver) {
+function RoutingMeta({ searchHit }: { searchHit: AlertRuleSearchHit }) {
+  if (searchHit.notificationType === 'SimplifiedRouting' && searchHit.receiver) {
     return (
       <MetaItem icon="at">
         {t('alerting.gma-rule-list.alert-rules.routing-direct', 'Delivered to')}{' '}
         <TextLink
-          href={createContactPointSearchLink(hit.receiver, GRAFANA_RULES_SOURCE_NAME)}
+          href={createContactPointSearchLink(searchHit.receiver, GRAFANA_RULES_SOURCE_NAME)}
           variant="bodySmall"
           color="primary"
         >
-          {hit.receiver}
+          {searchHit.receiver}
         </TextLink>
       </MetaItem>
     );
   }
-  if (hit.notificationType === 'NamedRoutingTree' && hit.routingTree) {
+  if (searchHit.notificationType === 'NamedRoutingTree' && searchHit.routingTree) {
     return (
       <MetaItem icon="at">
-        {t('alerting.gma-rule-list.alert-rules.routing-named', 'Policy: {{policy}}', { policy: hit.routingTree })}
+        {t('alerting.gma-rule-list.alert-rules.routing-named', 'Policy: {{policy}}', { policy: searchHit.routingTree })}
       </MetaItem>
     );
   }
@@ -56,26 +56,26 @@ function RoutingMeta({ hit }: { hit: AlertRuleSearchHit }) {
 }
 
 /** Presentation-only; missing state/health renders "unavailable", never healthy. */
-export function AlertRuleRow({ hit, fullRule, folderPath, actions }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, fullRule, folderPath, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
-  const pluginId = getPluginId(hit.labels);
+  const pluginId = getPluginId(searchHit.labels);
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
   const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   // Gate each entry: a null-rendering component would leave a stray separator.
-  const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
-  const hasTotals = Object.values(hit.totals).some((total) => total !== undefined);
-  const hasDisplayLabels = Object.keys(getDisplayLabels(hit.labels)).length > 0;
+  const hasQueriedDataSources = searchHit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
+  const hasTotals = Object.values(searchHit.totals).some((total) => total !== undefined);
+  const hasDisplayLabels = Object.keys(getDisplayLabels(searchHit.labels)).length > 0;
 
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="alert" state={hit.state} health={hit.health} paused={hit.paused} />}
+      icon={<RuleStatusIcon kind="alert" state={searchHit.state} health={searchHit.health} paused={searchHit.paused} />}
       title={
         <Stack direction="row" alignItems="center" gap={1} wrap={false}>
-          <TextLink id={titleId} href={grafanaRulesNav.viewLink(hit.uid)} color="primary" inline={false}>
-            {hit.title}
+          <TextLink id={titleId} href={grafanaRulesNav.viewLink(searchHit.uid)} color="primary" inline={false}>
+            {searchHit.title}
           </TextLink>
           {pluginId === undefined ? (
             isOwnedElsewhere && <ProvisioningBadge managerKind={managerKind} />
@@ -84,15 +84,15 @@ export function AlertRuleRow({ hit, fullRule, folderPath, actions }: AlertRuleRo
           )}
         </Stack>
       }
-      description={<RuleListItemDescription error={hit.lastError} summary={hit.summary} />}
+      description={<RuleListItemDescription error={searchHit.lastError} summary={searchHit.summary} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
-        hasQueriedDataSources && <DataSourcesMeta key="datasources" uids={hit.dataSourceUids} />,
-        hasTotals && <InstanceTotalsMeta key="totals" totals={hit.totals} />,
-        hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
-        <RoutingMeta key="routing" hit={hit} />,
+        hasQueriedDataSources && <DataSourcesMeta key="datasources" uids={searchHit.dataSourceUids} />,
+        hasTotals && <InstanceTotalsMeta key="totals" totals={searchHit.totals} />,
+        hasDisplayLabels && <LabelsMeta key="labels" labels={searchHit.labels} />,
+        <RoutingMeta key="routing" searchHit={searchHit} />,
       ]}
-      metaRight={<IntervalIndicator interval={hit.interval} />}
+      metaRight={<IntervalIndicator interval={searchHit.interval} />}
       actions={actions}
     />
   );

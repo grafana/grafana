@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { type InfiniteQueryResult, type PagedFailure, retryPagedQuery, toPagedFailure } from '../shared/pagedQuery';
+import { type PagedFailure } from '../shared/PagedFailureAlert';
+import { type InfiniteQueryResult, retryPagedQuery, toPagedFailure } from '../shared/pagedQuery';
 
 export interface UseDeletedRulesResult<T> {
   rows: T[];

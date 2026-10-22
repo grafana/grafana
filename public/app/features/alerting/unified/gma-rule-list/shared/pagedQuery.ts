@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
 
+import { type PagedFailure } from './PagedFailureAlert';
+
 export interface InfiniteQueryResult<TPage> {
   currentData?: { pages: TPage[] };
   isError: boolean;
@@ -12,11 +14,6 @@ export interface InfiniteQueryResult<TPage> {
   isFetchNextPageError?: boolean;
   fetchNextPage: () => unknown;
   refetch: () => unknown;
-}
-
-export interface PagedFailure {
-  kind: 'load-more' | 'refresh';
-  error: unknown;
 }
 
 export interface PagedResult<T> {

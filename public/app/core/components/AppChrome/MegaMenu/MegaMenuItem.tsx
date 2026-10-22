@@ -18,7 +18,7 @@ import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { getDragHandleStyles } from './styles';
-import { hasChildMatch } from './utils';
+import { hasChildMatch, hiddenKey } from './utils';
 
 interface Props {
   link: NavModelItem;
@@ -175,7 +175,12 @@ export function MegaMenuItem({
   const showPin = !canCustomise || isPinnableItem;
 
   return (
-    <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
+    <li
+      ref={setItemRef}
+      className={styles.listItem}
+      data-nav-id={hiddenKey(link)}
+      {...draggableProvided?.draggableProps}
+    >
       <div className={styles.menuItem}>
         {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
             the content columns line up between top-level sections and their children. */}

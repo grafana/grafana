@@ -1,8 +1,7 @@
 import { Trans } from '@grafana/i18n';
 import { Box, Button } from '@grafana/ui';
 
-import { PagedFailureAlert } from './PagedFailureAlert';
-import { type PagedFailure } from './pagedQuery';
+import { type PagedFailure, PagedFailureAlert } from './PagedFailureAlert';
 
 interface LoadMoreFooterProps {
   hasMore: boolean;

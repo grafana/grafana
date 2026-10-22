@@ -1,9 +1,5 @@
 import Skeleton from 'react-loading-skeleton';
 
-import {
-  type ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata,
-  type ListRecordingRuleSearchRulesV0Alpha1SearchResultsMetadata,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Text } from '@grafana/ui';
 
@@ -37,18 +33,6 @@ export function ResultCount({ kind, total, isLoading = false }: ResultCountProps
       {resultCountLabel(kind, total.count, formatted)}
     </Text>
   );
-}
-
-/** Reads the total from a search page's metadata; `totalHits` is typed as required but guarded, since the count is optional to show. */
-export function toResultTotal(
-  metadata:
-    | ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata
-    | ListRecordingRuleSearchRulesV0Alpha1SearchResultsMetadata
-): ResultTotal | undefined {
-  if (typeof metadata.totalHits !== 'number') {
-    return undefined;
-  }
-  return { count: metadata.totalHits, isLowerBound: metadata.totalHitsRelation === 'lte' };
 }
 
 function resultCountLabel(kind: RuleKind, count: number, formatted: string): string {

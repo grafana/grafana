@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import { useDispatch } from 'app/types/store';
 
-import { type PagedFailure, keepFirstPage, retryPagedQuery, toPagedFailure } from '../shared/pagedQuery';
+import { type PagedFailure } from '../shared/PagedFailureAlert';
+import { keepFirstPage, retryPagedQuery, toPagedFailure } from '../shared/pagedQuery';
 
 import { type FolderHit, folderSearchAPI, useSearchRuleFoldersInfiniteQuery } from './folderSearch';
 

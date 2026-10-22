@@ -1,10 +1,11 @@
 import {
   type ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
+  type ListRecordingRuleSearchRulesV0Alpha1SearchResultsMetadata,
   generatedAPI,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useDispatch } from 'app/types/store';
 
-import { type ResultTotal, toResultTotal } from '../rule-row/ResultCount';
+import { type ResultTotal } from '../rule-row/ResultCount';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
@@ -60,4 +61,12 @@ export function useRecordingRuleSearch(
 
 function getHits(page: RecordingRuleSearchPage) {
   return page.hits;
+}
+
+/** `totalHits` is typed as required but guarded, since the count is optional to show. */
+function toResultTotal(metadata: ListRecordingRuleSearchRulesV0Alpha1SearchResultsMetadata): ResultTotal | undefined {
+  if (typeof metadata.totalHits !== 'number') {
+    return undefined;
+  }
+  return { count: metadata.totalHits, isLowerBound: metadata.totalHitsRelation === 'lte' };
 }

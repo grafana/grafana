@@ -9,7 +9,7 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 const server = setupMswServer();
 
-const hit: AlertRuleSearchHit = {
+const searchHit: AlertRuleSearchHit = {
   uid: 'rule-1',
   title: 'CPU high',
   folderUid: 'folder-1',
@@ -37,7 +37,7 @@ function mockFolderPath() {
 function renderEntry(showFolderPath: boolean) {
   return render(
     <ul>
-      <AlertRuleListEntry hit={hit} showFolderPath={showFolderPath} />
+      <AlertRuleListEntry searchHit={searchHit} showFolderPath={showFolderPath} />
     </ul>
   );
 }

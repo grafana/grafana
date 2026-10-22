@@ -196,40 +196,79 @@ describe('AlertRulesPage', () => {
     expect(callCount()).toBe(2);
   });
 
-  it('keeps loaded rows visible when Load more fails and repeats the same continuation request on Retry', async () => {
+  it('keeps loaded rows when Load more fails, and reloads them with fresh tokens on Retry', async () => {
     const continuations: Array<string | null> = [];
+    let firstPages = 0;
     let failNext = true;
     server.use(
       http.post(ruleSearchUrl('alert'), async ({ request }) => {
-        const { continue: token = null } = (await request.json()) as { continue?: string };
-        continuations.push(token);
+        const { continue: token } = (await request.json()) as { continue?: string };
+        continuations.push(token ?? null);
         if (!token) {
+          firstPages += 1;
           return HttpResponse.json({
             items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],
-            metadata: { continue: 'tok' },
+            // The reloaded first page hands out a new token, so a replayed one is detectable.
+            metadata: { continue: firstPages === 1 ? 'tok' : 'tok-fresh' },
+          });
+        }
+        if (token === 'tok' || token === 'tok-fresh') {
+          return HttpResponse.json({
+            items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-2')],
+            metadata: { continue: 'tok-2' },
           });
         }
         if (failNext) {
           failNext = false;
-          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+          return HttpResponse.json({ message: 'expired' }, { status: 410 });
         }
-        return HttpResponse.json({ items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-2')], metadata: {} });
+        return HttpResponse.json({ items: [ruleItem('alert', 'rule-3', 'Memory high', 'folder-1')], metadata: {} });
       })
     );
 
     await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
-    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+    await screen.findByText('Disk full');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
-
     expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
     expect(screen.getByText('CPU high')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    expect(await screen.findByText('Disk full')).toBeInTheDocument();
+    // Retry reloads both loaded pages from the first one, taking the second page's token from the reloaded first page.
+    await waitFor(() => expect(continuations).toEqual([null, 'tok', 'tok-2', null, 'tok-fresh']));
+    expect(await screen.findByRole('button', { name: 'Load more' })).toBeEnabled();
     expect(screen.getByText('CPU high')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok', 'tok']);
+    expect(screen.getByText('Disk full')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+    expect(await screen.findByText('Memory high')).toBeInTheDocument();
+  });
+
+  it('keeps loaded rows and names the refresh as failed when the reload on Retry fails too', async () => {
+    let calls = 0;
+    server.use(
+      http.post(ruleSearchUrl('alert'), () => {
+        calls += 1;
+        if (calls === 1) {
+          return HttpResponse.json({
+            items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],
+            metadata: { continue: 'tok' },
+          });
+        }
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      })
+    );
+
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
+    expect(screen.getByText('CPU high')).toBeInTheDocument();
   });
 
   it('loads one page once when Load more is double clicked', async () => {
