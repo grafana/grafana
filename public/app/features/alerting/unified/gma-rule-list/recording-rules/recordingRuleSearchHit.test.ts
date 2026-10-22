@@ -1,7 +1,7 @@
-import { toRecordingRuleSearchHit } from './recordingRuleSearchHit';
+import { recordingRuleSearchHitSchema } from './recordingRuleSearchHit';
 
-function toHit(fields?: Record<string, unknown>) {
-  return toRecordingRuleSearchHit({
+function toHit(fields?: unknown) {
+  return recordingRuleSearchHitSchema.parse({
     resource: {
       group: 'rules.alerting.grafana.app',
       kind: 'RecordingRule',
@@ -12,7 +12,7 @@ function toHit(fields?: Record<string, unknown>) {
   });
 }
 
-describe('toRecordingRuleSearchHit', () => {
+describe('recordingRuleSearchHitSchema', () => {
   it('reads the row fields from the search hit', () => {
     const hit = toHit({ title: 'cpu:usage:rate5m', folder: 'folder-1', paused: true, health: 'Recording' });
 
@@ -37,8 +37,11 @@ describe('toRecordingRuleSearchHit', () => {
     });
   });
 
-  it('leaves status unset when the search returned no fields', () => {
-    expect(toHit()).toEqual({ uid: 'rule-1', title: 'rule-1' });
+  it.each([
+    { name: 'no fields', fields: undefined },
+    { name: 'fields that are not an object', fields: 'title=cpu:usage:rate5m' },
+  ])('falls back to the rule UID alone when the search returned $name', ({ fields }) => {
+    expect(toHit(fields)).toEqual({ uid: 'rule-1', title: 'rule-1' });
   });
 
   it.each([

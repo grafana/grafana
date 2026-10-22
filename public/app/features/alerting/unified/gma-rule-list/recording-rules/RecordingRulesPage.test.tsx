@@ -55,10 +55,7 @@ function failFirstCall(url: string, ok: object) {
 }
 
 function secondPage() {
-  return HttpResponse.json({
-    items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')],
-    metadata: {},
-  });
+  return HttpResponse.json({ items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')], metadata: {} });
 }
 
 describe('RecordingRulesPage', () => {
@@ -148,7 +145,7 @@ describe('RecordingRulesPage', () => {
 
     render(<RecordingRulesPage />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load recording rules');
     expect(screen.queryByText('No recording rules found')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -157,49 +154,38 @@ describe('RecordingRulesPage', () => {
     expect(callCount()).toBe(2);
   });
 
-  it('keeps loaded rows visible when Load more fails and repeats the same continuation request on Retry', async () => {
+  it('keeps loaded rows when Load more fails, and reloads them with fresh tokens on Retry', async () => {
+    const continuations: Array<string | null> = [];
+    let firstPages = 0;
     let failNext = true;
-    const continuations = mockPagedSearch(() => {
-      if (failNext) {
-        failNext = false;
-        return HttpResponse.json({ message: 'boom' }, { status: 500 });
-      }
-      return secondPage();
-    });
-
-    render(<RecordingRulesPage />);
-
-    expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
-
-    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
-    expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-
-    expect(await screen.findByText('disk:usage:rate5m')).toBeInTheDocument();
-    expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok', 'tok']);
-  });
-
-  it('restarts from the first page on Retry when the server rejected the continuation token', async () => {
-    let rejectNext = true;
-    const continuations = mockPagedSearch((token) => {
-      if (token === 'tok') {
+    server.use(
+      http.post(ruleSearchUrl('recording'), async ({ request }) => {
+        const { continue: token } = (await request.json()) as { continue?: string };
+        continuations.push(token ?? null);
+        if (!token) {
+          firstPages += 1;
+          return HttpResponse.json({
+            items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+            // The reloaded first page hands out a new token, so a replayed one is detectable.
+            metadata: { continue: firstPages === 1 ? 'tok' : 'tok-fresh' },
+          });
+        }
+        if (token === 'tok' || token === 'tok-fresh') {
+          return HttpResponse.json({
+            items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')],
+            metadata: { continue: 'tok-2' },
+          });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'expired' }, { status: 410 });
+        }
         return HttpResponse.json({
-          items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')],
-          metadata: { continue: 'tok-2' },
+          items: [ruleItem('recording', 'rule-3', 'mem:usage:rate5m', 'folder-1')],
+          metadata: {},
         });
-      }
-      if (rejectNext) {
-        rejectNext = false;
-        return HttpResponse.json({ message: 'expired' }, { status: 410 });
-      }
-      return HttpResponse.json({
-        items: [ruleItem('recording', 'rule-3', 'mem:usage:rate5m', 'folder-1')],
-        metadata: {},
-      });
-    });
+      })
+    );
 
     render(<RecordingRulesPage />);
 
@@ -207,13 +193,43 @@ describe('RecordingRulesPage', () => {
     await screen.findByText('disk:usage:rate5m');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    // Only the first page is fetched again; the pages after it were built on the rejected chain.
-    await waitFor(() => expect(screen.queryByText('disk:usage:rate5m')).not.toBeInTheDocument());
+    // Retry reloads both loaded pages from the first one, taking the second page's token from the reloaded first page.
+    await waitFor(() => expect(continuations).toEqual([null, 'tok', 'tok-2', null, 'tok-fresh']));
+    expect(await screen.findByRole('button', { name: 'Load more' })).toBeEnabled();
     expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok', 'tok-2', null]);
+    expect(screen.getByText('disk:usage:rate5m')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+    expect(await screen.findByText('mem:usage:rate5m')).toBeInTheDocument();
+  });
+
+  it('keeps loaded rows and names the refresh as failed when the reload on Retry fails too', async () => {
+    let calls = 0;
+    server.use(
+      http.post(ruleSearchUrl('recording'), () => {
+        calls += 1;
+        if (calls === 1) {
+          return HttpResponse.json({
+            items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+            metadata: { continue: 'tok' },
+          });
+        }
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      })
+    );
+
+    render(<RecordingRulesPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
+    expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
   });
 
   it('loads one page once when Load more is double clicked', async () => {

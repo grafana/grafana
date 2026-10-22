@@ -1,10 +1,6 @@
-import {
-  type ListRecordingRuleSearchRulesV0Alpha1SearchResultHit,
-  type RecordingRuleRecordingRuleHealth,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import * as z from 'zod';
 
-import { asBoolean, asOneOf, asString } from '../rule-search/searchHitFields';
-import { keysOf } from '../shared/keysOf';
+import { type RecordingRuleRecordingRuleHealth } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 export interface RecordingRuleSearchHit {
   uid: string;
@@ -15,25 +11,36 @@ export interface RecordingRuleSearchHit {
   health?: RecordingRuleRecordingRuleHealth;
 }
 
-export function toRecordingRuleSearchHit(
-  item: ListRecordingRuleSearchRulesV0Alpha1SearchResultHit
-): RecordingRuleSearchHit {
-  const fields: Record<string, unknown> = item.fields ?? {};
-
-  return {
-    uid: item.resource.name,
-    title: asString(fields.title) ?? item.resource.name,
-    folderUid: asString(fields.folder),
-    paused: asBoolean(fields.paused),
-    health: asOneOf(fields.health, RECORDING_RULE_HEALTHS),
-  };
-}
-
 // Keyed by the generated union, so a value the API adds or drops fails the type check here.
-const RECORDING_RULE_HEALTHS = keysOf<RecordingRuleRecordingRuleHealth>({
-  Unknown: true,
-  Recording: true,
-  Paused: true,
-  Error: true,
-  NoData: true,
+const RECORDING_RULE_HEALTHS = {
+  Unknown: 'Unknown',
+  Recording: 'Recording',
+  Paused: 'Paused',
+  Error: 'Error',
+  NoData: 'NoData',
+} satisfies Record<RecordingRuleRecordingRuleHealth, RecordingRuleRecordingRuleHealth>;
+
+// Search fields are untyped in the API. A field that is missing or fails its check reads as absent
+// instead of failing the whole hit.
+const recordingRuleSearchFieldsSchema = z.object({
+  title: z.string().optional().catch(undefined),
+  folder: z.string().optional().catch(undefined),
+  paused: z.boolean().optional().catch(undefined),
+  health: z.enum(RECORDING_RULE_HEALTHS).optional().catch(undefined),
 });
+
+/** Parses one search item straight into the row's shape. */
+export const recordingRuleSearchHitSchema = z
+  .object({
+    resource: z.object({ name: z.string() }),
+    fields: recordingRuleSearchFieldsSchema.catch({}),
+  })
+  .transform(
+    ({ resource, fields }): RecordingRuleSearchHit => ({
+      uid: resource.name,
+      title: fields.title ?? resource.name,
+      folderUid: fields.folder,
+      paused: fields.paused,
+      health: fields.health,
+    })
+  );
