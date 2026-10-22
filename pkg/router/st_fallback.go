@@ -152,6 +152,14 @@ type singleTenantFallbackOptions struct {
 	transport           *http.Transport
 }
 
+// Idle connection bounds for the shared transport to every stack: enough per
+// stack for concurrent requests, and a total that bounds the sockets held for
+// thousands of stacks.
+const (
+	singleTenantMaxIdleConnsPerHost = 32
+	singleTenantMaxIdleConns        = 1000
+)
+
 func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFallback, error) {
 	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
 	if err != nil {
@@ -197,6 +205,11 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
+		// Stacks are reached over plaintext HTTP/1.1, one request per
+		// connection at a time, so net/http's default of 2 idle connections per
+		// host makes most concurrent requests dial again.
+		opts.transport.MaxIdleConnsPerHost = singleTenantMaxIdleConnsPerHost
+		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
 	return &singleTenantFallback{
@@ -415,6 +428,7 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 		Transport:     newBackendTransport(st.transport),
 		ErrorHandler:  proxyErrorHandler,
 		FlushInterval: streamingFlushInterval,
+		BufferPool:    proxyBuffers,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err

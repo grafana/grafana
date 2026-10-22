@@ -8121,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Open query pane",
+      "open-query-pane": "Open query pane",
+      "open-sidebar": "Open sidebar",
       "tooltip-open-query-pane": "Open query pane"
     },
     "viz-panel-links-renderer": {
@@ -13718,6 +13720,13 @@
       "placeholder": "Name",
       "required": "Please enter a title",
       "save-tooltip": "Save"
+    }
+  },
+  "page-fallback-loader": {
+    "aria-label": "Page loading progress",
+    "step": {
+      "preparing": "Preparing page",
+      "preparing-named": "Preparing {{pageTitle}}"
     }
   },
   "page-loader": {

@@ -78,6 +78,13 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
   router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
+- **Authenticate, then check the namespace, before any dispatch.** Every `/apis` and `/openapi/v3`
+  request needs a requester: one Grafana's middleware set, or one from a verified `X-Access-Token`
+  (`authenticate`), or it gets a 401. A request whose path names a namespace
+  (`/apis/<g>/<v>/namespaces/<ns>[/...]`, read by `namespaceFromPath`) then gets a 403 `Status`
+  unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
+  fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
+  Grafana admins. Anonymous users get only their own. Backends still authorize everything else.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -224,6 +231,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
+  - The document is written by `writeAggregatedDiscovery`, never through a per-request
+    `aggregated.ResourceManager`, which logs a line for every group version each time it is built.
+    It must answer exactly as that manager would: groups sorted by name, versions in order, empty
+    groups left out, and the same ETag. `TestAggregatedDiscoveryMatchesAPIServer` checks it.
 - **App manifest discovery** (`/apis/discovery`) is published in `publish` with the root documents, from
   the `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
   - Keep it cheap, since `publish` runs on every reconcile: `publishManifestDocs` does nothing when

@@ -164,6 +164,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
 			FlushInterval:  streamingFlushInterval,
+			BufferPool:     proxyBuffers,
 		},
 	}, nil
 }

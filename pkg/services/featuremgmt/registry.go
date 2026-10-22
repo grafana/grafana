@@ -3436,6 +3436,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:        "reporting.removeLogoUrlField",
+			Description: "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
