@@ -1432,7 +1432,7 @@
   },
   "public/app/features/commandPalette/scopes/scopeActions.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/correlations/CorrelationsPageWrapper.tsx": {
