@@ -610,6 +610,15 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		attribute.String("job.repository", repository),
 	)
 
+	// Jobs deleted so far. Recorded on every exit path, errors included: a
+	// clean-up that fails part way through still removed the jobs counted up to
+	// the failure, and the caller reports that same partial count as its
+	// finalizer metric.
+	var deleted int
+	defer func() {
+		span.SetAttributes(attribute.Int("jobs_deleted", deleted))
+	}()
+
 	// Set up the provisioning identity for this namespace.
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
@@ -635,7 +644,6 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		return 0, apifmt.Errorf("failed to list jobs in '%s': %w", namespace, err)
 	}
 
-	var deleted int
 	for i := range list.Items {
 		job := &list.Items[i]
 		if !isCleanupCandidate(job, repository) {
@@ -645,6 +653,7 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		removed, err := s.deleteUnclaimedJob(ctx, logger, namespace, repository, job)
 		if err != nil {
 			span.RecordError(err)
+			logger.Warn("cleanup queue incomplete", "deleted", deleted, "job", job.GetName(), "error", err)
 			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
 		}
 		if removed {
@@ -652,7 +661,6 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		}
 	}
 
-	span.SetAttributes(attribute.Int("jobs_deleted", deleted))
 	logger.Info("cleanup queue complete", "deleted", deleted)
 	return deleted, nil
 }

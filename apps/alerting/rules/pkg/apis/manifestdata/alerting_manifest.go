@@ -378,6 +378,31 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaRuleSequencev0alpha1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "recordingRuleUIDs",
+							Path:         "spec.recordingRules[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of the recording rules in the sequence",
+						},
+						{
+							Name:         "alertingRuleUIDs",
+							Path:         "spec.alertingRules[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of the alert rules in the sequence",
+						},
+						{
+							Name:         "interval",
+							Path:         "spec.trigger.interval",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The evaluation interval of the sequence",
+						},
+					},
 				},
 
 				{

@@ -88,18 +88,21 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
 	})
 
-	t.Run("sends the prometheus target data source only when alert states are written to it", func(t *testing.T) {
+	t.Run("sends the prometheus target data source whenever it is set", func(t *testing.T) {
 		for _, tc := range []struct {
 			backend string
+			uid     string
 			want    string
 		}{
-			{backend: "prometheus", want: "prom-uid"},
-			{backend: "loki", want: ""},
+			{backend: "prometheus", uid: "prom-uid", want: "prom-uid"},
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			{backend: "loki", uid: "prom-uid", want: "prom-uid"},
+			{backend: "loki", uid: "", want: ""},
 		} {
 			cfg := setting.NewCfg()
 			cfg.UnifiedAlerting.StateHistory.Enabled = true
 			cfg.UnifiedAlerting.StateHistory.Backend = tc.backend
-			cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = "prom-uid"
+			cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = tc.uid
 
 			license := &licensing.OSSLicensingService{Cfg: cfg}
 
