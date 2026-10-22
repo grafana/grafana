@@ -930,6 +930,10 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
+	// FlagSearchPerResourceFolderTree
+	// Allow recursive folder filters in per-resource search APIs
+	FlagSearchPerResourceFolderTree = "search.perResourceFolderTree"
+
 	// FlagAlertingHybridSearch
 	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
 	FlagAlertingHybridSearch = "alerting.hybridSearch"

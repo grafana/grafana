@@ -5592,6 +5592,20 @@
     },
     {
       "metadata": {
+        "name": "search.perResourceFolderTree",
+        "resourceVersion": "1792675954030",
+        "creationTimestamp": "2026-10-22T13:32:34Z"
+      },
+      "spec": {
+        "description": "Allow recursive folder filters in per-resource search APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsKeeperUI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-02-11T16:49:52Z"

@@ -2880,6 +2880,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "search.perResourceFolderTree",
+			Description:  "Allow recursive folder filters in per-resource search APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "alerting.hybridSearch",
 			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
 			Stage:       FeatureStageExperimental,

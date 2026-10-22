@@ -333,6 +333,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-28,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
 2026-06-12,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-06-17,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
+2026-10-22,search.perResourceFolderTree,experimental,@grafana/search-and-storage,false,false,false
 2026-10-06,alerting.hybridSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-07-01,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/search-and-storage,false,false,true
