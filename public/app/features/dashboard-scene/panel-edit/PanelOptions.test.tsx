@@ -22,6 +22,13 @@ import * as utils from '../utils/utils';
 import { PanelOptions } from './PanelOptions';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
+jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
+  getVariableSuggestions: () => [
+    { value: 't', label: 't', origin: 'template' },
+    { value: 'other', label: 'other', origin: 'template' },
+  ],
+}));
+
 jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
   LazyGenAIPanelTitleButton: () => null,
   LazyGenAIPanelDescriptionButton: () => null,
@@ -272,11 +279,11 @@ describe('PanelOptions', () => {
         await setupWithExpressions('v2');
 
         const minInput = getMinInput();
-        expect(minInput).toHaveAttribute('type', 'text');
+        expect(minInput).not.toHaveAttribute('type', 'number');
         expect(minInput).toHaveValue('$min');
 
         const decimalsInput = getDecimalsOverrideInput();
-        expect(decimalsInput).toHaveAttribute('type', 'text');
+        expect(decimalsInput).not.toHaveAttribute('type', 'number');
         expect(decimalsInput).toHaveValue('$decimals');
       });
 
@@ -355,11 +362,26 @@ describe('PanelOptions', () => {
 
         const minInput = getMinInput();
         await userEvent.clear(minInput);
-        await userEvent.type(minInput, '$other{Enter}');
+        // Escape closes the variable list, so Enter commits the typed text
+        await userEvent.type(minInput, '$other{Escape}{Enter}');
 
         const { defaults } = panel.state.fieldConfig;
         expect(defaults.varMappings).toEqual({ min: '$other' });
         expect(defaults.min).toBe(0);
+      });
+
+      it('suggests dashboard variables on $ and writes the picked one', async () => {
+        const { panel } = await setupWithExpressions('v2');
+
+        const minInput = getMinInput();
+        await userEvent.clear(minInput);
+        await userEvent.type(minInput, '$');
+        expect(await screen.findByText('other')).toBeInTheDocument();
+
+        await userEvent.keyboard('{ArrowDown}{Enter}');
+
+        expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ min: '${other}' });
+        expect(getMinInput()).toHaveValue('${other}');
       });
     });
   });
