@@ -3076,7 +3076,8 @@
       "metadata": {
         "name": "grafana.ofrepRootUrl",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-07T10:58:18Z"
+        "creationTimestamp": "2026-08-07T10:58:18Z",
+        "deletionTimestamp": "2026-10-22T12:08:26Z"
       },
       "spec": {
         "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",

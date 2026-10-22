@@ -1,6 +1,8 @@
 import Feature from 'ol/Feature';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
+import LayerGroup from 'ol/layer/Group';
+import VectorLayer from 'ol/layer/Vector';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
@@ -8,6 +10,7 @@ import { DataHoverClearEvent, type DataFrame } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
+import { type MapLayerState } from '../types';
 
 import { getMapLayerState } from './layers';
 import { pointerMoveListener, setTooltipListeners } from './tooltip';
@@ -314,6 +317,17 @@ describe('tooltip utils', () => {
       jest.mocked(getMapLayerState).mockReturnValue(state as ReturnType<typeof getMapLayerState>);
 
       expect(hoverFilter()(mockWebGLLayer)).toBe(tested);
+    });
+
+    it('skips layers inside a basemap layer group', () => {
+      const basemapChild = new VectorLayer();
+      panel.layers = [
+        { isBasemap: true, layer: new LayerGroup({ layers: [basemapChild] }) } as unknown as MapLayerState,
+      ];
+
+      const layerFilter = hoverFilter();
+      expect(layerFilter(basemapChild)).toBe(false);
+      expect(layerFilter(mockWebGLLayer)).toBe(true);
     });
   });
 });
