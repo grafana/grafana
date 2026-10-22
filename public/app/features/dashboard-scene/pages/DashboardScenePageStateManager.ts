@@ -75,7 +75,7 @@ import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistor
 import { setPendingChangesPageClose, setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { openPendingChangesForEditing } from '../lifecycle/pendingChangesSave';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { loadSavedViews } from '../savedviews/loadSavedViews';
+import { applyDefaultSavedViewToUrl, loadSavedViews } from '../savedviews/loadSavedViews';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
@@ -598,13 +598,20 @@ abstract class DashboardScenePageStateManagerBase<T>
     await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
+    const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
-    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches lazily.
-    if (
-      scene &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&
-      typeof locationService.getSearchObject().viewFilter === 'string'
-    ) {
+    if (scene && savedViewsEnabled && !isRenderTarget(options.route)) {
+      // Writes ?viewFilter= into the URL if the viewer has a stored default for this dashboard
+      // and the URL doesn't already name one -- see applyDefaultSavedViewToUrl's own comment for
+      // why this happens before the scene mounts rather than applying the view's state directly.
+      // Gated on !isRenderTarget: a scheduled report or embedded render has its own fixed
+      // parameters, which the viewer's personal default must never silently substitute.
+      await applyDefaultSavedViewToUrl(scene);
+    }
+
+    // Fetched eagerly only for ?viewFilter= links (including one set by a stored default above),
+    // which URL sync needs resolved; the pane fetches lazily.
+    if (scene && savedViewsEnabled && typeof locationService.getSearchObject().viewFilter === 'string') {
       await loadSavedViews(scene);
     }
 
