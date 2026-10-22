@@ -167,18 +167,29 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               }
               invalid={Boolean(errors.ref || branchError)}
               error={
-                errors.ref ? (
-                  <BranchValidationError />
-                ) : branchError ? (
-                  t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
-                ) : undefined
+                errors.ref
+                  ? errors.ref.message || <BranchValidationError />
+                  : branchError
+                    ? t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
+                    : undefined
               }
             >
               <Controller
                 name="ref"
                 control={control}
                 rules={{
-                  validate: validateBranchName,
+                  validate: {
+                    name: validateBranchName,
+                    // The configured branch stays listed for context when pushes to it are disabled, and
+                    // a typed name can still match it; the backend would reject that commit with a 403.
+                    target: (value) =>
+                      canPushToConfiguredBranch ||
+                      value !== repository?.branch ||
+                      t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.error-configured-branch-disabled',
+                        'Pushing to the configured branch is disabled for this repository'
+                      ),
+                  },
                   // When the branch changes, re-run path validation: a file may exist on one
                   // branch but not another, so the previous result is stale on the new ref.
                   deps: shouldValidatePath ? ['path'] : undefined,

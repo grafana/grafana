@@ -135,6 +135,9 @@ export function DeleteProvisionedDashboardForm({
   const handleJobStatusChange = useCallback(
     (statusInfo: StepStatusInfo) => {
       if (statusInfo.status === 'success' && submitted) {
+        // Nothing is left to save once the file is deleted, so the redirect must not trip the
+        // unsaved-changes prompt.
+        dashboard.setState({ isDirty: false });
         panelEditor?.onDiscard();
         navigate(
           getJobListRedirectUrl({
@@ -151,7 +154,7 @@ export function DeleteProvisionedDashboardForm({
         setJobError(statusInfo.error);
       }
     },
-    [panelEditor, navigate, submitted, repository?.type]
+    [dashboard, panelEditor, navigate, submitted, repository?.type]
   );
 
   return (

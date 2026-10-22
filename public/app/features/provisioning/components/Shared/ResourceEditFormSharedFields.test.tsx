@@ -383,6 +383,37 @@ describe('ResourceEditFormSharedFields', () => {
       // Check if validation error appears
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
+
+    it('blocks submitting the configured branch when pushes to it are disabled', async () => {
+      // The read-only configured-branch option stays listed for context, and a typed name can match it;
+      // committing it would be a direct write the backend rejects with a 403.
+      const onValid = jest.fn();
+      const TestComponent = () => {
+        const methods = useForm<ProvisionedDashboardFormData>({
+          defaultValues: { path: 'dashboards/test.json', comment: '', ref: 'main' },
+        });
+        return (
+          <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onValid)}>
+              <ResourceEditFormSharedFields
+                canPushToConfiguredBranch={false}
+                repository={{ ...mockRepo.github, branch: 'main' }}
+                resourceType="dashboard"
+              />
+              <button type="submit">Submit</button>
+            </form>
+          </FormProvider>
+        );
+      };
+      const { user } = render(<TestComponent />);
+
+      await user.click(screen.getByRole('button', { name: 'Submit' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Pushing to the configured branch is disabled for this repository'
+      );
+      expect(onValid).not.toHaveBeenCalled();
+    });
   });
 
   describe('Path validation for new dashboards', () => {

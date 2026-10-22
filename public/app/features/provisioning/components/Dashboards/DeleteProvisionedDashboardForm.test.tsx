@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -145,7 +145,9 @@ describe('DeleteProvisionedDashboardForm', () => {
           },
         })
       );
-      const { user } = setup();
+      const { user, props } = setup();
+      // An edit-mode dashboard with pending changes would otherwise block the redirect with the unsaved-changes prompt
+      act(() => props.dashboard.setState({ isDirty: true }));
 
       await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
 
@@ -154,6 +156,7 @@ describe('DeleteProvisionedDashboardForm', () => {
           '/dashboards?new_pull_request_url=https%3A%2F%2Fgithub.com%2Ftest%2Frepo%2Fcompare%2Fmain...feature%2Fdelete&repo_type=github&action=delete'
         );
       });
+      expect(props.dashboard.state.isDirty).toBe(false);
     });
 
     it('redirects to the dashboard list once a configured-branch delete job finishes', async () => {
