@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -71,6 +73,26 @@ func TestContentsCleaner_DeleteInFolder(t *testing.T) {
 		err := c.DeleteInFolder(ctx, "org-3", "fold1", user)
 		require.ErrorIs(t, err, folder.ErrAccessDenied, "must be classifiable as an access-denial, not a generic error, so callers map it to 403 rather than 500")
 		assert.Empty(t, a.deletedUIDs, "must not delete anything on the checked path either")
+	})
+
+	t.Run("a Grafana Admin is exempt from the namespace match, same as the apiserver's own namespaceAuthorizer", func(t *testing.T) {
+		a := &fakeRegistryService{}
+		c := NewContentsCleaner(a)
+		admin := &identity.StaticRequester{UserUID: "admin-user", OrgID: 1, Namespace: "org-2", IsGrafanaAdmin: true}
+
+		// admin's own namespace is org-2, target namespace is org-3.
+		require.NoError(t, c.DeleteInFolder(ctx, "org-3", "fold1", admin))
+		assert.Equal(t, [][]string{{"fold1"}}, a.deletedUIDs)
+	})
+
+	t.Run("an anonymous identity is exempt from the namespace match, same as the apiserver's own namespaceAuthorizer", func(t *testing.T) {
+		a := &fakeRegistryService{}
+		c := NewContentsCleaner(a)
+		anon := &identity.StaticRequester{UserUID: "anon-user", OrgID: 1, Namespace: "org-2", Type: claims.TypeAnonymous}
+
+		// anon's own namespace is org-2, target namespace is org-3.
+		require.NoError(t, c.DeleteInFolder(ctx, "org-3", "fold1", anon))
+		assert.Equal(t, [][]string{{"fold1"}}, a.deletedUIDs)
 	})
 
 	t.Run("errors, without panicking, on a nil requester", func(t *testing.T) {
