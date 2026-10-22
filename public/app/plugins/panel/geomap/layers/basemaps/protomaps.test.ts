@@ -22,14 +22,14 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, four labels, one border, four roads */
+/** Trimmed from a generated Protomaps style: one fill, six labels, one border, four roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
   layers: [
     { id: 'earth', type: 'fill', source: 'protomaps', 'source-layer': 'earth' },
     {
-      id: 'places_locality',
+      id: 'earth_label_islands',
       type: 'symbol',
       source: 'protomaps',
       'source-layer': 'places',
@@ -95,6 +95,25 @@ const STYLE = {
         'line-width': 0.7,
         'line-dasharray': ['step', ['zoom'], ['literal', [2, 0]], 4, ['literal', [2, 1]]],
       },
+    },
+    {
+      id: 'places_region',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'places',
+      layout: {
+        'text-font': ['Noto Sans Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 7, 16],
+        'text-transform': 'uppercase',
+      },
+      paint: { 'text-color': '#b3b3b3', 'text-halo-color': '#ffffff', 'text-halo-width': 1 },
+    },
+    {
+      id: 'places_locality',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'places',
+      layout: { 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
     },
   ],
 };
@@ -236,6 +255,60 @@ describe('Protomaps basemap', () => {
     });
   });
 
+  it('keeps labels as quiet as CARTO’s, so they stay under the panel’s data', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+
+    const [, , minorRoads, pois] = appliedStyle().layers;
+    expect(minorRoads.layout['text-size']).toBe(9);
+    expect(pois.layout).toEqual({
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-size': ['interpolate', ['linear'], ['zoom'], 15, 8, 17, 9, 18, 10],
+    });
+    expect(pois.paint).toEqual({ 'text-color': '#525252', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 });
+  });
+
+  it('draws region names in CARTO’s size and weight, without a halo', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+
+    const region = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_region');
+    expect(region.layout).toEqual({
+      'text-font': ['Inter SemiBold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 7, 14],
+      'text-transform': 'uppercase',
+      'text-max-width': 9,
+    });
+    expect(region.paint).toEqual({ 'text-color': '#b3b3b3', 'text-halo-color': '#ffffff', 'text-halo-width': 0 });
+  });
+
+  it('sizes cities, towns and villages by CARTO’s place classes rather than by population', async () => {
+    await initLayer({ showLabels: true });
+
+    const locality = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_locality');
+    const [interpolate, linear, zoom, , dotSize, firstLabelZoom, firstLabelSizes] = locality.layout['text-size'];
+    expect([interpolate, linear, zoom]).toEqual(['interpolate', ['linear'], ['zoom']]);
+    expect(dotSize).toEqual(expect.arrayContaining(['major_city', 12, 'city', 12]));
+    expect(firstLabelZoom).toBe(8);
+    expect(firstLabelSizes).toEqual([
+      'match',
+      [
+        'case',
+        ['==', ['get', 'kind_detail'], 'city'],
+        ['case', ['<=', ['coalesce', ['get', 'min_zoom'], 0], 6], 'major_city', 'city'],
+        ['get', 'kind_detail'],
+      ],
+      'major_city',
+      14,
+      'city',
+      12,
+      'town',
+      10,
+      'village',
+      9,
+      8,
+    ]);
+  });
+
   it('leaves out house numbers, which CARTO never shows', async () => {
     await initLayer({ showLabels: true });
 
@@ -348,7 +421,8 @@ describe('Protomaps basemap', () => {
 
     const layers = appliedStyle().layers;
     expect(layers[0].paint).toBeUndefined();
-    expect(layers.at(-1).paint['line-color']).toBe('#adadad');
+    const borders = layers.find((layer: { id: string }) => layer.id === 'boundaries_country');
+    expect(borders.paint['line-color']).toBe('#adadad');
   });
 
   it('credits OpenStreetMap before the style request resolves', async () => {
