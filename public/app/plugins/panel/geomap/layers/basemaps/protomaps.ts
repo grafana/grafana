@@ -41,8 +41,17 @@ const PROMINENT_POI: GlValue = [
   ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13],
 ];
 
-/** The map sits under the panel's data, so like CARTO it shows no house numbers, shields or one-way arrows */
+/**
+ * The map sits under the panel's data, so labels follow CARTO's: no house numbers, shields or one-way
+ * arrows, small road and water names, and points of interest in the muted grey of minor-road names.
+ */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
+const LABEL_SIZES: Record<string, GlValue> = {
+  [MINOR_ROAD_LABELS]: 9,
+  roads_labels_major: zoomRamp([14, 10], [16, 11], [18, 12]),
+  water_waterway_label: zoomRamp([9, 8], [10, 9]),
+  pois: zoomRamp([15, 8], [17, 9], [18, 10]),
+};
 
 /** Which kinds each label layer keeps */
 const LABELLED_KIND: Record<string, (kind: string) => boolean> = {
@@ -296,10 +305,12 @@ export function isProtomapsBasemapEnabled() {
 }
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
+  const mutedPaint = glStyle.layers.find((layer) => layer.id === MINOR_ROAD_LABELS)?.paint;
   const cartoPaint = CARTO_PAINT[flavor] ?? {};
   const layers = glStyle.layers
     .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
-    .map((layer) => withPaint(adaptLayer(layer), cartoPaint[layer.id]));
+    // CARTO's own colors come last, so they win over the muted grey given to points of interest
+    .map((layer) => withPaint(adaptLayer(layer, mutedPaint), cartoPaint[layer.id]));
   return { ...glStyle, layers };
 }
 
@@ -311,7 +322,7 @@ function withPaint<T extends GlLayer>(layer: T, paint: Paint | undefined): T {
   return { ...layer, paint: Object.fromEntries(merged) };
 }
 
-function adaptLayer<T extends GlLayer>(layer: T): T {
+function adaptLayer<T extends GlLayer>(layer: T, mutedPaint: GlLayer['paint']): T {
   let adapted = layer;
   if (adapted.layout?.['text-font']) {
     adapted = { ...adapted, layout: { ...adapted.layout, 'text-font': toGrafanaFonts(adapted.layout['text-font']) } };
@@ -328,9 +339,31 @@ function adaptLayer<T extends GlLayer>(layer: T): T {
       ...adapted,
       minzoom: Math.max(adapted.minzoom ?? 0, POI_LABEL_MIN_ZOOM),
       filter: adapted.filter ? ['all', adapted.filter, PROMINENT_POI] : PROMINENT_POI,
+      layout: { ...withoutIcon(adapted.layout), 'text-transform': 'uppercase' },
+      paint: mutedLabelPaint(adapted.paint, mutedPaint),
+    };
+  }
+  const size = LABEL_SIZES[adapted.id];
+  if (size !== undefined) {
+    adapted = {
+      ...adapted,
+      layout: { ...adapted.layout, 'text-size': size },
     };
   }
   return adapted;
+}
+
+/** The text sat beside the icon, so it moves back onto the point once the icon is gone */
+function withoutIcon(layout: GlLayer['layout']) {
+  const { 'icon-image': _icon, 'text-offset': _offset, 'text-variable-anchor': _anchor, ...rest } = layout ?? {};
+  return rest;
+}
+
+function mutedLabelPaint(paint: GlLayer['paint'], mutedPaint: GlLayer['paint']) {
+  if (!mutedPaint) {
+    return paint;
+  }
+  return { ...paint, 'text-color': mutedPaint['text-color'], 'text-halo-color': mutedPaint['text-halo-color'] };
 }
 
 function zoomRamp(...stops: Array<[number, GlValue]>): GlValue {

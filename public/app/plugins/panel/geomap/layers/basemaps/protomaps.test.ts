@@ -217,6 +217,19 @@ describe('Protomaps basemap', () => {
     });
   });
 
+  it('keeps labels as quiet as CARTO’s, so they stay under the panel’s data', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+
+    const [, , minorRoads, pois] = appliedStyle().layers;
+    expect(minorRoads.layout['text-size']).toBe(9);
+    expect(pois.layout).toEqual({
+      'text-font': ['Inter Regular'],
+      'text-transform': 'uppercase',
+      'text-size': ['interpolate', ['linear'], ['zoom'], 15, 8, 17, 9, 18, 10],
+    });
+    expect(pois.paint).toEqual({ 'text-color': '#525252', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 });
+  });
+
   it('leaves out house numbers, which CARTO never shows', async () => {
     await initLayer({ showLabels: true });
 
