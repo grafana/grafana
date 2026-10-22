@@ -61,7 +61,7 @@ func TestMiddlewareReplacesEmbeddedGroups(t *testing.T) {
 	serve := func(target string) int {
 		recorder := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, target, nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "*"}))
 		svc.HandleFunc(recorder, req, embedded)
 		return recorder.Code
 	}

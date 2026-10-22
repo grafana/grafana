@@ -47,6 +47,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | P12, P13: authentication of local and managed plugins | #133656 |
 | A4, partly: aggregate targets as a list, per-target TLS and `poll_interval` | #134381, #134461 |
 | R3: the forward transport cache never evicted | Moot: the forward source no longer exists |
+| P15, P16: stale OpenAPI hashes on the ST path, standalone router as middleware | #135730 |
+| P22: a namespace check before dispatch | #135740 |
 
 ## About the `router-review*` branches
 
@@ -66,7 +68,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## Suggested order
 
-1. **Correctness quick wins:** P15, P16 with D1, P18, P19.
+1. **Correctness quick wins:** P18 and P19, then D1.
 2. **Performance:** F1, then F5, F6, F3, F4. Add the F12 benchmarks first, so each change has a
    baseline.
 3. **Dead-code sweep:** D2–D4 and D6–D9, in one or two PRs.
@@ -120,10 +122,12 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 - [ ] **P14. The deprecated `/watch/` path still classifies as a watch.**
   - `requestVerb` (`watch.go`) maps `/apis/<g>/<v>/watch/...` to verb `watch`.
-  - That path form is out of scope, so it should get no watch treatment. Reject it with a 400 at both
-    `rejectUpgrade` sites.
+  - That path form is out of scope, so it should get no watch treatment. Reject it, for example with
+    a 404, at both `rejectUpgrade` sites.
+  - It also names no namespace for P22's check, so only its backend authorizes it. A rejection was
+    tried in #135740 and dropped, to keep that PR to the namespace check.
 
-- [ ] **P15. A stale OpenAPI `hash` becomes a 502 on the ST path.**
+- [x] **P15. A stale OpenAPI `hash` becomes a 502 on the ST path.** Done in #135730.
   - **Problem:** `singleTenantFallback.forward` and the ST discovery fetch pass the caller's `?hash=`
     through to the stack.
     - kube-openapi answers a mismatched hash with a 301 (`handler3`).
@@ -136,7 +140,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     - Leave it out of `stackDiscoveryKey`.
   - **Test:** a stale hash through the fallback returns the current document, not a 502.
 
-- [ ] **P16. The standalone router drops every cloud source when `grafanaUseRouterMiddleware` is on.**
+- [x] **P16. The standalone router drops every cloud source when `grafanaUseRouterMiddleware` is on.**
+  Done in #135730, which also dropped `!s.middleware` from `RegisterTargetRoutes`.
   - **Problem:** `middlewareEnabled` (`loader_factory.go`) returns true in the standalone target when
     the flag is on.
     - `ProvideRoutesLoader` then skips the cloud loader.
@@ -145,6 +150,15 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
       reports ready. `service_test.go` asserts this today.
   - **Fix:** `middlewareEnabled` returns false whenever `standaloneRouter(cfg)` is true. See D1 for
     the rest of that branch.
+
+- [x] **P22. Check the namespace before dispatch.** Done in #135740.
+  - This is hardening: backends already enforce namespaces, and this cheap check runs before them.
+  - After `authenticate`, a request whose path names a namespace
+    (`/apis/<g>/<v>/namespaces/<ns>[/...]`) gets a 403 `Status` unless its requester may use that
+    namespace (`authorizeNamespace`). Allowed: the requester's own namespace, any for `*`, and any
+    for Grafana admins.
+  - Anonymous users may use only their own namespace, which is stricter than the embedded API
+    server's namespace authorizer.
 
 - [ ] **P17. Deadlines the router sets itself never count against a breaker.**
   - **Problem:** `breakerOutcome` treats any `req.Context().Err()` as `errCallerGone`. That includes
@@ -291,9 +305,9 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
       in-Grafana, where the handler is nil.
     - `ProvideGrafanaRouter` repeats `standaloneRouter(cfg)` inline.
   - **Fix:**
-    - `ProvideRoutesLoader` serves local plugins only.
-    - Fix P16.
-    - Drop `!s.middleware` from `RegisterTargetRoutes`, and drop the dead `HandleFunc` branch.
+    - `ProvideRoutesLoader` serves local plugins only. P16 (#135730) already made the standalone
+      router never middleware, and dropped `!s.middleware` from `RegisterTargetRoutes`.
+    - Drop the dead `HandleFunc` branch.
     - Move `pkg/tests/apis/appplugin/router_test.go` to the factory.
   - **Saves:** about 25 lines, and one mode.
 
