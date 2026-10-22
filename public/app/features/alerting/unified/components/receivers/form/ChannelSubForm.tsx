@@ -408,11 +408,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   wrapper: css({
     margin: theme.spacing(2, 0),
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
     border: `solid 1px ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.lg,
   }),
   topRow: css({
+    marginBottom: theme.spacing(2),
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
