@@ -25,6 +25,7 @@ import {
   getLinksSupplier,
   setDynamicConfigValue,
   setFieldConfigDefaults,
+  validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 
@@ -146,6 +147,26 @@ describe('Global MinMax', () => {
 
       expect(min).toBe(1);
       expect(max).toBe(5);
+    });
+  });
+
+  describe('when a number field holds strings or booleans', () => {
+    it.each([
+      { desc: 'a numeric string', values: [5, '200', 10], min: 5, max: 200 },
+      { desc: 'an empty string', values: [5, '', 10], min: 5, max: 10 },
+      { desc: 'only numeric strings', values: ['5', '10'], min: 5, max: 10 },
+      { desc: 'a boolean', values: [5, true, 10], min: 5, max: 10 },
+    ])('should use number values for $desc', ({ values, min, max }) => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: values.map((_, i) => i) },
+          { name: 'Value', type: FieldType.number, values },
+        ],
+      });
+      const range = findNumericFieldMinMax([frame]);
+
+      expect(range.min).toBe(min);
+      expect(range.max).toBe(max);
     });
   });
 
@@ -809,6 +830,49 @@ describe('applyFieldOverrides', () => {
 
     expect(data.fields[1].config.displayName).toBe('Kittens improved');
     expect(getFieldDisplayName(data.fields[1], data)).toBe('Kittens improved');
+  });
+
+  it('converts a string max set by the data source to a number', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.number, values: [42], config: { max: '100' } as unknown as FieldConfig },
+      ],
+    });
+
+    const field = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (str: string) => str,
+      theme: createTheme(),
+    })[0].fields[0];
+
+    expect(field.config.max).toBe(100);
+    expect(field.state!.range!.max).toBe(100);
+  });
+});
+
+describe('validateFieldConfig', () => {
+  it.each([
+    { desc: 'a numeric string', value: '100', expected: 100 },
+    { desc: 'an empty string', value: '', expected: undefined },
+    { desc: 'a whitespace-only string', value: '   ', expected: undefined },
+    { desc: 'a non-numeric string', value: 'abc', expected: undefined },
+    { desc: 'a number', value: 5, expected: 5 },
+    { desc: 'null', value: null, expected: null },
+  ])('turns min/max given as $desc into $expected', ({ value, expected }) => {
+    const config = { min: value, max: value } as unknown as FieldConfig;
+
+    validateFieldConfig(config);
+
+    expect({ min: config.min, max: config.max }).toEqual({ min: expected, max: expected });
+  });
+
+  it('converts string min/max before checking that min is below max', () => {
+    const config = { min: '50', max: '100' } as unknown as FieldConfig;
+
+    validateFieldConfig(config);
+
+    expect(config).toEqual({ min: 50, max: 100 });
   });
 });
 

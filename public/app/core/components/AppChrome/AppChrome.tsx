@@ -10,6 +10,7 @@ import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
@@ -47,7 +48,12 @@ export function AppChrome({ children }: Props) {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
     setExtensionSidebarWidth,
+    presentation: extensionSidebarPresentation,
+    floatingHidden: isExtensionSidebarFloatingHidden,
   } = useExtensionSidebarContext();
+  const isExtensionSidebarFloating = isExtensionSidebarOpen && extensionSidebarPresentation === 'floating';
+  // Floating, the sidebar sits above drawers, so an open drawer must not hide it from keyboard and screen reader users.
+  const floatingSidebarAttributes = isExtensionSidebarFloating ? { [DRAWER_INSIDE_ATTRIBUTE]: '' } : {};
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
@@ -193,7 +199,9 @@ export function AppChrome({ children }: Props) {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
-              [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
+              // Floating takes no width from the page, so the docked width is 0.
+              [contentSizeStyles.contentWidth]:
+                !state.chromeless && isExtensionSidebarOpen && !isSmallScreen && !isExtensionSidebarFloating,
             })}
             id="pageContent"
             tabIndex={-1}
@@ -204,18 +212,32 @@ export function AppChrome({ children }: Props) {
           {!state.chromeless &&
             isExtensionSidebarOpen &&
             (isSmallScreen ? (
-              <div className={styles.sidebarContainerFloating} data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}>
+              <div
+                className={cx(
+                  styles.sidebarContainerFloating,
+                  isExtensionSidebarFloating && styles.sidebarContainerFloatingBar,
+                  isExtensionSidebarFloatingHidden && styles.sidebarContainerHidden
+                )}
+                data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}
+                {...floatingSidebarAttributes}
+              >
                 <ExtensionSidebar />
               </div>
             ) : (
+              // Docked and floating share this container so the extension never remounts; floating only
+              // restyles it and turns off resizing.
               <Resizable
-                className={styles.sidebarContainer}
+                className={cx(styles.sidebarContainer, {
+                  [styles.sidebarContainerFloatingBar]: isExtensionSidebarFloating,
+                  [styles.sidebarContainerHidden]: isExtensionSidebarFloatingHidden,
+                })}
                 defaultSize={{ width: extensionSidebarWidth }}
-                enable={{ left: true }}
+                enable={isExtensionSidebarFloating ? false : { left: true }}
                 onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
                 handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
                 minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+                {...floatingSidebarAttributes}
               >
                 <ExtensionSidebar />
               </Resizable>
@@ -380,6 +402,29 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
+    }),
+    // A panel anchored to the bottom right: content-driven height, no chrome of its own.
+    sidebarContainerFloatingBar: css({
+      // `Resizable` sets width and height inline.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      width: `min(480px, calc(100% - ${theme.spacing(4)})) !important` as 'auto',
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      height: 'auto !important' as 'auto',
+      top: 'auto',
+      left: 'auto',
+      // Matches the page's own padding, so the snap points (which reuse this inset) line up with its panes.
+      right: theme.spacing(2),
+      bottom: theme.spacing(2),
+      background: 'transparent',
+      // The sidebar inside can be moved off this box; the box itself must not block the page.
+      pointerEvents: 'none',
+      // Above drawers and their mask (modalBackdrop), so the Assistant stays usable beside, for example, panel
+      // inspect; below modal dialogs, and below the portal that tooltips and menus (its own included) render in.
+      zIndex: theme.zIndex.modalBackdrop + 1,
+    }),
+    // A page holds the floating sidebar hidden: it stays mounted, so it takes over the page's prompt at once.
+    sidebarContainerHidden: css({
+      display: 'none',
     }),
     sidebarContainerFloating: css({
       position: 'fixed',

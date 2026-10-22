@@ -1,8 +1,8 @@
 # Router: Active discovery for aggregate apiservers
 
 Status: implemented. Amended 2026-10-10 for the configured target list (#134381),
-`discovery_auth = none` (#134461), per-target TLS and `poll_interval`, aggregated-discovery
-polling, and the removal of the AppManifest source (#134652).
+`discovery_auth = none` (#134461), per-target TLS and `poll_interval`, and aggregated-discovery
+polling.
 Package: `pkg/router`
 
 ## Context
@@ -20,8 +20,8 @@ known only from the target's own `/apis` endpoint, and the router must poll that
 them. The design also covers how that active discovery fits with the passive health model.
 
 The original design had a fixed pair of targets, `baas_apiserver` and
-`cloud_app_platform_apiserver`, plus a separate AppManifest CR source. #134381 replaced the fixed pair
-with a configured list, and #134652 removed the CR source.
+`cloud_app_platform_apiserver`. #134381 replaced the fixed pair
+with a configured list.
 
 ## Active discovery vs. passive health: distinct concerns
 
@@ -195,7 +195,7 @@ because the cooldown is the loop's only timing source (see the Design section).
    own credentials; the CAP token is only for discovery polls.
 7. **Readiness vs. first poll** — still open. `GrafanaRouter.Ready()` doesn't wait for a target's
    first poll, so a router with only aggregate targets can report ready while serving empty
-   discovery. Tracked as O7 in `2026-10-10-router-review-plan.md`.
+   discovery. Tracked as O7 in `2026-10-23-router-review-plan.md`.
 
 ## Testing
 

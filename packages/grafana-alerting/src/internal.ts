@@ -13,6 +13,10 @@ export {
 } from './grafana/dataSources/predicates';
 
 export { getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
-export { useDataSourcesWithValidRecordingTarget } from './grafana/dataSources/hooks';
+export {
+  type DataSourcesWithValidRecordingTargetByUidResult,
+  useDataSourcesWithValidRecordingTarget,
+  useDataSourcesWithValidRecordingTargetByUid,
+} from './grafana/dataSources/hooks';
 
 export default {};

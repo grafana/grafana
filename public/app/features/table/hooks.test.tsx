@@ -11,7 +11,6 @@ import {
   type FieldConfigSource,
   FieldType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
@@ -279,6 +278,17 @@ describe('useAdHocColumnState', () => {
       latest = next;
     });
 
+    act(() => result.current?.onColumnOrderChange(['value']));
+    expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
+      otherFrame,
+      unrelated,
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'B' },
+        options: { indexByName: { value: 0 }, excludeByName: {}, renameByName: {} },
+      },
+    ]);
+
     act(() => result.current?.onHiddenColumnsChange(new Set(['value'])));
     expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
       otherFrame,
@@ -286,7 +296,7 @@ describe('useAdHocColumnState', () => {
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: {}, excludeByName: { value: true }, renameByName: {} },
+        options: { indexByName: { value: 0 }, excludeByName: { value: true }, renameByName: {} },
       },
     ]);
   });
@@ -344,11 +354,12 @@ describe('useCellActions', () => {
 
 describe('useTableSharedCrosshair', () => {
   afterEach(() => {
-    config.featureToggles.tableSharedCrosshair = false;
+    cleanup();
+    setTestFlags({});
   });
 
   it('is false when the feature toggle is off', () => {
-    config.featureToggles.tableSharedCrosshair = false;
+    setTestFlags({ tableSharedCrosshair: false });
     const { result } = renderHook(() => useTableSharedCrosshair(), {
       wrapper: wrapperWith(makeContext({ sync: () => DashboardCursorSync.Crosshair })),
     });
@@ -357,7 +368,7 @@ describe('useTableSharedCrosshair', () => {
   });
 
   it('is false when the panel has no sync', () => {
-    config.featureToggles.tableSharedCrosshair = true;
+    setTestFlags({ tableSharedCrosshair: true });
     const { result } = renderHook(() => useTableSharedCrosshair(), {
       wrapper: wrapperWith(makeContext()),
     });
@@ -366,7 +377,7 @@ describe('useTableSharedCrosshair', () => {
   });
 
   it('is false when cursor sync is Off', () => {
-    config.featureToggles.tableSharedCrosshair = true;
+    setTestFlags({ tableSharedCrosshair: true });
     const { result } = renderHook(() => useTableSharedCrosshair(), {
       wrapper: wrapperWith(makeContext({ sync: () => DashboardCursorSync.Off })),
     });
@@ -375,12 +386,25 @@ describe('useTableSharedCrosshair', () => {
   });
 
   it('is true when the toggle is on and cursor sync is enabled', () => {
-    config.featureToggles.tableSharedCrosshair = true;
+    setTestFlags({ tableSharedCrosshair: true });
     const { result } = renderHook(() => useTableSharedCrosshair(), {
       wrapper: wrapperWith(makeContext({ sync: () => DashboardCursorSync.Crosshair })),
     });
 
     expect(result.current).toBe(true);
+  });
+
+  it('updates the shared crosshair when the flag changes', async () => {
+    setTestFlags({ tableSharedCrosshair: false });
+    const { result } = renderHook(() => useTableSharedCrosshair(), {
+      wrapper: wrapperWith(makeContext({ sync: () => DashboardCursorSync.Crosshair })),
+    });
+
+    expect(result.current).toBe(false);
+    await act(async () => setTestFlags({ tableSharedCrosshair: true }));
+    expect(result.current).toBe(true);
+    await act(async () => setTestFlags({ tableSharedCrosshair: false }));
+    expect(result.current).toBe(false);
   });
 });
 
