@@ -2,6 +2,7 @@ import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from 'app/core/appPluginIds';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -9,7 +10,6 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked, recommendationsShown } from '../analytics/main';
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
 import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
