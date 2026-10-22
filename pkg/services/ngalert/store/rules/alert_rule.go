@@ -1878,6 +1878,9 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
+//
+// All folders are permission-checked before any deletion starts, so a denial partway through
+// the list leaves every folder's rules intact rather than only the ones checked first.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	ctx = identity.WithRequester(ctx, user)
 
