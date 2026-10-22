@@ -15,9 +15,12 @@ import (
 )
 
 // AddToScheme also registers v0alpha1 <-> v1beta1 conversions for objects and
-// lists. The SDK converts lists not at all, and objects by encoding them in the
-// version their TypeMeta names, which decoding a request leaves empty. These
-// replace the SDK's object conversions for the same type pairs.
+// lists, which the SDK's scheme registration doesn't handle correctly:
+//   - It registers no conversions for list types.
+//   - Its object conversions encode the source in the version its TypeMeta
+//     names, and TypeMeta is empty on an object decoded from a request.
+//
+// The object conversions here replace the SDK's for the same type pairs.
 func (a *AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 	if err := a.AppInstaller.AddToScheme(scheme); err != nil {
 		return err
@@ -30,15 +33,15 @@ func (a *AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 
 func registerObjectConversions(scheme *runtime.Scheme) error {
 	objectConversion := func(in, out any, _ conversion.Scope) error {
-		from, ok := in.(resource.Object)
+		src, ok := in.(resource.Object)
 		if !ok {
 			return fmt.Errorf("%T is not a resource.Object", in)
 		}
-		to, ok := out.(resource.Object)
+		dst, ok := out.(resource.Object)
 		if !ok {
 			return fmt.Errorf("%T is not a resource.Object", out)
 		}
-		return convert.Into(from, to)
+		return convert.Into(src, dst)
 	}
 	for _, pair := range [][2]any{
 		{(*v0alpha1.AlertRule)(nil), (*v1beta1.AlertRule)(nil)},

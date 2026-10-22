@@ -35,6 +35,8 @@ func Raw(raw []byte, kind, targetAPIVersion string) ([]byte, error) {
 	obj["apiVersion"] = targetAPIVersion
 	if kind == "" {
 		kind, _ = obj["kind"].(string)
+	} else {
+		obj["kind"] = kind
 	}
 	toV1beta1 := targetAPIVersion == v1beta1.GroupVersion.String()
 	if toV1beta1 {
@@ -83,12 +85,12 @@ func Hub[T resource.Object](obj runtime.Object) (T, error) {
 	if hub, ok := obj.(T); ok {
 		return hub, nil
 	}
-	from, isResource := obj.(resource.Object)
+	src, isResource := obj.(resource.Object)
 	hub, ok := counterpart(obj).(T)
 	if !ok || !isResource {
 		return zero, fmt.Errorf("object is not of type %T", zero)
 	}
-	if err := Into(from, hub); err != nil {
+	if err := Into(src, hub); err != nil {
 		return zero, err
 	}
 	return hub, nil
@@ -129,20 +131,21 @@ func counterpart(obj runtime.Object) resource.Object {
 	return nil
 }
 
-// Into replaces to with from converted to to's version. The kind and version
-// come from the Go types, not from TypeMeta, which decoding can leave empty.
-func Into(from, to resource.Object) error {
-	reflect.ValueOf(to).Elem().SetZero()
-	raw, err := json.Marshal(from)
+// Into replaces dst with src converted to dst's version. The kind and version
+// come from dst's Go type, not from TypeMeta, which decoding can leave empty,
+// and dst's TypeMeta is set to them.
+func Into(src, dst resource.Object) error {
+	reflect.ValueOf(dst).Elem().SetZero()
+	raw, err := json.Marshal(src)
 	if err != nil {
-		return fmt.Errorf("failed to marshal %T for conversion: %w", from, err)
+		return fmt.Errorf("failed to marshal %T for conversion: %w", src, err)
 	}
-	converted, err := Raw(raw, kindOf(to), groupVersion(to).String())
+	converted, err := Raw(raw, kindOf(dst), groupVersion(dst).String())
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(converted, to); err != nil {
-		return fmt.Errorf("failed to unmarshal %T: %w", to, err)
+	if err := json.Unmarshal(converted, dst); err != nil {
+		return fmt.Errorf("failed to unmarshal %T: %w", dst, err)
 	}
 	return nil
 }

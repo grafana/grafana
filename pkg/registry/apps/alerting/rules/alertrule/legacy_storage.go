@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -151,13 +151,13 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return out, err
 	}
 
-	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
+	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, v1beta1.GroupLabelKey)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.GroupLabelKey, err))
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", v1beta1.GroupLabelKey, err))
 	}
-	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.FolderLabelKey)
+	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, v1beta1.FolderLabelKey)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.FolderLabelKey, err))
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", v1beta1.FolderLabelKey, err))
 	}
 
 	var (
@@ -279,7 +279,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	}
 
 	// The dual writer can pass the object in the version of the request.
-	p, err := convert.Hub[*model.AlertRule](obj)
+	p, err := convert.Hub[*v1beta1.AlertRule](obj)
 	if err != nil {
 		return nil, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
@@ -326,7 +326,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		}
 	}
 
-	new, err := convert.Hub[*model.AlertRule](obj)
+	new, err := convert.Hub[*v1beta1.AlertRule](obj)
 	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
@@ -374,7 +374,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	p, err := convert.Hub[*model.AlertRule](old)
+	p, err := convert.Hub[*v1beta1.AlertRule](old)
 	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
