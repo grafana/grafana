@@ -24,13 +24,24 @@ func (s *state) restrictToTargeted(hinted []Key) {
 	for _, op := range s.ops {
 		switch op.Kind {
 		case OpEnsureContainer:
-			// Keep only ensures for containers that do not exist yet: a
-			// targeted plan creates the path it needs and leaves identities
-			// alone.
-			if len(s.obsCont[op.Key]) == 0 {
+			switch {
+			case len(s.obsCont[op.Key]) == 0:
+				// A container the path needs and the target does not have.
 				op.Reason = ""
 				op.Group = ""
 				kept = append(kept, op)
+			case named[op.Key] && op.Reason == ReasonContentChanged:
+				// The caller named this container and its content changed, so
+				// that is the write it asked for. Its identity still comes
+				// from the target: a targeted plan updates what a container
+				// says about itself, never which container it is.
+				op.Identity = s.obsCont[op.Key][0].Identity
+				op.ContainerProvenance = FromInventory
+				op.Group = ""
+				kept = append(kept, op)
+			default:
+				// An incidental ancestor update or re-identification the
+				// caller did not ask for.
 			}
 		case OpRemoveContainer:
 			if named[op.Key] {

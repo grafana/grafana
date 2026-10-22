@@ -134,8 +134,9 @@ type Config struct {
 	// again, because nothing further is going to free capacity.
 	RetryDeferred bool
 
-	// Halt, when set, is consulted after each operation. A non-nil error stops
-	// the run and is returned.
+	// Halt, when set, is consulted as operations are scheduled and after each
+	// stage. A non-nil error stops queued work and is returned once the
+	// in-flight operations have drained.
 	//
 	// This is the circuit breaker a caller needs when per-operation failures
 	// are recorded rather than returned: past some threshold, continuing only
@@ -233,9 +234,10 @@ func (r *Result) Errors() []error {
 // result rather than returned, because the caller needs the whole picture to
 // decide whether to advance its position.
 func Run(ctx context.Context, p *converge.Plan, a Actuator, cfg Config) (*Result, error) {
-	res := &Result{Outcomes: make([]OpOutcome, 0, len(p.Ops))}
+	// Guard before touching p: sizing the result from p.Ops first would panic
+	// on the nil plan this is supposed to accept.
 	if p == nil || len(p.Ops) == 0 {
-		return res, nil
+		return &Result{}, nil
 	}
 
 	status := make(map[converge.OpRef]Status, len(p.Ops))
@@ -299,7 +301,7 @@ func Run(ctx context.Context, p *converge.Plan, a Actuator, cfg Config) (*Result
 		retryDeferred(ctx, p, a, cfg, status, errs, &mu)
 	}
 
-	res = snapshot(p, status, errs)
+	res := snapshot(p, status, errs)
 	if haltErr != nil {
 		return res, haltErr
 	}
@@ -386,6 +388,13 @@ func runStage(ctx context.Context, ops []converge.Op, a Actuator, cfg Config, re
 
 	for _, op := range ops {
 		if ctx.Err() != nil {
+			record(op, NotAttempted, nil)
+			continue
+		}
+		// The breaker is checked while scheduling, not only between stages: a
+		// stage of thousands of independent writes would otherwise run every
+		// one of them after the threshold had already tripped.
+		if cfg.Halt != nil && cfg.Halt() != nil {
 			record(op, NotAttempted, nil)
 			continue
 		}

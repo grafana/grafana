@@ -2,11 +2,14 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/converge"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // useConverge routes the write path through a plan before it writes anything.
@@ -38,7 +41,7 @@ func (r *DualReadWriter) preflight(ctx context.Context, path, ref string, isDir 
 		desired = append(desired, converge.Declaration{Key: a, Container: true})
 	}
 
-	observed, err := r.observeAncestors(ctx, key, ref)
+	observed, canObserve, err := r.observeAncestors(ctx, key, ref)
 	if err != nil {
 		return err // transient: not a refusal
 	}
@@ -64,6 +67,15 @@ func (r *DualReadWriter) preflight(ctx context.Context, path, ref string, isDir 
 		if e.Key == key {
 			return &UnsupportedPathError{Path: path, Err: IsPathSupported(path)}
 		}
+	}
+
+	// Without a reliable view of which folders exist, the plan cannot say
+	// which ones this write has to create — and demanding create permission
+	// for folders that are already there fails writes on access they never
+	// needed. The path refusal above still stands; the folder authorisation
+	// does not get to guess.
+	if !canObserve {
+		return nil
 	}
 
 	// Every folder the write implies is authorised before any of them exists.
@@ -103,37 +115,32 @@ func declarationFor(path string, isDir bool) converge.Declaration {
 // a write into a folder that already exists does not ask anyone for permission
 // to create it.
 //
-// The folder tree is only populated during a sync, so it cannot answer this
-// for an interactive write; the nearest existing ancestor has to be resolved
-// against storage.
-func (r *DualReadWriter) observeAncestors(ctx context.Context, key converge.Key, ref string) ([]converge.Observation, error) {
-	ancestors := key.Ancestors()
-	if len(ancestors) == 0 || r.folders == nil {
-		return nil, nil
+// Each directory is resolved on its own. FindExistingAncestor returns only the
+// nearest existing folder's identity, not the path it was found at, so there is
+// no way to tell from it which ancestors exist: a pinned UID on "a/" with "a/b/"
+// missing would have "a/b/" reported as present and its required ensure — and
+// its authorisation — dropped.
+func (r *DualReadWriter) observeAncestors(ctx context.Context, key converge.Key, ref string) ([]converge.Observation, bool, error) {
+	if r.folders == nil || r.folders.Client() == nil {
+		return nil, false, nil
 	}
 
-	deepest := ancestors[len(ancestors)-1]
-	id, found, err := r.folders.FindExistingAncestor(ctx, string(deepest), ref)
-	if err != nil {
-		return nil, fmt.Errorf("resolve existing ancestor of %s: %w", key, err)
-	}
-	if !found {
-		return nil, nil
-	}
-
-	// FindExistingAncestor reports the nearest folder that exists. Everything
-	// at or above it exists too; everything below it is what the write has to
-	// create.
 	var out []converge.Observation
-	for _, a := range ancestors {
-		identity := converge.Identity(ParseFolder(string(a), r.repo.Config().GetName()).ID)
-		if string(identity) == id || a == deepest {
-			identity = converge.Identity(id)
+	for _, a := range key.Ancestors() {
+		id, err := GetFolderID(ctx, r.repo, string(a), ref, r.folderMetadataEnabled)
+		if err != nil {
+			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue
+			}
+			return nil, false, fmt.Errorf("resolve identity of %s: %w", a, err)
 		}
-		out = append(out, converge.Observation{Key: a, Identity: identity, Container: true})
-		if string(identity) == id {
-			break
+		if _, err := r.folders.GetFolder(ctx, id); err != nil {
+			if apierrors.IsNotFound(err) {
+				continue // the write has to create it, and ask to
+			}
+			return nil, false, fmt.Errorf("look up folder %s: %w", a, err)
 		}
+		out = append(out, converge.Observation{Key: a, Identity: converge.Identity(id), Container: true})
 	}
-	return out, nil
+	return out, true, nil
 }

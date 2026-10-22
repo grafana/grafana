@@ -34,6 +34,14 @@ func NewPlan(desired []Declaration, inventory []Observation, opts ...Option) (*P
 		window = cfg.hints.closure(desired, inventory, cfg.containers)
 	}
 
+	// Budget admission is a question about the whole target, so a window makes
+	// it unanswerable: a hinted run would admit a create without counting the
+	// entities it was not pointed at. Rather than admit wrongly, plan in full
+	// whenever a budget binds.
+	if window != nil && !cfg.budget.unlimited() {
+		mode, window = ModeFull, nil
+	}
+
 	s, err := newState(desired, inventory, window, cfg)
 	if err != nil {
 		return nil, err
@@ -57,7 +65,11 @@ func NewPlan(desired []Declaration, inventory []Observation, opts ...Option) (*P
 	s.planEntities()
 	s.planContainerOps()
 	if cfg.moves {
-		s.detectMoves()
+		// A targeted plan may only pair keys the caller named. Pairing it with
+		// a row nobody mentioned turns "create a copy here" into "move that
+		// other resource", and the restriction below would keep the move
+		// because its destination was named.
+		s.detectMoves(targetedKeys(cfg))
 	}
 	if cfg.scope == ScopeTargeted {
 		s.restrictToTargeted(cfg.hints.Keys)
@@ -71,7 +83,7 @@ func NewPlan(desired []Declaration, inventory []Observation, opts ...Option) (*P
 		Mode:       mode,
 		Scope:      cfg.scope,
 	}
-	if err := order(p, s.ops); err != nil {
+	if err := order(p, s.ops, !cfg.budget.unlimited()); err != nil {
 		return nil, err
 	}
 	return p, nil
@@ -136,6 +148,15 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 		}
 		seen[d.Key] = true
 
+		// An exclusion is reported whatever the operation window is. Narrowing
+		// the work must not narrow the warnings: a convergent plan claims to
+		// have surveyed the source, so an excluded key elsewhere in it goes on
+		// being named on every run. Only a targeted plan, which never made
+		// that claim, reports just what it touched.
+		if d.Verdict == Excluded && !d.Container && cfg.scope == ScopeConvergent {
+			s.exclusions = append(s.exclusions, Exclusion{Key: d.Key, Reason: d.Reason})
+		}
+
 		if !inWindow(d.Key) {
 			continue
 		}
@@ -152,7 +173,9 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 			// this.
 			s.contDecl[d.Key] = mergeContainerDeclarations(s.contDecl[d.Key], d)
 		case d.Verdict == Excluded:
-			s.exclusions = append(s.exclusions, Exclusion{Key: d.Key, Reason: d.Reason})
+			if cfg.scope != ScopeConvergent {
+				s.exclusions = append(s.exclusions, Exclusion{Key: d.Key, Reason: d.Reason})
+			}
 		default:
 			s.entities[d.Key] = d
 		}
@@ -271,6 +294,20 @@ func (s *state) admitBudget() {
 			Removed: len(s.obsEntity[k]) > 0,
 		})
 	}
+}
+
+// targetedKeys returns the keys a targeted plan is allowed to act on, or nil
+// when the plan is convergent and may act on anything.
+func targetedKeys(cfg config) map[Key]bool {
+	if cfg.scope != ScopeTargeted {
+		return nil
+	}
+	named := make(map[Key]bool, len(cfg.hints.Keys)*2)
+	for _, k := range cfg.hints.Keys {
+		named[k] = true
+		named[k.AsContainer()] = true
+	}
+	return named
 }
 
 func sortExclusions(xs []Exclusion) {

@@ -1,6 +1,9 @@
 package converge
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // OpKind is the kind of change an operation makes.
 type OpKind uint8
@@ -106,14 +109,20 @@ type Op struct {
 }
 
 // Ref returns the operation's stable reference.
+//
+// The fields are length-prefixed rather than joined by a separator. Keys and
+// identities are opaque and may contain any character, so a separator makes
+// distinct operations collide: a move from "a|b" to "c" and one from "a" to
+// "b|c" would share a reference, and the maps keyed by it — byRef lookups,
+// execution status, vetoes — would conflate them.
 func (o Op) Ref() OpRef {
 	var b strings.Builder
 	b.WriteString(o.Kind.String())
-	b.WriteByte('|')
-	b.WriteString(string(o.From))
-	b.WriteByte('|')
-	b.WriteString(string(o.Key))
-	b.WriteByte('|')
-	b.WriteString(string(o.Identity))
+	for _, field := range []string{string(o.From), string(o.Key), string(o.Identity)} {
+		b.WriteByte('|')
+		b.WriteString(strconv.Itoa(len(field)))
+		b.WriteByte(':')
+		b.WriteString(field)
+	}
 	return OpRef(b.String())
 }

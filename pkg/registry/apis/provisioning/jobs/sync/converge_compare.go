@@ -55,6 +55,19 @@ func CompareViaConverge(
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	// An unusable claim falls back to the identity Grafana already has, which
+	// only the observed list knows.
+	for i := range target.Items {
+		item := &target.Items[i]
+		if item.Resource != resources.FolderResource.Resource || item.Path == "" {
+			continue
+		}
+		dir := safepath.EnsureTrailingSlash(item.Path)
+		if md, ok := metadata[dir]; ok && !md.Valid {
+			md.Held = item.Name
+			metadata[dir] = md
+		}
+	}
 
 	observed, unaddressable := plan.Observe(target)
 	p, err := converge.NewPlan(
@@ -161,7 +174,11 @@ func attachActions(invalid []*resources.InvalidFolderMetadata, changes []Resourc
 // in stage order, which is what applyChanges spends six buckets rebuilding.
 func translatePlan(ctx context.Context, p *converge.Plan, target *provisioning.ResourceList, metadata map[string]plan.FolderMetadata) []ResourceFileChange {
 	logger := logging.FromContext(ctx)
-	byIdentity := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	// Keyed by path *and* name: a dashboard and a playlist can both be called
+	// "shared" at different paths, and indexing by name alone attaches the
+	// wrong row — after which applyChange uses its group and resource to
+	// delete or replace the wrong object.
+	byKeyIdentity := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	// Folders are also indexed by path. A container taking a new identity is
 	// ensured under the new one, so looking the old folder up by identity
 	// finds nothing — and without it the change is not recognisable as a
@@ -169,17 +186,25 @@ func translatePlan(ctx context.Context, p *converge.Plan, target *provisioning.R
 	foldersByPath := make(map[string]*provisioning.ResourceListItem)
 	for i := range target.Items {
 		item := &target.Items[i]
-		byIdentity[item.Name] = item
+		byKeyIdentity[item.Path+"\x00"+item.Name] = item
 		if item.Resource == resources.FolderResource.Resource && item.Path != "" {
 			foldersByPath[safepath.EnsureTrailingSlash(item.Path)] = item
 		}
+	}
+	// A move leaves its origin, so that is where its row is.
+	lookup := func(op converge.Op) *provisioning.ResourceListItem {
+		key := string(op.Key)
+		if op.Kind == converge.OpMove && op.From != "" {
+			key = string(op.From)
+		}
+		return byKeyIdentity[key+"\x00"+string(op.Identity)]
 	}
 
 	out := make([]ResourceFileChange, 0, len(p.Ops)+len(p.Exclusions))
 
 	for _, op := range p.Ops {
 		c := ResourceFileChange{Path: string(op.Key), Hash: string(op.Fingerprint)}
-		if existing, ok := byIdentity[string(op.Identity)]; ok {
+		if existing := lookup(op); existing != nil {
 			c.Existing = existing
 		}
 
@@ -204,7 +229,7 @@ func translatePlan(ctx context.Context, p *converge.Plan, target *provisioning.R
 				c.Action = repository.FileActionUpdated
 				c.Path = safepath.EnsureTrailingSlash(string(op.Key))
 				c.Hash = ""
-				if existing, ok := byIdentity[string(op.Identity)]; ok {
+				if existing := lookup(op); existing != nil {
 					c.Existing = existing
 				}
 				break

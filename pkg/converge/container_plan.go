@@ -35,9 +35,27 @@ func (s *state) computeWantedContainers() error {
 		keys = append(keys, c)
 	}
 	sortKeys(keys)
+	excluded := make(map[Key]bool)
+	for c, d := range s.contDecl {
+		if d.Verdict == Excluded {
+			excluded[c] = true
+		}
+	}
+
 	for _, c := range keys {
 		d := s.contDecl[c]
 		if d.Verdict == Excluded {
+			continue
+		}
+		// A container inside one the source refuses cannot exist either.
+		// Without this the plan ensures a child inside a container it never
+		// creates, or removes the refused parent while the child survives.
+		if unreachable(c, excluded) {
+			s.exclusions = append(s.exclusions, Exclusion{
+				Key:     c,
+				Reason:  ReasonContainerExcluded,
+				Removed: len(s.obsCont[c]) > 0,
+			})
 			continue
 		}
 		if err := add(c, &d); err != nil {
@@ -48,6 +66,9 @@ func (s *state) computeWantedContainers() error {
 	if cc.Implied {
 		var walkErr error
 		for _, k := range s.sortedEntityKeys(s.admitted) {
+			if unreachable(k, excluded) {
+				continue
+			}
 			k.eachAncestor(func(a Key) bool {
 				if _, ok := s.wantCont[a]; ok {
 					// Its own ancestors were added when it was.
@@ -346,7 +367,9 @@ func (s *state) containerOp(kind OpKind, c Key, w containerWant, reason Reason) 
 // others — which is why they are reported as one [OpMove] rather than as an
 // ensure plus a remove.
 func (s *state) containerMoves() map[Key]Key {
-	if !s.cfg.moves {
+	if !s.cfg.moves || s.cfg.scope == ScopeTargeted {
+		// Same reason as entity moves: a targeted plan has no mandate to
+		// relocate a container nobody named.
 		return nil
 	}
 	byIdentity := make(map[Identity]Key, len(s.obsCont))
@@ -395,4 +418,21 @@ func (s *state) sortedContainerKeys(m any) []Key {
 	}
 	sortKeys(keys)
 	return keys
+}
+
+// unreachable reports whether any container enclosing k is refused by the
+// source. Anything inside one cannot be held either.
+func unreachable(k Key, excluded map[Key]bool) bool {
+	if len(excluded) == 0 {
+		return false
+	}
+	found := false
+	k.eachAncestor(func(a Key) bool {
+		if excluded[a] {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
 }

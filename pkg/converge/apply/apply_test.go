@@ -211,3 +211,60 @@ func TestEmptyPlanConverges(t *testing.T) {
 		t.Fatal("an empty plan has converged by definition")
 	}
 }
+
+func TestRunDoesNotPanicOnANilPlan(t *testing.T) {
+	res, err := apply.Run(context.Background(), nil, apply.ActuatorFunc(
+		func(context.Context, converge.Op) error { return errors.New("must not be called") },
+	), apply.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.Converged() {
+		t.Fatal("a nil plan has nothing to do")
+	}
+}
+
+func TestHaltStopsSchedulingWithinAStage(t *testing.T) {
+	// The breaker is documented as consulted per operation. Checking it only
+	// between stages lets a wide stage run every one of its failures after the
+	// threshold has already tripped.
+	p, err := converge.NewPlan(
+		[]converge.Declaration{
+			{Key: "a/one.json", Fingerprint: "h1"},
+			{Key: "a/two.json", Fingerprint: "h2"},
+			{Key: "a/three.json", Fingerprint: "h3"},
+			{Key: "a/four.json", Fingerprint: "h4"},
+		},
+		[]converge.Observation{{Key: "a/", Identity: "F", Container: true}},
+		converge.WithContainers(converge.ContainerConfig{Implied: true}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var attempts int32
+	tripped := errors.New("too many errors")
+	res, err := apply.Run(context.Background(), p, apply.ActuatorFunc(
+		func(context.Context, converge.Op) error {
+			atomic.AddInt32(&attempts, 1)
+			return nil
+		},
+	), apply.Config{
+		Workers: 1,
+		Halt: func() error {
+			if atomic.LoadInt32(&attempts) >= 1 {
+				return tripped
+			}
+			return nil
+		},
+	})
+	if !errors.Is(err, tripped) {
+		t.Fatalf("want the halt error, got %v", err)
+	}
+	if got := atomic.LoadInt32(&attempts); got > 2 {
+		t.Fatalf("the breaker should stop scheduling, but %d operations ran", got)
+	}
+	if res.Converged() {
+		t.Fatal("a halted run has not converged")
+	}
+}

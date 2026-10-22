@@ -49,6 +49,15 @@ func FolderConfig(repoName string) converge.ContainerConfig {
 type FolderMetadata struct {
 	UID   string
 	Valid bool
+
+	// Held is the identity Grafana currently has for the folder, if any. It is
+	// what an unusable claim falls back to.
+	//
+	// Leaving the declaration's identity empty is not the same as preserving
+	// one: the planner then derives the path-based identity, which *replaces*
+	// a pinned UID and re-parents every child. Naming the held identity is how
+	// "drop the claim, keep the folder" stays true to itself.
+	Held string
 }
 
 // Declare converts a repository tree into what the repository declares.
@@ -75,15 +84,7 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 			if dir == "" {
 				continue // the repository root is not a folder sync owns
 			}
-			d := converge.Declaration{Key: dir, Container: true}
-			// A folder at a path Grafana cannot address is no more a folder
-			// than a file at one is a resource. Excluding it is what keeps the
-			// safe part of the path — and only the safe part — from being
-			// created, and pulls everything underneath out with it.
-			if err := resources.IsPathSupported(string(dir)); err != nil {
-				d.Verdict, d.Reason = converge.Excluded, ReasonUnsupportedPath
-			}
-			out = append(out, d)
+			out = append(out, declareDirectory(dir))
 
 		case resources.IsFolderMetadataFile(entry.Path):
 			dir := converge.Key(safepath.EnsureTrailingSlash(safepath.Dir(entry.Path)))
@@ -91,18 +92,23 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 				continue
 			}
 			d := converge.Declaration{Key: dir, Container: true, Fingerprint: converge.Fingerprint(entry.Hash)}
-			if err := resources.IsPathSupported(string(dir)); err != nil {
+			if unsupported := resources.IsPathSupported(string(dir)); unsupported != nil {
 				d.Verdict, d.Reason = converge.Excluded, ReasonUnsupportedPath
 				out = append(out, d)
 				continue
 			}
 			// An unparseable _folder.json makes the identity claim unusable,
 			// not the folder. The folder is still declared at this key; it
-			// just keeps the identity it already has, or the derived one if it
-			// is new. Excluding it instead would delete a folder, and
+			// keeps the identity it already has, or takes the derived one if
+			// it is new. Excluding it instead would delete a folder, and
 			// everything in it, over one bad line in a metadata file.
-			if md, ok := metadata[string(dir)]; ok && md.Valid {
-				d.Identity = converge.Identity(md.UID)
+			if md, ok := metadata[string(dir)]; ok {
+				switch {
+				case md.Valid:
+					d.Identity = converge.Identity(md.UID)
+				case md.Held != "":
+					d.Identity = converge.Identity(md.Held)
+				}
 			}
 			out = append(out, d)
 
@@ -112,6 +118,24 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 	}
 
 	return out
+}
+
+// declareDirectory classifies a directory. A folder at a path Grafana cannot
+// address is no more a folder than a file at one is a resource: excluding it is
+// what keeps the safe part of the path — and only the safe part — from being
+// created, and pulls everything underneath out with it.
+func declareDirectory(dir converge.Key) converge.Declaration {
+	d := converge.Declaration{Key: dir.AsContainer(), Container: true}
+	if err := resources.IsPathSupported(string(d.Key)); err != nil {
+		d.Verdict, d.Reason = converge.Excluded, ReasonUnsupportedPath
+	}
+	return d
+}
+
+// fileEntry adapts a bare path for classification, for callers that have a
+// path and no tree entry.
+func fileEntry(path string) repository.FileTreeEntry {
+	return repository.FileTreeEntry{Path: path, Blob: true}
 }
 
 func declareFile(entry repository.FileTreeEntry) converge.Declaration {

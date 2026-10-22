@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -46,6 +47,15 @@ func applyChangesViaConverge(
 		trace.WithAttributes(attribute.Int("changes_count", len(changes))),
 	)
 	defer span.End()
+
+	// applyChange reports per-resource failures into progress and returns only
+	// whether quota blocked the write. Treating every non-quota result as
+	// success tells the helper that failed operations applied, so nothing
+	// downstream of a failure is ever skipped — a folder removal would still
+	// be attempted after the re-parent that was supposed to empty it failed.
+	// Watching what gets recorded is how the actuator learns the difference.
+	outcomes := &recordedOutcomes{JobProgressRecorder: progress, failed: map[string]bool{}}
+	progress = outcomes
 
 	ops, byRef, warnings, renames := translateChanges(changes)
 
@@ -107,6 +117,11 @@ func applyChangesViaConverge(
 			// retry is the helper's to schedule.
 			return apply.ErrDeferred
 		}
+		if err := outcomes.errorAt(change.Path); err != nil {
+			// Already reported to the user; returned here only so the helper
+			// skips what depended on it.
+			return err
+		}
 		return nil
 	}), apply.Config{
 		Workers:   maxSyncWorkers,
@@ -123,6 +138,31 @@ func applyChangesViaConverge(
 		return tracing.Error(span, err)
 	}
 
+	// An operation the helper skipped was never handed to applyChange, so
+	// nothing has reported it. A folder left in place because the re-parent
+	// that should have emptied it failed is exactly the thing a user needs
+	// told; the dependency graph knowing not to attempt it is not the same as
+	// saying so.
+	for _, o := range res.Outcomes {
+		if o.Status != apply.Skipped {
+			continue
+		}
+		change, ok := byRef[o.Ref]
+		if !ok {
+			continue
+		}
+		result := jobs.NewFolderResult(change.Path)
+		if !safepath.IsDir(change.Path) {
+			result = jobs.NewPathOnlyResult(change.Path)
+		}
+		// Ignored, not the action it would have had: nothing was attempted.
+		progress.Record(ctx, result.
+			WithAction(repository.FileActionIgnored).
+			WithError(fmt.Errorf("not attempted because dependent path changes failed")).
+			AsSkipped().
+			Build())
+	}
+
 	// applyChange records every per-resource outcome itself, so a failure is
 	// already reported and does not fail the job. What is left is the quota
 	// refusal, which only becomes final once the retry has had its turn.
@@ -136,6 +176,43 @@ func applyChangesViaConverge(
 			Build())
 	}
 	return progress.TooManyErrors()
+}
+
+// recordedOutcomes watches what the actuator reports so the helper can tell a
+// failed operation from a successful one.
+type recordedOutcomes struct {
+	jobs.JobProgressRecorder
+
+	mu     sync.Mutex
+	failed map[string]bool
+	errs   map[string]error
+}
+
+func (r *recordedOutcomes) Record(ctx context.Context, result jobs.JobResourceResult) {
+	if err := result.Error(); err != nil {
+		r.mu.Lock()
+		if r.errs == nil {
+			r.errs = map[string]error{}
+		}
+		key := safepath.EnsureTrailingSlash(result.Path())
+		if !safepath.IsDir(result.Path()) {
+			key = result.Path()
+		}
+		r.failed[key] = true
+		r.errs[key] = err
+		r.mu.Unlock()
+	}
+	r.JobProgressRecorder.Record(ctx, result)
+}
+
+func (r *recordedOutcomes) errorAt(path string) error {
+	key := path
+	if safepath.IsDir(path) {
+		key = safepath.EnsureTrailingSlash(path)
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.errs[key]
 }
 
 // removeOrphanFolder deletes a folder that had to survive until its children

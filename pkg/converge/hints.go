@@ -46,36 +46,52 @@ func (h HintSet) closure(decls []Declaration, obs []Observation, cc ContainerCon
 		}
 	}
 
-	// Rules 2 and 4 need a pass over both sides.
+	// Rules 2 and 4 need the transitive closure, which a single pass over the
+	// inputs cannot produce: whether a key is in depends on whether its parent
+	// is, and the inputs arrive in no particular order. Iterating to a fixpoint
+	// is what keeps the window from depending on slice order — and with
+	// ReparentDescendants a window that stops short omits descendant updates
+	// the plan needs.
 	fingerprints := make(map[Fingerprint]bool)
-	for _, d := range decls {
-		if in[d.Key] {
-			fingerprints[d.Fingerprint] = true
+	noteFingerprint := func(k Key, fp Fingerprint) {
+		if fp != "" && in[k] {
+			fingerprints[fp] = true
 		}
 	}
+	for _, d := range decls {
+		noteFingerprint(d.Key, d.Fingerprint)
+	}
 	for _, o := range obs {
-		if in[o.Key] {
-			fingerprints[o.Fingerprint] = true
-		}
+		noteFingerprint(o.Key, o.Fingerprint)
 	}
 
-	add := func(k Key, fp Fingerprint) {
-		if in[k] {
-			return
-		}
-		if fp != "" && fingerprints[fp] {
-			in[k] = true
-			return
-		}
-		if p := k.Parent(); p != "" && in[p] {
-			in[k] = true
-		}
+	type candidate struct {
+		key Key
+		fp  Fingerprint
 	}
+	candidates := make([]candidate, 0, len(decls)+len(obs))
 	for _, d := range decls {
-		add(d.Key, d.Fingerprint)
+		candidates = append(candidates, candidate{d.Key, d.Fingerprint})
 	}
 	for _, o := range obs {
-		add(o.Key, o.Fingerprint)
+		candidates = append(candidates, candidate{o.Key, o.Fingerprint})
+	}
+
+	for changed := true; changed; {
+		changed = false
+		for _, c := range candidates {
+			if in[c.key] {
+				continue
+			}
+			parent := c.key.Parent()
+			if (c.fp != "" && fingerprints[c.fp]) || (parent != "" && in[parent]) {
+				in[c.key] = true
+				if c.fp != "" {
+					fingerprints[c.fp] = true
+				}
+				changed = true
+			}
+		}
 	}
 	return in
 }

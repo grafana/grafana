@@ -10,11 +10,16 @@ package converge
 // fingerprint, so the right partner is unknowable — the plan degrades to a
 // delete and a create. That is not an error: the target ends up holding the
 // same content either way, and only the surviving identity differs.
-func (s *state) detectMoves() {
+func (s *state) detectMoves(named map[Key]bool) {
+	allowed := func(k Key) bool { return named == nil || named[k] }
+
 	byFingerprint := make(map[Fingerprint]int)
 	ambiguous := make(map[Fingerprint]bool)
 	for i, op := range s.ops {
 		if op.Kind != OpDelete || op.Reason != "" || op.Key.IsContainer() {
+			continue
+		}
+		if !allowed(op.Key) {
 			continue
 		}
 		fp := s.observedFingerprint(op.Key, op.Identity)
@@ -36,6 +41,9 @@ func (s *state) detectMoves() {
 	consumed := make(map[int]bool)
 	for i, op := range s.ops {
 		if op.Kind != OpCreate || op.Fingerprint == "" || op.Key.IsContainer() {
+			continue
+		}
+		if !allowed(op.Key) {
 			continue
 		}
 		j, ok := byFingerprint[op.Fingerprint]

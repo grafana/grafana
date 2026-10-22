@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plan"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -154,6 +155,24 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		if path == targetPath {
 			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+opts.TargetPath)
 			progress.Record(ctx, jobs.NewPathOnlyResult(path).WithAction(repository.FileActionIgnored).Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// The target path is constructed from a job-supplied directory and is
+		// otherwise unchecked, so a move can land a resource where Grafana
+		// cannot address it — the write succeeds in the repository and the
+		// next sync deletes it. The same classifier the sync and the files API
+		// use decides it here.
+		if refused := plan.RefuseUnsupportedPaths(targetPath); len(refused) > 0 {
+			progress.Record(ctx, resultBuilder.
+				WithError(&resources.UnsupportedPathError{
+					Path: targetPath,
+					Err:  resources.IsPathSupported(targetPath),
+				}).
+				Build())
 			if err := progress.TooManyErrors(); err != nil {
 				return err
 			}

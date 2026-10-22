@@ -441,8 +441,10 @@ func declarationsFor(m *Model) []converge.Declaration {
 	for k, e := range m.Entities {
 		out = append(out, converge.Declaration{Key: k, Fingerprint: e.Fingerprint})
 	}
-	for k, id := range m.Containers {
-		out = append(out, converge.Declaration{Key: k, Container: true, Identity: id})
+	for k, ids := range m.Containers {
+		for _, id := range ids {
+			out = append(out, converge.Declaration{Key: k, Container: true, Identity: id})
+		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
 	return out

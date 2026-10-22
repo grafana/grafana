@@ -59,9 +59,12 @@ func Targeted(repoName string, w Write, nearby *provisioning.ResourceList) (*con
 		// Classification is shared with the convergence path: a key sync would
 		// refuse must be refused here too, with the same reason, or the API
 		// accepts writes the next sync deletes.
+		// The same classifier either way: a directory the sync would refuse
+		// must be refused here too, or the API accepts a folder the next sync
+		// deletes.
 		d := declareFile(repository.FileTreeEntry{Path: w.Path, Hash: w.Hash, Blob: true})
 		if w.Folder {
-			d = converge.Declaration{Key: converge.Key(w.Path).AsContainer(), Container: true}
+			d = declareDirectory(converge.Key(w.Path).AsContainer())
 		}
 		desired = append(desired, d)
 	}

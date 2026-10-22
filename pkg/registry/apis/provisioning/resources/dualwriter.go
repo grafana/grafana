@@ -362,10 +362,6 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
-	if err := r.preflight(ctx, opts.Path, opts.Ref, safepath.IsDir(opts.Path)); err != nil {
-		return nil, err
-	}
-
 	info := &repository.FileInfo{
 		Data: opts.Data,
 		Path: opts.Path,
@@ -447,7 +443,15 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 		// Only folder-scoped kinds carry a folder annotation; org-scoped kinds (e.g. playlists)
 		// must not have one stamped onto them, or the apiserver rejects the write.
+		// Only kinds that live in a folder get the folder preflight. An
+		// org-scoped kind — a playlist, say — deliberately bypasses folder
+		// resolution, so demanding folder access before it is even parsed
+		// fails valid writes on permissions they never needed.
 		if parsed.FolderScoped {
+			if err := r.preflight(ctx, opts.Path, opts.Ref, safepath.IsDir(opts.Path)); err != nil {
+				return nil, err
+			}
+
 			parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("ensure folder path exists: %w", err)

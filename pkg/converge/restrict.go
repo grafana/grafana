@@ -132,10 +132,32 @@ func Restrict(p *Plan, vetoes []Veto) (*Plan, error) {
 		out.Exclusions = append(out.Exclusions, Exclusion{Key: o.Key, Reason: reason})
 	}
 	sortExclusions(out.Exclusions)
-	if err := order(out, kept); err != nil {
+	// A restricted plan keeps whatever budget ordering the original had: the
+	// surviving creates still need their capacity freed first.
+	if err := order(out, kept, len(p.Rejected) > 0 || budgetOrdered(p)); err != nil {
 		return nil, err
 	}
 	return out, nil
+}
+
+// budgetOrdered reports whether the plan it came from had creation waiting on
+// deletion, so Restrict does not silently drop that floor.
+func budgetOrdered(p *Plan) bool {
+	lastDelete, firstCreate := -1, -1
+	for i, stage := range p.Stages {
+		for _, o := range stage {
+			switch o.Kind {
+			case OpDelete:
+				lastDelete = i
+			case OpCreate:
+				if firstCreate < 0 {
+					firstCreate = i
+				}
+			default:
+			}
+		}
+	}
+	return lastDelete >= 0 && firstCreate > lastDelete
 }
 
 func clonePlan(p *Plan) *Plan {

@@ -52,6 +52,24 @@ func (e *TransientError) Unwrap() error { return e.Err }
 
 // Vetoes authorises a whole plan and returns the operations that may not run.
 //
+// # Why background jobs do not use this yet
+//
+// The move and delete workers classify their paths through
+// [RefuseUnsupportedPaths] but do not authorise through here, and adding it
+// would be worse than leaving it out.
+//
+// A job's worker runs under a provisioning service identity —
+// identity.WithProvisioningIdentity in the job driver — not the identity of
+// whoever asked for the job. A veto pass over that context would check the
+// service account's permissions, which pass everything: an authorisation step
+// that authorises nothing, but which every later reader would take as proof the
+// path is covered.
+//
+// Making it real means re-establishing the requesting identity inside the
+// worker from the job's author annotations, which is impersonation driven by an
+// annotation and needs to be designed and reviewed as such, not inferred from
+// the fact that the annotation happens to be there.
+//
 // One pass serves the convergence path and the interactive path, which is the
 // point: two implementations of one rule produce an API that accepts a write
 // the next sync deletes.

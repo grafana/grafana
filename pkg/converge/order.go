@@ -21,7 +21,7 @@ import (
 //
 // A cycle is impossible given those edges. If one is found it is a bug in this
 // package, not bad input, so it panics rather than emitting an unsafe plan.
-func order(p *Plan, ops []Op) error {
+func order(p *Plan, ops []Op, budgetBinds bool) error {
 	n := len(ops)
 	if n == 0 {
 		p.Ops, p.Stages = nil, nil
@@ -36,7 +36,7 @@ func order(p *Plan, ops []Op) error {
 	idx := indexOps(ops)
 	deps := dependencies(ops, idx)
 	level := levels(ops, deps, refs)
-	applyBudgetFloor(ops, level, len(p.Rejected) > 0)
+	applyBudgetFloor(ops, level, budgetBinds)
 	assembleStages(p, ops, deps, refs, level)
 	return nil
 }
@@ -218,6 +218,11 @@ func levels(ops []Op, deps [][]int, refs []OpRef) []int {
 // applyBudgetFloor makes creation wait for every deletion when a budget binds.
 // It depends on capacity rather than on any one deletion, so it is a floor on
 // the creation stage instead of an edge from every create to every delete.
+//
+// Whether anything was rejected is the wrong trigger: a replacement under a cap
+// of one — the target holding z.json, the source declaring only a.json — rejects
+// nothing and still needs the delete first, or the target refuses the create
+// before its slot is freed.
 func applyBudgetFloor(ops []Op, level []int, binding bool) {
 	if !binding {
 		return

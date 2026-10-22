@@ -159,7 +159,7 @@ func (p *Plan) String() string {
 // problem where the bugs are.
 func Order(ops []Op, mode Mode, scope ExclusionScope) (*Plan, error) {
 	p := &Plan{Mode: mode, Scope: scope}
-	if err := order(p, ops); err != nil {
+	if err := order(p, ops, false); err != nil {
 		return nil, err
 	}
 	return p, nil

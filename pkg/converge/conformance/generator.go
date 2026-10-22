@@ -52,7 +52,10 @@ func (g *generator) next() scenario {
 		if g.rng.Intn(3) == 0 {
 			continue
 		}
-		model.Entities[k] = Entry{Identity: converge.Identity("held:" + string(k)), Fingerprint: g.fingerprint()}
+		model.Entities[k] = Entry{
+			Identity:    converge.Identity("held:" + string(k)),
+			Fingerprint: g.fingerprint(),
+		}
 	}
 	if g.opts.Containers.Implied {
 		for k := range model.Entities {
@@ -60,13 +63,13 @@ func (g *generator) next() scenario {
 				if _, ok := model.Containers[a]; ok {
 					continue
 				}
-				model.Containers[a] = g.containerIdentity(a)
+				model.Containers[a] = []converge.Identity{g.containerIdentity(a)}
 			}
 		}
 		// A container nothing declares, so removal is exercised too.
 		if g.rng.Intn(2) == 0 {
 			orphan := converge.Key("orphan/")
-			model.Containers[orphan] = g.containerIdentity(orphan)
+			model.Containers[orphan] = []converge.Identity{g.containerIdentity(orphan)}
 		}
 	}
 
