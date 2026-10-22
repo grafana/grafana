@@ -11,6 +11,7 @@ type Snowflake struct {
 }
 
 func New() *Snowflake {
+	// NewNode never returns an error when the input is in the [0, 1023] range
 	node, _ := snowflake.NewNode(rand.Int63n(1024))
 	return &Snowflake{node: node}
 }
