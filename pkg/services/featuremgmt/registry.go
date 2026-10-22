@@ -264,14 +264,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.userAttribution",
-			Description: "Author Git Sync commits as the acting Grafana user",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{Go: true, React: true},
-		},
-		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
 			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).`,
 			Stage:        FeatureStageExperimental,
@@ -1244,7 +1236,7 @@ var (
 		{
 			Name:            "reloadDashboardsOnParamsChange",
 			Description:     "Enables reload of dashboards on scopes, time range and variables changes",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:        Generate{LegacyFrontend: true, React: true},
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
@@ -1946,15 +1938,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "restrictedPluginApis",
-			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "true",
-		},
-		{
 			Name:        "favoriteDatasources",
 			Description: "Enable favorite datasources",
 			Stage:       FeatureStageExperimental,
@@ -2448,16 +2431,6 @@ var (
 		{
 			Name:            "appplugins.loadAppManifest",
 			Description:     "Load app manifest when loading plugin definitions",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			Generate:        Generate{Go: true},
-			RequiresRestart: true,
-			Expression:      "false",
-			HideFromDocs:    true,
-		},
-		{
-			Name:            "appplugins.loadAppManifestAndKeepSettings",
-			Description:     "Continue to expose settings when a manifest exists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			Generate:        Generate{Go: true},
@@ -3445,6 +3418,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "grafana.geomapProtomapsBasemap",
+			Description:  "Adds an experimental Protomaps vector basemap to the geomap panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

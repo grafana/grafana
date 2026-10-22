@@ -167,7 +167,8 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
     {
       layerFilter: (l) => {
         const hoverLayerState = getMapLayerState(l);
-        return hoverLayerState?.options?.tooltip !== false;
+        // A vector basemap's roads and land polygons are features too, and are never what a user hovers for
+        return !hoverLayerState?.isBasemap && hoverLayerState?.options?.tooltip !== false;
       },
     }
   );

@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -80,6 +81,7 @@ func ProvideAuthZClients(
 	restConfig apiserver.RestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
 	legacyLoader *legacypermissions.Loader,
+	scopeResolvers *accesscontrol.ScopeResolverRegistry,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -152,6 +154,9 @@ func ProvideAuthZClients(
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 			rbacSettings,
+		).WithLegacyScopeResolvers(
+			scopeResolvers,
+			apirequest.GetNamespaceMapper(cfg),
 		)
 
 		channel := &inprocgrpc.Channel{}
