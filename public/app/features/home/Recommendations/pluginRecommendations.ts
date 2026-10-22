@@ -5,6 +5,7 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
+import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
 
 import {
   APP_OBSERVABILITY_APP_ID,
@@ -212,7 +213,8 @@ const installedPlugins = createTtlCachedPromise(
 );
 
 export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
-  return installedPlugins.get();
+  // /api/plugins is legacy-only; an empty inventory already makes plugin-backed offers fail closed.
+  return isLegacyAPIBlocked() ? Promise.resolve([]) : installedPlugins.get();
 }
 
 export function resetInstalledPlugins(): void {

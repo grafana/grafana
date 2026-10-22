@@ -6,7 +6,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useStoredString } from 'app/core/hooks/useStored';
@@ -178,23 +178,31 @@ export default function HomePage() {
                   })}
 
                   <HomeGrid columns={2} gap={2}>
-                    {/* Skip the HomepageTabs extension point for the redesign UI */}
-                    <DashboardTabs extensionComponents={[]} />
-                    <AlertIncidentTabs
-                      alertsData={alertsData}
-                      incidentsData={incidentsData}
-                      alertsFilter={alertsFilter}
-                      onAlertsFilterChange={setAlertsFilter}
-                      incidentsFilter={incidentsFilter}
-                      onIncidentsFilterChange={setIncidentsFilter}
-                      switchRef={alertIncidentRef}
-                    />
+                    <ErrorBoundaryAlert boundaryName="home-dashboard-tabs">
+                      {/* Skip the HomepageTabs extension point for the redesign UI */}
+                      <DashboardTabs extensionComponents={[]} />
+                    </ErrorBoundaryAlert>
+                    <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                      <AlertIncidentTabs
+                        alertsData={alertsData}
+                        incidentsData={incidentsData}
+                        alertsFilter={alertsFilter}
+                        onAlertsFilterChange={setAlertsFilter}
+                        incidentsFilter={incidentsFilter}
+                        onIncidentsFilterChange={setIncidentsFilter}
+                        switchRef={alertIncidentRef}
+                      />
+                    </ErrorBoundaryAlert>
                   </HomeGrid>
 
                   {showSolutions && (
                     <>
-                      <Recommendations solutions={solutions} />
-                      <Overview solutions={solutions.solutions} />
+                      <ErrorBoundaryAlert boundaryName="home-recommendations">
+                        <Recommendations solutions={solutions} />
+                      </ErrorBoundaryAlert>
+                      <ErrorBoundaryAlert boundaryName="home-overview">
+                        <Overview solutions={solutions.solutions} />
+                      </ErrorBoundaryAlert>
                     </>
                   )}
                 </>
@@ -208,15 +216,27 @@ export default function HomePage() {
                       components: assistantComponents,
                       pluginId: ASSISTANT_PLUGIN_ID,
                     })}
-                    <DashboardTabs extensionComponents={tabComponents} />
+                    <ErrorBoundaryAlert boundaryName="home-dashboard-tabs">
+                      <DashboardTabs extensionComponents={tabComponents} />
+                    </ErrorBoundaryAlert>
                   </HomeSection>
 
                   <HomeGrid columns={2} gap={2}>
-                    {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
+                    {alertsData.enabled && (
+                      <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                        <FiringAlertsCard data={alertsData} />
+                      </ErrorBoundaryAlert>
+                    )}
                     {incidentsData.enabled ? (
-                      <IncidentsCard data={incidentsData} />
+                      <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                        <IncidentsCard data={incidentsData} />
+                      </ErrorBoundaryAlert>
                     ) : (
-                      config.newsFeedEnabled && <NewsCard />
+                      config.newsFeedEnabled && (
+                        <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                          <NewsCard />
+                        </ErrorBoundaryAlert>
+                      )
                     )}
                   </HomeGrid>
                 </>

@@ -22,6 +22,17 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+it('resolves an empty inventory without a request when the legacy API is blocked', async () => {
+  const originalMode = window.__grafanaLegacyAPIMode;
+  window.__grafanaLegacyAPIMode = 'block';
+  try {
+    await expect(fetchInstalledPlugins()).resolves.toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  } finally {
+    window.__grafanaLegacyAPIMode = originalMode;
+  }
+});
+
 it('shares the plugin inventory between concurrent homepage consumers', async () => {
   const overview = fetchInstalledPlugins();
   const recommendations = fetchInstalledPlugins();

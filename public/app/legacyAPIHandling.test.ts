@@ -1,4 +1,4 @@
-import { patchFetchForLegacyAPIMode } from './legacyAPIHandling';
+import { isLegacyAPIBlocked, patchFetchForLegacyAPIMode } from './legacyAPIHandling';
 
 describe('patchFetchForLegacyAPIMode', () => {
   const originalFetch = window.fetch;
@@ -97,5 +97,23 @@ describe('patchFetchForLegacyAPIMode', () => {
       await expect(window.fetch(new Request('http://localhost/api/dashboards'))).rejects.toThrow('/api/dashboards');
       expect(fetchMock).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('isLegacyAPIBlocked', () => {
+  const originalMode = window.__grafanaLegacyAPIMode;
+
+  afterEach(() => {
+    window.__grafanaLegacyAPIMode = originalMode;
+  });
+
+  it('is true only in block mode', () => {
+    window.__grafanaLegacyAPIMode = 'block';
+    expect(isLegacyAPIBlocked()).toBe(true);
+  });
+
+  it.each([undefined, 'off', 'log'])('is false for mode %p', (mode) => {
+    window.__grafanaLegacyAPIMode = mode;
+    expect(isLegacyAPIBlocked()).toBe(false);
   });
 });
