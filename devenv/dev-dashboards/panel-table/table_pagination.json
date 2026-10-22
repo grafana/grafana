@@ -37,6 +37,714 @@
     "cursorSync": "Off",
     "editable": true,
     "elements": {
+      "panel-13": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Pagination, 5 rows per page",
+          "description": "Fixed page size. Enable the tablePaginationPageSize feature toggle. Resize the panel to verify the number of rows per page stays fixed.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 2
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "country_name": true,
+                        "created_on": true,
+                        "expenses": true,
+                        "floor": true,
+                        "geonames_id": true,
+                        "id": true,
+                        "image_thumbnail": true,
+                        "lat": true,
+                        "lat_lon": true,
+                        "lon": true,
+                        "operation": true,
+                        "place_with_parent_names": true,
+                        "price_aprox_local_currency": true,
+                        "price_aprox_usd": true,
+                        "state_name": true,
+                        "surface_total_in_m2": true
+                      },
+                      "indexByName": {
+                        "country_name": 13,
+                        "created_on": 9,
+                        "currency": 19,
+                        "description": 5,
+                        "expenses": 24,
+                        "floor": 7,
+                        "geonames_id": 15,
+                        "id": 0,
+                        "image_thumbnail": 26,
+                        "lat": 17,
+                        "lat_lon": 16,
+                        "lon": 18,
+                        "operation": 8,
+                        "place_name": 4,
+                        "place_with_parent_names": 12,
+                        "price": 11,
+                        "price_aprox_local_currency": 20,
+                        "price_aprox_usd": 21,
+                        "price_per_m2": 23,
+                        "price_usd_per_m2": 22,
+                        "properati_url": 25,
+                        "property_type": 2,
+                        "rooms": 6,
+                        "state_name": 14,
+                        "surface_covered_in_m2": 3,
+                        "surface_total_in_m2": 10,
+                        "title": 1
+                      },
+                      "renameByName": {
+                        "description": "Description",
+                        "place_name": "City",
+                        "price": "Price",
+                        "properati_url": "URL",
+                        "property_type": "Type",
+                        "rooms": "Rooms",
+                        "surface_covered_in_m2": "Surface",
+                        "title": "Property name"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "9.0.0-pre",
+            "spec": {
+              "options": {
+                "footer": {
+                  "enablePagination": true,
+                  "fields": "",
+                  "reducer": ["sum"],
+                  "show": false
+                },
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Surface"
+                  }
+                ],
+                "pageSize": 5
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "rent": {
+                          "color": "yellow",
+                          "index": 0
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "property_type"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "gradient",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "store": {
+                                "color": "blue",
+                                "index": 0
+                              }
+                            },
+                            "type": "value"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "title"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 205
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Number of rooms"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 66
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Description"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "URL"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Show details",
+                            "url": "${__value.raw}"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Surface"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "basic",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "dark-red"
+                            },
+                            {
+                              "color": "orange",
+                              "value": 100
+                            },
+                            {
+                              "color": "yellow",
+                              "value": 200
+                            },
+                            {
+                              "color": "green",
+                              "value": 300
+                            },
+                            {
+                              "color": "#EAB839",
+                              "value": 500
+                            },
+                            {
+                              "color": "#6ED0E0",
+                              "value": 1000
+                            },
+                            {
+                              "color": "#EF843C",
+                              "value": 2000
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "unit",
+                        "value": "areaM2"
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 93
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Type"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 94
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "City"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 120
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Rooms"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 77
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Price"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Pagination, 20 rows per page",
+          "description": "Fixed page size. Enable the tablePaginationPageSize feature toggle. Resize the panel to verify the number of rows per page stays fixed.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 2
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "country_name": true,
+                        "created_on": true,
+                        "expenses": true,
+                        "floor": true,
+                        "geonames_id": true,
+                        "id": true,
+                        "image_thumbnail": true,
+                        "lat": true,
+                        "lat_lon": true,
+                        "lon": true,
+                        "operation": true,
+                        "place_with_parent_names": true,
+                        "price_aprox_local_currency": true,
+                        "price_aprox_usd": true,
+                        "state_name": true,
+                        "surface_total_in_m2": true
+                      },
+                      "indexByName": {
+                        "country_name": 13,
+                        "created_on": 9,
+                        "currency": 19,
+                        "description": 5,
+                        "expenses": 24,
+                        "floor": 7,
+                        "geonames_id": 15,
+                        "id": 0,
+                        "image_thumbnail": 26,
+                        "lat": 17,
+                        "lat_lon": 16,
+                        "lon": 18,
+                        "operation": 8,
+                        "place_name": 4,
+                        "place_with_parent_names": 12,
+                        "price": 11,
+                        "price_aprox_local_currency": 20,
+                        "price_aprox_usd": 21,
+                        "price_per_m2": 23,
+                        "price_usd_per_m2": 22,
+                        "properati_url": 25,
+                        "property_type": 2,
+                        "rooms": 6,
+                        "state_name": 14,
+                        "surface_covered_in_m2": 3,
+                        "surface_total_in_m2": 10,
+                        "title": 1
+                      },
+                      "renameByName": {
+                        "description": "Description",
+                        "place_name": "City",
+                        "price": "Price",
+                        "properati_url": "URL",
+                        "property_type": "Type",
+                        "rooms": "Rooms",
+                        "surface_covered_in_m2": "Surface",
+                        "title": "Property name"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "9.0.0-pre",
+            "spec": {
+              "options": {
+                "footer": {
+                  "enablePagination": true,
+                  "fields": "",
+                  "reducer": ["sum"],
+                  "show": false
+                },
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Surface"
+                  }
+                ],
+                "pageSize": 20
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "rent": {
+                          "color": "yellow",
+                          "index": 0
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "property_type"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "gradient",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "store": {
+                                "color": "blue",
+                                "index": 0
+                              }
+                            },
+                            "type": "value"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "title"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 205
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Number of rooms"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 66
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Description"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "URL"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Show details",
+                            "url": "${__value.raw}"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Surface"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "basic",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "dark-red"
+                            },
+                            {
+                              "color": "orange",
+                              "value": 100
+                            },
+                            {
+                              "color": "yellow",
+                              "value": 200
+                            },
+                            {
+                              "color": "green",
+                              "value": 300
+                            },
+                            {
+                              "color": "#EAB839",
+                              "value": 500
+                            },
+                            {
+                              "color": "#6ED0E0",
+                              "value": 1000
+                            },
+                            {
+                              "color": "#EF843C",
+                              "value": 2000
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "unit",
+                        "value": "areaM2"
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 93
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Type"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 94
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "City"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 120
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Rooms"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 77
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Price"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
       "panel-10": {
         "kind": "Panel",
         "spec": {
@@ -2864,6 +3572,32 @@
       "kind": "GridLayout",
       "spec": {
         "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 24,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-13"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 24,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-14"
+              }
+            }
+          },
           {
             "kind": "GridLayoutItem",
             "spec": {
