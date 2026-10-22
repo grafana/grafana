@@ -419,6 +419,10 @@ type PluginBackend struct {
 	// hasBackend is whether the plugin runs a backend process, for the
 	// status page.
 	hasBackend bool
+
+	// acquire, when set, takes what each loaded handler holds until it is
+	// destroyed, such as a reference to a managed plugin's connection.
+	acquire func() (release func(), err error)
 }
 
 // PluginStatus implements [PluginStatusProvider].
@@ -443,6 +447,22 @@ func (b *PluginBackend) Key() string {
 }
 
 func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
+	release := func() {}
+	if b.acquire != nil {
+		var err error
+		if release, err = b.acquire(); err != nil {
+			return nil, err
+		}
+	}
+	handler, err := b.load(ctx)
+	if err != nil {
+		release()
+		return nil, err
+	}
+	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name, release: release}, nil
+}
+
+func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) {
 	clientV2, clientV3, err := b.client(ctx, b.pluginID)
 	if err != nil {
 		return nil, err
@@ -463,16 +483,10 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)
 	}
 
-	var handler *pluginroute.Handler
 	if b.settings != nil {
-		handler, err = b.loadSettings(ctx, cfg, opts, clientV2)
-	} else {
-		handler, err = b.loadManifest(cfg, opts, clientV3)
+		return b.loadSettings(ctx, cfg, opts, clientV2)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name}, nil
+	return b.loadManifest(cfg, opts, clientV3)
 }
 
 // loadSettings serves the settings API, which calls the plugin through its

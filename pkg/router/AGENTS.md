@@ -28,6 +28,13 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
+- **Tear down a retired handler only after it drains.** A handler that holds resources implements
+  `Destroy` (a plugin's API server, through `tracedPluginHandler`). When reconcile retires its
+  entry, the entry refuses new requests (503 with `Retry-After: 1`, for a request that read the
+  old snapshot), its watches end, and `Destroy` runs once the requests in flight finish
+  (`retire.go`). Never destroy a handler under a running request. A managed plugin's gRPC
+  connection is reference-counted by the handlers loaded on it (`acquireConnection`), so it closes
+  with the last one destroyed, never while a superseded handler may still serve.
 - **Build discovery from what is served,** meaning `r.served`, never the raw `Load` result. A group
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
@@ -317,7 +324,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   (`middlewareEnabled`), so a flag that also reaches its deployment can't drop its cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
-  `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
+  `next`, and the router publishes groups and manifests without loading any handler
+  (`manifestsOnly`), since none would be served. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
   in-process storage as a `resource.ManifestDiscovery`. `ProvideService` then attaches the loader.
   The loader depends on storage, so this order keeps the graph acyclic.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
