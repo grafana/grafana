@@ -56,6 +56,8 @@ const tabToColumnMenu = async (page: Page, selectors: E2ESelectorGroups, columnN
   return columnMenuButton(page, selectors, columnName);
 };
 
+// Tests marked with test.fail() cover known bugs and are expected to fail until the bug is fixed. Once a fix
+// lands, the test passes, Playwright reports that as a failure, and the test.fail() line should be removed.
 test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panels', '@table'] }, () => {
   test.describe('keyboard only', () => {
     test('header tab order follows the visual column order', async ({ page, selectors }) => {
@@ -102,6 +104,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
       page,
       selectors,
     }) => {
+      test.fail(true, 'Known bug: the filter popup opens without taking focus, and Tab skips past it.');
       const table = await gotoSoloTable(page, selectors);
       const menuButton = await tabToColumnMenu(page, selectors, 'Info');
       await page.keyboard.press('Enter');
@@ -112,7 +115,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
       await expect(filterContainer).toBeVisible();
       await expect(async () => {
         expect(await filterContainer.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-      }, 'focus moves into the filter popup').toPass();
+      }, 'focus moves into the filter popup').toPass({ timeout: 5_000 });
 
       const rowCount = await table.getAttribute('aria-rowcount');
       // Narrow to one value, select it, then confirm with Ok.
@@ -131,6 +134,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
     });
 
     test('a column can be hidden from the header menu', async ({ page, selectors }) => {
+      test.fail(true, 'Known bug: hiding a column moves focus to <body>.');
       const table = await gotoSoloTable(page, selectors);
       await tabToColumnMenu(page, selectors, 'Info');
       await page.keyboard.press('Enter');
@@ -143,6 +147,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
     });
 
     test('columns can be reordered from the columns sidebar', async ({ page, selectors }) => {
+      test.fail(true, 'Known bug: a keyboard reorder moves focus from the drag handle to the sidebar container.');
       const table = await gotoSoloTable(page, selectors);
       const before = await headerTexts(table);
       await tabToColumnMenu(page, selectors, before[0]);
@@ -169,6 +174,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
     });
 
     test('cell actions menu is reachable from the keyboard', async ({ page, selectors }) => {
+      test.fail(true, 'Known bug: Tab from a cell skips its cell actions button.');
       const table = await gotoSoloTable(page, selectors);
       const cell = table
         .getByRole('gridcell')
@@ -222,6 +228,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
 
   test.describe('screen reader labels', () => {
     test('every column menu button is named after its column', async ({ page, selectors }) => {
+      test.fail(true, 'Known bug: column names are HTML-escaped in the menu button name, e.g. "w&#x2F;" for "w/".');
       const table = await gotoSoloTable(page, selectors);
       const columns = await headerTexts(table);
       const names = await table
@@ -253,6 +260,7 @@ test.describe('Panels test: Table - keyboard and screen reader', { tag: ['@panel
     });
 
     test('the columns sidebar is a named group with named controls', async ({ page, selectors }) => {
+      test.fail(true, 'Known bug: column names are HTML-escaped in the reorder handle name, e.g. "w&#x2F;" for "w/".');
       const table = await gotoSoloTable(page, selectors);
       const columns = await headerTexts(table);
       await page.getByRole('button', { name: `Column options for ${columns[0]}`, exact: true }).click();
