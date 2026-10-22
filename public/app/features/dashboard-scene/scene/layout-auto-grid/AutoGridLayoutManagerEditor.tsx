@@ -69,6 +69,11 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
 
   useSyncUncontrolledInput(inputRef, typeof columnWidth === 'number' ? columnWidth : undefined);
 
+  // A rejected input never reaches the state, so a state change (e.g. by undo/redo) makes its error stale
+  useEffect(() => {
+    setCustomMinWidthError(false);
+  }, [columnWidth]);
+
   const minWidthOptions: Array<ComboboxOption<AutoGridColumnWidth>> = [
     'narrow' as const,
     'standard' as const,
@@ -410,6 +415,11 @@ function NamedOrCustomSizeField<T extends string | number>({
   }, [focusInput, inputRef]);
 
   useSyncUncontrolledInput(inputRef, customValue);
+
+  // A rejected input never reaches the state, so a state change (e.g. by undo/redo) makes its error stale
+  useEffect(() => {
+    setError(false);
+  }, [customValue, isCustom]);
 
   return (
     <Field

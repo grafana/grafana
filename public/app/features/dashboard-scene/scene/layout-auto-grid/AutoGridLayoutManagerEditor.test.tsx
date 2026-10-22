@@ -3,6 +3,7 @@ import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
+import { changeAutoGridRowHeight } from '../../actions/layout/changeAutoGridOption';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -66,6 +67,26 @@ describe('AutoGridLayoutManagerEditor', () => {
     expect(
       await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight)
     ).toHaveValue(300);
+    deactivate();
+  });
+
+  it('clears the custom row height validation error when undo leaves custom mode', async () => {
+    const manager = new AutoGridLayoutManager({ rowHeight: 'standard' });
+    const { sidebar, deactivate } = setup(manager);
+    act(() => changeAutoGridRowHeight(manager, 300));
+    const input = await screen.findByTestId(
+      selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight
+    );
+
+    await userEvent.clear(input);
+    await userEvent.type(input, '10');
+    await userEvent.tab();
+    expect(screen.getByText('A number between 50 and 2000 is required')).toBeInTheDocument();
+
+    act(() => sidebar.undoAction());
+
+    expect(manager.state.rowHeight).toBe('standard');
+    expect(screen.queryByText('A number between 50 and 2000 is required')).not.toBeInTheDocument();
     deactivate();
   });
 
