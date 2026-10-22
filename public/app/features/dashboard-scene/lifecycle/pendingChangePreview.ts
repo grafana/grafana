@@ -60,6 +60,9 @@ type DashboardPendingChangesLoader = (request: { uid: string; id: string }) => P
 /** The embedded view's Show original choices, which have no URL to live in. */
 const ORIGINAL_VIEW_KEY = 'grafana.dashboard.pendingChanges.showOriginal';
 
+/** The pending changes whose changes the requester asked to see highlighted, for the browser tab. */
+const HIGHLIGHT_KEY = 'grafana.dashboard.pendingChanges.highlight';
+
 /** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
 export type PendingChangesView = 'page' | 'embedded';
 
@@ -76,9 +79,10 @@ const previewKey = (view: PendingChangesView, uid: string) => `${view}/${uid}`;
 
 const viewKey = (uid: string, id: string) => `${uid}/${id}`;
 
-function originalViews(): Set<string> {
+/** A per-tab set of `uid/id` keys in session storage. */
+function storedViews(storageKey: string): Set<string> {
   try {
-    const raw = window.sessionStorage.getItem(ORIGINAL_VIEW_KEY);
+    const raw = window.sessionStorage.getItem(storageKey);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []);
   } catch {
@@ -90,7 +94,7 @@ function originalViews(): Set<string> {
 function isShowingOriginal(view: PendingChangesView, uid: string, id: string): boolean {
   return view === 'page'
     ? locationService.getSearchObject()[PENDING_CHANGES_VIEW_QUERY_PARAM] === 'original'
-    : originalViews().has(viewKey(uid, id));
+    : storedViews(ORIGINAL_VIEW_KEY).has(viewKey(uid, id));
 }
 
 /**
@@ -113,18 +117,34 @@ export async function showOriginal(
   await reload();
 }
 
-function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
-  const views = originalViews();
-  if (showOriginal) {
+function setStoredView(storageKey: string, uid: string, id: string, on: boolean) {
+  const views = storedViews(storageKey);
+  if (on) {
     views.add(viewKey(uid, id));
   } else {
     views.delete(viewKey(uid, id));
   }
   try {
-    window.sessionStorage.setItem(ORIGINAL_VIEW_KEY, JSON.stringify([...views]));
+    window.sessionStorage.setItem(storageKey, JSON.stringify([...views]));
   } catch {
     // Without session storage the choice lasts until the next reload.
   }
+}
+
+function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
+  setStoredView(ORIGINAL_VIEW_KEY, uid, id, showOriginal);
+}
+
+/**
+ * Whether the requester asked to see these pending changes highlighted. Kept for the tab, because
+ * a new change from the plugin reloads the dashboard and its banner.
+ */
+export function isHighlightingChanges(uid: string, id: string): boolean {
+  return storedViews(HIGHLIGHT_KEY).has(viewKey(uid, id));
+}
+
+export function setHighlightingChanges(uid: string, id: string, on: boolean) {
+  setStoredView(HIGHLIGHT_KEY, uid, id, on);
 }
 
 /** Whether the pending changes propose a new dashboard rather than change a saved one. */
@@ -241,6 +261,7 @@ export function clearPendingChangePreview(uid: string, id: string) {
     }
   }
   setShowOriginal(uid, id, false);
+  setHighlightingChanges(uid, id, false);
 }
 
 /** A dashboard page search string without the pending changes preview. */

@@ -1,4 +1,4 @@
-import { changedPanelKeys, diffDashboardSpecs } from './specDiff';
+import { changedPanels, diffDashboardSpecs } from './specDiff';
 
 const panel = (id: number, title: string, expr = 'up') => ({
   kind: 'Panel',
@@ -30,9 +30,9 @@ describe('diffDashboardSpecs', () => {
       { type: 'added', target: 'panel', name: 'CPU', panelKey: 'panel-3' },
       { type: 'removed', target: 'panel', name: 'Errors' },
     ]);
-    expect([...changedPanelKeys(changes)]).toEqual([
-      ['panel-1', 'edited'],
-      ['panel-3', 'added'],
+    expect([...changedPanels(changes)]).toEqual([
+      ['panel-1', changes[0]],
+      ['panel-3', changes[1]],
     ]);
   });
 

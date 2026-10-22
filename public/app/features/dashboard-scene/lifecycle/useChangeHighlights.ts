@@ -1,15 +1,24 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { t } from '@grafana/i18n';
+import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { changedPanelKeys, type SpecChange } from './specDiff';
+import { changedPanels, type SpecChange } from './specDiff';
 
 /** Marks the root of an embedded dashboard view (`grafana/dashboard-view/v1`). */
 const DASHBOARD_VIEW_ATTRIBUTE = 'data-dashboard-view';
+
+/** Marks the element a changed panel's badge renders into. */
+const BADGE_ATTRIBUTE = 'data-lifecycle-badge';
+
+/** Marks a panel dimmed because the pending changes leave it as it is. */
+const DIMMED_ATTRIBUTE = 'data-lifecycle-dimmed';
+
+/** Marks a panel positioned for a badge in its corner. */
+const CORNER_ATTRIBUTE = 'data-lifecycle-corner';
 
 /**
  * The element holding a view's panels, found from an element inside the view's banner: the embedded
@@ -35,60 +44,84 @@ export function panelSelector(key: string): string {
   return `[data-viz-panel-key="${CSS.escape(key)}"]`;
 }
 
+/** Where a changed panel's badge renders, and the change it describes. */
+interface ChangeBadgeTarget {
+  change: SpecChange;
+  mount: HTMLElement;
+}
+
 /**
- * Borders the panels pending changes add or edit, in the view `getRoot` returns. Decorates the
- * rendered panels by their scene key instead of changing scene state, so highlighting never marks
- * the dashboard dirty.
+ * The element a panel's badge renders into: right after the panel's title in its header, or, for a
+ * panel without a title, over the panel's top-right corner.
+ */
+function badgeMount(panel: Element, classes: { inline: string; corner: string; cornerHost: string }): HTMLElement {
+  const existing = panel.querySelector<HTMLElement>(`[${BADGE_ATTRIBUTE}]`);
+  if (existing) {
+    return existing;
+  }
+  const mount = document.createElement('span');
+  mount.setAttribute(BADGE_ATTRIBUTE, '');
+  const title = panel.querySelector(`[data-testid="${selectors.components.Panels.Panel.headerContainer}"] h2`);
+  if (title?.parentElement) {
+    mount.className = classes.inline;
+    title.parentElement.after(mount);
+  } else {
+    mount.className = classes.corner;
+    panel.classList.add(classes.cornerHost);
+    panel.setAttribute(CORNER_ATTRIBUTE, '');
+    panel.append(mount);
+  }
+  return mount;
+}
+
+/**
+ * Marks the panels pending changes add or edit, in the view `getRoot` returns: a badge beside each
+ * one's title, which the caller renders into the returned mounts, and the other panels dimmed. Decorates the rendered panels by their scene key instead of changing scene state, so
+ * marking never makes the dashboard dirty.
  */
 export function useChangeHighlights(
   dashboard: DashboardScene,
   changes: SpecChange[] | undefined,
   getRoot: () => Element | null
-) {
+): ChangeBadgeTarget[] {
   const theme = useTheme2();
+  const [targets, setTargets] = useState<ChangeBadgeTarget[]>([]);
 
   useEffect(() => {
     const root = getRoot();
     if (!changes || changes.length === 0 || !root) {
+      setTargets([]);
       return;
     }
-    const keys = changedPanelKeys(changes);
-    const highlight = (color: string, text: string) =>
-      css({
-        position: 'relative',
-        // Above the panel's header and content, which would cover an outline but for its corners.
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          border: `2px solid ${color}`,
-          borderRadius: theme.shape.radius.default,
-          pointerEvents: 'none',
-          zIndex: 1,
-        },
-        '&::after': {
-          content: JSON.stringify(text),
-          position: 'absolute',
-          top: theme.spacing(0.75),
-          right: theme.spacing(5),
-          padding: theme.spacing(0, 0.75),
-          borderRadius: theme.shape.radius.default,
-          background: color,
-          color: theme.colors.getContrastText(color),
-          fontSize: theme.typography.bodySmall.fontSize,
-          lineHeight: theme.typography.bodySmall.lineHeight,
-          pointerEvents: 'none',
-          zIndex: 1,
-        },
-      });
-    const added = highlight(theme.colors.success.border, t('dashboard-scene.lifecycle.highlight-new', 'New'));
-    const edited = highlight(theme.colors.warning.border, t('dashboard-scene.lifecycle.highlight-edited', 'Edited'));
+    const panels = changedPanels(changes);
+    const classes = {
+      inline: css({ display: 'inline-flex', marginLeft: theme.spacing(1) }),
+      corner: css({
+        position: 'absolute',
+        top: theme.spacing(0.75),
+        right: theme.spacing(5),
+        zIndex: 1,
+      }),
+      cornerHost: css({ position: 'relative' }),
+    };
+    const dimmed = css({ opacity: 0.4 });
+    let current: ChangeBadgeTarget[] = [];
     const decorate = () => {
-      for (const [key, type] of keys) {
-        for (const el of queryDashboardView(root, panelSelector(key))) {
-          el.classList.add(type === 'added' ? added : edited);
-          el.setAttribute('data-lifecycle-change', type);
+      const next: ChangeBadgeTarget[] = [];
+      for (const panel of queryDashboardView(root, '[data-viz-panel-key]')) {
+        const change = panels.get(panel.getAttribute('data-viz-panel-key') ?? '');
+        if (change) {
+          next.push({ change, mount: badgeMount(panel, classes) });
+        } else if (!panel.hasAttribute(DIMMED_ATTRIBUTE)) {
+          panel.classList.add(dimmed);
+          panel.setAttribute(DIMMED_ATTRIBUTE, '');
         }
+      }
+      // Rendering the badges mutates the view too; only a new or lost mount needs another render.
+      const unchanged = next.length === current.length && next.every((target, i) => target.mount === current[i].mount);
+      if (!unchanged) {
+        current = next;
+        setTargets(next);
       }
     };
     decorate();
@@ -96,10 +129,18 @@ export function useChangeHighlights(
     observer.observe(root, { childList: true, subtree: true });
     return () => {
       observer.disconnect();
-      queryDashboardView(root, '[data-lifecycle-change]').forEach((el) => {
-        el.classList.remove(added, edited);
-        el.removeAttribute('data-lifecycle-change');
+      queryDashboardView(root, `[${BADGE_ATTRIBUTE}]`).forEach((mount) => mount.remove());
+      queryDashboardView(root, `[${CORNER_ATTRIBUTE}]`).forEach((panel) => {
+        panel.classList.remove(classes.cornerHost);
+        panel.removeAttribute(CORNER_ATTRIBUTE);
       });
+      queryDashboardView(root, `[${DIMMED_ATTRIBUTE}]`).forEach((panel) => {
+        panel.classList.remove(dimmed);
+        panel.removeAttribute(DIMMED_ATTRIBUTE);
+      });
+      setTargets([]);
     };
   }, [dashboard, changes, theme, getRoot]);
+
+  return targets;
 }

@@ -147,7 +147,7 @@ function ChangeList({ changes, onSelectPanel }: { changes: SpecChange[]; onSelec
   );
 }
 
-function changeLabel(change: SpecChange): string {
+export function changeLabel(change: SpecChange): string {
   if (change.target === 'layout') {
     return t('dashboard-scene.lifecycle.change-layout', 'Layout');
   }
@@ -161,7 +161,7 @@ function changeLabel(change: SpecChange): string {
   }
 }
 
-function changeColor(change: SpecChange): BadgeColor {
+export function changeColor(change: SpecChange): BadgeColor {
   if (change.target === 'layout' || change.target === 'settings') {
     return 'blue';
   }
@@ -171,7 +171,7 @@ function changeColor(change: SpecChange): BadgeColor {
 function describeChange(change: SpecChange): string {
   switch (change.target) {
     case 'panel': {
-      const parts = change.parts?.length ? ` · ${change.parts.join(', ')}` : '';
+      const parts = change.parts?.length ? ` → ${change.parts.join(', ')}` : '';
       return t('dashboard-scene.lifecycle.change-panel', 'Panel “{{name}}”', { name: change.name }) + parts;
     }
     case 'variable':

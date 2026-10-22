@@ -1,29 +1,46 @@
 import { css, cx } from '@emotion/css';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { AppEvents, type GrafanaTheme2, locationUtil, urlUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Alert, Button, ConfirmModal, Icon, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  ConfirmModal,
+  Icon,
+  IconButton,
+  LinkButton,
+  Stack,
+  Text,
+  TextLink,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { CompareDrawer } from './CompareDrawer';
+import { changeColor, changeLabel, CompareDrawer } from './CompareDrawer';
 import { getSavedDashboard, type SavedDashboard } from './lifecycleApi';
 import {
   clearPendingChangePreview,
   type DashboardPendingChanges,
   getPendingChangePreview,
+  isHighlightingChanges,
   PENDING_CHANGES_QUERY_PARAM,
   type PendingChangesView,
   previewedDashboardUid,
   proposesNewDashboard,
+  setHighlightingChanges,
   showOriginal,
 } from './pendingChangePreview';
+import { type SpecChange } from './specDiff';
 import { dashboardViewRoot, panelSelector, queryDashboardView, useChangeHighlights } from './useChangeHighlights';
 import { usePendingChangeDiff } from './usePendingChangeDiff';
 
@@ -116,6 +133,13 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   const [currentGeneration, setCurrentGeneration] = useState<number | undefined>(undefined);
   const [comparing, setComparing] = useState(false);
   const [confirm, setConfirm] = useState<'apply' | 'discard' | undefined>(undefined);
+  // Off until the requester asks: badges the changed panels and dims the rest. Kept for the tab, as
+  // the plugin's next change reloads the dashboard and this banner.
+  const [highlighting, setHighlighting] = useState(() => isHighlightingChanges(uid, id));
+  const toggleHighlighting = () => {
+    setHighlightingChanges(uid, id, !highlighting);
+    setHighlighting(!highlighting);
+  };
   const { changes, baseSpec } = usePendingChangeDiff(uid, pending, saved);
 
   useEffect(() => {
@@ -133,8 +157,8 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   // Finds this view's panels: the same dashboard can also be open in another view.
   const anchor = useRef<HTMLSpanElement>(null);
   const viewRoot = useCallback(() => dashboardViewRoot(anchor.current), []);
-  // Against the version they were made from: once the dashboard moved on, they'd mislead.
-  useChangeHighlights(dashboard, stale ? undefined : changes, viewRoot);
+  // Only on request, and against the version they were made from: once the dashboard moved on, they'd mislead.
+  const badges = useChangeHighlights(dashboard, stale || !highlighting ? undefined : changes, viewRoot);
   const title = saved?.title ?? dashboard.state.title;
   const changeCount = changes?.length;
   const canApply = saved?.canEdit ?? false;
@@ -167,9 +191,30 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   return (
     <>
       <span ref={anchor} hidden />
+      {badges.map(({ change, mount }) =>
+        createPortal(
+          <Badge text={changeLabel(change)} color={changeColor(change)} tooltip={changeTooltip(change)} />,
+          mount,
+          change.panelKey
+        )
+      )}
       <LifecycleAlert
         className={styles.banner}
         heading={t('dashboard-scene.lifecycle.pending-title', 'Pending changes')}
+        headingAction={
+          !stale && (
+            <IconButton
+              name={highlighting ? 'eye' : 'eye-slash'}
+              size="sm"
+              tooltip={
+                highlighting
+                  ? t('dashboard-scene.lifecycle.stop-highlighting-changes', 'Stop highlighting changes')
+                  : t('dashboard-scene.lifecycle.highlight-changes', 'Highlight changes on the dashboard')
+              }
+              onClick={toggleHighlighting}
+            />
+          )
+        }
         actions={
           stale ? (
             <>
@@ -394,22 +439,34 @@ async function discardPendingChanges(
   }
 }
 
+/** Which parts of an edited panel changed, on hover. A badge with nothing to add has no tooltip. */
+function changeTooltip(change: SpecChange): string | undefined {
+  return change.type === 'edited' && change.parts?.length
+    ? t('dashboard-scene.lifecycle.change-badge-parts', 'Changed: {{parts}}', { parts: change.parts.join(', ') })
+    : undefined;
+}
+
 interface LifecycleAlertProps {
   className: string;
   heading: string;
+  /** Right after the heading, such as a toggle for how the dashboard shows the changes. */
+  headingAction?: ReactNode;
   /** At the top right. */
   actions: ReactNode;
   children: ReactNode;
 }
 
 /** An Alert with its actions beside the heading, at the top right, rather than centred beside the body. */
-function LifecycleAlert({ className, heading, actions, children }: LifecycleAlertProps) {
+function LifecycleAlert({ className, heading, headingAction, actions, children }: LifecycleAlertProps) {
   const styles = useStyles2(getLifecycleAlertStyles);
   return (
     <Alert className={cx(className, styles.alert)} severity="info" title="" aria-label={heading}>
       <div className={styles.content}>
         <Stack justifyContent="space-between" alignItems="center" wrap="wrap" gap={1}>
-          <Text weight="medium">{heading}</Text>
+          <Stack alignItems="center" gap={1.5}>
+            <Text weight="medium">{heading}</Text>
+            {headingAction}
+          </Stack>
           <Stack gap={1} wrap="wrap">
             {actions}
           </Stack>

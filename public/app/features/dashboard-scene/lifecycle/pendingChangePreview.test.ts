@@ -5,10 +5,13 @@ import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/fe
 import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
 
 import {
+  clearPendingChangePreview,
   finishSavingNewDashboard,
   getPendingChangePreview,
+  isHighlightingChanges,
   loadPendingChangePreview,
   previewedDashboardUid,
+  setHighlightingChanges,
   showOriginal,
   withoutPendingChangesPreview,
 } from './pendingChangePreview';
@@ -159,5 +162,20 @@ describe('a new dashboard proposed as pending changes', () => {
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&orgId=1')).toBe('?orgId=1');
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&pendingChangesView=original')).toBe('');
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1')).toBe('');
+  });
+});
+
+describe('highlighting the pending changes', () => {
+  beforeEach(() => window.sessionStorage.clear());
+
+  it('is remembered for the tab per dashboard and pending changes, and forgotten once they are cleared', () => {
+    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
+
+    setHighlightingChanges('dash', 'chat-1', true);
+    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
+    expect(isHighlightingChanges('dash', 'chat-2')).toBe(false);
+
+    clearPendingChangePreview('dash', 'chat-1');
+    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
   });
 });

@@ -21,7 +21,7 @@ function same(a: unknown, b: unknown): boolean {
   return isEqual(withoutEmpty(a), withoutEmpty(b));
 }
 
-export type SpecChangeType = 'added' | 'edited' | 'removed';
+type SpecChangeType = 'added' | 'edited' | 'removed';
 type SpecChangeTarget = 'panel' | 'variable' | 'layout' | 'settings';
 
 export interface SpecChange {
@@ -109,15 +109,15 @@ export function diffDashboardSpecs(base: unknown, next: unknown): SpecChange[] {
   return changes;
 }
 
-/** Scene keys of the panels a set of changes adds or edits. */
-export function changedPanelKeys(changes: SpecChange[]): Map<string, SpecChangeType> {
-  const keys = new Map<string, SpecChangeType>();
+/** The changes that add or edit a panel, by the panel's scene key. A removed panel isn't on the dashboard. */
+export function changedPanels(changes: SpecChange[]): Map<string, SpecChange> {
+  const panels = new Map<string, SpecChange>();
   for (const change of changes) {
     if (change.target === 'panel' && change.panelKey && change.type !== 'removed') {
-      keys.set(change.panelKey, change.type);
+      panels.set(change.panelKey, change);
     }
   }
-  return keys;
+  return panels;
 }
 
 function panelKeyOf(panel: PanelInfo): string | undefined {

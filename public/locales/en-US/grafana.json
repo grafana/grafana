@@ -7427,6 +7427,7 @@
       "breadcrumb-draft": "Draft",
       "breadcrumb-pending-changes": "Pending changes",
       "change-added": "Added",
+      "change-badge-parts": "Changed: {{parts}}",
       "change-edited": "Edited",
       "change-layout": "Layout",
       "change-layout-detail": "Panels moved, resized, or regrouped",
@@ -7453,8 +7454,7 @@
       "draft-body": "Previewing a new dashboard, only you can see it until you save it.",
       "draft-body-source": "Previewing a new dashboard {{source}}, only you can see it until you save it.",
       "draft-title": "Draft",
-      "highlight-edited": "Edited",
-      "highlight-new": "New",
+      "highlight-changes": "Highlight changes on the dashboard",
       "open-to-save": "Open to save",
       "pending-body": "Previewing pending changes, only you can see them.",
       "pending-body-source": "Previewing pending changes {{source}}, only you can see them.",
@@ -7464,7 +7464,8 @@
       "preview-changes": "Preview changes",
       "rebase": "Rebase",
       "save": "Save",
-      "show-original-dashboard": "Show original dashboard"
+      "show-original-dashboard": "Show original dashboard",
+      "stop-highlighting-changes": "Stop highlighting changes"
     },
     "link-edit-actions": {
       "add-link": "Add link",
