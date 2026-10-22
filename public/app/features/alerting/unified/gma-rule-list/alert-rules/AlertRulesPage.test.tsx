@@ -152,20 +152,34 @@ describe('AlertRulesPage', () => {
   });
 
   it('keeps loaded rows when Load more fails, and reloads them with fresh tokens on Retry', async () => {
+    const continuations: Array<string | null> = [];
+    let firstPages = 0;
     let failNext = true;
-    const continuations = mockPagedSearch((token) => {
-      if (token === 'tok') {
-        return HttpResponse.json({
-          items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-2')],
-          metadata: { continue: 'tok-2' },
-        });
-      }
-      if (failNext) {
-        failNext = false;
-        return HttpResponse.json({ message: 'expired' }, { status: 410 });
-      }
-      return HttpResponse.json({ items: [ruleItem('alert', 'rule-3', 'Memory high', 'folder-1')], metadata: {} });
-    });
+    server.use(
+      http.post(ruleSearchUrl('alert'), async ({ request }) => {
+        const { continue: token } = (await request.json()) as { continue?: string };
+        continuations.push(token ?? null);
+        if (!token) {
+          firstPages += 1;
+          return HttpResponse.json({
+            items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],
+            // The reloaded first page hands out a new token, so a replayed one is detectable.
+            metadata: { continue: firstPages === 1 ? 'tok' : 'tok-fresh' },
+          });
+        }
+        if (token === 'tok' || token === 'tok-fresh') {
+          return HttpResponse.json({
+            items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-2')],
+            metadata: { continue: 'tok-2' },
+          });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'expired' }, { status: 410 });
+        }
+        return HttpResponse.json({ items: [ruleItem('alert', 'rule-3', 'Memory high', 'folder-1')], metadata: {} });
+      })
+    );
 
     render(<AlertRulesPage />);
 
@@ -177,8 +191,8 @@ describe('AlertRulesPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    // Retry reloads both loaded pages from the first one; the failed page is not requested again.
-    await waitFor(() => expect(continuations).toEqual([null, 'tok', 'tok-2', null, 'tok']));
+    // Retry reloads both loaded pages from the first one, taking the second page's token from the reloaded first page.
+    await waitFor(() => expect(continuations).toEqual([null, 'tok', 'tok-2', null, 'tok-fresh']));
     expect(await screen.findByRole('button', { name: 'Load more' })).toBeEnabled();
     expect(screen.getByText('CPU high')).toBeInTheDocument();
     expect(screen.getByText('Disk full')).toBeInTheDocument();
