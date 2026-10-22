@@ -4139,6 +4139,15 @@ describe('DashboardScene', () => {
       expect(pageNav.url).toBe('/subUrl/d/dash-1/dash-1-slug');
     });
 
+    it('links a new dashboard preview to the uid it is proposed under, not to a blank new dashboard', () => {
+      const scene = buildTestScene({ uid: '', meta: { newDashboardUid: 'new-dash' } });
+      const location = { pathname: '/d/new-dash', search: '?pendingChanges=chat-1', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.url).toBe('/subUrl/d/new-dash?pendingChanges=chat-1');
+    });
+
     it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
       const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
       const panel = findVizPanelByKey(scene, 'panel-1')!;

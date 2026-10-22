@@ -485,7 +485,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newCreateParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -531,7 +531,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 					Spec:       folders.FolderSpec{Title: "new"},
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
-				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage, 5), 5, dryRun)
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage), 5, dryRun)
 				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return
@@ -1285,6 +1285,25 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "[folder.not-empty]",
 	}, {
+		name: "folder not empty - contains migrated library panels",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "librarypanels",
+						Count:    3,
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
 		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1886,12 +1905,13 @@ func TestCheckMoveAccess(t *testing.T) {
 		})
 	}
 
-	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+	t.Run("sanitizes BatchCheck transport error", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient(nil)
 		mock.batchCheckErr = fmt.Errorf("boom")
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
-		require.ErrorContains(t, err, "boom")
+		require.True(t, apierrors.IsInternalError(err))
+		require.NotContains(t, err.Error(), "boom")
 		require.Equal(t, 1, mock.batchCheckCall)
 	})
 

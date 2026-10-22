@@ -87,10 +87,14 @@ export function QueryEditorPanel({
     () => ({
       datasourceType: coauthoringDatasourceType,
       previewPhase: proposalTransaction.previewPhase,
+      previewData: proposalTransaction.previewData,
+      readPreviewData: proposalTransaction.readPreviewData,
       timeRange: filteredData?.timeRange
         ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
         : undefined,
       preview: proposalTransaction.preview,
+      peek: proposalTransaction.peek,
+      stopPeek: proposalTransaction.stopPeek,
       accept: proposalTransaction.accept,
       revert: proposalTransaction.revert,
     }),
@@ -99,7 +103,11 @@ export function QueryEditorPanel({
       filteredData?.timeRange,
       proposalTransaction.accept,
       proposalTransaction.preview,
+      proposalTransaction.peek,
+      proposalTransaction.stopPeek,
       proposalTransaction.previewPhase,
+      proposalTransaction.previewData,
+      proposalTransaction.readPreviewData,
       proposalTransaction.revert,
     ]
   );
