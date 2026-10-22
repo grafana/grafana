@@ -15,14 +15,14 @@ jest.mock('ol-mapbox-style', () => ({
   applyBackground: (...args: unknown[]) => applyBackgroundMock(...args),
 }));
 
-import { protomaps, ProtomapsFlavor, type ProtomapsConfig, TileDelivery } from './protomaps';
+import { protomaps, ProtomapsFlavor, type ProtomapsConfig, TileDelivery, toExpressionFilter } from './protomaps';
 
 const map = {} as OpenLayersMap;
 const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, six labels, one border, two roads */
+/** Trimmed from a generated Protomaps style: one fill, six labels, two borders, two roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -93,6 +93,14 @@ const STYLE = {
         'line-width': 0.7,
         'line-dasharray': ['step', ['zoom'], ['literal', [2, 0]], 4, ['literal', [2, 1]]],
       },
+    },
+    {
+      id: 'boundaries',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'boundaries',
+      filter: ['>', 'kind_detail', 2],
+      paint: { 'line-color': '#adadad', 'line-width': 0.4 },
     },
     {
       id: 'places_region',
@@ -317,6 +325,70 @@ describe('Protomaps basemap', () => {
     expect(layer('boundaries_country').minzoom).toBeUndefined();
   });
 
+  it('draws macroregion borders up to zoom 6 and state borders only from zoom 6, like CARTO', async () => {
+    await initLayer({ showLabels: true });
+
+    const boundaries = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'boundaries');
+    expect(boundaries.filter).toEqual([
+      'all',
+      ['>', ['get', 'kind_detail'], 2],
+      [
+        'any',
+        ['all', ['==', ['get', 'kind'], 'macroregion'], ['<', ['zoom'], 6]],
+        ['match', ['get', 'kind_detail'], 4, ['>=', ['zoom'], 6], 6, ['>=', ['zoom'], 9], false],
+      ],
+    ]);
+  });
+
+  it.each([
+    [
+      ['has', 'name'],
+      ['has', 'name'],
+    ],
+    [
+      ['!has', 'is_tunnel'],
+      ['!', ['has', 'is_tunnel']],
+    ],
+    [
+      ['in', 'kind', 'lake', 'water'],
+      ['in', ['get', 'kind'], ['literal', ['lake', 'water']]],
+    ],
+    [
+      ['!in', 'kind', 'path', 'other'],
+      ['!', ['in', ['get', 'kind'], ['literal', ['path', 'other']]]],
+    ],
+    [
+      ['==', 'kind', 'locality'],
+      ['==', ['get', 'kind'], 'locality'],
+    ],
+    [
+      ['!=', 'kind_detail', 'service'],
+      ['!=', ['get', 'kind_detail'], 'service'],
+    ],
+    [
+      ['>', 'kind_detail', 2],
+      ['>', ['get', 'kind_detail'], 2],
+    ],
+    [
+      ['<=', 'kind_detail', 2],
+      ['<=', ['get', 'kind_detail'], 2],
+    ],
+    [
+      ['all', ['!has', 'is_bridge'], ['any', ['==', 'kind', 'major_road'], ['in', 'kind', 'highway']]],
+      [
+        'all',
+        ['!', ['has', 'is_bridge']],
+        ['any', ['==', ['get', 'kind'], 'major_road'], ['in', ['get', 'kind'], ['literal', ['highway']]]],
+      ],
+    ],
+    [
+      ['==', ['get', 'kind'], 'sea'],
+      ['==', ['get', 'kind'], 'sea'],
+    ],
+  ])('converts the legacy filter %j to %j', (legacy, expression) => {
+    expect(toExpressionFilter(legacy)).toEqual(expression);
+  });
+
   it('keeps the generator’s legacy filter working when it adds CARTO’s classes', async () => {
     await initLayer({ showLabels: true });
 
@@ -341,6 +413,7 @@ describe('Protomaps basemap', () => {
       'roads_highway',
       'roads_major',
       'boundaries_country',
+      'boundaries',
     ]);
   });
 

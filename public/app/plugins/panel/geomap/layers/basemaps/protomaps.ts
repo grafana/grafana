@@ -74,10 +74,9 @@ const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Re
   water_waterway_label: {
     layout: { 'text-size': zoomRamp([9, 8], [10, 9]), 'text-font': ['Inter Italic'], 'text-letter-spacing': 0 },
   },
-  // Protomaps labels seas, bays and straits in this layer too, which CARTO draws at a fixed 12px
   water_label_ocean: {
     layout: {
-      'text-size': zoomRamp([0, oceanOr(13, 12)], [2, oceanOr(14, 12)], [4, oceanOr(18, 12)]),
+      'text-size': 12,
       'text-font': ['Inter SemiBold Italic'],
       'text-transform': 'none',
       'text-letter-spacing': 0.1,
@@ -193,9 +192,14 @@ const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?
   roads_rail: { minzoom: 13 },
   roads_runway: { minzoom: 12 },
   buildings: { minzoom: 13 },
-  // CARTO draws state borders from zoom 4 and county borders from zoom 9, and no city districts
+  // CARTO draws macroregion borders up to zoom 6, state borders from zoom 6, county borders from
+  // zoom 9, and no city districts
   boundaries: {
-    visible: ['match', KIND_DETAIL, 4, fromZoom(4), 6, fromZoom(9), false],
+    visible: [
+      'any',
+      ['all', ['==', ['get', 'kind'], 'macroregion'], ['<', ['zoom'], 6]],
+      ['match', KIND_DETAIL, 4, fromZoom(6), 6, fromZoom(9), false],
+    ],
   },
   places_country: {
     minzoom: 2,
@@ -254,15 +258,17 @@ const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?
   // Seas from zoom 5. Ocean points carry only translated names, and CARTO's style reads `name`
   // alone, so it never draws them. Nor does it name bays, straits or fjords
   water_label_ocean: { minzoom: 5, visible: ['==', ['get', 'kind'], 'sea'] },
-  water_label_lakes: { minzoom: 4, visible: ['match', ['get', 'kind'], 'water', fromZoom(15), true] },
+  water_label_lakes: { minzoom: 4 },
   roads_labels_major: {
     minzoom: 13,
     visible: [
       'match',
-      ['get', 'kind'],
-      'highway',
+      KIND_DETAIL,
+      ['motorway', 'motorway_link', 'trunk', 'trunk_link'],
       true,
-      ['match', KIND_DETAIL, ['trunk', 'primary'], fromZoom(14), fromZoom(15)],
+      ['primary', 'primary_link'],
+      fromZoom(14),
+      fromZoom(15),
     ],
   },
 };
@@ -579,12 +585,13 @@ function adaptLayer<T extends GlLayer>(layer: T, mutedPaint: GlLayer['paint']): 
   }
   const zoomRange = ZOOM_RANGES[adapted.id];
   if (zoomRange) {
-    adapted = {
-      ...adapted,
-      minzoom: Math.max(adapted.minzoom ?? 0, zoomRange.minzoom ?? 0),
-      maxzoom: Math.min(adapted.maxzoom ?? Infinity, zoomRange.maxzoom ?? Infinity),
-      filter: withVisibility(adapted.filter, zoomRange.visible),
-    };
+    adapted = { ...adapted, filter: withVisibility(adapted.filter, zoomRange.visible) };
+    if (zoomRange.minzoom !== undefined) {
+      adapted.minzoom = Math.max(adapted.minzoom ?? 0, zoomRange.minzoom);
+    }
+    if (zoomRange.maxzoom !== undefined) {
+      adapted.maxzoom = Math.min(adapted.maxzoom ?? Infinity, zoomRange.maxzoom);
+    }
   }
   const labelStyle = LABEL_STYLES[adapted.id];
   if (labelStyle) {
@@ -620,10 +627,6 @@ function sizeByClass(classOf: GlValue, classes: string[], stops: Array<[number, 
   );
 }
 
-function oceanOr(ocean: number, other: number): GlValue {
-  return ['match', ['get', 'kind'], 'ocean', ocean, other];
-}
-
 /**
  * A filter mixing the two syntaxes is read as an expression throughout, which turns a legacy
  * `["in", "kind", ...]` into a substring test, so the generator's legacy filter is converted first.
@@ -636,7 +639,7 @@ function withVisibility(filter: GlValue | undefined, visible: GlValue | undefine
 }
 
 /** Converts the legacy filter forms the Protomaps style generator emits, and leaves expressions alone */
-function toExpressionFilter(filter: GlValue): GlValue {
+export function toExpressionFilter(filter: GlValue): GlValue {
   if (!Array.isArray(filter)) {
     return filter;
   }
