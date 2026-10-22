@@ -4,10 +4,12 @@ import { type SceneObject } from '@grafana/scenes';
 
 import { renameElement } from '../actions/element/renameElement';
 import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { isSceneVariable } from '../settings/variables/utils';
 
 export interface OutlineRenameState {
   isRenaming?: boolean;
   originalName?: string;
+  draftName?: string;
   error?: string;
 }
 
@@ -31,7 +33,8 @@ export function useOutlineRename(
     }
 
     isCommitPendingRef.current = true;
-    setState({ isRenaming: true, originalName: getRawName(sceneObject, editableElement) });
+    const originalName = getRawName(sceneObject, editableElement);
+    setState({ isRenaming: true, originalName, draftName: originalName });
   };
 
   const onInputBlur = () => {
@@ -61,12 +64,10 @@ export function useOutlineRename(
   }, []);
 
   const onChangeName = (evt: ChangeEvent<HTMLInputElement>) => {
-    const result = editableElement.onChangeName!(evt.target.value);
-    if (result?.errorMessage) {
-      setState({ ...state, error: result.errorMessage });
-    } else if (state.error) {
-      setState({ ...state, error: undefined });
-    }
+    const draftName = evt.target.value;
+    const result = editableElement.onChangeName!(draftName);
+    // The outline node does not re-render on scene object state changes, so the input reads the draft from here
+    setState((prev) => ({ ...prev, draftName, error: result?.errorMessage }));
   };
 
   const onInputKeyDown = (evt: KeyboardEvent) => {
@@ -77,6 +78,7 @@ export function useOutlineRename(
 
   return {
     isRenaming: state.isRenaming,
+    draftName: state.draftName ?? '',
     onNameDoubleClicked,
     renameInputRef,
     onChangeName,
@@ -86,9 +88,14 @@ export function useOutlineRename(
 }
 
 /**
- * The displayed name of panels, rows and tabs has variables interpolated, undo has to restore the raw title
+ * The name that onChangeName writes, which can differ from the displayed instanceName:
+ * variables display their label, and panels, rows and tabs display their title with variables interpolated.
  */
 function getRawName(sceneObject: SceneObject, editableElement: EditableDashboardElement): string {
+  if (isSceneVariable(sceneObject)) {
+    return sceneObject.state.name;
+  }
+
   const { state } = sceneObject;
   if ('title' in state && typeof state.title === 'string') {
     return state.title;

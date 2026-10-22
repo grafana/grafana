@@ -12,6 +12,7 @@ interface DashboardOutlineNodeButtonContentProps {
   instanceName: string;
   isCloned: boolean;
   isRenaming: boolean | undefined;
+  renameValue: string;
   renameInputRef: (ref: HTMLInputElement | null) => void;
   onChangeName: (evt: ChangeEvent<HTMLInputElement>) => void;
   onInputBlur: () => void;
@@ -23,6 +24,7 @@ export function DashboardOutlineNodeButtonContent({
   instanceName,
   isCloned,
   isRenaming,
+  renameValue,
   renameInputRef,
   onChangeName,
   onInputBlur,
@@ -45,7 +47,7 @@ export function DashboardOutlineNodeButtonContent({
       <input
         ref={renameInputRef}
         type="text"
-        value={elementInfo.instanceName}
+        value={renameValue}
         className={styles.outlineInput}
         onChange={onChangeName}
         onBlur={onInputBlur}
