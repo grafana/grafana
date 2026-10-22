@@ -257,3 +257,28 @@ func (t headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set(t.name, t.value)
 	return t.base.RoundTrip(req)
 }
+
+// mtDiscoveryRule serves the router's request to skip it: a stack's own groups
+// only, so what the router has offered never comes back to it as the stack's.
+func mtDiscoveryRule() discoveryRule {
+	return discoveryRule{
+		Header:  skipMTHeader,
+		Exclude: func(e servingEntry) bool { return e.source == aggregateSource(mtSourceName) },
+	}
+}
+
+// WatchLocalGroups reads the groups the embedded apiserver serves, once it is
+// ready, through its loopback config. It does nothing without the router's
+// groups to compare them with.
+func (s *Service) WatchLocalGroups(ctx context.Context, cfg *rest.Config) error {
+	if s.mtRoutes == nil {
+		return nil
+	}
+	client, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return fmt.Errorf("building loopback discovery client: %w", err)
+	}
+	client.Timeout = singleTenantLookupTimeout
+	go s.mtRoutes.local.run(ctx, client, cfg.Host)
+	return nil
+}

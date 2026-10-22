@@ -28,6 +28,8 @@ type fakeMTRouter struct {
 	markerSeen atomic.Bool
 	// accessToken is the X-Access-Token of the latest discovery request.
 	accessToken atomic.Value
+	// proxiedToken is the X-Access-Token of the latest proxied request.
+	proxiedToken atomic.Value
 }
 
 func newFakeMTRouter(t *testing.T, groups ...string) *fakeMTRouter {
@@ -46,6 +48,7 @@ func newFakeMTRouter(t *testing.T, groups ...string) *fakeMTRouter {
 			serveLocalDiscovery(w, true, groups)
 			return
 		}
+		f.proxiedToken.Store(r.Header.Get("X-Access-Token"))
 		w.WriteHeader(http.StatusAccepted)
 	}))
 	t.Cleanup(f.Close)

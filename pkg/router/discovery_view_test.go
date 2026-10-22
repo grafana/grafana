@@ -89,13 +89,18 @@ func sourceHandler(calls *int) http.Handler {
 
 func legacyGroups(t *testing.T, router *GrafanaRouter, next http.Handler, header string) []string {
 	t.Helper()
+	return legacyGroupsWith(t, router.HandleFunc, next, header)
+}
+
+func legacyGroupsWith(t *testing.T, handle func(http.ResponseWriter, *http.Request, http.Handler), next http.Handler, header string) []string {
+	t.Helper()
 	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", "application/json")
 	if header != "" {
 		req.Header.Set(header, "true")
 	}
 	res := httptest.NewRecorder()
-	router.HandleFunc(res, req, next)
+	handle(res, req, next)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 	var list metav1.APIGroupList
 	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &list))

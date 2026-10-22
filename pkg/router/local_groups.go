@@ -6,23 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
-	lru "github.com/hashicorp/golang-lru/v2"
-	clientrest "k8s.io/client-go/rest"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-
 	// stFallbackHeader marks a request a single-tenant stack forwarded to the
 	// multi-tenant router for a group it does not serve. The router's own
 	// single-tenant fallback sends unknown groups back to the stack, so
@@ -38,9 +31,6 @@ const (
 	skipSTHeader = "X-Grafana-Discovery-Skip-ST"
 	skipMTHeader = "X-Grafana-Discovery-Skip-MT"
 	skipValue    = "true"
-
-	// mtBreakerCacheSize bounds breakers, which are keyed by a client-supplied group.
-	mtBreakerCacheSize = 1000
 )
 
 // localGroups is the set of API groups the embedded API server answers for,
@@ -185,122 +175,4 @@ func apiServiceGroups(ctx context.Context, client *http.Client, url string) ([]s
 		groups = append(groups, item.Spec.Group)
 	}
 	return groups, nil
-}
-
-// mtFallback forwards requests for groups the embedded API server does not
-// serve to the multi-tenant router.
-type mtFallback struct {
-	target    *url.URL
-	transport *http.Transport
-	local     *localGroups
-
-	breakerMu sync.Mutex
-	breakers  *lru.Cache[string, *groupBreaker]
-}
-
-func newMTFallback(address, caFile string, insecure bool) (*mtFallback, error) {
-	target, err := url.Parse(address)
-	if err != nil || (target.Scheme != "http" && target.Scheme != "https") || target.Host == "" {
-		return nil, fmt.Errorf("%s: %s must be an absolute HTTP(S) URL", cloudRouterSection, mtRouterAddressKey)
-	}
-	// Insecure would silently override the CA, which hides a misconfiguration.
-	if insecure && caFile != "" {
-		return nil, fmt.Errorf("%s: %s and %s cannot both be set", cloudRouterSection, mtRouterCAFileKey, mtRouterInsecureKey)
-	}
-	tlsCfg, err := buildAggregateTLSConfig(caFile, insecure)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, mtRouterAddressKey, err)
-	}
-	breakers, err := lru.New[string, *groupBreaker](mtBreakerCacheSize)
-	if err != nil {
-		return nil, err
-	}
-	return &mtFallback{target: target, transport: newAggregateBaseTransport(tlsCfg), local: newLocalGroups(), breakers: breakers}, nil
-}
-
-// newMTFallbackFromConfig builds the fallback from the [cloud_router] section,
-// or returns nil when mt_router_address is not set. A full Grafana server never
-// builds the cloud routes loader, which only the standalone router does, so the
-// service reads these settings itself.
-//
-// Only a cloud stack gets the fallback: its platform sets [environment]
-// stack_id, which the rest of Grafana also reads to tell a stack from a
-// self-managed install.
-func newMTFallbackFromConfig(cfg *setting.Cfg) (*mtFallback, error) {
-	if cfg == nil {
-		return nil, nil
-	}
-	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
-	address := section.Key(mtRouterAddressKey).MustString("")
-	if address == "" {
-		return nil, nil
-	}
-	if cfg.StackID == "" {
-		logging.DefaultLogger.Warn("router: ignoring " + mtRouterAddressKey + ", which applies only to a cloud stack ([environment] stack_id is not set)")
-		return nil, nil
-	}
-	return newMTFallback(address, section.Key(mtRouterCAFileKey).MustString(""), section.Key(mtRouterInsecureKey).MustBool(false))
-}
-
-// handles reports whether req is for a group that is not served locally. A
-// request already marked as forwarded is never sent again, which also stops a
-// stack whose address points at itself.
-func (m *mtFallback) handles(req *http.Request, group string) bool {
-	return group != "" && req.Header.Get(stFallbackHeader) == "" && m.local.absent(group)
-}
-
-func (m *mtFallback) serve(w http.ResponseWriter, req *http.Request, group string) {
-	proxy := &httputil.ReverseProxy{
-		Rewrite: func(pr *httputil.ProxyRequest) {
-			rewriteOutbound(pr, m.target)
-			pr.Out.Header.Set(stFallbackHeader, stFallbackValue)
-		},
-		Transport:     newBackendTransport(m.transport),
-		ErrorHandler:  proxyErrorHandler,
-		FlushInterval: streamingFlushInterval,
-		ModifyResponse: func(resp *http.Response) error {
-			return rejectBackendRedirects(resp)
-		},
-	}
-	serveThroughBreaker(m.breakerFor(group), group, proxy, w, req)
-}
-
-func (m *mtFallback) breakerFor(group string) *groupBreaker {
-	key := strings.TrimSuffix(m.target.String(), "/") + "#" + group
-	m.breakerMu.Lock()
-	defer m.breakerMu.Unlock()
-	if breaker, ok := m.breakers.Get(key); ok {
-		return breaker
-	}
-	breaker := newGroupBreaker(key)
-	m.breakers.Add(key, breaker)
-	return breaker
-}
-
-// WatchLocalGroups reads the groups the embedded API server serves, once it is
-// ready, through its loopback config. It is a no-op when no multi-tenant router is configured.
-func (s *Service) WatchLocalGroups(ctx context.Context, cfg *clientrest.Config) error {
-	if s.mt == nil {
-		return nil
-	}
-	client, err := clientrest.HTTPClientFor(cfg)
-	if err != nil {
-		return fmt.Errorf("building loopback discovery client: %w", err)
-	}
-	client.Timeout = singleTenantLookupTimeout
-	go s.mt.local.run(ctx, client, cfg.Host)
-	return nil
-}
-
-func (s *Service) serveMT(w http.ResponseWriter, req *http.Request, group string) {
-	setRoute(req, routeFallback)
-	if rejectUpgrade(w, req) {
-		return
-	}
-	serve := func(w http.ResponseWriter, req *http.Request) { s.mt.serve(w, req, group) }
-	if requestVerb(req) == "watch" {
-		s.router.serveWatch(w, req, nil, serve)
-		return
-	}
-	serve(w, req)
 }
