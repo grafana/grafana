@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setRunRequest } from '@grafana/runtime';
-import { AdHocFiltersVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, type AdHocFilterWithLabels } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -530,6 +530,28 @@ describe('AdHocFiltersVariableEditor undo/redo', () => {
 
     expect(sidebar.state.undoStack).toHaveLength(undoStackLength);
   });
+
+  it('does not record moving editing between default filters loaded with the dashboard', async () => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    const { sidebar } = await setup(undefined, {
+      inline: true,
+      originFilters: [
+        { key: 'region', operator: '=', value: 'eu', origin: 'dashboard' },
+        { key: 'zone', operator: '=', value: 'a', origin: 'dashboard' },
+      ],
+    });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+
+    const [regionFilter, zoneFilter] = capturedOriginController!.useState().filters;
+    expect(regionFilter).toMatchObject({ key: 'region', value: 'eu' });
+    act(() => capturedOriginController!.handleComboboxBackspace(zoneFilter));
+    expect(capturedOriginController!.useState().filters[0].forceEdit).toBe(true);
+    act(() =>
+      capturedOriginController!.updateFilter(capturedOriginController!.useState().filters[0], { forceEdit: undefined })
+    );
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
 });
 
 interface SetupOptions {
@@ -537,6 +559,7 @@ interface SetupOptions {
   enableGroupBy?: boolean;
   datasource?: { uid: string; type: string } | null;
   inline?: boolean;
+  originFilters?: AdHocFilterWithLabels[];
 }
 
 async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, options: SetupOptions = {}) {
@@ -545,6 +568,7 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     enableGroupBy,
     datasource = { uid: defaultDatasource.uid, type: defaultDatasource.type },
     inline,
+    originFilters,
   } = options;
   const onRunQuery = jest.fn();
   const variable = new AdHocFiltersVariable({
@@ -570,6 +594,7 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     allowCustomValue: true,
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
     enableGroupBy,
+    originFilters,
   });
   // Only inline editors record changes, which needs the variable to be part of an edited dashboard
   const sidebar = inline ? addToEditedDashboard(variable) : undefined;

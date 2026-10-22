@@ -1,4 +1,4 @@
-import { isEqual, noop, omit } from 'lodash';
+import { isEqual, noop, omit, sortBy } from 'lodash';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -82,8 +82,9 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       setOriginalFilters(filters);
       originFiltersSetByEditor.current = filters;
 
-      // Moving editing between pills only toggles forceEdit, which is not a change worth an undo entry
-      const changed = !isEqual(withoutForceEdit(oldOriginFilters), withoutForceEdit(filters));
+      // Moving editing between pills only toggles forceEdit, which is not a change worth an undo entry.
+      // Compared with the editor's own filters, as the runtime origin filters can differ in shape and order.
+      const changed = !isEqual(withoutForceEdit(originalFilters), withoutForceEdit(filters));
 
       undoableVariableEdit(inline && changed, {
         meta,
@@ -100,7 +101,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       });
       lastOriginalFilters.current = variable.getOriginalFilters();
     },
-    [variable, inline]
+    [variable, inline, originalFilters]
   );
 
   const originFiltersController = useMemo(() => {
@@ -279,6 +280,10 @@ export function getAdHocFilterOptions(variable: SceneVariable): OptionsPaneItemD
   ];
 }
 
-function withoutForceEdit(filters: AdHocFilterWithLabels[] | undefined) {
-  return filters?.map((filter) => omit(filter, 'forceEdit'));
+function withoutForceEdit(filters: AdHocFilterWithLabels[]) {
+  // The editors only add, update or remove filters, so a different order alone is not a change
+  return sortBy(
+    filters.map((filter) => omit(filter, 'forceEdit')),
+    (filter) => JSON.stringify(filter)
+  );
 }
