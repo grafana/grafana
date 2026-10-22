@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -109,9 +110,23 @@ func TestService_UpdatePluginSetting_JSONDataSize(t *testing.T) {
 		OrgID:    1,
 		JSONData: map[string]any{"k": strings.Repeat("a", maxJSONDataBytes)},
 	})
-	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingJSONDataTooLarge)
+	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
 
-	require.NoError(t, validateJSONDataSize(map[string]any{"k": strings.Repeat("a", maxJSONDataBytes-len(`{"k":""}`))}))
+	require.NoError(t, validateStoredSize("jsonData", map[string]any{"k": strings.Repeat("a", maxJSONDataBytes-len(`{"k":""}`))}))
+}
+
+func TestService_UpdatePluginSetting_SecureJSONDataSize(t *testing.T) {
+	psService := ProvideService(nil, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+
+	err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
+		PluginID:       "test-app",
+		OrgID:          1,
+		SecureJSONData: map[string]string{"k": strings.Repeat("a", maxJSONDataBytes)},
+	})
+	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
+	var e errutil.Error
+	require.ErrorAs(t, err, &e)
+	require.Equal(t, "Plugin secureJsonData is too large to store.", e.PublicMessage)
 }
 
 func TestIntegrationPluginSettings(t *testing.T) {
