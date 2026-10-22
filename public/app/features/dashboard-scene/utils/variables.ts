@@ -92,7 +92,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
   const defaultVariableObjects = createSceneVariablesFromVariableKinds(defaultVariables, { migrateUrlState: false });
 
   // Explicitly disable scopes for public dashboards
-  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 

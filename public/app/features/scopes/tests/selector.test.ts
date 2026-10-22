@@ -1,6 +1,7 @@
-import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_SCOPES } from '@grafana/test-utils/unstable';
+import { MOCK_SCOPES, testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
@@ -48,9 +49,7 @@ describe('Selector', () => {
   let dashboardReloadSpy: jest.SpyInstance;
   let scopesService: ScopesService;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const result = await renderDashboard();
