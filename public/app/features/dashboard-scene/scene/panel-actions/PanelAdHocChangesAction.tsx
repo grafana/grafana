@@ -1,10 +1,11 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { Button, Dropdown, Icon, Menu, PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { getDashboardScenePageStateManager } from '../../pages/DashboardScenePageStateManager';

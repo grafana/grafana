@@ -196,6 +196,14 @@ export interface PanelInteractionPromotionContext {
   transformations: readonly DataTransformerConfig[];
 }
 
+/**
+ * Owner under which a panel keeps its viewer-only (ad hoc) runtime transformations. A panel has a single set of
+ * unsaved ad hoc changes, so every panel uses this owner.
+ *
+ * @alpha
+ */
+export const PANEL_AD_HOC_TRANSFORMATIONS_OWNER = 'grafana:panel-adhoc';
+
 export interface PanelInteractions {
   interactions: PanelInteraction[];
 }

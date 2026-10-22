@@ -9,19 +9,12 @@ import {
   type GrafanaTheme2,
   type PanelProps,
   type SelectableValue,
+  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
-import {
-  Combobox,
-  Field,
-  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
-  Stack,
-  usePanelContext,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useAdHocColumnState,

@@ -14,13 +14,14 @@ import {
   standardFieldConfigEditorRegistry,
   type DataTransformerConfig,
   type FieldConfigSource,
+  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER, PanelContextProvider } from '@grafana/ui';
+import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { getPanelProps } from '../test-utils';

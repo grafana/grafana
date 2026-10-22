@@ -10,10 +10,11 @@ import {
   EventBusSrv,
   type FieldConfigSource,
   FieldType,
+  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER, type PanelContext, PanelContextProvider } from '@grafana/ui';
+import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import {
   useCacheFieldDisplayNames,

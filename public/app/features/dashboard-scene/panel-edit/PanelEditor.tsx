@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
 
-import { type NavIndex, type PanelPlugin } from '@grafana/data';
+import { type NavIndex, type PanelPlugin, PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -20,7 +20,6 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { createInfoNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';

@@ -1,8 +1,7 @@
-import { type PanelInteraction } from '@grafana/data';
+import { type PanelInteraction, PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DashboardScene } from '../DashboardScene';

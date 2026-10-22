@@ -15,14 +15,6 @@ import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
-/**
- * Owner under which a panel keeps its viewer-only (ad hoc) runtime transformations. A panel has a single set of
- * unsaved ad hoc changes, so every panel uses this owner.
- *
- * @alpha
- */
-export const PANEL_AD_HOC_TRANSFORMATIONS_OWNER = 'grafana:panel-adhoc';
-
 /** Runtime transformations supplied by a panel host, grouped by owner. @alpha */
 export interface PanelRuntimeTransformations {
   /** Returns the same immutable snapshot until this owner changes. */

@@ -1,10 +1,10 @@
 import { act, render, screen, userEvent } from 'test/test-utils';
 
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DashboardScene } from '../DashboardScene';

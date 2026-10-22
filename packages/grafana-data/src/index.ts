@@ -456,6 +456,7 @@ export {
   type PanelInteraction,
   type PanelInteractions,
   type PanelInteractionPromotionContext,
+  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,

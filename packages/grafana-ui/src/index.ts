@@ -180,7 +180,6 @@ export {
   PanelContextProvider,
   type PanelContext,
   type PanelRuntimeTransformations,
-  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
   type AdHocTransformationsState,
   PanelContextRoot,
   usePanelContext,

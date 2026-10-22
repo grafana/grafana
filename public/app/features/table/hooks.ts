@@ -8,6 +8,7 @@ import {
   type Field,
   type FieldConfigSource,
   type InterpolateFunction,
+  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import {
   useFlagTableAutoColumnWidths,
@@ -17,7 +18,7 @@ import {
   useFlagTableSharedCrosshair,
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER, usePanelContext } from '@grafana/ui';
+import { usePanelContext } from '@grafana/ui';
 import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 

@@ -1,6 +1,6 @@
+import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
