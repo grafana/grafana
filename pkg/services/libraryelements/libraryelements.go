@@ -82,7 +82,9 @@ type LibraryElementService struct {
 	// unset, those queries use SQLStore and bare table names.
 	LegacyDatabaseProvider legacysql.LegacyDatabaseProvider
 	// ConnectedDashboardsFinder is used by the folder-delete path to check whether a library panel is
-	// still referenced outside the folder being deleted. Defaults to dashboardsService.
+	// still referenced outside the folder being deleted. ProvideService defaults this to
+	// dashboardsService; any other construction must set it explicitly or folder deletes
+	// containing library elements fail with ErrConnectedDashboardsFinderNotConfigured.
 	ConnectedDashboardsFinder ConnectedDashboardsFinder
 }
 

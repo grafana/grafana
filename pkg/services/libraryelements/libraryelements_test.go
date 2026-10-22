@@ -64,6 +64,14 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
 		})
 
+	scenarioWithPanel(t, "When ConnectedDashboardsFinder isn't configured, deleting a folder with library elements should fail instead of panicking",
+		func(t *testing.T, sc scenarioContext) {
+			sc.service.ConnectedDashboardsFinder = nil
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
+		})
+
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())

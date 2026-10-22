@@ -833,6 +833,10 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 		return err
 	}
 
+	if len(elements) > 0 && l.ConnectedDashboardsFinder == nil {
+		return model.ErrConnectedDashboardsFinderNotConfigured
+	}
+
 	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
 		connectedDashboards, err := l.ConnectedDashboardsFinder.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
