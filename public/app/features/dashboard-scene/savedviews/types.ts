@@ -23,10 +23,21 @@ export interface SavedViewTimeRange {
   timezone?: string;
 }
 
+/** Ad hoc filters scoped to a tab or row. */
+export interface SavedViewSectionFilter {
+  sectionKind: 'tab' | 'row';
+  /** A layout path, e.g. "/tabs/1" or "/rows/0/tabs/2". */
+  sectionKey: string;
+  /** Title at capture time, so apply can tell if layout edits moved sectionKey to another section. */
+  sectionTitle?: string;
+  variables: SavedViewVariable[];
+}
+
 /** Mirrors the spec in apps/dashboardviews/kinds/saveddashboardview.cue. */
 export interface SavedDashboardViewSpec {
   dashboardUID: string;
   name: string;
   timeRange: SavedViewTimeRange;
   variables: SavedViewVariable[];
+  sectionFilters?: SavedViewSectionFilter[];
 }
