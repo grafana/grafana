@@ -4,9 +4,10 @@ import * as React from 'react';
 import { ValueMatcherID, type RangeValueMatcherOptions } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineLabel } from '@grafana/ui';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
-import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
+import { numberOrVariableValidator } from '../../utils';
 
 import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 
