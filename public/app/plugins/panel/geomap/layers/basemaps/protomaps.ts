@@ -41,16 +41,118 @@ const PROMINENT_POI: GlValue = [
   ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13],
 ];
 
+const MIN_ZOOM: GlValue = ['coalesce', ['get', 'min_zoom'], 0];
+
+/**
+ * Protomaps sizes places by population rank. CARTO, on the same Tilezen-style tile schema, sizes
+ * countries by how early they appear, cities the same way, and smaller places by OpenStreetMap
+ * class. Below zoom 8 CARTO names only cities, all at 12px.
+ */
+const COUNTRY_CLASS: GlValue = ['case', ['<=', MIN_ZOOM, 3], 'major', 'minor'];
+const LOCALITY_CLASS: GlValue = [
+  'case',
+  ['==', ['get', 'kind_detail'], 'city'],
+  ['case', ['<=', MIN_ZOOM, 6], 'major_city', 'city'],
+  ['get', 'kind_detail'],
+];
+
 /**
  * The map sits under the panel's data, so labels follow CARTO's: no house numbers, shields or one-way
- * arrows, small road and water names, and points of interest in the muted grey of minor-road names.
+ * arrows, CARTO's text sizes, weights and spacing, and points of interest in the muted grey of
+ * minor-road names.
  */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
-const LABEL_SIZES: Record<string, GlValue> = {
-  [MINOR_ROAD_LABELS]: 9,
-  roads_labels_major: zoomRamp([14, 10], [16, 11], [18, 12]),
-  water_waterway_label: zoomRamp([9, 8], [10, 9]),
-  pois: zoomRamp([15, 8], [17, 9], [18, 10]),
+const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Record<string, GlValue> }> = {
+  [MINOR_ROAD_LABELS]: { layout: { 'text-size': 9, 'text-font': ['Inter Medium'] } },
+  roads_labels_major: {
+    layout: {
+      'text-size': zoomRamp([14, 10], [16, 11], [18, 12]),
+      'text-font': ['Inter Medium'],
+      'text-letter-spacing': zoomRamp([13, 0], [16, 0.2]),
+    },
+  },
+  water_waterway_label: {
+    layout: { 'text-size': zoomRamp([9, 8], [10, 9]), 'text-font': ['Inter Italic'], 'text-letter-spacing': 0 },
+  },
+  // Protomaps labels seas, bays and straits in this layer too, which CARTO draws at a fixed 12px
+  water_label_ocean: {
+    layout: {
+      'text-size': zoomRamp([0, oceanOr(13, 12)], [2, oceanOr(14, 12)], [4, oceanOr(18, 12)]),
+      'text-font': ['Inter SemiBold Italic'],
+      'text-transform': 'none',
+      'text-letter-spacing': 0.1,
+      'text-max-width': 6,
+      'text-line-height': 1.2,
+    },
+  },
+  water_label_lakes: {
+    layout: {
+      'text-size': zoomRamp([13, 9], [14, 10], [15, 11], [16, 12], [17, 13]),
+      'text-font': ['Inter Italic'],
+      'text-letter-spacing': 0,
+      'text-line-height': 1.2,
+    },
+    paint: { 'text-halo-blur': 1 },
+  },
+  pois: { layout: { 'text-size': zoomRamp([15, 8], [17, 9], [18, 10]), 'text-font': ['Inter SemiBold'] } },
+  places_country: {
+    layout: {
+      // Columns: countries named by zoom 3, then the rest
+      'text-size': sizeByClass(
+        COUNTRY_CLASS,
+        ['major'],
+        [
+          [3, 11, 10],
+          [4, 12, 10.5],
+          [5, 13, 11],
+          [6, 14, 12],
+          [7, 14, 13],
+          [8, 14, 14],
+        ]
+      ),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-max-width': zoomRamp([3, 6], [4, 9], [5, 12]),
+    },
+  },
+  places_region: {
+    layout: {
+      'text-size': zoomRamp([5, 12], [7, 14]),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-max-width': 9,
+    },
+    paint: { 'text-halo-width': 0 },
+  },
+  places_locality: {
+    layout: {
+      // Columns: cities named by zoom 6, other cities, towns, villages, then hamlets
+      'text-size': sizeByClass(
+        LOCALITY_CLASS,
+        ['major_city', 'city', 'town', 'village'],
+        [
+          [7.99, 12, 12, 12, 12, 12],
+          [8, 14, 12, 10, 9, 8],
+          [9, 15, 13, 10, 9, 8],
+          [10, 16, 14, 11, 9, 8],
+          [12, 18, 16, 13, 10, 8],
+          [13, 19, 17, 14, 11, 8],
+          [14, 22, 20, 15, 12, 10],
+          [16, 22, 20, 15, 13, 11],
+        ]
+      ),
+      'text-font': ['Inter SemiBold'],
+    },
+  },
+  places_subplace: {
+    layout: {
+      'text-size': zoomRamp([12, 9], [13, 10], [14, 11], [15, 12], [16, 13]),
+      'text-font': ['Inter Medium'],
+      'text-transform': ['step', ['zoom'], 'none', 12, 'uppercase'],
+      'text-letter-spacing': 0,
+      'text-max-width': 10,
+    },
+  },
 };
 
 /** Which kinds each label layer keeps */
@@ -343,11 +445,12 @@ function adaptLayer<T extends GlLayer>(layer: T, mutedPaint: GlLayer['paint']): 
       paint: mutedLabelPaint(adapted.paint, mutedPaint),
     };
   }
-  const size = LABEL_SIZES[adapted.id];
-  if (size !== undefined) {
+  const labelStyle = LABEL_STYLES[adapted.id];
+  if (labelStyle) {
     adapted = {
       ...adapted,
-      layout: { ...adapted.layout, 'text-size': size },
+      layout: { ...adapted.layout, ...labelStyle.layout },
+      paint: labelStyle.paint ? { ...adapted.paint, ...labelStyle.paint } : adapted.paint,
     };
   }
   return adapted;
@@ -364,6 +467,20 @@ function mutedLabelPaint(paint: GlLayer['paint'], mutedPaint: GlLayer['paint']) 
     return paint;
   }
   return { ...paint, 'text-color': mutedPaint['text-color'], 'text-halo-color': mutedPaint['text-halo-color'] };
+}
+
+/** A zoom ramp whose stops give one size per class, in `classes` order, then one for any other class */
+function sizeByClass(classOf: GlValue, classes: string[], stops: Array<[number, ...number[]]>): GlValue {
+  return zoomRamp(
+    ...stops.map(([zoom, ...sizes]): [number, GlValue] => [
+      zoom,
+      ['match', classOf, ...classes.flatMap((name, i) => [name, sizes[i]]), sizes[classes.length]],
+    ])
+  );
+}
+
+function oceanOr(ocean: number, other: number): GlValue {
+  return ['match', ['get', 'kind'], 'ocean', ocean, other];
 }
 
 function zoomRamp(...stops: Array<[number, GlValue]>): GlValue {
