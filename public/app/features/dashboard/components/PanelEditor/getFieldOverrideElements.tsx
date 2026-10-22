@@ -340,10 +340,11 @@ export function getFieldOverrideCategories(
           return;
         }
 
-        // Writing a plain value also drops the expression, so the plain value takes effect.
+        // Writing a plain value also drops the expression, so the plain value takes effect. With the
+        // flag off this is the only way to get rid of an expression saved with the flag on.
         const properties = override.properties
           .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
-          .filter((p) => !eligibleForVarMapping || p.id !== varMappingId);
+          .filter((p) => p.id !== varMappingId);
 
         onOverrideChange(idx, { ...override, properties });
       };

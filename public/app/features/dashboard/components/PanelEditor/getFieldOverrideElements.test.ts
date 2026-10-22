@@ -293,7 +293,7 @@ describe('getFieldOverrideCategories', () => {
     const makeMinItem = (process: FieldConfigPropertyItem['process'] = numberOverrideProcessor) =>
       makeItem('min', { isCustom: false, process });
 
-    it('shows the stored number and keeps the varMappings.<id> entry on change when the flag is off', () => {
+    it('shows the stored number and drops the varMappings.<id> entry on change when the flag is off', () => {
       const registry = makeRegistry([makeMinItem()]);
       const onFieldConfigsChange = jest.fn();
       const fieldConfig: FieldConfigSource = {
@@ -323,15 +323,7 @@ describe('getFieldOverrideCategories', () => {
       element.props.onChange(42);
       expect(onFieldConfigsChange).toHaveBeenCalledWith({
         ...fieldConfig,
-        overrides: [
-          {
-            matcher: { id: 'byName', options: 'A-series' },
-            properties: [
-              { id: 'min', value: 42 },
-              { id: 'varMappings.min', value: '$myVar' },
-            ],
-          },
-        ],
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 42 }] }],
       });
     });
 

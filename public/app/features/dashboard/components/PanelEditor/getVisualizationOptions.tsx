@@ -148,11 +148,9 @@ function getDefaultsEditing(
       if (varMappingEligible && typeof v === 'string') {
         return updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, v);
       }
-      // Writing a plain value also drops the expression, so the plain value takes effect.
-      return writeValue(
-        varMappingEligible ? updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, undefined) : fieldConfig,
-        v
-      );
+      // Writing a plain value also drops the expression, so the plain value takes effect. With the
+      // flag off this is the only way to get rid of an expression saved with the flag on.
+      return writeValue(updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, undefined), v);
     },
   };
 }

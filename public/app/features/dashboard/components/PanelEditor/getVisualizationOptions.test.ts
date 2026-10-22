@@ -463,7 +463,7 @@ describe('getVisualizationOptions', () => {
         fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => fieldConfigItems),
       }) as unknown as PanelPlugin;
 
-    it('uses the plugin editor and the stored number when the flag is off', () => {
+    it('uses the plugin editor and the stored number when the flag is off, and a typed number drops the expression', () => {
       const minProperty = buildMinProperty();
       const plugin = buildPlugin([minProperty]);
       const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-off' });
@@ -488,8 +488,30 @@ describe('getVisualizationOptions', () => {
       expect(element.props.value).toBe(0);
 
       element.props.onChange(42);
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: 42 }, overrides: [] }, true);
+    });
+
+    it('keeps other expressions when a typed number drops one with the flag off', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-off-2' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar', max: '$other' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange(42);
+
       expect(onFieldConfigChange).toHaveBeenCalledWith(
-        { defaults: { min: 42, varMappings: { min: '$myVar' } }, overrides: [] },
+        { defaults: { min: 42, varMappings: { max: '$other' } }, overrides: [] },
         true
       );
     });

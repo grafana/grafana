@@ -212,6 +212,25 @@ describe('PanelOptions', () => {
       expect(decimalsInput).toHaveValue(2);
     });
 
+    it('lets a typed number replace the saved expressions with the flag off', async () => {
+      const { panel } = await setupWithExpressions();
+
+      const minInput = getMinInput();
+      await userEvent.clear(minInput);
+      await userEvent.type(minInput, '5');
+      await userEvent.tab();
+
+      const decimalsInput = getDecimalsOverrideInput();
+      await userEvent.clear(decimalsInput);
+      await userEvent.type(decimalsInput, '1');
+      await userEvent.tab();
+
+      const { defaults, overrides } = panel.state.fieldConfig;
+      expect(defaults.min).toBe(5);
+      expect(defaults.varMappings).toBeUndefined();
+      expect(overrides[0].properties).toEqual([{ id: 'decimals', value: 1 }]);
+    });
+
     describe('with the flag on', () => {
       beforeEach(() => {
         setTestFlags({ 'grafana.panelOptionInterpolation': true });
