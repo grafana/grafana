@@ -19,7 +19,6 @@ import { getDefaultTopPlacementLabel } from '../variables/utils';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';
-import { isAnnotationLabelHidden } from './annotationDisplay';
 
 export function AnnotationNameInput({ layer, autoFocus }: { layer: AnnotationLayer; autoFocus: boolean }) {
   const { name } = layer.useState();
@@ -105,14 +104,12 @@ export function AnnotationColorPicker({ layer }: { layer: AnnotationLayer }) {
 
 enum AnnotationControlsDisplay {
   Visible,
-  LabelHidden,
   InControlsMenu,
   Hidden,
 }
 
 export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLayer }) {
-  const { isHidden, placement, query } = layer.useState();
-  const hideLabel = isAnnotationLabelHidden(query);
+  const { isHidden, placement } = layer.useState();
   const sectionOwner = dashboardSceneGraph.findSectionOwner(layer);
   const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
   const resolvedTopPlacementLabel = topPlacementLabel ?? getDefaultTopPlacementLabel();
@@ -122,15 +119,14 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
     (option: ComboboxOption<AnnotationControlsDisplay>) => {
       annotationEditActions.changeAnnotationControlsDisplay({
         source: layer,
-        oldValue: { isHidden: Boolean(isHidden), placement, hideLabel },
+        oldValue: { isHidden: Boolean(isHidden), placement },
         newValue: {
           isHidden: option.value === AnnotationControlsDisplay.Hidden,
           placement: option.value === AnnotationControlsDisplay.InControlsMenu ? 'inControlsMenu' : undefined,
-          hideLabel: option.value === AnnotationControlsDisplay.LabelHidden,
         },
       });
     },
-    [hideLabel, isHidden, layer, placement]
+    [isHidden, layer, placement]
   );
 
   const options = useMemo(
@@ -138,17 +134,6 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
       {
         value: AnnotationControlsDisplay.Visible,
         label: resolvedTopPlacementLabel,
-      },
-      {
-        value: AnnotationControlsDisplay.LabelHidden,
-        label: t('dashboard.sidebar.annotation.display-options.label-hidden', '{{placement}}, label hidden', {
-          placement: resolvedTopPlacementLabel,
-        }),
-        description: t(
-          'dashboard.sidebar.annotation.display-options.label-hidden-description',
-          '{{placement}}, but without showing the name of the annotation',
-          { placement: resolvedTopPlacementLabel }
-        ),
       },
       ...(!hideControlsMenuOption
         ? [
@@ -178,15 +163,12 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
     if (placement === 'inControlsMenu') {
       return AnnotationControlsDisplay.InControlsMenu;
     }
-    if (hideLabel) {
-      return AnnotationControlsDisplay.LabelHidden;
-    }
     return AnnotationControlsDisplay.Visible;
-  }, [hideLabel, isHidden, placement]);
+  }, [isHidden, placement]);
 
   return (
     <Field label={t('dashboard.sidebar.annotation.display', 'Show annotation controls in')} noMargin>
-      <Combobox options={options} value={currentValue} onChange={onChange} width="auto" minWidth={52} />
+      <Combobox options={options} value={currentValue} onChange={onChange} width="auto" minWidth={100} />
     </Field>
   );
 }

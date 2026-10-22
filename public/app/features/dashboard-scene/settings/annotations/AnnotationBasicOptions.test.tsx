@@ -48,14 +48,13 @@ function layerOnDashboard() {
 }
 
 describe('AnnotationControlsDisplayPicker', () => {
-  it('offers the section placement, label hidden, and hidden for a tab annotation', async () => {
+  it('offers the section placement and hidden for a tab annotation', async () => {
     const user = userEvent.setup();
     render(<AnnotationControlsDisplayPicker layer={layerOnTab()} />);
 
     await user.click(screen.getByRole('combobox'));
 
     expect(await screen.findByText('Top of tab')).toBeInTheDocument();
-    expect(screen.getByText('Top of tab, label hidden')).toBeInTheDocument();
     expect(screen.getByText('Hidden')).toBeInTheDocument();
     expect(screen.queryByText('Controls menu')).not.toBeInTheDocument();
   });
@@ -67,24 +66,23 @@ describe('AnnotationControlsDisplayPicker', () => {
     await user.click(screen.getByRole('combobox'));
 
     expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Above dashboard, label hidden')).toBeInTheDocument();
     expect(screen.getByText('Controls menu')).toBeInTheDocument();
     expect(screen.getByText('Hidden')).toBeInTheDocument();
   });
 
-  it('stores label hidden without hiding the control', async () => {
+  it('hides the control when Hidden is selected', async () => {
     const user = userEvent.setup();
     const layer = layerOnTab();
     const spy = jest.spyOn(annotationEditActions, 'changeAnnotationControlsDisplay').mockImplementation(() => {});
     render(<AnnotationControlsDisplayPicker layer={layer} />);
 
     await user.click(screen.getByRole('combobox'));
-    await user.click(await screen.findByText('Top of tab, label hidden'));
+    await user.click(await screen.findByText('Hidden'));
 
     expect(spy).toHaveBeenCalledWith({
       source: layer,
-      oldValue: { isHidden: false, placement: undefined, hideLabel: false },
-      newValue: { isHidden: false, placement: undefined, hideLabel: true },
+      oldValue: { isHidden: false, placement: undefined },
+      newValue: { isHidden: true, placement: undefined },
     });
     spy.mockRestore();
   });

@@ -6369,9 +6369,7 @@
           "controls-menu": "Controls menu",
           "controls-menu-description": "Visible when the controls menu is open",
           "hidden": "Hidden",
-          "hidden-description": "Only visible in edit mode",
-          "label-hidden": "{{placement}}, label hidden",
-          "label-hidden-description": "{{placement}}, but without showing the name of the annotation"
+          "hidden-description": "Only visible in edit mode"
         },
         "enabled": "Enabled",
         "enabled-description": "When enabled the annotation query is issued every dashboard refresh",

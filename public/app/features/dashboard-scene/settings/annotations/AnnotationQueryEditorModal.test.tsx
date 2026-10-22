@@ -5,7 +5,6 @@ import { type DataSourceInstanceSettings } from '@grafana/data';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 
 import { AnnotationQueryEditorModal } from './AnnotationQueryEditorModal';
-import { isAnnotationLabelHidden } from './annotationDisplay';
 
 const lokiDataSource = { uid: 'loki-uid', type: 'loki' } as DataSourceInstanceSettings;
 
@@ -25,8 +24,8 @@ describe('AnnotationQueryEditorModal', () => {
         enable: false,
         iconColor: 'red',
         datasource: { uid: 'prom-uid', type: 'prometheus' },
+        hide: true,
         placement: 'inControlsMenu',
-        hideLabel: true,
       } as DashboardAnnotationsDataLayer['state']['query'],
     });
     jest.spyOn(layer, 'runLayer').mockImplementation(() => undefined);
@@ -39,6 +38,6 @@ describe('AnnotationQueryEditorModal', () => {
 
     expect(layer.state.query.datasource).toEqual({ uid: 'loki-uid', type: 'loki' });
     expect(layer.state.query.placement).toBe('inControlsMenu');
-    expect(isAnnotationLabelHidden(layer.state.query)).toBe(true);
+    expect(layer.state.query.hide).toBe(true);
   });
 });

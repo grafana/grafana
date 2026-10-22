@@ -9,8 +9,6 @@ import { edit } from '../../actions/utils/edit';
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 
-import { annotationQueryWithDisplay } from './annotationDisplay';
-
 type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
 export const annotationEditActions = {
@@ -155,8 +153,8 @@ export const annotationEditActions = {
     newValue,
   }: {
     source: DataLayer;
-    oldValue: { isHidden: boolean; placement?: 'inControlsMenu'; hideLabel?: boolean };
-    newValue: { isHidden: boolean; placement?: 'inControlsMenu'; hideLabel?: boolean };
+    oldValue: { isHidden: boolean; placement?: 'inControlsMenu' };
+    newValue: { isHidden: boolean; placement?: 'inControlsMenu' };
   }) {
     const forceReRender = () => {
       // force parent DashboardDataLayerSet to update its state so components that filter
@@ -178,7 +176,11 @@ export const annotationEditActions = {
         source.setState({
           isHidden: newValue.isHidden,
           placement: newValue.placement,
-          query: annotationQueryWithDisplay(source.state.query, newValue),
+          query: {
+            ...source.state.query,
+            hide: newValue.isHidden,
+            placement: newValue.placement,
+          },
         });
         forceReRender();
       },
@@ -186,7 +188,11 @@ export const annotationEditActions = {
         source.setState({
           isHidden: oldValue.isHidden,
           placement: oldValue.placement,
-          query: annotationQueryWithDisplay(source.state.query, oldValue),
+          query: {
+            ...source.state.query,
+            hide: oldValue.isHidden,
+            placement: oldValue.placement,
+          },
         });
         forceReRender();
       },
