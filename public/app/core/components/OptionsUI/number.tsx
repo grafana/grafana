@@ -1,11 +1,11 @@
-import { css } from '@emotion/css';
-import { type ChangeEvent, type FocusEvent, type KeyboardEvent, useCallback, useId, useState } from 'react';
+import { type KeyboardEvent, useCallback, useState } from 'react';
 
-import { type GrafanaTheme2, type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
+import { type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
 import { hasVarMappingVariableReference, isInVarMappingRange } from '@grafana/data/internal';
-import { FieldValidationMessage, Input, useFieldContext, useStyles2 } from '@grafana/ui';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
-import { getOutOfRangeText, getRangeText, NumberInput } from './NumberInput';
+import { getOutOfRangeText, NumberInput } from './NumberInput';
 
 type Props = StandardEditorProps<number, NumberFieldConfigSettings>;
 
@@ -41,30 +41,29 @@ type VarMappingProps = Omit<StandardEditorProps<number | string, NumberFieldConf
  * Number editor that also accepts variable expressions. It's a separate component because
  * `NumberValueEditor` is used directly by some panel editors that expect a numeric `onChange`.
  *
- * A `type="number"` input can't hold a `$`, so this is a text input. On blur or Enter, text with a
- * variable reference is passed to `onChange` as a string, which callers store in `varMappings`. A
- * `$` without a variable isn't stored. Anything else is parsed as a number in the settings' range,
- * or reverted when it isn't one.
+ * A `type="number"` input can't hold a `$`, so this is a text input that suggests dashboard
+ * variables on `$`. On blur, Enter or picking a suggestion, text with a variable reference is
+ * passed to `onChange` as a string, which callers store in `varMappings`. A `$` without a variable
+ * isn't stored. Anything else is parsed as a number in the settings' range, or reverted when it
+ * isn't one.
  */
 export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMappingProps) => {
   const { settings } = item;
   const formatted = value == null ? '' : String(value);
-  const [text, setText] = useState(formatted);
+  // SuggestionsInput keeps its own text, so it's remounted to show a value it didn't produce
+  const [revision, setRevision] = useState(0);
   const [rangeError, setRangeError] = useState<string>();
   // The last text passed to onChange, so the blur after Enter doesn't commit it again
   const [committed, setCommitted] = useState(formatted);
   const [prevFormatted, setPrevFormatted] = useState(formatted);
-  const rangeId = useId();
-  const errorId = useId();
-  const rangeText = getRangeText(settings?.min, settings?.max);
-  const fieldContext = useFieldContext();
-  const styles = useStyles2(getStyles);
 
   if (formatted !== prevFormatted) {
     setPrevFormatted(formatted);
-    setCommitted(formatted);
-    setText(formatted);
     setRangeError(undefined);
+    if (formatted !== committed) {
+      setCommitted(formatted);
+      setRevision((r) => r + 1);
+    }
   }
 
   const commit = useCallback(
@@ -92,7 +91,7 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
 
       const parsed = Number(raw);
       if (!Number.isFinite(parsed)) {
-        setText(committed);
+        setRevision((r) => r + 1);
         return;
       }
 
@@ -111,45 +110,27 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
     [committed, onChange, settings]
   );
 
-  // Same as NumberInput: the error replaces the range hint while it's shown
-  const localDescribedBy = rangeError ? errorId : rangeText ? rangeId : undefined;
-  const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
-
   return (
-    <div>
-      <Input
-        type="text"
+    // Only captures Enter bubbling up from the input; the input itself stays the interactive element
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+        // SuggestionsInput only handles Enter to pick a suggestion, and prevents the default then
+        if (e.key === 'Enter' && !e.defaultPrevented && e.target instanceof HTMLInputElement) {
+          commit(e.target.value);
+        }
+      }}
+    >
+      <SuggestionsInput
+        key={revision}
         id={id}
-        value={text}
+        value={formatted}
         placeholder={settings?.placeholder}
-        invalid={rangeError !== undefined || fieldContext.invalid}
-        aria-describedby={describedBy}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => {
-          setText(e.currentTarget.value);
-          setRangeError(undefined);
-        }}
-        onBlur={(e: FocusEvent<HTMLInputElement>) => commit(e.currentTarget.value)}
-        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-          if (e.key === 'Enter') {
-            commit(e.currentTarget.value);
-          }
-        }}
+        suggestions={getVariableSuggestions()}
+        invalid={rangeError !== undefined}
+        error={rangeError}
+        onChange={commit}
       />
-      {rangeText && (
-        <div id={rangeId} className={styles.rangeHint}>
-          {rangeText}
-        </div>
-      )}
-      {rangeError && <FieldValidationMessage id={errorId}>{rangeError}</FieldValidationMessage>}
     </div>
   );
 };
-
-// Matches NumberInput's range hint
-const getStyles = (theme: GrafanaTheme2) => ({
-  rangeHint: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.size.sm,
-    marginTop: theme.spacing(0.25),
-  }),
-});
