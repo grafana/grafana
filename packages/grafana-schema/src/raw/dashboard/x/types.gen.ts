@@ -622,6 +622,7 @@ export interface Threshold {
   value: (number | null);
   /**
    * Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+   * @deprecated Use the FieldConfig varMappings key "thresholds.steps.<index>" instead.
    */
   valueExpr?: string;
 }

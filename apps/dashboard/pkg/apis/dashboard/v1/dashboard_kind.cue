@@ -447,6 +447,7 @@ lineage: schemas: [{
 			// Nulls currently appear here when serializing -Infinity to JSON.
 			value: number | null @grafanamaturity(NeedsExpertReview)
 			// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+			// @deprecated Use the FieldConfig varMappings key "thresholds.steps.<index>" instead.
 			valueExpr?: string
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
