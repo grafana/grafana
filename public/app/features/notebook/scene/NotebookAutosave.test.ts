@@ -1202,6 +1202,41 @@ describe('NotebookAutosave', () => {
       expect(scene.state.$timeRange.state.from).toBe('now-6h');
     });
 
+    // The scene ignores a stored hideTimepicker, so a write that did not touch the time settings has to
+    // send the same false it shows, not the stored true it was loaded from.
+    it('writes a stored hideTimepicker back as false on a save that did not touch the time settings', async () => {
+      const scene = transformNotebookToScene({
+        apiVersion: 'notebook.grafana.app/v2beta1',
+        kind: 'Notebook',
+        metadata: { name: 'nb-1', resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
+        spec: {
+          ...defaultNotebookSpec(),
+          title: 'My notebook',
+          timeSettings: { ...defaultNotebookSpec().timeSettings, hideTimepicker: true },
+          elements: { md1: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'Hi' } } } } },
+          layout: {
+            kind: 'NotebookLayout',
+            spec: {
+              cells: [
+                {
+                  kind: 'NotebookLayoutItem',
+                  spec: { element: { kind: 'ElementReference', name: 'md1' }, source: 'user' },
+                },
+              ],
+            },
+          },
+        },
+      });
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      editFirstCell(scene, 'Hello world');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(updateNotebook).mock.calls[0][1].timeSettings.hideTimepicker).toBe(false);
+    });
+
     // setCellTimeRange clears the panel's own one-sided override to make room for the cell range, so a
     // restore that only put the cell range back would cost the notebook a timeFrom it has.
     it("puts back the panel's own one-sided override the reader's cell range displaced", () => {

@@ -246,7 +246,7 @@ describe('NotebookScenePage', () => {
       jest.restoreAllMocks();
     });
 
-    function buildScene(hideTimeControls = false) {
+    function buildScene() {
       return new NotebookScene({
         title: 'Checkout latency investigation',
         uid: 'nb-1',
@@ -254,7 +254,6 @@ describe('NotebookScenePage', () => {
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
         timePicker: new SceneTimePicker({}),
         refreshPicker: new SceneRefreshPicker({}),
-        hideTimeControls,
       });
     }
 
@@ -369,15 +368,6 @@ describe('NotebookScenePage', () => {
         expect(loadNotebook).toHaveBeenCalledTimes(1);
         expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'notebook_list');
       });
-    });
-
-    it('still honours the url for a notebook with the time controls hidden', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      const scene = buildScene(true);
-
-      await renderLoaded(scene, '/notebooks/nb-1?edit=true');
-
-      expect(scene.state.isEditing).toBe(true);
     });
   });
 });
