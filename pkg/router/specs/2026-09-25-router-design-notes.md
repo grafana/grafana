@@ -66,7 +66,7 @@ Revisit only if a concrete client is confirmed to read the field.
 - When a backend is removed, drain its in-flight requests before tearing down what it holds, and
   never close anything eagerly on swap. Today nothing is torn down per backend: each aggregate target
   owns one proxy transport for its lifetime, and plugin gRPC connections (keyed by host and plugin
-  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-10-router-review-plan.md`.
+  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-23-router-review-plan.md`.
 
 ## Readiness: why a partial reconcile error doesn't fail `Ready`
 

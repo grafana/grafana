@@ -64,6 +64,34 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
 		})
 
+	scenarioWithPanel(t, "When ConnectedDashboardsFinder isn't configured, deleting a folder with library elements should fail instead of panicking",
+		func(t *testing.T, sc scenarioContext) {
+			sc.service.ConnectedDashboardsFinder = nil
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
+		})
+
+	scenarioWithPanel(t, "DeleteLibraryElementsInFolderUnchecked should delete elements without consulting AccessControl",
+		func(t *testing.T, sc scenarioContext) {
+			// A user with no permissions at all: sc.reqContext.SignedInUser carries a baked-in
+			// folder.ActionFoldersWrite wildcard that would let a reintroduced permission check
+			// pass regardless of AccessControl, masking a regression.
+			sc.service.AccessControl = acmock.New()
+			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
+
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), noPermsUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			var count int64
+			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
+				_, err := session.SQL("SELECT COUNT(*) FROM library_element WHERE folder_uid=?", sc.folder.UID).Get(&count)
+				return err
+			})
+			require.NoError(t, err)
+			require.Equal(t, int64(0), count)
+		})
+
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
@@ -457,14 +485,15 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
 	service := LibraryElementService{
-		Cfg:               cfg,
-		features:          featuremgmt.WithFeatures(),
-		SQLStore:          sqlStore,
-		folderService:     folderSvc,
-		dashboardsService: dashService,
-		AccessControl:     ac,
-		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc, false),
+		Cfg:                       cfg,
+		features:                  featuremgmt.WithFeatures(),
+		SQLStore:                  sqlStore,
+		folderService:             folderSvc,
+		dashboardsService:         dashService,
+		ConnectedDashboardsFinder: dashService,
+		AccessControl:             ac,
+		log:                       log.NewNopLogger(),
+		treeCache:                 newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))
