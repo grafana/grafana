@@ -233,7 +233,7 @@
     "ora": "^9.0.0",
     "pa11y-ci": "^4.0.0",
     "pdf-parse": "^1.1.1",
-    "postcss": "8.5.6",
+    "postcss": "8.5.31",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
