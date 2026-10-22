@@ -13367,7 +13367,6 @@
     "add-panel": {
       "cancel": "Cancel",
       "card-author": "By {{author}}",
-      "card-selected": "{{title}} (selected)",
       "card-updated": "Updated {{when}}",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
@@ -13378,6 +13377,7 @@
       "error-open-conflict": "This notebook changed since it was opened. Reload it and try again.",
       "list-error": "Failed to load notebooks",
       "list-error-body": "Something went wrong loading your notebooks. Try again, or create a new one instead.",
+      "list-label": "Notebooks",
       "list-no-matches": "No notebooks match these filters.",
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
