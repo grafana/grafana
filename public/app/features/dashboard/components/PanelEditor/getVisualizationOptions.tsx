@@ -96,7 +96,10 @@ export function isFieldConfigOptionVisible(
   return Boolean(fieldOption.showIf(currentValue, data?.series, data?.annotations, context));
 }
 
-export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
+export function getVisualizationOptions(
+  props: OptionPaneRenderProps,
+  varMappingsEnabled = false
+): OptionsPaneCategoryDescriptor[] {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard, instanceState } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
@@ -146,7 +149,8 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const Editor = isVarMappingEligible(fieldOption) ? VarMappingNumberValueEditor : fieldOption.editor;
+    const varMappingEligible = varMappingsEnabled && isVarMappingEligible(fieldOption);
+    const Editor = varMappingEligible ? VarMappingNumberValueEditor : fieldOption.editor;
 
     const defaults = currentFieldConfig.defaults;
     const numericValue = fieldOption.isCustom
@@ -156,7 +160,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       : lodashGet(defaults, fieldOption.path);
     // A varMappings expression, when present, takes over the editor's displayed value - the
     // property's own stored value (numericValue) stays untouched as the numeric fallback.
-    const varMappingExpr = isVarMappingEligible(fieldOption) ? defaults.varMappings?.[fieldOption.id] : undefined;
+    const varMappingExpr = varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined;
     const value = varMappingExpr ?? numericValue;
 
     if (fieldOption.getItemsCount) {
@@ -174,14 +178,14 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            if (isVarMappingEligible(fieldOption) && typeof v === 'string') {
+            if (varMappingEligible && typeof v === 'string') {
               onFieldConfigsChange(updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, v));
               return;
             }
 
             // A plain number (or clearing) always clears a stale expression too, so typing a
             // number over an expression puts the property back into plain-value mode.
-            const withoutExpr = isVarMappingEligible(fieldOption)
+            const withoutExpr = varMappingEligible
               ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
               : currentFieldConfig;
 
@@ -248,10 +252,20 @@ export interface OptionPaneRenderProps2 {
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
   reportInteractionUI: 'panel-edit' | 'view-panel';
+  varMappingsEnabled?: boolean;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, data, eventBus, instanceState, currentOptions, currentFieldConfig } = props;
+  const {
+    plugin,
+    panel,
+    data,
+    eventBus,
+    instanceState,
+    currentOptions,
+    currentFieldConfig,
+    varMappingsEnabled = false,
+  } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
@@ -305,7 +319,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const Editor = isVarMappingEligible(fieldOption) ? VarMappingNumberValueEditor : fieldOption.editor;
+    const varMappingEligible = varMappingsEnabled && isVarMappingEligible(fieldOption);
+    const Editor = varMappingEligible ? VarMappingNumberValueEditor : fieldOption.editor;
     const defaults = currentFieldConfig.defaults;
 
     const numericValue = fieldOption.isCustom
@@ -315,7 +330,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       : lodashGet(defaults, fieldOption.path);
     // A varMappings expression, when present, takes over the editor's displayed value - the
     // property's own stored value (numericValue) stays untouched as the numeric fallback.
-    const varMappingExpr = isVarMappingEligible(fieldOption) ? defaults.varMappings?.[fieldOption.id] : undefined;
+    const varMappingExpr = varMappingEligible ? defaults.varMappings?.[fieldOption.id] : undefined;
     const value = varMappingExpr ?? numericValue;
 
     if (fieldOption.getItemsCount) {
@@ -333,7 +348,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            if (isVarMappingEligible(fieldOption) && typeof v === 'string') {
+            if (varMappingEligible && typeof v === 'string') {
               panel.onFieldConfigChange(
                 updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, v),
                 true
@@ -341,7 +356,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             } else {
               // A plain number (or clearing) always clears a stale expression too, so typing a
               // number over an expression puts the property back into plain-value mode.
-              const withoutExpr = isVarMappingEligible(fieldOption)
+              const withoutExpr = varMappingEligible
                 ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
                 : currentFieldConfig;
 

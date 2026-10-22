@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -6,6 +6,7 @@ import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@gra
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { overrideRuleTooltipDescription } from 'app/features/dashboard/components/PanelEditor/state/getOptionOverrides';
@@ -163,6 +164,89 @@ describe('PanelOptions', () => {
       await userEvent.click(screen.getByLabelText('Remove override'));
 
       expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('varMappings expression mode', () => {
+    // deleting a rule in an earlier test persists a collapsed state for the override group
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    const setupWithExpressions = () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        fieldConfig: {
+          defaults: { min: 0, varMappings: { min: '$min' } },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'SeriesA' },
+              properties: [
+                { id: 'decimals', value: 2 },
+                { id: 'varMappings.decimals', value: '$decimals' },
+              ],
+            },
+          ],
+        },
+      });
+      new DashboardGridItem({ body: panel });
+      return setup({ panel });
+    };
+
+    const getMinInput = () => screen.getByLabelText(/^Min/);
+    const getDecimalsOverrideInput = () =>
+      within(screen.getByTestId(selectors.components.OptionsGroup.group('panel-options-override-0'))).getByLabelText(
+        /Decimals/
+      );
+
+    it('is absent with the flag off', async () => {
+      await setupWithExpressions();
+
+      const minInput = getMinInput();
+      expect(minInput).toHaveAttribute('type', 'number');
+      expect(minInput).toHaveValue(0);
+
+      const decimalsInput = getDecimalsOverrideInput();
+      expect(decimalsInput).toHaveAttribute('type', 'number');
+      expect(decimalsInput).toHaveValue(2);
+    });
+
+    describe('with the flag on', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.panelOptionInterpolation': true });
+      });
+
+      // reset in afterAll rather than afterEach: RTL's cleanup runs after this
+      // block's afterEach, so resetting per-test would emit a flag change into a
+      // still-mounted component and trip the act() warning
+      afterAll(() => {
+        setTestFlags();
+      });
+
+      it('shows the stored expressions in text inputs', async () => {
+        await setupWithExpressions();
+
+        const minInput = getMinInput();
+        expect(minInput).toHaveAttribute('type', 'text');
+        expect(minInput).toHaveValue('$min');
+
+        const decimalsInput = getDecimalsOverrideInput();
+        expect(decimalsInput).toHaveAttribute('type', 'text');
+        expect(decimalsInput).toHaveValue('$decimals');
+      });
+
+      it('writes a typed expression to defaults.varMappings', async () => {
+        const { panel } = await setupWithExpressions();
+
+        const minInput = getMinInput();
+        await userEvent.clear(minInput);
+        await userEvent.type(minInput, '$other{Enter}');
+
+        const { defaults } = panel.state.fieldConfig;
+        expect(defaults.varMappings).toEqual({ min: '$other' });
+        expect(defaults.min).toBe(0);
+      });
     });
   });
 

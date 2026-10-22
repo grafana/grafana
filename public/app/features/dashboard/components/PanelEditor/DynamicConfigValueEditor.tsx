@@ -8,7 +8,6 @@ import {
   FieldConfigProperty,
   type FieldOverrideContext,
   type GrafanaTheme2,
-  isVarMappingEligible,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
@@ -24,6 +23,7 @@ interface DynamicConfigValueEditorProps {
   onRemove: () => void;
   isSystemOverride?: boolean;
   searchQuery: string;
+  varMappingEligible?: boolean;
 }
 
 export const DynamicConfigValueEditor = ({
@@ -34,6 +34,7 @@ export const DynamicConfigValueEditor = ({
   onRemove,
   isSystemOverride,
   searchQuery,
+  varMappingEligible,
 }: DynamicConfigValueEditorProps) => {
   const styles = useStyles2(getStyles);
 
@@ -48,7 +49,7 @@ export const DynamicConfigValueEditor = ({
   // Rendered instead of item.override for a property that opts into varMappings expression
   // support (see isVarMappingEligible) - item.override itself stays untouched since it's also
   // used directly by some panel editors with a strictly numeric onChange.
-  const Override = isVarMappingEligible(item) ? VarMappingNumberValueEditor : item.override;
+  const Override = varMappingEligible ? VarMappingNumberValueEditor : item.override;
 
   const isCollapsible =
     Array.isArray(property.value) ||

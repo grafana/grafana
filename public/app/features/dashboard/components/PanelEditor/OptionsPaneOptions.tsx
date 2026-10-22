@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaPanelOptionInterpolation } from '@grafana/runtime/internal';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -23,12 +24,17 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
+  const varMappingsEnabled = useFlagGrafanaPanelOptionInterpolation();
 
   const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
-    () => [getPanelFrameCategory(props), getVisualizationOptions(props), getLibraryPanelOptionsCategory(props)],
+    () => [
+      getPanelFrameCategory(props),
+      getVisualizationOptions(props, varMappingsEnabled),
+      getLibraryPanelOptionsCategory(props),
+    ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, props.instanceState, searchQuery]
+    [panel.configRev, props.data, props.instanceState, searchQuery, varMappingsEnabled]
   );
 
   const justOverrides = useMemo(
@@ -39,10 +45,11 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         props.data?.series ?? [],
         searchQuery,
         props.onFieldConfigsChange,
-        props.panel.getOptions()
+        props.panel.getOptions(),
+        varMappingsEnabled
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, props.instanceState, searchQuery]
+    [panel.configRev, props.data, props.instanceState, searchQuery, varMappingsEnabled]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

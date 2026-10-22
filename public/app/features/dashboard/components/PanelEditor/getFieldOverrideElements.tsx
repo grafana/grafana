@@ -59,7 +59,8 @@ export function getFieldOverrideCategories(
   searchQuery: string,
   onFieldConfigsChange: (config: FieldConfigSource) => void,
   // Panel options, so an override editor can render against them
-  options?: Record<string, unknown>
+  options?: Record<string, unknown>,
+  varMappingsEnabled = false
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -301,7 +302,7 @@ export function getFieldOverrideCategories(
       }
 
       const varMappingId = wrapVarMappingPropId(property.id);
-      const eligibleForVarMapping = isVarMappingEligible(registryItemForProperty);
+      const eligibleForVarMapping = varMappingsEnabled && isVarMappingEligible(registryItemForProperty);
       const varMappingExpr = eligibleForVarMapping
         ? override.properties.find((p) => p.id === varMappingId)?.value
         : undefined;
@@ -322,8 +323,8 @@ export function getFieldOverrideCategories(
         // A plain number (or clearing) always clears a stale expression too, so typing a number
         // over an expression puts the property back into plain-value mode.
         const properties = override.properties
-          .filter((p) => p.id !== varMappingId)
-          .map((prop, i) => (prop.id === property.id ? { ...prop, value } : prop));
+          .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
+          .filter((p) => !eligibleForVarMapping || p.id !== varMappingId);
 
         onOverrideChange(idx, { ...override, properties });
       };
@@ -355,6 +356,7 @@ export function getFieldOverrideCategories(
                 registry={registry}
                 context={context}
                 searchQuery={searchQuery}
+                varMappingEligible={eligibleForVarMapping}
               />
             );
           },

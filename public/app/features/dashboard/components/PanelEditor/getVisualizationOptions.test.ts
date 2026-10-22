@@ -460,6 +460,37 @@ describe('getVisualizationOptions', () => {
         fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => fieldConfigItems),
       }) as unknown as PanelPlugin;
 
+    it('uses the plugin editor and the stored number when the flag is off', () => {
+      const minProperty = buildMinProperty();
+      const plugin = buildPlugin([minProperty]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-off' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{
+        value: unknown;
+        onChange: (v: unknown) => void;
+      }>;
+      expect(element.type).toBe(minProperty.editor);
+      expect(element.props.value).toBe(0);
+
+      element.props.onChange(42);
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        { defaults: { min: 42, varMappings: { min: '$myVar' } }, overrides: [] },
+        true
+      );
+    });
+
     it('displays the stored expression instead of the numeric value when varMappings holds one', () => {
       const plugin = buildPlugin([buildMinProperty()]);
       const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-1' });
@@ -472,6 +503,7 @@ describe('getVisualizationOptions', () => {
         currentOptions: {},
         currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
       const item = vizOptions[0].items[0];
@@ -492,6 +524,7 @@ describe('getVisualizationOptions', () => {
         currentOptions: {},
         currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
       const item = vizOptions[0].items[0];
@@ -517,6 +550,7 @@ describe('getVisualizationOptions', () => {
         currentOptions: {},
         currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
       const item = vizOptions[0].items[0];
@@ -539,6 +573,7 @@ describe('getVisualizationOptions', () => {
         currentOptions: {},
         currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
       const item = vizOptions[0].items[0];
@@ -573,6 +608,7 @@ describe('getVisualizationOptions', () => {
         currentOptions: {},
         currentFieldConfig: { defaults: { custom: { lineWidth: 2 } }, overrides: [] },
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
       const item = vizOptions[0].items[0];
@@ -710,6 +746,7 @@ describe('getVisualizationOptions', () => {
         currentOptions,
         currentFieldConfig: fieldConfig,
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
     it('hands a field config showIf the panel options and the whole field config', () => {

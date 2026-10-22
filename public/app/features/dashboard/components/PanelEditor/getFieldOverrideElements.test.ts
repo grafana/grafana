@@ -291,6 +291,48 @@ describe('getFieldOverrideCategories', () => {
     const makeMinItem = (allowVariables = true) =>
       makeItem('min', { isCustom: false, process: numberOverrideProcessor, allowVariables });
 
+    it('shows the stored number and keeps the varMappings.<id> entry on change when the flag is off', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        property: DynamicConfigValue;
+        varMappingEligible?: boolean;
+        onChange: (value: unknown) => void;
+      }>;
+
+      expect(element.props.property).toEqual({ id: 'min', value: 20 });
+      expect(element.props.varMappingEligible).toBe(false);
+
+      element.props.onChange(42);
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 42 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      });
+    });
+
     it('displays the stored expression instead of the numeric value when a sibling varMappings.<id> entry exists', () => {
       const registry = makeRegistry([makeMinItem()]);
       const fieldConfig: FieldConfigSource = {
@@ -306,7 +348,7 @@ describe('getFieldOverrideCategories', () => {
         ],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
       const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
       const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
         property: DynamicConfigValue;
@@ -330,7 +372,7 @@ describe('getFieldOverrideCategories', () => {
         ],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
       const propertyItems = categories[0].items.filter((item) => item.props.id?.includes('-property-'));
 
       expect(propertyItems).toHaveLength(1);
@@ -351,7 +393,7 @@ describe('getFieldOverrideCategories', () => {
         ],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
       const addButtonItem = categories[0].items[categories[0].items.length - 1];
       const element = addButtonItem.props.render(addButtonItem) as React.ReactElement<{
         options: Array<{ value: string }>;
@@ -369,7 +411,15 @@ describe('getFieldOverrideCategories', () => {
         overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 20 }] }],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
       const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
       const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
         onChange: (value: unknown) => void;
@@ -407,7 +457,15 @@ describe('getFieldOverrideCategories', () => {
         ],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
       const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
       const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
         onChange: (value: unknown) => void;
@@ -445,7 +503,15 @@ describe('getFieldOverrideCategories', () => {
         ],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
       const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
       const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
         onChange: (value: unknown) => void;
@@ -467,7 +533,15 @@ describe('getFieldOverrideCategories', () => {
         overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 20 }] }],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
       const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
       const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
         onChange: (value: unknown) => void;
@@ -497,7 +571,15 @@ describe('getFieldOverrideCategories', () => {
         ],
       };
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
       const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
       const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{ onRemove: () => void }>;
 
