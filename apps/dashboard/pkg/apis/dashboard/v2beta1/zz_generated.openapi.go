@@ -4784,7 +4784,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardThreshold(ref common.ReferenceCa
 					},
 					"valueExpr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. @deprecated Use the FieldConfig varMappings key \"thresholds.steps.<index>\" instead.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -7082,7 +7082,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookThreshold(ref common.ReferenceCal
 					},
 					"valueExpr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. @deprecated Use the FieldConfig varMappings key \"thresholds.steps.<index>\" instead.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

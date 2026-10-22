@@ -1103,7 +1103,7 @@ export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
-  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. @deprecated Use the FieldConfig varMappings key "thresholds.steps.<index>" instead. */
   valueExpr?: string;
 };
 export type DashboardThresholdsConfig = {
@@ -1151,6 +1151,10 @@ export type DashboardFieldConfig = {
   thresholds?: DashboardThresholdsConfig;
   /** Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit. */
   unit?: string;
+  /** Maps field-config property ids (e.g. `min`, `unit`, `custom.lineWidth`, or `thresholds.steps.<index>` for a threshold step) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property. */
+  varMappings?: {
+    [key: string]: string;
+  };
   /** True if data source can write a value to the path. Auth/authz are supported separately */
   writeable?: boolean;
 };
@@ -2020,7 +2024,7 @@ export type NotebookThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
-  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. @deprecated Use the FieldConfig varMappings key "thresholds.steps.<index>" instead. */
   valueExpr?: string;
 };
 export type NotebookThresholdsConfig = {
@@ -2068,6 +2072,10 @@ export type NotebookFieldConfig = {
   thresholds?: NotebookThresholdsConfig;
   /** Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit. */
   unit?: string;
+  /** Maps field-config property ids (e.g. `min`, `unit`, `custom.lineWidth`, or `thresholds.steps.<index>` for a threshold step) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property. */
+  varMappings?: {
+    [key: string]: string;
+  };
   /** True if data source can write a value to the path. Auth/authz are supported separately */
   writeable?: boolean;
 };
