@@ -421,11 +421,9 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 	t.Helper()
 	withManifest := manifestFile != ""
 
-	// The router serves both the settings and the manifest APIs.
+	// The settings API alone enables the router, which serves both the settings
+	// and the manifest APIs.
 	features := append(slices.Clone(extraFeatures), featuremgmt.FlagApppluginsRegisterAPIServer)
-	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
-		features = append(features, featuremgmt.FlagGrafanaUseRouterMiddleware)
-	}
 
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,

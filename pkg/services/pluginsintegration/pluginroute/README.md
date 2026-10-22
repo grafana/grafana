@@ -18,8 +18,9 @@ router prepares one backend per manifest, and one settings backend per app plugi
 Settings never appear under the manifest's `ext.grafana.app` group.
 
 The router loads manifests independently of `appplugins.loadAppManifest`.
-`appplugins.registerAPIServer` controls whether it serves settings. Both APIs
-require the router.
+`appplugins.registerAPIServer` controls whether it serves settings, and in
+single-tenant Grafana also turns on the router middleware. Both APIs require the
+router.
 
 Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for

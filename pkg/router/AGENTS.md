@@ -300,6 +300,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
+  `appplugins.registerAPIServer` turns middleware mode on too, except in the standalone router
+  (`middlewareEnabled`): app plugin settings are only served by the router.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
   `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to

@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,7 +26,7 @@ import (
 // In middleware mode the router runs inside a single-tenant Grafana, so the
 // cloud sources are never loaded.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	middleware := deps.Features != nil && deps.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	middleware := middlewareEnabled(cfg, deps.Features)
 	if !middleware {
 		// The cloud loader is invalid when running in OSS/middleware mode
 		if cloud, err := ProvideCloudRoutesLoaderFactory(cfg, deps.PluginDependencies); err != nil || cloud != nil {
@@ -101,4 +102,19 @@ type RoutesLoaderClients struct {
 	Access             types.AccessClient
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
+}
+
+// middlewareEnabled reports whether the router serves API groups inside a
+// single-tenant Grafana, ahead of the embedded API server. App plugin settings
+// are only served by the router, so enabling them enables it too, except in the
+// standalone router, which has no embedded API server to stand in front of.
+func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
+	if features == nil {
+		return false
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) { //nolint:staticcheck
+		return true
+	}
+	standalone := cfg != nil && slices.Contains(cfg.Target, "router")
+	return !standalone && features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
 }

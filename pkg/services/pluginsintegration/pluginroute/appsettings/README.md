@@ -19,8 +19,8 @@ group and name for reads, writes, and inline secure value ownership.
 [`pluginroute.NewAppSettingsHandler`](../README.md) serves this builder as its own
 API server. The router's local plugin loader builds one for every local app plugin
 when `appplugins.registerAPIServer` is enabled, with or without a manifest, and serves
-it under the plugin ID, so the settings API requires the router
-(`grafana.useRouterMiddleware` in single-tenant Grafana). The embedded API server
+it under the plugin ID. In single-tenant Grafana, `appplugins.registerAPIServer`
+also turns on the router middleware, since only the router serves settings. The embedded API server
 no longer registers it.
 
 The router resolves wildcard settings storage configuration at startup, before the
