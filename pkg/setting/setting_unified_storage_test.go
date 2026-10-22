@@ -350,6 +350,26 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("search_enforce_sort_capability", func(t *testing.T) {
+		t.Run("defaults to on", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchEnforceSortCapability)
+		})
+
+		t.Run("can be turned off", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			_, err = cfg.Raw.Section("unified_storage").NewKey("search_enforce_sort_capability", "false")
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchEnforceSortCapability)
+		})
+	})
+
 	t.Run("env vars create unified_storage resource sections without ini file", func(t *testing.T) {
 		// Set env vars for a resource that has NO ini section defined.
 		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_DUALWRITERMODE", "3")

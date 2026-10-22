@@ -254,20 +254,17 @@ it('ends a request Assistant has not acted on when the dashboard goes away', asy
 // A fresh load with the Assistant sidebar closed: Assistant registers only once one of its roots mounts.
 describe('before Assistant first registers', () => {
   const original = {
-    restrictedPluginApis: config.featureToggles.restrictedPluginApis,
     allow: config.bootData.settings.pluginRestrictedAPIsAllowList,
   };
 
   beforeEach(() => {
     stopAssistant();
     resetComposerEnterRequestsForTests();
-    config.featureToggles.restrictedPluginApis = true;
     config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: [ASSISTANT] };
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    config.featureToggles.restrictedPluginApis = original.restrictedPluginApis;
     config.bootData.settings.pluginRestrictedAPIsAllowList = original.allow;
   });
 

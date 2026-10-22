@@ -7,17 +7,11 @@ import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/
 import { composerApi } from './composer/composerApi';
 import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
-// This existing flag is only generated for the legacy frontend API.
-// eslint-disable-next-line @grafana/no-config-feature-toggles
-export const restrictedApisEnabled = config.featureToggles.restrictedPluginApis;
-
-const sharedApis: RestrictedGrafanaApisContextType = restrictedApisEnabled
-  ? {
-      alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
-      // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
-      extensionSidebar: extensionSidebarApi,
-    }
-  : {};
+const sharedApis: RestrictedGrafanaApisContextType = {
+  alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
+  // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
+  extensionSidebar: extensionSidebarApi,
+};
 
 /** Whether one of Composer's flags is on now: Composer exists while it is. */
 export function isComposerEnabled(): boolean {
@@ -42,7 +36,7 @@ export function getRestrictedGrafanaApis({
   return {
     ...sharedApis,
     ...(dashboardMutationAPI ? { dashboardMutationAPI } : {}),
-    ...(restrictedApisEnabled && composerEnabled ? { composer: composerApi } : {}),
+    ...(composerEnabled ? { composer: composerApi } : {}),
   };
 }
 

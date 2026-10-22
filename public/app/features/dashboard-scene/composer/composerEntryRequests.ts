@@ -247,15 +247,11 @@ function offer(listener: EnterRequestListener, target: ComposerTarget): boolean 
 
 /**
  * Whether the `composer` API would be shared with Assistant, as RestrictedGrafanaApisProvider and
- * RestrictedGrafanaApisContextProvider decide: the restricted APIs on, then the allow list (or, without one,
- * the block list). Whether Assistant is enabled is the entry points' check: they need its sidebar component,
- * which only an enabled Assistant registers.
+ * RestrictedGrafanaApisContextProvider decide: the allow list, or, without one, the block list. Whether
+ * Assistant is enabled is the entry points' check: they need its sidebar component, which only an enabled
+ * Assistant registers.
  */
 function canAssistantHaveComposerApi(): boolean {
-  // eslint-disable-next-line @grafana/no-config-feature-toggles -- only generated for the legacy frontend API
-  if (!config.featureToggles.restrictedPluginApis) {
-    return false;
-  }
   const matches = (list: string[] | undefined) => Boolean(list?.includes(ASSISTANT_PLUGIN_ID));
   const { pluginRestrictedAPIsAllowList: allow, pluginRestrictedAPIsBlockList: block } = config.bootData.settings;
   if (allow && Object.keys(allow).length > 0) {

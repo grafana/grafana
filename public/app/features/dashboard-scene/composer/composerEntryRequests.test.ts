@@ -276,21 +276,18 @@ describe('before Assistant first registers', () => {
     'grafana.dashboardComposer': true,
   };
   const original = {
-    restrictedPluginApis: config.featureToggles.restrictedPluginApis,
     allow: config.bootData.settings.pluginRestrictedAPIsAllowList,
     block: config.bootData.settings.pluginRestrictedAPIsBlockList,
   };
 
   beforeEach(() => {
     setTestFlags(COMPOSER_FLAGS);
-    config.featureToggles.restrictedPluginApis = true;
     config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: ['grafana-assistant-app'] };
     config.bootData.settings.pluginRestrictedAPIsBlockList = undefined;
   });
 
   afterEach(() => {
     setTestFlags({});
-    config.featureToggles.restrictedPluginApis = original.restrictedPluginApis;
     config.bootData.settings.pluginRestrictedAPIsAllowList = original.allow;
     config.bootData.settings.pluginRestrictedAPIsBlockList = original.block;
   });
@@ -303,7 +300,6 @@ describe('before Assistant first registers', () => {
 
   it.each([
     ['grafana.dashboardComposer is off', () => setTestFlags({ ...COMPOSER_FLAGS, 'grafana.dashboardComposer': false })],
-    ['the restricted APIs are off', () => (config.featureToggles.restrictedPluginApis = false)],
     [
       'the composer API is not allowed for Assistant',
       () => (config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: ['another-app'] }),

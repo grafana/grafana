@@ -127,6 +127,19 @@ func TestSettingsCreate(t *testing.T) {
 	require.True(t, settings.Spec.Pinned)
 }
 
+func TestSettingsCreate_JSONDataTooLarge(t *testing.T) {
+	storage := newTestStorage(map[string]*pluginsettings.DTO{})
+	storage.pluginSettings = &pluginsettings.FakePluginSettings{
+		UpdateErr: pluginsettings.ErrPluginSettingJSONDataTooLarge.Errorf("too large"),
+	}
+
+	ctx := request.WithNamespace(context.Background(), "default")
+	input := &apppluginV0.Settings{ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"}}
+
+	_, err := storage.Create(ctx, input, nil, nil)
+	require.True(t, apierrors.IsBadRequest(err))
+}
+
 func TestSettingsCreate_DryRunDoesNotPersist(t *testing.T) {
 	plugins := map[string]*pluginsettings.DTO{}
 	storage := newTestStorage(plugins)

@@ -183,11 +183,9 @@ describe('Composer in the notebook mode switch', () => {
 
   it('is left out on a fresh page before Assistant registers, where only dashboards are assumed', () => {
     const original = {
-      restrictedPluginApis: config.featureToggles.restrictedPluginApis,
       allow: config.bootData.settings.pluginRestrictedAPIsAllowList,
     };
     cleanups.push(() => {
-      config.featureToggles.restrictedPluginApis = original.restrictedPluginApis;
       config.bootData.settings.pluginRestrictedAPIsAllowList = original.allow;
     });
     stopAssistant();
@@ -199,7 +197,6 @@ describe('Composer in the notebook mode switch', () => {
       'grafana.dashboardPreviewMode': true,
       'grafana.dashboardComposer': true,
     });
-    config.featureToggles.restrictedPluginApis = true;
     config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: [ASSISTANT] };
 
     render(<NotebookEditToggle notebook={notebook()} />);
