@@ -223,6 +223,103 @@ describe('combineResponses', () => {
     expect(extraField?.values).toEqual([undefined, undefined, 'extraB1', undefined]);
   });
 
+  it('keeps a field introduced in the middle of the newly fetched frame', () => {
+    // `extraField` occupies an index that dest already uses for `Line`. Copying source fields
+    // only into empty slots drops it and can duplicate the shifted field at the end instead.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'extraField', type: FieldType.string, config: {}, values: ['extra'] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'id', 'extraField']);
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([11, 22, 33]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual(['line1', 'line2', 'line3']);
+    expect(fields.find((field: Field) => field.name === 'id')?.values).toEqual(['id1', 'id2', 'id3']);
+    expect(fields.find((field: Field) => field.name === 'extraField')?.values).toEqual([undefined, 'extra', undefined]);
+  });
+
+  it('keeps a field that replaces another field when both frames have the same field count', () => {
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'fieldA', type: FieldType.string, config: {}, values: ['a1', 'a3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'fieldB', type: FieldType.string, config: {}, values: ['b2'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'fieldA', 'fieldB']);
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([11, 22, 33]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual(['line1', 'line2', 'line3']);
+    expect(fields.find((field: Field) => field.name === 'fieldA')?.values).toEqual(['a1', undefined, 'a3']);
+    expect(fields.find((field: Field) => field.name === 'fieldB')?.values).toEqual([undefined, 'b2', undefined]);
+  });
+
+  it('keeps a same-named field with different labels when it replaces another at the same count', () => {
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [1, 3], labels: { level: 'debug' } },
+        { name: 'Value', type: FieldType.number, config: {}, values: [10, 30], labels: { only: 'dest' } },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [2], labels: { level: 'debug' } },
+        { name: 'Value', type: FieldType.number, config: {}, values: [20], labels: { only: 'source' } },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.labels)).toEqual([
+      undefined,
+      { level: 'debug' },
+      { only: 'dest' },
+      { only: 'source' },
+    ]);
+    expect(fields[1].values).toEqual([1, 2, 3]);
+    expect(fields[2].values).toEqual([10, undefined, 30]);
+    expect(fields[3].values).toEqual([undefined, 20, undefined]);
+  });
+
   it('does not pair a dest field with an unrelated source field when no field by that name exists in source', () => {
     // `onlyInDest` doesn't exist in `source` at all. findSourceField's positional fallback is
     // meant to disambiguate same-named fields, but it also fires when there are zero name

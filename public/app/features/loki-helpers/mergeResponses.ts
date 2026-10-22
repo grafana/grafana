@@ -106,7 +106,17 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
 
   const sourceTimeValues = sourceTimeField?.values.slice(0) ?? [];
   const destTimeValuesLength = destTimeField.values.length;
-  const totalFields = Math.max(dest.fields.length, source.fields.length);
+
+  // A field may exist only in `source` regardless of field count or position
+  source.fields.forEach((sourceField, index) => {
+    if (!findSourceField(sourceField, dest.fields, index)) {
+      dest.fields.push({
+        ...sourceField,
+        values: new Array(destTimeValuesLength).fill(undefined),
+      });
+    }
+  });
+  const totalFields = dest.fields.length;
 
   for (let i = 0; i < sourceTimeValues.length; i++) {
     const destIdx = resolveIdx(destTimeField, sourceTimeField, i);
@@ -114,13 +124,6 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
     const entryExistsInDest = compareEntries(destTimeField, destIdField, destIdx, sourceTimeField, sourceIdField, i);
 
     for (let f = 0; f < totalFields; f++) {
-      // New field in the new data frame
-      if (!dest.fields[f]) {
-        dest.fields[f] = {
-          ...source.fields[f],
-          values: new Array(destTimeValuesLength).fill(undefined),
-        };
-      }
       // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
       // If the field has no name, we fallback to the old index version.
       const sourceField = findSourceField(dest.fields[f], source.fields, f);
