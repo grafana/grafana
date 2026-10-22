@@ -1,4 +1,4 @@
-package appplugin
+package appsettings
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func TestSubresourceMetricsRegistersWithEachRegistry(t *testing.T) {
 	registerSubresourceMetrics(first)
 	registerSubresourceMetrics(second)
 	registerSubresourceMetrics(first)
-	newConnectMetric("resources", "metrics-test-app").Record()
+	newSubresourceMetric("resources", "metrics-test-app").Record()
 
 	for _, reg := range []*prometheus.Registry{first, second} {
 		count, err := testutil.GatherAndCount(reg,

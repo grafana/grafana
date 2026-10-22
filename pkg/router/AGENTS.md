@@ -70,7 +70,11 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
   `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
   misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
-  it, never one whose data or permissions matter (dashboards, folders, IAM).
+  it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
+  loader also serves each app plugin's settings API under its plugin ID
+  (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
+  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
@@ -297,6 +301,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
   `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
+  `appplugins.registerAPIServer` turns middleware mode on too, except in the standalone router
+  (`middlewareEnabled`): app plugin settings are only served by the router.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
   `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
