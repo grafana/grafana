@@ -18,47 +18,54 @@ jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
 }));
 
 describe('GeneralSettingsEditView', () => {
-  it('clears undo and redo history on each entry without reverting dashboard changes', () => {
-    const dashboard = new DashboardScene({ title: 'Original', isEditing: true });
-    const deactivateDashboard = activateFullSceneTree(dashboard);
-    const settings = new GeneralSettingsEditView({});
-    dashboard.setState({ editview: settings });
-    const sidebar = dashboard.state.sidebar;
+  describe('Edit history', () => {
+    let dashboard: DashboardScene;
+    let settings: GeneralSettingsEditView;
 
-    try {
-      for (const title of ['First visit', 'Second visit']) {
-        const previousTitle = dashboard.state.title;
-        edit({
-          source: dashboard,
-          description: 'Change title',
-          meta: { actionId: 'panel.changeTitle' },
-          perform: () => dashboard.setState({ title }),
-          undo: () => dashboard.setState({ title: previousTitle }),
-        });
-        edit({
-          source: dashboard,
-          description: 'Change description',
-          meta: { actionId: 'panel.changeDescription' },
-          perform: () => dashboard.setState({ description: 'Edited description' }),
-          undo: () => dashboard.setState({ description: undefined }),
-        });
-        sidebar.undoAction();
-        expect(sidebar.state.undoStack).toHaveLength(1);
-        expect(sidebar.state.redoStack).toHaveLength(1);
+    beforeEach(async () => {
+      ({ dashboard } = await buildTestScene());
+      edit({
+        source: dashboard,
+        description: 'Change title',
+        meta: { actionId: 'dashboard.changeTitle' },
+        perform: () => dashboard.setState({ title: 'Edited title' }),
+        undo: () => dashboard.setState({ title: 'hello' }),
+      });
+      edit({
+        source: dashboard,
+        description: 'Change description',
+        meta: { actionId: 'dashboard.changeDescription' },
+        perform: () => dashboard.setState({ description: 'Edited description' }),
+        undo: () => dashboard.setState({ description: undefined }),
+      });
+      dashboard.state.sidebar.undoAction();
 
-        const deactivateSettings = settings.activate();
-        try {
-          expect(sidebar.state.undoStack).toHaveLength(0);
-          expect(sidebar.state.redoStack).toHaveLength(0);
-          expect(dashboard.state.title).toBe(title);
-          expect(dashboard.state.description).toBeUndefined();
-        } finally {
-          deactivateSettings();
-        }
-      }
-    } finally {
-      deactivateDashboard();
-    }
+      // Entering settings creates a new view
+      settings = new GeneralSettingsEditView({});
+      dashboard.setState({ editview: settings });
+      settings.activate();
+    });
+
+    it('keeps undo and redo history while no setting is changed', () => {
+      const { sidebar } = dashboard.state;
+
+      expect(sidebar.state.undoStack.map((action) => action.description)).toEqual(['Change title']);
+      expect(sidebar.state.redoStack.map((action) => action.description)).toEqual(['Change description']);
+    });
+
+    it.each([
+      { name: 'title', change: (view: GeneralSettingsEditView) => view.onTitleChange('Settings title') },
+      { name: 'time zone', change: (view: GeneralSettingsEditView) => view.onTimeZoneChange('UTC') },
+      { name: 'graph tooltip', change: (view: GeneralSettingsEditView) => view.onTooltipChange(1) },
+      { name: 'hide time picker', change: (view: GeneralSettingsEditView) => view.onHideTimePickerChange(true) },
+    ])('clears undo and redo history when the $name setting changes', ({ change }) => {
+      const { sidebar } = dashboard.state;
+
+      change(settings);
+
+      expect(sidebar.state.undoStack).toEqual([]);
+      expect(sidebar.state.redoStack).toEqual([]);
+    });
   });
 
   describe('Dashboard state', () => {

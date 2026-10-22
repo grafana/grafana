@@ -37,17 +37,16 @@ export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
 {
-  constructor(state: GeneralSettingsEditViewState) {
-    super(state);
-
-    this.addActivationHandler(() => {
-      // General settings are outside edit history, so earlier actions must not be replayed across this boundary.
-      this._dashboard.state.sidebar.setState({ undoStack: [], redoStack: [] });
-    });
-  }
-
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
+  }
+
+  // Changes made here are not recorded, so earlier undo entries must not be replayed over them
+  private clearEditHistory() {
+    const { sidebar } = this._dashboard.state;
+    if (sidebar.state.undoStack.length > 0 || sidebar.state.redoStack.length > 0) {
+      sidebar.setState({ undoStack: [], redoStack: [] });
+    }
   }
 
   public getUrlKey(): string {
@@ -84,18 +83,22 @@ export class GeneralSettingsEditView
   }
 
   public onTitleChange = (value: string) => {
+    this.clearEditHistory();
     this._dashboard.setState({ title: value });
   };
 
   public onDescriptionChange = (value: string) => {
+    this.clearEditHistory();
     this._dashboard.setState({ description: value });
   };
 
   public onTagsChange = (value: string[]) => {
+    this.clearEditHistory();
     this._dashboard.setState({ tags: value });
   };
 
   public onFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
+    this.clearEditHistory();
     const newMeta = {
       ...this._dashboard.state.meta,
       folderUid: newUID || this._dashboard.state.meta.folderUid,
@@ -110,10 +113,12 @@ export class GeneralSettingsEditView
   };
 
   public onEditableChange = (value: boolean) => {
+    this.clearEditHistory();
     this._dashboard.setState({ editable: value });
   };
 
   public onDefaultGridChange = (value: string) => {
+    this.clearEditHistory();
     if (value === AutoGridLayoutManager.descriptor.id) {
       this._dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
     } else if (value === DefaultGridLayoutManager.descriptor.id) {
@@ -122,16 +127,19 @@ export class GeneralSettingsEditView
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
+    this.clearEditHistory();
     this.getTimeRange().setState({
       timeZone: value,
     });
   };
 
   public onWeekStartChange = (value?: WeekStart) => {
+    this.clearEditHistory();
     this.getTimeRange().setState({ weekStart: value });
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
+    this.clearEditHistory();
     const control = this.getRefreshPicker();
     control?.setState({
       intervals: value,
@@ -139,6 +147,7 @@ export class GeneralSettingsEditView
   };
 
   public onNowDelayChange = (value: string) => {
+    this.clearEditHistory();
     const timeRange = this.getTimeRange();
 
     timeRange?.setState({
@@ -147,12 +156,14 @@ export class GeneralSettingsEditView
   };
 
   public onHideTimePickerChange = (value: boolean) => {
+    this.clearEditHistory();
     this.getDashboardControls()?.setState({
       hideTimeControls: value,
     });
   };
 
   public onLiveNowChange = (enable: boolean) => {
+    this.clearEditHistory();
     try {
       const liveNow = this.getLiveNowTimer();
       enable ? liveNow.enable() : liveNow.disable();
@@ -162,10 +173,12 @@ export class GeneralSettingsEditView
   };
 
   public onTooltipChange = (value: number) => {
+    this.clearEditHistory();
     this.getCursorSync()?.setState({ sync: value });
   };
 
   public onPreloadChange = (preload: boolean) => {
+    this.clearEditHistory();
     this._dashboard.setState({ preload });
   };
 
@@ -191,6 +204,7 @@ export class GeneralSettingsEditView
   };
 
   public onMoveSuccess = (folderUID: string, folderTitle: string) => {
+    this.clearEditHistory();
     const newMeta = {
       ...this._dashboard.state.meta,
       folderUid: folderUID,
