@@ -45,8 +45,8 @@ export function RecordingRulesListView() {
     <Stack direction="column" gap={0.5}>
       <ResultCount kind="recording" total={total} />
       <RuleRowList>
-        {items.map((hit) => (
-          <RecordingRuleListEntry key={hit.uid} hit={hit} />
+        {items.map((searchHit) => (
+          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} />
         ))}
       </RuleRowList>
       <LoadMoreFooter

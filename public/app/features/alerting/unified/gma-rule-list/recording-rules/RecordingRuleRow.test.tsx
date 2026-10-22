@@ -17,7 +17,7 @@ function renderRow(props: Parameters<typeof RecordingRuleRow>[0]) {
 
 describe('RecordingRuleRow', () => {
   it('links the title to the rule view and labels the list item with it', () => {
-    renderRow({ hit: baseHit() });
+    renderRow({ searchHit: baseHit() });
 
     expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toHaveAttribute(
       'href',
@@ -27,13 +27,13 @@ describe('RecordingRuleRow', () => {
   });
 
   it('shows the Recording status icon when health is Recording', () => {
-    renderRow({ hit: baseHit({ health: 'Recording' }) });
+    renderRow({ searchHit: baseHit({ health: 'Recording' }) });
 
     expect(screen.getByLabelText('Recording')).toBeInTheDocument();
   });
 
-  it('reads Status unavailable, never Recording, when the hit carries no health', () => {
-    renderRow({ hit: baseHit() });
+  it('reads Status unavailable, never Recording, when the search hit carries no health', () => {
+    renderRow({ searchHit: baseHit() });
 
     expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
   });
@@ -42,7 +42,7 @@ describe('RecordingRuleRow', () => {
     { name: 'is known', folderPath: ['Platform', 'Team Metrics'], shown: true },
     { name: 'is still loading', folderPath: undefined, shown: false },
   ])('shows the folder path only when it $name', ({ folderPath, shown }) => {
-    renderRow({ hit: baseHit(), folderPath });
+    renderRow({ searchHit: baseHit(), folderPath });
 
     expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
     expect(screen.queryByText('Team Metrics') !== null).toBe(shown);

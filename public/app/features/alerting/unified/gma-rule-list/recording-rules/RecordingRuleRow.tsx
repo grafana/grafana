@@ -11,24 +11,24 @@ import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
 interface RecordingRuleRowProps {
-  hit: RecordingRuleSearchHit;
+  searchHit: RecordingRuleSearchHit;
   /** Absent while the folder path loads or when its lookup failed. */
   folderPath?: string[];
 }
 
 /** Presentation-only; missing health renders "unavailable", never recording. */
-export function RecordingRuleRow({ hit, folderPath }: RecordingRuleRowProps) {
+export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProps) {
   const titleId = useId();
   const returnTo = createReturnTo();
-  const href = `${grafanaRulesNav.viewLink(hit.uid)}?returnTo=${encodeURIComponent(returnTo)}`;
+  const href = `${grafanaRulesNav.viewLink(searchHit.uid)}?returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="recording" health={hit.health} paused={hit.paused} />}
+      icon={<RuleStatusIcon kind="recording" health={searchHit.health} paused={searchHit.paused} />}
       title={
         <TextLink id={titleId} href={href} color="primary" inline={false}>
-          {hit.title}
+          {searchHit.title}
         </TextLink>
       }
       meta={[folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />]}

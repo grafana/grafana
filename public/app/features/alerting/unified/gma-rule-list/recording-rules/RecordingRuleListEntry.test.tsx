@@ -23,7 +23,7 @@ describe('RecordingRuleListEntry', () => {
 
     render(
       <ul>
-        <RecordingRuleListEntry hit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }} />
+        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }} />
       </ul>
     );
 
