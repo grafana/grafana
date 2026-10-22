@@ -29,6 +29,7 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 
 import { RowItem } from './RowItem';
 import { performRowRepeats } from './RowItemRepeater';
+import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
@@ -80,6 +81,25 @@ describe('RowItemRepeater', () => {
       act(() => scene.state.sidebar.redoAction());
       expect(rowToRepeat.getCollapsedState()).toBe(true);
       expect(rowToRepeat.state.repeatedRows!.map((row) => row.getCollapsedState())).toEqual([false, false]);
+    });
+
+    it('applies a header visibility change of multiple selected rows to the repeated rows', async () => {
+      const { scene, rowToRepeat } = renderScene({ variableQueryTime: 0 });
+      await waitFor(() => expect(rowToRepeat.state.repeatedRows).toHaveLength(2));
+      act(() => {
+        scene.onEnterEditMode();
+        scene.state.sidebar.activate();
+      });
+      const otherRow = new RowItem({ title: 'Other', layout: AutoGridLayoutManager.createEmpty() });
+      act(() => rowToRepeat.getParentLayout().setState({ rows: [rowToRepeat, otherRow] }));
+
+      act(() => new RowItems([rowToRepeat, otherRow], scene).onHeaderHiddenToggle(false, false));
+      expect(rowToRepeat.state.repeatedRows!.map((row) => row.state.hideHeader)).toEqual([true, true]);
+      expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+
+      act(() => scene.state.sidebar.undoAction());
+      expect(rowToRepeat.state.hideHeader).toBeUndefined();
+      expect(rowToRepeat.state.repeatedRows!.map((row) => row.state.hideHeader)).toEqual([undefined, undefined]);
     });
 
     it('Should repeat row', async () => {

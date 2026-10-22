@@ -48,7 +48,7 @@ export class RowItems implements EditableDashboardElement {
 
   public onHeaderHiddenToggle(value: boolean, indeterminate: boolean) {
     changeRowsHeaderVisibility({
-      source: this._dashboard,
+      dashboard: this._dashboard,
       rows: this._rows,
       hideHeader: indeterminate ? true : !value,
     });
