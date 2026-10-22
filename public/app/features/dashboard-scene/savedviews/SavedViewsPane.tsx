@@ -1,11 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { type SceneComponentProps, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectState,
+  SceneVariableValueChangedEvent,
+  sceneGraph,
+} from '@grafana/scenes';
 import {
   Box,
   Button,
@@ -34,7 +40,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
 import { loadSavedViews } from './loadSavedViews';
-import { applySavedViewState, captureSavedViewState } from './state';
+import { applySavedViewState, captureSavedViewState, getSavedViewDiff } from './state';
 
 type ViewMode = 'compact' | 'expanded';
 
@@ -133,6 +139,13 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [loadFailed, setLoadFailed] = useState(false);
+  // Re-render on time range and variable changes so the selected view's save button tracks the dashboard.
+  sceneGraph.getTimeRange(dashboard).useState();
+  const [, refreshOnVariableChange] = useReducer((revision: number) => revision + 1, 0);
+  useEffect(() => {
+    const sub = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, refreshOnVariableChange);
+    return () => sub.unsubscribe();
+  }, [dashboard]);
 
   // undefined means "not fetched yet" (e.g. the pane was opened without a ?viewFilter= link
   // having already loaded them) -- distinct from an empty array, which means "fetched, none saved".
@@ -196,8 +209,9 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     );
   }
 
-  // A view is only "active" once the URL says so -- this is what gates Overwrite, not local edits.
+  // A view is only "active" once the URL says so; its save button is enabled once the dashboard drifts from it.
   const selectedView = savedViews.find((v) => v.metadata.name === viewFilter);
+  const isDirty = selectedView ? getSavedViewDiff(captureSavedViewState(dashboard), selectedView.spec) : false;
 
   const trimmedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredViews = trimmedSearchQuery
@@ -398,6 +412,15 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                           {view.spec.name || view.metadata.name}
                         </Button>
 
+                        {isSelected && (
+                          <IconButton
+                            name="save"
+                            tooltip={t('dashboard.sidebar.saved-views.save-changes', 'Save changes')}
+                            onClick={handleOverwrite}
+                            disabled={!isDirty || busy}
+                          />
+                        )}
+
                         <Dropdown
                           overlay={
                             <Menu>
@@ -451,25 +474,9 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       </ScrollContainer>
 
       <div className={styles.footer}>
-        <Stack gap={1}>
-          <Button variant="secondary" onClick={openSaveModal} disabled={busy} className={styles.footerButton}>
+        <Stack justifyContent="flex-end">
+          <Button icon="plus" variant="primary" onClick={openSaveModal} disabled={busy}>
             {t('dashboard.sidebar.saved-views.save-new', 'Save new')}
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={!selectedView || busy}
-            onClick={handleOverwrite}
-            className={styles.footerButton}
-            tooltip={
-              selectedView
-                ? t('dashboard.sidebar.saved-views.overwrite-tooltip', 'Overwrite "%NAME%"').replace(
-                    '%NAME%',
-                    selectedView.spec.name
-                  )
-                : t('dashboard.sidebar.saved-views.overwrite-tooltip-none', 'Select a saved view to overwrite')
-            }
-          >
-            {t('dashboard.sidebar.saved-views.overwrite', 'Overwrite')}
           </Button>
         </Stack>
       </div>
@@ -559,9 +566,6 @@ function getStyles(theme: GrafanaTheme2) {
       // content, so no bottom padding here to avoid doubling it up.
       padding: theme.spacing(1, 1, 0, 1),
       borderTop: `1px solid ${theme.colors.border.weak}`,
-    }),
-    footerButton: css({
-      flex: 1,
     }),
     row: css({
       padding: theme.spacing(1),

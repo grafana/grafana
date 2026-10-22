@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import { QueryVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 
@@ -55,7 +55,12 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 }
 
 function renderPane(savedViews?: SavedDashboardView[]) {
-  const scene = new DashboardScene({ title: 'hello', uid: 'dash-1', savedViews });
+  const scene = new DashboardScene({
+    title: 'hello',
+    uid: 'dash-1',
+    savedViews,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+  });
   const pane = new SavedViewsPane({});
   scene.state.sidebar.openPane(pane);
   render(
@@ -185,22 +190,64 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
-  it('disables Overwrite until a view is active for the dashboard, then enables it', () => {
-    const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
+  describe('Save changes', () => {
+    it('is not shown until a view is active for the dashboard', () => {
+      renderPane([buildView('view-1', { name: 'My view' })]);
 
-    expect(screen.getByRole('button', { name: 'Overwrite' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
+    });
 
-    act(() => scene.setState({ viewFilter: 'view-1' }));
+    it('shows only in the selected row, disabled while the dashboard matches the view', () => {
+      const { scene } = renderPane([buildView('view-1', { name: 'My view' }), buildView('view-2', { name: 'Other' })]);
 
-    expect(screen.getByRole('button', { name: 'Overwrite' })).not.toHaveAttribute('aria-disabled', 'true');
+      act(() => scene.setState({ viewFilter: 'view-1' }));
+
+      const buttons = screen.getAllByRole('button', { name: 'Save changes' });
+      expect(buttons).toHaveLength(1);
+      expect(buttons[0]).toBeDisabled();
+    });
+
+    it('enables once the time range drifts from the selected view', () => {
+      const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
+      act(() => scene.setState({ viewFilter: 'view-1' }));
+
+      act(() => scene.state.$timeRange?.setState({ from: 'now-24h' }));
+
+      expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled();
+    });
+
+    it('enables once a variable drifts from the selected view', async () => {
+      const env = new QueryVariable({ name: 'env', query: '', value: 'prod', text: 'prod' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        $variables: new SceneVariableSet({ variables: [env] }),
+        savedViews: [buildView('view-1', { variables: [{ name: 'env', type: 'query', value: 'prod' }] })],
+        viewFilter: 'view-1',
+      });
+      const pane = new SavedViewsPane({});
+      scene.state.sidebar.openPane(pane);
+      render(
+        <WrapSidebar>
+          <pane.Component model={pane} />
+        </WrapSidebar>
+      );
+      expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+
+      act(() => env.changeValueTo('dev', 'dev'));
+
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled());
+    });
   });
 
   it('preserves an existing description when overwriting', async () => {
     api.update.mockResolvedValue(buildView('view-1', { name: 'My view', description: 'Original note' }));
     const { scene } = renderPane([buildView('view-1', { name: 'My view', description: 'Original note' })]);
     act(() => scene.setState({ viewFilter: 'view-1' }));
+    act(() => scene.state.$timeRange?.setState({ from: 'now-24h' }));
 
-    await userEvent.click(screen.getByRole('button', { name: 'Overwrite' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(api.update).toHaveBeenCalled());
     expect(api.update).toHaveBeenCalledWith(
@@ -293,6 +340,13 @@ describe('SavedViewsPane', () => {
     expect(partialSpy).toHaveBeenCalledWith({ viewFilter: 'view-2' });
     expect(screen.queryByRole('heading', { name: 'Save new view' })).not.toBeInTheDocument();
     partialSpy.mockRestore();
+  });
+
+  it('offers only Save new in the footer', () => {
+    renderPane([buildView('view-1', { name: 'My view' })]);
+
+    expect(screen.getByRole('button', { name: 'Save new' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
   });
 
   it('cancels the save-new modal without creating a view', async () => {
