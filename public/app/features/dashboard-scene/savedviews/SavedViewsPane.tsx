@@ -566,7 +566,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexShrink: 0,
       // Sidebar's own openPane wrapper already reserves paddingBottom: theme.spacing(2) below its
       // content, so no bottom padding here to avoid doubling it up.
-      padding: theme.spacing(1, 1, 0, 1),
+      padding: theme.spacing(2, 1, 0, 1),
       borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     row: css({
