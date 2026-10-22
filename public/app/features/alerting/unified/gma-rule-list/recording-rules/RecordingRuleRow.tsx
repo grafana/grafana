@@ -2,7 +2,6 @@ import { useId } from 'react';
 
 import { TextLink } from '@grafana/ui';
 
-import { createReturnTo } from '../../hooks/useReturnTo';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleListItem } from '../rule-row/RuleListItem';
@@ -19,8 +18,7 @@ interface RecordingRuleRowProps {
 /** Presentation-only; missing health renders "unavailable", never recording. */
 export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProps) {
   const titleId = useId();
-  const returnTo = createReturnTo();
-  const href = `${grafanaRulesNav.viewLink(searchHit.uid)}?returnTo=${encodeURIComponent(returnTo)}`;
+  const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
 
   return (
     <RuleListItem

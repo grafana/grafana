@@ -11,7 +11,8 @@ function renderRow(props: Parameters<typeof RecordingRuleRow>[0]) {
   return render(
     <ul>
       <RecordingRuleRow {...props} />
-    </ul>
+    </ul>,
+    { historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] } }
   );
 }
 
@@ -21,7 +22,7 @@ describe('RecordingRuleRow', () => {
 
     expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toHaveAttribute(
       'href',
-      expect.stringContaining('/alerting/grafana/rule-1/view')
+      '/alerting/grafana/rule-1/view?returnTo=%2Falerting%2Frules%2Frecording%3Fsearch%3Dcpu'
     );
     expect(screen.getByRole('listitem', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
   });
