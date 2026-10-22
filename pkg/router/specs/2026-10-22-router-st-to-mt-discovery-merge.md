@@ -1,0 +1,163 @@
+# Router: Merged discovery for the ST→MT fallback
+
+Status: proposed
+Package: `pkg/router`
+
+A cloud single-tenant (ST) Grafana forwards requests for API groups its embedded apiserver does
+not serve to the multi-tenant (MT) router (`mt_fallback.go`). Those requests work, but the ST's
+root `/apis` and `/openapi/v3` still list only local groups, so MT groups are reachable and not
+discoverable. This note designs the merge. It also replaces the per-request gate with a polled
+set of MT groups, which fixes the metric group label (see "Metrics").
+
+## Why the ST has to serve it
+
+For most stacks the edge sends discovery straight to the MT router, which already merges its own
+sources with the caller's stack (`discovery_handler.go`, `discoverySource`). Some stacks use
+authentication the edge cannot satisfy yet, so their requests reach the ST first, and the ST must
+answer discovery itself. The merge is built for every ST with `mt_router_address` set, whether or
+not it sits behind the edge, so there is one behavior and no special case.
+
+## The recursion problem, and how it stops
+
+The MT router's root discovery already includes the caller's stack (its ST fallback forwards
+`/apis` there). If the ST's discovery now included the MT router's, each would ask the other.
+Each leg asks the other side for a view without its own contribution, with a request header:
+
+| Header | Sent by | Asks the receiver for |
+| --- | --- | --- |
+| `X-Grafana-Discovery-Skip-ST` | ST, on its poll of the MT router | The groups the MT router itself serves, with no stack contribution |
+| `X-Grafana-Discovery-Skip-MT` | MT router, on the discovery it forwards to a stack | The groups the stack itself serves, with no MT contribution |
+
+The value is `true`; only presence matters. The names say the effect the receiver should produce,
+not who sent the request. They are separate from `X-Grafana-ST-To-Router-Fallback`, which marks a
+resource request already forwarded once and makes the MT router refuse it (404, and
+`grafana_router_stack_fallback_refused_total`). A discovery poll carries only the discovery
+header, so the refusal metric stays a count of forwarded resource requests, and a skipped
+contribution is not an error and is not counted.
+
+**What the MT router does with `Skip-ST`.** Today a stack-less answer is not an MT-only view: when
+`readRootDiscovery` fails, `serveAggregatedDiscovery` takes the unscoped path and adds the
+callerScoped entries as defaults, which are the generic ST groups from `st_discovery_url`. A
+request with the header therefore needs both of these, not only the first:
+
+1. no read of the fallback source (`discoverySource`);
+2. no callerScoped entries from the snapshot, which the merge loops of the aggregated `/apis`,
+   the legacy `/apis` and the `/openapi/v3` index each handle (`entry.callerScoped && scoped`).
+
+The ST then receives a 200 with only the groups the MT router serves. The MT router's own
+non-callerScoped backends already win over names a stack returns, but a group the MT router has
+dropped and the stack still remembers would otherwise appear as a ghost, which is why the MT→ST
+leg is marked too.
+
+**What the ST does with `Skip-MT`.** It answers `/apis` and `/openapi/v3` from its local groups
+only, never from the merged view.
+
+With both legs marked, discovery cannot recurse in either direction.
+
+### Where the rule lives
+
+The rule is one per-request view, not a check in each handler. Only
+`discoverySource(next)` is not enough, since it controls (1) and not (2). A router helper,
+`discoveryView(req)`, returns the snapshot, the source and whether the source is caller-scoped,
+and every discovery handler reads it. A request that asks for the caller-independent view gets
+the snapshot without its callerScoped entries and no fallback source. One rule means one test, and
+a handler cannot be added later that forgets it. A per-handler check was rejected because the
+three merge loops would have to stay in step, and a miss is silent: generic ST groups leak.
+
+`AGENTS.md` keeps deployment-specific knowledge out of the engine files (`router.go`,
+`discovery*.go`), and a header name is deployment-specific. The engine therefore never reads the
+header. It has a field, `discoveryFlat func(*http.Request) bool`, set from the source files
+(`mt_fallback.go` for `Skip-ST`, `st_fallback.go` for `Skip-MT`), and `discoveryView` asks it. The
+engine only learns that this request wants the caller-independent view.
+
+### Caching
+
+The same URL now has two views. The router's cached documents (`apiGroupList` and the OpenAPI
+index) are built for the default view and must not be served to, or overwritten by, a request with
+a skip header. Such a response carries `Vary` on its header, and the router builds it per request
+or from a separate cache, never from the default one. A skip header only narrows what the caller
+sees, so any client may send it, and it never changes authorization.
+
+## Design: MT as a polled source of backends
+
+Do not give the engine a second per-request discovery source: `discoverySource` assumes one, so
+that would change `router.go`. Treat the MT router the way the router already treats an aggregate
+target (`aggregate_poller.go`): poll it, and expose what it serves as `Backend`s.
+
+1. A poller reads the MT router's `/apis`, sent with `X-Grafana-Discovery-Skip-ST`, (aggregated discovery, falling back to the
+   legacy list, through `discoverGroupResources`) on an interval, with jitter and the existing
+   cooldown backoff after a failure.
+2. Each discovered group becomes a `Backend` whose handler is the MT proxy (`mtFallback.serve`):
+   per-group breaker, redirect rejection, the `X-Grafana-ST-To-Router-Fallback` marker, the requester's credentials. The
+   backend carries the group's discovery document, so the router's existing union serves
+   `/apis`, `/apis/<group>` and `/openapi/v3` without new merge code.
+3. The mt fallback implements `RoutesLoader`, as `singleTenantFallback` does, and the cloud
+   loader merges it into its `Load` at the lowest priority. The router's existing reconcile,
+   `served` map and breaker handling then apply unchanged.
+4. The per-request gate in `Service.HandleFunc` goes away: a group is forwarded because it is in
+   the router's snapshot, not because it is absent from a local set. Groups in neither go to
+   `next` and get a local 404.
+
+## Precedence
+
+- **A group the embedded apiserver serves always stays local.** In middleware mode a group the
+  router serves replaces the embedded server's, core groups included, so a polled MT group must
+  never reach the snapshot when the local snapshot has it. The poller drops every group in the
+  local set (the one read once at readiness, `/readyz` plus `/apis` plus the aggregator's
+  APIServices), so a group served by both is local.
+- **`Load` waits for the local set.** Until it exists, the MT source reports
+  `errMTDiscoveryPending`, like `errSingleTenantDiscoveryPending`, so a reconcile cannot publish
+  an MT group that is really local. A failed local read is retried by the existing backoff.
+- **Between sources,** a group the cloud loader's other sources serve keeps the existing priority
+  order (`cloudLoader.Load`); the MT source is last.
+- **Within a group,** one backend owns every version: the discovery document of a group served by
+  the MT router is taken whole, never merged with a local one.
+
+## Authentication
+
+The MT router's `/apis` needs credentials. The poll is made as a service, not on behalf of a
+user: the ST uses its own access policy, exchanging its CAP token for a signed access token per
+request, exactly as aggregate targets do (`aggregateTokenWrapper`, `authnlib.TokenExchangeClient`).
+It reuses `[cloud_router] cap_token` and `token_exchange_url`, and adds `mt_router_audience`,
+required whenever the address is set. Proxied requests are separate: they carry the caller's own
+credentials through `rewriteOutbound`, as they do today.
+
+## Staleness
+
+The set of MT groups changes only when new apps roll out, which is rare, so the poll interval is
+long (default 10 minutes, as for ST discovery) and a freshly rolled-out MT group is not reachable
+from an ST until the next successful poll. This is accepted. Consequences:
+
+- A group removed from the MT router stays listed, and requests for it fail at the MT router (a
+  404 from it, not a loop), until the next poll.
+- A poll that fails keeps the last-known-good groups, as every other source does.
+- There is no per-request fallback for an unknown group, so a typo is a local 404 and costs no
+  MT round trip.
+
+## Cost
+
+- **Per request:** none; the merge is in memory.
+- **Background:** one authenticated GET per ST per interval. The MT-only document is the same for
+  every stack, and with `Skip-ST` the MT router does no stack fan-out to answer it. Jitter
+  spreads thousands of stacks across the interval.
+
+## Metrics
+
+Forwarded requests are instrumented like any other backend's: `grafana_router_http_requests_total`
+with `route="backend"`, the duration histogram, the long-running gauge for watches and
+`backend_failures_total`. The group label is the real group, because it is in the snapshot
+(`KnownGroup`), so cardinality is bounded by what the MT router served at the last poll. The
+earlier gate could not do this without labelling every forward `unknown`.
+
+## Out of scope
+
+- Client certificates (mTLS) to the MT router.
+- Watching MT for changes instead of polling.
+- Discovery of groups installed in the embedded apiserver after readiness (CRDs), as in the
+  fallback itself.
+
+## Decisions
+
+- The marked-request rule is one `discoveryView(req)` helper, with the header check injected as a
+  predicate so the engine stays free of deployment-specific names (see "Where the rule lives").
+- The reverse marker is `X-Grafana-Discovery-Skip-MT`. A skipped contribution is not counted.
