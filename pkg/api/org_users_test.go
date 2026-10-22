@@ -1113,14 +1113,47 @@ func TestGetOrgUsersForCurrentOrg_ExactRedirectLookup(t *testing.T) {
 	}
 }
 
+func TestOrgUserSearchIgnoresUIDOnOtherEndpoints(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	service := &usertest.FakeUserService{
+		ExpectedUser: &user.User{ID: 3, UID: "viewer", OrgID: 1, OrgRole: "Viewer"},
+		ExpectedSearchUsers: user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{
+			{ID: 1, Role: "Admin"}, {ID: 2, Role: "Admin"},
+		}, TotalCount: 2, Page: 1, PerPage: 10},
+	}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service, authInfoService: &authinfotest.FakeService{}}
+	t.Run("last admin guard", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest(http.MethodPatch, "/api/org/users/1?userUid=viewer", nil)},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserID: 1},
+		}
+		other, err := hs.orgHasOtherAdmin(ctx, 1, 1)
+		require.NoError(t, err)
+		require.True(t, other)
+	})
+	t.Run("paged search", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users/search?userUid=viewer&page=1&perpage=10", nil)},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserID: 1},
+		}
+		resp := hs.SearchOrgUsersWithPaging(ctx).(*response.NormalResponse)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var result org.SearchOrgUsersQueryResult
+		require.NoError(t, json.Unmarshal(resp.Body(), &result))
+		require.Len(t, result.OrgUsers, 2)
+		require.Equal(t, 1, result.Page)
+		require.Equal(t, 10, result.PerPage)
+	})
+}
+
 func TestGetOrgUsersForCurrentOrg_UIDLegacy(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
 	service := &usertest.MockService{}
-	service.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "target"}).Return(&user.User{ID: 42, OrgID: 99}, nil).Once()
 	hs := &HTTPServer{
 		Cfg: setting.NewCfg(), userService: service, authInfoService: &authinfotest.FakeService{},
 		orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-			require.Equal(t, int64(42), query.UserID)
+			require.Zero(t, query.UserID)
+			require.Equal(t, "target", query.UserUID)
 			require.Equal(t, int64(7), query.OrgID)
 			require.True(t, query.ExcludeHiddenUsers)
 			return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
