@@ -4,8 +4,8 @@ Code for Grafana's Prometheus convert API (`/api/convert/...`). That API takes r
 configs in the format mimirtool and cortextool use, and turns them into Grafana-managed alert rules,
 recording rules and notification resources.
 
-This entry point holds functions, types and an RTKQ client. It has no React components: those belong in
-`@grafana/alerting/unstable`.
+This entry point holds functions, types and an RTKQ client. It has no React components, and none should be
+added: apps build their own forms from these and from the components `@grafana/alerting/unstable` already has.
 
 ```ts
 import { convertAPI, getConvertRulesHeaders, type RulerRuleGroupDTO } from '@grafana/alerting/convert';
@@ -13,12 +13,12 @@ import { convertAPI, getConvertRulesHeaders, type RulerRuleGroupDTO } from '@gra
 
 ## What's in here
 
-| File                      | What it holds                                                                                   |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `api/types.ts`            | The rule group types, plus the request and response bodies of the convert API                   |
-| `api/headers.ts`          | Builds the `X-Grafana-Alerting-*` headers the convert API reads its options from                |
-| `api/client.ts`           | `convertAPI`, the RTKQ client for the convert API                                               |
-| `notificationSettings.ts` | Converts between the notification settings selector's value and the shape the convert API takes |
+| File                      | What it holds                                                                                 |
+| ------------------------- | --------------------------------------------------------------------------------------------- |
+| `api/types.ts`            | The rule group types, plus the request and response bodies of the convert API                 |
+| `api/headers.ts`          | Builds the `X-Grafana-Alerting-*` headers the convert API reads its options from              |
+| `api/client.ts`           | `convertAPI`, the RTKQ client for the convert API                                             |
+| `notificationSettings.ts` | The `NotificationSettings` value, and conversions to and from the shape the convert API takes |
 
 ### Types (`api/types.ts`)
 
@@ -73,24 +73,27 @@ for cortextool, so those aren't repeated here.
 All paths are under `/api/convert`. A few things to know:
 
 - The read endpoints ask for JSON. Without that, Grafana answers in YAML so mimirtool keeps working.
-- The import endpoints take the selector's `NotificationSettings` value and convert it for the header
-  themselves.
+- The import endpoints take a `NotificationSettings` value and convert it for the header themselves.
 - Reads only return rules and configs that came in through the convert API, not every rule in a folder.
-- Like the other clients in this package, it needs its reducer and middleware added to a Redux store.
+- Like the other clients in this package, it needs its reducer and middleware in a Redux store. Pass it to
+  `createAlertingStore` from `@grafana/alerting/unstable` to get one store for it and the existing pickers:
+  `createAlertingStore([convertAPI])`.
 
 ### Notification settings (`notificationSettings.ts`)
 
-- `toRulerNotificationSettings(value)` turns the selector's value into a `RulerNotificationSettingsDTO` for the
+`NotificationSettings` is where an alert rule's notifications go: `{ type: 'SimplifiedRouting', receiver, ... }`
+for a contact point, optionally with grouping, timing and time interval overrides, or
+`{ type: 'NamedRoutingTree', routingTree }` for a named notification policy tree. `null` means the default
+policy tree. Apps build this value from their own form.
+
+- `toRulerNotificationSettings(value)` turns it into a `RulerNotificationSettingsDTO` for the
   header. `null` (default routing) gives `undefined`, meaning "leave the header out".
 - `fromRulerNotificationSettings(settings)` reads one back, e.g. from a rule's `notification_settings`.
 
 Both leave out blank durations and empty lists, because the API rejects an empty duration.
 
-`NotificationSettings` is declared here for now. It's a copy of the type from grafana/grafana#134990; once
-that's merged, import it from there instead and remove the copy.
-
 ## What doesn't belong here
 
-- React components. Put those in `@grafana/alerting/unstable`.
+- React components, in this entry point or anywhere else in the package.
 - Grafana-managed types that have nothing to do with the convert API. These live with the rest of the
   package, built on the generated k8s API clients.
