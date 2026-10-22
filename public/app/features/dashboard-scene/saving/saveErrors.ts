@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 
-import { isApiMachineryError, type MetaStatusCause } from '../../apiserver/types';
+import { isApiMachineryError, type MetaStatus, type MetaStatusCause } from '../../apiserver/types';
 
 type SaveDashboardErrorKind =
   | 'version-mismatch'
@@ -52,6 +52,13 @@ export function getSaveDashboardErrorInfo(error: unknown): SaveDashboardErrorInf
   }
 
   if (isApiMachineryError(error)) {
+    if (isBareForbidden(error)) {
+      return {
+        kind: 'forbidden',
+        message: t('dashboard-scene.save-errors.forbidden', 'Ask your Grafana administrator for access.'),
+        causes: [],
+      };
+    }
     return {
       kind: API_MACHINERY_REASON_KINDS[error.data.reason ?? ''] ?? 'unknown',
       message: resolveMessage(error),
@@ -72,6 +79,13 @@ export function getSaveDashboardErrorInfo(error: unknown): SaveDashboardErrorInf
     message: error instanceof Error && error.message ? error.message : genericMessage(),
     causes: [],
   };
+}
+
+// Unified storage's create permission check rejects with a 403 Status carrying neither a reason nor a
+// message. A 403 that has a message but no reason stays unclassified: quota and service-to-service
+// auth failures share that shape, and their text explains them better than a permission alert would.
+function isBareForbidden(error: FetchError<MetaStatus>): boolean {
+  return error.status === 403 && !error.data.reason && !error.data.message;
 }
 
 function formatCauses(causes?: MetaStatusCause[]): string[] {
