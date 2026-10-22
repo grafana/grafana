@@ -143,8 +143,7 @@ describe('PanelModel', () => {
 
     describe('migrations', () => {
       let initialMigrator: PanelMigrationHandler<(typeof model)['options']> | undefined = undefined;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let initialShouldMigrate: ((panel: any) => boolean) | undefined = undefined;
+      let initialShouldMigrate: typeof tablePlugin.shouldMigrate = undefined;
 
       beforeEach(() => {
         initialMigrator = tablePlugin.onPanelMigration;

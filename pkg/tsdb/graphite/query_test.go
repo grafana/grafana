@@ -766,7 +766,7 @@ func TestRunQueryE2E(t *testing.T) {
 						ID:  1,
 						URL: server.URL,
 					},
-					OrgID: 1,
+					OrgID: 1, //nolint:staticcheck // Exercise the legacy plugin context.
 				},
 				Queries: tt.queries,
 			}

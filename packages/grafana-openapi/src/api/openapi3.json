@@ -3230,13 +3230,14 @@
         "type": "object"
       },
       "AttributeTypeAndValue": {
-        "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
+        "description": "When parsed as part of a pkix.Name structure in a crypto/x509 type,\nthe Value will be\n\n- a string if the ASN.1 type is PrintableString, IA5String,\nNumericString, BMPString, T61String, or UTF8String;\n- an int64 if the ASN.1 type is INTEGER;\n- an asn1.BitString if the ASN.1 type is BIT STRING;\n- a []byte if the ASN.1 type is OCTET STRING;\n- an asn1.ObjectIdentifier if the ASN.1 type is OBJECT IDENTIFIER;\n- a time.Time if the ASN.1 type is UTCTIME or GENERALIZEDTIME;\n- a bool if the ASN.1 type is BOOLEAN;\n- nil if the ASN.1 type is NULL;\n- an asn1.RawValue otherwise.",
         "properties": {
           "Type": {
             "$ref": "#/components/schemas/ObjectIdentifier"
           },
           "Value": {}
         },
+        "title": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
         "type": "object"
       },
       "Authorization": {
@@ -3682,6 +3683,13 @@
             "type": "array"
           },
           "RawIssuer": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSignatureAlgorithm": {
             "items": {
               "format": "uint8",
               "type": "integer"
@@ -6777,52 +6785,6 @@
         },
         "type": "object"
       },
-      "InhibitionRule": {
-        "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
-        "properties": {
-          "equal": {
-            "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "source_match": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
-            "type": "object"
-          },
-          "source_match_re": {
-            "$ref": "#/components/schemas/MatchRegexps"
-          },
-          "source_matchers": {
-            "$ref": "#/components/schemas/Matchers"
-          },
-          "target_match": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
-            "type": "object"
-          },
-          "target_match_re": {
-            "$ref": "#/components/schemas/MatchRegexps"
-          },
-          "target_matchers": {
-            "$ref": "#/components/schemas/Matchers"
-          }
-        },
-        "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
-        "type": "object"
-      },
       "InspectType": {
         "format": "int64",
         "title": "InspectType is a type for the Inspect property of a Notice.",
@@ -7249,19 +7211,6 @@
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "ManagedInhibitionRules": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/InhibitionRule"
-        },
-        "type": "object"
-      },
-      "ManagedRoutes": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Route"
-        },
-        "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
         "type": "object"
       },
       "ManagerKind": {
@@ -8534,21 +8483,6 @@
         },
         "type": "object"
       },
-      "PostableApiTemplate": {
-        "description": "nolint:revive",
-        "properties": {
-          "content": {
-            "type": "string"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/TemplateKind"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "PostableExtendedRuleNode": {
         "properties": {
           "alert": {
@@ -8752,38 +8686,6 @@
         },
         "type": "object"
       },
-      "PostableUserConfig": {
-        "properties": {
-          "alertmanager_config": {
-            "$ref": "#/components/schemas/PostableApiAlertingConfig"
-          },
-          "extra_config": {
-            "items": {
-              "$ref": "#/components/schemas/ExtraConfiguration"
-            },
-            "type": "array"
-          },
-          "managed_inhibition_rules": {
-            "$ref": "#/components/schemas/ManagedInhibitionRules"
-          },
-          "managed_routes": {
-            "$ref": "#/components/schemas/ManagedRoutes"
-          },
-          "managed_templates": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/PostableApiTemplate"
-            },
-            "type": "object"
-          },
-          "template_files": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      },
       "PreferencesNavbarPreference": {
         "properties": {
           "bookmarkUrls": {
@@ -8807,7 +8709,7 @@
       "PreferencesSpec": {
         "properties": {
           "homeDashboardUID": {
-            "description": "UID for the home dashboard",
+            "description": "UID for the home dashboard. The reserved value \"global-home\" is not a\ndashboard UID: it selects the instance default home (home_page, the\nconfigured home dashboard file, or the built-in home page) instead of\nfalling through to lower-precedence preferences.",
             "type": "string"
           },
           "homeURL": {

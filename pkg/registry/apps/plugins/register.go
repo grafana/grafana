@@ -1,20 +1,16 @@
 package plugins
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	authlib "github.com/grafana/authlib/types"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -57,18 +53,7 @@ func ProvideAppInstaller(
 	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
-	coreProvider, err := meta.NewCoreProvider(logger, meta.CoreProviderOpts{
-		StaticRootPath: func() (string, error) {
-			return getStaticRootPath(cfgProvider, logger)
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if err = coreProvider.Init(context.Background()); err != nil {
-		logger.Warn("Failed to eagerly load core plugins", "error", err)
-	}
-	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
+	metaProviderManager := meta.NewProviderManager(localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.NewPluginsAppInstaller(pluginsapp.PluginAppInstallerConfig{
 		Logger:              logger,
@@ -85,32 +70,4 @@ func ProvideAppInstaller(
 		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
-}
-
-func getStaticRootPath(cfgProvider configprovider.ConfigProvider, logger logging.Logger) (string, error) {
-	cfg, err := cfgProvider.Get(context.Background())
-	if err != nil {
-		wd, err := os.Getwd()
-		if err != nil {
-			return "", errors.New("getStaticRootPath fallback failed: could not determine working directory")
-		}
-		// Check if we're in the Grafana root
-		staticRootPath := filepath.Join(wd, "public")
-		if _, err = os.Stat(filepath.Join(staticRootPath, "app", "plugins")); err != nil {
-			return "", errors.New("getStaticRootPath fallback failed: could not find core plugins directory")
-		}
-		return staticRootPath, nil
-	}
-
-	staticRootPath := cfg.StaticRootPath
-	// cfg.HomePath may not be set correctly depending on the cfgProvider implementation
-	if staticRootPath == "" || staticRootPath == "." || !filepath.IsAbs(staticRootPath) {
-		staticRootPath = "/usr/share/grafana/public"
-	}
-
-	if _, err = os.Stat(filepath.Join(staticRootPath, "app", "plugins")); err != nil {
-		return "", fmt.Errorf("could not find core plugins in directory %s", staticRootPath)
-	}
-
-	return staticRootPath, nil
 }

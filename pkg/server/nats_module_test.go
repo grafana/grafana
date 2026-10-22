@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -200,4 +201,55 @@ func TestCompositeServiceFailureCleanup(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNATSStorageShutdownOrder(t *testing.T) {
+	broker := natstest.RunServer(&natsserver.Options{Host: "127.0.0.1", Port: -1})
+	t.Cleanup(func() { broker.Shutdown(); broker.WaitForShutdown() })
+	cfg := setting.NewCfg()
+	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal,
+		ClientURLs: []string{broker.ClientURL()}, Notifier: true}
+	ms := &ModuleServer{cfg: cfg, registerer: prometheus.NewRegistry()}
+	natsModule, err := ms.initNATSModule()
+	require.NoError(t, err)
+	manager := modules.New(log.NewNopLogger(), []string{modules.StorageServer})
+	manager.RegisterModule(modules.NATS, func() (services.Service, error) { return natsModule, nil })
+	for _, name := range []string{modules.InstrumentationServer, modules.GRPCServer,
+		modules.UnifiedVectorBackend, modules.MemberlistKV, modules.SearchServerRing} {
+		manager.RegisterModule(name, func() (services.Service, error) {
+			return services.NewIdleService(nil, nil), nil
+		})
+	}
+	for _, name := range []string{modules.StorageServer, modules.UnifiedBackend} {
+		manager.RegisterModule(name, func() (services.Service, error) {
+			return services.NewIdleService(nil, func(_ error) error {
+				// Writes must still publish while storage and its backend drain.
+				if err := ms.natsPublisher.Publish(context.Background(), "shutdown", nil); err != nil {
+					t.Errorf("NATS stopped before %s drained: %v", name, err)
+				}
+				return nil
+			}), nil
+		})
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(func() {
+		cancel()
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer stopCancel()
+		require.NoError(t, services.StopAndAwaitTerminated(stopCtx, manager))
+	})
+	require.NoError(t, services.StartAndAwaitRunning(ctx, manager))
+	var reconnects atomic.Int64
+	subscription, err := ms.natsSubscriber.Subscribe(t.Context(), "shutdown", func(string, []byte) {},
+		nats.WithOnReconnect(func() { reconnects.Add(1) }))
+	require.NoError(t, err)
+	readyCtx, readyCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer readyCancel()
+	require.NoError(t, subscription.WaitReady(readyCtx))
+	cancel()
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer stopCancel()
+	require.NoError(t, manager.AwaitTerminated(stopCtx))
+	require.Zero(t, reconnects.Load(), "pod shutdown must not trigger reconciliation")
+	require.Eventually(t, func() bool { return broker.NumClients() == 0 }, 5*time.Second, time.Millisecond)
 }

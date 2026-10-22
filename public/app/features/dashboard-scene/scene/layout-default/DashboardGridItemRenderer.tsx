@@ -8,7 +8,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
-import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
+import { PanelSearchResult, SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
 import { getIsLazy } from '../layouts-shared/utils';
 
@@ -59,12 +59,14 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     itemHeight ?? 10
   );
 
+  if (soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter) {
+    return [body, ...repeatedPanels].map((panel) => (
+      <PanelSearchResult key={panel.state.key} panel={panel} filter={soloPanelContext} isLazy={isLazy} />
+    ));
+  }
+
   if (soloPanelContext) {
-    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
-    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
-    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
-    const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
 
   if (!variableName) {

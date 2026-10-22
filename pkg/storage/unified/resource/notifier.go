@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"time"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const (
@@ -23,14 +22,7 @@ const (
 	defaultBufferSize  = 10000
 )
 
-// WatchInvalidator exposes a generation that closes when watch delivery may
-// have gaps. Implementations without invalidation return nil.
-type WatchInvalidator interface {
-	WatchInvalidation() <-chan struct{}
-}
-
 type notifier interface {
-	WatchInvalidator
 	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, WatchOptions) <-chan Event
 	// Publish lets callers to inform watchers about events. Some notifiers
@@ -48,16 +40,17 @@ var (
 
 type pollingNotifier struct {
 	eventStore *eventStore
-	log        log.Logger
+	log        logging.Logger
 }
 
 type notifierOptions struct {
-	log                log.Logger
+	log                logging.Logger
 	useChannelNotifier bool
 
 	enableNatsNotifier bool
 	eventSubscriber    EventSubscriber
 	natsDropped        *prometheus.CounterVec
+	invalidator        Invalidator
 }
 
 type WatchOptions struct {
@@ -95,32 +88,30 @@ func (opts WatchOptions) normalize() WatchOptions {
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
-			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+			return newNatsNotifier(opts.eventSubscriber, opts.invalidator, opts.natsDropped, opts.log.With("notifier", "natsNotifier"))
 		}
 		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
 	}
 
 	if opts.useChannelNotifier {
-		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
+		return newChannelNotifier(opts.log.With("notifier", "channelNotifier"))
 	}
 
-	return &pollingNotifier{eventStore: eventStore, log: opts.log.New("notifier", "pollingNotifier")}
+	return &pollingNotifier{eventStore: eventStore, log: opts.log.With("notifier", "pollingNotifier")}
 }
 
 type channelNotifier struct {
-	log         log.Logger
+	log         logging.Logger
 	subscribers map[chan Event]struct{}
 	mu          sync.Mutex
 }
 
-func newChannelNotifier(log log.Logger) *channelNotifier {
+func newChannelNotifier(log logging.Logger) *channelNotifier {
 	return &channelNotifier{
 		log:         log,
 		subscribers: make(map[chan Event]struct{}),
 	}
 }
-
-func (*channelNotifier) WatchInvalidation() <-chan struct{} { return nil }
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	cn.log.Info("creating new notifier",
@@ -220,8 +211,6 @@ func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, 
 	}
 	return e.ResourceVersion, nil
 }
-
-func (*pollingNotifier) WatchInvalidation() <-chan struct{} { return nil }
 
 func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	n.log.Info("creating new notifier",

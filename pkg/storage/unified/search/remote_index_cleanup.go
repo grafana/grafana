@@ -55,7 +55,7 @@ var errCleanupLockLost = errors.New("cleanup lock lost")
 // cleanupSnapshotsPeriodically runs runCleanup on a fixed CleanupInterval, with
 // a uniformly jittered initial delay in [0, CleanupInterval). The jitter spreads
 // the first cleanup pass across replicas deployed together so they don't all
-// hammer the bucket on the same 6h boundary, and brings the average first-run
+// hammer the store on the same 6h boundary, and brings the average first-run
 // latency down from one full interval to half.
 func (b *bleveBackend) cleanupSnapshotsPeriodically(ctx context.Context) {
 	defer b.bgTasksWg.Done()
@@ -201,7 +201,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 	span.AddEvent("snapshot.lock.acquire.completed", oteltrace.WithAttributes(lockAttrs...))
 
 	// Tie a per-namespace context to the cleanup lock: if the lock is lost
-	// mid-run, cancel the context so any in-flight bucket operation
+	// mid-run, cancel the context so any in-flight store operation
 	// (List/Delete) aborts immediately rather than waiting for the next
 	// resource boundary. The cause carries the reason so the post-loop check
 	// can distinguish lock loss from parent shutdown.
@@ -287,7 +287,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 		return fmt.Errorf("listing snapshots: %w", err)
 	}
 
-	toDelete := selectSnapshotsToDelete(metas, time.Now(), b.opts.Snapshot.MaxIndexAge, b.opts.Snapshot.CleanupGracePeriod)
+	toDelete := selectSnapshotsToDelete(res, metas, time.Now(), b.opts.Snapshot.MaxIndexAge, b.opts.Snapshot.CleanupGracePeriod)
 	deleteFailures := 0
 	for _, key := range toDelete {
 		if ctx.Err() != nil {
@@ -307,7 +307,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 
 	// CleanupIncompleteIndexSnapshots returns a partial cleaned count even on error;
 	// record successes before checking the error so metrics don't undercount
-	// on transient bucket failures. Treated symmetrically with the per-snapshot
+	// on transient store failures. Treated symmetrically with the per-snapshot
 	// delete loop above: log, flag, continue — don't short-circuit the resource.
 	cleaned, incompleteErr := CleanupIncompleteIndexSnapshots(ctx, store, res, time.Now().Add(-cleanupIncompleteUploadsMinAge), logger)
 	for range cleaned {
@@ -349,7 +349,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 //
 // The function is deliberately pure (no I/O, no metrics, no clock) to make
 // retention semantics directly unit-testable.
-func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxAge, gracePeriod time.Duration) []ulid.ULID {
+func selectSnapshotsToDelete(key resource.NamespacedResource, metas map[ulid.ULID]*IndexMeta, now time.Time, maxAge, gracePeriod time.Duration) []ulid.ULID {
 	type entry struct {
 		key  ulid.ULID
 		meta *IndexMeta
@@ -376,14 +376,8 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 	}
 
 	for _, g := range groups {
-		// Newest first: highest LatestResourceVersion wins, ties broken by
-		// UploadTimestamp desc. Mirrors download-side selection so cleanup keeps
-		// what the download path would prefer.
 		sort.Slice(g, func(i, j int) bool {
-			if g[i].meta.LatestResourceVersion != g[j].meta.LatestResourceVersion {
-				return g[i].meta.LatestResourceVersion > g[j].meta.LatestResourceVersion
-			}
-			return g[i].meta.UploadTimestamp.After(g[j].meta.UploadTimestamp)
+			return newerSnapshot(g[i].meta, g[j].meta, key.IsGlobal())
 		})
 
 		if len(g) <= 1 {

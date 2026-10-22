@@ -28,6 +28,13 @@ describe('hasAPIConfigEntry', () => {
   it('returns false when the config entry is absent', () => {
     expect(hasAPIConfigEntry(tmpDir, variant, 'folder', 'v1')).toBe(false);
   });
+
+  it('recognizes a client configured with search routes', () => {
+    fs.writeFileSync(path.join(tmpDir, variant.codegenScript), `createAPIConfigWithSearch('dashboard', 'v0alpha1')`);
+
+    expect(hasAPIConfigEntry(tmpDir, variant, 'dashboard', 'v0alpha1')).toBe(true);
+    expect(hasAPIConfigEntry(tmpDir, variant, 'dashboard', 'v1')).toBe(false);
+  });
 });
 
 describe('getExistingClientFiles', () => {

@@ -1,20 +1,25 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
-import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
+import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+import { NOTEBOOK_BLOCK_INSERT_VIA } from 'app/features/notebook/analytics/types';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookPanelActions } from './NotebookPanelActions';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 // A lone VizPanel fills its parent, so the parent needs a resolved height (not just
 // min-height) or PanelChrome measures 0 and nothing shows.
@@ -50,7 +55,9 @@ export function NotebookCellRenderer({
   onAdvance,
   onFocusRequest,
   onNavigate,
-}: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
+  onDuplicate,
+  onDelete,
+}: { cell: NotebookCellItem; onDuplicate?: () => void; onDelete?: () => void } & NarrativeCellFocusProps) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   // Panel and Collapsed cells have no caret of their own to detect an ArrowUp/Down boundary with —
@@ -61,7 +68,16 @@ export function NotebookCellRenderer({
   }
 
   if (panel) {
-    return <PanelCell cell={cell} panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
+    return (
+      <PanelCell
+        cell={cell}
+        panel={panel}
+        isEditing={isEditing}
+        autoFocus={autoFocus}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+      />
+    );
   }
 
   if (narrative) {
@@ -89,20 +105,100 @@ function PanelCell({
   panel,
   isEditing,
   autoFocus,
+  onDuplicate,
+  onDelete,
 }: {
   cell: NotebookCellItem;
   panel: VizPanel;
   isEditing: boolean;
   autoFocus?: boolean;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 }) {
   const styles = useStyles2(getStyles);
+  // NotebookCellItem has no static Component and is never otherwise activated, so a $timeRange
+  // assigned to it would never get its own activate() call without this.
+  const { elementName, $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
+  const { pluginId } = panel.useState();
+  const panelHeight = pluginId === 'stat' || pluginId === 'gauge' ? 180 : PANEL_HEIGHT;
+
+  const [queryEditorOpen, setQueryEditorOpen] = useState(Boolean(autoFocus));
+  const [queryEditorMounted, setQueryEditorMounted] = useState(Boolean(autoFocus));
+  const queryEditorId = useId();
+  const hasTimeRange = Boolean($timeRange);
+  const focusClockOnMount = useRef(false);
+  const clockButtonRef = useCallback((button: HTMLElement | null) => {
+    if (button && focusClockOnMount.current) {
+      requestAnimationFrame(() => {
+        if (button.isConnected && focusClockOnMount.current) {
+          focusClockOnMount.current = false;
+          button.focus();
+        }
+      });
+    }
+  }, []);
+  useEffect(() => {
+    cell.initializeAutoSuggest(Boolean(autoFocus));
+  }, [cell, autoFocus]);
+  const [timeRangeOpen, setTimeRangeOpen] = useState(false);
+  const canEditQuery = isEditing && isEditableQueryPanel(panel);
+  const [toolbarRef, { width: toolbarWidth }] = useMeasure<HTMLDivElement>();
+  const panelStyle: CSSProperties & { '--notebook-panel-actions-width': string } = {
+    height: panelHeight,
+    '--notebook-panel-actions-width': `${toolbarWidth}px`,
+  };
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
-      <div className={styles.panel}>
+      {hasTimeRange && (
+        <Box display="flex" justifyContent="flex-end">
+          <NotebookCellTimeRangeControl
+            cell={cell}
+            popoverAlign="end"
+            isEditing={isEditing}
+            onClear={() => {
+              focusClockOnMount.current = true;
+            }}
+          />
+        </Box>
+      )}
+      <div
+        className={styles.panel}
+        style={panelStyle}
+        data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}
+      >
+        <NotebookPanelActions
+          cell={cell}
+          panel={panel}
+          isEditing={isEditing}
+          toolbarRef={toolbarRef}
+          timeRangeOpen={timeRangeOpen}
+          onToggleQueryEditor={
+            canEditQuery
+              ? () => {
+                  setQueryEditorMounted(true);
+                  setQueryEditorOpen((open) => !open);
+                }
+              : undefined
+          }
+          queryEditorOpen={queryEditorOpen}
+          queryEditorId={queryEditorId}
+          timeRangeControl={
+            isEditing &&
+            !hasTimeRange && (
+              <NotebookCellTimeRangeControl cell={cell} buttonRef={clockButtonRef} onOpenChange={setTimeRangeOpen} />
+            )
+          }
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+        />
         <panel.Component model={panel} />
       </div>
+      {canEditQuery && (
+        <div id={queryEditorId} hidden={!queryEditorOpen} className={styles.queryEditor}>
+          {queryEditorMounted && <PanelQueryEditor cell={cell} panel={panel} autoFocus={true} />}
+        </div>
+      )}
     </Stack>
   );
 }
@@ -269,7 +365,7 @@ function SpecialMarkdownCell({
   };
 
   const handlePick = (type: NotebookBlockType) => {
-    cell.onConvert(type);
+    cell.onConvert(type, NOTEBOOK_BLOCK_INSERT_VIA.SLASH_MENU);
     setMenuOpen(false);
     // Picking a type is a mouse click, which moves DOM focus to the button that was clicked, and a
     // pick that changes content.kind (e.g. "Code") unmounts this cell's editor for a different one
@@ -314,9 +410,29 @@ function CollapsedCell({ name }: { name: string }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  queryEditor: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(1),
+    background: theme.colors.background.secondary,
+  }),
   panel: css({
-    height: PANEL_HEIGHT,
     position: 'relative',
+    '.show-on-hover:has(> :only-child:empty)': {
+      display: 'none',
+    },
+    [`[data-testid="${selectors.components.Panels.Panel.headerContainer}"]`]: {
+      paddingRight: `calc(var(--notebook-panel-actions-width, 0px) + ${theme.spacing(2)})`,
+    },
+    // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
+    breakInside: 'avoid',
+    pageBreakInside: 'avoid',
+    '&:hover, &:focus-within': {
+      '[data-notebook-panel-actions], [data-notebook-title-action]': {
+        opacity: 1,
+        pointerEvents: 'auto',
+      },
+    },
   }),
   content: css({
     padding: theme.spacing(1, 0),

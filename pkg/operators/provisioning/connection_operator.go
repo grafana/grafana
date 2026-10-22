@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/client-go/tools/cache"
 
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -67,8 +68,14 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
+	// nil unless keys_only_relist is on, which keeps the full-object re-list.
+	connKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	if err != nil {
+		return err
+	}
+
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,

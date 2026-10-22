@@ -22,7 +22,7 @@ import (
 
 const authQueryParamName = "auth_token"
 
-var _ authn.ContextAwareClient = new(JWT)
+var _ authn.ContextAwareClient = (*JWT)(nil)
 
 var (
 	errJWTInvalid = errutil.Unauthorized(

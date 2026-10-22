@@ -1,16 +1,19 @@
+import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { useFlagDashboardNotebooks, usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
-import { Alert, Box } from '@grafana/ui';
+import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
+import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { notebookResourceFor } from '../api/notebookResource';
 import { NotebookPageStateManager, type NotebookLoadError } from '../pages/NotebookPageStateManager';
 import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec } from '../types';
@@ -32,12 +35,16 @@ interface CommonProps {
    * everything else.
    */
   onTitleChange?: (title: string) => void;
+  /** Background for the sticky controls row */
+  controlsBackground?: string;
 }
 
 /** A notebook that exists. Its autosave writes edits straight through to the resource. */
 export interface SavedNotebookViewProps extends CommonProps {
   /** The notebook to render, by `metadata.name`. */
   uid: string;
+  /** Enters edit mode when this becomes true, e.g. right after content was added. False does nothing. */
+  enterEditMode?: boolean;
   spec?: never;
   onChange?: never;
 }
@@ -52,6 +59,7 @@ export interface SavedNotebookViewProps extends CommonProps {
  */
 export interface DraftNotebookViewProps extends CommonProps {
   uid?: never;
+  enterEditMode?: never;
   /** The document to edit. Read once, as the starting point — see the note in DraftNotebookView. */
   spec: NotebookSpec;
   /**
@@ -72,7 +80,7 @@ export type NotebookViewProps = SavedNotebookViewProps | DraftNotebookViewProps;
  * Assistant renders one of these in a canvas tab. Fully editable: the scene brings its own edit
  * toggle, save status, undo/redo and time controls, and its autosave persists through the same
  * endpoints the route uses, so a notebook edited here is the same notebook listed under
- * /notebooks.
+ * /notebooks. A host that has just added content can pass `enterEditMode` to open it for editing.
  *
  * Takes a uid rather than a document, and deliberately so — this renders a notebook that EXISTS.
  * A host holding a draft has nothing to pass here and nothing to gain: core's editor writes
@@ -91,23 +99,27 @@ export function NotebookView(props: NotebookViewProps) {
     return null;
   }
 
-  return props.uid !== undefined ? (
-    <SavedNotebookView uid={props.uid} onTitleChange={props.onTitleChange} />
-  ) : (
-    <DraftNotebookView
-      spec={props.spec}
-      onChange={props.onChange}
-      onDirtyChange={props.onDirtyChange}
-      onTitleChange={props.onTitleChange}
-    />
+  return (
+    <NotebookEmbeddedHost controlsBackground={props.controlsBackground}>
+      {props.uid !== undefined ? (
+        <SavedNotebookView uid={props.uid} enterEditMode={props.enterEditMode} onTitleChange={props.onTitleChange} />
+      ) : (
+        <DraftNotebookView
+          spec={props.spec}
+          onChange={props.onChange}
+          onDirtyChange={props.onDirtyChange}
+          onTitleChange={props.onTitleChange}
+        />
+      )}
+    </NotebookEmbeddedHost>
   );
 }
 
-function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
-  // Per instance, not the module singleton: the singleton holds one scene for the whole app, so an
-  // embedded notebook would evict whatever the notebooks route had open and be evicted by it in
-  // turn. The cost is that this instance's scene is not shared with the route's.
-  const stateManager = useMemo(() => new NotebookPageStateManager({ isLoading: false }), []);
+function SavedNotebookView({ uid, enterEditMode, onTitleChange }: SavedNotebookViewProps) {
+  // Per instance, not the module singleton, so this view has its own loading and error state. The
+  // scenes themselves are still shared, through the module-level cache in NotebookPageStateManager:
+  // one notebook on screen twice has to be one scene, and therefore one autosave.
+  const stateManager = useMemo(() => new NotebookPageStateManager({ isLoading: false }, true), []);
   const { scene, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
@@ -118,6 +130,25 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
     };
   }, [stateManager, uid]);
 
+  // Held, per notebook, until it has loaded: a host may turn the prop back off before then.
+  const editRequestedFor = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (enterEditMode) {
+      editRequestedFor.current = uid;
+    } else if (editRequestedFor.current !== uid) {
+      editRequestedFor.current = undefined;
+    }
+    // Right after a uid change, `scene` is still the previous notebook's.
+    if (!scene || scene.state.uid !== uid || editRequestedFor.current !== uid) {
+      return;
+    }
+    editRequestedFor.current = undefined;
+    // Guarded: re-entering would reset what autosave counts as edited while an add is still saving.
+    if (!scene.state.isEditing) {
+      scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK);
+    }
+  }, [scene, uid, enterEditMode]);
+
   if (!scene) {
     return loadError ? <NotebookViewError error={loadError} /> : <Centered>{isLoading && <PageLoader />}</Centered>;
   }
@@ -125,7 +156,29 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
   return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
-function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
+/**
+ * Split from the build below so that build stays a one-shot: the inner component mounts once, with
+ * the panel metas its synchronous transform needs already in hand.
+ */
+function DraftNotebookView(props: DraftNotebookViewProps) {
+  const { value: panelMetas, error } = usePanelPluginMetasMap();
+
+  if (error) {
+    return <NotebookViewError error={{ message: error.message }} />;
+  }
+
+  if (!panelMetas) {
+    return (
+      <Centered>
+        <PageLoader />
+      </Centered>
+    );
+  }
+
+  return <DraftNotebookDocument {...props} />;
+}
+
+function DraftNotebookDocument({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo
@@ -252,6 +305,7 @@ function useNotebookDraftChanges(
 }
 
 function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTitleChange?: (title: string) => void }) {
+  const styles = useStyles2(getStyles);
   const { title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
@@ -261,14 +315,15 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
   }, [onTitleChange, title]);
 
   /**
-   * Wrapped rather than flagged on the scene: this tree has no app header, but the same scene may
-   * also be mounted on /notebooks, which does, and the two share one object so they share one
-   * autosave. Only the tree can answer per mount.
+   * `NotebookEmbeddedHost` wraps the whole view instead of sitting here, so the host's
+   * `controlsBackground` reaches the row; a nested provider would shadow it. The flex column is
+   * explicit because the host is not ours, and the sticky row needs one above it.
    */
   return (
-    <NotebookEmbeddedHost>
+    <div className={styles.host}>
+      <NotebookSceneControls model={scene} stickyOffset={0} />
       <scene.Component model={scene} />
-    </NotebookEmbeddedHost>
+    </div>
   );
 }
 
@@ -302,3 +357,11 @@ function Centered({ children }: { children: ReactNode }) {
     </Box>
   );
 }
+
+const getStyles = () => ({
+  host: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+  }),
+});

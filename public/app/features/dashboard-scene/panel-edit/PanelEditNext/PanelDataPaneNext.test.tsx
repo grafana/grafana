@@ -24,14 +24,9 @@ const mockGetDataSourceInstance = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (ref?: unknown, scopedVars?: unknown) => mockGetDataSourceInstance(ref, scopedVars),
   getDataSourceInstanceSettings: (ref?: unknown, scopedVars?: unknown) => mockGetInstanceSettings(ref, scopedVars),
 }));
-
 // Mutable state object for the mock queryRunner
 const mockQueryRunnerState: {
   datasource: { uid: string; type: string } | undefined;

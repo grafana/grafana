@@ -41,8 +41,8 @@ var (
 )
 
 var (
-	_ authn.HookClient         = new(Proxy)
-	_ authn.ContextAwareClient = new(Proxy)
+	_ authn.HookClient         = (*Proxy)(nil)
+	_ authn.ContextAwareClient = (*Proxy)(nil)
 )
 
 func ProvideProxy(cfg *setting.Cfg, cache proxyCache, tracer trace.Tracer, clients ...authn.ProxyClient) (*Proxy, error) {
