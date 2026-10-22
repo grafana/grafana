@@ -7,6 +7,9 @@ import (
 recordingRuleKind: {
 	kind:       "RecordingRule"
 	pluralName: "RecordingRules"
+	search: {
+		global: true
+	}
 }
 
 recordingRulev0alpha1: recordingRuleKind & {
