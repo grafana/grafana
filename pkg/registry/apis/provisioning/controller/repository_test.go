@@ -5851,10 +5851,18 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	// User-caused: revoked or insufficient credentials, wrapped as the callers wrap them.
 	rc.recordReconcileError(reconcilePhaseDelete, fmt.Errorf("execute deletion hooks: %w", repository.ErrPermissionDenied))
 	rc.recordReconcileError(reconcilePhaseBuild, fmt.Errorf("create repository from configuration: %w", repository.ErrUnauthorized))
+	// User-caused: unmanaged resources block folder deletion, wrapped as handleDelete wraps it.
+	rc.recordReconcileError(reconcilePhaseDelete, fmt.Errorf("process finalizers: %w", &finalizerError{
+		finalizer: repository.RemoveOrphanResourcesFinalizer,
+		err: fmt.Errorf("remove resources: %w", &nonEmptyFolderError{
+			folder: &provisioning.ResourceListItem{Name: "folder-1"},
+		}),
+	}))
 	// System-caused: anything not attributable to the user.
 	rc.recordReconcileError(reconcilePhaseHook, errors.New("boom"))
 
-	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseUser))
+	assert.Equal(t, 2.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseUser))
+	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseSystem))
 	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseBuild, reconcileCauseUser))
 	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseSystem))
 	// A system failure must not be miscounted as user-caused (which an SLO would ignore).

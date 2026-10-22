@@ -41,6 +41,10 @@ const (
 	}
 }
 `
+	// DefaultDeletedRuleRetention is exported so callers that construct a RuleStore outside the
+	// normal ini-driven Cfg path (e.g. a standalone folder apiserver's cascade delete) can default
+	// to the same retention as a standard deployment instead of duplicating the literal.
+	DefaultDeletedRuleRetention             = 30 * 24 * time.Hour
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
@@ -679,7 +683,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("setting 'rule_status_sync_interval' is invalid, only a positive duration is allowed")
 	}
 
-	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(DefaultDeletedRuleRetention)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}
