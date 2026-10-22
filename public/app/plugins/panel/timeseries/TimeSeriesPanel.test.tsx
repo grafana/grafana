@@ -180,6 +180,98 @@ describe('TimeSeriesPanel', () => {
     expect(await screen.findByText('late-annotation-trace')).toBeVisible();
   });
 
+  it.each([false, true])(
+    'opens exemplars with an all-null metric series (programmatic request: %s)',
+    async (programmatic) => {
+      const from = Date.UTC(2026, 9, 15, 10);
+      const to = from + 60_000;
+      const time = from + 30_000;
+      const props = getPanelProps(
+        { ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } },
+        {
+          timeRange: {
+            from: dateTime(from),
+            to: dateTime(to),
+            raw: { from: dateTime(from), to: dateTime(to) },
+          },
+        }
+      );
+      const [series, exemplar] = applyFieldOverrides({
+        data: [
+          createDataFrame({
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [from, to] },
+              { name: 'Value', type: FieldType.number, values: [null, null], labels: {}, config: { custom: {} } },
+            ],
+          }),
+          createDataFrame({
+            name: 'exemplar',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [time] },
+              { name: 'Value', type: FieldType.number, values: [62.514141] },
+              { name: 'traceID', type: FieldType.string, values: ['query-sample-trace'] },
+            ],
+          }),
+        ],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+      });
+      props.data = { ...props.data, series: [series], annotations: [exemplar] };
+      let pending = programmatic;
+      const onHandled = jest.fn(() => {
+        pending = false;
+      });
+      const context = {
+        eventsScope: 'test',
+        eventBus: new EventBusSrv(),
+        openExemplar: programmatic
+          ? {
+              getRequest: () => (pending ? { requestId: 'query-sample', frameIndex: 0, rowIndex: 0 } : undefined),
+              onHandled,
+            }
+          : undefined,
+      };
+      const { rerender } = render(
+        <PanelContextProvider value={context}>
+          <TimeSeriesPanel {...props} />
+        </PanelContextProvider>
+      );
+
+      const marker = await screen.findByTestId(selectors.components.DataSource.Prometheus.exemplarMarker);
+      expect(marker.parentElement).toHaveStyle({ top: '0px' });
+      if (!programmatic) {
+        await userEvent.click(marker);
+      }
+      expect(await screen.findByText('query-sample-trace')).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Close' })).toBeVisible();
+      if (programmatic) {
+        expect(onHandled).toHaveBeenCalledWith('query-sample');
+      }
+      await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+      expect(screen.queryByText('query-sample-trace')).not.toBeInTheDocument();
+
+      const populatedSeries = {
+        ...series,
+        fields: series.fields.map((field) =>
+          field.type === FieldType.number ? { ...field, values: [20, 100] } : field
+        ),
+      };
+      rerender(
+        <PanelContextProvider value={context}>
+          <TimeSeriesPanel {...props} data={{ ...props.data, series: [populatedSeries] }} />
+        </PanelContextProvider>
+      );
+      await waitFor(() => {
+        const position = screen.getByTestId(selectors.components.DataSource.Prometheus.exemplarMarker).parentElement!;
+        expect(parseFloat(position.style.top)).toBeGreaterThan(0);
+        expect(parseFloat(position.style.top)).toBeLessThan(props.height);
+      });
+      expect(screen.queryByText('query-sample-trace')).not.toBeInTheDocument();
+    }
+  );
+
   it('does not retry a pending exemplar request on an unrelated panel render', async () => {
     const props = getPanelProps({ ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } });
     props.data.series = [validFrame];
