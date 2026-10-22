@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Component, type MouseEvent, type ReactNode, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type PanelData, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
@@ -14,6 +14,7 @@ import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { type QueryPreviewSelection } from './queryPreview';
 
 interface Props {
   adapter: QueryEditorCoauthoringAdapterV1;
@@ -24,8 +25,12 @@ interface Props {
 interface QueryCoauthoringHost {
   datasourceType: string;
   previewPhase: 'idle' | 'pending' | 'running' | 'complete';
+  previewData?: PanelData;
+  readPreviewData?(): PanelData | undefined;
   timeRange?: { from: number; to: number };
-  preview(query: DataQuery): boolean;
+  preview(query: DataQuery, options?: QueryPreviewSelection): boolean;
+  peek?(query: DataQuery): boolean;
+  stopPeek?(): void;
   accept(query: DataQuery): boolean;
   revert(): void;
 }
@@ -117,7 +122,11 @@ function QueryCoauthoringAdapterSurface({
       datasourceType={host.datasourceType}
       onAccept={host.accept}
       onPreview={host.preview}
+      onPeek={host.peek}
+      onStopPeek={host.stopPeek}
       onRevertPreview={host.revert}
+      previewData={host.previewData}
+      readPreviewData={host.readPreviewData}
       isPreviewRunning={host.previewPhase === 'pending' || host.previewPhase === 'running'}
       timeRange={host.timeRange}
     />

@@ -5,6 +5,7 @@ import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringProposalResultV1,
 } from './internalCoauthoringContract';
+import { queryCoauthoringDiff, type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
 import {
   buildInvalidProposalRepairMessage,
   buildProposalToolDescription,
@@ -14,6 +15,8 @@ import {
   normalizeClarificationMessage,
   type QueryFallback,
   type QueryProposal,
+  type RankedQueryProposals,
+  normalizeProposalQuery,
   requestFailedMessage,
   staleQueryResponseMessage,
   unchangedQueryResponseMessage,
@@ -22,6 +25,10 @@ import {
 } from './queryCoauthoringPrompts';
 
 type PreparedQuery = Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }>;
+export interface PreparedQueryProposal extends QueryProposal {
+  prepared: PreparedQuery;
+  diff: QueryCoauthoringDiffHunk[];
+}
 const MAX_INVALID_PROPOSAL_REPAIR_ATTEMPTS = 1;
 
 export interface QueryCoauthoringRequestError {
@@ -33,7 +40,7 @@ export type QueryCoauthoringRequestOutcome =
   | { status: 'ignored' }
   | { status: 'clarification'; message: string }
   | { status: 'fallback'; fallback: QueryFallback }
-  | { status: 'proposal'; proposal: QueryProposal; prepared: PreparedQuery }
+  | { status: 'proposal'; options: PreparedQueryProposal[] }
   | { status: 'error'; error: QueryCoauthoringRequestError };
 
 interface QueryCoauthoringRequestOptions {
@@ -49,8 +56,7 @@ export function createQueryCoauthoringRequest({
   context,
   isCurrent,
 }: QueryCoauthoringRequestOptions) {
-  let submittedProposal: QueryProposal | undefined;
-  let submittedPrepared: PreparedQuery | undefined;
+  let submittedOptions: PreparedQueryProposal[] | undefined;
   let submittedFallback: QueryFallback | undefined;
   let rejectedTerminalProposal: 'unchanged' | 'stale' | undefined;
   let acceptedTerminalToolCallCount = 0;
@@ -59,14 +65,33 @@ export function createQueryCoauthoringRequest({
   let terminalCallbackHandled = false;
 
   const proposalTool = createTool(
-    async (input: QueryProposal) => {
+    async (input: RankedQueryProposals) => {
       if (isCurrent()) {
         if (invalidProposalRepairExhausted) {
           return 'The query proposal is invalid and no further repair attempts are available.';
         }
-        const prepared = adapter.prepareProposal(invocationId, input.proposedQuery);
-        if (prepared.status !== 'ready') {
-          if (prepared.reason === 'invalid') {
+        const seen = new Set([normalizeProposalQuery(context.query)]);
+        const options: PreparedQueryProposal[] = [];
+        let rejection: 'invalid' | 'unchanged' | 'stale' = 'unchanged';
+        for (const option of input.options) {
+          const normalized = normalizeProposalQuery(option.proposedQuery);
+          if (seen.has(normalized)) {
+            continue;
+          }
+          seen.add(normalized);
+          const prepared = adapter.prepareProposal(invocationId, option.proposedQuery);
+          if (prepared.status === 'ready') {
+            options.push({
+              ...option,
+              prepared,
+              diff: queryCoauthoringDiff(context.query, option.proposedQuery, context.focusRanges),
+            });
+          } else if (prepared.reason === 'stale' || (rejection !== 'stale' && prepared.reason === 'invalid')) {
+            rejection = prepared.reason;
+          }
+        }
+        if (options.length === 0) {
+          if (rejection === 'invalid') {
             rejectedInvalidProposalCount++;
             if (rejectedInvalidProposalCount <= MAX_INVALID_PROPOSAL_REPAIR_ATTEMPTS) {
               throw new Error(buildInvalidProposalRepairMessage(context));
@@ -75,14 +100,13 @@ export function createQueryCoauthoringRequest({
             return 'The query proposal is invalid and no further repair attempts are available.';
           }
           acceptedTerminalToolCallCount++;
-          rejectedTerminalProposal = prepared.reason;
-          return prepared.reason === 'stale'
+          rejectedTerminalProposal = rejection;
+          return rejection === 'stale'
             ? 'The query proposal is no longer current.'
             : 'The query proposal does not change the current query.';
         }
         acceptedTerminalToolCallCount++;
-        submittedProposal = input;
-        submittedPrepared = prepared;
+        submittedOptions = options;
       }
       return 'The query proposal was received.';
     },
@@ -92,14 +116,31 @@ export function createQueryCoauthoringRequest({
       inputSchema: {
         type: 'object',
         additionalProperties: false,
-        required: ['proposedQuery', 'why'],
+        required: ['options'],
         properties: {
-          proposedQuery: { type: 'string', minLength: 1, maxLength: 20_000 },
-          why: {
+          options: {
             type: 'array',
             minItems: 1,
-            maxItems: 5,
-            items: { type: 'string', minLength: 1, maxLength: 500 },
+            maxItems: 3,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['proposedQuery', 'why'],
+              properties: {
+                proposedQuery: { type: 'string', minLength: 1, maxLength: 20_000 },
+                why: {
+                  type: 'array',
+                  minItems: 1,
+                  maxItems: 5,
+                  items: { type: 'string', minLength: 1, maxLength: 500 },
+                },
+                unconfirmedValues: {
+                  type: 'array',
+                  maxItems: 5,
+                  items: { type: 'string', minLength: 1, maxLength: 500 },
+                },
+              },
+            },
           },
         },
       },
@@ -167,8 +208,8 @@ export function createQueryCoauthoringRequest({
     if (submittedFallback) {
       return { status: 'fallback', fallback: submittedFallback };
     }
-    if (submittedProposal && submittedPrepared) {
-      return { status: 'proposal', proposal: submittedProposal, prepared: submittedPrepared };
+    if (submittedOptions) {
+      return { status: 'proposal', options: submittedOptions };
     }
     return { status: 'error', error: { message: invalidQueryResponseMessage(context), retryable: true } };
   };

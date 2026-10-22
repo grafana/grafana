@@ -1,6 +1,7 @@
 import { type MutableRefObject, useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
+import { type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 
@@ -8,9 +9,10 @@ import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringContextV1,
-  type QueryEditorCoauthoringProposalResultV1,
 } from './internalCoauthoringContract';
+import { type QueryCoauthoringGroupEvent } from './queryCoauthoringGroupLayout';
 import { queryCoauthoringMentionOptions, type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
+import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import {
   buildAssistantHandoffContext,
   buildAssistantHandoffInstructions,
@@ -22,12 +24,12 @@ import {
   selectionSummary,
   type QueryExplanation,
   type QueryFallback,
-  type QueryProposal,
 } from './queryCoauthoringPrompts';
 import {
   createQueryCoauthoringRequest,
   type QueryCoauthoringRequestError,
   type QueryCoauthoringRequestOutcome,
+  type PreparedQueryProposal,
 } from './queryCoauthoringRequest';
 import {
   createQueryCoauthoringSessionState,
@@ -46,16 +48,22 @@ import {
   trackQueryCoauthoringOpened,
   trackQueryCoauthoringPromptSubmitted,
   trackQueryCoauthoringProposalAccepted,
+  trackQueryCoauthoringOptionSelected,
+  trackQueryCoauthoringOptionPeeked,
+  trackQueryCoauthoringGroupAdjusted,
+  trackQueryCoauthoringPreviewOutcomeShown,
 } from './queryCoauthoringTracking';
+import { type QueryPreviewSelection } from './queryPreview';
 import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
 
 interface QueryClarification {
   message: string;
 }
 
-interface PreparedQueryProposal extends QueryProposal {
+interface RankedProposal {
   context: QueryEditorCoauthoringContextV1;
-  prepared: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }>;
+  options: PreparedQueryProposal[];
+  selectedIndex: number;
 }
 
 interface StagedFallback extends QueryFallback {
@@ -101,8 +109,13 @@ export type QueryCoauthoringSessionState =
     }
   | {
       kind: 'proposal';
+      peekIndex?: number;
+      peek(index: number): void;
+      stopPeek(): void;
+      previewOutcome: QueryPreviewOutcome;
       isPreviewRunning: boolean;
-      proposal: PreparedQueryProposal;
+      proposal: RankedProposal;
+      selectOption(index: number, source?: 'keyboard'): void;
       accept(): void;
       continueInAssistant(): void;
       setFeedback(feedback: QueryCoauthoringFeedbackState): void;
@@ -114,9 +127,13 @@ export interface QueryCoauthoringSessionOptions {
   datasourceType: string;
   onBaseline: (query: DataQuery) => boolean;
   onAccept: (query: DataQuery) => boolean;
-  onPreview: (query: DataQuery) => boolean;
+  onPreview: (query: DataQuery, options?: QueryPreviewSelection) => boolean;
   onRevertPreview: () => void;
+  onPeek?: (query: DataQuery) => boolean;
+  onStopPeek?: () => void;
   isPreviewRunning?: boolean;
+  previewData?: PanelData;
+  readPreviewData?: () => PanelData | undefined;
   timeRange?: { from: number; to: number };
 }
 
@@ -135,7 +152,11 @@ export function useQueryCoauthoringSession({
   onAccept,
   onPreview,
   onRevertPreview,
+  onPeek,
+  onStopPeek,
   isPreviewRunning = false,
+  previewData,
+  readPreviewData,
   timeRange,
 }: QueryCoauthoringSessionOptions) {
   const {
@@ -149,6 +170,7 @@ export function useQueryCoauthoringSession({
     contextError,
     loadContext,
     readContext,
+    readBaseline,
   } = useQueryCoauthoringInvocation({
     adapter,
     invocationId,
@@ -172,6 +194,12 @@ export function useQueryCoauthoringSession({
     dispatch(event);
     return next !== previous;
   }, []);
+  const previewDataRef = useRef(previewData);
+  previewDataRef.current = previewData;
+  const readCurrentPreviewData = useCallback(
+    () => (readPreviewData ? readPreviewData() : previewDataRef.current),
+    [readPreviewData]
+  );
   const { intent, clarification } = session.data.prompt;
   const proposal = session.kind === 'proposal' ? session.proposal : undefined;
   const fallback = session.kind === 'fallback' ? session.fallback : undefined;
@@ -179,7 +207,17 @@ export function useQueryCoauthoringSession({
     send({ type: 'intent-changed', intent, caret });
   };
   const setFeedback = (feedback: QueryCoauthoringFeedbackState): void => {
-    send({ type: 'feedback-changed', feedback });
+    send({
+      type: 'feedback-changed',
+      feedback:
+        proposal && feedback.outcome === 'proposal'
+          ? {
+              ...feedback,
+              selectedOptionRank: proposal.selectedIndex + 1,
+              optionCount: proposal.options.length,
+            }
+          : feedback,
+    });
   };
 
   useEffect(() => {
@@ -201,6 +239,18 @@ export function useQueryCoauthoringSession({
   useEffect(() => {
     send({ type: 'preview-running-changed', isPreviewRunning });
   }, [isPreviewRunning, send]);
+  useEffect(() => {
+    send({ type: 'preview-data-changed', previewData: readCurrentPreviewData() });
+  }, [previewData, readCurrentPreviewData, send]);
+
+  const shownOutcome = session.kind === 'proposal' ? session.previewOutcome.kind : undefined;
+  const shownSelection = proposal?.selectedIndex;
+  useEffect(() => {
+    if (shownOutcome) {
+      trackQueryCoauthoringPreviewOutcomeShown(shownOutcome);
+    }
+  }, [shownOutcome, shownSelection]);
+
   const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
   const trackedOpenRef = useRef(false);
@@ -318,7 +368,7 @@ export function useQueryCoauthoringSession({
       if (outcome.status !== 'proposal') {
         return;
       }
-      if (!onPreview(outcome.prepared.query)) {
+      if (!onPreview(outcome.options[0].prepared.query)) {
         send({
           type: 'preview-failed',
           error: {
@@ -332,6 +382,7 @@ export function useQueryCoauthoringSession({
         return;
       }
       previewActiveRef.current = true;
+      send({ type: 'preview-data-changed', previewData: readCurrentPreviewData() });
     };
 
     await generate({
@@ -397,10 +448,12 @@ export function useQueryCoauthoringSession({
   };
 
   const accept = useCallback(() => {
-    if (!proposal) {
+    const current = sessionRef.current;
+    const selected = current.kind === 'proposal' ? current.proposal.options[current.proposal.selectedIndex] : undefined;
+    if (!selected) {
       return;
     }
-    if (!onAccept(proposal.prepared.query)) {
+    if (!onAccept(selected.prepared.query)) {
       send({
         type: 'accept-failed',
         error: {
@@ -417,7 +470,52 @@ export function useQueryCoauthoringSession({
     previewActiveRef.current = false;
     trackQueryCoauthoringProposalAccepted({ datasourceType });
     dismiss();
-  }, [datasourceType, dismiss, onAccept, proposal, send]);
+  }, [datasourceType, dismiss, onAccept, send]);
+
+  const stopPeek = useCallback(() => {
+    onStopPeek?.();
+    send({ type: 'peek-stopped', previewData: readCurrentPreviewData() });
+  }, [onStopPeek, readCurrentPreviewData, send]);
+
+  const peek = (index: number) => {
+    const current = sessionRef.current;
+    if (current.kind !== 'proposal' || index < -1 || index >= current.proposal.options.length) {
+      return;
+    }
+    const query = index < 0 ? readBaseline() : current.proposal.options[index].prepared.query;
+    if (query && onPeek?.(query)) {
+      send({ type: 'peek-started', index });
+      trackQueryCoauthoringOptionPeeked(index + 1);
+    }
+  };
+
+  const selectOption = (index: number, source?: 'keyboard') => {
+    const current = sessionRef.current;
+    if (current.kind !== 'proposal') {
+      return;
+    }
+    const proposal = current.proposal;
+    if (index < -1 || index >= proposal.options.length || index === proposal.selectedIndex) {
+      return;
+    }
+    const query = index < 0 ? readBaseline() : proposal.options[index].prepared.query;
+    const previewed = query && (source === 'keyboard' ? onPreview(query, { debounce: true }) : onPreview(query));
+    if (!previewed) {
+      send({
+        type: 'preview-failed',
+        error: {
+          message: t(
+            'query-editor-coauthoring.error-preview-failed',
+            'The query proposal could not be previewed. Try again.'
+          ),
+          retryable: true,
+        },
+      });
+      return;
+    }
+    send({ type: 'option-selected', index, previewData: readCurrentPreviewData() });
+    trackQueryCoauthoringOptionSelected(index + 1);
+  };
 
   const continueInAssistant = (sourceState: QueryCoauthoringHandoffSource, reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;
@@ -503,8 +601,13 @@ export function useQueryCoauthoringSession({
     case 'proposal':
       state = {
         kind: 'proposal',
+        peekIndex: session.peekIndex,
+        peek,
+        stopPeek,
+        previewOutcome: session.previewOutcome,
         isPreviewRunning: session.isPreviewRunning,
         proposal: session.proposal,
+        selectOption,
         accept,
         continueInAssistant: () => continueInAssistant('proposal'),
         setFeedback,
@@ -553,7 +656,33 @@ export function useQueryCoauthoringSession({
           },
         }
       : undefined;
+  const updateGroup = useCallback(
+    (event: QueryCoauthoringGroupEvent) => {
+      const previous = sessionRef.current.data;
+      if (
+        ((event.type === 'group-pointer-moved' || event.type === 'group-pointer-ended') && !previous.groupGesture) ||
+        (event.type === 'group-viewport-changed' && !previous.groupLayout)
+      ) {
+        return;
+      }
+      send(event);
+      const data = sessionRef.current.data;
+      if (
+        event.type === 'group-pointer-ended' &&
+        !data.groupAdjustmentReported &&
+        (data.groupDragged || data.groupResized)
+      ) {
+        trackQueryCoauthoringGroupAdjusted(Boolean(data.groupDragged), Boolean(data.groupResized));
+        send({ type: 'group-adjustment-reported' });
+      }
+    },
+    [send]
+  );
+
   return {
+    groupLayout: session.data.groupLayout,
+    groupGesture: session.data.groupGesture,
+    updateGroup,
     closeFeedback,
     dismiss: dismissPopover,
     dismissUntouched,
