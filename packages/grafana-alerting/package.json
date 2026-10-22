@@ -34,6 +34,12 @@
       "import": "./dist/esm/unstable.mjs",
       "require": "./dist/cjs/unstable.cjs"
     },
+    "./convert": {
+      "@grafana-app/source": "./src/convert.ts",
+      "types": "./dist/types/convert.d.ts",
+      "import": "./dist/esm/convert.mjs",
+      "require": "./dist/cjs/convert.cjs"
+    },
     "./internal": {
       "@grafana-app/source": "./src/internal.ts"
     },
