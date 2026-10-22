@@ -216,9 +216,8 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 type PluginLoader struct {
 	deps PluginLoaderDependencies
 
-	// settings is whether the loader may serve app plugin settings, when
-	// appplugins.registerAPIServer is enabled. The standalone router never does
-	// (see standaloneRouter).
+	// settings is whether the loader serves app plugin settings
+	// (settingsEnabled).
 	settings bool
 }
 
@@ -254,14 +253,13 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 }
 
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
-	settings := pl.settings && openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx))
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
 		client := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 			return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, id), nil
 		}
 
-		if settings {
+		if pl.settings {
 			if backend, err := newPluginSettingsBackend(plugin, client, pl.deps.PluginDependencies); err != nil {
 				logging.FromContext(ctx).Warn("router: skipping app plugin settings", "pluginId", plugin.JSONData.ID, "err", err)
 			} else {
