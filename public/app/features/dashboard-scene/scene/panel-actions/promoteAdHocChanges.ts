@@ -1,7 +1,7 @@
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -32,7 +32,7 @@ export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefine
   const interactions = panel.getPlugin()?.panelInteractions?.interactions ?? [];
   const context = {
     elementKey: dashboardSceneGraph.getElementIdentifierForVizPanel(panel),
-    transformations: panel.getRuntimeTransformations().get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER),
+    transformations: panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER),
   };
 
   // Panels declare one interaction today. Once applied interactions are tracked (URL or local storage),

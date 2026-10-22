@@ -7,7 +7,6 @@ import {
   LoadingState,
   type PanelPlugin,
   store,
-  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import {
@@ -26,6 +25,7 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 import { dispatch } from 'app/store/store';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -140,7 +140,7 @@ describe('PanelEditor', () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
       const { panel } = await setup({ pluginId: 'table', initialTableTransformations: transformations });
 
-      expect(panel.getRuntimeTransformations().get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER)).toEqual([]);
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
       expect(dispatch).toHaveBeenCalledWith(
         expect.objectContaining({
           payload: expect.objectContaining({
@@ -151,13 +151,13 @@ describe('PanelEditor', () => {
 
       deactivate!();
       deactivate = undefined;
-      expect(panel.getRuntimeTransformations().get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER)).toEqual(transformations);
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
     });
 
     it('does not notify when the table has no ad hoc transformations', async () => {
       const { panel } = await setup({ pluginId: 'table' });
 
-      expect(panel.getRuntimeTransformations().get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER)).toEqual([]);
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
       expect(dispatch).not.toHaveBeenCalled();
     });
 
@@ -536,7 +536,7 @@ async function setup(options: SetupOptions = {}) {
   });
 
   if (options.initialTableTransformations) {
-    panel.getRuntimeTransformations().set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, options.initialTableTransformations);
+    panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, options.initialTableTransformations);
   }
 
   const gridItem = new DashboardGridItem({ body: panel, variableName: options.repeatByVariable });

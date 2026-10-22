@@ -14,7 +14,6 @@ import {
   standardFieldConfigEditorRegistry,
   type DataTransformerConfig,
   type FieldConfigSource,
-  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -145,7 +144,7 @@ it('excludes override-hidden columns while retaining ad-hoc-hidden columns and p
   expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeChecked();
   expect(screen.getByRole('checkbox', { name: 'Hide C' })).toBeEnabled();
   await userEvent.click(screen.getByRole('checkbox', { name: 'Show B' }));
-  expect(set).toHaveBeenCalledWith(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
+  expect(set).toHaveBeenCalledWith('grafana:table-view', []);
 });
 
 it('shows changed upstream column order without losing ad-hoc visibility', async () => {

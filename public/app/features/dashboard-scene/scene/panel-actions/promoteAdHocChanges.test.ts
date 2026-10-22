@@ -1,8 +1,9 @@
-import { type PanelInteraction, PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
+import { type PanelInteraction } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { DashboardScene } from '../DashboardScene';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -42,7 +43,7 @@ async function buildScene(version: 'v1' | 'v2' = 'v2') {
   );
   activateFullSceneTree(dashboard);
   await new Promise((r) => setTimeout(r, 1));
-  panel.getRuntimeTransformations().set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, hideColumn);
+  panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideColumn);
   return { panel, dashboard };
 }
 

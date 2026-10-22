@@ -1,12 +1,12 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-import { PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
 import { getDashboardScenePageStateManager } from '../../pages/DashboardScenePageStateManager';
 import { useSaveDashboard } from '../../saving/useSaveDashboard';
@@ -63,7 +63,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
     }
   };
 
-  const onRemoveChanges = () => panel.getRuntimeTransformations().set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
+  const onRemoveChanges = () => panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, []);
 
   if (!hasChanges) {
     return null;
@@ -115,13 +115,10 @@ export function PanelAdHocChangesAction({ panel }: Props) {
 function useHasAdHocTransformations(panel: VizPanel, enabled: boolean): boolean {
   const api = panel.getRuntimeTransformations();
   const subscribe = useCallback(
-    (onChange: () => void) => (enabled ? api.subscribe(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, onChange) : () => {}),
+    (onChange: () => void) => (enabled ? api.subscribe(TABLE_TRANSFORMATIONS_OWNER, onChange) : () => {}),
     [api, enabled]
   );
-  const getSnapshot = useCallback(
-    () => enabled && api.get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER).length > 0,
-    [api, enabled]
-  );
+  const getSnapshot = useCallback(() => enabled && api.get(TABLE_TRANSFORMATIONS_OWNER).length > 0, [api, enabled]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }

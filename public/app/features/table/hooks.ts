@@ -8,7 +8,6 @@ import {
   type Field,
   type FieldConfigSource,
   type InterpolateFunction,
-  PANEL_AD_HOC_TRANSFORMATIONS_OWNER,
 } from '@grafana/data';
 import {
   useFlagTableAutoColumnWidths,
@@ -26,6 +25,8 @@ import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
+
+export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
@@ -145,10 +146,10 @@ export function useAdHocColumnState(
   configuredSourceSeries?: readonly DataFrame[]
 ) {
   const api = usePanelContext().adHocTransformations;
-  const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(PANEL_AD_HOC_TRANSFORMATIONS_OWNER);
+  const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
   const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
 
-  return useColumnTransformations(sourceIndex, api, PANEL_AD_HOC_TRANSFORMATIONS_OWNER, enabled, sourceSeries);
+  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled, sourceSeries);
 }
 
 function getEligibleColumnSourceIndex(

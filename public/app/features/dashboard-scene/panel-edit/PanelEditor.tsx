@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
 
-import { type NavIndex, type PanelPlugin, PANEL_AD_HOC_TRANSFORMATIONS_OWNER } from '@grafana/data';
+import { type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -27,6 +27,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -104,10 +105,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     const runtimeTransformations = panel.getRuntimeTransformations();
-    const tableTransformations = runtimeTransformations.get(PANEL_AD_HOC_TRANSFORMATIONS_OWNER);
+    const tableTransformations = runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER);
     const pluginId = panel.state.pluginId;
     if (pluginId === 'table' && tableTransformations.length > 0) {
-      runtimeTransformations.set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, []);
+      runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, []);
       dispatch(
         notifyApp(
           createInfoNotification(
@@ -151,7 +152,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       if (pluginId === panel.state.pluginId && tableTransformations.length > 0) {
-        runtimeTransformations.set(PANEL_AD_HOC_TRANSFORMATIONS_OWNER, tableTransformations);
+        runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, tableTransformations);
       }
       this.commitChanges();
       reportInteraction('panel_edit_closed', {}, { silent: true });
