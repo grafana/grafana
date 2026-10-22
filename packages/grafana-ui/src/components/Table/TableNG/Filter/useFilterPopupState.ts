@@ -136,6 +136,7 @@ export function useFilterPopupState({
     unsupportedReason,
     popupProps: {
       stateKey: snapshot,
+      rangeFiltersEnabled: view?.rangeFiltersEnabled,
       onApplyValues: (values) => {
         if (view && field) {
           if (values.length === 0) {
@@ -163,7 +164,7 @@ export function useFilterPopupState({
       timeZone: view?.timeZone,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       rows: rowsForPopup,
-      filterValue,
+      filterValue: filterValue ?? (range && !view?.rangeFiltersEnabled ? [] : undefined),
       field,
       onClose: () => setPopoverVisible(false),
       searchFilter,

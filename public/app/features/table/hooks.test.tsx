@@ -481,6 +481,7 @@ describe('useCommonTableProps', () => {
       contentAwareWidthsEnabled: false,
       tableRefreshEnabled: false,
       jsonSyntaxHighlightingEnabled: false,
+      rangeFiltersEnabled: false,
       zebraStriping: false,
     });
   });
@@ -503,6 +504,7 @@ describe('useCommonTableProps', () => {
       wrapper: FeatureFlagsProvider,
     });
     expect(result.current.jsonSyntaxHighlightingEnabled).toBe(newFeatures);
+    expect(result.current.rangeFiltersEnabled).toBe(newFeatures);
   });
 
   it('enables hover overflow when the option is undefined', () => {

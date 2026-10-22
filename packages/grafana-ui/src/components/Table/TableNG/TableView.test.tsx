@@ -111,7 +111,13 @@ function displayedNames() {
 it('filters locally while preserving existing sorting and source indices on refresh', async () => {
   const user = userEvent.setup();
   const onDisplayedRowIndicesChange = jest.fn();
-  const props = { width: 800, height: 600, rowTransformationsEnabled: true, onDisplayedRowIndicesChange };
+  const props = {
+    width: 800,
+    height: 600,
+    rowTransformationsEnabled: true,
+    rangeFiltersEnabled: true,
+    onDisplayedRowIndicesChange,
+  };
   const { rerender } = render(<TableNG {...props} data={makeFrame()} />);
   await user.click(screen.getByRole('button', { name: 'Filter Value' }));
   await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '15');
@@ -128,6 +134,25 @@ it('filters locally while preserving existing sorting and source indices on refr
   await user.click(screen.getByRole('button', { name: 'Filter Value' }));
   await user.click(screen.getByRole('button', { name: 'Clear filter' }));
   expect(displayedNames()).toEqual(['alpha', 'beta', 'gamma', 'outlier']);
+});
+
+it('keeps an existing range filter clearable after range editors are disabled', async () => {
+  const user = userEvent.setup();
+  const data = makeFrame();
+  const { rerender } = render(
+    <TableNG data={data} width={800} height={600} rowTransformationsEnabled rangeFiltersEnabled />
+  );
+  await user.click(screen.getByRole('button', { name: 'Filter Value' }));
+  await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '15');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(displayedNames()).toEqual(['gamma', 'beta', 'outlier']);
+
+  rerender(<TableNG data={data} width={800} height={600} rowTransformationsEnabled />);
+  await user.click(screen.getByRole('button', { name: 'Filter Value' }));
+  expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Clear filter' })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Clear filter' }));
+  expect(displayedNames()).toEqual(['gamma', 'alpha', 'beta', 'outlier']);
 });
 
 it('computes each distribution using all other filters, independent of insertion order', () => {
@@ -186,7 +211,7 @@ it('offers typed filters on child fields and leaves sibling parents intact', asy
     timeZone: 'utc',
     replaceVariables: (s) => s,
   });
-  render(<TableNG data={displayed} width={800} height={600} rowTransformationsEnabled />);
+  render(<TableNG data={displayed} width={800} height={600} rowTransformationsEnabled rangeFiltersEnabled />);
   const user = userEvent.setup();
   await user.click(screen.getAllByRole('button', { name: /expand/i })[0]);
   await user.click(screen.getByRole('button', { name: 'Filter east' }));
@@ -251,6 +276,7 @@ it.each([false, true])(
       width: 800,
       height: 600,
       rowTransformationsEnabled: true,
+      rangeFiltersEnabled: true,
       sortBy: savedSort ? [{ displayName: 'Value', desc: false }] : undefined,
       rowTransformations: { api, owner: 'table', frameKey: '[null,0,1]', frameIndex: 0 },
     };
