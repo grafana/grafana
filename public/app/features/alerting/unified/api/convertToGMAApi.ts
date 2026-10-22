@@ -11,7 +11,10 @@ import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/ty
 import { type WithNotificationOptions, alertingApi } from './alertingApi';
 
 /** Args for the wizard's interactive dry-run validation. No `promote` — the wizard never promotes from Step 1. */
-export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote'>;
+/** The dry run checks the configuration itself, so the policy tree name is optional here. */
+export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote' | 'configIdentifier'> & {
+  configIdentifier?: string;
+};
 
 function fileSignature(file: File): string {
   return `${file.name}:${file.size}:${file.lastModified}`;
@@ -72,6 +75,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           ...(targetDatasourceUID ? { 'X-Grafana-Alerting-Target-Datasource-UID': targetDatasourceUID } : {}),
           ...(notificationSettings ? { 'X-Grafana-Alerting-Notification-Settings': notificationSettings } : {}),
         },
+        // Callers report failures themselves; the default toast would duplicate it.
+        notificationOptions: { showErrorAlert: false },
       }),
     }),
 
@@ -101,6 +106,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           ...(forceReplace ? { 'X-Grafana-Alerting-Config-Force-Replace': 'true' } : {}),
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
+        // The import wizard shows failures in its confirm modal; the default toast would duplicate it.
+        notificationOptions: { showErrorAlert: false },
       }),
       // Staged imports land on the AM config's extra_config, so the config query has to refetch —
       // otherwise the Import tab renders its cached, pre-import config and shows the empty state.
@@ -116,7 +123,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
       WithNotificationOptions<{
         alertmanagerConfig: string;
         templateFiles?: Record<string, string>;
-        configIdentifier: string;
+        /** Without one, the backend checks the configuration under its default name. */
+        configIdentifier?: string;
         /** Also validate the merge into the live config, and the caller's permissions for it. */
         promote?: boolean;
       }>
@@ -129,7 +137,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           template_files: templateFiles,
         },
         headers: {
-          'X-Grafana-Alerting-Config-Identifier': configIdentifier,
+          ...(configIdentifier ? { 'X-Grafana-Alerting-Config-Identifier': configIdentifier } : {}),
           'X-Grafana-Alerting-Dry-Run': 'true',
           // Force-replace so validation isn't blocked by a 409 from an existing identifier.
           'X-Grafana-Alerting-Config-Force-Replace': 'true',

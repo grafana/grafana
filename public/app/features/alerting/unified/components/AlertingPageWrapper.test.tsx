@@ -1,9 +1,11 @@
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { act, render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { type NavModelItem, OrgRole, store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -24,6 +26,11 @@ const testPageNav: NavModelItem = {
 };
 
 const server = setupMswServer();
+
+const IMPORT_WIZARD_FLAGS = {
+  [FlagKeys.AlertingMigrationWizardUI]: true,
+  [FlagKeys.AlertingImportAlertmanagerAPI]: true,
+};
 
 describe('AlertmanagerPageWrapper', () => {
   afterEach(() => {
@@ -215,7 +222,13 @@ describe('AlertmanagerPageWrapper', () => {
   });
 
   describe('ImportToGMA banner', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
+    beforeEach(() => setTestFlags(IMPORT_WIZARD_FLAGS));
+    // The reset fires OpenFeature events while components are still mounted, so it needs act.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
 
     const importBanner = byRole('link', { name: /import to grafana alerting/i });
 
@@ -283,7 +296,14 @@ describe('AlertmanagerPageWrapper', () => {
     });
 
     describe('while Mimir Alertmanager auto-sync is active', () => {
-      testWithFeatureToggles({ enable: ['alertingMigrationWizardUI', 'alerting.syncExternalAlertmanager'] });
+      testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+      beforeEach(() => setTestFlags(IMPORT_WIZARD_FLAGS));
+      // The reset fires OpenFeature events while components are still mounted, so it needs act.
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags();
+        });
+      });
 
       it('does not show the import banner', async () => {
         const externalAm = setupExternalAlertmanager();

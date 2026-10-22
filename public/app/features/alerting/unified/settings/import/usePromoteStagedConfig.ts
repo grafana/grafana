@@ -87,7 +87,7 @@ export function usePromoteStagedConfig(
         ),
         t(
           'alerting.settings.import.promote.sync-not-cleared-body',
-          'The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification resources again.'
+          'The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification configuration again.'
         )
       );
       return;
@@ -99,7 +99,7 @@ export function usePromoteStagedConfig(
       ),
       t(
         'alerting.settings.import.promote.sync-ini-managed-body',
-        'Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification resources again.'
+        'Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification configuration again.'
       )
     );
   };

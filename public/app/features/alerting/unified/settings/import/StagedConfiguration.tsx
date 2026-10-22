@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { base64UrlEncode } from '@grafana/alerting';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
@@ -78,9 +78,27 @@ interface Props {
    * resources the backend renames on a name collision, so their View links address the staged copy.
    */
   liveConfig?: AlertmanagerConfig;
+  /** Replaces the identifier heading, for example with the datasource auto-sync mirrors from. */
+  title?: ReactNode;
+  /** Replaces the staged/synced badge, for example with the auto-sync status. */
+  badge?: ReactNode;
+  /** Shown before the promote button, for example to disable auto-sync. */
+  extraActions?: ReactNode;
+  /** Shown under the header, for example what is wrong with the sync. */
+  notices?: ReactNode;
 }
 
-export function StagedConfiguration({ stagedConfig, canPromote, canRevert, isSyncManaged, liveConfig }: Props) {
+export function StagedConfiguration({
+  stagedConfig,
+  canPromote,
+  canRevert,
+  isSyncManaged,
+  liveConfig,
+  title,
+  badge,
+  extraActions,
+  notices,
+}: Props) {
   const styles = useStyles2(getStyles);
   const [openModal, setOpenModal] = useState<'promote' | 'revert' | null>(null);
   const noPermissionTooltip = t(
@@ -125,7 +143,7 @@ export function StagedConfiguration({ stagedConfig, canPromote, canRevert, isSyn
   if (receivers.length > 0) {
     sections.push({
       key: 'contact-points',
-      icon: 'comment-alt',
+      icon: 'at',
       label: t('alerting.settings.import.section.contact-points', 'Contact points'),
       count: receivers.length,
       content: receivers.map((receiver, index) => (
@@ -227,23 +245,18 @@ export function StagedConfiguration({ stagedConfig, canPromote, canRevert, isSyn
   }
 
   return (
-    <div className={styles.card}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} wrap="wrap">
-        <Stack direction="row" alignItems="center" gap={1}>
+    <StagedCard
+      title={
+        title ?? (
           <Text element="h3" variant="h5">
             {stagedConfig.identifier}
           </Text>
-          {isSyncManaged ? (
-            <Badge color="green" icon="sync" text={t('alerting.settings.import.synced-badge', 'Synced · read-only')} />
-          ) : (
-            <Badge
-              color="blue"
-              icon="cloud-upload"
-              text={t('alerting.settings.import.staged-badge', 'Staged · read-only')}
-            />
-          )}
-        </Stack>
-        <Stack direction="row" gap={1}>
+        )
+      }
+      badge={badge ?? <StagedConfigBadge isSyncManaged={isSyncManaged} />}
+      actions={
+        <>
+          {extraActions}
           {!isSyncManaged && (
             <Button
               variant="secondary"
@@ -256,15 +269,16 @@ export function StagedConfiguration({ stagedConfig, canPromote, canRevert, isSyn
           )}
           <Button
             variant="primary"
-            icon="cloud-upload"
             disabled={!canPromote}
             tooltip={canPromote ? undefined : noPermissionTooltip}
             onClick={() => setOpenModal('promote')}
           >
-            <Trans i18nKey="alerting.settings.import.promote-button">Promote to live config</Trans>
+            <Trans i18nKey="alerting.settings.import.promote-button">Promote</Trans>
           </Button>
-        </Stack>
-      </Stack>
+        </>
+      }
+    >
+      {notices}
 
       {isSyncManaged && (
         <Text variant="bodySmall" color="secondary">
@@ -287,7 +301,43 @@ export function StagedConfiguration({ stagedConfig, canPromote, canRevert, isSyn
       {openModal === 'revert' && (
         <RevertConfirmModal stagedConfig={stagedConfig} onDismiss={() => setOpenModal(null)} />
       )}
+    </StagedCard>
+  );
+}
+
+interface StagedCardProps {
+  title: ReactNode;
+  badge?: ReactNode;
+  actions?: ReactNode;
+  children?: ReactNode;
+}
+
+/** The card a staged configuration is shown in: a header with title, badge and actions, then the content. */
+export function StagedCard({ title, badge, actions, children }: StagedCardProps) {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.card}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} wrap="wrap">
+        <Stack direction="row" alignItems="center" gap={1}>
+          {title}
+          {badge}
+        </Stack>
+        {actions && (
+          <Stack direction="row" gap={1}>
+            {actions}
+          </Stack>
+        )}
+      </Stack>
+      {children}
     </div>
+  );
+}
+
+export function StagedConfigBadge({ isSyncManaged }: { isSyncManaged?: boolean }) {
+  return isSyncManaged ? (
+    <Badge color="green" icon="sync" text={t('alerting.settings.import.synced-badge', 'Synced · read-only')} />
+  ) : (
+    <Badge color="blue" icon="cloud-upload" text={t('alerting.settings.import.staged-badge', 'Staged · read-only')} />
   );
 }
 

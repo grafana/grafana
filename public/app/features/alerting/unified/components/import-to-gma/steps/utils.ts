@@ -27,7 +27,7 @@ export function validatePolicyTreeName(value: string): string | true {
 /**
  * Validates that a source selection has the required data based on the source type
  */
-function hasValidSourceSelection(
+export function hasValidSourceSelection(
   source: 'yaml' | 'datasource',
   yamlFile: File | null | undefined,
   datasourceUID: string | null | undefined
