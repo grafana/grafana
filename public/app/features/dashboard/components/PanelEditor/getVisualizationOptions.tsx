@@ -140,7 +140,7 @@ function getDefaultsEditing(
       value: withThresholdStepExpressions(storedValue, (key) => defaults.varMappings?.[key]),
       toFieldConfig: (v: unknown) => {
         if (!hasThresholdSteps(v)) {
-          return writeValue(fieldConfig, v);
+          return writeValue(updateDefaultThresholdStepVarMappings(fieldConfig, {}), v);
         }
         const { thresholds, expressions } = splitThresholdStepExpressions(v);
         return writeValue(updateDefaultThresholdStepVarMappings(fieldConfig, expressions), thresholds);

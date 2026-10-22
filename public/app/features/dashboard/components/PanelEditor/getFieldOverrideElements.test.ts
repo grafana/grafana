@@ -621,6 +621,15 @@ describe('getFieldOverrideCategories', () => {
         ]);
       });
 
+      it('drops the step entries when the thresholds are cleared', () => {
+        const onFieldConfigsChange = jest.fn();
+        renderRow(true, onFieldConfigsChange).props.onChange(undefined);
+
+        expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([
+          { id: 'thresholds', value: undefined },
+        ]);
+      });
+
       it('removes the step entries with the thresholds row', () => {
         const onFieldConfigsChange = jest.fn();
         renderRow(true, onFieldConfigsChange).props.onRemove();

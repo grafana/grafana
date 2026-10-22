@@ -684,6 +684,13 @@ describe('getVisualizationOptions', () => {
         );
       });
 
+      it('drops the step expressions when the thresholds are cleared', () => {
+        const { element, onFieldConfigChange } = renderThresholds(true);
+
+        element.props.onChange(undefined);
+        expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: {}, overrides: [] }, true);
+      });
+
       it('shows the stored thresholds with the flag off, and an edit drops the step expressions', () => {
         const { element, onFieldConfigChange } = renderThresholds(false);
 
