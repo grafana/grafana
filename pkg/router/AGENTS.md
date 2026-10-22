@@ -73,7 +73,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
-  must be a DNS label with a hyphen, so it can never name a core or manifest group.
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
+  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,

@@ -632,13 +632,17 @@ func TestPluginLoaderServesSettingsUnderPluginID(t *testing.T) {
 		return out
 	}
 
-	backends, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
+	backends, err := (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)
 	require.Equal(t, []string{"example.ext.grafana.app"}, groups(backends), "settings are only served behind the feature flag")
 	manifestKey := backends[0].Key()
 
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
-	backends, err = (PluginLoader{}).prepareBackends(t.Context(), defs)
+	standalone, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
+	require.NoError(t, err)
+	require.Equal(t, []string{"example.ext.grafana.app"}, groups(standalone), "a loader without settings ignores the feature flag")
+
+	backends, err = (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)
 	require.Equal(t, []string{"example-app", "example.ext.grafana.app", "legacy-app"}, groups(backends),
 		"every valid app plugin serves its settings, with or without a manifest")
@@ -652,7 +656,7 @@ func TestPluginLoaderServesSettingsUnderPluginID(t *testing.T) {
 
 	// Settings do not depend on the manifest, so a manifest change keeps the settings group serving.
 	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "v2", Served: true})
-	changed, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
+	changed, err := (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)
 	require.Equal(t, settings.Key(), changed[0].Key())
 	require.NotEqual(t, manifestKey, changed[1].Key())
@@ -726,4 +730,33 @@ func TestPluginSettingsBackendLoad(t *testing.T) {
 			require.Error(t, err, id)
 		}
 	})
+}
+
+// The standalone router has no SQL settings store or dual writer, so its
+// local plugin loader never serves settings, whatever the feature flag says.
+func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
+	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource { return nil }}
+	for _, tc := range []struct {
+		name     string
+		target   []string
+		settings bool
+	}{
+		{"grafana", nil, true},
+		{"standalone router", []string{"router"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.Target = tc.target
+			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
+				PluginSources: sources,
+				PluginDependencies: PluginDependencies{
+					Features: featuremgmt.WithFeatures(featuremgmt.FlagApppluginsRegisterAPIServer),
+				},
+			})
+			require.NoError(t, err)
+			pl, ok := loader.(*PluginLoader)
+			require.True(t, ok, "expected the local plugin loader, got %T", loader)
+			require.Equal(t, tc.settings, pl.settings)
+		})
+	}
 }

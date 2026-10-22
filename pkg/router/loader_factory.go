@@ -42,7 +42,7 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 				return nil, err
 			}
 		}
-		return &PluginLoader{deps: deps}, nil
+		return &PluginLoader{deps: deps, settings: !standaloneRouter(cfg)}, nil
 	}
 
 	return dummyRoutesLoader{groups: []string{
@@ -115,6 +115,12 @@ func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bo
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) { //nolint:staticcheck
 		return true
 	}
-	standalone := cfg != nil && slices.Contains(cfg.Target, "router")
-	return !standalone && features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
+	return !standaloneRouter(cfg) && features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
+}
+
+// standaloneRouter reports whether this process runs the router target, which
+// serves no app plugin settings: they need the SQL settings store and dual
+// writer that only Grafana itself provides.
+func standaloneRouter(cfg *setting.Cfg) bool {
+	return cfg != nil && slices.Contains(cfg.Target, "router")
 }

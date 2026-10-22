@@ -71,7 +71,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	router.loader = loader
 
 	s := newService(router, reg)
-	s.standalone = slices.Contains(cfg.Target, "router")
+	s.standalone = standaloneRouter(cfg)
 	s.middleware = middlewareEnabled(cfg, features)
 	if lifecycle, ok := loader.(services.Service); ok {
 		s.loaderLifecycle = lifecycle
