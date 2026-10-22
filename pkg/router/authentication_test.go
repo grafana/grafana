@@ -20,6 +20,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,7 +36,7 @@ func newAuthenticatedRequest(method, target string, body io.Reader) *http.Reques
 
 func authenticatedTestContext(ctx context.Context) context.Context {
 	return identity.WithRequester(ctx, &identity.StaticRequester{
-		Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: "default",
+		Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: "*",
 	})
 }
 
@@ -116,6 +118,106 @@ func TestRouterAuthentication(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestRouterAuthorizesNamespace(t *testing.T) {
+	user := &identity.StaticRequester{Type: types.TypeUser, UserUID: "u", OrgID: 1, Namespace: "stacks-1"}
+	for _, tc := range []struct {
+		name      string
+		requester *identity.StaticRequester
+		path      string
+		allowed   bool
+	}{
+		{"own namespace", user, "/apis/example/v1/namespaces/stacks-1/widgets", true},
+		{"own namespace, watch", user, "/apis/example/v1/namespaces/stacks-1/widgets?watch=true", true},
+		{"other namespace", user, "/apis/example/v1/namespaces/stacks-2/widgets", false},
+		{"other namespace, watch", user, "/apis/example/v1/namespaces/stacks-2/widgets?watch=true", false},
+		{"other namespace, object", user, "/apis/example/v1/namespaces/stacks-2/widgets/a/status", false},
+		{"other namespace, fallback", user, "/apis/unknown/v1/namespaces/stacks-2/widgets", false},
+		{"cluster-scoped", user, "/apis/example/v1/widgets", true},
+		{"group discovery", user, "/apis/example/v1", true},
+		{"wildcard", &identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*"}, "/apis/example/v1/namespaces/stacks-2/widgets", true},
+		{"no namespace", &identity.StaticRequester{Type: types.TypeAccessPolicy}, "/apis/example/v1/namespaces/stacks-2/widgets", false},
+		{"grafana admin", &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, Namespace: "default", IsGrafanaAdmin: true}, "/apis/example/v1/namespaces/org-2/widgets", true},
+		{"anonymous, own namespace", &identity.StaticRequester{Type: types.TypeAnonymous, OrgID: 1, Namespace: "default"}, "/apis/example/v1/namespaces/default/widgets", true},
+		{"anonymous, other namespace", &identity.StaticRequester{Type: types.TypeAnonymous, OrgID: 1, Namespace: "default"}, "/apis/example/v1/namespaces/org-2/widgets", false},
+		{"namespace object", user, "/apis/example/v1/namespaces/stacks-2", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			router := NewGrafanaRouter(stubLoader{}, nil)
+			served := 0
+			handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				served++
+				namespace, _ := request.NamespaceFrom(req.Context())
+				require.Equal(t, namespaceFromPath(req.URL.Path), namespace)
+				w.WriteHeader(http.StatusNoContent)
+			})
+			snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
+			router.snapshot.Store(&snapshot)
+			router.unregisteredGroupHandler = handler
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), tc.requester))
+			rec := httptest.NewRecorder()
+			router.HandleFunc(rec, req, handler)
+			if tc.allowed {
+				require.Equal(t, http.StatusNoContent, rec.Code)
+				require.Equal(t, 1, served)
+				return
+			}
+			require.Equal(t, http.StatusForbidden, rec.Code)
+			require.Zero(t, served, "a backend must not see a request for another namespace")
+			var status metav1.Status
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+			require.Equal(t, metav1.StatusReasonForbidden, status.Reason)
+		})
+	}
+}
+
+func TestNamespaceFromPath(t *testing.T) {
+	for path, want := range map[string]string{
+		"/apis/g/v1/namespaces/ns/things":          "ns",
+		"/apis/g/v1/namespaces/ns/things/a/status": "ns",
+		"/apis/g/v1/namespaces/ns":                 "ns",
+		"/apis/g/v1/namespaces/":                   "",
+		"/apis/g/v1/namespaces":                    "",
+		"/apis/g/v1/things":                        "",
+		"/apis/g/v1/things/namespaces/ns":          "",
+		"/apis/g/v1/watch/namespaces/ns/things":    "",
+		"/apis/g/v1":                               "",
+		"/apis/g":                                  "",
+		"/apis":                                    "",
+		"/openapi/v3/apis/g/v1":                    "",
+		"/api/namespaces/ns":                       "",
+	} {
+		require.Equal(t, want, namespaceFromPath(path), path)
+	}
+}
+
+// The deprecated path form puts "watch" before the namespace. The router
+// doesn't serve it, so no backend sees it, whatever the namespace.
+func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
+	router := NewGrafanaRouter(stubLoader{}, nil)
+	served := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		served = true
+		w.WriteHeader(http.StatusNoContent)
+	})
+	snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
+	router.snapshot.Store(&snapshot)
+	router.unregisteredGroupHandler = handler
+	for _, path := range []string{
+		"/apis/example/v1/watch/namespaces/stacks-1/widgets",
+		"/apis/example/v1/watch/namespaces/stacks-2/widgets",
+		"/apis/example/v1/watch/widgets",
+		"/apis/unknown/v1/watch/namespaces/stacks-2/widgets",
+	} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, Namespace: "stacks-1"}))
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, req, handler)
+		require.Equal(t, http.StatusNotFound, rec.Code, path)
+	}
+	require.False(t, served)
 }
 
 func TestProvideStandaloneServiceRequiresTokenVerificationConfig(t *testing.T) {

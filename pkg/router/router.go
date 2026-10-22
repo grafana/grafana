@@ -18,6 +18,9 @@ import (
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -230,6 +233,9 @@ func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next ht
 	if req == nil {
 		return
 	}
+	if rejectDeprecatedWatch(w, req) {
+		return
+	}
 
 	// Built by the router, and checked before group dispatch so the tree is
 	// never mistaken for a group.
@@ -320,7 +326,65 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 		return nil
 	}
 
+	// Not ctx: its span has ended, and must not parent the rest of the request.
 	return req.WithContext(identity.WithRequester(req.Context(), info))
+}
+
+// authorizeNamespace refuses a request for a namespace its requester may not
+// use, before any backend or stack sees it: Grafana admins may name any
+// namespace, and everyone else only their own, or any with "*". Backends
+// still authorize everything else. An allowed request carries its namespace
+// in the apiserver's request context.
+func authorizeNamespace(w http.ResponseWriter, req *http.Request) bool {
+	ns := namespaceFromPath(req.URL.Path)
+	if ns == "" {
+		return true
+	}
+
+	ctx := req.Context()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || requester == nil {
+		setRoute(req, routeUnauthenticated)
+		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing requester"), w)
+		return false
+	}
+
+	if requester.GetIsGrafanaAdmin() || types.NamespaceMatches(requester.GetNamespace(), ns) {
+		return true
+	}
+	setRoute(req, routeForbidden)
+	_ = errhttp.Write(req.Context(), apierrors.NewForbidden(
+		schema.GroupResource{}, "",
+		fmt.Errorf("the requester's namespace is not %q", ns),
+	), w)
+	return false
+}
+
+// namespaceFromPath returns the namespace a resource path names, where the
+// apiserver reads it: /apis/<group>/<version>/namespaces/<namespace>[/...].
+// That includes the namespace object itself, /apis/<g>/<v>/namespaces/<ns>.
+// Any other path, the deprecated /watch/ form included, names none.
+func namespaceFromPath(path string) string {
+	rest, ok := pathAfterVersion(path)
+	if !ok {
+		return ""
+	}
+	rest, ok = strings.CutPrefix(rest, "namespaces/")
+	if !ok {
+		return ""
+	}
+	namespace, _, _ := strings.Cut(rest, "/")
+	return namespace
+}
+
+// pathAfterVersion returns what follows /apis/<group>/<version>/ in path,
+// without allocating, since every request reads it.
+func pathAfterVersion(path string) (string, bool) {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	for i := 0; ok && i < 2; i++ {
+		_, rest, ok = strings.Cut(rest, "/")
+	}
+	return rest, ok
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
