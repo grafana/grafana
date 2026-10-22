@@ -85,10 +85,6 @@ func (c *Calculator) ModuleHash(ctx context.Context, pluginID, pluginVersion str
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
 func (c *Calculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSBase string) (r string, err error) {
-	if !c.cfg.Features.SriChecksEnabled {
-		return "", nil
-	}
-
 	// Ignore unsigned plugins
 	if !p.Signature.IsValid() {
 		return "", nil

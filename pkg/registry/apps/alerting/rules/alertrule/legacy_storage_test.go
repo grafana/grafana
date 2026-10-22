@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -75,7 +75,7 @@ func (fakeRuleAccessControl) AuthorizeAccessToRuleGroup(context.Context, identit
 func (fakeRuleAccessControl) AuthorizeAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) error {
 	return nil
 }
-func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *store.GroupDelta) error {
+func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 	return nil
 }
 func (fakeRuleAccessControl) HasAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) (bool, error) {

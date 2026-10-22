@@ -39,7 +39,7 @@ export function SidebarPaneHeader({ children, title }: Props) {
             data-testid={selectors.components.Sidebar.goBack}
           />
         )}
-        <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
+        <Text weight="medium" variant="base" truncate data-testid={selectors.components.Sidebar.headerTitle}>
           {title}
         </Text>
         <div className={styles.flexGrow} />
@@ -77,6 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      fontSize: theme.typography.size.md,
     }),
     header: css({
       display: 'flex',

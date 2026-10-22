@@ -5,7 +5,7 @@ import { useOverlay } from '@react-aria/overlays';
 import { useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, useStyles2, getPortalContainer } from '@grafana/ui';
 
@@ -37,7 +37,10 @@ export const ResourcePickerPopover = (props: Props) => {
   };
 
   const ref = useRef<HTMLElement>(null);
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog(
+    { 'aria-label': t('dimensions.resource-picker-popover.dialog-label', 'Select a resource') },
+    ref
+  );
   const { overlayProps } = useOverlay(
     {
       onClose,

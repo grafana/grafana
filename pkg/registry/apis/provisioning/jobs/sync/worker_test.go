@@ -274,6 +274,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.jobStatus.Finished = 1234567890
 			clientFactory := resources.NewMockClientFactory(t)
 			repoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 			repositoryPatchFn := NewMockRepositoryPatchFn(t)
@@ -292,7 +293,8 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.SyncStatus{
-						LastRef: "existing-ref",
+						LastRef:     "existing-ref",
+						LastChecked: 1234567800,
 					},
 				},
 			}
@@ -316,9 +318,15 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 			var capturedPullCondition metav1.Condition
+			var capturedSyncStatus provisioning.SyncStatus
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig,
 				mock.MatchedBy(func(patch map[string]interface{}) bool {
-					return patch["path"] == "/status/sync"
+					if patch["path"] != "/status/sync" {
+						return false
+					}
+					var ok bool
+					capturedSyncStatus, ok = patch["value"].(provisioning.SyncStatus)
+					return ok
 				}),
 				mock.MatchedBy(func(patch map[string]interface{}) bool {
 					if patch["path"] != "/status/conditions" {
@@ -360,6 +368,9 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
 			require.NoError(t, err)
 
+			require.Equal(t, tt.jobStatus.Finished, capturedSyncStatus.Finished, "all completed syncs, including warnings, must reset the interval")
+			require.Equal(t, tt.jobStatus.State, capturedSyncStatus.State)
+			require.Equal(t, repoConfig.Status.Sync.LastChecked, capturedSyncStatus.LastChecked, "sync jobs must preserve the controller's last sync attempt")
 			require.Equal(t, provisioning.ConditionTypePullStatus, capturedPullCondition.Type)
 			require.Equal(t, tt.expectedPullReason, capturedPullCondition.Reason)
 			require.Equal(t, tt.expectedPullStatus, capturedPullCondition.Status)
