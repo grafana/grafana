@@ -13144,6 +13144,10 @@
     "upgrading": {
       "title": "Stats and license"
     },
+    "urv": {
+      "subtitle": "Browse everything in one place",
+      "title": "Resources"
+    },
     "users": {
       "subtitle": "Invite and assign roles to users",
       "title": "Users"
@@ -18220,13 +18224,16 @@
     "empty": "No resources match these filters",
     "filters": {
       "chip-owner": "Owner: {{value}}",
+      "chip-provisioned": "Provisioned only",
       "chip-tag": "Tag: {{value}}",
       "chip-type": "Type: {{value}}",
       "chip-updated": "Updated: {{value}}",
       "open": "Add a filter",
       "option-count": "{{name}} ({{total}})",
       "owner": "Owner",
-      "placeholder": "Filter by type, tag, owner or updated",
+      "placeholder": "Filter by type, tag, owner, updated or provisioned",
+      "provisioned": "Provisioned only",
+      "provisioned-description": "Synced from a Git repository",
       "remove": "Remove {{filter}}",
       "tag": "Tag",
       "type": "Type",
@@ -18234,6 +18241,11 @@
       "updated-24h": "Last 24 hours",
       "updated-30d": "Last 30 days",
       "updated-7d": "Last 7 days"
+    },
+    "folders": {
+      "grid": "Grid",
+      "in-folder": "in {{folder}}",
+      "list": "List"
     },
     "group": {
       "label": "Group",
@@ -18246,10 +18258,10 @@
       "view-all": "View all {{total}} {{type}}"
     },
     "heading": {
-      "all": "All resources",
       "count_one": "{{total}} resource",
       "count_other": "{{total}} resources",
-      "no-folder": "No folder"
+      "no-folder": "No folder",
+      "root": "Root level"
     },
     "kinds": {
       "alert-rule": "Alert rule",
@@ -18301,6 +18313,14 @@
       "starred": "Starred",
       "trash": "Trash: not available from global search yet"
     },
+    "provisioned": {
+      "branch-only": "This repository only takes changes through a branch. Delete it from the Dashboards page instead.",
+      "checking": "Checking the repository...",
+      "move-git": "Its folder comes from where the file sits in the repository. Move it from the Dashboards page instead.",
+      "orphaned": "The repository it was synced from is gone, so it can't be changed here",
+      "root-folder": "This is the repository's root folder. It's removed when the repository is.",
+      "unknown": "Couldn't load the repository, so this can't be changed here"
+    },
     "search": {
       "placeholder": "Search all resources"
     },
@@ -18312,14 +18332,18 @@
       "delete": "Delete",
       "delete-body": "This deletes them for everyone.",
       "delete-confirm": "Delete",
+      "delete-none": "None of the selected items can be deleted here",
+      "delete-skipped_one": "{{count}} selected item can't be deleted here and will be skipped",
+      "delete-skipped_other": "{{count}} selected items can't be deleted here and will be skipped",
       "delete-title_one": "Delete {{count}} item",
       "delete-title_other": "Delete {{count}} items",
       "failed_one": "{{count}} of {{total}} failed",
       "failed_other": "{{count}} of {{total}} failed",
       "move": "Move",
       "move-confirm": "Move",
-      "move-partial_one": "{{count}} selected item can't go in a folder and will be skipped",
-      "move-partial_other": "{{count}} selected items can't go in folders and will be skipped",
+      "move-none": "None of the selected items can be moved here",
+      "move-skipped_one": "{{count}} selected item can't be moved and will be skipped",
+      "move-skipped_other": "{{count}} selected items can't be moved and will be skipped",
       "move-title_one": "Move {{count}} item",
       "move-title_other": "Move {{count}} items"
     },
@@ -18334,7 +18358,10 @@
       "new-folder": "New folder",
       "no-folder": "No folder",
       "no-matches": "No folders match",
+      "root": "Root level",
       "show": "Show folders",
+      "team-folders": "Team folders",
+      "team-folders-error": "Couldn't load team folders",
       "title": "Folders",
       "your-folders": "Your folders"
     },

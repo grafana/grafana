@@ -52,8 +52,25 @@ describe('buildWhere for the filter menu', () => {
   it('matches root content but not root folders for "No folder"', () => {
     expect(buildWhere({ noFolder: true, folders: ['ignored'] })).toEqual({
       and: [
-        { filter: { field: 'folder', operator: 'In', values: [''] } },
         { filter: { field: 'groupResource', operator: 'NotIn', values: ['folder.grafana.app/folders'] } },
+        { filter: { field: 'folder', operator: 'In', values: [''] } },
+      ],
+    });
+  });
+
+  it('excludes types in one leaf, even when "No folder" also excludes folders', () => {
+    expect(
+      buildWhere({ excludeTypes: ['folder.grafana.app/folders', 'dashboard.grafana.app/variables'], noFolder: true })
+    ).toEqual({
+      and: [
+        {
+          filter: {
+            field: 'groupResource',
+            operator: 'NotIn',
+            values: ['folder.grafana.app/folders', 'dashboard.grafana.app/variables'],
+          },
+        },
+        { filter: { field: 'folder', operator: 'In', values: [''] } },
       ],
     });
   });
@@ -65,6 +82,13 @@ describe('buildWhere for the filter menu', () => {
         { range: { field: 'updated', gte: 1000 } },
       ],
     });
+  });
+
+  it('keeps only things synced from a Git repository for "Provisioned only"', () => {
+    expect(buildWhere({ provisioned: true })).toEqual({
+      and: [{ filter: { field: 'manager.kind', operator: 'In', values: ['repo'] } }],
+    });
+    expect(buildWhere({ provisioned: false })).toBeUndefined();
   });
 });
 

@@ -18,10 +18,20 @@ import {
 } from '../api/globalSearchApi';
 
 import { type PlaceScope } from './usePlaceScope';
-import { NO_FOLDER, type UrvSort, type UrvState, type UrvUpdated, updatedSince } from './useUrvState';
+import {
+  NO_FOLDER,
+  ROOT_LEVEL,
+  type UrvSort,
+  type UrvState,
+  type UrvUpdated,
+  folderUID,
+  updatedSince,
+} from './useUrvState';
 
 /** Rows shown per type before "Show more". */
 export const GROUP_PREVIEW = 10;
+// Fills whole rows of folder cards at 2, 3, 4 or 6 per row.
+const FOLDER_PREVIEW = 12;
 export const PAGE_SIZE = 50;
 const FACET_LIMIT = 50;
 const ITEM_FIELDS = [
@@ -32,6 +42,8 @@ const ITEM_FIELDS = [
   FIELD.updated,
   FIELD.createdBy,
   FIELD.description,
+  FIELD.managerKind,
+  FIELD.managerId,
 ];
 
 function sortFields(sort: UrvSort): SortField[] | undefined {
@@ -55,6 +67,8 @@ export interface ResultGroup {
   relation: GlobalSearchResults['metadata']['totalHitsRelation'];
   continue?: string;
   isLoadingMore: boolean;
+  /** Only the folders directly in the current place, not the ones nested below them. */
+  childrenOnly: boolean;
 }
 
 export interface SearchCounts {
@@ -82,20 +96,25 @@ interface SearchInput {
   tags: string[];
   owners: string[];
   updated?: UrvUpdated;
+  provisioned: boolean;
   sort: UrvSort;
   grouped: boolean;
 }
 
 function toFilters(input: SearchInput): GlobalSearchFilters {
+  const uid = folderUID(input.folder);
+  const isRoot = input.folder === ROOT_LEVEL;
   return {
     text: input.text,
-    folders: input.folder && input.folder !== NO_FOLDER ? [input.folder] : undefined,
-    includeSubfolders: true,
+    // Root level is only what sits directly at the root, so no subfolders there.
+    folders: isRoot ? [''] : uid ? [uid] : undefined,
+    includeSubfolders: !isRoot,
     noFolder: input.folder === NO_FOLDER,
     tags: input.tags,
     names: input.names,
     owners: input.owners,
     updatedSince: updatedSince(input.updated),
+    provisioned: input.provisioned,
   };
 }
 
@@ -115,6 +134,7 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
     tags: state.tags,
     owners: state.owners,
     updated: state.updated,
+    provisioned: state.provisioned,
     sort: state.sort,
     grouped,
   };
@@ -151,8 +171,8 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
       return;
     }
 
-    const itemQuery = (types: string[] | undefined, limit: number): SearchQuery => ({
-      where: buildWhere({ ...filters, types }),
+    const itemQuery = (overrides: Partial<GlobalSearchFilters>, limit: number): SearchQuery => ({
+      where: buildWhere({ ...filters, ...overrides }),
       sort: sortFields(parsed.sort),
       fields: ITEM_FIELDS,
       limit,
@@ -181,7 +201,7 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
       return res;
     });
 
-    const runGroup = async (type: string, query: SearchQuery): Promise<ResultGroup> => {
+    const runGroup = async (type: string, query: SearchQuery, childrenOnly = false): Promise<ResultGroup> => {
       groupQueries.current[type] = query;
       setDebug((prev) => ({ ...prev, itemRequests: { ...prev.itemRequests, [type || 'all']: toRequestBody(query) } }));
       const res = await globalSearch(query);
@@ -192,21 +212,62 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
         relation: res.metadata.totalHitsRelation,
         continue: res.metadata.continue,
         isLoadingMore: false,
+        childrenOnly,
       };
     };
 
+    // While browsing a folder, its subfolders show one level like a file browser.
+    // Searching or filtering looks at every level.
+    const browsing =
+      !parsed.text.trim() &&
+      !parsed.tags.length &&
+      !parsed.owners.length &&
+      !parsed.updated &&
+      !parsed.provisioned &&
+      !parsed.names;
+    const browsedFolder = browsing ? folderUID(parsed.folder) : undefined;
+    const childrenOnly = Boolean(browsedFolder);
+    const runFolderSection = () =>
+      runGroup(
+        FOLDER_GROUP_RESOURCE,
+        itemQuery(
+          {
+            types: [FOLDER_GROUP_RESOURCE],
+            ...(browsedFolder && { folders: [browsedFolder], includeSubfolders: false }),
+          },
+          FOLDER_PREVIEW
+        ),
+        childrenOnly
+      );
+
+    // Folders lead like in a file browser, then a mixed list of everything else.
+    const runUngrouped = () => {
+      const scopeTypes = parsed.scopeTypes;
+      const wantFolders = !scopeTypes || scopeTypes.includes(FOLDER_GROUP_RESOURCE);
+      const otherTypes = scopeTypes?.filter((type) => type !== FOLDER_GROUP_RESOURCE);
+      return Promise.all([
+        wantFolders && runFolderSection(),
+        otherTypes?.length !== 0 &&
+          runGroup('', itemQuery({ types: otherTypes, excludeTypes: [FOLDER_GROUP_RESOURCE] }, PAGE_SIZE)),
+      ]).then((groups) => groups.filter((group): group is ResultGroup => Boolean(group)));
+    };
+
     const groupsPromise = parsed.grouped
-      ? // One preview per type, in the order the facet ranks them.
+      ? // One preview per type, folders first, then in the order the facet ranks them.
         countsPromise.then((res) =>
           Promise.all(
-            (res.facets?.[FIELD.groupResource] ?? [])
+            foldersFirst(res.facets?.[FIELD.groupResource] ?? [])
               .filter((term) => term.count > 0)
-              .map((term) => runGroup(term.value, itemQuery([term.value], GROUP_PREVIEW)))
+              .map((term) =>
+                term.value === FOLDER_GROUP_RESOURCE
+                  ? runFolderSection()
+                  : runGroup(term.value, itemQuery({ types: [term.value] }, GROUP_PREVIEW))
+              )
           )
         )
-      : runGroup(parsed.type ?? '', itemQuery(parsed.type ? [parsed.type] : parsed.scopeTypes, PAGE_SIZE)).then(
-          (group) => [group]
-        );
+      : parsed.type
+        ? runGroup(parsed.type, itemQuery({ types: [parsed.type] }, PAGE_SIZE)).then((group) => [group])
+        : runUngrouped();
 
     groupsPromise
       .then((next) => isCurrent() && setGroups(next))
@@ -289,6 +350,13 @@ export function useGlobalSearch(state: UrvState, scope: PlaceScope) {
   };
 }
 
+function foldersFirst(terms: FacetTerm[]): FacetTerm[] {
+  return [
+    ...terms.filter((term) => term.value === FOLDER_GROUP_RESOURCE),
+    ...terms.filter((term) => term.value !== FOLDER_GROUP_RESOURCE),
+  ];
+}
+
 function sameRef(a: ResourceRef, b: ResourceRef) {
   return a.group === b.group && a.resource === b.resource && a.name === b.name;
 }
@@ -309,8 +377,9 @@ function useFolderTitles(
       wanted.add(folder);
     }
   }
-  if (selectedFolder && selectedFolder !== NO_FOLDER) {
-    wanted.add(selectedFolder);
+  const selectedUID = folderUID(selectedFolder);
+  if (selectedUID) {
+    wanted.add(selectedUID);
   }
   const missing = [...wanted].filter((uid) => !requested.current.has(uid)).sort();
   const missingKey = missing.join(',');

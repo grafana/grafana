@@ -1,9 +1,20 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { type ReactElement, useState } from 'react';
 
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ConfirmModal, Drawer, Dropdown, IconButton, Menu, Modal, Stack, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ConfirmModal,
+  Drawer,
+  Dropdown,
+  IconButton,
+  Menu,
+  Modal,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
@@ -15,11 +26,27 @@ import { getKindInfo } from '../kinds';
 interface Props {
   item: ResultItem;
   title: string;
+  /** Why Move is off, such as a read-only repository. */
+  moveLockedReason?: string;
+  /** Why Delete is off, such as a read-only repository. */
+  deleteLockedReason?: string;
   onMoved: () => void;
   onDeleted: () => void;
 }
 
-export function RowActions({ item, title, onMoved, onDeleted }: Props) {
+/** Disabled menu items can't show why on their own. */
+function WithReason({ reason, children }: { reason?: string; children: ReactElement }) {
+  if (!reason) {
+    return children;
+  }
+  return (
+    <Tooltip content={reason} placement="left">
+      <div>{children}</div>
+    </Tooltip>
+  );
+}
+
+export function RowActions({ item, title, moveLockedReason, deleteLockedReason, onMoved, onDeleted }: Props) {
   const styles = useStyles2(getStyles);
   const ref = item.resource;
   const path = openPath(ref);
@@ -77,22 +104,28 @@ export function RowActions({ item, title, onMoved, onDeleted }: Props) {
       {path && <Menu.Item label={t('urv.actions.copy-link', 'Copy link')} icon="link" onClick={onCopyLink} />}
       <Menu.Item label={t('urv.actions.view-json', 'View JSON')} icon="brackets-curly" onClick={onViewJson} />
       {canMove(ref) && (
-        <Menu.Item
-          label={t('urv.actions.move', 'Move')}
-          icon="folder-open"
-          onClick={() => {
-            setTargetFolder(typeof currentFolder === 'string' ? currentFolder : undefined);
-            setIsMoving(true);
-          }}
-        />
+        <WithReason reason={moveLockedReason}>
+          <Menu.Item
+            label={t('urv.actions.move', 'Move')}
+            icon="folder-open"
+            disabled={Boolean(moveLockedReason)}
+            onClick={() => {
+              setTargetFolder(typeof currentFolder === 'string' ? currentFolder : undefined);
+              setIsMoving(true);
+            }}
+          />
+        </WithReason>
       )}
       <Menu.Divider />
-      <Menu.Item
-        label={t('urv.actions.delete', 'Delete')}
-        icon="trash-alt"
-        destructive
-        onClick={() => setIsDeleting(true)}
-      />
+      <WithReason reason={deleteLockedReason}>
+        <Menu.Item
+          label={t('urv.actions.delete', 'Delete')}
+          icon="trash-alt"
+          destructive
+          disabled={Boolean(deleteLockedReason)}
+          onClick={() => setIsDeleting(true)}
+        />
+      </WithReason>
     </Menu>
   );
 

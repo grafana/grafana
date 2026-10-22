@@ -8,10 +8,12 @@ import { useStarItem } from 'app/features/stars/hooks';
 
 import { openPath, starTarget } from '../actions';
 import { FIELD, type ResultItem } from '../api/globalSearchApi';
+import { type ManagerLookup } from '../hooks/useManagerLookup';
 import { type UrvSort } from '../hooks/useUrvState';
 import { getKindInfo } from '../kinds';
 
 import { KindIcon } from './KindIcon';
+import { ManagerBadge } from './ManagerBadge';
 import { RowActions } from './RowActions';
 
 export function itemKey(item: ResultItem): string {
@@ -24,7 +26,7 @@ export function itemTitle(item: ResultItem): string {
   return typeof title === 'string' && title ? title : item.resource.name;
 }
 
-function stringField(item: ResultItem, field: string): string {
+export function stringField(item: ResultItem, field: string): string {
   const value = item.fields?.[field];
   return typeof value === 'string' ? value : '';
 }
@@ -37,7 +39,12 @@ function numberField(item: ResultItem, field: string): number | undefined {
 export interface RowHandlers {
   folderTitles: Record<string, string>;
   ownerName: (createdBy: string) => string;
+  manager: ManagerLookup;
   starredKeys: Set<string>;
+  /** The folder being browsed, if any. */
+  currentFolder?: string;
+  /** Anything on the page is selected, so selection controls stay visible. */
+  hasSelection: boolean;
   isSelected: (item: ResultItem) => boolean;
   onToggleSelected: (item: ResultItem) => void;
   onOpenFolder: (folderUID: string) => void;
@@ -89,6 +96,7 @@ function ResourceRow({
   showType,
   folderTitles,
   ownerName,
+  manager: lookupManager,
   starredKeys,
   isSelected,
   onToggleSelected,
@@ -98,6 +106,7 @@ function ResourceRow({
 }: RowHandlers & { item: ResultItem; showType: boolean }) {
   const styles = useStyles2(getStyles);
   const info = getKindInfo(item.resource);
+  const manager = lookupManager(item);
   const title = itemTitle(item);
   const path = openPath(item.resource);
   const star = starTarget(item.resource);
@@ -129,6 +138,7 @@ function ResourceRow({
               {title}
             </span>
           )}
+          <ManagerBadge manager={manager} />
         </span>
       </td>
       <td className={styles.location}>
@@ -161,7 +171,14 @@ function ResourceRow({
         )}
       </td>
       <td className={styles.iconCell}>
-        <RowActions item={item} title={title} onMoved={onChanged} onDeleted={() => onDeleted(item)} />
+        <RowActions
+          item={item}
+          title={title}
+          moveLockedReason={manager.moveLockedReason}
+          deleteLockedReason={manager.deleteLockedReason}
+          onMoved={onChanged}
+          onDeleted={() => onDeleted(item)}
+        />
       </td>
     </tr>
   );

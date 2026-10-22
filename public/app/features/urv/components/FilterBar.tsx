@@ -107,6 +107,13 @@ export function FilterBar({ state, update, types, tags, owners, ownerName }: Pro
       onRemove: () => update({ updated: undefined }),
     });
   }
+  if (state.provisioned) {
+    chips.push({
+      key: 'provisioned',
+      label: t('urv.filters.chip-provisioned', 'Provisioned only'),
+      onRemove: () => update({ provisioned: false }),
+    });
+  }
 
   const check = (on: boolean) => (on ? 'check' : undefined);
   const filterMenu = (
@@ -159,6 +166,14 @@ export function FilterBar({ state, update, types, tags, owners, ownerName }: Pro
           />
         ))}
       />
+      <Menu.Item
+        label={t('urv.filters.provisioned', 'Provisioned only')}
+        description={t('urv.filters.provisioned-description', 'Synced from a Git repository')}
+        icon={state.provisioned ? 'check' : 'exchange-alt'}
+        role="menuitemcheckbox"
+        ariaChecked={state.provisioned}
+        onClick={() => update({ provisioned: !state.provisioned })}
+      />
     </Menu>
   );
 
@@ -185,7 +200,7 @@ export function FilterBar({ state, update, types, tags, owners, ownerName }: Pro
           <Icon name="filter" className={styles.fieldIcon} />
           {chips.length === 0 && (
             <span className={styles.placeholder}>
-              {t('urv.filters.placeholder', 'Filter by type, tag, owner or updated')}
+              {t('urv.filters.placeholder', 'Filter by type, tag, owner, updated or provisioned')}
             </span>
           )}
           {chips.map((chip) => (

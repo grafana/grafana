@@ -10,9 +10,11 @@ import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/Neste
 
 import { canMove, deleteObject, moveToFolder } from '../actions';
 import { type ResultItem } from '../api/globalSearchApi';
+import { type ManagerLookup } from '../hooks/useManagerLookup';
 
 interface Props {
   items: ResultItem[];
+  manager: ManagerLookup;
   onClear: () => void;
   onMoved: () => void;
   onDeleted: (items: ResultItem[]) => void;
@@ -36,12 +38,13 @@ async function runAll(items: ResultItem[], action: (item: ResultItem) => Promise
   return items.filter((_, index) => results[index].status === 'fulfilled');
 }
 
-export function SelectionBar({ items, onClear, onMoved, onDeleted }: Props) {
+export function SelectionBar({ items, manager, onClear, onMoved, onDeleted }: Props) {
   const styles = useStyles2(getStyles);
   const [isMoving, setIsMoving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [target, setTarget] = useState<string>();
-  const movable = items.filter((item) => canMove(item.resource));
+  const deletable = items.filter((item) => !manager(item).deleteLockedReason);
+  const movable = items.filter((item) => canMove(item.resource) && !manager(item).moveLockedReason);
 
   const onMove = async () => {
     setIsMoving(false);
@@ -51,8 +54,48 @@ export function SelectionBar({ items, onClear, onMoved, onDeleted }: Props) {
 
   const onDelete = async () => {
     setIsDeleting(false);
-    onDeleted(await runAll(items, (item) => deleteObject(item.resource)));
+    onDeleted(await runAll(deletable, (item) => deleteObject(item.resource)));
   };
+
+  // When everything is skipped for the same reason, say the reason instead of a count.
+  const skippedText = (
+    kept: ResultItem[],
+    reasonOf: (item: ResultItem) => string | undefined,
+    noneText: string,
+    countText: (count: number) => string
+  ) => {
+    if (kept.length === items.length) {
+      return undefined;
+    }
+    if (kept.length > 0) {
+      return countText(items.length - kept.length);
+    }
+    const reasons = new Set(items.map(reasonOf));
+    const [onlyReason] = reasons;
+    return reasons.size === 1 && onlyReason ? onlyReason : noneText;
+  };
+  const moveTooltip = skippedText(
+    movable,
+    (item) => manager(item).moveLockedReason,
+    t('urv.selection.move-none', 'None of the selected items can be moved here'),
+    (count) =>
+      t('urv.selection.move-skipped', '', {
+        count,
+        defaultValue_one: "{{count}} selected item can't be moved and will be skipped",
+        defaultValue_other: "{{count}} selected items can't be moved and will be skipped",
+      })
+  );
+  const deleteTooltip = skippedText(
+    deletable,
+    (item) => manager(item).deleteLockedReason,
+    t('urv.selection.delete-none', 'None of the selected items can be deleted here'),
+    (count) =>
+      t('urv.selection.delete-skipped', '', {
+        count,
+        defaultValue_one: "{{count}} selected item can't be deleted here and will be skipped",
+        defaultValue_other: "{{count}} selected items can't be deleted here and will be skipped",
+      })
+  );
 
   return (
     <div className={styles.bar}>
@@ -68,20 +111,19 @@ export function SelectionBar({ items, onClear, onMoved, onDeleted }: Props) {
         variant="secondary"
         icon="folder-open"
         disabled={movable.length === 0}
-        tooltip={
-          movable.length < items.length
-            ? t('urv.selection.move-partial', '', {
-                count: items.length - movable.length,
-                defaultValue_one: "{{count}} selected item can't go in a folder and will be skipped",
-                defaultValue_other: "{{count}} selected items can't go in folders and will be skipped",
-              })
-            : undefined
-        }
+        tooltip={moveTooltip}
         onClick={() => setIsMoving(true)}
       >
         <Trans i18nKey="urv.selection.move">Move</Trans>
       </Button>
-      <Button size="sm" variant="destructive" icon="trash-alt" onClick={() => setIsDeleting(true)}>
+      <Button
+        size="sm"
+        variant="destructive"
+        icon="trash-alt"
+        disabled={deletable.length === 0}
+        tooltip={deleteTooltip}
+        onClick={() => setIsDeleting(true)}
+      >
         <Trans i18nKey="urv.selection.delete">Delete</Trans>
       </Button>
       <Button size="sm" variant="secondary" fill="text" onClick={onClear}>
@@ -119,7 +161,7 @@ export function SelectionBar({ items, onClear, onMoved, onDeleted }: Props) {
       <ConfirmModal
         isOpen={isDeleting}
         title={t('urv.selection.delete-title', '', {
-          count: items.length,
+          count: deletable.length,
           defaultValue_one: 'Delete {{count}} item',
           defaultValue_other: 'Delete {{count}} items',
         })}

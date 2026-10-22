@@ -1046,3 +1046,27 @@ func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
 		assert.Contains(t, errs[0].Detail, "unknown field")
 	})
 }
+
+func TestTranslateGlobalSearchQuery_Manager(t *testing.T) {
+	q := searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+		Field: resource.SEARCH_FIELD_MANAGER_KIND, Operator: "In", Values: []string{"repo"},
+	}})
+	q.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID}
+
+	req, errs := TranslateGlobalSearchQuery(q, "default")
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 1)
+	assert.Equal(t, resource.SEARCH_FIELD_MANAGER_KIND, req.Options.Fields[0].Key)
+	assert.Equal(t, []string{"repo"}, req.Options.Fields[0].Values)
+	assert.Equal(t, q.Fields, req.Fields)
+
+	t.Run("not sortable or faceted", func(t *testing.T) {
+		q := searchQuery(nil)
+		q.Sort = []searchv0.SortField{{Field: resource.SEARCH_FIELD_MANAGER_ID}}
+		q.Facets = []string{resource.SEARCH_FIELD_MANAGER_KIND}
+		_, errs := TranslateGlobalSearchQuery(q, "default")
+		require.Len(t, errs, 2, errs)
+		assert.Equal(t, "sort[0].field", errs[0].Field)
+		assert.Equal(t, "facets[0]", errs[1].Field)
+	})
+}

@@ -1,5 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 /**
  * Client for `POST .../namespaces/{namespace}/global/search`, the search that spans resource types.
@@ -25,7 +26,9 @@ export const FIELD = {
   updated: 'updated',
   createdBy: 'createdBy',
   name: 'name',
-  managedBy: 'managedBy',
+  // Not in the global index field list upstream yet; this POC allows them in the API layer.
+  managerKind: 'manager.kind',
+  managerId: 'manager.id',
 } as const;
 
 export const FOLDER_GROUP_RESOURCE = 'folder.grafana.app/folders';
@@ -106,6 +109,7 @@ export interface GlobalSearchFilters {
   text?: string;
   /** `{group}/{resource}` values. */
   types?: string[];
+  excludeTypes?: string[];
   folders?: string[];
   includeSubfolders?: boolean;
   /** Things at the root. Root folders are left out, since they're places rather than content. */
@@ -117,6 +121,8 @@ export interface GlobalSearchFilters {
   owners?: string[];
   /** Epoch milliseconds. */
   updatedSince?: number;
+  /** Only things synced from a Git repository. */
+  provisioned?: boolean;
 }
 
 export function buildWhere(filters: GlobalSearchFilters): WhereNode | undefined {
@@ -129,9 +135,15 @@ export function buildWhere(filters: GlobalSearchFilters): WhereNode | undefined 
   if (filters.types?.length) {
     leaves.push({ filter: { field: FIELD.groupResource, operator: 'In', values: filters.types } });
   }
+  const excluded = new Set(filters.excludeTypes);
+  if (filters.noFolder) {
+    excluded.add(FOLDER_GROUP_RESOURCE);
+  }
+  if (excluded.size) {
+    leaves.push({ filter: { field: FIELD.groupResource, operator: 'NotIn', values: [...excluded] } });
+  }
   if (filters.noFolder) {
     leaves.push({ filter: { field: FIELD.folder, operator: 'In', values: [''] } });
-    leaves.push({ filter: { field: FIELD.groupResource, operator: 'NotIn', values: [FOLDER_GROUP_RESOURCE] } });
   } else if (filters.folders?.length) {
     // folderTree matches what is below the folders, but never the folders themselves.
     const field = filters.includeSubfolders ? FIELD.folderTree : FIELD.folder;
@@ -148,6 +160,9 @@ export function buildWhere(filters: GlobalSearchFilters): WhereNode | undefined 
   }
   if (filters.updatedSince !== undefined) {
     leaves.push({ range: { field: FIELD.updated, gte: filters.updatedSince } });
+  }
+  if (filters.provisioned) {
+    leaves.push({ filter: { field: FIELD.managerKind, operator: 'In', values: [ManagerKind.Repo] } });
   }
   return leaves.length ? { and: leaves } : undefined;
 }

@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { FIELD, FOLDER_GROUP_RESOURCE, type ResultItem, buildWhere, globalSearch } from '../api/globalSearchApi';
+
+import { useTeamFolders } from './useTeamFolders';
 
 export interface FolderNode {
   uid: string;
@@ -43,7 +45,7 @@ export function useFolderSidebar(filter: string) {
   const [children, setChildren] = useState<Record<string, FolderNode[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [totals, setTotals] = useState<{ all?: number; noFolder?: number; folders?: number }>({});
+  const [totals, setTotals] = useState<{ all?: number; root?: number; noFolder?: number; folders?: number }>({});
   const [matches, setMatches] = useState<FolderNode[]>();
   const [parentTitles, setParentTitles] = useState<Record<string, string>>({});
   const [reloadKey, setReloadKey] = useState(0);
@@ -65,10 +67,11 @@ export function useFolderSidebar(filter: string) {
     load('');
     Promise.all([
       countWhere(undefined),
+      countWhere(buildWhere({ folders: [''] })),
       countWhere(buildWhere({ noFolder: true })),
       countWhere(buildWhere({ types: [FOLDER_GROUP_RESOURCE] })),
     ])
-      .then(([all, noFolder, folders]) => setTotals({ all, noFolder, folders }))
+      .then(([all, root, noFolder, folders]) => setTotals({ all, root, noFolder, folders }))
       .catch(() => setTotals({}));
   }, [load, reloadKey]);
 
@@ -138,8 +141,18 @@ export function useFolderSidebar(filter: string) {
       .catch(() => {});
   }, [parentKey]);
 
+  const team = useTeamFolders();
+  const teamFolderUids = useMemo(() => new Set(team.folders.map((node) => node.uid)), [team.folders]);
+  const teamFolders = useMemo(() => {
+    const needle = debouncedFilter.toLowerCase();
+    return needle ? team.folders.filter((node) => node.title.toLowerCase().includes(needle)) : team.folders;
+  }, [team.folders, debouncedFilter]);
+
   // Global search can't facet on folders, so each visible folder gets its own count.
-  const visible = matches ?? [...(children[''] ?? []), ...[...expanded].flatMap((uid) => children[uid] ?? [])];
+  const visible = [
+    ...teamFolders,
+    ...(matches ?? [...(children[''] ?? []), ...[...expanded].flatMap((uid) => children[uid] ?? [])]),
+  ];
   const countKey = visible
     .map((node) => node.uid)
     .filter((uid) => !requestedCounts.current.has(uid))
@@ -160,5 +173,17 @@ export function useFolderSidebar(filter: string) {
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
-  return { children, expanded, toggle, counts, totals, matches, parentTitles, reload };
+  return {
+    children,
+    expanded,
+    toggle,
+    counts,
+    totals,
+    matches,
+    parentTitles,
+    teamFolders,
+    teamFolderUids,
+    teamFoldersError: team.error,
+    reload,
+  };
 }

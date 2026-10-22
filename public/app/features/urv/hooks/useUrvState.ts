@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
+import { locationUtil } from '@grafana/data';
+
 export const URV_SORTS = ['updated', 'created', 'title', 'relevance'] as const;
 export type UrvSort = (typeof URV_SORTS)[number];
 
@@ -25,17 +27,26 @@ export function updatedSince(updated: UrvUpdated | undefined): number | undefine
 
 /** Folder value for "No folder". Real folder uids can't contain "~". */
 export const NO_FOLDER = '~none';
+/** Folder value for "Root level": top-level folders and everything else at the root. */
+export const ROOT_LEVEL = '~root';
+
+/** The folder uid, or undefined for the places that aren't a real folder. */
+export function folderUID(folder: string | undefined): string | undefined {
+  return folder && folder !== NO_FOLDER && folder !== ROOT_LEVEL ? folder : undefined;
+}
 
 export interface UrvState {
   query: string;
   /** One `group/resource`, or unset for the All tab. */
   type?: string;
-  /** A folder uid, NO_FOLDER, or unset for everything. */
+  /** A folder uid, NO_FOLDER, ROOT_LEVEL, or unset for everything. */
   folder?: string;
   place: UrvPlace;
   tags: string[];
   owners: string[];
   updated?: UrvUpdated;
+  /** Only things synced from a Git repository. */
+  provisioned: boolean;
   group: UrvGroup;
   sort: UrvSort;
 }
@@ -55,6 +66,7 @@ function readState(params: URLSearchParams): UrvState {
     tags: params.getAll('tag'),
     owners: params.getAll('owner'),
     updated: oneOf(URV_UPDATED, params.get('updated')),
+    provisioned: params.get('provisioned') === 'true',
     group: oneOf(URV_GROUPS, params.get('group'), 'type'),
     sort: oneOf(URV_SORTS, params.get('sort'), 'updated'),
   };
@@ -88,6 +100,9 @@ function writeState(prev: URLSearchParams, patch: Partial<UrvState>): URLSearchP
   if ('updated' in patch) {
     setOne('updated', patch.updated);
   }
+  if (patch.provisioned !== undefined) {
+    setOne('provisioned', patch.provisioned ? 'true' : undefined);
+  }
   if (patch.group !== undefined) {
     setOne('group', patch.group === 'type' ? undefined : patch.group);
   }
@@ -95,6 +110,12 @@ function writeState(prev: URLSearchParams, patch: Partial<UrvState>): URLSearchP
     setOne('sort', patch.sort === 'updated' ? undefined : patch.sort);
   }
   return next;
+}
+
+/** Link to the same view in another folder, keeping the type, query and filters. */
+export function folderHref(params: URLSearchParams, folder: string | undefined): string {
+  const search = writeState(params, { folder }).toString();
+  return locationUtil.assureBaseUrl(search ? `/urv?${search}` : '/urv');
 }
 
 export function useUrvState() {

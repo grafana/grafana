@@ -170,18 +170,34 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 	return &fieldSet{byName: m}
 }
 
-// globalFieldSet is the field set of the global index, plus folderTree.
+// globalFieldSet is the field set of the global index, plus folderTree and the
+// manager fields.
 //
 // folderTree is not stored in the index: the index works it out from its folder
 // tree when searching, so it is declared here rather than with the index's
 // stored fields.
+//
+// The manager fields are stored and keyword-indexed in every index already. They
+// are declared here rather than in GlobalSearchFieldDefinitions so adding them
+// does not change the index hash and rebuild every global index.
 func globalFieldSet() *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
 	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
+	m[resource.SEARCH_FIELD_MANAGER_KIND] = managerField(resource.SEARCH_FIELD_MANAGER_KIND, "Kind of tool that manages the resource, such as repo for Git Sync. Empty when not managed.")
+	m[resource.SEARCH_FIELD_MANAGER_ID] = managerField(resource.SEARCH_FIELD_MANAGER_ID, "Name of the manager instance, such as the repository name. Empty when not managed.")
 	return &fieldSet{byName: m}
+}
+
+func managerField(name, description string) resource.SearchFieldDefinition {
+	return resource.SearchFieldDefinition{
+		Name:         name,
+		Type:         resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+		Description:  description,
+	}
 }
 
 func folderTreeField() resource.SearchFieldDefinition {

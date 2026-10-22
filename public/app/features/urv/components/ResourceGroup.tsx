@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Checkbox, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { FOLDER_GROUP_RESOURCE } from '../api/globalSearchApi';
 import { PAGE_SIZE, type ResultGroup } from '../hooks/useGlobalSearch';
 import { type UrvSort } from '../hooks/useUrvState';
 import { kindInfoFor } from '../kinds';
 
+import { FolderGrid, type FolderLayout } from './FolderGrid';
 import { KindIcon } from './KindIcon';
 import { ResourceTable, type RowHandlers } from './ResourceTable';
 
@@ -20,6 +22,8 @@ interface Props extends RowHandlers {
   /** Unset when the group already is the whole view. */
   onViewAll?: () => void;
   onSelectAll: (selected: boolean) => void;
+  folderLayout: FolderLayout;
+  onFolderLayoutChange: (layout: FolderLayout) => void;
 }
 
 function shownText(shown: number, total: number, relation: ResultGroup['relation']) {
@@ -30,10 +34,35 @@ function shownText(shown: number, total: number, relation: ResultGroup['relation
   });
 }
 
-export function ResourceGroup({ group, sort, onSort, onLoadMore, onViewAll, onSelectAll, ...handlers }: Props) {
+export function ResourceGroup({
+  group,
+  sort,
+  onSort,
+  onLoadMore,
+  onViewAll,
+  onSelectAll,
+  folderLayout,
+  onFolderLayoutChange,
+  ...handlers
+}: Props) {
   const styles = useStyles2(getStyles);
   const [collapsed, setCollapsed] = useState(false);
   const info = kindInfoFor(group.type);
+  const isFolders = group.type === FOLDER_GROUP_RESOURCE;
+  const layoutOptions: Array<SelectableValue<FolderLayout>> = [
+    {
+      value: 'grid',
+      icon: 'apps',
+      description: t('urv.folders.grid', 'Grid'),
+      ariaLabel: t('urv.folders.grid', 'Grid'),
+    },
+    {
+      value: 'list',
+      icon: 'list-ul',
+      description: t('urv.folders.list', 'List'),
+      ariaLabel: t('urv.folders.list', 'List'),
+    },
+  ];
   const selectedCount = group.items.filter(handlers.isSelected).length;
   const allSelected = group.items.length > 0 && selectedCount === group.items.length;
   const someSelected = selectedCount > 0 && !allSelected;
@@ -63,16 +92,25 @@ export function ResourceGroup({ group, sort, onSort, onLoadMore, onViewAll, onSe
           <Text weight="medium">{info.plural()}</Text>
           <span className={styles.count}>{group.total.toLocaleString()}</span>
         </button>
+        {isFolders && (
+          <div className={styles.headerEnd}>
+            <RadioButtonGroup size="sm" options={layoutOptions} value={folderLayout} onChange={onFolderLayoutChange} />
+          </div>
+        )}
       </header>
       {!collapsed && (
         <>
-          <ResourceTable items={group.items} showType={false} sort={sort} onSort={onSort} {...handlers} />
+          {isFolders && folderLayout === 'grid' ? (
+            <FolderGrid items={group.items} {...handlers} />
+          ) : (
+            <ResourceTable items={group.items} showType={false} sort={sort} onSort={onSort} {...handlers} />
+          )}
           {(group.continue || onViewAll) && group.total > group.items.length && (
             <footer className={styles.footer}>
               <Text variant="bodySmall" color="secondary">
                 {shownText(group.items.length, group.total, group.relation)}
               </Text>
-              {group.continue && <ShowMoreButton isLoading={group.isLoadingMore} onClick={onLoadMore} />}
+              {group.continue && <ShowMoreButton group={group} onClick={onLoadMore} />}
               {onViewAll && (
                 <Button size="sm" variant="secondary" fill="text" onClick={onViewAll}>
                   <Stack alignItems="center" gap={0.5}>
@@ -94,7 +132,14 @@ export function ResourceGroup({ group, sort, onSort, onLoadMore, onViewAll, onSe
 }
 
 /** One table across every type, for the type tabs and "Group: None". */
-export function FlatResults({ group, sort, onSort, onLoadMore, onSelectAll, ...handlers }: Omit<Props, 'onViewAll'>) {
+export function FlatResults({
+  group,
+  sort,
+  onSort,
+  onLoadMore,
+  onSelectAll,
+  ...handlers
+}: Omit<Props, 'onViewAll' | 'folderLayout' | 'onFolderLayoutChange'>) {
   const styles = useStyles2(getStyles);
   return (
     <section className={styles.card}>
@@ -104,19 +149,20 @@ export function FlatResults({ group, sort, onSort, onLoadMore, onSelectAll, ...h
           <Text variant="bodySmall" color="secondary">
             {shownText(group.items.length, group.total, group.relation)}
           </Text>
-          {group.continue && <ShowMoreButton isLoading={group.isLoadingMore} onClick={onLoadMore} />}
+          {group.continue && <ShowMoreButton group={group} onClick={onLoadMore} />}
         </footer>
       )}
     </section>
   );
 }
 
-function ShowMoreButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => void }) {
+function ShowMoreButton({ group, onClick }: { group: ResultGroup; onClick: () => void }) {
+  const remaining = group.relation === 'eq' ? group.total - group.items.length : PAGE_SIZE;
   return (
-    <Button size="sm" variant="secondary" onClick={onClick} disabled={isLoading}>
-      {isLoading
+    <Button size="sm" variant="secondary" onClick={onClick} disabled={group.isLoadingMore}>
+      {group.isLoadingMore
         ? t('urv.group.loading', 'Loading...')
-        : t('urv.group.show-more', 'Show {{size}} more', { size: PAGE_SIZE })}
+        : t('urv.group.show-more', 'Show {{size}} more', { size: Math.max(1, Math.min(PAGE_SIZE, remaining)) })}
     </Button>
   );
 }
@@ -145,6 +191,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: 'none',
     color: theme.colors.text.primary,
     cursor: 'pointer',
+  }),
+  headerEnd: css({
+    marginLeft: 'auto',
   }),
   count: css({
     padding: theme.spacing(0, 0.75),

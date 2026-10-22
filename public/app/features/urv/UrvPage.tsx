@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useMemo, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -16,28 +18,34 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
+import { type FolderInfo, useGetFolderParentsQuery } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { NewFolderForm } from 'app/features/browse-dashboards/components/NewFolderForm';
 
-import { type ResultItem } from './api/globalSearchApi';
+import { FIELD, FOLDER_GROUP_RESOURCE, type ResultItem, groupResourceOf } from './api/globalSearchApi';
 import { FilterBar } from './components/FilterBar';
+import { FolderBreadcrumb, type FolderCrumb } from './components/FolderBreadcrumb';
+import { type FolderLayout } from './components/FolderGrid';
 import { FolderSidebar } from './components/FolderSidebar';
 import { NewResourceButton } from './components/NewResourceButton';
 import { FlatResults, ResourceGroup } from './components/ResourceGroup';
 import { type RowHandlers, itemKey } from './components/ResourceTable';
 import { SelectionBar } from './components/SelectionBar';
 import { TypeTabs } from './components/TypeTabs';
-import { useFolderSidebar } from './hooks/useFolderSidebar';
-import { useGlobalSearch } from './hooks/useGlobalSearch';
+import { type FolderNode, useFolderSidebar } from './hooks/useFolderSidebar';
+import { type ResultGroup, useGlobalSearch } from './hooks/useGlobalSearch';
+import { useManagerLookup } from './hooks/useManagerLookup';
 import { useOwnerNames } from './hooks/useOwnerNames';
 import { usePlaceScope, useStarredKeys } from './hooks/usePlaceScope';
-import { NO_FOLDER, useUrvState } from './hooks/useUrvState';
+import { TEAM_FOLDER_ICON } from './hooks/useTeamFolders';
+import { NO_FOLDER, ROOT_LEVEL, folderUID, useUrvState } from './hooks/useUrvState';
 
 // The index catches up a moment after a write, so wait before searching again.
 const REFRESH_AFTER_WRITE_MS = 1000;
+const FOLDER_LAYOUT_KEY = 'grafana.urv.folderLayout';
 
 export default function UrvPage() {
   const styles = useStyles2(getStyles);
@@ -46,6 +54,7 @@ export default function UrvPage() {
   const scope = usePlaceScope(state.place);
   const search = useGlobalSearch(state, scope);
   const owners = useOwnerNames();
+  const manager = useManagerLookup();
   const starredKeys = useStarredKeys();
   const [folderFilter, setFolderFilter] = useState('');
   const sidebar = useFolderSidebar(folderFilter);
@@ -53,8 +62,31 @@ export default function UrvPage() {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [createFolder] = useCreateFolder();
   const [selected, setSelected] = useState<Map<string, ResultItem>>(new Map());
+  const [storedLayout, setFolderLayout] = useLocalStorage<FolderLayout>(FOLDER_LAYOUT_KEY, 'grid');
+  const folderLayout = storedLayout === 'list' ? 'list' : 'grid';
 
-  const realFolder = state.folder && state.folder !== NO_FOLDER ? state.folder : undefined;
+  const realFolder = folderUID(state.folder);
+  const parents = useGetFolderParentsQuery(realFolder ? { name: realFolder } : skipToken);
+  const { children: sidebarFolders, matches: sidebarMatches, parentTitles } = sidebar;
+  const knownTitles = useMemo(
+    () =>
+      knownFolderTitles(
+        [...Object.values(sidebarFolders).flat(), ...(sidebarMatches ?? [])],
+        parentTitles,
+        search.groups,
+        search.folderTitles
+      ),
+    [sidebarFolders, sidebarMatches, parentTitles, search.groups, search.folderTitles]
+  );
+  const folderPath = useMemo(
+    () => placePath(state.folder, parents.data?.items, knownTitles),
+    [state.folder, parents.data, knownTitles]
+  );
+  const pageNav = useMemo<NavModelItem | undefined>(() => {
+    const current = folderPath?.at(-1);
+    const icon = realFolder ? (sidebar.teamFolderUids.has(realFolder) ? TEAM_FOLDER_ICON : 'folder') : undefined;
+    return current && { text: current.title, icon };
+  }, [folderPath, realFolder, sidebar.teamFolderUids]);
 
   const afterWrite = () => {
     search.refresh(REFRESH_AFTER_WRITE_MS);
@@ -92,7 +124,10 @@ export default function UrvPage() {
   const handlers: RowHandlers = {
     folderTitles: search.folderTitles,
     ownerName: owners.resolve,
+    manager,
     starredKeys,
+    currentFolder: realFolder,
+    hasSelection: selected.size > 0,
     isSelected: (item) => selected.has(itemKey(item)),
     onToggleSelected: (item) => setItemsSelected([item], !selected.has(itemKey(item))),
     onOpenFolder: (folder) => update({ folder }),
@@ -100,21 +135,15 @@ export default function UrvPage() {
     onDeleted: (item) => removeItems([item]),
   };
 
-  const heading =
-    state.folder === NO_FOLDER
-      ? t('urv.heading.no-folder', 'No folder')
-      : realFolder
-        ? (search.folderTitles[realFolder] ?? realFolder)
-        : t('urv.heading.all', 'All resources');
   const shownTotal = state.type ? (search.groups[0]?.total ?? 0) : search.counts.total;
   const hasResults = search.groups.some((group) => group.items.length > 0);
   const grouped = !state.type && state.group === 'type';
 
-  const pageNav: NavModelItem = { text: t('urv.page.title', 'Resources'), icon: 'layer-group' };
-
   return (
     <Page
-      navModel={{ node: pageNav, main: pageNav }}
+      navId="urv"
+      pageNav={pageNav}
+      subTitle={folderPath && <FolderBreadcrumb path={folderPath} />}
       actions={<NewResourceButton folderUID={realFolder} onNewFolder={() => setShowNewFolder(true)} />}
     >
       <Page.Contents>
@@ -164,9 +193,6 @@ export default function UrvPage() {
                     onClick={() => setSidebarOpen(true)}
                   />
                 )}
-                <Text element="h2" variant="h4">
-                  {heading}
-                </Text>
                 <Text color="secondary">
                   {t('urv.heading.count', '', {
                     count: shownTotal,
@@ -181,6 +207,7 @@ export default function UrvPage() {
               {selected.size > 0 && (
                 <SelectionBar
                   items={[...selected.values()]}
+                  manager={manager}
                   onClear={() => setSelected(new Map())}
                   onMoved={() => {
                     setSelected(new Map());
@@ -206,32 +233,37 @@ export default function UrvPage() {
                 <EmptyState variant="not-found" message={t('urv.empty', 'No resources match these filters')} />
               )}
 
-              {hasResults &&
-                (grouped ? (
-                  search.groups
-                    .filter((group) => group.items.length > 0)
-                    .map((group) => (
-                      <ResourceGroup
-                        key={group.type}
-                        group={group}
-                        sort={state.sort}
-                        onSort={(sort) => update({ sort })}
-                        onLoadMore={() => search.loadMore(group.type)}
-                        onViewAll={() => update({ type: group.type })}
-                        onSelectAll={(on) => setItemsSelected(group.items, on)}
-                        {...handlers}
-                      />
-                    ))
-                ) : (
-                  <FlatResults
-                    group={search.groups[0]}
-                    sort={state.sort}
-                    onSort={(sort) => update({ sort })}
-                    onLoadMore={() => search.loadMore(search.groups[0].type)}
-                    onSelectAll={(on) => setItemsSelected(search.groups[0].items, on)}
-                    {...handlers}
-                  />
-                ))}
+              {search.groups
+                .filter((group) => group.items.length > 0)
+                .map((group) =>
+                  grouped || group.type === FOLDER_GROUP_RESOURCE ? (
+                    <ResourceGroup
+                      key={group.type}
+                      group={group}
+                      sort={state.sort}
+                      onSort={(sort) => update({ sort })}
+                      onLoadMore={() => search.loadMore(group.type)}
+                      onViewAll={
+                        // A one-level folder section would undercount what the Folders tab lists.
+                        state.type || group.childrenOnly ? undefined : () => update({ type: group.type })
+                      }
+                      onSelectAll={(on) => setItemsSelected(group.items, on)}
+                      folderLayout={folderLayout}
+                      onFolderLayoutChange={setFolderLayout}
+                      {...handlers}
+                    />
+                  ) : (
+                    <FlatResults
+                      key={group.type || 'mixed'}
+                      group={group}
+                      sort={state.sort}
+                      onSort={(sort) => update({ sort })}
+                      onLoadMore={() => search.loadMore(group.type)}
+                      onSelectAll={(on) => setItemsSelected(group.items, on)}
+                      {...handlers}
+                    />
+                  )
+                )}
 
               <ControlledCollapse label={t('urv.debug.title', 'Debug')} isOpen={false}>
                 <pre className={styles.debug}>{JSON.stringify(search.debug, null, 2)}</pre>
@@ -248,6 +280,49 @@ export default function UrvPage() {
       </Page.Contents>
     </Page>
   );
+}
+
+/** Folder titles the page already has, so a just-opened folder doesn't show its uid while its path loads. */
+function knownFolderTitles(
+  sidebarFolders: FolderNode[],
+  parentTitles: Record<string, string>,
+  groups: ResultGroup[],
+  folderTitles: Record<string, string>
+): Record<string, string> {
+  const titles: Record<string, string> = { ...parentTitles };
+  for (const node of sidebarFolders) {
+    titles[node.uid] = node.title;
+  }
+  for (const item of groups.flatMap((group) => group.items)) {
+    const title = item.fields?.[FIELD.title];
+    if (groupResourceOf(item.resource) === FOLDER_GROUP_RESOURCE && typeof title === 'string' && title) {
+      titles[item.resource.name] = title;
+    }
+  }
+  return { ...titles, ...folderTitles };
+}
+
+/** Root first, ending with the selected place. Undefined when no folder or place is picked. */
+function placePath(
+  folder: string | undefined,
+  chain: FolderInfo[] | undefined,
+  folderTitles: Record<string, string>
+): FolderCrumb[] | undefined {
+  if (folder === NO_FOLDER) {
+    return [{ folder, title: t('urv.heading.no-folder', 'No folder') }];
+  }
+  if (folder === ROOT_LEVEL) {
+    return [{ folder, title: t('urv.heading.root', 'Root level') }];
+  }
+  if (!folder) {
+    return undefined;
+  }
+  // The previous folder's chain stays around while the next one loads, and still answers when going up.
+  const index = chain?.findIndex((item) => item.name === folder) ?? -1;
+  if (!chain || index < 0) {
+    return [{ folder, title: folderTitles[folder] ?? folder }];
+  }
+  return chain.slice(0, index + 1).map((item) => ({ folder: item.name, title: item.title }));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

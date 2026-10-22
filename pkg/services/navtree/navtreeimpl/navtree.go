@@ -125,6 +125,15 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 
 		treeRoot.AddSection(dashboardLink)
+
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Resources",
+			Id:         navtree.NavIDUrv,
+			SubTitle:   "Browse everything in one place",
+			Icon:       "layer-group",
+			Url:        s.cfg.AppSubURL + "/urv",
+			SortWeight: navtree.WeightDashboard + 1,
+		})
 	}
 
 	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {

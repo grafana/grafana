@@ -6,7 +6,8 @@ import { t } from '@grafana/i18n';
 import { FilterInput, Icon, IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
 
 import { type FolderNode, type useFolderSidebar } from '../hooks/useFolderSidebar';
-import { NO_FOLDER } from '../hooks/useUrvState';
+import { TEAM_FOLDER_ICON } from '../hooks/useTeamFolders';
+import { NO_FOLDER, ROOT_LEVEL } from '../hooks/useUrvState';
 
 interface Props {
   sidebar: ReturnType<typeof useFolderSidebar>;
@@ -21,7 +22,26 @@ interface Props {
 export function FolderSidebar({ sidebar, filter, onFilterChange, selected, onSelect, onNewFolder, onCollapse }: Props) {
   const styles = useStyles2(getStyles);
   const [foldersOpen, setFoldersOpen] = useState(true);
-  const { children, expanded, toggle, counts, totals, matches, parentTitles } = sidebar;
+  const [teamFoldersOpen, setTeamFoldersOpen] = useState(true);
+  const {
+    children,
+    expanded,
+    toggle,
+    counts,
+    totals,
+    matches,
+    parentTitles,
+    teamFolders,
+    teamFolderUids,
+    teamFoldersError,
+  } = sidebar;
+
+  const sectionToggle = (label: string, isOpen: boolean, onToggle: () => void) => (
+    <button type="button" className={styles.sectionToggle} aria-expanded={isOpen} onClick={onToggle}>
+      <Icon name={isOpen ? 'angle-down' : 'angle-right'} size="sm" />
+      {label}
+    </button>
+  );
 
   const row = (options: {
     key: string;
@@ -60,7 +80,7 @@ export function FolderSidebar({ sidebar, filter, onFilterChange, selected, onSel
     return row({
       key: node.uid,
       depth,
-      icon: isOpen ? 'folder-open' : 'folder',
+      icon: teamFolderUids.has(node.uid) ? TEAM_FOLDER_ICON : isOpen ? 'folder-open' : 'folder',
       label: node.title,
       subtitle,
       count: counts[node.uid],
@@ -136,16 +156,31 @@ export function FolderSidebar({ sidebar, filter, onFilterChange, selected, onSel
         isSelected: !selected,
         onClick: () => onSelect(undefined),
       })}
+      {row({
+        key: 'root',
+        depth: 0,
+        icon: 'home-alt',
+        label: t('urv.sidebar.root', 'Root level'),
+        count: totals.root,
+        isSelected: selected === ROOT_LEVEL,
+        onClick: () => onSelect(selected === ROOT_LEVEL ? undefined : ROOT_LEVEL),
+      })}
 
-      <button
-        type="button"
-        className={styles.sectionToggle}
-        aria-expanded={foldersOpen}
-        onClick={() => setFoldersOpen((open) => !open)}
-      >
-        <Icon name={foldersOpen ? 'angle-down' : 'angle-right'} size="sm" />
-        {t('urv.sidebar.your-folders', 'Your folders')}
-      </button>
+      {(teamFolders.length > 0 || teamFoldersError) && (
+        <>
+          {sectionToggle(t('urv.sidebar.team-folders', 'Team folders'), teamFoldersOpen, () =>
+            setTeamFoldersOpen((open) => !open)
+          )}
+          {teamFoldersOpen &&
+            (teamFoldersError ? (
+              <div className={styles.empty}>{t('urv.sidebar.team-folders-error', "Couldn't load team folders")}</div>
+            ) : (
+              teamFolders.map((node) => folderRow(node, 0, node.teams.join(', ')))
+            ))}
+        </>
+      )}
+
+      {sectionToggle(t('urv.sidebar.your-folders', 'Your folders'), foldersOpen, () => setFoldersOpen((open) => !open))}
       {foldersOpen &&
         (matches ? (
           matches.length === 0 ? (
