@@ -159,6 +159,7 @@ export function DashboardOutlineNode({
             instanceName={instanceName}
             isCloned={isCloned}
             isRenaming={outlineRename.isRenaming}
+            renameValue={outlineRename.renameValue}
             renameInputRef={outlineRename.renameInputRef}
             onChangeName={outlineRename.onChangeName}
             onInputBlur={outlineRename.onInputBlur}

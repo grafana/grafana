@@ -8,6 +8,8 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 export interface OutlineRenameState {
   isRenaming?: boolean;
   originalName?: string;
+  // The outline node doesn't re-render when the element changes, so the input shows this draft instead
+  name?: string;
   error?: string;
 }
 
@@ -31,7 +33,8 @@ export function useOutlineRename(
     }
 
     isCommitPendingRef.current = true;
-    setState({ isRenaming: true, originalName: getRawName(sceneObject, editableElement) });
+    const originalName = getRawName(sceneObject, editableElement);
+    setState({ isRenaming: true, originalName, name: originalName });
   };
 
   const onInputBlur = () => {
@@ -61,12 +64,9 @@ export function useOutlineRename(
   }, []);
 
   const onChangeName = (evt: ChangeEvent<HTMLInputElement>) => {
-    const result = editableElement.onChangeName!(evt.target.value);
-    if (result?.errorMessage) {
-      setState({ ...state, error: result.errorMessage });
-    } else if (state.error) {
-      setState({ ...state, error: undefined });
-    }
+    const name = evt.target.value;
+    const result = editableElement.onChangeName!(name);
+    setState({ ...state, name, error: result?.errorMessage });
   };
 
   const onInputKeyDown = (evt: KeyboardEvent) => {
@@ -77,6 +77,7 @@ export function useOutlineRename(
 
   return {
     isRenaming: state.isRenaming,
+    renameValue: state.name ?? '',
     onNameDoubleClicked,
     renameInputRef,
     onChangeName,

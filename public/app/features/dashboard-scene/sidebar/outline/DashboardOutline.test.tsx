@@ -198,6 +198,35 @@ describe('DashboardOutline', () => {
     });
   });
 
+  describe('renaming', () => {
+    it('shows each typed character in the rename input', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const outlinePane = sidebar.state.outlinePane!;
+      const row = (scene.state.body as RowsLayoutManager).state.rows[0];
+
+      scene.onEnterEditMode();
+      sidebar.enableSelection();
+      sidebar.openPane(outlinePane);
+
+      render(
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      await user.dblClick(await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
+      const input = screen.getByDisplayValue('Row level 1');
+      await user.keyboard('{End} renamed');
+
+      expect(input).toHaveValue('Row level 1 renamed');
+      expect(row.state).toMatchObject({ title: 'Row level 1 renamed' });
+    });
+  });
+
   describe('outline item interactions tracking', () => {
     it('should call DashboardInteractions.outlineItemClicked with correct parameters when clicking on items', async () => {
       const user = userEvent.setup();
