@@ -31,7 +31,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
 
     const minColumnHeader = page.getByRole('columnheader').nth(minColumnIdx);
 
-    // get the first value in the "State" column, filter it out, then check that it went away.
+    // Exclude the current last Min value, then check that the footer changes.
     await minColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
@@ -39,11 +39,23 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
 
     await expect(filterContainer).toBeVisible();
 
-    // select all, then click the first value to unselect it, filtering it out.
-    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    await filterContainer.getByTitle('Filter values').fill(minReducerValue);
-    await filterContainer.getByTitle(minReducerValue, { exact: true }).locator('label').click();
-    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+    const minimumSlider = filterContainer.getByRole('slider', { name: 'Minimum' });
+    const extentMin = Number(await minimumSlider.getAttribute('aria-valuemin'));
+    const extentMax = Number(await minimumSlider.getAttribute('aria-valuemax'));
+    const footerValue = Number(minReducerValue.replaceAll(',', ''));
+    expect(Number.isFinite(footerValue)).toBe(true);
+    expect(extentMax).toBeGreaterThan(extentMin);
+
+    if (footerValue - extentMin <= extentMax - footerValue) {
+      await filterContainer
+        .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Range.minimumInput)
+        .fill(String((footerValue + extentMax) / 2));
+    } else {
+      await filterContainer
+        .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Range.maximumInput)
+        .fill(String((footerValue + extentMin) / 2));
+    }
+    await filterContainer.getByRole('button', { name: 'Apply' }).click();
 
     await expect(
       dashboardPage

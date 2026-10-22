@@ -12,6 +12,7 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 import { useTheme2 } from '../../../../themes/ThemeContext';
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
+import { createRangePredicate } from '../transformations/rangeFilter';
 import { createValuePredicate, unsupportedFilterReason } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
@@ -135,6 +136,7 @@ export function useFilterPopupState({
     unsupportedReason,
     popupProps: {
       stateKey: snapshot,
+      rangeFiltersEnabled: view?.rangeFiltersEnabled,
       onApplyValues: (values) => {
         if (view && field) {
           if (values.length === 0) {
@@ -156,25 +158,13 @@ export function useFilterPopupState({
       onApplyRange:
         view && field
           ? ({ min, max, includeMissing }) =>
-              view.applyFilter(
-                field,
-                {
-                  id: 'between',
-                  options: {
-                    from: min,
-                    to: max,
-                    inclusive: true,
-                    allowOpenBounds: true,
-                    includeMissing,
-                  } satisfies RangeValueMatcherOptions<number>,
-                },
-                parentIndex
-              )
+              view.applyFilter(field, createRangePredicate({ min, max, includeMissing }), parentIndex)
           : undefined,
       onClear: () => field && view?.clearFilter(field, parentIndex),
+      timeZone: view?.timeZone,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       rows: rowsForPopup,
-      filterValue,
+      filterValue: filterValue ?? (range && !view?.rangeFiltersEnabled ? [] : undefined),
       field,
       onClose: () => setPopoverVisible(false),
       searchFilter,

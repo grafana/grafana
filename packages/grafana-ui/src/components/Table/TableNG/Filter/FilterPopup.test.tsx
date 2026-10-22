@@ -49,6 +49,24 @@ describe('FilterPopup', () => {
     document.body.querySelectorAll('button').forEach((b) => b.remove());
   });
 
+  it('previews selected string rows, including repeated values', async () => {
+    const user = userEvent.setup();
+    renderPopup({ rows: makeRows('Status', ['active', 'active', 'inactive']) });
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'active' }));
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'inactive' }));
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'active' }));
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'inactive' }));
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+  });
+
   describe('Cancel button', () => {
     it('calls onClose without modifying the filter', async () => {
       const user = userEvent.setup();
@@ -84,6 +102,57 @@ describe('FilterPopup', () => {
       expect(onClose).toHaveBeenCalledTimes(1);
       expect(onClear).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it.each([FieldType.number, FieldType.time])('clears and closes an active %s range filter', async (type) => {
+    const user = userEvent.setup();
+    const field: Field = { name: 'Value', type, values: [0, 10], config: {} };
+    const { onClear, onClose } = renderPopup({
+      field,
+      rangeFiltersEnabled: true,
+      rows: makeRows('Value', ['0', '10']),
+      range: { min: 0, max: 10, includeMissing: false },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Clear filter' }));
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('mounts the date range editor for time fields', () => {
+    const field: Field = { name: 'Time', type: FieldType.time, values: [Date.UTC(2026, 8, 17)], config: {} };
+    renderPopup({ field, rows: makeRows('Time', ['2026-09-17']), rangeFiltersEnabled: true });
+
+    expect(screen.getByRole('textbox', { name: 'Start' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'End' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Filter values')).not.toBeInTheDocument();
+  });
+
+  it.each([FieldType.number, FieldType.time])(
+    'uses the string editor for %s fields without the new-features flag',
+    (type) => {
+      const field: Field = { name: 'Value', type, values: [0, 10], config: {} };
+      renderPopup({ field, rows: makeRows('Value', ['0', '10']) });
+
+      expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: '0' })).toBeInTheDocument();
+      expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Start' })).not.toBeInTheDocument();
+    }
+  );
+
+  it('keeps an existing value filter in the string editor with range filters enabled', () => {
+    const field: Field = { name: 'Value', type: FieldType.number, values: [0, 10], config: {} };
+    renderPopup({
+      field,
+      rows: makeRows('Value', ['0', '10']),
+      rangeFiltersEnabled: true,
+      filterValue: [{ value: '0', label: '0' }],
+    });
+
+    expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '0' })).toBeChecked();
   });
 
   describe('Ok button', () => {
@@ -129,5 +198,23 @@ describe('FilterPopup', () => {
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('keeps the numeric filter open when a slider drag ends outside, then closes on a separate outside click', async () => {
+    const user = userEvent.setup();
+    const field: Field = { name: 'Value', type: FieldType.number, values: [0, 10], config: {} };
+    const { onClose } = renderPopup({ field, rows: makeRows('Value', ['0', '10']), rangeFiltersEnabled: true });
+    const popup = screen.getByRole('group', { name: 'Filter Value' });
+
+    await user.pointer([
+      { target: popup, keys: '[MouseLeft>]' },
+      { target: document.body, keys: '[/MouseLeft]' },
+    ]);
+
+    expect(screen.getByRole('slider', { name: 'Minimum' })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.click(document.body);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

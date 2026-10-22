@@ -22,10 +22,12 @@ export interface TableRowTransformations {
 interface FilterContext {
   filters: readonly FilterByValueConfig[];
   filteringDisabled?: boolean;
+  rangeFiltersEnabled?: boolean;
   getFilters: (field: Field, parentIndex?: number) => readonly FilterByValueConfig[];
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
   clearFilters: () => void;
+  timeZone?: string;
 }
 const TableFilterContext = createContext<FilterContext | undefined>(undefined);
 export const useTableFilters = () => useContext(TableFilterContext);
@@ -98,7 +100,11 @@ export function TableFilterProvider({ props, children }: { props: TableNGProps; 
               clearFilters: () => {},
             }
           : value;
-        return <TableFilterContext.Provider value={context}>{children}</TableFilterContext.Provider>;
+        return (
+          <TableFilterContext.Provider value={{ ...context, rangeFiltersEnabled: props.rangeFiltersEnabled }}>
+            {children}
+          </TableFilterContext.Provider>
+        );
       }}
     </ErrorBoundary>
   );
