@@ -19,6 +19,12 @@ export default [
     treeshake: false,
   },
   {
+    input: 'src/convert.ts',
+    plugins,
+    output: [cjsOutput(pkg, 'grafana-alerting'), esmOutput(pkg, 'grafana-alerting')],
+    treeshake: false,
+  },
+  {
     input: 'src/testing.ts',
     plugins,
     output: [cjsOutput(pkg, 'grafana-alerting'), esmOutput(pkg, 'grafana-alerting')],

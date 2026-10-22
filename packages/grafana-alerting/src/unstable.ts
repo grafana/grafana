@@ -30,6 +30,13 @@ export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
 export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
 export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
+export {
+  ALERTNAME_LABEL,
+  GRAFANA_FOLDER_LABEL,
+  ALERT_RULE_UID_LABEL,
+  ALERT_RULE_NAMESPACE_UID_LABEL,
+  getGrafanaRuleInstanceLabels,
+} from './grafana/rules/utils/labels';
 
 // Matchers
 export { MatcherBadge } from './grafana/matchers/components/MatcherBadge';
@@ -45,3 +52,4 @@ export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rt
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 export { generatedAPI as rulesAPIv1beta1 } from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
 export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+export { alertingAPIReducers, alertingAPIMiddleware, createAlertingStore } from './grafana/api/store';
