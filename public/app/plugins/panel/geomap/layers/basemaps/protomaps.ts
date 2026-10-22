@@ -99,7 +99,7 @@ interface GlStyle {
 /** An undefined value removes the generator's own, as for a dash CARTO draws solid */
 type Paint = Record<string, GlValue | undefined>;
 
-type RoadClass = 'highway' | 'major' | 'secondary' | 'minor' | 'other';
+type RoadClass = 'highway' | 'major' | 'secondary' | 'minor' | 'service' | 'other';
 
 /** Protomaps' `major_road` kind covers these as well as trunk and primary roads */
 const SECONDARY_ROADS = ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'];
@@ -113,7 +113,10 @@ type RoadColors = [far: string, outer: string, inner: string];
  * Protomaps' casings draw as a plain line under the fill, and both take the color CARTO shows at
  * each zoom.
  */
-function cartoRoads(fills: Record<RoadClass, RoadColors>) {
+function cartoRoads(
+  fills: Record<RoadClass, RoadColors>,
+  tunnels: Record<Exclude<RoadClass, 'service'> | 'casing', string>
+) {
   // CARTO colors secondary and tertiary roads apart from trunk and primary ones in some flavors
   const colorAt = (roadClass: RoadClass, i: number): GlValue => {
     const [color, secondary] = [fills[roadClass][i], fills.secondary[i]];
@@ -132,9 +135,19 @@ function cartoRoads(fills: Record<RoadClass, RoadColors>) {
     paint[`${prefix}minor`] = { 'line-color': fill('minor') };
     paint[`${prefix}other`] = { 'line-color': fill('other') };
   }
-  paint.roads_minor_service = { 'line-color': fill('other') };
+  paint.roads_minor_service = { 'line-color': fill('service') };
+  // CARTO draws tunnels in one flat color per class at every zoom
+  for (const roadClass of ['highway', 'major', 'link', 'minor', 'other'] as const) {
+    const fillClass = roadClass === 'link' ? 'major' : roadClass;
+    const color =
+      fillClass === 'major' && tunnels.major !== tunnels.secondary
+        ? ['match', ['get', 'kind_detail'], SECONDARY_ROADS, tunnels.secondary, tunnels.major]
+        : tunnels[fillClass];
+    paint[`roads_tunnels_${roadClass}`] = { 'line-color': color };
+    paint[`roads_tunnels_${roadClass}_casing`] = { 'line-color': tunnels.casing };
+  }
   for (const [id, roadClass] of [
-    ['roads_minor_service_casing', 'other'],
+    ['roads_minor_service_casing', 'service'],
     ['roads_minor_casing', 'minor'],
     ['roads_link_casing', 'major'],
     ['roads_major_casing_early', 'major'],
@@ -177,13 +190,24 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_stream: { 'line-color': '#d1dbdf' },
     water_river: { 'line-color': '#d1dbdf' },
     buildings: cartoBuildings('#dfdfdf', '#ededed'),
-    ...cartoRoads({
-      highway: ['#e6e6e6', '#dddddd', '#ffffff'],
-      major: ['#e6e6e6', '#dddddd', '#ffffff'],
-      secondary: ['#e6e6e6', '#dddddd', '#ffffff'],
-      minor: ['#dddddd', '#dddddd', '#fdfdfd'],
-      other: ['#dddddd', '#dddddd', '#fdfdfd'],
-    }),
+    ...cartoRoads(
+      {
+        highway: ['#e6e6e6', '#dddddd', '#ffffff'],
+        major: ['#e6e6e6', '#dddddd', '#ffffff'],
+        secondary: ['#e6e6e6', '#dddddd', '#ffffff'],
+        minor: ['#dddddd', '#dddddd', '#fdfdfd'],
+        service: ['#dddddd', '#dddddd', '#fdfdfd'],
+        other: ['#dddddd', '#dddddd', '#fdfdfd'],
+      },
+      {
+        casing: '#dddddd',
+        highway: '#eeeeee',
+        major: '#eeeeee',
+        secondary: '#eeeeee',
+        minor: '#eeeeee',
+        other: '#eeeeee',
+      }
+    ),
     boundaries_country: {
       'line-color': zoomRamp([4, '#f2e6e7'], [5, '#ebd6d8']),
       'line-width': zoomRamp([3, 1], [6, 1.5]),
@@ -206,7 +230,6 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_waterway_label: { 'text-color': '#7a96a0', 'text-halo-color': '#f5f5f3' },
     roads_labels_major: { 'text-color': '#838383', 'text-halo-color': '#ffffff' },
     roads_labels_minor: { 'text-color': '#838383', 'text-halo-color': '#ffffff' },
-    pois: { 'text-color': '#7d9c83', 'text-halo-color': '#f5f5f3' },
   },
   [ProtomapsFlavor.Black]: {
     background: { 'background-color': '#0e0e0e' },
@@ -215,13 +238,25 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_stream: { 'line-color': '#3f5a6d' },
     water_river: { 'line-color': '#3f5a6d' },
     buildings: cartoBuildings('#0e0e0e', '#393939'),
-    ...cartoRoads({
-      highway: ['#1a1a1a', '#232323', '#494949'],
-      major: ['#1a1a1a', '#232323', '#535666'],
-      secondary: ['#414758', '#414758', '#414758'],
-      minor: ['#414758', '#414758', '#414758'],
-      other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
-    }),
+    ...cartoRoads(
+      {
+        highway: ['#1a1a1a', '#232323', '#494949'],
+        major: ['#1a1a1a', '#232323', '#535666'],
+        secondary: ['#414758', '#414758', '#414758'],
+        minor: ['#414758', '#414758', '#414758'],
+        // Dark Matter fills service roads darker than the land, inside a lighter casing
+        service: ['#1c1c1c', '#1c1c1c', '#0b0b0b'],
+        other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
+      },
+      {
+        casing: '#232323',
+        highway: '#414758',
+        major: '#414758',
+        secondary: '#161616',
+        minor: '#161616',
+        other: '#161616',
+      }
+    ),
     boundaries_country: {
       'line-color': zoomRamp([4, '#5c5e5e'], [5, '#606060'], [6, '#666666']),
       'line-width': zoomRamp([3, 1], [6, 1.5]),
@@ -243,7 +278,6 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_waterway_label: { 'text-color': '#a4a4a4', 'text-halo-color': '#181818' },
     roads_labels_major: { 'text-color': '#929292', 'text-halo-color': '#222222' },
     roads_labels_minor: { 'text-color': '#b5b4b4', 'text-halo-color': '#111111' },
-    pois: { 'text-color': '#515151', 'text-halo-color': '#151515' },
   },
 };
 
