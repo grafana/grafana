@@ -398,3 +398,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-16,grafana.announcementBannerDismissible,GA,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-14,datasources.gatewayAuditPolicy,experimental,@grafana/data-sources-plugins,false,false,false
 2026-10-21,grafana.geomapProtomapsBasemap,experimental,@grafana/dataviz-squad,false,false,true
+2026-10-20,grafana.panelActionsPopover,experimental,@grafana/dashboards-squad,false,false,true
