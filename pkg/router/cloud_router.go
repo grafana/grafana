@@ -344,6 +344,12 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	}
 	l.recordShadowed(ctx, shadowed)
 
+	if l.singleTenantFallback != nil {
+		if b, ok := lookup[singleTenantResourcesGroup]; ok && b.Source() != sourceSingleTenant {
+			lookup[singleTenantResourcesGroup] = &singleTenantResourcesBackend{Backend: b, st: l.singleTenantFallback}
+		}
+	}
+
 	if len(lookup) == 0 && discoveryErr != nil {
 		return nil, discoveryErr
 	}

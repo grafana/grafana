@@ -41,6 +41,10 @@ const (
 	}
 }
 `
+	// DefaultDeletedRuleRetention is exported so callers that construct a RuleStore outside the
+	// normal ini-driven Cfg path (e.g. a standalone folder apiserver's cascade delete) can default
+	// to the same retention as a standard deployment instead of duplicating the literal.
+	DefaultDeletedRuleRetention             = 30 * 24 * time.Hour
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
@@ -66,7 +70,6 @@ const (
 	stateHistoryDefaultEnabled             = true
 	stateHistoryBackendLoki                = "loki"
 	stateHistoryBackendMultiple            = "multiple"
-	stateHistoryBackendPrometheus          = "prometheus"
 	notificationHistoryDefaultEnabled      = false
 	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
 	defaultRecordingRequestTimeout         = 10 * time.Second
@@ -289,25 +292,11 @@ func (u *UnifiedAlertingStateHistorySettings) QueriesServedByLoki() bool {
 	return isStateHistoryBackend(u.Backend, stateHistoryBackendLoki)
 }
 
-// WritesToPrometheus returns true if alert states are written as metrics to a Prometheus data source,
-// either as the only backend or as the primary or a secondary of the "multiple" backend. The alert
-// activity page reads those metrics, so it needs this to show anything.
-func (u *UnifiedAlertingStateHistorySettings) WritesToPrometheus() bool {
-	if !u.Enabled || u.PrometheusTargetDatasourceUID == "" {
-		return false
-	}
-	if isStateHistoryBackend(u.Backend, stateHistoryBackendMultiple) {
-		if isStateHistoryBackend(u.MultiPrimary, stateHistoryBackendPrometheus) {
-			return true
-		}
-		for _, secondary := range u.MultiSecondaries {
-			if isStateHistoryBackend(secondary, stateHistoryBackendPrometheus) {
-				return true
-			}
-		}
-		return false
-	}
-	return isStateHistoryBackend(u.Backend, stateHistoryBackendPrometheus)
+// HasAlertStateMetrics returns true if a Prometheus data source is set for the alert state metrics.
+// The alert activity page reads them from there. The backend setting is not checked on purpose: on
+// Grafana Cloud a separate ruler service writes these metrics, while this Grafana only writes to Loki.
+func (u *UnifiedAlertingStateHistorySettings) HasAlertStateMetrics() bool {
+	return u.Enabled && u.PrometheusTargetDatasourceUID != ""
 }
 
 // isStateHistoryBackend normalizes the configured value the same way historian.ParseBackendType does.
@@ -694,7 +683,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("setting 'rule_status_sync_interval' is invalid, only a positive duration is allowed")
 	}
 
-	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(DefaultDeletedRuleRetention)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}

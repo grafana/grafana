@@ -59,9 +59,9 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
       },
     },
     visualRefreshEnabled && {
-      background: theme.colors.error.background,
+      background: theme.colors.error.subtleBackground,
       border: `1px solid ${theme.colors.error.border}`,
-      color: theme.colors.error.contrastText,
+      color: theme.colors.error.text,
 
       a: {
         color: theme.colors.error.text,
@@ -122,6 +122,7 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
     ),
     fieldValidationMessageIcon: css({
       marginRight: theme.spacing(),
+      verticalAlign: 'text-bottom',
     }),
   };
 };
