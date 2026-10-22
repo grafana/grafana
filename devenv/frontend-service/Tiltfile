@@ -86,15 +86,10 @@ local_resource(
 # --- Docker Compose
 base_config = read_yaml('./docker-compose.yaml')
 
-# grafana-api evaluates feature flags from static config; the frontend-service
-# evaluates them from GOFF, so the two need the bundler flag set separately.
 grafana_api_env = {
   'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
   'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
 }
-if use_rspack:
-  grafana_api_env['GF_FEATURE_TOGGLES_grafana.rspackBuild'] = 'true'
-
 # Ports and port-dependent environment variables are set here rather than in
 # docker-compose.yaml so they can be derived from PORT.
 compose_overrides = {'services': {
@@ -125,9 +120,6 @@ compose_overrides = {'services': {
     'ports': ['%d:1031/tcp' % port_goff],
   },
 }}
-
-if use_rspack:
-  compose_overrides['configs'] = {'goff_flags_bundler': {'file': './goff-flags.rspack.yaml'}}
 
 # Enterprise overrides: mount dev license into grafana-api
 base_volumes = base_config['services']['grafana-api']['volumes']

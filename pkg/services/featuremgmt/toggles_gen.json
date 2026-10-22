@@ -3254,6 +3254,7 @@
         "name": "grafana.rspackBuild",
         "resourceVersion": "1792683802382",
         "creationTimestamp": "2026-08-10T08:36:48Z",
+        "deletionTimestamp": "2026-10-22T16:30:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-22 15:43:22.382754 +0000 UTC"
         }

@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -82,7 +81,7 @@ func setupPreviewTestMux(t *testing.T, previewBaseURL string) *web.Mux {
 	cfg := &setting.Cfg{
 		Raw:                   raw,
 		HTTPPort:              "3000",
-		StaticRootPath:        setupTestWebAssetsWithRspack(t),
+		StaticRootPath:        setupTestWebAssets(t),
 		Env:                   setting.Dev,
 		AssetSriChecksEnabled: true,
 	}
@@ -203,7 +202,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		return mux, csrfCookie.Value
 	}
 
-	t.Run("should set the preview cookie for a valid confirmation", func(t *testing.T) {
+	t.Run("should set the preview cookie when the selected rspack preview exists", func(t *testing.T) {
 		mux, token := setup(t)
 
 		req := newPreviewRequest(confirmURL(token))
@@ -226,23 +225,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		assert.Equal(t, -1, csrfCookie.MaxAge, "CSRF cookie should be cleared")
 	})
 
-	t.Run("should set the cookie when the selected rspack preview exists", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
-		mux, token := setup(t)
-
-		req := newPreviewRequest(confirmURL(token))
-		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
-		recorder := httptest.NewRecorder()
-		mux.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusSeeOther, recorder.Code)
-		previewCookie := getCookie(t, recorder.Result(), previewAssetsCookieName)
-		require.NotNil(t, previewCookie)
-		assert.Equal(t, folder, previewCookie.Value)
-	})
-
 	t.Run("should reject confirmation when webpack exists but selected rspack preview is missing", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
 		bucket := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path != "/"+folder+"/public/build/assets-manifest.json" {
 				http.NotFound(w, r)

@@ -14,11 +14,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -45,10 +43,7 @@ func PublicPathFor(buildDir string) string {
 // ResolveBuildDir returns the directory holding the manifest and boot script to read.
 // Call it per request; resolving at startup pins the rollout to process lifetime.
 func ResolveBuildDir(ctx context.Context) string {
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
-		return RspackBuildDir
-	}
-	return BuildDir
+	return RspackBuildDir
 }
 
 type ManifestInfo struct {

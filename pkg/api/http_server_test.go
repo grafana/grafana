@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -415,39 +414,23 @@ func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 		{desc: "rspack assets", url: "/public/build/rspack/app.js", expectedBody: "rspack"},
 	}
 
-	flagStates := []struct {
-		desc         string
-		enabledFlags []string
-	}{
-		{desc: "flag off"},
-		{desc: "flag on", enabledFlags: []string{featuremgmt.FlagGrafanaRspackBuild}},
-	}
+	cfg := setting.NewCfg()
+	cfg.Env = setting.Prod
+	cfg.StaticRootPath = staticRoot
 
-	for _, flagState := range flagStates {
-		t.Run(flagState.desc, func(t *testing.T) {
-			if len(flagState.enabledFlags) > 0 {
-				featuremgmt.WithEnabledFlags(t, flagState.enabledFlags...)
-			}
+	hs := &HTTPServer{Cfg: cfg}
 
-			cfg := setting.NewCfg()
-			cfg.Env = setting.Prod
-			cfg.StaticRootPath = staticRoot
+	m := web.New()
+	hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
 
-			hs := &HTTPServer{Cfg: cfg}
+	for _, asset := range assets {
+		t.Run(asset.desc, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, asset.url, nil))
 
-			m := web.New()
-			hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
-
-			for _, asset := range assets {
-				t.Run(asset.desc, func(t *testing.T) {
-					recorder := httptest.NewRecorder()
-					m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, asset.url, nil))
-
-					require.Equal(t, http.StatusOK, recorder.Code)
-					require.Equal(t, asset.expectedBody, recorder.Body.String())
-					require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
-				})
-			}
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.Equal(t, asset.expectedBody, recorder.Body.String())
+			require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
 		})
 	}
 }
