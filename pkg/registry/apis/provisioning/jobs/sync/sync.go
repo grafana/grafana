@@ -72,17 +72,7 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 			return "", fmt.Errorf("get latest ref: %w", err)
 		}
 
-		// A narrowed run is only sound if the narrowing cannot change the
-		// answer, which is the planner's guarantee and not the hand-rolled
-		// path's. Until the planner's own hinted sync is wired — it needs the
-		// resource clients the incremental function is not given — an
-		// incremental request runs the planner-backed full sync instead. It
-		// reaches the same state; it just does not save the work.
-		if r.convergePlanner && cfg.Status.Sync.LastRef != "" && options.Incremental {
-			logger.Info("converge planner enabled: running full sync for an incremental request")
-		}
-
-		if !r.convergePlanner && cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
+		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
 			progress.SetMessage(ctx, "incremental sync")
 			// Tag the job so the driver's throughput metric can split pull jobs by
 			// the sync variance that actually ran.
