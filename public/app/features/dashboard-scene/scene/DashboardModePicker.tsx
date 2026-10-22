@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
+import { ButtonGroup, Dropdown, FeatureBadge, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
 import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
 
 import { canEnterComposer } from '../composer/composerAccess';
@@ -28,6 +28,8 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const mode = getDashboardMode(state);
   const composer = useComposerOption(dashboard);
   const nextMode = mode === 'edit' ? 'view' : 'edit';
+  // From Viewing, the main button goes to Composer where it can start; otherwise it toggles Viewing and Editing.
+  const requestComposer = mode === 'view' && composer?.disabledReason === undefined ? composer?.request : undefined;
   const viewingDisabled = isNewDashboard(state);
   const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
@@ -105,7 +107,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             ariaChecked={mode === 'composer'}
             disabled={composer.disabledReason !== undefined}
             className={cx(styles.item, composer.disabledReason === undefined && styles.assistantIcon)}
-            component={mode === 'composer' ? SelectedMode : undefined}
+            component={mode === 'composer' ? SelectedMode : NewMode}
             // Already in Composer: nothing to do.
             onClick={mode === 'composer' ? undefined : composer.request}
           />
@@ -125,14 +127,19 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           className={cx(mode === 'composer' && styles.assistantIcon)}
           aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
           tooltip={
-            viewingDisabled && nextMode === 'view'
-              ? saveBeforeViewing
-              : nextMode === 'view'
-                ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
-                : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
+            requestComposer
+              ? t('dashboard.modes.switch-to-composer', 'Switch to Composer')
+              : viewingDisabled && nextMode === 'view'
+                ? saveBeforeViewing
+                : nextMode === 'view'
+                  ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
+                  : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
           }
-          disabled={disabled || (viewingDisabled && nextMode === 'view') || (!state.editable && nextMode === 'edit')}
-          onClick={() => choose(nextMode)}
+          disabled={
+            disabled ||
+            (!requestComposer && ((viewingDisabled && nextMode === 'view') || (!state.editable && nextMode === 'edit')))
+          }
+          onClick={() => (requestComposer ? requestComposer() : choose(nextMode))}
         >
           {current.label}
         </ToolbarButton>
@@ -190,6 +197,16 @@ function useComposerOption(dashboard: DashboardScene) {
   return { disabledReason, request };
 }
 
+/** Composer is a new mode, marked as Grafana marks new items in the navigation. */
+function NewMode() {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={styles.newBadge}>
+      <FeatureBadge featureState={FeatureState.new} />
+    </span>
+  );
+}
+
 function SelectedMode() {
   const styles = useStyles2(getStyles);
   return <Icon name="check" className={styles.check} aria-hidden />;
@@ -200,6 +217,13 @@ function getStyles(theme: GrafanaTheme2) {
     menu: css({ width: 360, maxWidth: 'calc(100vw - 32px)', '> [role="menu"]': { width: '100%' } }),
     item: css({ padding: theme.spacing(1.5, 5, 1.5, 1.5) }),
     check: css({ position: 'absolute', right: theme.spacing(1.5), top: theme.spacing(1.5) }),
+    // Where the check sits for the current mode, beside the label; it keeps its own colours, not Composer's gradient.
+    newBadge: css({
+      position: 'absolute',
+      right: theme.spacing(1.5),
+      top: theme.spacing(1.5),
+      '&& svg path': { fill: 'currentColor', stroke: 'none' },
+    }),
     assistantIcon: css({
       '& svg': { opacity: 1 },
       '& svg path': {
