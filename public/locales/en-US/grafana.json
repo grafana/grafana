@@ -1440,6 +1440,36 @@
       "saving": "Saving...",
       "title-error-saving-receiver": "Error saving receiver"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "No alert rules found",
+        "rules-error": "Failed to load rules"
+      },
+      "result-count": {
+        "alert-rules_one": "{{formatted}} alert rule",
+        "alert-rules_other": "{{formatted}} alert rules",
+        "recording-rules_one": "{{formatted}} recording rule",
+        "recording-rules_other": "{{formatted}} recording rules"
+      },
+      "shared": {
+        "load-more": "Load more",
+        "load-more-error": "Failed to load more results",
+        "loading-rules": "Loading rules",
+        "refresh-error": "Failed to refresh results",
+        "retry": "Retry"
+      },
+      "status": {
+        "error": "Failed to evaluate rule",
+        "firing": "Firing",
+        "no-data": "Insufficient data",
+        "normal": "Normal",
+        "paused": "Paused",
+        "pending": "Pending",
+        "recording": "Recording",
+        "recovering": "Recovering",
+        "unavailable": "Status unavailable"
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your Administrator.",
       "admin-hint-external": "To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your Administrator.",
