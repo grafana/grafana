@@ -3231,10 +3231,10 @@ var (
 		{
 			Name:        "grafana.rspackBuild",
 			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
 			Generate:    Generate{Go: true},
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "pluginsForceTls13",

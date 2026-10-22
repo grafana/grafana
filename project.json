@@ -5,13 +5,15 @@
   "targets": {
     "start": {
       "dependsOn": [
+        "build:rspack:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
         }
-      ]
+      ],
+      "cache": false
     },
     "start:rspack": {
       "dependsOn": [
@@ -50,7 +52,9 @@
     },
     "dev": {
       "dependsOn": [
+        "build:rspack:boot:dev",
         "themes-generate",
+        "build:swagger",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"

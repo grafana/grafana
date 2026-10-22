@@ -13,11 +13,8 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
-# --- Bundler selection
-# Set RSPACK=1 to build the frontend with rspack instead of webpack. rspack writes
-# inside the webpack output directory, so the CDN mount and the public/build URL
-# prefix are the same either way; only the manifest and the flag change.
-use_rspack = os.environ.get('RSPACK', '') in ('1', 'true')
+# --- Core build
+use_rspack = True
 build_dir = 'build/rspack' if use_rspack else 'build'
 manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
