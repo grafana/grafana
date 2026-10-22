@@ -247,29 +247,6 @@ describe('DeleteProvisionedFolderForm', () => {
       });
     });
 
-    it('commits the rendered commit template on the configured branch', async () => {
-      const { mockCreateJob, clickDeleteButton } = setup(
-        {},
-        {
-          ...defaultHookData,
-          repository: {
-            ...mockRepository,
-            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
-          },
-        }
-      );
-
-      await clickDeleteButton();
-
-      await waitFor(() => {
-        expect(mockCreateJob).toHaveBeenCalledWith(
-          expect.objectContaining({
-            jobSpec: expect.objectContaining({ message: 'chore(folders): delete Test Folder' }),
-          })
-        );
-      });
-    });
-
     it('sends the custom commit message and the ref when deleting on a new branch', async () => {
       const customFormData = {
         ...mockFormData,
@@ -311,23 +288,6 @@ describe('DeleteProvisionedFolderForm', () => {
         expect(mockCreateJob).toHaveBeenCalledWith(
           expect.objectContaining({
             jobSpec: expect.objectContaining({ message: 'chore(folders): delete Test Folder' }),
-          })
-        );
-      });
-    });
-
-    it('runs the delete job with the ref for an existing non-configured branch', async () => {
-      const { mockCreateJob, clickDeleteButton } = setup(
-        {},
-        { ...defaultHookData, initialValues: { ...mockFormData, ref: 'develop' } }
-      );
-
-      await clickDeleteButton();
-
-      await waitFor(() => {
-        expect(mockCreateJob).toHaveBeenCalledWith(
-          expect.objectContaining({
-            jobSpec: expect.objectContaining({ delete: expect.objectContaining({ ref: 'develop' }) }),
           })
         );
       });

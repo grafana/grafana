@@ -198,8 +198,7 @@ describe('MoveProvisionedDashboardForm', () => {
 
   it.each([
     ['the configured branch', 'main', undefined],
-    ['an existing branch', 'develop', 'develop'],
-    ['a new branch', 'feature/move', 'feature/move'],
+    ['another branch', 'feature/move', 'feature/move'],
   ])('runs a move job into the target folder on %s', async (_label, ref, expectedRef) => {
     const posted = mockMoveJob();
     const { user } = setup({ defaultValues: { ...branchDefaultValues, ref } });

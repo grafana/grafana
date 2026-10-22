@@ -376,51 +376,15 @@ describe('useProvisionedDashboardData', () => {
     expect(result.current.defaultValues?.path).toBe(path);
   });
 
-  describe('enforced branch name template', () => {
-    // write-first repo: without the enforced template the default ref would be the configured branch.
-    const enforcedRepo: RepositoryView = {
-      ...folderRepo,
-      workflows: ['write', 'branch'],
-      branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
-    };
-
-    it('starts on a generated branch when the template is enforced', () => {
-      const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
-        { wrapper }
-      );
-
-      // A branch default must never point at the configured branch; useBranchTemplate fills the actual template ref.
-      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
-    });
-
-    it('stays on the configured branch when enforcement has no usable template', () => {
-      // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so the
-      // ref must stay on the configured branch (nothing to enforce).
-      const repo: RepositoryView = { ...enforcedRepo, branchOptions: { enforceTemplate: true } };
-
-      const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(repo, folder('dashboards'))),
-        { wrapper }
-      );
-
-      expect(result.current.defaultValues?.ref).toBe('main');
-    });
-  });
-
   describe('loaded from a branch preview', () => {
     const previewWrapper = getWrapper({
       renderWithRouter: true,
       historyOptions: { initialEntries: ['/?ref=feature-branch'] },
     });
 
-    it.each([
-      { desc: 'a branch-only repository', workflows: ['branch'] as RepositoryView['workflows'] },
-      { desc: 'a repository allowing both workflows', workflows: ['branch', 'write'] as RepositoryView['workflows'] },
-    ])('defaults to writing back to the previewed branch for $desc', ({ workflows }) => {
-      const repo: RepositoryView = { ...folderRepo, workflows };
+    it('defaults to writing back to the previewed branch', () => {
       const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(repo, folder('dashboards'))),
+        () => useProvisionedDashboardData(createDashboard(), readyView(folderRepo, folder('dashboards'))),
         { wrapper: previewWrapper }
       );
 

@@ -82,13 +82,8 @@ describe('useIsNewBranch', () => {
     expect(result.current.isNew).toBe(false);
   });
 
-  it('returns false for a non-git repository without hitting the refs query', () => {
-    const { result } = render({ ...repo, type: 'local', branch: undefined }, '');
-    expect(result.current).toBe(false);
-  });
-
-  it('returns false when there is no repository (skipped query)', () => {
-    const { result } = render(undefined, 'anything');
-    expect(result.current).toBe(false);
+  it('returns false without hitting the refs query when there is no git repository', () => {
+    expect(render({ ...repo, type: 'local', branch: undefined }, '').result.current).toBe(false);
+    expect(render(undefined, 'anything').result.current).toBe(false);
   });
 });

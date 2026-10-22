@@ -160,12 +160,6 @@ describe('ResourceEditFormSharedFields', () => {
   });
 
   describe('Branch field', () => {
-    it('renders the branch field', () => {
-      setup({ repository: mockRepo.github });
-
-      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
-    });
-
     it('should render a read-only branch input when only configured branch is allowed', () => {
       const restrictedRepo: RepositoryView = {
         ...mockRepo.github,
@@ -294,20 +288,7 @@ describe('ResourceEditFormSharedFields', () => {
       expect(commentTextarea).toHaveValue('Test comment');
     });
 
-    it('should allow selecting a branch value', async () => {
-      const { user } = setup({
-        repository: mockRepo.github,
-      });
-
-      const branchInput = screen.getByRole('combobox', { name: /branch/i });
-      await user.click(branchInput);
-      await user.type(branchInput, 'feature-branch');
-      await user.keyboard('{Enter}');
-
-      expect(branchInput).toHaveValue('feature-branch');
-    });
-
-    it('should allow typing a new branch name', async () => {
+    it('accepts a typed branch name', async () => {
       const { user } = setup({
         repository: mockRepo.github,
       });

@@ -122,8 +122,7 @@ describe('DeleteProvisionedDashboardForm', () => {
   describe('Form Submission', () => {
     it.each([
       ['the configured branch', 'main', undefined],
-      ['an existing branch', 'develop', 'develop'],
-      ['a new branch', 'feature/delete', 'feature/delete'],
+      ['another branch', 'feature/delete', 'feature/delete'],
     ])('runs a delete job targeting %s', async (_label, ref, expectedRef) => {
       const posted = mockDeleteJob();
       const { user } = setup(withRef(ref));

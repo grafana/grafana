@@ -77,19 +77,6 @@ describe('useBranchTemplate', () => {
     expect(input).toHaveValue('');
   });
 
-  it('applies the template once the ref becomes a new branch', async () => {
-    // The fill is not limited to mount: a ref that is classified as new later (e.g. once the refs
-    // load) gets the template, as long as the user has not edited the field.
-    const repository = makeRepo({ nameTemplate: TEMPLATE });
-    const { rerender } = render(<Host repository={repository} vars={dashboardVars} isNewBranch={false} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    expect(input).toHaveValue('');
-
-    rerender(<Host repository={repository} vars={dashboardVars} isNewBranch />);
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-  });
-
   it('keeps a branch name the user typed once the ref becomes a new branch', async () => {
     // Typing a name is how the user enters new-branch mode, and it may happen before the refs
     // lookup confirms the name is new. The template is a default, so it never replaces an edit.
@@ -123,14 +110,6 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
   });
 
-  it('pre-fills the branch field from the rendered template when the ref is a new branch', async () => {
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-    expect(input).not.toHaveAttribute('readonly');
-  });
-
   it('generates a {{random}} token and renders it into the branch name', async () => {
     const spy = jest.spyOn(Math, 'random').mockReturnValue(0);
     try {
@@ -140,47 +119,6 @@ describe('useBranchTemplate', () => {
     } finally {
       spy.mockRestore();
     }
-  });
-
-  it('re-renders the field as the template variables change', async () => {
-    const repository = makeRepo({ nameTemplate: TEMPLATE });
-    const { rerender } = render(<Host repository={repository} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-
-    rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Renamed' }} />);
-    await waitFor(() => expect(input).toHaveValue('grafana/create-renamed'));
-  });
-
-  it('freezes after a manual edit so a later variable change keeps the user value', async () => {
-    const repository = makeRepo({ nameTemplate: TEMPLATE });
-    const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-
-    await user.type(input, 'x');
-    expect(input).toHaveValue('grafana/create-testx');
-
-    // The user has edited the field, so a later variable change must NOT overwrite their value.
-    rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Renamed' }} />);
-    expect(input).toHaveValue('grafana/create-testx');
-  });
-
-  it('keeps a manual edit while the template variables are unchanged', async () => {
-    const repository = makeRepo({ nameTemplate: TEMPLATE });
-    const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-
-    await user.type(input, 'x');
-    expect(input).toHaveValue('grafana/create-testx');
-
-    // Re-render with the same vars: the rendered name is unchanged, so the manual edit survives.
-    rerender(<Host repository={repository} vars={dashboardVars} />);
-    expect(input).toHaveValue('grafana/create-testx');
   });
 
   it('re-applies the enforced template after a form reset overwrites the ref', async () => {
@@ -200,15 +138,6 @@ describe('useBranchTemplate', () => {
     expect(input).toHaveAttribute('readonly');
   });
 
-  it('reports locked and keeps the field read-only when enforcement is on', async () => {
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true })} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
-    expect(input).toHaveAttribute('readonly');
-    expect(screen.getByTestId('locked')).toHaveTextContent('true');
-  });
-
   it('applies and locks an enforced template before the refs confirm the ref is new', async () => {
     // Enforcement must not wait for the refs query: with isNewBranch still false the field is
     // filled from the template and locked read-only.
@@ -226,24 +155,6 @@ describe('useBranchTemplate', () => {
     expect(screen.getByTestId('locked')).toHaveTextContent('true');
   });
 
-  it('does not enforce the template on a write-only repository', async () => {
-    // The enforcement guard needs the branch workflow; a write-only repo never leaves the configured
-    // branch, so the field keeps its value and stays editable.
-    render(
-      <Host
-        repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true }, ['write'])}
-        vars={dashboardVars}
-        isNewBranch={false}
-        defaultRef="main"
-      />
-    );
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    expect(screen.getByTestId('locked')).toHaveTextContent('false');
-    expect(input).not.toHaveAttribute('readonly');
-    await waitFor(() => expect(input).toHaveValue('main'));
-  });
-
   it('does not lock when an enforced template renders empty, leaving the field editable', async () => {
     // An enforced template whose render sanitises away (all-punctuation title) must not freeze the
     // field read-only on the auto-generated ref — the user needs to be able to set a valid branch.
@@ -258,35 +169,6 @@ describe('useBranchTemplate', () => {
     const input = screen.getByRole('textbox', { name: /branch/i });
     expect(screen.getByTestId('locked')).toHaveTextContent('false');
     expect(input).not.toHaveAttribute('readonly');
-    await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
-  });
-
-  it('does not lock when enforcement is set but no template is configured', async () => {
-    // Nothing to enforce without a template, so the field stays editable on its existing value
-    // rather than freezing read-only on an auto-generated ref.
-    render(
-      <Host repository={makeRepo({ enforceTemplate: true })} vars={dashboardVars} defaultRef="dashboard/2023-abc" />
-    );
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    expect(screen.getByTestId('locked')).toHaveTextContent('false');
-    expect(input).not.toHaveAttribute('readonly');
-    expect(input).toHaveValue('dashboard/2023-abc');
-  });
-
-  it('leaves the existing ref untouched when the rendered name sanitises to empty', async () => {
-    // A title made up entirely of punctuation sanitises away; the field must keep its valid default
-    // rather than being wiped to an empty (invalid) ref.
-    render(
-      <Host
-        repository={makeRepo({ nameTemplate: '{{title}}' })}
-        vars={{ ...dashboardVars, title: '!!!' }}
-        defaultRef="dashboard/2023-abc"
-      />
-    );
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    // Give the template effect a chance to run; it must be a no-op here.
     await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
   });
 });

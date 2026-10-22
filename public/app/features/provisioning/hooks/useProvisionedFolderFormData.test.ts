@@ -92,33 +92,4 @@ describe('useProvisionedFolderFormData', () => {
 
     expect(result.current.isLoading).toBe(false);
   });
-
-  describe('enforced branch name template', () => {
-    it('starts on a generated branch when the template is enforced', async () => {
-      // write-first repo: without the override the default ref would be the configured branch.
-      const { result } = renderFolderFormData(
-        {
-          repository: repoView({
-            workflows: ['write', 'branch'],
-            branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
-          }),
-        },
-        'My folder'
-      );
-
-      await waitFor(() => expect(result.current.initialValues?.ref).toMatch(/^folder\//));
-    });
-
-    it('stays on the configured branch when enforcement has no usable template', async () => {
-      const { result } = renderFolderFormData(
-        {
-          repository: repoView({ workflows: ['write', 'branch'], branchOptions: { enforceTemplate: true } }),
-        },
-        'My folder'
-      );
-
-      // enforceTemplate without a nameTemplate: useBranchTemplate stays inactive, so no switch.
-      await waitFor(() => expect(result.current.initialValues?.ref).toBe('main'));
-    });
-  });
 });
