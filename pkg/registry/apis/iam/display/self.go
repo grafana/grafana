@@ -84,6 +84,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		DisplayName:     authInfo.GetName(),
 		Namespace:       authInfo.GetNamespace(),
 		Email:           authInfo.GetEmail(),
+		Teams:           authInfo.GetGroups(),
 		AuthenticatedBy: authInfo.GetAuthenticatedBy(),
 	}
 

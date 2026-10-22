@@ -15824,6 +15824,7 @@
           },
           {
             "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
+            "explode": true,
             "in": "query",
             "name": "tags",
             "schema": {
@@ -15831,7 +15832,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Return alerts or user created annotations\nDescription:\n- `alert`\n- `annotation`",
@@ -18281,6 +18283,7 @@
           },
           {
             "description": "Source datasource UID filter to be applied to correlations",
+            "explode": true,
             "in": "query",
             "name": "sourceUID",
             "schema": {
@@ -18288,7 +18291,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           }
         ],
         "responses": {
@@ -21883,6 +21887,7 @@
         "parameters": [
           {
             "description": "List of data source UIDs to search for",
+            "explode": true,
             "in": "query",
             "name": "datasourceUid",
             "schema": {
@@ -21890,7 +21895,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Text inside query or comments that is searched for",
@@ -23058,6 +23064,7 @@
           },
           {
             "description": "List of tags to search for",
+            "explode": true,
             "in": "query",
             "name": "tag",
             "schema": {
@@ -23065,7 +23072,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Type to search for, dash-folder or dash-db\nDescription:\n- `dash-folder` - Search for folder\n- `dash-db` - Seatch for dashboard",
@@ -27541,6 +27549,9 @@
     }
   ],
   "servers": [
+    {
+      "url": "/api"
+    },
     {
       "url": "/api"
     }
