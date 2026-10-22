@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
@@ -79,5 +80,29 @@ describe('unlinkLibraryPanel', () => {
 
     expect(isLibraryPanel(panel)).toBe(true);
     expect(handleEditChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('unlinkLibraryPanel (legacy layouts)', () => {
+  beforeEach(() => setTestFlags({ dashboardNewLayouts: false }));
+
+  let deactivate: (() => void) | undefined;
+
+  afterEach(() => {
+    setTestFlags({});
+    deactivate?.();
+    deactivate = undefined;
+  });
+
+  it('unlinks without undo history, since the sidebar is not active in legacy layouts', () => {
+    const behavior = new LibraryPanelBehavior({ uid: 'lib-uid', name: 'Library panel', isLoaded: true });
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'table', $behaviors: [behavior] });
+    const dashboard = new DashboardScene({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+    deactivate = activateFullSceneTree(dashboard.state.body);
+
+    unlinkLibraryPanel(dashboard, panel);
+
+    expect(panel.state.$behaviors).toBeUndefined();
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
   });
 });
