@@ -1,12 +1,11 @@
 import mermaid from 'mermaid';
 import { HttpResponse, delay, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
@@ -97,7 +96,6 @@ function setup(folderUID = 'test-folder') {
 describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setTestFlags({ 'provisioning.readmes': true });
     // locationUtil keeps module-level config, so reset it between tests
     locationUtil.initialize({
       config: { appSubUrl: '' } as GrafanaConfig,
@@ -107,12 +105,6 @@ describe('FolderReadmePanel', () => {
     setDocs();
     setReadmeResult();
     mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>', diagramType: 'flowchart' });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
   });
 
   it('renders the README markdown inside a panel with an anchor id and a README tab', () => {
@@ -511,20 +503,6 @@ describe('FolderReadmePanel', () => {
     });
   });
 
-  it('renders nothing when the feature toggle is off', () => {
-    setTestFlags({ 'provisioning.readmes': false });
-
-    const { container } = setup();
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('does not invoke the data hooks when the feature toggle is off', () => {
-    setTestFlags({ 'provisioning.readmes': false });
-    setup();
-    expect(mockUseFolderDocs).not.toHaveBeenCalled();
-    expect(mockUseFolderReadme).not.toHaveBeenCalled();
-  });
-
   it('renders nothing when the folder is not provisioned', () => {
     setDocs({ repository: undefined, docs: [readmeDoc] });
     setReadmeResult({ status: 'loading', markdownContent: undefined });
@@ -586,6 +564,45 @@ describe('FolderReadmePanel', () => {
     // DOMPurify strips the dangerous elements
     expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
     expect(markdownDiv!.innerHTML).not.toContain('onerror');
+  });
+
+  // Parsing and the table's layout are covered in markdownFrontmatter.test.ts and
+  // MarkdownFrontmatterTable.test.tsx; these check the document is split and wired up.
+  describe('front matter', () => {
+    it('renders a leading YAML block as a metadata table and the rest as the document', () => {
+      setReadmeResult({
+        markdownContent: ['---', 'title: Team A', 'tags:', '  - as-code', '---', '# Hello', '', 'Body.'].join('\n'),
+      });
+
+      setup();
+
+      const table = screen.getByRole('table', { name: 'Document metadata' });
+      expect(within(table).getByRole('rowheader', { name: 'title' })).toBeInTheDocument();
+      expect(within(table).getByRole('cell', { name: 'Team A' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
+      expect(screen.getByText('Body.')).toBeInTheDocument();
+      // Left in the markdown, the opening `---` would render as an <hr> and the
+      // closing `---` would turn the YAML into a setext <h2>.
+      expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
+    });
+
+    it('renders no metadata table when the document has no front matter', () => {
+      setup();
+
+      expect(screen.getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
+    it('renders an invalid YAML block as plain markdown, like GitHub does', () => {
+      setReadmeResult({ markdownContent: '---\ntitle: [unclosed\n---\n# Hello' });
+
+      setup();
+
+      expect(screen.getByRole('heading', { level: 2, name: 'title: [unclosed' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
   });
 
   // The renderer itself is covered in core/utils/mermaid.test.ts and

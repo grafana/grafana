@@ -190,5 +190,5 @@ func loadConfig(configFile, homePath, configOverrides string, extraArgs []string
 // registerBuildMetrics records version/commit/branch/build-stamp on the metrics
 // registerer so build info is exported as a metric.
 func registerBuildMetrics(opts BuildInfo) {
-	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
+	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts), setting.IsEnterprise)
 }

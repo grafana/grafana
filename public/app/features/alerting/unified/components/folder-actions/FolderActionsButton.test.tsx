@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -44,8 +44,6 @@ jest.mock('../../api/alertingFolderActionsApi', () => {
     },
   };
 });
-
-testWithFeatureToggles({ enable: ['alertingBulkActionsInUI'] });
 
 const mockFolder: FolderDTO = {
   canAdmin: true,

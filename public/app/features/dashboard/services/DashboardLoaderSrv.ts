@@ -1,5 +1,6 @@
 import { AppEvents, dateMath, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -47,7 +48,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string): Promise<DashboardDTO> {
-    if (config.featureToggles.disableScriptedDashboards) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DisableScriptedDashboards, true)) {
       return Promise.reject({
         status: 410,
         messageId: SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID,
@@ -256,12 +257,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    // Return the chained promise: a detached `.then()` would reject unhandled when the load fails.
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record dashboard impression: ', e);
+      }
       return result;
     });
-
-    return promise;
   }
 
   loadSnapshot(slug: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -269,13 +273,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r));
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record snapshot impression: ', e);
+      }
 
       return result;
     });
-
-    return promise;
   }
 }
 

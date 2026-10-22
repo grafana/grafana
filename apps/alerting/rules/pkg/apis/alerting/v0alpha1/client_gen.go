@@ -42,7 +42,7 @@ func (c *CustomRouteClient) ListAlertRuleSearchRulesV0alpha1(ctx context.Context
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
 	}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/alertrules/searchRules",
+		Path:    "/searchAlertRules",
 		Verb:    "POST",
 		Body:    io.NopCloser(bytes.NewReader(body)),
 		Headers: request.Headers,
@@ -69,7 +69,7 @@ func (c *CustomRouteClient) ListRecordingRuleSearchRulesV0alpha1(ctx context.Con
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
 	}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/recordingrules/searchRules",
+		Path:    "/searchRecordingRules",
 		Verb:    "POST",
 		Body:    io.NopCloser(bytes.NewReader(body)),
 		Headers: request.Headers,

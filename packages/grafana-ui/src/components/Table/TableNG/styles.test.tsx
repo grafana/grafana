@@ -13,7 +13,40 @@ import {
 import { mockClientSize } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
-import { getCellActionStyles } from './styles';
+import { NESTED_ROW_CLASS } from './constants';
+import { getCellActionStyles, getGridStyles } from './styles';
+
+it('limits frozen hover backgrounds to direct cells of unselected body rows', () => {
+  const { grid } = getGridStyles(createTheme());
+  const rule = Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule &&
+        rule.selectorText.startsWith(`.${grid} `) &&
+        rule.style.getPropertyValue('background-color') === 'var(--rdg-row-hover-background-color)'
+    );
+
+  // jsdom cannot hover elements, so substitute a class to exercise the generated selector's scope.
+  const selector = rule!.selectorText.replaceAll(':hover', '.hovered');
+  const fixture = document.createElement('div');
+  fixture.className = grid;
+  fixture.innerHTML = `
+    <div role="row" class="rdg-row hovered"><div id="body" class="rdg-cell rdg-cell-frozen-start"></div>
+      <div><div id="descendant" class="rdg-cell rdg-cell-frozen-start"></div></div>
+    </div>
+    <div role="row" class="rdg-header-row hovered"><div class="rdg-cell rdg-cell-frozen-start"></div></div>
+    <div role="row" class="rdg-row rdg-summary-row hovered"><div class="rdg-cell rdg-cell-frozen-start"></div></div>
+    <div role="row" class="rdg-row hovered" aria-selected="true"><div class="rdg-cell rdg-cell-frozen-start"></div></div>
+    <div role="row" class="rdg-row ${NESTED_ROW_CLASS} hovered">
+      <div class="rdg-cell rdg-cell-frozen-start">
+        <div role="row" class="rdg-row"><div class="rdg-cell rdg-cell-frozen-start"></div></div>
+        <div role="row" class="rdg-row hovered"><div id="nested-body" class="rdg-cell rdg-cell-frozen-start"></div></div>
+      </div>
+    </div>`;
+
+  expect(Array.from(fixture.querySelectorAll(selector), (cell) => cell.id)).toEqual(['body', 'nested-body']);
+});
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -58,9 +91,9 @@ function gridVarsFor(theme: GrafanaTheme2, props: Partial<React.ComponentProps<t
     // Emotion's injected rules accumulate across cases in a file, so anything read back out of the
     // stylesheet has to be scoped to the class this render actually produced.
     gridClass: Array.from(grid.classList).find((c) => c.startsWith('css-')) ?? '',
-    frozenBackgrounds: Array.from(container.querySelectorAll('.rdg-row:not(.rdg-summary-row) .rdg-cell-frozen')).map(
-      (cell) => window.getComputedStyle(cell).backgroundColor
-    ),
+    frozenBackgrounds: Array.from(
+      container.querySelectorAll('.rdg-row:not(.rdg-summary-row) .rdg-cell-frozen-start')
+    ).map((cell) => window.getComputedStyle(cell).backgroundColor),
     /** Background each body row resolves to, in document order. */
     rowBackgrounds: Array.from(container.querySelectorAll('.rdg-row:not(.rdg-summary-row)')).map(
       (row) => window.getComputedStyle(row).backgroundColor

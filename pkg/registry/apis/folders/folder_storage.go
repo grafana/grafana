@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -82,7 +84,18 @@ func (s *folderStorage) Create(ctx context.Context,
 ) (runtime.Object, error) {
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
+		logging.FromContext(ctx).Warn("Failed to create folder", "error", err)
 		statusErr := apierrors.ToFolderStatusError(err)
+		// Client errors can carry intentional validation details. Backend calls
+		// with untrusted 4xx diagnostics must sanitize them at their source.
+		if statusErr.ErrStatus.Code >= 500 || statusErr.ErrStatus.Code == 499 {
+			message := statusErr.ErrStatus.Message
+			statusErr = backendStatusError(err)
+			// Keep established generic wording, but never copy arbitrary backend text.
+			if message == "Folder API error" || (message != "" && message == http.StatusText(int(statusErr.ErrStatus.Code))) {
+				statusErr.ErrStatus.Message = message
+			}
+		}
 		return nil, &statusErr
 	}
 

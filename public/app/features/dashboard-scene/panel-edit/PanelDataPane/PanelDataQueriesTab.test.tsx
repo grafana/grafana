@@ -209,42 +209,6 @@ function resolveMockUid(ref?: DataSourceRef | string | null) {
   return typeof ref === 'string' ? ref : ref?.uid;
 }
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
-    const uid = resolveMockUid(ref);
-    if (uid === '-- Grafana --') {
-      return grafanaDs;
-    }
-    if (uid === 'gdev-testdata') {
-      return ds1Mock;
-    }
-    if (uid === 'gdev-prometheus') {
-      return ds2Mock;
-    }
-    if (uid === '-- Mixed --') {
-      return MixedDs;
-    }
-    if (uid === SHARED_DASHBOARD_QUERY) {
-      return ds3Mock;
-    }
-    return defaultDsMock;
-  },
-  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
-    const uid = resolveMockUid(ref);
-    if (uid === 'gdev-testdata') {
-      return instance1SettingsMock;
-    }
-    if (uid === 'gdev-prometheus') {
-      return instance2SettingsMock;
-    }
-    if (uid === '-- Mixed --') {
-      return MixedDsSettingsMock;
-    }
-    return instance1SettingsMock;
-  },
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
@@ -302,6 +266,38 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'gdev-testdata',
     expressionsEnabled: true,
+  },
+  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === '-- Grafana --') {
+      return grafanaDs;
+    }
+    if (uid === 'gdev-testdata') {
+      return ds1Mock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return ds2Mock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDs;
+    }
+    if (uid === SHARED_DASHBOARD_QUERY) {
+      return ds3Mock;
+    }
+    return defaultDsMock;
+  },
+  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === 'gdev-testdata') {
+      return instance1SettingsMock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return instance2SettingsMock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDsSettingsMock;
+    }
+    return instance1SettingsMock;
   },
 }));
 
@@ -362,39 +358,28 @@ describe('PanelDataQueriesTab', () => {
       // Test: Button hidden when both flags are false
       mockQueryLibraryEnabled.mockReturnValue(false);
       mockContextSrv.hasPermission.mockReturnValue(false);
-      mockContextSrv.user.isSignedIn = true;
       const { rerender } = render(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
       // Test: Button hidden when only queryLibraryEnabled is true
       mockQueryLibraryEnabled.mockReturnValue(true);
       mockContextSrv.hasPermission.mockReturnValue(false);
-      mockContextSrv.isSignedIn = false;
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
-      // Test: Button hidden when only canReadQueries is true (non-RBAC mode)
+      // Test: Button hidden when only canReadQueries is true
       mockQueryLibraryEnabled.mockReturnValue(false);
-      mockContextSrv.isSignedIn = true;
-      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
-
-      // Test: Button visible when both are true (non-RBAC mode - isSignedIn)
-      mockQueryLibraryEnabled.mockReturnValue(true);
-      mockContextSrv.isSignedIn = true;
-      config.featureToggles.savedQueriesRBAC = false;
-      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      let button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
-      expect(button).toBeInTheDocument();
-      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
-
-      // Test: Button visible when both are true (RBAC mode - hasPermission)
-      config.featureToggles.savedQueriesRBAC = true;
-      mockContextSrv.isSignedIn = true;
       mockContextSrv.hasPermission.mockReturnValue(true);
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button visible when both are true
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      const button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
       expect(button).toBeInTheDocument();
+      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
 
       // Test: Button click calls openDrawer with correct params
       await userEvent.click(button);
