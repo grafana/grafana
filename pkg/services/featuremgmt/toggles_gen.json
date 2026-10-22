@@ -1023,6 +1023,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboard.artifacts",
+        "resourceVersion": "1792586736293",
+        "creationTimestamp": "2026-10-21T12:45:36Z"
+      },
+      "spec": {
+        "description": "Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.dashboardPlanBuildingScreen",
         "resourceVersion": "1792049243204",
         "creationTimestamp": "2026-10-15T07:27:23Z"
