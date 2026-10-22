@@ -1,13 +1,7 @@
 import { useMemo } from 'react';
-import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
 import { useDataSourcesManagingAlertsByUid } from '@grafana/alerting/internal';
-import {
-  type DataSourceInstanceListItem,
-  type SelectableValue,
-  getDataSourceUID,
-  isUnsignedPluginSignature,
-} from '@grafana/data';
+import { type DataSourceInstanceListItem, type SelectableValue, isUnsignedPluginSignature } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
@@ -17,139 +11,49 @@ import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@graf
 export interface MultipleDataSourcePickerProps {
   /** Only offer data sources whose plugin supports alerting. */
   alerting?: boolean;
-  noDefault?: boolean;
   placeholder?: string;
+  /** Data source names, as stored in the URL. */
   current: string[] | undefined;
   onChange: (ds: DataSourceInstanceListItem, action: 'add' | 'remove') => void;
   onClear?: () => void;
 }
 
-export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
-  const { alerting, noDefault, placeholder, current, onClear } = props;
+/** An option or selected value. Only those that resolve to a data source carry it. */
+type DataSourceOption = SelectableValue<string> & { dataSource?: DataSourceInstanceListItem };
 
-  const { items: dataSources, isLoading: isLoadingOptions } = useDataSourceInstanceList({ alerting });
-  const { byUid: managingAlertsByUid, isLoading: isLoadingManagingAlerts } = useDataSourcesManagingAlertsByUid();
+export function MultipleDataSourcePicker({
+  alerting,
+  placeholder,
+  current = [],
+  onChange,
+  onClear,
+}: MultipleDataSourcePickerProps) {
+  const { isLoading, options, value } = useDataSourcePickerOptions({ alerting, current });
 
-  // `current` comes from the URL and may name a data source that the options exclude, so resolve it
-  // against every data source, by uid or by name.
-  const { items: allDataSources, isLoading: isLoadingAllDataSources } = useDataSourceInstanceList({ all: true });
-  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(allDataSources);
-  const resolveDataSource = useMemo(() => {
-    const byUid = new Map(allDataSources.map((ds) => [ds.uid, ds]));
-    const byName = new Map(allDataSources.map((ds) => [ds.name, ds]));
-    return (uidOrName: string) => byUid.get(uidOrName) ?? byName.get(uidOrName);
-  }, [allDataSources]);
-
-  const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear' && onClear) {
-      onClear();
+  const handleChange = (_: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
+    if (actionMeta.action === 'clear') {
+      onClear?.();
       return;
     }
 
-    const selectedItem = items[items.length - 1];
+    const isRemoval = actionMeta.action === 'remove-value' || actionMeta.action === 'pop-value';
+    const changed: DataSourceOption | undefined = isRemoval ? actionMeta.removedValue : actionMeta.option;
 
-    let dataSourceName, action: 'add' | 'remove';
-
-    if (actionMeta.action === 'pop-value' || actionMeta.action === 'remove-value') {
-      const castedActionMeta:
-        | RemoveValueActionMeta<SelectableValue<string>>
-        | PopValueActionMeta<SelectableValue<string>> = actionMeta;
-      dataSourceName = castedActionMeta.removedValue?.value;
-      action = 'remove';
-    } else {
-      dataSourceName = selectedItem.value;
-      action = 'add';
-    }
-
-    const ds = dataSourceName ? resolveDataSource(dataSourceName) : undefined;
-
-    if (ds) {
-      props.onChange(ds, action);
+    if (changed?.dataSource) {
+      onChange(changed.dataSource, isRemoval ? 'remove' : 'add');
     }
   };
-
-  const getCurrentValue = (): Array<SelectableValue<string>> | undefined => {
-    if (!current && noDefault) {
-      return;
-    }
-
-    return current?.map((dataSourceName: string) => {
-      // Show the stored name until the list resolves, rather than flashing "not found".
-      if (isLoadingAllDataSources) {
-        return { label: dataSourceName, value: dataSourceName };
-      }
-
-      const ds = resolveDataSource(dataSourceName);
-      if (ds) {
-        return {
-          label: ds.name.slice(0, 37),
-          value: ds.name,
-          imgUrl: ds.meta.info.logos.small,
-          meta: ds.meta,
-        };
-      }
-
-      const uid = getDataSourceUID(dataSourceName);
-
-      if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
-        return { label: uid, value: uid };
-      }
-
-      return {
-        label: (uid ?? 'no name') + ' - not found',
-        value: uid ?? undefined,
-        imgUrl: '',
-      };
-    });
-  };
-
-  const getDataSourceOptions = () => {
-    const toOption = (ds: DataSourceInstanceListItem) => ({
-      value: ds.name,
-      label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
-      imgUrl: ds.meta.info.logos.small,
-      meta: ds.meta,
-    });
-
-    const alertManagingDs = dataSources.filter((ds) => managingAlertsByUid.has(ds.uid)).map(toOption);
-    const nonAlertManagingDs = dataSources.filter((ds) => !managingAlertsByUid.has(ds.uid)).map(toOption);
-
-    const groupedOptions = [
-      {
-        label: t(
-          'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.data-sources-with-configured-alert-rules',
-          'Data sources with configured alert rules'
-        ),
-        options: alertManagingDs,
-        expanded: true,
-      },
-      {
-        label: t(
-          'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.other-data-sources',
-          'Other data sources'
-        ),
-        options: nonAlertManagingDs,
-        expanded: true,
-      },
-    ];
-
-    return groupedOptions;
-  };
-
-  const options = getDataSourceOptions();
-  const value = getCurrentValue();
-  const isClearable = typeof onClear === 'function';
 
   return (
     <div data-testid={selectors.components.DataSourcePicker.container}>
-      <MultiSelect
-        isLoading={isLoadingOptions || isLoadingManagingAlerts || isLoadingAllDataSources}
+      <MultiSelect<string>
+        isLoading={isLoading}
         data-testid={selectors.components.DataSourcePicker.inputV2}
         inputId="data-source-picker"
         className="ds-picker select-container"
-        isClearable={isClearable}
+        isClearable={Boolean(onClear)}
         backspaceRemovesValue={true}
-        onChange={onChange}
+        onChange={handleChange}
         options={options}
         maxMenuHeight={500}
         placeholder={placeholder}
@@ -157,18 +61,110 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
           'alerting.multiple-data-source-picker.noOptionsMessage-no-datasources-found',
           'No datasources found'
         )}
-        value={value ?? []}
-        getOptionLabel={(o) => {
-          if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
-            return (
-              <Stack alignItems="center" justifyContent="space-between">
-                <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-              </Stack>
-            );
-          }
-          return o.label || '';
-        }}
+        value={value}
+        getOptionLabel={renderOptionLabel}
       />
     </div>
   );
-};
+}
+
+interface DataSourceLookup {
+  byUid: Map<string, DataSourceInstanceListItem>;
+  byName: Map<string, DataSourceInstanceListItem>;
+}
+
+function useDataSourcePickerOptions({ alerting, current }: { alerting?: boolean; current: string[] }) {
+  const optionsList = useDataSourceInstanceList({ alerting });
+  const managingAlerts = useDataSourcesManagingAlertsByUid();
+  // `current` may name a data source that the options exclude, so resolve it against every data source.
+  const allDataSourcesList = useDataSourceInstanceList({ all: true });
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(allDataSourcesList.items);
+
+  const lookup = useMemo<DataSourceLookup>(
+    () => ({
+      byUid: new Map(allDataSourcesList.items.map((ds) => [ds.uid, ds])),
+      byName: new Map(allDataSourcesList.items.map((ds) => [ds.name, ds])),
+    }),
+    [allDataSourcesList.items]
+  );
+
+  return {
+    isLoading: optionsList.isLoading || managingAlerts.isLoading || allDataSourcesList.isLoading,
+    options: groupOptions(optionsList.items, managingAlerts.byUid, defaultDataSource?.uid),
+    value: current.map((ref) => toSelectedValue(ref, lookup, allDataSourcesList.isLoading)),
+  };
+}
+
+// MultiSelect replaces a selected value with the option that has the same `value`, and hides that
+// option from the menu. Options and resolved values must therefore both use the uid.
+function toSelectedValue(ref: string, lookup: DataSourceLookup, isLoading: boolean): DataSourceOption {
+  if (isLoading) {
+    return { label: ref, value: ref };
+  }
+
+  const ds = lookup.byUid.get(ref) ?? lookup.byName.get(ref);
+  if (ds) {
+    return {
+      label: ds.name.slice(0, 37),
+      value: ds.uid,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+      dataSource: ds,
+    };
+  }
+
+  if (ref === ExpressionDatasourceRef.uid || ref === ExpressionDatasourceRef.name) {
+    return { label: ref, value: ref };
+  }
+
+  return { label: `${ref} - not found`, value: ref, imgUrl: '' };
+}
+
+function toOption(ds: DataSourceInstanceListItem, defaultUid: string | undefined): DataSourceOption {
+  return {
+    label: `${ds.name}${ds.uid === defaultUid ? ' (default)' : ''}`,
+    value: ds.uid,
+    imgUrl: ds.meta.info.logos.small,
+    meta: ds.meta,
+    dataSource: ds,
+  };
+}
+
+function groupOptions(
+  dataSources: DataSourceInstanceListItem[],
+  managingAlertsByUid: Map<string, DataSourceInstanceListItem>,
+  defaultUid: string | undefined
+) {
+  const managing = dataSources.filter((ds) => managingAlertsByUid.has(ds.uid));
+  const others = dataSources.filter((ds) => !managingAlertsByUid.has(ds.uid));
+
+  return [
+    {
+      label: t(
+        'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.data-sources-with-configured-alert-rules',
+        'Data sources with configured alert rules'
+      ),
+      options: managing.map((ds) => toOption(ds, defaultUid)),
+      expanded: true,
+    },
+    {
+      label: t(
+        'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.other-data-sources',
+        'Other data sources'
+      ),
+      options: others.map((ds) => toOption(ds, defaultUid)),
+      expanded: true,
+    },
+  ];
+}
+
+function renderOptionLabel(option: SelectableValue<string>) {
+  if (option.meta && isUnsignedPluginSignature(option.meta.signature)) {
+    return (
+      <Stack alignItems="center" justifyContent="space-between">
+        <span>{option.label}</span> <PluginSignatureBadge status={option.meta.signature} />
+      </Stack>
+    );
+  }
+  return option.label || '';
+}

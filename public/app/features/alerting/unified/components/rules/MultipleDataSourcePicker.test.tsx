@@ -25,6 +25,12 @@ function getGroup(label: string) {
   return screen.getByText(label).parentElement!.parentElement!;
 }
 
+// The picker shows a spinner until every data source list has resolved.
+async function waitForDataSourcesToLoad() {
+  const container = screen.getByTestId(selectors.components.DataSourcePicker.container);
+  await waitFor(() => expect(within(container).queryByTestId('Spinner')).not.toBeInTheDocument());
+}
+
 function mockDataSourceListLoading() {
   listHookMock.mockReturnValue({ isLoading: true, items: [] });
 }
@@ -96,8 +102,9 @@ describe('MultipleDataSourcePicker', () => {
     setupDataSources(mockDataSource({ name: 'loki', jsonData: {} }, { alerting: true }));
 
     render(<MultipleDataSourcePicker alerting current={['loki']} onChange={jest.fn()} />);
+    await waitForDataSourcesToLoad();
 
-    expect(await screen.findByText('loki')).toBeInTheDocument();
+    expect(screen.getByText('loki')).toBeInTheDocument();
   });
 
   it('resolves a selected data source that the options exclude', async () => {
@@ -106,8 +113,9 @@ describe('MultipleDataSourcePicker', () => {
     );
 
     render(<MultipleDataSourcePicker alerting current={['tempo']} onChange={jest.fn()} />);
+    await waitForDataSourcesToLoad();
 
-    expect(await screen.findByText('tempo')).toBeInTheDocument();
+    expect(screen.getByText('tempo')).toBeInTheDocument();
     expect(screen.queryByText('tempo - not found')).not.toBeInTheDocument();
   });
 
@@ -136,7 +144,7 @@ describe('MultipleDataSourcePicker', () => {
     );
 
     const { rerender } = render(<MultipleDataSourcePicker alerting current={['loki', 'mimir']} onChange={jest.fn()} />);
-    await screen.findByText('loki');
+    await waitForDataSourcesToLoad();
 
     rerender(<MultipleDataSourcePicker alerting current={['mimir', 'loki']} onChange={jest.fn()} />);
 
@@ -162,6 +170,22 @@ describe('MultipleDataSourcePicker', () => {
     expect(screen.queryByText('No datasources found')).not.toBeInTheDocument();
   });
 
+  it('hides a selected data source from the menu', async () => {
+    setupDataSources(
+      mockDataSource({ name: 'loki', jsonData: {} }, { alerting: true }),
+      mockDataSource({ name: 'mimir', jsonData: {} }, { alerting: true })
+    );
+
+    const user = userEvent.setup();
+    render(<MultipleDataSourcePicker alerting current={['loki']} onChange={jest.fn()} />);
+
+    await user.click(getInput());
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['mimir']);
+    });
+  });
+
   it('calls onChange with the list item when an option is selected', async () => {
     const loki = mockDataSource({ name: 'loki', jsonData: {} }, { alerting: true });
     setupDataSources(loki);
@@ -184,9 +208,24 @@ describe('MultipleDataSourcePicker', () => {
 
     const user = userEvent.setup();
     render(<MultipleDataSourcePicker alerting current={['loki']} onChange={onChange} />);
+    await waitForDataSourcesToLoad();
 
-    await user.click(await screen.findByRole('button', { name: /remove/i }));
+    await user.click(screen.getByRole('button', { name: /remove/i }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ uid: loki.uid, name: 'loki' }), 'remove');
+  });
+
+  it('calls onChange with the list item when a selected data source that the options exclude is removed', async () => {
+    const tempo = mockDataSource({ name: 'tempo', type: 'tempo', jsonData: {} }, { alerting: false, tracing: true });
+    setupDataSources(tempo);
+    const onChange = jest.fn();
+
+    const user = userEvent.setup();
+    render(<MultipleDataSourcePicker alerting current={['tempo']} onChange={onChange} />);
+    await waitForDataSourcesToLoad();
+
+    await user.click(screen.getByRole('button', { name: /remove/i }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ uid: tempo.uid, name: 'tempo' }), 'remove');
   });
 });
