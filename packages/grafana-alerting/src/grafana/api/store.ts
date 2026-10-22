@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { type Middleware, type Reducer, configureStore } from '@reduxjs/toolkit';
 
 import { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
@@ -21,14 +21,29 @@ export const alertingAPIMiddleware = [
   historianAPIv0alpha1.middleware,
 ] as const;
 
+// The parts of an RTKQ client a store needs.
+interface StoreAPI {
+  reducerPath: string;
+  reducer: Reducer;
+  middleware: Middleware;
+}
+
 /**
  * A Redux store with only this package's API clients in it, for apps that have no store of their own, or
  * whose store runs on an older Redux Toolkit than this package. Wrap the package's hooks and components in a
  * react-redux `Provider` with it.
+ *
+ * Pass any other clients from this package the app uses, e.g. `createAlertingStore([convertAPI])`, so they
+ * share the one store.
  */
-export function createAlertingStore() {
+export function createAlertingStore(extraAPIs: StoreAPI[] = []) {
+  const extraReducers = Object.fromEntries(extraAPIs.map((api) => [api.reducerPath, api.reducer]));
+
   return configureStore({
-    reducer: alertingAPIReducers,
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(alertingAPIMiddleware),
+    reducer: { ...alertingAPIReducers, ...extraReducers },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware()
+        .concat(alertingAPIMiddleware)
+        .concat(extraAPIs.map((api) => api.middleware)),
   });
 }

@@ -1,7 +1,6 @@
 import { type RulerNotificationSettingsDTO } from './api/types';
 
-// Where an alert rule's notifications go, as `NotificationsSettingsSelector` emits it. A local copy of the
-// `NotificationSettings` type from grafana/grafana#134990; import that one instead once it's merged.
+// Send straight to one contact point, optionally overriding the grouping, timings and time intervals.
 interface SimplifiedRoutingSettings {
   type: 'SimplifiedRouting';
   receiver: string;
@@ -13,15 +12,20 @@ interface SimplifiedRoutingSettings {
   activeTimeIntervals?: string[];
 }
 
+// Route through a named notification policy tree instead of the default one.
 interface NamedRoutingTreeSettings {
   type: 'NamedRoutingTree';
   routingTree: string;
 }
 
+/**
+ * Where an alert rule's notifications go: a contact point or a named notification policy tree. Code that
+ * lets users pick one works with this value, and `null` means the default policy tree.
+ */
 export type NotificationSettings = SimplifiedRoutingSettings | NamedRoutingTreeSettings;
 
 /**
- * Turns a `NotificationsSettingsSelector` value into the Ruler shape the convert API's
+ * Turns a `NotificationSettings` value into the Ruler shape the convert API's
  * `X-Grafana-Alerting-Notification-Settings` header takes. `null` (default routing) gives `undefined`,
  * meaning "leave the header out".
  */
@@ -49,7 +53,7 @@ export function toRulerNotificationSettings(
 
 /**
  * Reads Ruler-shaped notification settings, e.g. a rule's `notification_settings` from Grafana's ruler API,
- * back into a `NotificationsSettingsSelector` value. Settings with neither a policy nor a receiver mean
+ * back into a `NotificationSettings` value. Settings with neither a policy nor a receiver mean
  * default routing, which is `null`.
  */
 export function fromRulerNotificationSettings(
