@@ -166,11 +166,20 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		// cannot address it — the write succeeds in the repository and the
 		// next sync deletes it. The same classifier the sync and the files API
 		// use decides it here.
-		if refused := plan.RefuseUnsupportedPaths(targetPath); len(refused) > 0 {
+		//
+		// For a directory the whole subtree has to be classified, not just the
+		// destination folder: a tree move takes everything inside it along, so
+		// a resource can pass the depth limit where it is and fail where it
+		// lands.
+		refused, err := w.refuseMove(ctx, rw, path, targetPath, opts.Ref)
+		if err != nil {
+			return err // transient: not a refusal
+		}
+		if len(refused) > 0 {
 			progress.Record(ctx, resultBuilder.
 				WithError(&resources.UnsupportedPathError{
-					Path: targetPath,
-					Err:  resources.IsPathSupported(targetPath),
+					Path: refused[0].Path,
+					Err:  resources.IsPathSupported(refused[0].Path),
 				}).
 				Build())
 			if err := progress.TooManyErrors(); err != nil {
@@ -191,6 +200,26 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 	}
 
 	return nil
+}
+
+// refuseMove classifies a move's destination, and for a directory every
+// destination its contents would land at.
+func (w *Worker) refuseMove(ctx context.Context, rw repository.ReaderWriter, sourcePath, targetPath, ref string) ([]plan.PathRefusal, error) {
+	if !safepath.IsDir(sourcePath) {
+		return plan.RefuseUnsupportedPaths(targetPath), nil
+	}
+
+	tree, err := rw.ReadTree(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("read tree to classify a directory move: %w", err)
+	}
+	var contents []string
+	for _, entry := range tree {
+		if entry.Blob && safepath.InDir(entry.Path, sourcePath) {
+			contents = append(contents, entry.Path)
+		}
+	}
+	return plan.RefuseUnsupportedMove(sourcePath, targetPath, contents), nil
 }
 
 // constructTargetPath combines the job's target path with the file/folder name from the source path.

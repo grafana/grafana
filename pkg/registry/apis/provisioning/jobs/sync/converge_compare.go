@@ -28,6 +28,17 @@ func CompareViaConverge(
 	ref string,
 	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
+	return compareViaConverge(ctx, repo, repositoryResources, ref, folderMetadataEnabled, converge.HintSet{})
+}
+
+func compareViaConverge(
+	ctx context.Context,
+	repo repository.Reader,
+	repositoryResources resources.RepositoryResources,
+	ref string,
+	folderMetadataEnabled bool,
+	hints converge.HintSet,
+) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error listing current: %w", err)
@@ -55,16 +66,19 @@ func CompareViaConverge(
 		dir := safepath.EnsureTrailingSlash(item.Path)
 		if md, ok := metadata[dir]; ok && !md.Valid {
 			md.Held = item.Name
+			md.HeldFingerprint = item.Hash
 			metadata[dir] = md
 		}
 	}
 
 	observed, unaddressable := plan.Observe(target)
-	p, err := converge.NewPlan(
-		plan.Declare(source, metadata),
-		observed,
+	opts := []converge.Option{
 		converge.WithContainers(plan.FolderConfig(repo.Config().GetName())),
-	)
+	}
+	if hints.Complete {
+		opts = append(opts, converge.WithHints(hints))
+	}
+	p, err := converge.NewPlan(plan.Declare(source, metadata, folderMetadataEnabled), observed, opts...)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
@@ -137,6 +151,17 @@ func readFolderMetadata(
 	return out, invalid, nil
 }
 
+// observedIdentityOf mirrors the identity plan.Observe assigns, so the index
+// and the plan agree on what names a row. A bare resource name does not: two
+// kinds can share a path and a name, and the index would hand both deletions
+// the same row.
+func observedIdentityOf(item *provisioning.ResourceListItem) string {
+	if isFolderItem(item) {
+		return item.Name
+	}
+	return item.Group + "/" + item.Resource + "/" + item.Name
+}
+
 // indexKey normalises a path so that the two sides agree: a folder is keyed by
 // its path with a trailing slash, an entity by its path as given.
 func indexKey(path string, container bool) string {
@@ -206,7 +231,7 @@ func translatePlan(ctx context.Context, p *converge.Plan, target *provisioning.R
 		// Folder keys carry a trailing slash on the plan side, so the index has
 		// to agree or every folder relocation loses the row that holds its old
 		// path and is mistaken for a fresh create.
-		byKeyIdentity[indexKey(item.Path, isFolderItem(item))+"\x00"+item.Name] = item
+		byKeyIdentity[indexKey(item.Path, isFolderItem(item))+"\x00"+observedIdentityOf(item)] = item
 		if item.Resource == resources.FolderResource.Resource && item.Path != "" {
 			foldersByPath[safepath.EnsureTrailingSlash(item.Path)] = item
 		}

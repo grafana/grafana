@@ -1070,7 +1070,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.convergePlanner {
 				compareFn, fullSyncFn = sync.CompareViaConverge, sync.FullSyncViaConverge
 			}
-			syncer := sync.NewSyncer(compareFn, fullSyncFn, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
+			syncer := sync.NewSyncer(compareFn, fullSyncFn, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout, b.convergePlanner) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,

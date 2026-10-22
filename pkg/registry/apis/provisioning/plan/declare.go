@@ -1,6 +1,8 @@
 package plan
 
 import (
+	"strings"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -50,6 +52,14 @@ type FolderMetadata struct {
 	UID   string
 	Valid bool
 
+	// HeldFingerprint is the content Grafana currently records for the folder.
+	// An unusable claim falls back to it for the same reason it falls back to
+	// Held: folder application keeps the existing folder, metadata hash
+	// included, so declaring the new file's hash would compare against a value
+	// the ensure can never persist — and report the same folder update on
+	// every sync, for ever.
+	HeldFingerprint string
+
 	// Held is the identity Grafana currently has for the folder, if any. It is
 	// what an unusable claim falls back to.
 	//
@@ -74,7 +84,7 @@ type FolderMetadata struct {
 //
 // The line between the last two is the whole user-visible difference between a
 // dashboard that disappears with a warning and one that disappears silently.
-func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata) []converge.Declaration {
+func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata, folderMetadataEnabled bool) []converge.Declaration {
 	out := make([]converge.Declaration, 0, len(tree))
 
 	for _, entry := range tree {
@@ -85,6 +95,13 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 				continue // the repository root is not a folder sync owns
 			}
 			out = append(out, declareDirectory(dir))
+
+		case resources.IsFolderMetadataFile(entry.Path) && !folderMetadataEnabled:
+			// With folder metadata off, a _folder.json states nothing about
+			// the folder: the identity is path-derived and the stored metadata
+			// hash is always empty. Declaring the file's hash anyway makes
+			// every full sync see a content change the ensure can never
+			// persist, so the repository never settles.
 
 		case resources.IsFolderMetadataFile(entry.Path):
 			dir := converge.Key(safepath.EnsureTrailingSlash(safepath.Dir(entry.Path)))
@@ -106,8 +123,13 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 				switch {
 				case md.Valid:
 					d.Identity = converge.Identity(md.UID)
-				case md.Held != "":
-					d.Identity = converge.Identity(md.Held)
+				default:
+					// The claim is unusable, so neither the identity nor the
+					// content it states can be applied.
+					if md.Held != "" {
+						d.Identity = converge.Identity(md.Held)
+					}
+					d.Fingerprint = converge.Fingerprint(md.HeldFingerprint)
 				}
 			}
 			out = append(out, d)
@@ -154,6 +176,32 @@ func declareFile(entry repository.FileTreeEntry) converge.Declaration {
 	return d
 }
 
+// observedIdentity names what the target holds.
+//
+// A resource name is not unique: a dashboard and a playlist can share both a
+// path and a name, and identical identities make identical operation
+// references — after which one deletion is applied twice and the other object
+// is left managed. Non-folder identities therefore carry their kind.
+//
+// Folder identities stay raw, because they are what a resource's parent is
+// compared against and what the actuator removes a folder by.
+func observedIdentity(item *provisioning.ResourceListItem, isFolder bool) converge.Identity {
+	if isFolder {
+		return converge.Identity(item.Name)
+	}
+	return converge.Identity(item.Group + "/" + item.Resource + "/" + item.Name)
+}
+
+// ResourceName recovers the target's own name from an identity produced by
+// [Observe].
+func ResourceName(id converge.Identity) string {
+	s := string(id)
+	if i := strings.LastIndex(s, "/"); i >= 0 {
+		return s[i+1:]
+	}
+	return s
+}
+
 // Unaddressable reports a resource the target holds that has no source path,
 // so no repository content can describe it and no diff can reach it.
 type Unaddressable struct {
@@ -195,7 +243,7 @@ func Observe(list *provisioning.ResourceList) ([]converge.Observation, []Unaddre
 		}
 		out = append(out, converge.Observation{
 			Key:         key,
-			Identity:    converge.Identity(item.Name),
+			Identity:    observedIdentity(item, isFolder),
 			Fingerprint: converge.Fingerprint(item.Hash),
 			Container:   isFolder,
 			// Which folder the resource is actually in. Without it a resource

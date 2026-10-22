@@ -250,6 +250,7 @@ func applyChange(
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
 	folderMoves []folderMove,
+	extraEnsureOpts ...resources.EnsurePathOption,
 ) bool {
 	if ctx.Err() != nil {
 		return false
@@ -344,6 +345,9 @@ func applyChange(
 		for _, m := range relocatingFoldersForPath(change.Path, folderMoves) {
 			ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(m.Path, m.UID))
 		}
+		// Decisions the caller already made about folder identity, applied
+		// rather than re-derived.
+		ensureOpts = append(ensureOpts, extraEnsureOpts...)
 
 		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef, ensureOpts...)
 		if err != nil {

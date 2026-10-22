@@ -29,18 +29,25 @@ type Syncer interface {
 }
 
 type syncer struct {
-	compare               CompareFn
-	fullSync              FullSyncFn
-	incrementalSync       IncrementalSyncFn
-	tracer                tracing.Tracer
+	compare         CompareFn
+	fullSync        FullSyncFn
+	incrementalSync IncrementalSyncFn
+	tracer          tracing.Tracer
+	// convergePlanner routes incremental requests through the planner-backed
+	// full sync. The incremental function is injected without resource clients,
+	// so a planner-backed one cannot be installed alongside the other two —
+	// and leaving the hand-rolled one in place would let every incremental run
+	// bypass the planner entirely, which is most runs.
+	convergePlanner       bool
 	metrics               jobs.JobMetrics
 	maxSyncWorkers        int
 	folderMetadataEnabled bool
 	resourceTimeout       time.Duration
 }
 
-func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceTimeout time.Duration) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceTimeout time.Duration, convergePlanner bool) Syncer {
 	return &syncer{
+		convergePlanner:       convergePlanner,
 		compare:               compare,
 		fullSync:              fullSync,
 		incrementalSync:       incrementalSync,
@@ -65,7 +72,17 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 			return "", fmt.Errorf("get latest ref: %w", err)
 		}
 
-		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
+		// A narrowed run is only sound if the narrowing cannot change the
+		// answer, which is the planner's guarantee and not the hand-rolled
+		// path's. Until the planner's own hinted sync is wired — it needs the
+		// resource clients the incremental function is not given — an
+		// incremental request runs the planner-backed full sync instead. It
+		// reaches the same state; it just does not save the work.
+		if r.convergePlanner && cfg.Status.Sync.LastRef != "" && options.Incremental {
+			logger.Info("converge planner enabled: running full sync for an incremental request")
+		}
+
+		if !r.convergePlanner && cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
 			progress.SetMessage(ctx, "incremental sync")
 			// Tag the job so the driver's throughput metric can split pull jobs by
 			// the sync variance that actually ran.

@@ -31,7 +31,12 @@ func NewPlan(desired []Declaration, inventory []Observation, opts ...Option) (*P
 			return nil, ErrIncompleteInput
 		}
 		mode = ModeHinted
-		window = cfg.hints.closure(desired, inventory, cfg.containers)
+		// Normalised copies: newState normalises container keys, so computing
+		// the closure over the raw inputs makes "b" and "b/" behave
+		// differently — the identity link is missed and the normalised
+		// observation is then filtered out, so a hinted plan ensures a
+		// container where a full plan moves one.
+		window = cfg.hints.closure(normalisedDecls(desired), normalisedObs(inventory), cfg.containers)
 	}
 
 	// Budget admission is a question about the whole target, so a window makes
@@ -167,6 +172,7 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 			}
 			if !s.reportedExclusions[key] {
 				s.reportedExclusions[key] = true
+				// Removed is filled in once the observations are indexed.
 				s.exclusions = append(s.exclusions, Exclusion{Key: key, Reason: d.Reason})
 			}
 		}
@@ -222,12 +228,26 @@ func newState(desired []Declaration, inventory []Observation, window map[Key]boo
 	}
 
 	// An exclusion is destructive on this run only if the target holds
-	// something at the excluded key right now.
+	// something at the excluded key right now — an entity or a container.
+	// Checking only entities makes a held, excluded folder look harmless in a
+	// preview even though the plan removes it.
 	for i := range s.exclusions {
-		s.exclusions[i].Removed = len(s.obsEntity[s.exclusions[i].Key]) > 0
+		s.exclusions[i].Removed = s.holdsAnythingAt(s.exclusions[i].Key)
 	}
 
 	return s, nil
+}
+
+func normalisedDecls(ds []Declaration) []Declaration {
+	out := append([]Declaration(nil), ds...)
+	normaliseDecls(out)
+	return out
+}
+
+func normalisedObs(os []Observation) []Observation {
+	out := append([]Observation(nil), os...)
+	normaliseObs(out)
+	return out
 }
 
 func normaliseDecls(ds []Declaration) {
@@ -329,6 +349,13 @@ func targetedKeys(cfg config) map[Key]bool {
 		named[k.AsContainer()] = true
 	}
 	return named
+}
+
+// holdsAnythingAt reports whether the target holds an entity or a container at
+// the key. Checking only entities makes a held, excluded folder look
+// non-destructive in a preview even though the plan removes it.
+func (s *state) holdsAnythingAt(k Key) bool {
+	return len(s.obsEntity[k]) > 0 || len(s.obsCont[k.AsContainer()]) > 0
 }
 
 func sortExclusions(xs []Exclusion) {

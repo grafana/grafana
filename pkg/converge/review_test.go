@@ -332,3 +332,78 @@ func TestCapacityPrerequisiteIsADependencyNotAStageNumber(t *testing.T) {
 		t.Fatalf("vetoing the deletion must drop the create that waited on it:\n%s", restricted)
 	}
 }
+
+func TestTargetedContentEditSurvivesAnApparentParentChange(t *testing.T) {
+	// A nested folder whose observed parent is a pinned UID gets
+	// ReasonParentChanged, because a targeted plan declares a bare ancestor
+	// whose derived identity differs. Matching on ReasonContentChanged alone
+	// dropped the edit the caller actually asked for.
+	p, err := NewPlan(
+		[]Declaration{
+			{Key: "top/f/", Container: true, Identity: "PINNED", Fingerprint: "m2"},
+			{Key: "top/", Container: true},
+		},
+		[]Observation{
+			{Key: "top/", Identity: "TOP-PINNED", Container: true},
+			{Key: "top/f/", Identity: "PINNED", Fingerprint: "m1", Container: true, Parent: "TOP-PINNED"},
+		},
+		WithContainers(hierarchy()),
+		WithHints(HintSet{Keys: []Key{"top/f/"}, Complete: true}),
+		WithExclusionScope(ScopeTargeted),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	op, _ := findOp(t, p, OpEnsureContainer, "top/f/")
+	if op.Identity != "PINNED" {
+		t.Fatalf("the held identity must be kept, got %q", op.Identity)
+	}
+	// Both identity fields move together, or a veto pass marks a path-derived
+	// fallback trusted and checks permission against a folder that does not
+	// exist.
+	if op.ContainerIdentity != "PINNED" || !op.ContainerProvenance.Trusted() {
+		t.Fatalf("container identity must match and be trusted: %q %s",
+			op.ContainerIdentity, op.ContainerProvenance)
+	}
+}
+
+func TestHintClosureNormalisesContainerKeys(t *testing.T) {
+	// newState normalises container keys, so computing the closure over the raw
+	// inputs makes "b" and "b/" behave differently: the identity link is missed
+	// and the normalised observation is then filtered out.
+	decls := []Declaration{{Key: "b", Container: true, Identity: "X"}}
+	obs := []Observation{{Key: "a/", Identity: "X", Container: true}}
+
+	p, err := NewPlan(decls, obs,
+		WithContainers(hierarchy()),
+		WithHints(HintSet{Keys: []Key{"b/"}, Complete: true}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	op, _ := findOp(t, p, OpMove, "b/")
+	if op.From != "a/" {
+		t.Fatalf("want a move from a/, got %+v:\n%s", op, p)
+	}
+}
+
+func TestHeldExcludedContainerIsReportedAsDestructive(t *testing.T) {
+	p, err := NewPlan(
+		[]Declaration{{Key: "bad/", Container: true, Verdict: Excluded, Reason: "unaddressable"}},
+		[]Observation{{Key: "bad/", Identity: "F", Container: true}},
+		WithContainers(hierarchy()),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range p.Exclusions {
+		if e.Key == "bad/" {
+			if !e.Removed {
+				t.Fatal("a held folder the plan removes is a destructive exclusion")
+			}
+			return
+		}
+	}
+	t.Fatalf("the container was not reported: %v", p.Exclusions)
+}

@@ -23,6 +23,33 @@ type PathRefusal struct {
 // Authorisation is a separate question and is deliberately not answered here;
 // see [Vetoes] and the note in the move worker.
 func RefuseUnsupportedPaths(paths ...string) []PathRefusal {
+	return refusePaths(paths)
+}
+
+// RefuseUnsupportedMove classifies a move's destination and, for a directory,
+// every destination its contents would land at.
+//
+// Checking only the destination folder is not enough: a directory move is a
+// tree move, so pushing a folder one level deeper takes everything inside it
+// one level deeper too, and a resource can pass the depth limit at the old
+// place and fail at the new one. Git moves the tree without classifying any of
+// it, so the move succeeds and the next sync removes what became unaddressable.
+//
+// sourcePaths are the repository paths currently under sourceDir; the caller
+// supplies them because reading the tree is I/O.
+func RefuseUnsupportedMove(sourceDir, targetDir string, sourcePaths []string) []PathRefusal {
+	paths := []string{targetDir}
+	for _, p := range sourcePaths {
+		rel, err := safepath.RelativeTo(p, sourceDir)
+		if err != nil {
+			continue
+		}
+		paths = append(paths, safepath.Join(targetDir, rel))
+	}
+	return refusePaths(paths)
+}
+
+func refusePaths(paths []string) []PathRefusal {
 	var out []PathRefusal
 	for _, path := range paths {
 		if path == "" {

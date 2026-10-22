@@ -88,7 +88,7 @@ func TestFullAndIncrementalConverge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			list := &provisioning.ResourceList{Items: tt.items}
-			desired := plan.Declare(tt.tree, nil)
+			desired := plan.Declare(tt.tree, nil, true)
 			observed := mustObserve(list)
 			cfg := converge.WithContainers(plan.FolderConfig(repoName))
 
@@ -123,7 +123,7 @@ func TestIncompleteHintsFallBackToFull(t *testing.T) {
 	}}
 
 	cfg := converge.WithContainers(plan.FolderConfig(repoName))
-	desired, observed := plan.Declare(tree, nil), mustObserve(list)
+	desired, observed := plan.Declare(tree, nil, true), mustObserve(list)
 
 	full, err := converge.NewPlan(desired, observed, cfg)
 	require.NoError(t, err)

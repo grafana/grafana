@@ -169,7 +169,9 @@ func TestFilesDelete(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, p.Ops, 1, "plan:\n%s", p)
 	require.Equal(t, converge.OpDelete, p.Ops[0].Kind)
-	require.Equal(t, converge.Identity("d1"), p.Ops[0].Identity)
+	// The identity carries the kind, because a name alone is not unique across
+	// kinds; the target's own name is recovered with ResourceName.
+	require.Equal(t, "d1", plan.ResourceName(p.Ops[0].Identity))
 }
 
 // A folder metadata edit asks the checker for update permission, not create:

@@ -90,6 +90,12 @@ func applyChangesViaConverge(
 	// exempts from the duplicate-UID guard along its own ancestor chain.
 	folderMoves := collectFolderMoves(changes)
 
+	// Identities the plan already resolved, so folder application applies that
+	// decision instead of re-reading the metadata and re-deciding — which would
+	// refuse the fallback folder the plan authorised when two _folder.json
+	// files claim one UID.
+	resolved := resolvedFolderIdentities(ops)
+
 	// Folders are serial: ensuring one walks its ancestors, so concurrent
 	// ensures race on a shared parent.
 	res, err := apply.Run(ctx, p, apply.ActuatorFunc(func(ctx context.Context, op converge.Op) error {
@@ -108,10 +114,11 @@ func applyChangesViaConverge(
 		}
 
 		moves := folderMoves
-		if op.Kind != converge.OpEnsureContainer {
-			moves = nil
+		ensureOpts := resolved
+		if op.Kind != converge.OpEnsureContainer && (op.Kind != converge.OpMove || !op.Key.IsContainer()) {
+			moves, ensureOpts = nil, nil
 		}
-		if blocked := applyChange(ctx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, moves); blocked {
+		if blocked := applyChange(ctx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, moves, ensureOpts...); blocked {
 			// Quota blocked it before any write was attempted. Capacity freed
 			// by the writes that do succeed is not knowable from here, so the
 			// retry is the helper's to schedule.
@@ -124,8 +131,10 @@ func applyChangesViaConverge(
 		}
 		return nil
 	}), apply.Config{
-		Workers:   maxSyncWorkers,
-		Serial:    []converge.OpKind{converge.OpEnsureContainer, converge.OpRemoveContainer},
+		Workers: maxSyncWorkers,
+		// Container moves are folder ensures underneath, which walk ancestors,
+		// so they serialise with the rest of the container work.
+		Serial:    []converge.OpKind{converge.OpEnsureContainer, converge.OpRemoveContainer, converge.OpMove},
 		OpTimeout: resourceTimeout,
 		// Drain the stage, then stop: a dependent of a failed operation is
 		// already skipped, and stopping on the first failure would leave the
@@ -306,6 +315,18 @@ func translateChanges(changes []ResourceFileChange) (
 			if c.OrphanCleanup || c.Reason != "" {
 				op.Reason = converge.Reason(c.Reason)
 			}
+		case isDir && c.Existing != nil && !c.FolderRenamed &&
+			safepath.EnsureTrailingSlash(c.Existing.Path) != string(key):
+			// A stable-UID relocation: the folder keeps its identity and
+			// changes path. The diff states it as an update whose Existing
+			// sits at the old path, and translating that as a bare ensure
+			// drops the edge that vacates the old parent — so the parent's
+			// removal can be scheduled before the relocation and fails on a
+			// folder that is not empty. Stated as a move, the origin is in the
+			// graph.
+			op.Kind = converge.OpMove
+			op.From = converge.Key(safepath.EnsureTrailingSlash(c.Existing.Path))
+
 		case isDir:
 			op.Kind = converge.OpEnsureContainer
 			if c.FolderRenamed {
@@ -375,6 +396,19 @@ func oldFolderRemovals(changes []ResourceFileChange) []converge.Op {
 			Group:     converge.GroupID("rename:" + string(key)),
 			Container: key.Parent(),
 		})
+	}
+	return out
+}
+
+// resolvedFolderIdentities collects the identity the plan settled on for each
+// folder it ensures.
+func resolvedFolderIdentities(ops []converge.Op) []resources.EnsurePathOption {
+	var out []resources.EnsurePathOption
+	for _, op := range ops {
+		if op.Kind != converge.OpEnsureContainer || op.Identity == "" {
+			continue
+		}
+		out = append(out, resources.WithResolvedIdentity(string(op.Key), string(op.Identity)))
 	}
 	return out
 }

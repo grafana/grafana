@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/converge"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -132,9 +133,19 @@ func (r *DualReadWriter) observeAncestors(ctx context.Context, key converge.Key,
 		return nil, false, nil
 	}
 
+	// Existence is read with the provisioning identity, as FindExistingAncestor
+	// does. The caller's permission to *create* a folder is still checked with
+	// the caller's identity below; requiring folders:get on every ancestor as
+	// well would fail a write the caller is authorised to make — access granted
+	// on the resource itself does not imply it on the folders above it.
+	lookupCtx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().GetNamespace())
+	if err != nil {
+		return nil, false, fmt.Errorf("identity for ancestor lookup: %w", err)
+	}
+
 	var out []converge.Observation
 	for _, a := range key.Ancestors() {
-		id, err := GetFolderID(ctx, r.repo, string(a), ref, r.folderMetadataEnabled)
+		id, err := r.ancestorIdentity(lookupCtx, a, ref)
 		if err != nil {
 			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
 				continue
@@ -151,7 +162,7 @@ func (r *DualReadWriter) observeAncestors(ctx context.Context, key converge.Key,
 			}
 			return nil, false, fmt.Errorf("resolve identity of %s: %w", a, err)
 		}
-		if _, err := r.folders.GetFolder(ctx, id); err != nil {
+		if _, err := r.folders.GetFolder(lookupCtx, id); err != nil {
 			if apierrors.IsNotFound(err) {
 				continue // the write has to create it, and ask to
 			}
@@ -160,4 +171,20 @@ func (r *DualReadWriter) observeAncestors(ctx context.Context, key converge.Key,
 		out = append(out, converge.Observation{Key: a, Identity: converge.Identity(id), Container: true})
 	}
 	return out, true, nil
+}
+
+// ancestorIdentity resolves what a directory's folder identity would be,
+// falling back to the configured branch when the requested ref does not exist
+// yet — the first nested write to a new pull-request branch, where the
+// _folder.json is only committed on the configured branch. The parser already
+// does this; refusing here would block the very write that creates the branch.
+func (r *DualReadWriter) ancestorIdentity(ctx context.Context, dir converge.Key, ref string) (string, error) {
+	id, err := GetFolderID(ctx, r.repo, string(dir), ref, r.folderMetadataEnabled)
+	if err == nil {
+		return id, nil
+	}
+	if ref != "" && errors.Is(err, repository.ErrRefNotFound) {
+		return GetFolderID(ctx, r.repo, string(dir), "", r.folderMetadataEnabled)
+	}
+	return "", err
 }

@@ -1,5 +1,19 @@
 package converge
 
+// namedContentDiffers reports whether the source states something about the
+// container that the target does not already hold.
+func (s *state) namedContentDiffers(c Key) bool {
+	obs := s.obsCont[c]
+	if len(obs) == 0 {
+		return false
+	}
+	want, ok := s.wantCont[c]
+	if !ok {
+		return false
+	}
+	return want.fingerprint != obs[0].Fingerprint
+}
+
 // containerHasContents reports whether the target holds anything inside the
 // container, by key or by parent identity.
 func (s *state) containerHasContents(c Key) bool {
@@ -53,13 +67,25 @@ func (s *state) restrictToTargeted(hinted []Key) {
 				op.Reason = ""
 				op.Group = ""
 				kept = append(kept, op)
-			case named[op.Key] && op.Reason == ReasonContentChanged:
-				// The caller named this container and its content changed, so
-				// that is the write it asked for. Its identity still comes
-				// from the target: a targeted plan updates what a container
-				// says about itself, never which container it is.
-				op.Identity = s.obsCont[op.Key][0].Identity
+			case named[op.Key] && s.namedContentDiffers(op.Key):
+				// The caller named this container and what the source says
+				// about it differs from what the target holds, so that is the
+				// write it asked for — whatever reason the planner attached.
+				// A nested folder whose observed parent is a pinned UID gets
+				// ReasonParentChanged here, because Targeted declares a bare
+				// ancestor whose derived identity differs; matching on
+				// ReasonContentChanged alone dropped the requested edit.
+				//
+				// The identity comes from the target in every case: a targeted
+				// plan updates what a container says about itself, never which
+				// container it is. Both identity fields move together, or a
+				// veto pass marks a path-derived fallback trusted and checks
+				// permission against a folder that does not exist.
+				held := s.obsCont[op.Key][0].Identity
+				op.Identity = held
+				op.ContainerIdentity = held
 				op.ContainerProvenance = FromInventory
+				op.Reason = ReasonContentChanged
 				op.Group = ""
 				kept = append(kept, op)
 			default:

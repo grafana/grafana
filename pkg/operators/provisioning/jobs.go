@@ -134,7 +134,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	if convergePlanner {
 		compareFn, fullSyncFn = jobsync.CompareViaConverge, jobsync.FullSyncViaConverge
 	}
-	syncer := jobsync.NewSyncer(compareFn, fullSyncFn, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout)
+	syncer := jobsync.NewSyncer(compareFn, fullSyncFn, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout, convergePlanner)
 	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
