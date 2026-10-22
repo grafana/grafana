@@ -75,7 +75,7 @@ export function FolderSelector() {
             rules={{
               required: {
                 value: true,
-                message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
+                message: t('alerting.folder-selector.message.folder-required', 'Folder is required'),
               },
             }}
           />

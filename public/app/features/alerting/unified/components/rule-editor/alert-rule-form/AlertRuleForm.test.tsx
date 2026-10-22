@@ -373,7 +373,7 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     await user.type(await ui.inputs.name.find(), 'my new rule');
     await user.click(ui.buttons.save.get());
 
-    expect(await screen.findByText('Select a folder')).toBeInTheDocument();
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
   });
 
   it('requires a group and POSTs to the legacy ruler API only', async () => {

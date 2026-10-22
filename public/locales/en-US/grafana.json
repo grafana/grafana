@@ -1315,7 +1315,7 @@
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in.",
       "message": {
-        "select-a-folder": "Select a folder"
+        "folder-required": "Folder is required"
       }
     },
     "folderAndGroup": {
