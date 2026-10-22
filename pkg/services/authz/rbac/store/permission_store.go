@@ -116,6 +116,10 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 		perms = append(perms, perm)
 	}
 
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("error getting permissions: %w", err)
+	}
+
 	return perms, nil
 }
 

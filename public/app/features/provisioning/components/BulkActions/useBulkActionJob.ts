@@ -18,14 +18,12 @@ type JobTargets = { paths: string[] } | { resources: ResourceRef[] };
 
 export interface DeleteJobSpec {
   action: 'delete';
-  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
   message?: string;
   delete: { ref?: string } & JobTargets;
 }
 
 export interface MoveJobSpec {
   action: 'move';
-  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
   message?: string;
   move: {
     ref?: string;
