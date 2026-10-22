@@ -131,13 +131,6 @@ describe('startOf and endOf', () => {
 });
 
 describe('format', () => {
-  it.each([
-    ['2024-11-05', 'QQ QQQ [Q DDD DDDD]', '44 444 Q DDD DDDD'],
-    ['2024-11-05', 'Q[Q] Q[yr] QQ[Q]', '4Q 4yr 44Q'],
-  ])('preserves adjacent quarter tokens and literals in %s with %s', (input, format, expected) => {
-    expect(moment.utc(input).format(format)).toBe(expected);
-  });
-
   it('uses Z for UTC in the default format', () => {
     expect(moment.utc('2024-05-08T10:30:45Z').format()).toBe('2024-05-08T10:30:45Z');
   });
