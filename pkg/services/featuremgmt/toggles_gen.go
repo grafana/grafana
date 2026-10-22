@@ -91,10 +91,6 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
-	// FlagProvisioningUserAttribution
-	// Author Git Sync commits as the acting Grafana user
-	FlagProvisioningUserAttribution = "provisioning.userAttribution"
-
 	// FlagGrafanaFrontendLegacyFeatureToggleHandling
 	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
 	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
@@ -418,10 +414,6 @@ const (
 	// FlagZanzanaMergeUserPermissions
 	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
 	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
-
-	// FlagReloadDashboardsOnParamsChange
-	// Enables reload of dashboards on scopes, time range and variables changes
-	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
 	// FlagEnableScopesInMetricsExplore
 	// Enables the scopes usage in Metrics Explore

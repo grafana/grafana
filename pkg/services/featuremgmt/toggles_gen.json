@@ -2875,6 +2875,24 @@
     },
     {
       "metadata": {
+        "name": "grafana.geomapProtomapsBasemap",
+        "resourceVersion": "1792544486351",
+        "creationTimestamp": "2026-10-21T00:37:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-21 01:01:26.351546 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds an experimental Protomaps vector basemap to the geomap panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.globalHomePreference",
         "resourceVersion": "1791348293298",
         "creationTimestamp": "2026-10-07T14:12:16Z"
@@ -4942,7 +4960,8 @@
       "metadata": {
         "name": "provisioning.userAttribution",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-10T09:02:18Z"
+        "creationTimestamp": "2026-07-10T09:02:18Z",
+        "deletionTimestamp": "2026-10-12T06:52:55Z"
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
@@ -5274,13 +5293,17 @@
     {
       "metadata": {
         "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-25T12:56:54Z"
+        "resourceVersion": "1792489752750",
+        "creationTimestamp": "2024-10-25T12:56:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-20 09:49:12.750999 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables reload of dashboards on scopes, time range and variables changes",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5459,7 +5482,8 @@
       "metadata": {
         "name": "restrictedPluginApis",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-10-16T13:40:44Z"
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",

@@ -28,7 +28,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-02-23,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2026-07-10,provisioning.userAttribution,preview,@grafana/grafana-app-platform-squad,false,false,false
 2026-09-16,grafana.frontendLegacyFeatureToggleHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
@@ -143,7 +142,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
 2026-04-20,zanzanaMergeUserPermissions,experimental,@grafana/identity-access-team,false,false,false
-2024-10-25,reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
+2024-10-25,reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,true
 2024-11-06,enableScopesInMetricsExplore,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2024-06-27,cloudWatchRoundUpEndTime,GA,@grafana/data-sources-plugins,false,false,false
 2022-05-30,prometheusAzureOverrideAudience,deprecated,@grafana/data-sources-plugins,false,false,false
@@ -225,7 +224,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
-2025-07-31,restrictedPluginApis,GA,@grafana/grafana-catalog,false,false,true
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2026-06-24,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true
@@ -399,3 +397,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-07,grafana.otelLogDetails,experimental,@grafana/observability-logs,false,false,true
 2026-10-16,grafana.announcementBannerDismissible,GA,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-14,datasources.gatewayAuditPolicy,experimental,@grafana/data-sources-plugins,false,false,false
+2026-10-21,grafana.geomapProtomapsBasemap,experimental,@grafana/dataviz-squad,false,false,true
