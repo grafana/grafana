@@ -28,7 +28,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-02-23,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2026-07-10,provisioning.userAttribution,preview,@grafana/grafana-app-platform-squad,false,false,false
 2026-09-16,grafana.frontendLegacyFeatureToggleHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
@@ -283,7 +282,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-20,kubernetesAuthInfoRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
 2026-08-19,appplugins.loadAppManifest,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2026-09-17,appplugins.loadAppManifestAndKeepSettings,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-06,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-06,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-02-12,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
