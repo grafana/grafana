@@ -64,6 +64,8 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
+  AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -138,8 +140,6 @@ export const FlagKeys = {
   DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
   DisableScriptedDashboards: "disableScriptedDashboards",
-  /** Set this to true to enable all app chrome extensions registered by plugins. */
-  EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -670,6 +670,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanBuildingScreen`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanBuildingScreen", false, options).value;
+};
+
+/**
  * Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built
  *
  * **Details:**
@@ -1074,17 +1085,6 @@ export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagDisableScriptedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("disableScriptedDashboards", true, options).value;
-};
-
-/**
- * Set this to true to enable all app chrome extensions registered by plugins.
- *
- * **Details:**
- * - flag key: `enableAppChromeExtensions`
- * - default value: `false`
- */
-export const useFlagEnableAppChromeExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("enableAppChromeExtensions", false, options).value;
 };
 
 /**
@@ -1565,10 +1565,10 @@ export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluati
  *
  * **Details:**
  * - flag key: `grafana.recordedQueriesDisableCreate`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.recordedQueriesDisableCreate", false, options).value;
+  return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
 };
 
 /**

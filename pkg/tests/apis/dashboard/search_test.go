@@ -756,6 +756,76 @@ func TestIntegrationSearchCreatePermissionSharedWithMe(t *testing.T) {
 	}
 }
 
+func TestIntegrationSearchIncludeCanCreate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+		EnableFeatureToggles: []string{featuremgmt.FlagFolderPickerCreatePermission},
+	})
+	defer helper.Shutdown()
+
+	for _, uid := range []string{"canc-parent", "canc-child"} {
+		parent := ""
+		if uid == "canc-child" {
+			parent = "canc-parent"
+		}
+		body, err := json.Marshal(map[string]string{"uid": uid, "title": uid, "parentUid": parent})
+		require.NoError(t, err)
+		resp := apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/folders", Body: body, ContentType: "application/json",
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+	}
+
+	createOnly := helper.CreateUser("canc-create-only", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+		Actions:           []string{dashboards.ActionDashboardsCreate},
+		Resource:          "folders",
+		ResourceAttribute: "uid",
+		ResourceID:        "canc-child",
+	}})
+
+	canCreate := func(user apis.User, query string) (map[string]bool, *dashboardV0.SearchResults) {
+		path := fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?type=folder&%s", user.Identity.GetNamespace(), query)
+		resp := apis.DoRequest(helper, apis.RequestParams{User: user, Method: http.MethodGet, Path: path}, &dashboardV0.SearchResults{})
+		require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+		got := map[string]bool{}
+		for _, hit := range resp.Result.Hits {
+			require.NotNil(t, hit.CanCreate, hit.Name)
+			got[hit.Name] = *hit.CanCreate
+		}
+		return got, resp.Result
+	}
+
+	t.Run("admin can create in every folder", func(t *testing.T) {
+		got, res := canCreate(helper.Org1.Admin, "query=canc-&include=canCreate")
+		assert.True(t, res.CanCreateChecked)
+		assert.Equal(t, map[string]bool{"canc-parent": true, "canc-child": true}, got)
+	})
+
+	t.Run("viewer can see the folders but not create in them", func(t *testing.T) {
+		got, _ := canCreate(helper.Org1.Viewer, "query=canc-&include=canCreate")
+		assert.Equal(t, map[string]bool{"canc-parent": false, "canc-child": false}, got)
+	})
+
+	t.Run("create-only grant is reported for a folder the user cannot read", func(t *testing.T) {
+		got, _ := canCreate(createOnly, "folder=sharedwithme&permission=create&include=canCreate")
+		assert.Equal(t, map[string]bool{"canc-child": true}, got)
+	})
+
+	t.Run("rejects dashboards", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?type=dashboard&include=canCreate", helper.Org1.Admin.Identity.GetNamespace())
+		resp := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodGet, Path: path}, &dashboardV0.SearchResults{})
+		assert.Equal(t, http.StatusBadRequest, resp.Response.StatusCode)
+	})
+}
+
 // roundTo rounds a float64 to a specified number of decimal places.
 func roundTo(n float64, decimals uint32) float64 {
 	// Calculate the power of 10 for the desired number of decimals

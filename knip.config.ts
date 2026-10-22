@@ -28,7 +28,7 @@ const nonProductionFiles = [
 
 const defaultProject = ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}!', ...nonProductionFiles];
 
-const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
+const externalisedDatasources = ['azuremonitor', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
