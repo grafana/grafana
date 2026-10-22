@@ -6,9 +6,12 @@ import {
   ASSERTS_APP_ID,
   ASSISTANT_APP_ID,
   AUTH_APP_ID,
+  COLLECTOR_APP_ID,
+  DBCFG_APP_ID,
   HOSTED_TRACES_APP_ID,
   LOGS_DRILLDOWN_APP_ID,
   METRICS_DRILLDOWN_APP_ID,
+  PDC_APP_ID,
   SERVICECENTER_APP_ID,
   SLO_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
@@ -17,8 +20,9 @@ import {
 import { NavID, type NavId, NavWeight } from './constants';
 
 export interface AppNavConfig {
-  sectionId: NavId;
-  sortWeight: number;
+  /** Required unless the entry is `hidden`, which has nowhere to be placed */
+  sectionId?: NavId;
+  sortWeight?: number;
   text?: string;
   icon?: IconName;
   subTitle?: string;
@@ -261,6 +265,21 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
     sortWeight: NavWeight.cmab,
     icon: 'cmab-logo',
   },
+  //////////////////////////
+  // Grafana Cloud config //
+  //////////////////////////
+  // Declared here rather than left to Grafana Cloud's instance config, which set
+  // these through [navigation.app_sections] and [navigation.app_standalone_pages].
+  // The server-built tree still reads them from that config, so these entries
+  // have no equivalent in applinks.go.
+  [COLLECTOR_APP_ID]: {
+    // The app is not listed; three of its pages are, below
+    hidden: true,
+  },
+  [DBCFG_APP_ID]: {
+    sectionId: NavID.cfg,
+  },
+
   'grafana-easystart-app': {
     sectionId: NavID.root,
     sortWeight: NavWeight.apps + 1,
@@ -320,6 +339,34 @@ const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
     sectionId: NavID.cfgAccess,
     sortWeight: 2,
     subTitle: 'Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services',
+  },
+
+  //////////////////////////
+  // Grafana Cloud config //
+  //////////////////////////
+  // As above: these mirror the Cloud instance config rather than applinks.go
+  [`/a/${COLLECTOR_APP_ID}/alloy`]: {
+    sectionId: NavID.connections,
+    sortWeight: 1,
+  },
+  [`/a/${COLLECTOR_APP_ID}/instrumentation-hub`]: {
+    sectionId: NavID.connections,
+    sortWeight: 2,
+  },
+  [`/a/${COLLECTOR_APP_ID}/fleet-management`]: {
+    sectionId: NavID.connections,
+    sortWeight: 3,
+  },
+  // Both of these replace the core Connections page of the same url
+  '/connections/add-new-connection': {
+    sectionId: NavID.connections,
+    sortWeight: 4,
+  },
+  '/connections/infrastructure': {
+    sectionId: NavID.connections,
+  },
+  [`/a/${PDC_APP_ID}`]: {
+    hidden: true,
   },
 };
 

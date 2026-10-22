@@ -165,7 +165,8 @@ function buildAppLink(app: AppPluginConfig): {
     }
     if (pathConfig) {
       standalonePages.push({
-        sectionId: pathConfig.sectionId,
+        // A page entry always names a section — only a hidden one may leave it out
+        sectionId: pathConfig.sectionId ?? NavID.apps,
         link: { ...withNavConfig(link, pathConfig), id: standalonePluginPageId(include.path) },
       });
       continue;
@@ -233,7 +234,7 @@ function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: Standalo
 function withNavConfig(link: NavModelItem, { sortWeight, text, subTitle, isNew, icon }: AppNavConfig): NavModelItem {
   return {
     ...link,
-    sortWeight,
+    ...(sortWeight !== undefined && { sortWeight }),
     ...(text !== undefined && { text }),
     ...(subTitle !== undefined && { subTitle }),
     ...(isNew !== undefined && { isNew }),
