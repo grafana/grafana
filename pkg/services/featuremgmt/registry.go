@@ -963,7 +963,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -3182,7 +3182,7 @@ var (
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{
