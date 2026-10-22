@@ -238,11 +238,6 @@ export function MegaMenuItem({
               <Text truncate element="p">
                 {link.text}
               </Text>
-              {/* TODO: place here the ellipsis component
-                  1. Check if link.url is in the allowList
-                  2. If it is not, show the component till the st pod is ready
-                  3. If it is, do nothing
-              */}
               {isStPodLoading && <StPodPendingDots />}
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}

@@ -4,7 +4,7 @@ import { matchPath } from 'react-router-dom-v5-compat';
 
 import { useFlagGrafanaMtFallback } from '@grafana/runtime/internal';
 
-export const useIsUrlAllowed = (location: Location) => {
+export const useIsUrlAllowed = (location: Pick<Location, 'pathname'>) => {
   const flagValue = useFlagGrafanaMtFallback();
   const urlList = getAllowedList(flagValue);
   return urlList?.length ? urlList.some((pattern) => matchPath(pattern, location.pathname) !== null) : true;
