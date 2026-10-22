@@ -27,7 +27,7 @@ These apply to every type, and matter when deciding whether an exclusion is safe
 ### Go
 
 - **Subtests cannot be excluded individually.** `go test -skip` matches each `/`-separated element, so entries must be the top-level `TestFoo`, not `TestFoo/case`. A flaky table case means excluding the whole parent test, and the validator rejects anything that is not a top-level name.
-- The exclusion applies to the enterprise module too, since every Go job reads the same list.
+- **grafana-enterprise's own Go jobs ignore this list.** Grafana's workflows cover the enterprise module, but `grafana-enterprise`'s `backend-tests-unit.yml` and `backend-tests-integration.yml` invoke `go test` directly without `-skip`, so a Go exclusion does not stop a failure reported by those jobs. Jest and Playwright exclusions do reach them, because those jobs run Grafana's own `yarn` scripts.
 
 ### Jest and Playwright
 

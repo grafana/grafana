@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "type": "jest",
+    "test": "DashboardSchemaEditor with CodeMirror validates JSON once after typing pauses and blocks saving while pending",
+    "codeowner": "@grafana/dashboards-squad"
+  },
+  {
+    "type": "jest",
+    "test": "getSqlSignatureHelpProvider clamps the active parameter to the last declared parameter for variadic functions",
+    "codeowner": "@grafana/datapro"
+  },
+  {
+    "type": "go",
+    "test": "TestIntegrationLegacyWatchNotifications",
+    "codeowner": "@grafana/identity-access-team"
+  }
+]
