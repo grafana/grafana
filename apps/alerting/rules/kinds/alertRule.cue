@@ -7,6 +7,9 @@ import (
 alertRuleKind: {
 	kind:       "AlertRule"
 	pluralName: "AlertRules"
+	search: {
+		global: true
+	}
 }
 
 alertRulev0alpha1: alertRuleKind & {
