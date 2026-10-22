@@ -6,7 +6,7 @@ import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo
 import { CoreApp, type GrafanaTheme2, type IconName, type LogLabelStatsModel, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, Dropdown, Icon, IconButton, Menu, Pagination, useStyles2 } from '@grafana/ui';
+import { Box, ClipboardButton, Dropdown, Icon, IconButton, Menu, Pagination, Stack, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -39,6 +39,16 @@ export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFi
 
   return (
     <>
+      <Stack justifyContent="center">
+        <Box marginBottom={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
       <div className={styles.fieldsTable}>
         {pagedItems.map((field, i) => (
           <LogLineOTelDetailsField
@@ -52,14 +62,16 @@ export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFi
           />
         ))}
       </div>
-      <div className={styles.pagination}>
-        <Pagination
-          currentPage={currentPage}
-          numberOfPages={numberOfPages}
-          onNavigate={onNavigate}
-          hideWhenSinglePage
-        />
-      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
     </>
   );
 };
@@ -82,6 +94,16 @@ export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDeta
 
   return (
     <>
+      <Stack justifyContent="center">
+        <Box marginBottom={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
       <div className={styles.fieldsTable}>
         {pagedItems.map((field, i) => (
           <LogLineOTelDetailsField
@@ -95,14 +117,16 @@ export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDeta
           />
         ))}
       </div>
-      <div className={styles.pagination}>
-        <Pagination
-          currentPage={currentPage}
-          numberOfPages={numberOfPages}
-          onNavigate={onNavigate}
-          hideWhenSinglePage
-        />
-      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
     </>
   );
 };
@@ -113,11 +137,6 @@ const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     // Icon buttons are 24px (sm) or 26px (md). This row always has three controls.
     gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(9) : theme.spacing(9.75)} fit-content(30%) 1fr`,
-  }),
-  pagination: css({
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: theme.spacing(1),
   }),
 });
 
