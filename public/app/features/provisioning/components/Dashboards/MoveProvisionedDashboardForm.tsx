@@ -80,8 +80,7 @@ export function MoveProvisionedDashboardForm({
 
   const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
     repository,
-    target: { workflow, prTitle },
-    ref,
+    prTitle,
     onBeforeLeave: () => {
       dashboard.setState({ isDirty: false });
       panelEditor?.onDiscard();
@@ -137,7 +136,7 @@ export function MoveProvisionedDashboardForm({
     };
 
     try {
-      await submit(repo, jobSpec);
+      await submit(jobSpec);
     } catch (error) {
       showError(
         extractErrorMessage(

@@ -5,28 +5,34 @@ import { type Job, type RepositoryView, useCreateRepositoryJobsMutation } from '
 
 import { type JobSuccess } from '../Wizard/types';
 import { type DeleteJobSpec, type MoveJobSpec } from '../components/BulkActions/useBulkActionJob';
-import { getJobListRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
+import { getJobListRedirectUrl } from '../utils/redirect';
 
-import { type CommitTarget } from './useCommitTarget';
 import { useLastBranch } from './useLastBranch';
 
+type ResourceJobSpec = DeleteJobSpec | MoveJobSpec;
+
 /**
- * A created job with the commit target it was submitted for. Creating the job refetches the refs,
- * which can reclassify the branch as existing and clear the live PR title, so completion reads
- * this snapshot instead of the form's current state.
+ * A created job with the exact spec it was created from. Creating the job refetches the refs,
+ * which can reclassify the branch and clear the live PR title, so completion reads this snapshot
+ * instead of the form's current state.
  */
-export type SubmittedJob = Pick<CommitTarget, 'workflow' | 'prTitle'> & { job: Job; ref: string };
+export interface SubmittedJob {
+  job: Job;
+  jobSpec: ResourceJobSpec;
+  prTitle: string;
+}
 
 interface UseResourceJobArgs {
   repository: RepositoryView | undefined;
-  /** Live commit target, snapshotted when the job is created. */
-  target: Pick<CommitTarget, 'workflow' | 'prTitle'>;
-  /** Current value of the form's `ref` field. */
-  ref: string;
-  /** PR-banner action for the list page; omitted for moves, which have none. */
-  action?: ResourceBranchAction;
+  /** Live PR title, snapshotted when the job is created; it is not part of the job spec. */
+  prTitle: string;
   /** Resource-specific cleanup right before leaving the page. */
   onBeforeLeave?: () => void;
+}
+
+/** The spec carries a ref only for a branch push; a direct write targets the configured branch. */
+function getRequestRef(jobSpec: ResourceJobSpec) {
+  return jobSpec.action === 'delete' ? jobSpec.delete.ref : jobSpec.move.ref;
 }
 
 /**
@@ -34,15 +40,18 @@ interface UseResourceJobArgs {
  * remembering the branch for the next form, and the redirect to the dashboard list once the job
  * finishes. `submit` rejects with the API error so the form can show it its own way.
  */
-export function useResourceJob({ repository, target, ref, action, onBeforeLeave }: UseResourceJobArgs) {
+export function useResourceJob({ repository, prTitle, onBeforeLeave }: UseResourceJobArgs) {
   const [createJob, { isLoading: isCreating }] = useCreateRepositoryJobsMutation();
   const [submitted, setSubmitted] = useState<SubmittedJob>();
   const navigate = useNavigate();
   const { setLastBranch } = useLastBranch();
 
-  const submit = async (repositoryName: string, jobSpec: DeleteJobSpec | MoveJobSpec) => {
-    const job = await createJob({ name: repositoryName, jobSpec }).unwrap();
-    setSubmitted({ job, ref, workflow: target.workflow, prTitle: target.prTitle });
+  const submit = async (jobSpec: ResourceJobSpec) => {
+    if (!repository) {
+      throw new Error('Cannot create a job without a repository');
+    }
+    const job = await createJob({ name: repository.name, jobSpec }).unwrap();
+    setSubmitted({ job, jobSpec, prTitle });
   };
 
   const handleSuccess = useCallback(
@@ -50,21 +59,22 @@ export function useResourceJob({ repository, target, ref, action, onBeforeLeave 
       if (!submitted) {
         return;
       }
-      // The form's ref is the configured branch for a direct write, so this mirrors what the
-      // /files-based forms remember through useProvisionedRequestHandler.
-      setLastBranch(repository?.name, submitted.ref || repository?.branch);
+      const requestRef = getRequestRef(submitted.jobSpec);
+      // Mirrors what the /files-based forms remember through useProvisionedRequestHandler.
+      setLastBranch(repository?.name, requestRef ?? repository?.branch);
       onBeforeLeave?.();
       navigate(
         getJobListRedirectUrl({
-          workflow: submitted.workflow,
+          workflow: requestRef ? 'branch' : 'write',
           urls,
           repoType: repository?.type,
-          action,
+          // The list page has a banner for deletes; moves have none.
+          action: submitted.jobSpec.action === 'delete' ? 'delete' : undefined,
           prTitle: submitted.prTitle,
         })
       );
     },
-    [submitted, repository?.name, repository?.branch, repository?.type, action, onBeforeLeave, navigate, setLastBranch]
+    [submitted, repository?.name, repository?.branch, repository?.type, onBeforeLeave, navigate, setLastBranch]
   );
 
   return { submitted, submit, isCreating, handleSuccess };

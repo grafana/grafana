@@ -21,18 +21,13 @@ interface ResourceJobStatusProps {
  * blank the watcher leaves when its lookup fails, and success either shows an alert or hands off.
  */
 export function ResourceJobStatus({ job, jobType, successTitle, onSuccess }: ResourceJobStatusProps) {
-  // Keep a finished status so the longer retry path re-emitting it does not flip the alert in a
-  // render loop. An error is not kept: the watcher reports a failed job lookup the same way as a
-  // failed job, and the lookup can recover into a finished job.
   const [status, setStatus] = useState<StepStatusInfo>();
 
   const onStatusChange = useCallback((info: StepStatusInfo) => {
     if (['error', 'warning', 'success'].includes(info.status)) {
-      setStatus((prev) => {
-        // A job that finished is final; nothing can follow it.
-        const finished = prev?.status === 'success' || prev?.status === 'warning';
-        return finished || prev?.status === info.status ? prev : info;
-      });
+      // A finished job is final. Anything earlier, including a failed job lookup the watcher reports
+      // as an error, is superseded by whatever it reports next.
+      setStatus((prev) => (prev?.status === 'success' || prev?.status === 'warning' ? prev : info));
     }
   }, []);
 

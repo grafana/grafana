@@ -75,9 +75,7 @@ export function DeleteProvisionedDashboardForm({
 
   const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
     repository,
-    target: { workflow, prTitle },
-    ref,
-    action: 'delete',
+    prTitle,
     onBeforeLeave: () => {
       // Nothing is left to save once the file is deleted, so the redirect must not trip the
       // unsaved-changes prompt.
@@ -129,7 +127,7 @@ export function DeleteProvisionedDashboardForm({
     };
 
     try {
-      await submit(repo, jobSpec);
+      await submit(jobSpec);
     } catch (error) {
       showError(error);
     }

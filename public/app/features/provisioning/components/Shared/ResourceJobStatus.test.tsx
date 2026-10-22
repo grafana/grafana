@@ -39,6 +39,18 @@ describe('ResourceJobStatus', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('shows the job failure that follows a failed lookup', () => {
+    emitted = [
+      { status: 'error', error: 'Error fetching active job' },
+      { status: 'error', error: 'file not found' },
+    ];
+
+    render(<ResourceJobStatus job={createJob()} jobType="delete" />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('file not found');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Error fetching active job');
+  });
+
   it('notifies success once even when the watcher re-emits it', () => {
     emitted = [
       { status: 'success', urls },

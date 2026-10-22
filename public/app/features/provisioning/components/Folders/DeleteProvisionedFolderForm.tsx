@@ -68,9 +68,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 
   const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
     repository,
-    target: { workflow, prTitle },
-    ref,
-    action: 'delete',
+    prTitle,
     onBeforeLeave: onDismiss,
   });
 
@@ -106,7 +104,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     };
 
     try {
-      await submit(repo, jobSpec);
+      await submit(jobSpec);
     } catch (error) {
       showError(error);
     }
