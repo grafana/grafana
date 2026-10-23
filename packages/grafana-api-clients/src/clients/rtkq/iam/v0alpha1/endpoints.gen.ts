@@ -1545,6 +1545,8 @@ export type CurrentUserInfo = {
   namespace?: string;
   /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). */
   role?: string;
+  /** The user teams */
+  teams?: string[];
 };
 export type UserPermission = {
   action: string;

@@ -20,6 +20,7 @@ import {
   NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION,
   NOTEBOOK_AUTOSAVE_FAILED_REASON,
   NOTEBOOK_ENTRY_POINT,
+  type NotebookEntryPoint,
 } from '../analytics/types';
 import {
   createNotebook,
@@ -152,9 +153,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private stopped = false;
   /** Failures in a row since the last save that landed. `autosave_failed` sends this as `attempt`. */
   private failedAttempts = 0;
+  private entryPoint: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST;
 
   public constructor(private scene: NotebookScene) {
     super({ status: 'idle' });
+  }
+
+  public setEntryPoint(source: NotebookEntryPoint): void {
+    this.entryPoint = source;
   }
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
@@ -282,7 +288,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
-    this.savedTimeSettings = timeSettings;
+    // Never the stored `hideTimepicker`: the scene ignores it, and `buildSpecToSave` substitutes this
+    // whenever time was not edited, so keeping it would write `true` back on every cell or title save.
+    this.savedTimeSettings = { ...timeSettings, hideTimepicker: false };
   }
 
   /**
@@ -1033,9 +1041,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       } finally {
         this.adoptingUid = false;
       }
-      // Only a blank notebook reaches this create, and the list is the only link to the blank route
-      // today. A second way in has to hand its own source to the autosave.
-      NotebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
+      NotebookAnalytics.created(created, this.entryPoint, spec.layout.spec.cells.length);
       return { generation, resourceVersion };
     });
   }
@@ -1166,16 +1172,12 @@ function isVizPanelState(state: SceneObjectState): state is VizPanel['state'] {
 /**
  * Whether a state change was a change to the notebook's time settings.
  *
- * `buildTimeSettingsSpec` reads them from these four places, so all four have to be named here: one left
+ * `buildTimeSettingsSpec` reads them from these three places, so all three have to be named here: one left
  * out is one whose edits get thrown away as if a reader had made them.
  */
 export function changesTimeSettings(payload: SceneObjectStateChangedPayload, scene: NotebookScene): boolean {
-  const { changedObject, partialUpdate } = payload;
+  const { changedObject } = payload;
   const { $timeRange, timePicker, refreshPicker } = scene.state;
-
-  if (changedObject === scene) {
-    return 'hideTimeControls' in partialUpdate;
-  }
 
   return changedObject === $timeRange || changedObject === timePicker || changedObject === refreshPicker;
 }

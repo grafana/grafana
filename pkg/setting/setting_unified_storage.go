@@ -251,6 +251,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
+	cfg.LoggedQuotaResources = parseCommaSeparatedList(section.Key("log_quotas_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -289,6 +290,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
+	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 
