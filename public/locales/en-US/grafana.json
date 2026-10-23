@@ -2136,14 +2136,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max data points",
-      "tooltip-max-data-points": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+      "tooltip-max-data-points": "Per series, used directly by some data sources and to calculate auto interval"
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "new"
     },
     "min-interval-option": {
       "label-interval": "Interval",
-      "tooltip-interval": "Interval sent to the data source. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
+      "tooltip-interval": "Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
     },
     "modify-export-rule-form": {
       "action-buttons": {
