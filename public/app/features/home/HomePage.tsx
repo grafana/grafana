@@ -1,6 +1,5 @@
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 
-
 import { LegacyHomePage } from './LegacyHomePage';
 import { RedesignedHomePage } from './RedesignedHomePage';
 
