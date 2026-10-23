@@ -11,9 +11,13 @@ test.use({
   featureToggles: {
     scopeFilters: true,
     groupByVariable: true,
-    reloadDashboardsOnParamsChange: true,
   },
-  openFeature: { flags: { 'grafana.scopesDashboardsMegaMenu': true } },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+      'grafana.scopesDashboardsMegaMenu': true,
+    },
+  },
 });
 
 runDashboardNavigationCujs({ megaMenu: true });
