@@ -43,14 +43,19 @@ Each notebook row includes an **Edit** button and a menu where you can access th
 - Copy a shareable link
 - Export by copying the raw Markdown
 - Export by downloading a .md file
-- Export as a PDF
+- Export as a PDF, when a compatible image renderer is available
 - Delete
 
 You can also access all of these options inside a notebook in the toolbar:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-toolbar-v13.3.png" max-width="600px" alt="The toolbar in a notebook with the actions menu open" >}}
 
-When you export a notebook as raw Markdown or in an .md file, panels render as JSON code blocks, like this:
+{{< admonition type="note">}}
+Sharing a notebook link doesn't grant access to the notebook or its data sources.
+Recipients need permission to view the notebook and query the data sources used by its panels.
+{{< /admonition >}}
+
+When you export a notebook as raw Markdown or in an .md file, panels render as JSON code blocks rather than rendered visualizations, like this:
 
 ```json
 [
@@ -65,6 +70,8 @@ When you export a notebook as raw Markdown or in an .md file, panels render as J
 ]
 ```
 
+PDF exports retain the rendered visualizations.
+
 ## Add notebooks
 
 To create a notebook from the **Notebooks** page, follow these steps:
@@ -73,11 +80,11 @@ To create a notebook from the **Notebooks** page, follow these steps:
 1. Click **+ New notebook**.
 1. (Optional) Update the title of the notebook to something descriptive and searchable.
 1. (Optional) Add tags to further define the subject of your notebook.
-1. Start typing to create a text block or click one of the buttons below the block to add one of the following options:
+1. Start typing to create a text block or click one of the following buttons below the block:
    - **Heading**: Adds an H1 heading.
-   - **Paragraph**: The default. Use this to revert to paragraph text if you've previously selected another option.
+   - **Paragraph**: Adds a text block that you can format with Markdown.
    - **Code**: Adds a code block. Select a language, like Go, SQL, or plain text.
-   - **Visualization**: Opens the panel query editor with a graph panel below it.
+   - **Visualization**: Adds an empty visualization with its query editor below it.
 
    You can also type a forward slash (`/`) to open a list of block types from which to select.
 
@@ -86,7 +93,10 @@ To create a notebook from the **Notebooks** page, follow these steps:
    Each new block is automatically added after the previous one. To add a block above a previous one, click the plus icon at the top-left corner of the block:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-add-block-above-v13.3.png" max-width="600px" alt="Adding a notebook block above the current block" >}}
 
-1. Reorder, duplicate, and delete blocks as needed:
+1. Do the following as needed:
+
+   - Use the drag-and-drop handles on the left side of each block to reorder them.
+   - Click the **Block actions** menu at the top-right corner to access duplicate or delete options.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-block-actions-v13.3.png" max-width="600px" alt="Notebook block with actions menu open" >}}
 
@@ -99,7 +109,38 @@ To create a notebook from the **Notebooks** page, follow these steps:
 
 To update the notebook, click **Edit** in the toolbar again.
 
-You don't need to save a notebook because it auto-saves throughout the creation process.
+Notebooks automatically save your changes.
+For more information, refer to the [Save status section](#save-status)
+
+<!--TODO: Do I wanna add this here? You can also create a notebook from the **New** menu in Grafana or by searching for **New notebook** in the command palette.-->
+
+## Save status
+
+Notebooks save your edits automatically, including changes made with [undo and redo](#undo-and-redo-changes).
+The save status displays at the top of the notebook next to the undo and redo icons.
+Possible saved statuses are: **Unsaved changes**, **Saving…**, **Saved**, or **Save failed**.
+If a save fails, check the error and use **Retry** when it's available before leaving the page.
+
+## Edit notebooks
+
+To edit a notebook, follow these steps:
+
+1. Navigate to **Notebooks**.
+1. Click **Edit** on the row of the notebook you want to update.
+1. Make any needed changes.
+1. When you've finished updating the notebook, click **View** to leave edit mode.
+
+Notebooks automatically save your changes.
+
+### Undo and redo changes
+
+You can also edit notebooks by undoing or redoing changes.
+The undo and redo icons are in the toolbar at the top of a notebook.
+When you hover your cursor over either of the buttons, it displays what change will be reverted or reinstated:
+
+<!-- TODO: SCREENSHOT HERE -->
+
+You can't restore a deleted notebook using undo or redo.
 
 ## Create notebooks from Grafana Assistant Workspace
 
@@ -148,16 +189,6 @@ To declare an incident from a notebook, follow these steps:
 
 1. Add any other needed context to the incident.
 
-## Edit notebooks
 
-To edit a notebook, follow these steps:
 
-1. Navigate to **Notebooks**.
-1. Click **Edit** on the row of the notebook you want to update.
-1. Make any needed changes.
 
-   Note that you might need to expand panel queries to edit them as they might be collapsed, by default.
-
-1. When you've finished updating the notebook, click **View** to leave edit mode.
-
-You don't need to save a notebook because it auto-saves throughout the editing process.
