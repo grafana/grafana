@@ -1445,6 +1445,7 @@
         "no-rules": "No alert rules found",
         "rules-error": "Failed to load rules"
       },
+      "interval": "Evaluated every {{interval}}",
       "recording-rules": {
         "no-rules": "No recording rules found",
         "rules-error": "Failed to load recording rules"
