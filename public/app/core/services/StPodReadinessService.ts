@@ -21,8 +21,6 @@ interface HealthResponse {
   database?: string;
 }
 
-const isTerminal = (status: StPodStatus): boolean => status === StPodStatus.Ready || status === StPodStatus.Timeout;
-
 const createPending = (): PendingResolver => {
   let resolve!: () => void;
   const promise = new Promise<void>((res) => {
@@ -67,7 +65,7 @@ export class StPodReadinessService {
     if (status === StPodStatus.Ready) {
       return;
     }
-    if (isTerminal(status)) {
+    if (status === StPodStatus.Timeout) {
       this.reset();
     }
     this.beginPolling();
