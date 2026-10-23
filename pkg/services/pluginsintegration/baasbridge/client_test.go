@@ -114,8 +114,14 @@ func newHTTPTestOperator(t *testing.T) (*httptest.Server, *[]string) {
 
 func newHTTPTestClient(t *testing.T, host string) appclientv3.Client {
 	t.Helper()
+	client, err := NewClient(host, httpTestManifest(), Options{RouteCredentials: httpTestCredentials})
+	require.NoError(t, err)
+	return client
+}
+
+func httpTestManifest() *app.ManifestData {
 	ops := []app.AdmissionOperation{app.AdmissionOperationCreate, app.AdmissionOperationUpdate}
-	manifest := &app.ManifestData{Group: httpTestGroup, Versions: []app.ManifestVersion{{
+	return &app.ManifestData{Group: httpTestGroup, Versions: []app.ManifestVersion{{
 		Name: "v1",
 		Kinds: []app.ManifestVersionKind{{
 			Kind:   "Widget",
@@ -132,9 +138,6 @@ func newHTTPTestClient(t *testing.T, host string) appclientv3.Client {
 			},
 		}},
 	}}}
-	client, err := NewClient(host, manifest, Options{RouteCredentials: httpTestCredentials})
-	require.NoError(t, err)
-	return client
 }
 
 // httpTestCredentials sets the headers the router sends a route for a requester.
@@ -229,6 +232,39 @@ func TestClientConvertObjects(t *testing.T) {
 		require.Equal(t, metav1.StatusFailure, rsp.GetError().GetStatus())
 		require.Equal(t, int32(http.StatusUnprocessableEntity), rsp.GetError().GetCode())
 	})
+}
+
+func TestClientWebhookPaths(t *testing.T) {
+	operator, _ := newHTTPTestOperator(t)
+	var paths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/hooks")
+		operator.Config.Handler.ServeHTTP(w, r)
+	}))
+	t.Cleanup(server.Close)
+	manifest := httpTestManifest()
+	manifest.Operator = &app.ManifestOperatorInfo{Webhooks: &app.ManifestOperatorWebhookProperties{
+		ConversionPath: "/hooks/convert",
+		MutationPath:   "/hooks/mutate",
+	}}
+	client, err := NewClient(server.URL, manifest, Options{})
+	require.NoError(t, err)
+
+	rsp, err := client.AdmissionReview(t.Context(), httpTestAdmissionRequest("Widget", "example"))
+	require.NoError(t, err)
+	require.True(t, rsp.GetAllowed(), rsp.GetError().GetMessage())
+	target := &pluginv3.GroupVersionKind{}
+	target.SetGroup(httpTestGroup)
+	target.SetVersion("v0alpha1")
+	target.SetKind("Widget")
+	req := &pluginv3.ConvertObjectsRequest{}
+	req.SetTarget(target)
+	req.SetObjects([][]byte{[]byte(`{"apiVersion":"` + httpTestGroup + `/v1","kind":"Widget","metadata":{"name":"a"}}`)})
+	conv, err := client.ConvertObjects(t.Context(), req)
+	require.NoError(t, err)
+	require.Nil(t, conv.GetError())
+	require.Equal(t, []string{"/hooks/mutate", "/validate", "/hooks/convert"}, paths)
 }
 
 func TestClientCallRoute(t *testing.T) {
