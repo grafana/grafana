@@ -2,10 +2,13 @@ package resource
 
 import (
 	"context"
+	"slices"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -41,11 +44,98 @@ func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotific
 	}
 }
 
+// watchNotificationLabels lists the label keys copied onto a notification.
+// Only these are sent to keep the payload small; extend it as consumers need more.
+var watchNotificationLabels = []string{
+	"encrypted",       // settings: value lives in the secrets service
+	"secureValueName", // settings: secure value to clean up
+}
+
+// watchNotificationAnnotations lists the annotation keys copied onto a
+// notification. Only these are sent to keep the payload small; extend it as
+// consumers need more.
+var watchNotificationAnnotations = []string{
+	"setting.grafana.app/pending-secret-cleanup", // settings: superseded secrets awaiting cleanup
+}
+
+// watchNotificationFinalizers lists the finalizers copied onto a notification.
+// Extend it as consumers need more.
+var watchNotificationFinalizers = []string{
+	"setting.grafana.app/secret-cleanup", // settings: secret cleanup pending on delete
+}
+
+// watchMetadata is the object metadata a notification carries so consumers can
+// filter without a GET. It is not part of the persisted Event.
+type watchMetadata struct {
+	Labels            map[string]string // allowlisted keys only
+	PreviousLabels    map[string]string // allowlisted keys only
+	Generation        int64
+	CreationTimestamp int64 // unix millis, 0 when unset
+	DeletionTimestamp int64 // unix millis, 0 when unset
+	Finalizers        []string
+	Annotations       map[string]string // allowlisted keys only
+}
+
+// newWatchMetadata reads the metadata of the written object and, when there is
+// one, of its previous revision. Either may be nil.
+func newWatchMetadata(obj, previous utils.GrafanaMetaAccessor) *watchMetadata {
+	if obj == nil {
+		return nil
+	}
+	m := &watchMetadata{
+		Labels:            filterKeys(obj.GetLabels(), watchNotificationLabels),
+		Generation:        obj.GetGeneration(),
+		Finalizers:        filterFinalizers(obj.GetFinalizers()),
+		Annotations:       filterKeys(obj.GetAnnotations(), watchNotificationAnnotations),
+		CreationTimestamp: timeToMillis(obj.GetCreationTimestamp().Time),
+	}
+	if dt := obj.GetDeletionTimestamp(); dt != nil {
+		m.DeletionTimestamp = timeToMillis(dt.Time)
+	}
+	if previous != nil {
+		m.PreviousLabels = filterKeys(previous.GetLabels(), watchNotificationLabels)
+	}
+	return m
+}
+
+// filterKeys keeps only the allowed keys, or nil when none are set.
+func filterKeys(m map[string]string, allowed []string) map[string]string {
+	var out map[string]string
+	for _, key := range allowed {
+		if v, ok := m[key]; ok {
+			if out == nil {
+				out = make(map[string]string)
+			}
+			out[key] = v
+		}
+	}
+	return out
+}
+
+// filterFinalizers keeps only the allowlisted finalizers, or nil when none are set.
+func filterFinalizers(finalizers []string) []string {
+	var out []string
+	for _, f := range finalizers {
+		if slices.Contains(watchNotificationFinalizers, f) {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+func timeToMillis(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
+	return t.UnixMilli()
+}
+
 // publishWatchNotification announces a committed write on the NATS resource
-// subject as a metadata-only WatchNotification. Consumers re-fetch the object at
+// subject as a metadata-only WatchNotification (identity, labels and a few
+// ObjectMeta fields). Consumers re-fetch the object at
 // their own API version, so no object body is sent. Errors are logged and
 // swallowed: the write is already durable in the event store.
-func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event Event) {
+func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event Event, meta *watchMetadata) {
 	if k.eventPublisher == nil || !k.eventPublisher.Enabled() {
 		return
 	}
@@ -55,7 +145,7 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		Resource: event.Resource,
 	}, event.Namespace)
 
-	payload, err := proto.Marshal(&resourcepb.WatchNotification{
+	n := &resourcepb.WatchNotification{
 		Type:                    actionToWatchNotificationType(event.Action),
 		Group:                   event.Group,
 		Resource:                event.Resource,
@@ -66,7 +156,17 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		PreviousResourceVersion: event.PreviousRV,
 		PreviousType:            actionToWatchNotificationType(event.PreviousAction),
 		PreviousFolder:          event.PreviousFolder,
-	})
+	}
+	if meta != nil {
+		n.Labels = meta.Labels
+		n.PreviousLabels = meta.PreviousLabels
+		n.Generation = meta.Generation
+		n.CreationTimestampMillis = meta.CreationTimestamp
+		n.DeletionTimestampMillis = meta.DeletionTimestamp
+		n.Finalizers = meta.Finalizers
+		n.Annotations = meta.Annotations
+	}
+	payload, err := proto.Marshal(n)
 	if err != nil {
 		k.metrics.recordWatchNotificationPublishFailure(event)
 		k.log.Warn("failed to marshal watch notification", "subject", subject, "error", err)

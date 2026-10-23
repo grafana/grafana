@@ -92,6 +92,8 @@ type kvStorageBackend struct {
 	eventStore             *eventStore
 	notifier               notifier
 	eventPublisher         EventPublisher
+	// watchNotificationMetadata adds object metadata to published notifications.
+	watchNotificationMetadata bool
 	// keysSubscriber lets search watch written keys straight from the bus. Set only
 	// when the NATS notifier is on: shadow mode is for observation, and must not
 	// change how anything receives updates.
@@ -333,6 +335,10 @@ type KVBackendOptions struct {
 	// external message bus (NATS). Optional; nil disables external publishing.
 	EventPublisher EventPublisher
 
+	// WatchNotificationMetadata adds allowlisted object metadata (labels,
+	// annotations, finalizers, generation, timestamps) to published notifications.
+	WatchNotificationMetadata bool
+
 	// EventSubscriber feeds the shadow NATS notifier; nil disables it.
 	EventSubscriber EventSubscriber
 	// EnableNatsNotifierShadow starts the shadow NATS notifier (see natsShadow):
@@ -501,28 +507,29 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			natsDropped:        metrics.NatsNotifierDropped,
 			invalidator:        opts.WatchInvalidator,
 		}),
-		eventPublisher:          opts.EventPublisher,
-		keysSubscriber:          keysSubscriber(opts),
-		watchOpts:               opts.WatchOptions.normalize(),
-		resourceVersions:        processResourceVersions,
-		resourceVersionMaxWait:  resourceVersionMaxWait,
-		log:                     logger,
-		eventRetentionPeriod:    eventRetentionPeriod,
-		eventPruningInterval:    eventPruningInterval,
-		rvManager:               opts.RvManager,
-		leaseManager:            leaseManager,
-		leaseTTL:                opts.LeaseTTL,
-		dbKeepAlive:             opts.DBKeepAlive,
-		lastImportStore:         newLastImportStore(kv),
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       garbageCollection,
-		blobGCMetrics:           NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		gcGate:                  opts.GCGate,
-		searchLookback:          opts.SearchLookback,
-		disableStorageServices:  opts.DisableStorageServices,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		cancel:                  cancel,
-		metrics:                 metrics,
+		eventPublisher:            opts.EventPublisher,
+		watchNotificationMetadata: opts.WatchNotificationMetadata,
+		keysSubscriber:            keysSubscriber(opts),
+		watchOpts:                 opts.WatchOptions.normalize(),
+		resourceVersions:          processResourceVersions,
+		resourceVersionMaxWait:    resourceVersionMaxWait,
+		log:                       logger,
+		eventRetentionPeriod:      eventRetentionPeriod,
+		eventPruningInterval:      eventPruningInterval,
+		rvManager:                 opts.RvManager,
+		leaseManager:              leaseManager,
+		leaseTTL:                  opts.LeaseTTL,
+		dbKeepAlive:               opts.DBKeepAlive,
+		lastImportStore:           newLastImportStore(kv),
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		garbageCollection:         garbageCollection,
+		blobGCMetrics:             NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		gcGate:                    opts.GCGate,
+		searchLookback:            opts.SearchLookback,
+		disableStorageServices:    opts.DisableStorageServices,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		cancel:                    cancel,
+		metrics:                   metrics,
 	}
 	err := backend.initPruner(ctx, opts.Reg)
 	if err != nil {
@@ -1436,7 +1443,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Name:      event.Key.Name,
 	})
 	k.notifier.Publish(eventData)
-	k.publishWatchNotification(ctx, eventData)
+	var meta *watchMetadata
+	if k.watchNotificationMetadata {
+		meta = newWatchMetadata(obj, event.ObjectOld)
+	}
+	k.publishWatchNotification(ctx, eventData, meta)
 
 	return rv, nil
 }
