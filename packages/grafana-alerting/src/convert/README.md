@@ -32,7 +32,9 @@ rule shapes.
   `align_evaluation_time_on_interval`) without an error, so a federated Mimir group comes in as a plain one.
 - `RulerNotificationSettingsDTO`: notification settings in snake case (`receiver`, `group_by`, `policy`, ...).
   It's the format of the `X-Grafana-Alerting-Notification-Settings` header, and of `notification_settings` on
-  each rule in Grafana's ruler API.
+  each rule in Grafana's ruler API. It's either a `RulerContactPointRoutingDTO` (a `receiver` with optional
+  overrides) or a `RulerPolicyRoutingDTO` (a `policy`), never both. Grafana's ruler API sends `receiver: ''`
+  next to a policy, which the policy type allows.
 - `ConvertPrometheusResponse` and `ConvertAlertmanagerResponse`: what the endpoints answer with.
   `ConvertAlertmanagerResponse` also lists what an Alertmanager import renamed (`RenameResources`) and added
   (`MergeStats`).

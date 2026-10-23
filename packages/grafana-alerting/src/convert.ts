@@ -17,6 +17,8 @@ export {
   type RulerRuleGroupDTO,
   type RulerRulesConfigDTO,
   type RulerNotificationSettingsDTO,
+  type RulerContactPointRoutingDTO,
+  type RulerPolicyRoutingDTO,
   type ConvertPrometheusResponse,
   type ConvertAlertmanagerResponse,
   type RenameResources,
