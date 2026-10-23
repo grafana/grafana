@@ -5,13 +5,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type SavedDashboardViewSpec, type SavedViewTimeRange, type SavedViewVariable } from './types';
 
-/**
- * Reads the dashboard's current time range and dashboard-level variable values into a spec ready
- * to POST/PUT. `dashboardUID` is filled from the scene; `name` is left blank for the caller (the
- * save/rename UI) to set, since it doesn't exist yet at capture time.
- *
- * Tab/row-scoped variables (SectionFiltersSet) are out of scope here — stretch goal, spec 2.1.1.
- */
+/** Captures the time range and dashboard-level variables. `name` is left for the caller to set. */
 export function captureSavedViewState(dashboard: DashboardScene): SavedDashboardViewSpec {
   return {
     dashboardUID: dashboard.state.uid ?? '',
@@ -52,8 +46,7 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
       value: variable.state.value,
     };
   }
-  // Other variable kinds (constant, textbox, system, ...) aren't part of the MVP capture — a view
-  // is a default, not a full snapshot, so leaving them alone is a no-op, not data loss.
+  // Other kinds (constant, textbox, ...) aren't captured.
   return undefined;
 }
 
@@ -104,11 +97,7 @@ function applyVariables(dashboard: DashboardScene, variables: SavedViewVariable[
 
 function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   if (target instanceof AdHocFiltersVariable && saved.filters) {
-    // updateFilters, not a raw setState: it also publishes SceneVariableValueChangedEvent when the
-    // filter expression/groupBy actually changed, which is what dependent panels/repeats/
-    // interpolated content listen for. A raw setState updates the filter-chip UI (reads
-    // state.filters directly) but leaves dependents silently showing data from the previous
-    // filters until an unrelated refresh.
+    // updateFilters, not setState, so SceneVariableValueChangedEvent reaches dependent panels.
     target.updateFilters(saved.filters);
     return;
   }
@@ -117,8 +106,7 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   }
 }
 
-/** True if `current` differs from `stored` in time range or any captured variable. Drives whether
- * "Overwrite" is enabled — not meant to detect changes outside what capture/apply itself covers. */
+/** True if `current` differs from `stored` in time range or any captured variable. */
 export function getSavedViewDiff(current: SavedDashboardViewSpec, stored: SavedDashboardViewSpec): boolean {
   if (timeRangeDiffers(current.timeRange, stored.timeRange)) {
     return true;
@@ -142,8 +130,7 @@ function variablesDiffer(current: SavedViewVariable[], stored: SavedViewVariable
   });
 }
 
-// Both sides come from captureVariable's fixed field order, so a plain JSON comparison is safe here
-// (no risk of the same object serializing differently on either side).
+// Safe because both sides come from captureVariable's fixed field order.
 function variableEqual(a: SavedViewVariable, b: SavedViewVariable): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }

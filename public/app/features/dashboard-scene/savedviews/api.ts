@@ -20,11 +20,7 @@ function client() {
 }
 
 export const savedDashboardViewsApi = {
-  /**
-   * Views belonging to one dashboard. The backend's FilterList re-checks every item against the
-   * caller's dashboard permissions regardless of this selector (see the backend spec, 4.3) — it's
-   * what makes this "the views for this dashboard", not a security boundary by itself.
-   */
+  // The selector scopes results to one dashboard; it isn't the permission check (FilterList is).
   async listForDashboard(dashboardUID: string): Promise<SavedDashboardView[]> {
     const result = await client().list({
       fieldSelector: [{ key: 'spec.dashboardUID', operator: '=', value: dashboardUID }],
