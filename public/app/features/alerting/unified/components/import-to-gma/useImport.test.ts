@@ -4,15 +4,19 @@ import { act, getWrapper, renderHook } from 'test/test-utils';
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS } from '@grafana/alerting';
 
 import { setupMswServer } from '../../mockApi';
+import { mockGrafanaRulerRule, mockRulerAlertingRule } from '../../mocks';
+import { convertResponse } from '../../mocks/convertApi';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 import {
   buildRoutingParams,
   deriveDryRunResult,
   deriveDryRunState,
+  filterRulerRulesConfig,
   parseDryRunResponse,
   summarizeMergeStats,
   useImportNotifications,
+  useImportRules,
 } from './useImport';
 
 const server = setupMswServer();
@@ -25,7 +29,7 @@ function captureConvertHeaders() {
   server.use(
     http.post(CONVERT_URL, ({ request }) => {
       headers.push(request.headers);
-      return HttpResponse.json({ status: 'success' });
+      return HttpResponse.json(convertResponse());
     })
   );
   return headers;
@@ -38,36 +42,36 @@ function yamlFile() {
 const wrapper = getWrapper({ renderWithRouter: true });
 
 describe('buildRoutingParams', () => {
-  it('should return notificationSettings with policy when a routing tree is selected', () => {
+  it('should return the named routing tree when one is selected', () => {
     const result = buildRoutingParams('my-policy');
 
     expect(result).toEqual({
-      notificationSettings: JSON.stringify({ policy: 'my-policy' }),
+      notificationSettings: { type: 'NamedRoutingTree', routingTree: 'my-policy' },
     });
   });
 
-  it('should return notificationSettings=undefined when no routing tree is selected', () => {
+  it('should return notificationSettings=null when no routing tree is selected', () => {
     const result = buildRoutingParams(undefined);
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 
-  it('should return notificationSettings=undefined for empty string routing tree', () => {
+  it('should return notificationSettings=null for empty string routing tree', () => {
     const result = buildRoutingParams('');
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 
-  it('should return notificationSettings=undefined for the default routing tree', () => {
+  it('should return notificationSettings=null for the default routing tree', () => {
     const result = buildRoutingParams(ROOT_ROUTE_NAME);
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 
-  it('should return notificationSettings=undefined for the default routing tree alias', () => {
+  it('should return notificationSettings=null for the default routing tree alias', () => {
     const result = buildRoutingParams(DEFAULT_ROUTING_TREE_NAME_ALIAS);
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 });
 
@@ -105,6 +109,8 @@ describe('parseDryRunResponse', () => {
   it('maps merge stats onto the validation result', () => {
     const result = parseDryRunResponse({
       status: 'success',
+      errorType: '',
+      error: '',
       stats: { added_receivers: ['slack'], added_route: 'imported-prod' },
     });
 
@@ -119,7 +125,7 @@ describe('parseDryRunResponse', () => {
   });
 
   it('omits stats when the response has none', () => {
-    const result = parseDryRunResponse({ status: 'success' });
+    const result = parseDryRunResponse({ status: 'success', errorType: '', error: '' });
 
     expect(result.stats).toBeUndefined();
   });
@@ -245,7 +251,7 @@ describe('template file import wiring', () => {
     server.use(
       http.post(CONVERT_URL, async ({ request }) => {
         bodies.push(await request.clone().json());
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     return bodies;
@@ -272,17 +278,92 @@ describe('template file import wiring', () => {
     const bodies = captureConvertBodies();
     const { result } = renderHook(() => useImportNotifications(), { wrapper });
 
-    await expect(
-      act(async () => {
-        await result.current({
+    // The rejection is checked inside `act`: an `act` call that rejects leaves React's test renderer
+    // broken, and every hook rendered after it in this file returns nothing.
+    await act(async () => {
+      await expect(
+        result.current({
           source: 'yaml',
           yamlFile: yamlFile(),
           templateFiles: [templateFile('dupe.tmpl', 'one'), templateFile('dupe.tmpl', 'two')],
           configIdentifier: 'prod',
-        });
-      })
-    ).rejects.toThrow('dupe.tmpl');
+        })
+      ).rejects.toThrow('dupe.tmpl');
+    });
 
     expect(bodies).toHaveLength(0);
+  });
+});
+
+describe('rules import wiring', () => {
+  const RULES_URL = '/api/convert/prometheus/config/v1/rules';
+
+  function captureRulesRequests() {
+    const requests: Array<{ headers: Headers; body: unknown }> = [];
+    server.use(
+      http.post(RULES_URL, async ({ request }) => {
+        requests.push({ headers: request.headers, body: await request.json() });
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    return requests;
+  }
+
+  it('sends the import options as headers, with the routing tree in the convert API shape', async () => {
+    const requests = captureRulesRequests();
+    const { result } = renderHook(() => useImportRules(), { wrapper });
+
+    await act(async () => {
+      await result.current({
+        dataSourceUID: 'mimir',
+        targetFolderUID: 'folder-1',
+        pauseAlertingRules: true,
+        pauseRecordingRules: false,
+        payload: {},
+        targetDatasourceUID: 'mimir-writes',
+        ...buildRoutingParams('team-a'),
+      });
+    });
+
+    expect(requests).toHaveLength(1);
+    const { headers } = requests[0];
+    expect(headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('mimir');
+    expect(headers.get('X-Grafana-Alerting-Folder-UID')).toBe('folder-1');
+    expect(headers.get('X-Grafana-Alerting-Target-Datasource-UID')).toBe('mimir-writes');
+    expect(headers.get('X-Grafana-Alerting-Alert-Rules-Paused')).toBe('true');
+    expect(headers.get('X-Grafana-Alerting-Recording-Rules-Paused')).toBe('false');
+    expect(headers.get('X-Grafana-Alerting-Notification-Settings')).toBe(JSON.stringify({ policy: 'team-a' }));
+    // The imported rules stay editable in the UI.
+    expect(headers.has('X-Disable-Provenance')).toBe(true);
+  });
+
+  it('leaves out the notification settings header for the default routing tree', async () => {
+    const requests = captureRulesRequests();
+    const { result } = renderHook(() => useImportRules(), { wrapper });
+
+    await act(async () => {
+      await result.current({
+        dataSourceUID: 'mimir',
+        pauseAlertingRules: false,
+        pauseRecordingRules: false,
+        payload: {},
+        ...buildRoutingParams(undefined),
+      });
+    });
+
+    expect(requests[0].headers.has('X-Grafana-Alerting-Notification-Settings')).toBe(false);
+  });
+});
+
+describe('filterRulerRulesConfig', () => {
+  it('skips Grafana-managed rules, since the convert API only imports data source rules', () => {
+    const dataSourceRule = mockRulerAlertingRule({ alert: 'HighCPU' });
+
+    const result = filterRulerRulesConfig({ ns: [{ name: 'group', rules: [dataSourceRule, mockGrafanaRulerRule()] }] });
+
+    expect(result).toEqual({
+      filteredConfig: { ns: [{ name: 'group', rules: [dataSourceRule] }] },
+      someRulesAreSkipped: true,
+    });
   });
 });
