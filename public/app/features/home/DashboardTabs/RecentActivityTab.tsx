@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Icon, LinkButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
@@ -142,11 +142,9 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
                       />
                     )}
                   </span>
-                  <Tooltip content={badge}>
-                    <span className={styles.kind} role="img" aria-label={badge}>
-                      <Icon name={icon} />
-                    </span>
-                  </Tooltip>
+                  <span className={styles.kind}>
+                    <Badge icon={icon} color="orange" tooltip={badge} role="img" aria-label={badge} />
+                  </span>
                   {showTime && <TimeAgoCell date={item.lastVisited} />}
                 </Stack>
               }
@@ -164,14 +162,11 @@ const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
     padding: theme.spacing(0, compact ? 0 : 0.5),
     margin: 0,
   }),
-  // One accent colour for every kind: the icon says which, the tooltip spells it out.
+  // A badge, not a bare icon, so the kind reads as a label and not as another action next to the star. One
+  // colour for every kind: the icon says which, the tooltip spells it out.
   kind: css({
     display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     flexShrink: 0,
-    width: theme.spacing(3),
-    color: theme.flags.visualDesignRefresh ? theme.colors.accent.main : theme.visualization.getColorByName('orange'),
   }),
   // Only dashboards can be starred. The slot is the button's size on every row so the badge and time columns
   // start at the same place and rows stay one height whether the button is there or not.
