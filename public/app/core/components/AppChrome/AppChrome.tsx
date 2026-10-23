@@ -237,7 +237,8 @@ export function AppChrome({ children }: Props) {
                 enable={isExtensionSidebarFloating ? false : { left: true }}
                 onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
                 handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
-                minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
+                // Floating has its own, lower minimum; an inline min-width would override `floatingWidth`.
+                minWidth={isExtensionSidebarFloating ? undefined : MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
                 {...floatingSidebarAttributes}
               >
