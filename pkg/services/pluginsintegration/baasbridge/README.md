@@ -29,21 +29,31 @@ One v3 `AdmissionReview` covers both mutation and validation. The operator serve
 
 When both hooks are declared, it mutates first: it applies the returned JSON patch and validates the patched object. The v3 admission service behaves the same way.
 
+Like `apiextensions-apiserver`, each admission call:
+
+- names the caller, as the API server authenticated them, in `request.userInfo`;
+- times out after 10 seconds, the Kubernetes default `timeoutSeconds`.
+
+A conversion response must name the request's UID and report `Success`, or the conversion fails.
+
 ## Authentication
 
 Requests carry the same credentials that `apiextensions-apiserver` sends:
 
-- **Webhooks** (`/validate`, `/mutate`, `/convert`) carry no caller credentials.
+- **Webhooks** (`/validate`, `/mutate`, `/convert`) carry no caller credentials. Admission reviews still identify the caller in `request.userInfo`.
 - **Routes** always carry the caller's ID token as `X-Grafana-Id`. They carry the caller's access token as `X-Access-Token` only when no access check declared in the manifest authorized the route, because then the operator authorizes it itself. Tokens are sent raw, without a `Bearer ` prefix.
 
 The router supplies the route credentials through `Options.RouteCredentials`. Any credential or identity-assertion headers on the incoming request are removed first. The client isn't wrapped with v3 token exchange.
 
 ## Errors
 
-When the operator can't be reached, or answers a webhook with 503, the client returns gRPC `Unavailable`, as the gRPC client does. The router's circuit breaker counts those against the backend. Route responses pass through with the operator's status code.
+When the operator can't be reached, or answers a webhook with 503, the client returns gRPC `Unavailable`. An admission call that times out returns `DeadlineExceeded`. The gRPC client uses the same codes, and the router's circuit breaker counts both against the backend. Route responses pass through with the operator's status code. Their status and headers are relayed before any body, so a watch's headers aren't held until its first event.
+
+Redirects are never followed, because that would carry the caller's credentials to the redirect target. A route redirect becomes a 502, as from the router's proxies, and doesn't count against the breaker. A webhook redirect fails the call.
 
 ## Known gaps
 
 - There is no ID token fallback. `apiextensions-apiserver` derives an ID token from the access token when the caller has none. The router has no deriver, so in that case no `X-Grafana-Id` is sent.
 - The router's gRPC request metrics don't cover these calls. They're traced through `otelhttp`.
-- There are no per-webhook timeouts. Calls are bounded by the request context.
+- Admission reviews don't set `dryRun`, because the v3 request doesn't carry it. An operator with side effects can't skip them for a dry run.
+- Calls aren't retried. The gRPC client retries `Unavailable` up to three times. `apiextensions-apiserver` only retries webhook responses that carry a `Retry-After` header, which the app-sdk webhook handler never sends.

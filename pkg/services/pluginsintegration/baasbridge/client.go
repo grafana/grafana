@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
@@ -25,12 +26,15 @@ import (
 	"google.golang.org/protobuf/proto"
 	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	admissionv1 "k8s.io/api/admission/v1"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
@@ -42,6 +46,11 @@ const defaultMaxResponseBytes = 100 << 20
 
 // routeChunkBytes is the most body one streamed route response carries.
 const routeChunkBytes = 32 << 10
+
+// admissionTimeout bounds each admission webhook call, as the Kubernetes
+// default timeoutSeconds does for apiextensions-apiserver. Conversion calls
+// have none there either, and are bounded by the request alone.
+var admissionTimeout = 10 * time.Second
 
 var _ appclientv3.Client = (*client)(nil)
 
@@ -73,14 +82,16 @@ type httpAdmissionKind struct {
 //
 // Deprecated: see the package documentation.
 func IsHTTPHost(host string) bool {
-	return strings.HasPrefix(host, "http://") || strings.HasPrefix(host, "https://")
+	scheme, _, ok := strings.Cut(host, "://")
+	return ok && (strings.EqualFold(scheme, "http") || strings.EqualFold(scheme, "https"))
 }
 
 // Options configures a client.
 //
 // Deprecated: see the package documentation.
 type Options struct {
-	// HTTPClient sends the requests; nil uses http.DefaultClient.
+	// HTTPClient sends the requests; nil uses a zero http.Client. Redirects are
+	// never followed, whatever its CheckRedirect.
 	HTTPClient *http.Client
 	// MaxResponseBytes limits webhook responses; <= 0 uses a default.
 	MaxResponseBytes int64
@@ -109,13 +120,17 @@ func NewClient(host string, manifest *app.ManifestData, opts Options) (appclient
 	if err != nil {
 		return nil, fmt.Errorf("baasbridge: parsing plugin host %q: %w", host, err)
 	}
+	// url.Parse lowercases the scheme.
 	if (base.Scheme != "http" && base.Scheme != "https") || base.Host == "" {
 		return nil, fmt.Errorf("baasbridge: plugin host %q must be an absolute http or https URL", host)
 	}
-	httpClient := opts.HTTPClient
-	if httpClient == nil {
-		httpClient = http.DefaultClient
+	httpClient := &http.Client{}
+	if opts.HTTPClient != nil {
+		*httpClient = *opts.HTTPClient
 	}
+	// Following a redirect would send the caller's credentials, which net/http
+	// copies onto the redirected request, to wherever it points.
+	httpClient.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	maxResponseBytes := opts.MaxResponseBytes
 	if maxResponseBytes <= 0 {
 		maxResponseBytes = defaultMaxResponseBytes
@@ -143,6 +158,11 @@ func IsClient(c appclientv3.Client) bool {
 // Deprecated: see the package documentation.
 func NewTransport(tlsConfig *tls.Config) http.RoundTripper {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// The default keeps 2 idle connections per host, so concurrent calls to one
+	// operator would open a new connection, and TLS session, for most requests.
+	// These match apiextensions-apiserver's custom-route proxy.
+	transport.MaxIdleConns = 250
+	transport.MaxIdleConnsPerHost = 50
 	if tlsConfig != nil {
 		transport.TLSClientConfig = tlsConfig.Clone()
 	}
@@ -219,11 +239,18 @@ func (c *client) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionRevi
 		return nil, fmt.Errorf("baasbridge: unsupported admission operation %s", in.GetOperation())
 	}
 
+	review := admissionCall{gvk: gvk, plural: kind.plural, op: op, oldObject: in.GetOldObjectBytes(), user: admissionUserInfo(ctx)}
+	// Mutation can't rename the object; the store keeps the request's identity.
+	review.meta = objectIdentity(in.GetObjectBytes())
+	if review.meta.Name == "" {
+		review.meta = objectIdentity(review.oldObject)
+	}
+
 	rsp := &pluginv3.AdmissionReviewResponse{}
 	object := in.GetObjectBytes()
 	var warnings []string
 	if kind.mutation[in.GetOperation()] {
-		result, err := c.admissionReview(ctx, "mutate", gvk, kind.plural, op, object, in.GetOldObjectBytes())
+		result, err := c.admissionReview(ctx, "mutate", review, object)
 		if err != nil {
 			return nil, err
 		}
@@ -248,7 +275,7 @@ func (c *client) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionRevi
 		}
 	}
 	if kind.validation[in.GetOperation()] {
-		result, err := c.admissionReview(ctx, "validate", gvk, kind.plural, op, object, in.GetOldObjectBytes())
+		result, err := c.admissionReview(ctx, "validate", review, object)
 		if err != nil {
 			return nil, err
 		}
@@ -262,31 +289,36 @@ func (c *client) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionRevi
 	return rsp, nil
 }
 
-func (c *client) admissionReview(
-	ctx context.Context,
-	endpoint string,
-	gvk schema.GroupVersionKind,
-	plural string,
-	op admissionv1.Operation,
-	object, oldObject []byte,
-) (*admissionv1.AdmissionResponse, error) {
-	meta := objectIdentity(object)
-	if meta.Name == "" {
-		meta = objectIdentity(oldObject)
-	}
+// admissionCall holds what the mutating and validating calls of one review
+// share.
+type admissionCall struct {
+	gvk       schema.GroupVersionKind
+	plural    string
+	op        admissionv1.Operation
+	meta      metav1.ObjectMeta
+	oldObject []byte
+	user      authenticationv1.UserInfo
+}
+
+func (c *client) admissionReview(ctx context.Context, endpoint string, call admissionCall, object []byte) (*admissionv1.AdmissionResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, admissionTimeout)
+	defer cancel()
+
+	gvk := call.gvk
 	kind := metav1.GroupVersionKind{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind}
-	resource := metav1.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: plural}
+	resource := metav1.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: call.plural}
 	req := &admissionv1.AdmissionRequest{
 		UID:             uuid.NewUUID(),
 		Kind:            kind,
 		Resource:        resource,
 		RequestKind:     &kind,
 		RequestResource: &resource,
-		Name:            meta.Name,
-		Namespace:       meta.Namespace,
-		Operation:       op,
+		Name:            call.meta.Name,
+		Namespace:       call.meta.Namespace,
+		Operation:       call.op,
+		UserInfo:        call.user,
 		Object:          runtime.RawExtension{Raw: object},
-		OldObject:       runtime.RawExtension{Raw: oldObject},
+		OldObject:       runtime.RawExtension{Raw: call.oldObject},
 	}
 	review := &admissionv1.AdmissionReview{
 		TypeMeta: metav1.TypeMeta{APIVersion: admissionv1.SchemeGroupVersion.String(), Kind: "AdmissionReview"},
@@ -303,6 +335,23 @@ func (c *client) admissionReview(
 		return nil, fmt.Errorf("baasbridge: %s webhook for %s answered request %q, expected %q", endpoint, gvk, out.Response.UID, req.UID)
 	}
 	return out.Response, nil
+}
+
+// admissionUserInfo is the caller as the API server authenticated it, which
+// apiextensions-apiserver sends its admission webhooks too.
+func admissionUserInfo(ctx context.Context) authenticationv1.UserInfo {
+	u, ok := request.UserFrom(ctx)
+	if !ok || u == nil {
+		return authenticationv1.UserInfo{}
+	}
+	info := authenticationv1.UserInfo{Username: u.GetName(), UID: u.GetUID(), Groups: u.GetGroups()}
+	if extra := u.GetExtra(); len(extra) > 0 {
+		info.Extra = make(map[string]authenticationv1.ExtraValue, len(extra))
+		for key, values := range extra {
+			info.Extra[key] = values
+		}
+	}
+	return info
 }
 
 // objectIdentity reads the name and namespace of a JSON object, which the
@@ -352,11 +401,23 @@ func (c *client) ConvertObjects(ctx context.Context, in *pluginv3.ConvertObjects
 	if out.Response == nil {
 		return nil, errors.New("baasbridge: conversion webhook returned no response")
 	}
+	// apiextensions-apiserver checks both, and treats anything but Success as
+	// a failure.
+	if out.Response.UID != uid {
+		return nil, fmt.Errorf("baasbridge: conversion webhook answered request %q, expected %q", out.Response.UID, uid)
+	}
 
 	rsp := &pluginv3.ConvertObjectsResponse{}
 	rsp.SetUid(in.GetUid())
-	if out.Response.Result.Status == metav1.StatusFailure {
-		rsp.SetError(statusResult(out.Response.Result))
+	if out.Response.Result.Status != metav1.StatusSuccess {
+		result := out.Response.Result
+		if result.Status == "" {
+			result.Status = metav1.StatusFailure
+		}
+		if result.Message == "" {
+			result.Message = fmt.Sprintf("response.result.status was %q, not %q", out.Response.Result.Status, metav1.StatusSuccess)
+		}
+		rsp.SetError(statusResult(result))
 		return rsp, nil
 	}
 	converted := make([]*pluginv3.ConvertObjectsResponse_Object, len(out.Response.ConvertedObjects))
@@ -394,11 +455,35 @@ func (c *client) CallRoute(ctx context.Context, in *pluginv3.CallRouteRequest) (
 		return nil, err
 	}
 
-	resp, err := c.client.Do(req)
+	// httpRouteStream closes the body at its end. A caller that stops receiving
+	// before then leaves it to the request's context, which ends the response.
+	resp, err := c.client.Do(req) //nolint:bodyclose
 	if err != nil {
 		return nil, transportError(ctx, err)
 	}
-	return &httpRouteStream{ctx: ctx, resp: resp, buf: make([]byte, routeChunkBytes)}, nil
+	if isRedirect(resp) {
+		_ = resp.Body.Close()
+		return nil, errRouteRedirect(resp)
+	}
+	return newHTTPRouteStream(ctx, resp), nil
+}
+
+// isRedirect matches the responses the router's proxies refuse to relay. A 304
+// has no Location, and passes.
+func isRedirect(resp *http.Response) bool {
+	return resp.StatusCode >= 300 && resp.StatusCode <= 399 && resp.Header.Get("Location") != ""
+}
+
+// errRouteRedirect answers a redirect with a 502, as the router's proxies do.
+// It is a policy decision, not a sign the operator is unhealthy, so the
+// breaker does not count it.
+func errRouteRedirect(resp *http.Response) error {
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusBadGateway,
+		Reason:  metav1.StatusReasonInternalError,
+		Message: fmt.Sprintf("baasbridge: backend redirect rejected (status %d, location %q)", resp.StatusCode, resp.Header.Get("Location")),
+	}}
 }
 
 // post sends body as JSON to the endpoint and decodes the JSON response into out.
@@ -426,10 +511,16 @@ func (c *client) post(ctx context.Context, endpoint string, body, out any) error
 		}
 		return err
 	}
-	data, err = io.ReadAll(io.LimitReader(resp.Body, c.maxResponseBytes+1))
-	if err != nil {
+	var buf bytes.Buffer
+	if resp.ContentLength > 0 && resp.ContentLength <= c.maxResponseBytes {
+		// A conversion response holds every object, so growing to it would copy
+		// it several times.
+		buf.Grow(int(resp.ContentLength) + bytes.MinRead)
+	}
+	if _, err := buf.ReadFrom(io.LimitReader(resp.Body, c.maxResponseBytes+1)); err != nil {
 		return transportError(ctx, err)
 	}
+	data = buf.Bytes()
 	if int64(len(data)) > c.maxResponseBytes {
 		return fmt.Errorf("baasbridge: %s webhook response is larger than %d bytes", endpoint, c.maxResponseBytes)
 	}
@@ -449,7 +540,11 @@ func (c *client) setCredentials(ctx context.Context, header http.Header) error {
 // transportError reports a failure to reach the operator as Unavailable, as
 // the gRPC client does, so callers such as the router's breaker treat it the
 // same way.
+// A call that ran out of time is DeadlineExceeded, like a gRPC deadline.
 func transportError(ctx context.Context, err error) error {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return status.Error(codes.DeadlineExceeded, err.Error())
+	}
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -513,7 +608,7 @@ func deleteHeaders(header http.Header, names []string) {
 }
 
 // httpRouteStream streams an HTTP response as v3 route responses: the first
-// carries the status code and headers, and each carries a chunk of the body.
+// carries the status code and headers, and each after it a chunk of the body.
 type httpRouteStream struct {
 	ctx        context.Context
 	resp       *http.Response
@@ -522,7 +617,37 @@ type httpRouteStream struct {
 	done       bool
 }
 
+func newHTTPRouteStream(ctx context.Context, resp *http.Response) *httpRouteStream {
+	// Most route responses are small, so a known length that fits sizes the
+	// buffer; one more byte lets the read of the whole body also see its end.
+	size := routeChunkBytes
+	if resp.ContentLength >= 0 && resp.ContentLength < routeChunkBytes {
+		size = int(resp.ContentLength) + 1
+	}
+	return &httpRouteStream{
+		ctx:  ctx,
+		resp: resp,
+		buf:  make([]byte, size),
+	}
+}
+
+// Recv returns the status and headers first, without a body: an operator may
+// flush them and then wait, as a watch does, and the caller must be able to
+// send them, and settle the call, before any body arrives.
 func (s *httpRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
+	if !s.sentHeader {
+		s.sentHeader = true
+		out := &pluginv3.CallRouteResponse{}
+		out.SetCode(int32(s.resp.StatusCode))
+		header := s.resp.Header.Clone()
+		deleteHeaders(header, hopByHopHeaders)
+		headers := make(map[string]*pluginv3.StringList, len(header))
+		for key, values := range header {
+			headers[key] = pluginv3.StringList_builder{Values: values}.Build()
+		}
+		out.SetHeaders(headers)
+		return out, nil
+	}
 	if s.done {
 		return nil, io.EOF
 	}
@@ -536,26 +661,12 @@ func (s *httpRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
 		if !errors.Is(err, io.EOF) {
 			return nil, transportError(s.ctx, err)
 		}
-		if n == 0 && s.sentHeader {
+		if n == 0 {
 			return nil, io.EOF
 		}
 	}
-
 	out := &pluginv3.CallRouteResponse{}
-	if !s.sentHeader {
-		s.sentHeader = true
-		out.SetCode(int32(s.resp.StatusCode))
-		header := s.resp.Header.Clone()
-		deleteHeaders(header, hopByHopHeaders)
-		headers := make(map[string]*pluginv3.StringList, len(header))
-		for key, values := range header {
-			headers[key] = pluginv3.StringList_builder{Values: values}.Build()
-		}
-		out.SetHeaders(headers)
-	}
-	if n > 0 {
-		out.SetBody(bytes.Clone(s.buf[:n]))
-	}
+	out.SetBody(bytes.Clone(s.buf[:n]))
 	return out, nil
 }
 

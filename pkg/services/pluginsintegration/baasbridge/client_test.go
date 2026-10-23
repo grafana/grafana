@@ -1,6 +1,7 @@
 package baasbridge
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,11 +11,16 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -59,6 +65,9 @@ func newHTTPTestOperator(t *testing.T) (*httptest.Server, *[]string) {
 		if req.Object.GetName() == "notallowed" {
 			return errors.New("name 'notallowed' is not allowed")
 		}
+		if req.Object.GetName() == "alices" && req.UserInfo.Username != "alice" {
+			return errors.New("only alice may write alices")
+		}
 		if req.Kind == "Widget" && req.Object.GetAnnotations()["mutated"] != "true" {
 			return errors.New("validation did not see the mutated object")
 		}
@@ -75,6 +84,10 @@ func newHTTPTestOperator(t *testing.T) (*httptest.Server, *[]string) {
 	mux := http.NewServeMux()
 	handler.Register(mux)
 	mux.HandleFunc("GET /apis/"+httpTestGroup+"/v1/namespaces/default/widgets/{name}/render", func(w http.ResponseWriter, r *http.Request) {
+		if r.PathValue("name") == "large" {
+			_, _ = w.Write(bytes.Repeat([]byte("0123456789"), 10_000))
+			return
+		}
 		w.Header().Set("X-Seen-Name", r.PathValue("name"))
 		w.Header().Set("X-Seen-Extra", r.Header.Get("X-Remote-Extra-Scopes"))
 		w.Header().Set("X-Seen-Upgrade", r.Header.Get("Upgrade"))
@@ -271,6 +284,216 @@ func TestClientUnavailable(t *testing.T) {
 }
 
 // The operator sees the path as the caller sent it, escapes included.
+// The caller the API server authenticated reaches the operator, which may
+// decide on it.
+func TestClientAdmissionReviewUserInfo(t *testing.T) {
+	server, _ := newHTTPTestOperator(t)
+	client := newHTTPTestClient(t, server.URL)
+
+	rsp, err := client.AdmissionReview(t.Context(), httpTestAdmissionRequest("Gadget", "alices"))
+	require.NoError(t, err)
+	require.False(t, rsp.GetAllowed())
+
+	ctx := request.WithUser(t.Context(), &user.DefaultInfo{Name: "alice", UID: "u-1", Groups: []string{"editors"}})
+	rsp, err = client.AdmissionReview(ctx, httpTestAdmissionRequest("Gadget", "alices"))
+	require.NoError(t, err)
+	require.True(t, rsp.GetAllowed(), rsp.GetError().GetMessage())
+}
+
+func TestClientAdmissionReviewTimeout(t *testing.T) {
+	previous := admissionTimeout
+	admissionTimeout = 50 * time.Millisecond
+	t.Cleanup(func() { admissionTimeout = previous })
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(func() { close(release) })
+
+	_, err := newHTTPTestClient(t, server.URL).AdmissionReview(t.Context(), httpTestAdmissionRequest("Widget", "example"))
+	require.Equal(t, codes.DeadlineExceeded, status.Code(err), "counted against the backend like a gRPC deadline")
+}
+
+// The conversion response is checked as apiextensions-apiserver checks it.
+func TestClientConvertObjectsResponseChecks(t *testing.T) {
+	target := &pluginv3.GroupVersionKind{}
+	target.SetGroup(httpTestGroup)
+	target.SetVersion("v0alpha1")
+	for name, tt := range map[string]struct {
+		respond func(apiextensionsv1.ConversionReview) apiextensionsv1.ConversionReview
+		check   func(t *testing.T, rsp *pluginv3.ConvertObjectsResponse, err error)
+	}{
+		"a status other than Success fails": {
+			respond: func(in apiextensionsv1.ConversionReview) apiextensionsv1.ConversionReview {
+				in.Response = &apiextensionsv1.ConversionResponse{UID: in.Request.UID}
+				return in
+			},
+			check: func(t *testing.T, rsp *pluginv3.ConvertObjectsResponse, err error) {
+				require.NoError(t, err)
+				require.Equal(t, metav1.StatusFailure, rsp.GetError().GetStatus())
+				require.Contains(t, rsp.GetError().GetMessage(), "not \"Success\"")
+			},
+		},
+		"a response to another request fails": {
+			respond: func(in apiextensionsv1.ConversionReview) apiextensionsv1.ConversionReview {
+				in.Response = &apiextensionsv1.ConversionResponse{UID: "other", Result: metav1.Status{Status: metav1.StatusSuccess}}
+				return in
+			},
+			check: func(t *testing.T, _ *pluginv3.ConvertObjectsResponse, err error) {
+				require.ErrorContains(t, err, "answered request \"other\"")
+			},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var review apiextensionsv1.ConversionReview
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&review))
+				_ = json.NewEncoder(w).Encode(tt.respond(review))
+			}))
+			t.Cleanup(server.Close)
+			req := &pluginv3.ConvertObjectsRequest{}
+			req.SetTarget(target)
+			req.SetObjects([][]byte{[]byte(`{}`)})
+			rsp, err := newHTTPTestClient(t, server.URL).ConvertObjects(t.Context(), req)
+			tt.check(t, rsp, err)
+		})
+	}
+}
+
+// A body larger than one chunk arrives whole, over several responses.
+func TestClientCallRouteLargeBody(t *testing.T) {
+	server, _ := newHTTPTestOperator(t)
+	req := &pluginv3.CallRouteRequest{}
+	req.SetMethod(http.MethodGet)
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/namespaces/default/widgets/large/render")
+	stream, err := newHTTPTestClient(t, server.URL).CallRoute(t.Context(), req)
+	require.NoError(t, err)
+	var body []byte
+	chunks := 0
+	for {
+		msg, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(msg.GetBody()), routeChunkBytes)
+		body = append(body, msg.GetBody()...)
+		chunks++
+	}
+	require.Equal(t, bytes.Repeat([]byte("0123456789"), 10_000), body)
+	require.Greater(t, chunks, 1)
+}
+
+// A caller that stops receiving releases the response when its request ends.
+func TestClientCallRouteAbandoned(t *testing.T) {
+	disconnected := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("first"))
+		w.(http.Flusher).Flush()
+		<-r.Context().Done()
+		close(disconnected)
+	}))
+	t.Cleanup(server.Close)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	req := &pluginv3.CallRouteRequest{}
+	req.SetMethod(http.MethodGet)
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/stream")
+	stream, err := newHTTPTestClient(t, server.URL).CallRoute(ctx, req)
+	require.NoError(t, err)
+	_, err = stream.Recv()
+	require.NoError(t, err)
+	chunk, err := stream.Recv()
+	require.NoError(t, err)
+	require.Equal(t, "first", string(chunk.GetBody()))
+
+	cancel()
+	select {
+	case <-disconnected:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the operator's response was never released")
+	}
+}
+
+// An operator that sends its headers and then waits, as a watch does, has them
+// relayed before any body.
+func TestClientCallRouteHeadersFirst(t *testing.T) {
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json;stream=watch")
+		w.WriteHeader(http.StatusOK)
+		w.(http.Flusher).Flush()
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(func() { close(release) })
+
+	req := &pluginv3.CallRouteRequest{}
+	req.SetMethod(http.MethodGet)
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/watch")
+	stream, err := newHTTPTestClient(t, server.URL).CallRoute(t.Context(), req)
+	require.NoError(t, err)
+
+	first := make(chan *pluginv3.CallRouteResponse, 1)
+	go func() {
+		msg, _ := stream.Recv()
+		first <- msg
+	}()
+	select {
+	case msg := <-first:
+		require.Equal(t, int32(http.StatusOK), msg.GetCode())
+		require.Equal(t, []string{"application/json;stream=watch"}, msg.GetHeaders()["Content-Type"].GetValues())
+		require.Empty(t, msg.GetBody())
+	case <-time.After(5 * time.Second):
+		t.Fatal("the headers waited for the body")
+	}
+}
+
+// A redirect is neither followed, which would carry the caller's credentials to
+// its target, nor relayed: it is a 502, as from the router's proxies.
+func TestClientCallRouteRedirect(t *testing.T) {
+	var followed bool
+	elsewhere := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { followed = true }))
+	t.Cleanup(elsewhere.Close)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/apis/"+httpTestGroup+"/v1/cached" {
+			w.Header().Set("ETag", `"v1"`)
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		http.Redirect(w, r, elsewhere.URL+"/steal", http.StatusFound)
+	}))
+	t.Cleanup(server.Close)
+	client := newHTTPTestClient(t, server.URL)
+
+	req := &pluginv3.CallRouteRequest{}
+	req.SetMethod(http.MethodGet)
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/namespaces/default/widgets/example/render")
+	_, err := client.CallRoute(t.Context(), req)
+	var statusErr apierrors.APIStatus
+	require.ErrorAs(t, err, &statusErr)
+	require.Equal(t, int32(http.StatusBadGateway), statusErr.Status().Code)
+	require.False(t, followed)
+
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/cached")
+	stream, err := client.CallRoute(t.Context(), req)
+	require.NoError(t, err, "a 304 is not a redirect")
+	first, err := stream.Recv()
+	require.NoError(t, err)
+	require.Equal(t, int32(http.StatusNotModified), first.GetCode())
+
+	_, err = client.AdmissionReview(t.Context(), httpTestAdmissionRequest("Widget", "example"))
+	require.ErrorContains(t, err, "returned status 302", "webhooks do not follow redirects either")
+	require.False(t, followed)
+}
+
 func TestClientCallRouteEscapedPath(t *testing.T) {
 	server, _ := newHTTPTestOperator(t)
 	for _, name := range []string{"a%2Fb", "100%25", "a%20b"} {
@@ -297,6 +520,18 @@ func TestClientRouteCredentialsError(t *testing.T) {
 	_, err := newHTTPTestClient(t, server.URL).CallRoute(ctx, req)
 	require.ErrorContains(t, err, "no requester")
 	require.Empty(t, *calls, "the request is not sent")
+}
+
+func TestIsHTTPHost(t *testing.T) {
+	for host, want := range map[string]bool{
+		"http://op:8080":  true,
+		"HTTPS://op:8443": true,
+		"op:10000":        false,
+		"dns:///op:10000": false,
+		"httpop:10000":    false,
+	} {
+		require.Equal(t, want, IsHTTPHost(host), host)
+	}
 }
 
 func TestNewClientRejectsInvalidHost(t *testing.T) {
