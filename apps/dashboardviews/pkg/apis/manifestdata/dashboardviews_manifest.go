@@ -38,7 +38,13 @@ var appManifestData = app.ManifestData{
 					Plural:     "SavedDashboardViews",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaSavedDashboardViewv0alpha1,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaSavedDashboardViewv0alpha1,
 					SelectableFields: []string{
 						"spec.dashboardUID",
 					},
