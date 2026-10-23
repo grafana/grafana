@@ -141,35 +141,22 @@ func (c authzLimitedClient) checkServicePermission(ctx context.Context, id claim
 // search instead of failing: otherwise one type without a grant would break the
 // search for every type. It fails only when no type is left.
 func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest, resources []NamespacedResource) (searched, skipped []string, err error) {
-	key := req.Options.Key
-	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
-	global := nsr.IsGlobal()
 	id, ok := claims.AuthInfoFrom(ctx)
 	if !ok || id == nil {
 		if s.access == nil {
-			if err := s.checkFederatedReadServices(ctx, req); err != nil {
-				return nil, nil, err
-			}
 			for _, resource := range resources {
-				if err := s.checkAllowedReadService(ctx, resource.Group, resource.Resource); err != nil {
-					if !global {
-						return nil, nil, err
-					}
-					skipped = append(skipped, resource.Group+"/"+resource.Resource)
-					continue
-				}
 				searched = append(searched, resource.Group+"/"+resource.Resource)
 			}
-			return searched, skipped, nil
+			return searched, nil, nil
 		}
 		return nil, nil, apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
 	}
+	key := req.Options.Key
 	if !claims.NamespaceMatches(id.GetNamespace(), key.Namespace) {
 		return nil, nil, claims.ErrNamespaceMismatch
 	}
-	if err := s.checkFederatedReadServices(ctx, req); err != nil {
-		return nil, nil, err
-	}
+	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+	global := nsr.IsGlobal()
 
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
@@ -181,14 +168,6 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 	var lastErr error
 	for _, resource := range resources {
 		groupResource := resource.Group + "/" + resource.Resource
-		if err := s.checkAllowedReadService(ctx, resource.Group, resource.Resource); err != nil {
-			if !global {
-				return nil, nil, err
-			}
-			skipped = append(skipped, groupResource)
-			lastErr = err
-			continue
-		}
 		if global && !s.checksEachResult(resource.Group, resource.Resource) {
 			s.logUncheckedGlobalType(ctx, groupResource)
 			skipped = append(skipped, groupResource)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -13,9 +15,124 @@ import (
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+type serviceReadRequester struct {
+	*identity.StaticRequester
+	identities []string
+}
+
+func (u *serviceReadRequester) GetExtra() map[string][]string {
+	return map[string][]string{authnlib.ServiceIdentityKey: u.identities}
+}
+
+func serviceReadContext(subject authlib.IdentityType, identities ...string) context.Context {
+	requester := &identity.StaticRequester{Type: subject, Namespace: "ns"}
+	if subject == authlib.TypeUser {
+		requester.AccessToken = "verified-access-token"
+		requester.AccessTokenClaims = &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+			DelegatedPermissions: []string{"g/r:get"},
+		}}
+	}
+	return authlib.WithAuthInfo(context.Background(), &serviceReadRequester{
+		StaticRequester: requester,
+		identities:      identities,
+	})
+}
+
+func TestHybridSearch_AllowedReadServices(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		subject    authlib.IdentityType
+		identities []string
+		policy     map[string][]string
+		wantDenied bool
+	}{
+		{name: "another service", subject: authlib.TypeAccessPolicy, identities: []string{"other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "missing identity", subject: authlib.TypeAccessPolicy, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "multiple identities", subject: authlib.TypeAccessPolicy, identities: []string{"assistant", "other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "user with assistant claim and delegated grant", subject: authlib.TypeUser, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "unconfigured user", subject: authlib.TypeUser},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
+			s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
+			s.allowedReadServices = tc.policy
+			resp, err := s.HybridSearch(serviceReadContext(tc.subject, tc.identities...), &resourcepb.HybridSearchRequest{Key: validKey(), Query: "memory"})
+			if tc.wantDenied {
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Nil(t, resp)
+				require.Zero(t, backend.resolveCalls)
+				require.Nil(t, index.gotReq)
+				require.Empty(t, embedder.gotIn.Texts)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.NotNil(t, index.gotReq)
+		})
+	}
+}
+
+func TestHybridSearch_ExternalServiceStillNeedsGetPermission(t *testing.T) {
+	const group, resource = "assistant.inframemories.ext.grafana.app", "inframemories"
+	const collection = group + "/" + resource
+	for _, tc := range []struct {
+		name, permission, namespace string
+		wantAuthzError              bool
+	}{
+		{name: "missing get permission", permission: "folder.grafana.app/folders:get", wantAuthzError: true},
+		{name: "wrong verb", permission: collection + ":update", wantAuthzError: true},
+		{name: "direct get permission", permission: collection + ":get"},
+		{name: "cross tenant", permission: collection + ":get", namespace: "other"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{
+				collection: &vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: true},
+				results:    []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}},
+			}
+			lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "memory", Title: "Memory"}}}
+			// Direct service grants resolve locally. A user-mapper RPC through this nil connection fails.
+			access := NewAuthzLimitedClient(authzlib.NewClient(nil), AuthzOptions{Registry: prometheus.NewRegistry()})
+			s, index, _ := newHybridTestServer(lexTableResponse(), backend, access)
+			s.externalLexical = lexical
+			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, []string{collection})
+			s.allowedReadServices = map[string][]string{collection: {"assistant"}}
+			caller := &identity.StaticRequester{
+				Type: authlib.TypeAccessPolicy, Namespace: "ns", AccessToken: "verified-access-token",
+				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+					ServiceIdentity: "assistant", Permissions: []string{tc.permission},
+				}},
+			}
+			key := &resourcepb.ResourceKey{Namespace: "ns", Group: group, Resource: resource}
+			if tc.namespace != "" {
+				key.Namespace = tc.namespace
+			}
+			resp, err := s.HybridSearch(authlib.WithAuthInfo(t.Context(), caller), &resourcepb.HybridSearchRequest{Key: key, Query: "memory"})
+			if tc.namespace != "" {
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Nil(t, resp)
+				require.Zero(t, backend.resolveCalls)
+				require.False(t, lexical.called)
+				return
+			}
+			if tc.wantAuthzError {
+				require.Equal(t, codes.Internal, status.Code(err))
+				require.Nil(t, resp, "failed authorization must not return a partial response")
+				require.Positive(t, backend.resolveCalls)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, resp.Results, 1)
+			require.Equal(t, "memory", resp.Results[0].Key.Name)
+			require.True(t, lexical.called)
+			require.Nil(t, index.gotReq, "external search must not use the resource index")
+		})
+	}
+}
 
 func TestHybridSearch_RestrictedLaterTargetRejectsWholeRequest(t *testing.T) {
 	for _, lexicalOnly := range []bool{false, true} {
@@ -56,48 +173,6 @@ func TestNewSearchServerEnforcesAllowedReadServices(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	require.NotNil(t, index.gotReq)
-}
-
-func TestResourceSearch_RestrictedCollectionRejectsBeforeIndexRead(t *testing.T) {
-	for _, tc := range []struct {
-		name, restricted string
-		federated        bool
-	}{
-		{name: "direct", restricted: "g/r"},
-		{name: "federated", restricted: "g/secret", federated: true},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			s, index, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-			s.allowedReadServices = map[string][]string{tc.restricted: {"assistant"}}
-			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: validKey()}, Query: "memory"}
-			if tc.federated {
-				req.Federated = []*resourcepb.ResourceKey{{Namespace: "ns", Group: "g", Resource: "secret"}}
-			}
-			resp, err := s.Search(authedCtx(), req)
-			require.NoError(t, err)
-			require.Equal(t, int32(403), resp.Error.Code)
-			require.Nil(t, index.gotReq)
-		})
-	}
-}
-
-func TestResourceSearch_FederatedPolicyKeepsAuthenticationAndTenantErrors(t *testing.T) {
-	s, index, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-	s.allowedReadServices = map[string][]string{"g/secret": {"assistant"}}
-	req := &resourcepb.ResourceSearchRequest{
-		Options:   &resourcepb.ListOptions{Key: validKey()},
-		Federated: []*resourcepb.ResourceKey{{Group: "g", Resource: "secret"}},
-	}
-	resp, err := s.Search(context.Background(), req)
-	require.NoError(t, err)
-	require.Equal(t, int32(401), resp.Error.Code)
-	require.Nil(t, index.gotReq)
-
-	req.Options.Key.Namespace = "other"
-	resp, err = s.Search(authedCtx(), req)
-	require.NoError(t, err)
-	require.Equal(t, int32(403), resp.Error.Code)
-	require.Nil(t, index.gotReq)
 }
 
 func TestHybridSearch_GlobalMetricLabels(t *testing.T) {
