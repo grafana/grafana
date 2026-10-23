@@ -1440,6 +1440,36 @@
       "saving": "Sparar ...",
       "title-error-saving-receiver": "Fel när mottagare skulle sparas"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Om du vill ändra din Alertmanager-inställning, gå till sidan för larmadministration. Kontakta administratören om du inte har åtkomst.",
       "admin-hint-external": "Om du vill ändra din Alertmanager-inställning, gå till sidan för larmadministration. Kontakta administratören om du inte har åtkomst.",
@@ -1765,7 +1795,9 @@
         "autosync-tooltip-unsupported": "Automatisk synkronisering är inte tillgänglig för denna typ av Alertmanager. Välj en Mimir- eller Cortex-datakälla för att aktivera den.",
         "datasource": "Alertmanager-datakälla",
         "datasource-autosync-badge": "Automatisk synkronisering",
+        "embedded-yaml-parse-error": "",
         "heading": "Importera aviseringsresurser",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Inga Alertmanager-datakällor hittades",
         "no-permission-desc": "Du saknar behörighet att importera aviseringresurser. Du behöver behörigheten <strong>alerting.notifications:write</strong>. Du kan hoppa över detta steg.",
@@ -7420,6 +7452,57 @@
       "usage-count_one": "Används på {{count}} instrumentpaneler",
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Lägg till länk",
       "remove-link": "Ta bort länk",
@@ -7745,6 +7828,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Ett oväntat fel uppstod vid sparandet."
     },
     "save-library-viz-panel-modal": {
@@ -8037,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Öppna frågefönstret",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Öppna frågefönstret"
     },
     "viz-panel-links-renderer": {
@@ -13634,6 +13720,13 @@
       "save-tooltip": "Spara"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Laddar …"
   },
@@ -15460,11 +15553,6 @@
       "original-query": "Ursprunglig fråga",
       "trace-id": "(Spårnings-ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Lägg till fråga",
-      "expression": "Uttryck",
-      "title-data-source-help": "Hjälp med datakälla"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Intervall = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15592,31 @@
     "accept": "Acceptera",
     "assistant-context-title": "Kontext för gemensam frågeredigering",
     "assistant-instructions-title": "Anvisningar för gemensam frågeredigering",
-    "assistant-unavailable": "Assistenten är inte tillgänglig",
-    "assistant-unavailable-body": "Gemensam frågeredigering kräver Grafana Assistant.",
-    "building": "Bygger fråga …",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Kontrollerar assistentens tillgänglighet …",
     "clarification-label": "Lägg till extra detaljer",
     "clarification-message": "Förtydligandemeddelande",
-    "clarification-placeholder": "Lägg till extra detaljer …",
+    "clarification-placeholder": "",
     "clarification-title": "Detalj begärd",
     "close": "Stäng medförfattande",
-    "context": "KONTEXT",
-    "context-error": "Kunde inte läsa det valda frågesammanhanget",
+    "context-error": "",
     "continue": "Fortsätt",
     "continue-here": "Fortsätt här",
     "continue-in-assistant": "Fortsätt i Assistant",
-    "continue-in-assistant-chat": "Fortsätt i Assistant-chatten",
     "dialog": "Medförfattare till fråga",
     "dismiss": "Avfärda",
     "error": "Fel vid gemensam frågeredigering",
     "error-accept-failed": "Frågeförslaget kunde inte godkännas. Försök igen.",
     "error-multiple-responses": "Assistenten returnerade motstridiga frågeförslag. Försök igen.",
     "error-preview-failed": "Frågeförslaget kunde inte förhandsgranskas. Försök igen.",
+    "explain-failed": "",
     "explain-or-modify": "Förklara eller ändra",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Avbryt",
     "feedback-description": "Din feedback hjälper till att förbättra frågeupplevelsen i Grafana.",
     "feedback-error": "Feedback kunde inte skickas. Försök igen.",
@@ -15536,36 +15627,61 @@
     "feedback-not-helpful": "Inte till hjälp",
     "feedback-positive-placeholder": "Vad tyckte du om? Hur kunde det ha varit ännu bättre?",
     "feedback-positive-title": "Vad gick bra?",
-    "feedback-privacy": "Ditt betyg, din kommentar och om detta var ett förslag eller en överlämning skickas. Din fråga, din prompt och assistentens svar inkluderas inte.",
+    "feedback-privacy": "",
     "feedback-recipient": "Din feedback kommer att skickas till de team som arbetar med frågor.",
     "feedback-send": "Skicka",
     "feedback-sending": "Skickar …",
-    "focus": "FOKUS",
-    "handoff-guidance": "Dina ändringar kan behöva omfatta en annan datakälla eller ytterligare frågor utanför den vi fokuserar på. Fortsätt i Assistant-chatten för att göra större ändringar.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Markerad fråga",
-    "highlighted-query-summary": "Sammanfattning av markerad fråga",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant kunde inte producera giltigt {{language}} efter att ha försökt reparera förslaget. Försök igen eller lägg till fler detaljer.",
     "iteration-nudge": "Jobbar du med något stort? Iterera på större ändringar med mer utrymme.",
-    "open-in-chat": "Öppna i chatt",
-    "original-change": "Ursprunglig {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Förhandsgranskar fråga",
+    "previous-option": "",
     "prompt-label": "Beskriv en frågeändring",
-    "prompt-placeholder": "Beskriv en snabb ändring …",
+    "prompt-placeholder": "",
     "proposal-details": "Information om frågeförslag",
-    "proposed-change": "Föreslagen {{kind}}",
-    "reading-highlighted-query": "Läser markerad fråga …",
+    "query-diff": "",
     "relevant-context": "Relevant frågekontext",
     "request-failed": "Assistant kunde inte skapa ett frågeförslag. Försök igen.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Försök igen",
+    "retry-context": "",
     "running-updated-query": "Kör uppdaterad fråga …",
+    "select-to-accept": "",
     "selection-ready": "Markeringen är en del av denna {{language}}-fråga.",
     "selection-whole-query": "Hela {{language}}-frågan är vald för gemensam redigering.",
     "selection-with-type": "{{name}} är en {{type}} {{kind}}.",
     "stale-query-response": "Den markerade frågan ändrades innan förslaget var redo. Avfärda och markera den igen.",
     "stop": "Stopp",
     "submit": "Medförfattare",
-    "suggestion-updated": "Förslaget har uppdaterats",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistenten returnerade den aktuella frågan utan ändringar. Försök igen eller lägg till fler detaljer.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Eventuella panelredigeringar som inte sparats kommer inte att gå förlorade.",
     "working-focus": "Frågefokus"
   },
@@ -16181,14 +16297,7 @@
       "time-range": "Lås tidsintervall"
     },
     "export": {
-      "back-button": "Tillbaka till exportkonfigurationen",
-      "cancel-button": "Avbryt",
-      "info-text": "Exportera denna instrumentpanel.",
-      "loading": "Laddar …",
-      "save-button": "Spara till fil",
-      "share-externally-label": "Exportera för extern delning",
-      "view-button": "Visa JSON",
-      "view-button-yaml": "Visa YAML"
+      "share-externally-label": "Exportera för extern delning"
     },
     "image": {
       "actions": "Bildexportåtgärder",
@@ -16246,9 +16355,6 @@
       "dark": "Mörk",
       "field-name": "Tema",
       "light": "Ljus"
-    },
-    "view-json": {
-      "copy-button": "Kopiera till klippbordet"
     }
   },
   "share-panel": {
@@ -17427,6 +17533,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Ta bort delar av frågeresultaten med ett regex-mönster."
       },
+      "deselect-all": "",
       "label-from-variable": "Från variabel",
       "label-identifier": "Identifierare",
       "label-use-variable": "Använd variabel",
@@ -17434,7 +17541,8 @@
       "name": {
         "filter-fields-by-name": "Filtrera fält efter namn"
       },
-      "placeholder-regular-expression-pattern": "Vanligt uttrycksmönster"
+      "placeholder-regular-expression-pattern": "Vanligt uttrycksmönster",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
