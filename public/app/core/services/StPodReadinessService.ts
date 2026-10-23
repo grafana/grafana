@@ -3,16 +3,14 @@ import { BehaviorSubject } from 'rxjs';
 import { useObservable } from '@grafana/data/unstable';
 import { getBackendSrv } from '@grafana/runtime';
 
+import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadinessConstants';
+
 export enum StPodStatus {
   Unknown = 'unknown',
   Waiting = 'waiting',
   Ready = 'ready',
   Timeout = 'timeout',
 }
-
-export const ST_POD_TIMEOUT_MS = 5 * 60 * 1000;
-export const ST_POD_POLL_INTERVAL_MS = 10 * 1000;
-export const ST_POD_READY_TTL_MS = 60 * 60 * 1000;
 
 interface PendingResolver {
   promise: Promise<void>;

@@ -1,12 +1,7 @@
 import { setBackendSrv, type BackendSrv } from '@grafana/runtime';
 
-import {
-  ST_POD_POLL_INTERVAL_MS,
-  ST_POD_READY_TTL_MS,
-  ST_POD_TIMEOUT_MS,
-  StPodReadinessService,
-  StPodStatus,
-} from './StPodReadinessService';
+import { StPodReadinessService, StPodStatus } from './StPodReadinessService';
+import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadinessConstants';
 
 const podUp = () => Promise.resolve({ database: 'ok' });
 const podDown = () => Promise.resolve({ database: 'failing' });
