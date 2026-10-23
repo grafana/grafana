@@ -198,7 +198,7 @@ func (p *privateCacheWriter) Write(b []byte) (int, error) {
 // complete is false when any version could not be read and is marked stale.
 func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveThroughBreaker(entry.breaker, name, entry.handler, w, r)
+		entry.serve(name, w, r)
 	})
 	var list apidiscoveryv2.APIGroupDiscoveryList
 	status, err := readDiscovery(req, handler, apisPrefix, aggregatedDiscoveryJSON, &list)

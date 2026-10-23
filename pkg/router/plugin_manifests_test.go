@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -23,10 +24,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -319,7 +322,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	connections := target.connections
 	target.closeConnections()
 	for _, conn := range connections {
-		require.Equal(t, connectivity.Shutdown, conn.GetState())
+		require.Equal(t, connectivity.Shutdown, conn.conn.GetState())
 	}
 	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app", nil)
 	require.ErrorContains(t, err, "closed")
@@ -639,4 +642,90 @@ func TestForwardRouteCredentials(t *testing.T) {
 	header = http.Header{}
 	require.NoError(t, forwardRouteCredentials(t.Context(), header))
 	require.Empty(t, header, "a request without a requester carries no credentials")
+}
+
+// A connection lives as long as a loaded handler uses it: superseded
+// handlers keep it until they are destroyed, and the last release closes it.
+func TestPluginConnectionClosesWithItsLastHandler(t *testing.T) {
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "https://plugins.invalid/plugins", nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	key := pluginConnectionKey{host: "localhost:50051", pluginID: "grafana-appsdktest-app"}
+
+	releaseOld, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	releaseNew, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	c := target.connections[key]
+	require.Equal(t, 2, c.refs)
+
+	releaseOld()
+	releaseOld() // releasing twice drops one reference
+	require.Same(t, c, target.connections[key])
+	require.NotEqual(t, connectivity.Shutdown, c.conn.GetState())
+
+	releaseNew()
+	require.NotContains(t, target.connections, key)
+	require.Equal(t, connectivity.Shutdown, c.conn.GetState())
+
+	// A new handler gets a new connection; one released after shutdown is a no-op.
+	release, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	require.NotSame(t, c, target.connections[key])
+	target.closeConnections()
+	release()
+	_, err = target.acquireConnection(key.host, key.pluginID)
+	require.ErrorContains(t, err, "closed")
+}
+
+// A handler that fails to load releases what Load acquired for it, also
+// when the load panics and the router recovers it.
+func TestPluginBackendLoadFailureReleases(t *testing.T) {
+	for name, client := range map[string]PluginClientProvider{
+		"error": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			return nil, nil, errors.New("unreachable")
+		},
+		"panic": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			panic("unreachable")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			acquired, released := 0, 0
+			backend := &PluginBackend{
+				pluginID: "grafana-appsdktest-app",
+				client:   client,
+				acquire: func() (func(), error) {
+					acquired++
+					return func() { released++ }, nil
+				},
+			}
+			_, err := loadBackend(t.Context(), backend)
+			require.ErrorContains(t, err, "unreachable")
+			require.Equal(t, 1, acquired)
+			require.Equal(t, 1, released)
+		})
+	}
+}
+
+// Only a gRPC deployment holds a connection; an HTTP operator, reached
+// through baasbridge, takes no connection reference when it loads.
+func TestPluginManifestsTargetAcquiresConnectionsOnlyForGRPCHosts(t *testing.T) {
+	for host, acquires := range map[string]bool{
+		"localhost:50051":       true,
+		"http://127.0.0.1:8080": false,
+	} {
+		t.Run(host, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(`{"key": "k", "plugins": [{"host": "` + host + `", "definition": {"jsonData": {"id": "example-app", "type": "app"}, "manifests": [{
+					"appName": "example", "group": "example.ext.grafana.app",
+					"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
+			}))
+			defer srv.Close()
+			target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			require.NoError(t, err)
+			target.poll(t.Context(), make(chan struct{}, 1))
+			require.Len(t, target.Backends(), 1)
+			backend := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+			require.Equal(t, acquires, backend.acquire != nil)
+		})
+	}
 }

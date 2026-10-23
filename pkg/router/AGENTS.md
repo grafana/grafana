@@ -28,11 +28,20 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
+- **Tear down a retired handler only after it drains.** A handler that holds resources implements
+  `Destroy` (a plugin's API server, through `tracedPluginHandler`). When reconcile retires its
+  entry, the entry refuses new requests (503 with `Retry-After: 1`, for a request that read the
+  old snapshot), its watches end, and `Destroy` runs once the requests in flight finish
+  (`retire.go`). Never destroy a handler under a running request. A managed plugin's gRPC
+  connection is reference-counted by the handlers loaded on it (`acquireConnection`), so it closes
+  with the last one destroyed, never while a superseded handler may still serve.
 - **Build discovery from what is served,** meaning `r.served`, never the raw `Load` result. A group
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
   re-reads full state through `Load`. Drain the channel before calling `Load`. `Run` does an explicit
-  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil).
+  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil). Since every
+  reconcile sees the same routes, a warning about them (reserved, invalid or duplicate groups) is
+  logged when it first appears, not on every reconcile (`warn` in `reconcile`).
 - **`Ready` fails only when nothing is served.** A partial reconcile error is logged, but must not
   drain the router from its load balancer.
 - **The circuit breaker is passive only.** `gobreaker`'s two-step breaker, one per group, driven by
@@ -78,6 +87,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
   router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
+  A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
+  `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
+  Until then its error is reported again, so `Ready` and the reconcile log don't change. A new key
+  for the group is loaded at once.
 - **Authenticate, then check the namespace, before any dispatch.** Every `/apis` and `/openapi/v3`
   request needs a requester: one Grafana's middleware set, or one from a verified `X-Access-Token`
   (`authenticate`), or it gets a 401. A request whose path names a namespace
@@ -180,7 +193,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status and shadowed groups. |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
