@@ -429,7 +429,17 @@ export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTy
 export type { ActionMeta } from './types/select';
 export type { ComponentSize } from './types/size';
 export type { Column } from './types/interactiveTable';
-export type { CellProps, SortByFn } from 'react-table';
+export type {
+  CellProps,
+  DefaultSortTypes,
+  HeaderProps,
+  IdType,
+  Renderer,
+  SortByFn,
+  SortingRule,
+  TableOptions,
+  UsePaginationInstanceProps,
+} from 'react-table';
 
 export {
   DEFAULT_ANNOTATION_COLOR,
