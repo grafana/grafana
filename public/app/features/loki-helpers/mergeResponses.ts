@@ -110,10 +110,14 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
   // A field may exist only in `source` regardless of field count or position
   source.fields.forEach((sourceField, index) => {
     if (!findSourceField(sourceField, dest.fields, index)) {
-      dest.fields.push({
+      const newField: Field = {
         ...sourceField,
         values: new Array(destTimeValuesLength).fill(undefined),
-      });
+      };
+      if (sourceField.nanos) {
+        newField.nanos = new Array(destTimeValuesLength).fill(0);
+      }
+      dest.fields.push(newField);
     }
   });
   const totalFields = dest.fields.length;

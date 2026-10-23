@@ -824,6 +824,43 @@ describe('combineResponses', () => {
     });
   });
 
+  it('merges prepended nanosecond fractions for a new timestamp column and leaves the source frame unchanged', () => {
+    // Dest has no timestamp column. Copying the source field keeps its nanos array, and
+    // prepending the first of two rows splices that same array so the next read sees 100.
+    const sourceNanos = [100, 200];
+    const sourceTimestampValues = [10, 20];
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [30, 40] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id3', 'id4'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [10, 20] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2'] },
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: sourceTimestampValues,
+          nanos: sourceNanos,
+        },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const timestamp = combined.data[0].fields.find((field: Field) => field.name === 'timestamp');
+
+    expect(timestamp?.nanos).toEqual([100, 200, 0, 0]);
+    expect(sourceNanos).toEqual([100, 200]);
+    expect(sourceTimestampValues).toEqual([10, 20]);
+  });
+
   describe('combine stats', () => {
     const { metricFrameA } = getMockFrames();
     const makeResponse = (stats?: QueryResultMetaStat[]): DataQueryResponse => ({
