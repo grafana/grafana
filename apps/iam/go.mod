@@ -15,6 +15,7 @@ replace (
 	github.com/grafana/grafana/apps/collections => ../collections
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
+	github.com/grafana/grafana/apps/dashboardviews => ../dashboardviews
 	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
 	github.com/grafana/grafana/apps/example => ../example
 	github.com/grafana/grafana/apps/folder => ../folder

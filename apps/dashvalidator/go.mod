@@ -338,6 +338,7 @@ replace (
 	github.com/grafana/grafana/apps/collections => ../collections
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
+	github.com/grafana/grafana/apps/dashboardviews => ../dashboardviews
 	github.com/grafana/grafana/apps/example => ../example
 	github.com/grafana/grafana/apps/folder => ../folder
 	github.com/grafana/grafana/apps/iam => ../iam
