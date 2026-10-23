@@ -12,34 +12,47 @@ var ErrUncheckedDeleteNotAuthorized = errors.New("unchecked delete called withou
 
 type uncheckedDeleteAuthorizedKey struct{}
 
-// uncheckedDeleteScope is the (orgID, namespace, requester UID) a marked ctx was authorized for; namespace is included because stacks-<id> namespaces all share legacy OrgID 1.
+// uncheckedDeleteScope is the (orgID, namespace, requester UID, authorized folder UIDs) a marked ctx was authorized for; namespace is included because stacks-<id> namespaces all share legacy OrgID 1. folderUIDs is a set, not an exact batch: a checked caller that authorizes a batch (e.g. ["a","b"]) may delegate to callees that each check only their own folder ("a", or "b") against that same marker, so membership -- not exact-set equality -- is what's checked.
 type uncheckedDeleteScope struct {
-	orgID     int64
-	namespace string
-	userUID   string
+	orgID      int64
+	namespace  string
+	userUID    string
+	folderUIDs map[string]struct{}
 }
 
-// WithUncheckedDeleteAuthorized marks ctx as authorized for an Unchecked delete by user in orgID; checked must be the caller's own permission-check result, not a hardcoded true. A false checked, or a nil/typed-nil user, leaves ctx unmarked.
-func WithUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, checked bool) context.Context {
+// WithUncheckedDeleteAuthorized marks ctx as authorized for an Unchecked delete of folderUIDs by user in orgID; checked must be the caller's own permission-check result, not a hardcoded true. A false checked, or a nil/typed-nil user, leaves ctx unmarked.
+func WithUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, folderUIDs []string, checked bool) context.Context {
 	if !checked || user == nil || user.IsNil() {
 		return ctx
 	}
+	set := make(map[string]struct{}, len(folderUIDs))
+	for _, uid := range folderUIDs {
+		set[uid] = struct{}{}
+	}
 	return context.WithValue(ctx, uncheckedDeleteAuthorizedKey{},
-		uncheckedDeleteScope{orgID: orgID, namespace: user.GetNamespace(), userUID: user.GetUID()})
+		uncheckedDeleteScope{orgID: orgID, namespace: user.GetNamespace(), userUID: user.GetUID(), folderUIDs: set})
 }
 
-// IsUncheckedDeleteAuthorized reports whether ctx is marked for this same orgID and user; namespace is compared by exact equality, not claims.NamespaceMatches's "*" wildcard.
-func IsUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester) bool {
+// IsUncheckedDeleteAuthorized reports whether ctx is marked for this orgID and user, and every one of folderUIDs is in the authorized set; namespace is compared by exact equality, not claims.NamespaceMatches's "*" wildcard.
+func IsUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, folderUIDs []string) bool {
 	if user == nil || user.IsNil() {
 		return false
 	}
 	v, ok := ctx.Value(uncheckedDeleteAuthorizedKey{}).(uncheckedDeleteScope)
-	return ok && v.orgID == orgID && v.namespace == user.GetNamespace() && v.userUID == user.GetUID()
+	if !ok || v.orgID != orgID || v.namespace != user.GetNamespace() || v.userUID != user.GetUID() {
+		return false
+	}
+	for _, uid := range folderUIDs {
+		if _, authorized := v.folderUIDs[uid]; !authorized {
+			return false
+		}
+	}
+	return true
 }
 
 // RequireUncheckedDeleteAuthorized is the guard every Unchecked delete entry point must run first.
-func RequireUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester) error {
-	if !IsUncheckedDeleteAuthorized(ctx, orgID, user) {
+func RequireUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, folderUIDs []string) error {
+	if !IsUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs) {
 		return ErrUncheckedDeleteNotAuthorized
 	}
 	return nil

@@ -216,7 +216,7 @@ func TestIntegration_DeleteLibraryElementsInFolderUnchecked(t *testing.T) {
 			err := sc.service.DeleteLibraryElementsInFolderUnchecked(context.Background(), orgID, sc.reqContext.SignedInUser, sc.folder.UID)
 			require.ErrorIs(t, err, folder.ErrUncheckedDeleteNotAuthorized)
 
-			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), orgID, sc.reqContext.SignedInUser, true)
+			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), orgID, sc.reqContext.SignedInUser, []string{sc.folder.UID}, true)
 			err = sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, sc.reqContext.SignedInUser, sc.folder.UID)
 			require.NoError(t, err)
 
@@ -233,7 +233,7 @@ func TestIntegration_DeleteLibraryElementsInFolderUnchecked(t *testing.T) {
 			sc.service.AccessControl = acmock.New()
 			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
 
-			ctx := folder.WithUncheckedDeleteAuthorized(sc.reqContext.Req.Context(), noPermsUser.OrgID, noPermsUser, true)
+			ctx := folder.WithUncheckedDeleteAuthorized(sc.reqContext.Req.Context(), noPermsUser.OrgID, noPermsUser, []string{sc.folder.UID}, true)
 			err := sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, noPermsUser.OrgID, noPermsUser, sc.folder.UID)
 			require.NoError(t, err)
 

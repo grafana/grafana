@@ -178,14 +178,14 @@ func (lps LibraryPanelService) DeleteInFolders(ctx context.Context, orgID int64,
 		}
 	}
 	// Reaching here means every folder's edit-permission check above passed.
-	return lps.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, true), orgID, folderUIDs, user)
+	return lps.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs, true), orgID, folderUIDs, user)
 }
 
 // DeleteInFoldersUnchecked is DeleteInFolders without requiring edit permissions on each folder, for
 // callers that have already authorized the requester through a different mechanism (e.g. a
 // standalone folder apiserver's cascade delete).
 func (lps LibraryPanelService) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user); err != nil {
+	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
 		return err
 	}
 

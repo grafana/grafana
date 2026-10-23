@@ -808,7 +808,7 @@ func TestIntegration_DeleteInFoldersUnchecked(t *testing.T) {
 	// Refuses to run without the unchecked-delete marker.
 	require.ErrorIs(t, store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{}), folder.ErrUncheckedDeleteNotAuthorized)
 
-	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), rule.OrgID, &user.SignedInUser{}, true)
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), rule.OrgID, &user.SignedInUser{}, []string{rule.NamespaceUID}, true)
 	err := store.DeleteInFoldersUnchecked(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 	require.NoError(t, err)
 

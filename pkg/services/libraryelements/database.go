@@ -801,7 +801,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		return err
 	}
 	// Reaching here means the edit-permission check above passed.
-	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c, signedInUser.GetOrgID(), signedInUser, true), signedInUser.GetOrgID(), signedInUser, folderUID)
+	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c, signedInUser.GetOrgID(), signedInUser, []string{folderUID}, true), signedInUser.GetOrgID(), signedInUser, folderUID)
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without checking folder permissions; elements still connected to a dashboard are kept and block the delete.

@@ -1900,14 +1900,14 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 		}
 	}
 	// Reaching here means every folder's AccessControl check above passed.
-	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, true), orgID, folderUIDs, user)
+	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs, true), orgID, folderUIDs, user)
 }
 
 // DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
 // already authorized the requester through a different mechanism (e.g. a standalone folder
 // apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in).
 func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user); err != nil {
+	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
 		return err
 	}
 
