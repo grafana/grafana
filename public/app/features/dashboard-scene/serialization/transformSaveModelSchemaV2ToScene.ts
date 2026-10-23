@@ -255,7 +255,7 @@ export function transformSaveModelSchemaV2ToScene(
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange:
-            config.featureToggles.reloadDashboardsOnParamsChange &&
+            getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false) &&
             Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
           uid: metadata.name,
         }),

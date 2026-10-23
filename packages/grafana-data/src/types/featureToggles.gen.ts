@@ -916,11 +916,6 @@ export interface FeatureToggles {
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
-  * Enables sharing a list of APIs with a list of plugins
-  * @default true
-  */
-  restrictedPluginApis?: boolean;
-  /**
   * Enable favorite datasources
   * @default false
   */
@@ -1194,7 +1189,7 @@ export interface FeatureToggles {
   lokiAlignedQuerySplitting?: boolean;
   /**
   * Enables heatmap visualization support for Pyroscope profiles
-  * @default false
+  * @default true
   */
   profilesHeatmap?: boolean;
   /**

@@ -27,7 +27,7 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ADD_TARGET, type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
 import { type PanelElement } from '../types';
-import { notebookViewHref, notebookViewUrl } from '../urls';
+import { loadSourceForEntryPoint, notebookViewHref, notebookViewUrl } from '../urls';
 
 import { CreateNotebookFields } from './CreateNotebookFields';
 import { LockTimeRangeField } from './LockTimeRangeField';
@@ -199,18 +199,24 @@ export function AddPanelToNotebookModalBody(props: Props) {
           : await buildSinglePanelCell(props, values.lockTimeRange);
         panelWasBuilt = true;
         added = existingUid
-          ? await addToExistingNotebook(existingUid, cells, entryPoint, source)
-          : await createNotebookWithContent({ title }, cells, entryPoint, source);
+          ? await addToExistingNotebook(existingUid, cells, entryPoint, source, values.lockTimeRange)
+          : await createNotebookWithContent({ title }, cells, entryPoint, source, values.lockTimeRange);
 
         dispatch(
           notifyApp(
             createSuccessNotification(
               props.cells
-                ? t('notebooks.add-panel.success-cells', 'Added to {{title}}', { title: added.title })
-                : t('notebooks.add-panel.success', 'Panel added to {{title}}', { title: added.title }),
+                ? t('notebooks.add-panel.success-cells', 'Added to {{title}}', {
+                    title: added.title,
+                    interpolation: { escapeValue: false },
+                  })
+                : t('notebooks.add-panel.success', 'Panel added to {{title}}', {
+                    title: added.title,
+                    interpolation: { escapeValue: false },
+                  }),
               '',
               undefined,
-              <TextLink href={notebookViewHref(added.uid)}>
+              <TextLink href={notebookViewHref(added.uid, loadSourceForEntryPoint(entryPoint))}>
                 <Trans i18nKey="notebooks.add-panel.success-link">View notebook</Trans>
               </TextLink>
             )
@@ -224,7 +230,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
           existingUid ?? '',
           entryPoint,
           existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
-          addPanelFailureReason(error, panelWasBuilt)
+          addPanelFailureReason(error, panelWasBuilt),
+          values.lockTimeRange
         );
 
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));

@@ -1,5 +1,6 @@
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -28,6 +29,9 @@ describe('Dashboard reload', () => {
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
   });
+  afterEach(() => {
+    setTestFlags({});
+  });
 
   it.each([
     [false, false, false, false],
@@ -43,7 +47,7 @@ describe('Dashboard reload', () => {
   ])(
     `reloadDashboardsOnParamsChange: %s, reloadOnParamsChange: %s, withUid: %s, editMode: %s`,
     async (reloadDashboardsOnParamsChange, reloadOnParamsChange, withUid, editMode) => {
-      config.featureToggles.reloadDashboardsOnParamsChange = reloadDashboardsOnParamsChange;
+      setTestFlags({ reloadDashboardsOnParamsChange });
       setDashboardAPI(undefined);
 
       const { scene: dashboardScene, scopesService } = await renderDashboard(

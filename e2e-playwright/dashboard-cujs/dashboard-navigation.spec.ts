@@ -20,7 +20,11 @@ import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReload
 test.use({
   featureToggles: {
     scopeFilters: true,
-    reloadDashboardsOnParamsChange: true,
+  },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+    },
   },
 });
 

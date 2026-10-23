@@ -26,7 +26,10 @@ func requestVerb(req *http.Request) string {
 		return outcome.verb
 	}
 	var verb string
-	if info, err := requestInfoFactory.NewRequestInfo(req); err == nil && info.Verb != "" {
+	if isDeprecatedWatchPath(req.URL.Path) {
+		// Rejected, so it is not a watch.
+		verb = strings.ToLower(req.Method)
+	} else if info, err := requestInfoFactory.NewRequestInfo(req); err == nil && info.Verb != "" {
 		verb = info.Verb
 	} else {
 		verb = strings.ToLower(req.Method)
@@ -35,6 +38,13 @@ func requestVerb(req *http.Request) string {
 		outcome.verb = verb
 	}
 	return verb
+}
+
+// isDeprecatedWatchPath reports whether path is the deprecated
+// /apis/<group>/<version>/watch/... form, which the router doesn't serve.
+func isDeprecatedWatchPath(path string) bool {
+	rest, ok := pathAfterVersion(path)
+	return ok && strings.HasPrefix(rest, "watch/")
 }
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a

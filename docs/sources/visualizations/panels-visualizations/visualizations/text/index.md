@@ -102,8 +102,12 @@ Choose from:
 The editor provides syntax highlighting in the authoring block.
 
 {{< admonition type="note" >}}
-To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables, depending on your deployment.
-{{< /admonition>}}
+When a text visualization has query data, an iframe only loads after you allow its source.
+For more information, refer to the [Security and external documentation](#security-and-external-content).
+
+To embed Grafana pages in an iframe, also set [`allow_embedding`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_embedding) to `true` in your Grafana configuration file or environment variables.
+This setting controls whether browsers can show Grafana in a frame. Other websites control this with their own settings.
+{{< /admonition >}}
 
 ## Render query results as text with Handlebars templates
 
@@ -111,6 +115,80 @@ Use `${__value}`, `${__field}`, `${__series}`, and `${__data}` macros to referen
 Choose what data to display, repeat content for each row with `{{#each}}`, and add if/then logic with `{{#if}}` helpers.
 
 ![Text visualization with Handlebars support](/media/docs/grafana/panels-visualizations/screenshot-text-handlebars-v13.3.png)
+
+## Style content with theme colors
+
+Use the [`$__theme` variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__theme) in inline styles to match the current Grafana theme.
+The content updates when a user switches between light and dark themes.
+
+For example, the following HTML shows a card with the theme's background, border, and secondary text colors:
+
+```html
+<div
+  style="padding: 12px; background: ${__theme.colors.background.secondary}; border: 1px solid ${__theme.colors.border.weak}; border-radius: ${__theme.shape.radius.default}"
+>
+  <strong>checkout</strong>
+  <div style="color: ${__theme.colors.text.secondary}; font-size: ${__theme.typography.size.sm}">182 ms</div>
+</div>
+```
+
+The variable works in Markdown and HTML modes, and in the output of Handlebars templates.
+For example, use `{{#if}}` to choose a success or error color for each row.
+
+## Security and external content
+
+When a text visualization has query data, Grafana renders its content in an isolated frame.
+This protects the dashboard and your Grafana session from the content of the panel.
+
+### What the frame blocks
+
+Inside the frame, the content can't:
+
+- Run scripts, including inline scripts and event handlers.
+- Read your Grafana session, cookies, or the rest of the dashboard.
+- Call the Grafana API or send requests to other services.
+- Submit forms or embed plugins with `<object>` or `<embed>`.
+- Load images, stylesheets, fonts, audio, video, or iframes from a URL, unless you allow its source.
+
+Grafana always sanitizes HTML in the frame, even when [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) is enabled.
+Inline styles, `data:` images, and Mermaid diagrams still work.
+By default, links open in a new tab.
+
+### Review blocked resources
+
+In most cases, when a panel tries to load content from a URL, Grafana blocks it and shows a banner at the top of the dashboard and in the panel editor.
+To load the content, complete the following steps:
+
+1. In the banner, click **Review**.
+1. Review each source and the full list of URLs that it requests.
+1. Select the sources that you trust.
+1. Click **Allow** or **Always allow**.
+
+You can't allow a source that requests too many URLs to list, because you can't review all of them.
+
+### Allow and Always allow
+
+The two options differ in where the approval applies and how long it lasts:
+
+- **Allow**: Loads content from the source in the text visualizations listed in the review. The approval only applies to the current dashboard and ends when you close the browser tab.
+- **Always allow**: Loads content from the source in any text visualization. The approval applies to any dashboard and lasts for 30 days.
+
+Approvals apply only to you, in the current organization and browser.
+They're stored in your browser, not in Grafana, and they aren't shared with other users.
+
+### What an approval allows
+
+When you allow a source, you allow its whole website, for example `https://example.com`, not only the URLs listed in the review.
+The panel can then load images, stylesheets, fonts, audio, video, and iframes from that website.
+
+Before you allow a source, consider the following risks:
+
+- **Data in URLs**: Panel content can put dashboard variables and query results into URLs. The website receives that data with each request.
+- **Viewer information**: The website receives your IP address, your browser details, and the time of each request. The requests don't include the address of your Grafana instance or the dashboard, unless the panel content puts it in a URL.
+- **Content changes**: The website can change what it serves after you allow it. An approval doesn't lock the content that you reviewed.
+- **Embedded pages**: An iframe from the website can show any content in the panel, and it can load content from other websites. However, it can't run scripts, submit forms, or read your Grafana session or the dashboard.
+
+Only allow websites that you trust with the data on the dashboard.
 
 ## Configuration options
 

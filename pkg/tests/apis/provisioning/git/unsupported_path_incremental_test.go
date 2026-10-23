@@ -157,7 +157,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovedOntoUnsupportedPath(
 			"parent/old-dir/dashboard.json": common.DashboardJSON("incr-folder-move-a", "Moved Dashboard", 1),
 			"parent/other.json":             common.DashboardJSON("incr-folder-move-b", "Other Dashboard", 1),
 		})
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		helper.RequireRepoDashboardCount(t, repoName, 2)
 		require.Contains(t, repoFolderTitles(t, helper, repoName), "old-dir")
 
@@ -211,7 +211,8 @@ func TestIntegrationProvisioning_IncrementalSync_NewTreeUnderUnsupportedFolder(t
 
 // A dashboard file renamed onto a path that is not a resource (README.md, another extension,
 // a hidden file or folder) is gone from the repository, so an incremental pull removes the
-// dashboard, as a full pull of the same commit does, and reports nothing about the new path.
+// dashboard, as a full pull of the same commit does. A new folder without metadata still
+// produces a metadata warning.
 func TestIntegrationProvisioning_IncrementalSync_RenameOntoReadme(t *testing.T) {
 	requireRenameOntoNonResourceRemovesDashboard(t, "readme", "README.md")
 }
@@ -258,7 +259,8 @@ func requireRenameOntoNonResourceRemovesDashboard(t *testing.T, name, target str
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-	require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State, "warnings: %v errors: %v", jobObj.Status.Warnings, jobObj.Status.Errors)
+	require.Empty(t, jobObj.Status.Errors)
+	require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
 	require.Empty(t, jobObj.Status.Warnings, "a path that is not a resource is not reported")
 
 	helper.RequireRepoDashboardCount(t, repoName, 1)

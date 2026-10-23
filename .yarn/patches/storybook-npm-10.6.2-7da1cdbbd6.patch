@@ -1,0 +1,13 @@
+diff --git a/dist/_node-chunks/builder-manager-7PMD5P2I.js b/dist/_node-chunks/builder-manager-7PMD5P2I.js
+index 93c3a52509880a568ee703c9c79c690f40e4542f..488ff63b6d804774d2367f1c35fde7b06237627c 100644
+--- a/dist/_node-chunks/builder-manager-7PMD5P2I.js
++++ b/dist/_node-chunks/builder-manager-7PMD5P2I.js
+@@ -1493,7 +1493,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
+     // turn this on to assist with debugging the bundling of managerEntries
+     // treeShaking: true,
+     sourcemap: !1,
+-    conditions: ["browser", "module", "default"],
++    conditions: ["@grafana-app/source", "browser", "module", "default"],
+     jsxFactory: "React.createElement",
+     jsxFragment: "React.Fragment",
+     jsx: "transform",

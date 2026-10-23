@@ -18,7 +18,11 @@ import { getRecentScopesSelector, getScopesSelectorInput, getScopeTreeCheckboxes
 test.use({
   featureToggles: {
     scopeFilters: true,
-    reloadDashboardsOnParamsChange: true,
+  },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+    },
   },
 });
 
