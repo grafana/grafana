@@ -33,11 +33,10 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo                  repository.ReaderWriter
-	parser                Parser
-	folders               *FolderManager
-	authorizer            Authorizer
-	folderMetadataEnabled bool
+	repo       repository.ReaderWriter
+	parser     Parser
+	folders    *FolderManager
+	authorizer Authorizer
 }
 
 type DualWriteOptions struct {
@@ -53,8 +52,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {

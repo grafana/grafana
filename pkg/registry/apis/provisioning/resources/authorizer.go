@@ -153,25 +153,23 @@ type FolderAncestorFinder interface {
 
 // ProvisioningAuthorizer implements Authorizer for provisioning operations.
 type ProvisioningAuthorizer struct {
-	repo                  *provisioning.Repository
-	reader                repository.Reader
-	access                auth.AccessChecker
-	clients               ResourceClients
-	folders               FolderAncestorFinder
-	folderMetadataEnabled bool
+	repo    *provisioning.Repository
+	reader  repository.Reader
+	access  auth.AccessChecker
+	clients ResourceClients
+	folders FolderAncestorFinder
 }
 
 // NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
 // supported resources to authorize against. The ancestor finder is required for
 // previews that resolve configured folders.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folders FolderAncestorFinder, folderMetadataEnabled bool) Authorizer {
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folders FolderAncestorFinder) Authorizer {
 	return &ProvisioningAuthorizer{
-		repo:                  repo,
-		reader:                reader,
-		access:                access,
-		clients:               clients,
-		folders:               folders,
-		folderMetadataEnabled: folderMetadataEnabled,
+		repo:    repo,
+		reader:  reader,
+		access:  access,
+		clients: clients,
+		folders: folders,
 	}
 }
 
@@ -307,7 +305,7 @@ func (a *ProvisioningAuthorizer) AuthorizeResourcePreview(ctx context.Context, p
 // from the configured branch (ref=""). See the Authorizer doc comment
 // for why we never use a caller-supplied ref here.
 func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (string, error) {
-	return GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+	return GetFolderID(ctx, a.reader, path, "")
 }
 
 // resolveFileGVR reads the file at path from the configured branch and parses it

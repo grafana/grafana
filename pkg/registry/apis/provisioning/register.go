@@ -150,7 +150,6 @@ type APIBuilder struct {
 	restConfigGetter              func(context.Context) (*clientrest.Config, error)
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
-	folderMetadataEnabled         bool
 	maxFileSize                   int64
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
@@ -222,7 +221,6 @@ func NewAPIBuilder(
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
-	folderMetadataEnabled bool,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
 ) (*APIBuilder, error) {
@@ -236,7 +234,7 @@ func NewAPIBuilder(
 		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
 
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	// Create access checker based on mode
@@ -260,7 +258,7 @@ func NewAPIBuilder(
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -275,7 +273,6 @@ func NewAPIBuilder(
 		registry:                            registry,
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
-		folderMetadataEnabled:               folderMetadataEnabled,
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
@@ -361,9 +358,8 @@ func RegisterAPIService(
 	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
-	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
-	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
+	incrementalPolicy := repository.NewIncrementalSyncPolicy(cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
 	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
@@ -406,7 +402,6 @@ func RegisterAPIService(
 		nil,   // newStandaloneClientFactoryFunc
 		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
-		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
 	)
@@ -453,7 +448,6 @@ func RegisterAPIService(
 		nil,   // newStandaloneClientFactoryFunc
 		false, // useExclusivelyAccessCheckerForAuthz
 		quotaGetter,
-		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
 	)
@@ -947,11 +941,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, performanceEnabled), 30*time.Second)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -1056,7 +1050,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.syncResourceTimeout) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,

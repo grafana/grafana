@@ -22,7 +22,7 @@ import (
 )
 
 // Convert git changes into resource file changes
-func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
+func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
 	syncStart := time.Now()
 	if previousRef == currentRef {
 		if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer); err != nil {
@@ -52,7 +52,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
-	diff = splitRenamesOntoNonResources(diff, folderMetadataEnabled)
+	diff = splitRenamesOntoNonResources(diff)
 
 	// Build a path→hash index of existing resources so the apply phase can
 	// detect unchanged content. When a resource is re-parented (folder UID
@@ -107,7 +107,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, relocations, existingHashes)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -153,7 +153,6 @@ func applyIncrementalChanges(
 	tracer tracing.Tracer,
 	span trace.Span,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 	relocations map[string][]string,
 	existingHashes map[string]string,
 ) (affectedFolders map[string]string, err error) {
@@ -420,10 +419,10 @@ func renamedFromResourceFile(change repository.VersionedFileChange) bool {
 // resource (README.md or another extension) into the deletion of the old
 // path and the creation of the new one. That is what a full sync of the same commit sees, and the
 // deletion removes the resource like any other (or, for a _folder.json, reverts the folder).
-func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderMetadataEnabled bool) []repository.VersionedFileChange {
+func splitRenamesOntoNonResources(diff []repository.VersionedFileChange) []repository.VersionedFileChange {
 	rewritten := make([]repository.VersionedFileChange, 0, len(diff))
 	for _, change := range diff {
-		if !splitsRename(change, folderMetadataEnabled) {
+		if !splitsRename(change) {
 			rewritten = append(rewritten, change)
 			continue
 		}
@@ -446,7 +445,7 @@ func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderM
 }
 
 // splitsRename reports whether a rename has to become a deletion and a creation.
-func splitsRename(change repository.VersionedFileChange, folderMetadataEnabled bool) bool {
+func splitsRename(change repository.VersionedFileChange) bool {
 	if !renamedFromResourceFile(change) || safepath.IsDir(change.Path) {
 		return false
 	}
