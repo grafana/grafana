@@ -64,9 +64,9 @@ Revisit only if a concrete client is confirmed to read the field.
   `TestRunDoesNotBusyLoopOnClosedNotifyChannel`, which asserts that `Load` stays bounded after the
   close, not just that the process doesn't hang.
 - When a backend is removed, drain its in-flight requests before tearing down what it holds, and
-  never close anything eagerly on swap. Today nothing is torn down per backend: each aggregate target
-  owns one proxy transport for its lifetime, and plugin gRPC connections (keyed by host and plugin
-  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-23-router-review-plan.md`.
+  never close anything eagerly on swap. A retired plugin handler is destroyed once it drains, and a
+  managed plugin's gRPC connection closes with the last handler using it (R1, R2). Each aggregate
+  target still owns one proxy transport for its lifetime.
 
 ## Readiness: why a partial reconcile error doesn't fail `Ready`
 

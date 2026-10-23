@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -23,9 +24,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -317,7 +320,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	connections := target.connections
 	target.closeConnections()
 	for _, conn := range connections {
-		require.Equal(t, connectivity.Shutdown, conn.GetState())
+		require.Equal(t, connectivity.Shutdown, conn.conn.GetState())
 	}
 	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app")
 	require.ErrorContains(t, err, "closed")
@@ -605,6 +608,68 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 				require.Empty(t, target.Backends())
 			}
 			require.Equal(t, tc.skipped, target.status.status(tc.source).Skipped)
+		})
+	}
+}
+
+// A connection lives as long as a loaded handler uses it: superseded
+// handlers keep it until they are destroyed, and the last release closes it.
+func TestPluginConnectionClosesWithItsLastHandler(t *testing.T) {
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "https://plugins.invalid/plugins", nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	key := pluginConnectionKey{host: "localhost:50051", pluginID: "grafana-appsdktest-app"}
+
+	releaseOld, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	releaseNew, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	c := target.connections[key]
+	require.Equal(t, 2, c.refs)
+
+	releaseOld()
+	releaseOld() // releasing twice drops one reference
+	require.Same(t, c, target.connections[key])
+	require.NotEqual(t, connectivity.Shutdown, c.conn.GetState())
+
+	releaseNew()
+	require.NotContains(t, target.connections, key)
+	require.Equal(t, connectivity.Shutdown, c.conn.GetState())
+
+	// A new handler gets a new connection; one released after shutdown is a no-op.
+	release, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	require.NotSame(t, c, target.connections[key])
+	target.closeConnections()
+	release()
+	_, err = target.acquireConnection(key.host, key.pluginID)
+	require.ErrorContains(t, err, "closed")
+}
+
+// A handler that fails to load releases what Load acquired for it, also
+// when the load panics and the router recovers it.
+func TestPluginBackendLoadFailureReleases(t *testing.T) {
+	for name, client := range map[string]PluginClientProvider{
+		"error": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			return nil, nil, errors.New("unreachable")
+		},
+		"panic": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			panic("unreachable")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			acquired, released := 0, 0
+			backend := &PluginBackend{
+				pluginID: "grafana-appsdktest-app",
+				client:   client,
+				acquire: func() (func(), error) {
+					acquired++
+					return func() { released++ }, nil
+				},
+			}
+			_, err := loadBackend(t.Context(), backend)
+			require.ErrorContains(t, err, "unreachable")
+			require.Equal(t, 1, acquired)
+			require.Equal(t, 1, released)
 		})
 	}
 }
