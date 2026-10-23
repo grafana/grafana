@@ -1524,7 +1524,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
-	value, err := readAndClose(data)
+	value, err := kv.ReadAllAndClose(data)
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
@@ -1682,7 +1682,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 				Folder:          entry.key.Folder,
 			}
 			if hasPeek && peek.Key.String() == entry.key.String() {
-				value, err := readAndClose(peek.Value)
+				value, err := kv.ReadAllAndClose(peek.Value)
 				hasPeek = false
 				if err != nil {
 					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -1791,7 +1791,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		if stats != nil {
 			stats.bodiesConsumed++
 		}
-		value, err := readAndClose(obj.Value)
+		value, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			found(i, &BackendReadResponse{
 				Key:             requests[i].Key,
@@ -1841,7 +1841,7 @@ func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListK
 				return
 			}
 
-			value, err := readAndClose(obj.Value)
+			value, err := kv.ReadAllAndClose(obj.Value)
 			if err != nil {
 				yield(nil, err)
 				return
@@ -2159,7 +2159,7 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	if !i.keysOnly {
-		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		i.value, i.err = kv.ReadAllAndClose(i.currentDataObj.Value)
 		if i.err != nil {
 			return false
 		}
@@ -2778,7 +2778,7 @@ func (i *kvHistoryIterator) Next() bool {
 
 		i.currentDataObj = &dataObj
 
-		i.value, err = readAndClose(dataObj.Value)
+		i.value, err = kv.ReadAllAndClose(dataObj.Value)
 		if err != nil {
 			i.err = err
 			return false
@@ -2927,7 +2927,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			readFailed = true
 			break
 		}
-		data, err := readAndClose(obj.Value)
+		data, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
 			if unreadable == nil {
@@ -3417,13 +3417,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	return rsp
-}
-
-// readAndClose reads all data from a ReadCloser and ensures it's closed,
-// combining any errors from both operations.
-func readAndClose(r io.ReadCloser) ([]byte, error) {
-	data, err := io.ReadAll(r)
-	return data, errors.Join(err, r.Close())
 }
 
 // keysSubscriber is the subscriber search may watch written keys with: the one

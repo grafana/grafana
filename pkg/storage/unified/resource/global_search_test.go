@@ -348,17 +348,24 @@ func TestUpdateCopyFieldsSetsGroupResource(t *testing.T) {
 	assert.Equal(t, "dashboard.grafana.app/dashboards", doc.GroupResource)
 }
 
-// Dashboards and folders opt in through their manifests. Written out so that a
-// Grafana kind joining them is reviewed: its lists must not hide objects that a
-// get by name returns, including in storage wrappers the manifest says nothing
-// about. The only test that reads the real coverage; the others use
-// testBuiltinManifests.
+// Dashboards, folders, notebooks and playlists opt in through their manifests.
+// Written out so that a Grafana kind joining them is reviewed: its lists must not
+// hide objects that a get by name returns, including in storage wrappers the
+// manifest says nothing about. The only test that reads the real coverage; the
+// others use testBuiltinManifests.
 func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	notebooks := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "notebooks"}
+	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
 	got := globalSearchCoverageOf(AppManifests())
-	assert.Equal(t, []schema.GroupResource{dashboards, folders}, got.types)
-	assert.Equal(t, map[schema.GroupResource]string{dashboards: "Dashboard", folders: "Folder"}, got.kinds)
+	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists}, got.types)
+	assert.Equal(t, map[schema.GroupResource]string{
+		dashboards: "Dashboard",
+		folders:    "Folder",
+		notebooks:  "Notebook",
+		playlists:  "Playlist",
+	}, got.kinds)
 }
 
 // testBuiltinManifests stand in for the compiled-in manifests in tests, so that

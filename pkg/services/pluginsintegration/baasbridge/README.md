@@ -21,7 +21,7 @@ See `pluginClients` in `pkg/router/plugin_manifests.go`.
 | `ConvertObjects` | `POST /convert` with an `apiextensions.k8s.io/v1` `ConversionReview` |
 | `CallRoute`      | The request's method on its own `/apis/<group>/<version>/...` path and query |
 
-These are the endpoints the app-sdk's `k8s.WebhookHandler` registers, and the custom route paths `simple.App` serves.
+These are the endpoints the app-sdk's `k8s.WebhookHandler` registers, and the custom route paths `simple.App` serves. Those paths can be even for bespoke backends, rather than ones created with app-sdk or k8s webhook handlers. An operator that serves its webhooks elsewhere names them in the manifest's `operator.webhooks` (`mutationPath`, `validationPath`, `conversionPath`), as for `apiextensions-apiserver`. A missing or empty path uses the default.
 
 ### Admission needs the manifest
 
@@ -40,7 +40,7 @@ A conversion response must name the request's UID and report `Success`, or the c
 
 Requests carry the same credentials that `apiextensions-apiserver` sends:
 
-- **Webhooks** (`/validate`, `/mutate`, `/convert`) carry no caller credentials. Admission reviews still identify the caller in `request.userInfo`.
+- **Webhooks** carry no caller credentials. Admission reviews still identify the caller in `request.userInfo`.
 - **Routes** always carry the caller's ID token as `X-Grafana-Id`. They carry the caller's access token as `X-Access-Token` only when no access check declared in the manifest authorized the route, because then the operator authorizes it itself. Tokens are sent raw, without a `Bearer ` prefix.
 
 The router supplies the route credentials through `Options.RouteCredentials`. Any credential or identity-assertion headers on the incoming request are removed first. The client isn't wrapped with v3 token exchange.

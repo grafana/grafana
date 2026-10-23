@@ -65,7 +65,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			},
 		}
 		// Create delete job for single file
-		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+		common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
 
 		// Debug state after successful delete
 		helper.DebugState(t, repo, "AFTER DELETE")
@@ -88,7 +88,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
 			},
 		}
-		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+		common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
 
 		// Verify files are deleted from repository
 		helper.RequireRepoFileNotFound(t, repo, "dashboard2.json")
@@ -147,7 +147,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				},
 			}
 
-			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
 
 			// Verify corresponding file is deleted from repository
 			helper.RequireRepoFileNotFound(t, repo, "resource-test-1.json")
@@ -178,7 +178,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					},
 				},
 			}
-			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
 
 			// Verify both dashboards are removed from Grafana
 			helper.RequireDashboardsNotFound(t, "resourceref2", "resourceref3")
@@ -222,7 +222,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				},
 			}
 
-			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
 
 			// Verify both targeted resources are deleted from Grafana
 			helper.RequireDashboardsNotFound(t, "resourceref1", "resourceref2")
@@ -275,7 +275,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					},
 				},
 			}
-			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
 
 			// Verify folder is deleted from Grafana
 			helper.RequireFoldersNotFound(t, testFolderName)
