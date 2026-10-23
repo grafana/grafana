@@ -9,14 +9,11 @@ import { useLocalStorage } from 'react-use';
 import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { toComparablePath } from 'app/core/navigation/comparablePath';
-import { useIsMtFallbackConfigured, useIsUrlAllowed } from 'app/core/navigation/mtFallback';
+import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
-import { StPodStatus } from 'app/core/services/StPodReadinessService';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -88,7 +85,7 @@ export function MegaMenuItem({
   childrenLoadError,
   disabled,
 }: Props) {
-  const { chrome, stPodReadiness } = useGrafana();
+  const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
   // An item is effectively hidden if it's hidden itself or any ancestor is — children of a hidden
@@ -96,13 +93,7 @@ export function MegaMenuItem({
   const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
-  const isMtFallbackConfigured = useIsMtFallbackConfigured();
-  const isUrlAllowed = useIsUrlAllowed({ pathname: toComparablePath(link.url ?? '', config.appSubUrl) });
-  const stPodStatus = stPodReadiness.useStatus();
-  const isStPodLoading =
-    isMtFallbackConfigured &&
-    !isUrlAllowed &&
-    (stPodStatus === StPodStatus.Unknown || stPodStatus === StPodStatus.Waiting);
+  const isStPodLoading = useIsStPodLoading(link.url ?? '');
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
