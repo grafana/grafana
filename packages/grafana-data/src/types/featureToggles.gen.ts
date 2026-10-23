@@ -1194,7 +1194,7 @@ export interface FeatureToggles {
   lokiAlignedQuerySplitting?: boolean;
   /**
   * Enables heatmap visualization support for Pyroscope profiles
-  * @default false
+  * @default true
   */
   profilesHeatmap?: boolean;
   /**

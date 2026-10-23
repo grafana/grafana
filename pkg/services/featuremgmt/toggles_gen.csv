@@ -302,7 +302,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-27,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-03-26,lokiAlignedQuerySplitting,GA,@grafana/observability-logs,false,false,false
-2026-04-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
+2026-04-16,profilesHeatmap,GA,@grafana/observability-traces-and-profiling,false,false,false
 2026-04-01,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-06,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
