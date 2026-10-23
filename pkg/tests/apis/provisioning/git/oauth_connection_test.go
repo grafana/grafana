@@ -10,39 +10,37 @@ import (
 	"testing"
 
 	"github.com/grafana/nanogit/gittest"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common/oauthsuite"
 )
 
 func TestIntegrationProvisioning_GitOAuthConnection(t *testing.T) {
-	helper := sharedGitHelper(t)
-	server := helper.GitServer()
+	oauthsuite.Run(t, func(t *testing.T) *common.ProvisioningTestHelper {
+		return sharedGitHelper(t).ProvisioningTestHelper
+	}, &giteaProvider{apps: map[string]giteaApp{}})
+}
 
-	const (
-		repoName       = "git-oauth-connection"
-		connectionName = "git-oauth-connection"
-		dashboardUID   = "git-oauth-dashboard"
-		redirectURI    = "http://grafana.example/callback"
-	)
+type giteaApp struct {
+	user     *gittest.User
+	clientID string
+}
 
+type giteaProvider struct {
+	apps map[string]giteaApp
+}
+
+func (p *giteaProvider) Name() string { return "gitea" }
+
+func (p *giteaProvider) NewConnection(t *testing.T, name string) *unstructured.Unstructured {
+	t.Helper()
+	server := env.GetHelper(t).GitServer()
 	user, err := server.CreateUser(t.Context())
 	require.NoError(t, err, "failed to create user")
-	remote, _ := helper.CreateRemoteGitRepo(t, repoName, user, map[string][]byte{
-		"dashboard.json": common.DashboardJSON(dashboardUID, "Git OAuth Dashboard", 1),
-	})
-
-	giteaAPI(t, user, http.MethodPatch, server.URL()+"/api/v1/repos/"+remote.Owner+"/"+remote.Name, map[string]any{"private": true}, nil)
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, remote.URL+"/info/refs?service=git-upload-pack", nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	require.NoError(t, resp.Body.Close())
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "private repository should require credentials")
 
 	var app struct {
 		ClientID     string `json:"client_id"`
@@ -50,19 +48,17 @@ func TestIntegrationProvisioning_GitOAuthConnection(t *testing.T) {
 	}
 	giteaAPI(t, user, http.MethodPost, server.URL()+"/api/v1/user/applications/oauth2", map[string]any{
 		"name":                "grafana",
-		"redirect_uris":       []string{redirectURI},
+		"redirect_uris":       []string{oauthsuite.RedirectURI},
 		"confidential_client": true,
 	}, &app)
+	p.apps[name] = giteaApp{user: user, clientID: app.ClientID}
 
-	_, err = helper.Connections.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": provisioning.APIVERSION,
 		"kind":       "Connection",
-		"metadata": map[string]any{
-			"name":      connectionName,
-			"namespace": helper.Namespace,
-		},
+		"metadata":   map[string]any{"name": name, "namespace": "default"},
 		"spec": map[string]any{
-			"title": connectionName,
+			"title": name,
 			"type":  string(provisioning.GitOAuthConnectionType),
 			"gitOAuth": map[string]any{
 				"authURL":  server.URL() + "/login/oauth/authorize",
@@ -73,33 +69,45 @@ func TestIntegrationProvisioning_GitOAuthConnection(t *testing.T) {
 		"secure": map[string]any{
 			"clientSecret": map[string]any{"create": app.ClientSecret},
 		},
-	}}, metav1.CreateOptions{FieldValidation: "Strict"})
-	require.NoError(t, err, "failed to create connection")
+	}}
+}
 
-	helper.AuthorizeConnection(t, connectionName, giteaAuthorizationCode(t, server, user, app.ClientID, redirectURI), redirectURI)
-	helper.WaitForHealthyConnection(t, connectionName)
+func (p *giteaProvider) AuthorizationCode(t *testing.T, name string) string {
+	t.Helper()
+	app := p.apps[name]
+	return giteaAuthorizationCode(t, env.GetHelper(t).GitServer(), app.user, app.clientID, oauthsuite.RedirectURI)
+}
+
+func (p *giteaProvider) CreateRepository(t *testing.T, helper *common.ProvisioningTestHelper, connection string) (string, string, string) {
+	t.Helper()
+	const dashboardUID, path = "git-oauth-dashboard", "dashboard.json"
+	gitHelper := env.GetHelper(t)
+	server := gitHelper.GitServer()
+	user := p.apps[connection].user
+	repoName := connection
+
+	remote, _ := gitHelper.CreateRemoteGitRepo(t, repoName, user, map[string][]byte{
+		path: common.DashboardJSON(dashboardUID, "Git OAuth Dashboard", 1),
+	})
+	giteaAPI(t, user, http.MethodPatch, server.URL()+"/api/v1/repos/"+remote.Owner+"/"+remote.Name, map[string]any{"private": true}, nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, remote.URL+"/info/refs?service=git-upload-pack", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "private repository should require credentials")
 
 	repoObj := helper.RenderObject(t, common.TestdataPath("git.json.tmpl"), map[string]any{
 		"Name":           repoName,
 		"URL":            remote.URL,
 		"Branch":         "main",
 		"TokenUser":      user.Username,
-		"ConnectionName": connectionName,
+		"ConnectionName": connection,
 		"WorkflowsJSON":  `["write"]`,
 	})
 	_, err = helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
-	helper.WaitForHealthyRepository(t, repoName)
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		require.NoError(collect, err)
-		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		require.False(collect, repo.Secure.Token.IsZero(), "repository token should be generated from the connection")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-
-	helper.SyncAndWait(t, repoName)
-	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, dashboardUID, repoName, "dashboard.json")
+	return repoName, dashboardUID, path
 }
 
 func giteaAPI(t *testing.T, user *gittest.User, method, endpoint string, payload, into any) {
