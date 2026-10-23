@@ -958,6 +958,32 @@ describe('align frames', () => {
   });
 });
 
+describe('auto join field selection', () => {
+  it('picks a numeric field shared by every frame when there is no time field', () => {
+    const series1 = toDataFrame({
+      fields: [
+        { name: 'id', type: FieldType.number, values: [1, 2] },
+        { name: 'A', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const series2 = toDataFrame({
+      fields: [
+        { name: 'id', type: FieldType.number, values: [1, 2] },
+        { name: 'B', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+
+    const out = joinDataFrames({ frames: [series1, series2] })!;
+
+    expect(out.fields.map((f) => f.name)).toEqual(['id', 'A', 'B']);
+    expect(out.fields.map((f) => f.values)).toEqual([
+      [1, 2],
+      [10, 20],
+      [30, 40],
+    ]);
+  });
+});
+
 function getFieldDisplayNames(data: DataFrame[]): string[] {
   return data.flatMap((frame) => frame.fields.map((f) => getFieldDisplayName(f, frame, data)));
 }
