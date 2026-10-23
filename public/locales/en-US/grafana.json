@@ -6636,14 +6636,10 @@
       },
       "saved-views": {
         "actions-aria-label": "Actions",
-        "author": "Created by %AUTHOR%",
-        "author-unknown": "Unknown author",
         "delete": "Delete",
         "delete-confirm-body": "Delete \"%NAME%\"? This cannot be undone.",
         "delete-confirm-confirm": "Delete",
         "delete-confirm-title": "Delete saved view",
-        "description-label": "Description",
-        "description-placeholder": "Add a description (optional)",
         "edit": "Edit",
         "edit-modal-cancel": "Cancel",
         "edit-modal-confirm": "Save",
@@ -6665,9 +6661,7 @@
         },
         "search-placeholder": "Search views",
         "title": "Views",
-        "tooltip": "Saved views",
-        "view-mode-compact": "Show compact list",
-        "view-mode-expanded": "Show details"
+        "tooltip": "Saved views"
       },
       "section-filters": {
         "title": "Filters"
