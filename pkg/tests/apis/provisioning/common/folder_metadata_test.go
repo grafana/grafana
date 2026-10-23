@@ -44,7 +44,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 	WriteFolderMetadata(t, "repo", root, "team/invalid", "team/new/nested", "/")
 	WriteFolderMetadata(t, "repo", root, "team/new/nested")
 	for name, body := range existing {
-		got, err := os.ReadFile(filepath.Join(root, name))
+		got, err := os.ReadFile(filepath.Join(root, name)) // #nosec G304 -- Read a known fixture within t.TempDir().
 		require.NoError(t, err)
 		require.Equal(t, body, got)
 	}
@@ -52,7 +52,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 		if _, exists := existing[name]; exists {
 			continue
 		}
-		got, err := os.ReadFile(filepath.Join(root, name))
+		got, err := os.ReadFile(filepath.Join(root, name)) // #nosec G304 -- Read a known fixture within t.TempDir().
 		require.NoError(t, err)
 		require.Equal(t, body, got)
 	}

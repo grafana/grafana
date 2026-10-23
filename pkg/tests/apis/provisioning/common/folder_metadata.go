@@ -39,7 +39,7 @@ func WriteFolderMetadata(t *testing.T, repoName, rootDir string, folders ...stri
 		fullPath := filepath.Join(rootDir, filepath.FromSlash(filePath))
 		require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0o750))
 		// Preserve explicit fixtures, including intentionally invalid manifests.
-		file, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+		file, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600) // #nosec G304 -- Test-controlled fixture root and validated relative folder paths.
 		if os.IsExist(err) {
 			continue
 		}
