@@ -1905,7 +1905,8 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 
 // DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
 // already authorized the requester through a different mechanism (e.g. a standalone folder
-// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in).
+// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in) and
+// marked ctx with folder.WithUncheckedDeleteAuthorized to prove it.
 func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
 		return err

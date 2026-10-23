@@ -50,7 +50,7 @@ func IsUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity
 	return true
 }
 
-// RequireUncheckedDeleteAuthorized is the guard every Unchecked delete entry point must run first.
+// RequireUncheckedDeleteAuthorized is the guard every exported Unchecked delete entry point must run first; it does not cover internal, reconciler-driven cleanup paths that call lower-level unexported functions directly.
 func RequireUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, folderUIDs []string) error {
 	if !IsUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs) {
 		return ErrUncheckedDeleteNotAuthorized
