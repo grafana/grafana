@@ -10,7 +10,8 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
-import { type FilterType, type TableRow } from '../types';
+import { useTableFilters } from '../TableFilterContext';
+import { type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterPopup } from './FilterPopup';
@@ -19,26 +20,25 @@ import { useFilterPopupState } from './useFilterPopupState';
 interface Props {
   name: string;
   rows: TableRow[];
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   field?: Field;
+  timeZone?: string;
   iconClassName?: string;
   parentIndex?: number;
   /** Cross-filter rows keyed by filter key. Each entry holds the rows available *before* that filter was applied.  */
-  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterRows: Record<string, () => TableRow[]>;
   /** Rows surviving all active filters. Used for brand-new (not-yet-active) filter popups. */
   crossFilterTailRows: TableRow[];
 }
 
 export const Filter = memo(
-  ({ name, filter, setFilter, field, iconClassName, parentIndex, crossFilterRows, crossFilterTailRows }: Props) => {
+  ({ name, field, timeZone, iconClassName, parentIndex, crossFilterRows, crossFilterTailRows }: Props) => {
     const ref = useRef<HTMLButtonElement>(null);
+    const filteringDisabled = useTableFilters()?.filteringDisabled;
     const styles = useStyles2(getStyles);
     const { isPopoverVisible, setPopoverVisible, filterEnabled, popupProps } = useFilterPopupState({
       name,
-      filter,
-      setFilter,
       field,
+      timeZone,
       parentIndex,
       crossFilterRows,
       crossFilterTailRows,
@@ -49,6 +49,7 @@ export const Filter = memo(
         className={styles.headerFilter}
         ref={ref}
         type="button"
+        disabled={filteringDisabled}
         aria-haspopup="dialog"
         aria-expanded={isPopoverVisible}
         aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {

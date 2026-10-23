@@ -16837,6 +16837,9 @@
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
+    "filter": {
+      "error": "Table filters could not be applied. Showing unfiltered rows."
+    },
     "frame-picker": {
       "label": "Query"
     },

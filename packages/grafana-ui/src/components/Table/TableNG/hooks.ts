@@ -33,6 +33,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
+import { useTableFilters, useHeaderFilterState } from './TableFilterContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -44,8 +45,8 @@ import {
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { transformTableFilters } from './transformations/rowProjection';
 import {
-  type FilterType,
   type FooterFieldState,
   type GetActionsFunctionLocal,
   type NestedRowEntry,
@@ -67,19 +68,16 @@ import {
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
-  applyFilter,
   compileFrameToRecords,
   createTypographyContext,
   extractPixelValue,
+  isFieldFilterable,
 } from './utils';
 
-export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
-  const [filter, setFilter] = useState<FilterType>({});
-  const filterResult = useMemo(
-    () => applyFilter(rows, filter, fields, hasNestedFrames),
-    [rows, filter, fields, hasNestedFrames]
-  );
-  return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
+export function useFilteredRows(rows: TableRow[], fields: Field[]) {
+  const view = useTableFilters();
+  const filterResult = useMemo(() => transformTableFilters(rows, fields, view?.filters ?? []), [rows, fields, view]);
+  return { rows: filterResult.filteredRows, filterResult };
 }
 
 export interface SortedRowsOptions {
@@ -387,9 +385,9 @@ export const useNestedRows = (
   nestedData: DataFrame[] | undefined,
   hasNestedFrames: boolean,
   nestedFramesFieldName: string | undefined,
-  filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
+  const view = useTableFilters();
   const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }));
 
   return useMemo(() => {
@@ -406,7 +404,7 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const filterResult = transformTableFilters(rawRows, nestedFrame.fields, view?.filters ?? [], parentRow.__index);
       const sortedRows = applySort(
         filterResult.filteredRows,
         nestedFrame.fields,
@@ -417,7 +415,7 @@ export const useNestedRows = (
     }
 
     return result;
-  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, frameToRecords, nestedData, view]);
 };
 
 interface UseHeaderHeightOptions {
@@ -435,10 +433,9 @@ interface UseHeaderHeightOptions {
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
   tableRefreshEnabled?: boolean;
-  /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
-  filter?: FilterType;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
+  filterParentCount?: number;
 }
 
 export function useHeaderHeight({
@@ -449,14 +446,14 @@ export function useHeaderHeight({
   showTypeIcons = false,
   noPanelPadding = false,
   tableRefreshEnabled = false,
-  filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
   reorderable = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
-  const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
+  const headerFilterState = useHeaderFilterState();
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -466,6 +463,8 @@ export function useHeaderHeight({
         }
 
         const field = fields[idx];
+        const filterState = headerFilterState?.(field, filterParentCount);
+        const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
         let width = c - CELL_HORIZONTAL_CHROME;
         if (idx === fields.length - 1) {
           width -= lastColumnExtraPadding;
@@ -476,11 +475,12 @@ export function useHeaderHeight({
         width -= getHeaderAffordanceWidth(field, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? false),
+          filterable,
           reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: field.config.custom?.filterable,
+              filterable,
               hideable: field.config.custom?.hideable,
               hasColumnSidebar,
               hasAssistantAction,
@@ -494,7 +494,8 @@ export function useHeaderHeight({
       showTypeIcons,
       noPanelPadding,
       tableRefreshEnabled,
-      filteredKeys,
+      headerFilterState,
+      filterParentCount,
       lastColumnExtraPadding,
       hasColumnSidebar,
       reorderable,
@@ -1058,7 +1059,9 @@ export interface ContentAwareWidths {
   hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   noPanelPadding?: boolean;
@@ -1110,11 +1113,11 @@ interface UseContentAwareWidthsOptions {
   hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  filter?: FilterType;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
+  filterParentCount?: number;
 }
 
 /**
@@ -1129,13 +1132,14 @@ export function useContentAwareWidths({
   hasHeader = true,
   getActions,
   tableRefreshEnabled = false,
-  filter,
   hasColumnSidebar = false,
   reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const headerFilterState = useHeaderFilterState();
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
   return useMemo(
@@ -1150,7 +1154,8 @@ export function useContentAwareWidths({
             hasHeader,
             getActions,
             tableRefreshEnabled,
-            filter,
+            headerFilterState,
+            filterParentCount,
             hasColumnSidebar,
             reorderable,
             noPanelPadding,
@@ -1165,7 +1170,8 @@ export function useContentAwareWidths({
       showTypeIcons,
       hasHeader,
       getActions,
-      filter,
+      headerFilterState,
+      filterParentCount,
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
