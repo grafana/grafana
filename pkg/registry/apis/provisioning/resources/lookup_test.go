@@ -167,7 +167,7 @@ func TestResourcePathLookup_AuthorizationBatches(t *testing.T) {
 	for _, failLast := range []bool{false, true} {
 		t.Run(fmt.Sprintf("later batch fails=%t", failLast), func(t *testing.T) {
 			lookup, lister, ctx := newLookupTest(t)
-			var items []provisioning.ResourceListItem
+			items := make([]provisioning.ResourceListItem, 0, 51)
 			for i := range 51 {
 				items = append(items, lookupItem(DashboardResource, fmt.Sprintf("dashboard-%d", i), "cpu.json"))
 			}

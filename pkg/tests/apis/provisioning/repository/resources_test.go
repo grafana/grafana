@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_ResourceLookup(t *testing.T) {
 					require.Equal(t, http.StatusOK, status)
 					var result provisioning.ResourceList
 					require.NoError(t, json.Unmarshal(raw, &result))
-					var got []string
+					got := make([]string, 0, len(result.Items))
 					for _, item := range result.Items {
 						got = append(got, item.Path)
 						require.NotEmpty(t, item.Name)
