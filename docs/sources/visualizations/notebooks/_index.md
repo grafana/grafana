@@ -96,7 +96,6 @@ To create a notebook from the **Notebooks** page, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-add-block-above-v13.3.png" max-width="750px" alt="Adding a notebook block above the current block" >}}
 
 1. Do the following as needed:
-
    - Use the drag-and-drop handles on the left side of each block to reorder them.
    - Click the **Block actions** menu at the top-right corner to access duplicate or delete options.
 
@@ -107,7 +106,7 @@ To create a notebook from the **Notebooks** page, follow these steps:
    - Change the time range of the notebook.
    - Change the refresh rate of the notebook.
 
-    {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-toolbar-simple-v13.3.png" max-width="650px" alt="Notebook toolbar" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-toolbar-simple-v13.3.png" max-width="650px" alt="Notebook toolbar" >}}
 
 1. When you've finished making changes, click **View** in the toolbar to leave edit mode.
 
@@ -190,7 +189,6 @@ You can bring a dashboard panel or an Explore query into a notebook without recr
 To add a panel from Dashboards or a query from Explore, follow these steps:
 
 1. Do one of the following:
-
    - In Dashboards, click the menu in the top-right corner of a panel and select **Add to notebook**.
    - In Explore, click the **Add** menu and select **Add to notebook**.
 
