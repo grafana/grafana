@@ -458,6 +458,13 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		}
 	}
 
+	if plugin.ID == "grafana-ml-app" {
+		ctx := c.Req.Context()
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaNavigationInfoArchRefresh, false, openfeature.TransactionContext(ctx)) {
+			sectionID = navtree.NavIDApps
+		}
+	}
+
 	sectionChildren := []*navtree.NavLink{appLink}
 	// asserts pages expand to root Observability section instead of it's own node
 	if plugin.ID == "grafana-asserts-app" {

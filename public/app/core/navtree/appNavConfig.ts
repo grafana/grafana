@@ -1,6 +1,7 @@
 import { type IconName, type PluginInclude } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   APP_OBSERVABILITY_APP_ID,
   ASSERTS_APP_ID,
@@ -236,7 +237,11 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
       (include.path !== undefined && ASSISTANT_OSS_NAV_PATHS.has(include.path)),
   },
   'grafana-ml-app': {
-    sectionId: NavID.root,
+    get sectionId() {
+      return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNavigationInfoArchRefresh, false)
+        ? NavID.apps
+        : NavID.root;
+    },
     sortWeight: NavWeight.aiAndMl,
     text: 'Machine Learning',
     subTitle: 'Explore AI and machine learning features',
