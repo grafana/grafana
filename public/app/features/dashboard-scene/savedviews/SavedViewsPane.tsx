@@ -17,14 +17,11 @@ import {
   ConfirmModal,
   Dropdown,
   EmptyState,
-  Field,
   FilterInput,
   IconButton,
   Input,
-  Label,
   LoadingPlaceholder,
   Menu,
-  Modal,
   ScrollContainer,
   Sidebar,
   Stack,
@@ -60,37 +57,14 @@ export class SavedViewsPane extends SceneObjectBase<SavedViewsPaneState> {
   }
 }
 
-interface SavedViewFormFieldsProps {
-  name: string;
-  onNameChange: (name: string) => void;
-  namePlaceholder: string;
-}
-
-function SavedViewFormFields({ name, onNameChange, namePlaceholder }: SavedViewFormFieldsProps) {
-  return (
-    <Field
-      noMargin
-      label={<Label htmlFor="saved-view-name">{t('dashboard.sidebar.saved-views.new-name-label', 'View name')}</Label>}
-    >
-      <Input
-        id="saved-view-name"
-        autoFocus
-        placeholder={namePlaceholder}
-        value={name}
-        onChange={(e) => onNameChange(e.currentTarget.value)}
-      />
-    </Field>
-  );
-}
-
 function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
   const { savedViews, viewFilter, uid, savedViewBaseline } = dashboard.useState();
   const { searchQuery } = model.useState();
   const [pendingDelete, setPendingDelete] = useState<SavedDashboardView | undefined>();
-  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [saveModalName, setSaveModalName] = useState('');
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [draftName, setDraftName] = useState('');
   const [editingView, setEditingView] = useState<SavedDashboardView | undefined>();
   const [editName, setEditName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -178,19 +152,21 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     locationService.partial({ viewFilter: null });
   }
 
-  function openSaveModal() {
-    setSaveModalName('');
-    setIsSaveModalOpen(true);
+  // Drafting and title editing share the list, so only one inline input is open at a time.
+  function startDraft() {
+    cancelEditingTitle();
+    setDraftName('');
+    setIsDrafting(true);
   }
 
-  function closeSaveModal() {
-    setIsSaveModalOpen(false);
-    setSaveModalName('');
+  function cancelDraft() {
+    setIsDrafting(false);
+    setDraftName('');
   }
 
-  function handleSaveModalConfirm() {
+  function handleDraftConfirm() {
     return withBusy(async () => {
-      const name = saveModalName.trim();
+      const name = draftName.trim();
       if (!uid || !name) {
         return;
       }
@@ -202,7 +178,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       const created = await savedDashboardViewsApi.create(spec);
       dashboard.setState({ savedViews: [...(dashboard.state.savedViews ?? []), created] });
       locationService.partial({ viewFilter: created.metadata.name });
-      closeSaveModal();
+      cancelDraft();
     });
   }
 
@@ -225,15 +201,19 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     });
   }
 
-  function openEditModal(view: SavedDashboardView) {
+  function startEditingTitle(view: SavedDashboardView) {
+    cancelDraft();
     setEditingView(view);
     setEditName(view.spec.name);
   }
 
-  function closeEditModal() {
+  function cancelEditingTitle() {
     setEditingView(undefined);
     setEditName('');
   }
+
+  const trimmedEditName = editName.trim();
+  const isTitleDirty = Boolean(editingView && trimmedEditName && trimmedEditName !== editingView.spec.name);
 
   function handleEditConfirm() {
     return withBusy(async () => {
@@ -250,7 +230,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
           v.metadata.name === updated.metadata.name ? updated : v
         ),
       });
-      closeEditModal();
+      cancelEditingTitle();
     });
   }
 
@@ -285,12 +265,12 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
           <Stack direction="column" gap={1}>
             {error && <Text color="error">{error}</Text>}
 
-            {savedViews.length === 0 ? (
+            {savedViews.length === 0 && !isDrafting ? (
               <EmptyState
                 variant="call-to-action"
                 message={t('dashboard.sidebar.saved-views.empty', 'No saved views yet')}
               />
-            ) : filteredViews.length === 0 ? (
+            ) : filteredViews.length === 0 && !isDrafting ? (
               <Text color="secondary">
                 <Trans i18nKey="dashboard.sidebar.saved-views.search.no-results">No results found for your query</Trans>
               </Text>
@@ -298,20 +278,54 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
               <Stack direction="column" gap={0}>
                 {filteredViews.map((view) => {
                   const isSelected = view.metadata.name === viewFilter;
+                  const isEditingTitle = editingView?.metadata.name === view.metadata.name;
 
                   return (
                     <div key={view.metadata.name} className={cx(styles.row, isSelected && styles.rowSelected)}>
                       <Stack alignItems="center" justifyContent="space-between" gap={1}>
-                        <Button
-                          variant={isSelected ? 'primary' : 'secondary'}
-                          fill="text"
-                          className={styles.nameButton}
-                          onClick={() => handleSelect(view)}
-                        >
-                          {view.spec.name || view.metadata.name}
-                        </Button>
+                        {isEditingTitle ? (
+                          <>
+                            <Box flex={1} minWidth={0}>
+                              <Input
+                                autoFocus
+                                aria-label={t('dashboard.sidebar.saved-views.edit-title-aria-label', 'View title')}
+                                value={editName}
+                                onChange={(e) => setEditName(e.currentTarget.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && isTitleDirty) {
+                                    handleEditConfirm();
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditingTitle();
+                                  }
+                                }}
+                                disabled={busy}
+                              />
+                            </Box>
+                            <IconButton
+                              name="check"
+                              tooltip={t('dashboard.sidebar.saved-views.edit-title-confirm', 'Save title')}
+                              onClick={handleEditConfirm}
+                              disabled={!isTitleDirty || busy}
+                            />
+                            <IconButton
+                              name="times"
+                              tooltip={t('dashboard.sidebar.saved-views.edit-title-cancel', 'Cancel')}
+                              onClick={cancelEditingTitle}
+                              disabled={busy}
+                            />
+                          </>
+                        ) : (
+                          <Button
+                            variant={isSelected ? 'primary' : 'secondary'}
+                            fill="text"
+                            className={styles.nameButton}
+                            onClick={() => handleSelect(view)}
+                          >
+                            {view.spec.name || view.metadata.name}
+                          </Button>
+                        )}
 
-                        {isSelected && (
+                        {isSelected && !isEditingTitle && (
                           <IconButton
                             name="save"
                             tooltip={t('dashboard.sidebar.saved-views.save-changes', 'Save changes')}
@@ -320,34 +334,58 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                           />
                         )}
 
-                        <Dropdown
-                          overlay={
-                            <Menu>
-                              <Menu.Item
-                                label={t('dashboard.sidebar.saved-views.edit', 'Edit')}
-                                icon="pen"
-                                onClick={() => openEditModal(view)}
-                              />
-                              <Menu.Item
-                                label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
-                                icon="trash-alt"
-                                destructive
-                                onClick={() => setPendingDelete(view)}
-                              />
-                            </Menu>
-                          }
-                          placement="bottom-end"
-                        >
-                          <IconButton
-                            name="ellipsis-v"
-                            aria-label={t('dashboard.sidebar.saved-views.actions-aria-label', 'Actions')}
-                            disabled={busy}
-                          />
-                        </Dropdown>
+                        {!isEditingTitle && (
+                          <Dropdown
+                            overlay={
+                              <Menu>
+                                <Menu.Item
+                                  label={t('dashboard.sidebar.saved-views.edit-title', 'Edit title')}
+                                  icon="pen"
+                                  onClick={() => startEditingTitle(view)}
+                                />
+                                <Menu.Item
+                                  label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
+                                  icon="trash-alt"
+                                  destructive
+                                  onClick={() => setPendingDelete(view)}
+                                />
+                              </Menu>
+                            }
+                            placement="bottom-end"
+                          >
+                            <IconButton
+                              name="ellipsis-v"
+                              aria-label={t('dashboard.sidebar.saved-views.actions-aria-label', 'Actions')}
+                              disabled={busy}
+                            />
+                          </Dropdown>
+                        )}
                       </Stack>
                     </div>
                   );
                 })}
+
+                {isDrafting && (
+                  <div className={styles.row}>
+                    <Box flex={1} minWidth={0}>
+                      <Input
+                        autoFocus
+                        aria-label={t('dashboard.sidebar.saved-views.new-title-aria-label', 'New view title')}
+                        placeholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
+                        value={draftName}
+                        onChange={(e) => setDraftName(e.currentTarget.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleDraftConfirm();
+                          } else if (e.key === 'Escape') {
+                            cancelDraft();
+                          }
+                        }}
+                        disabled={busy}
+                      />
+                    </Box>
+                  </div>
+                )}
               </Stack>
             )}
           </Stack>
@@ -355,62 +393,23 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       </ScrollContainer>
 
       <div className={styles.footer}>
-        <Stack justifyContent="flex-end">
-          <Button icon="plus" variant="primary" onClick={openSaveModal} disabled={busy}>
-            {t('dashboard.sidebar.saved-views.save-new', 'Save new')}
-          </Button>
+        <Stack justifyContent="flex-end" gap={1}>
+          {isDrafting ? (
+            <>
+              <Button variant="secondary" onClick={cancelDraft} disabled={busy}>
+                {t('dashboard.sidebar.saved-views.save-new-cancel', 'Cancel')}
+              </Button>
+              <Button variant="primary" onClick={handleDraftConfirm} disabled={!draftName.trim() || busy}>
+                {t('dashboard.sidebar.saved-views.save-new-confirm', 'Confirm')}
+              </Button>
+            </>
+          ) : (
+            <Button icon="plus" variant="primary" onClick={startDraft} disabled={busy}>
+              {t('dashboard.sidebar.saved-views.save-new', 'Save new')}
+            </Button>
+          )}
         </Stack>
       </div>
-
-      {isSaveModalOpen && (
-        <Modal
-          isOpen
-          title={t('dashboard.sidebar.saved-views.save-new-modal-title', 'Save new view')}
-          onDismiss={closeSaveModal}
-          onClickBackdrop={closeSaveModal}
-        >
-          <Stack direction="column" gap={2}>
-            <SavedViewFormFields
-              name={saveModalName}
-              onNameChange={setSaveModalName}
-              namePlaceholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
-            />
-            <Modal.ButtonRow>
-              <Button variant="secondary" onClick={closeSaveModal}>
-                <Trans i18nKey="dashboard.sidebar.saved-views.save-new-modal-cancel">Cancel</Trans>
-              </Button>
-              <Button onClick={handleSaveModalConfirm} disabled={!saveModalName.trim() || busy}>
-                <Trans i18nKey="dashboard.sidebar.saved-views.save-new-modal-confirm">Save</Trans>
-              </Button>
-            </Modal.ButtonRow>
-          </Stack>
-        </Modal>
-      )}
-
-      {editingView && (
-        <Modal
-          isOpen
-          title={t('dashboard.sidebar.saved-views.edit-modal-title', 'Edit view')}
-          onDismiss={closeEditModal}
-          onClickBackdrop={closeEditModal}
-        >
-          <Stack direction="column" gap={2}>
-            <SavedViewFormFields
-              name={editName}
-              onNameChange={setEditName}
-              namePlaceholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
-            />
-            <Modal.ButtonRow>
-              <Button variant="secondary" onClick={closeEditModal}>
-                <Trans i18nKey="dashboard.sidebar.saved-views.edit-modal-cancel">Cancel</Trans>
-              </Button>
-              <Button onClick={handleEditConfirm} disabled={!editName.trim() || busy}>
-                <Trans i18nKey="dashboard.sidebar.saved-views.edit-modal-confirm">Save</Trans>
-              </Button>
-            </Modal.ButtonRow>
-          </Stack>
-        </Modal>
-      )}
 
       {pendingDelete && (
         <ConfirmModal
