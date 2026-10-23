@@ -274,3 +274,71 @@ func TestAggregatedDiscoveryMatchesAPIServer(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &legacy))
 	require.Equal(t, "APIGroupList", legacy.Kind)
 }
+
+// Merged root discovery is reused only for byte-for-byte the same answer and
+// the same snapshot: a different answer, as another stack would send, and a
+// new snapshot each get their own document.
+func TestRootDiscoveryMemo(t *testing.T) {
+	answer := func(groups ...string) []byte {
+		list := metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}}
+		for _, g := range groups {
+			gv := metav1.GroupVersionForDiscovery{GroupVersion: g + "/v1", Version: "v1"}
+			list.Groups = append(list.Groups, metav1.APIGroup{Name: g, Versions: []metav1.GroupVersionForDiscovery{gv}, PreferredVersion: gv})
+		}
+		body, err := json.Marshal(list)
+		require.NoError(t, err)
+		return body
+	}
+	current := answer("embedded-a.grafana.app")
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(current)
+	})
+	loader := &mutableLoader{backends: []Backend{newBenchmarkAggregateBackend(t, "routed.ext.grafana.app", benchmarkRoundTripper{})}}
+	svc := newService(NewGrafanaRouter(loader, nil), prometheus.NewRegistry())
+	svc.middleware = true
+	require.NoError(t, svc.router.reconcile(t.Context()))
+	groups := func() []string {
+		req := newAuthenticatedRequest(http.MethodGet, apisPrefix, nil)
+		req.Header.Set("Accept", "application/json")
+		rec := httptest.NewRecorder()
+		svc.HandleFunc(rec, req, next)
+		require.Equal(t, http.StatusOK, rec.Code)
+		var list metav1.APIGroupList
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &list))
+		names := make([]string, 0, len(list.Groups))
+		for _, g := range list.Groups {
+			names = append(names, g.Name)
+		}
+		return names
+	}
+
+	require.Equal(t, []string{"discovery", "embedded-a.grafana.app", "routed.ext.grafana.app"}, groups())
+	require.Equal(t, []string{"discovery", "embedded-a.grafana.app", "routed.ext.grafana.app"}, groups())
+	require.Equal(t, 1, svc.router.rootMemo.entries.Len(), "the same answer reuses its document")
+
+	current = answer("embedded-b.grafana.app")
+	require.Equal(t, []string{"discovery", "embedded-b.grafana.app", "routed.ext.grafana.app"}, groups())
+	require.Equal(t, 2, svc.router.rootMemo.entries.Len())
+
+	loader.backends = append(loader.backends, newBenchmarkAggregateBackend(t, "added.ext.grafana.app", benchmarkRoundTripper{}))
+	require.NoError(t, svc.router.reconcile(t.Context()))
+	require.Equal(t, 0, svc.router.rootMemo.entries.Len(), "a new snapshot drops every document")
+	require.Equal(t, []string{"added.ext.grafana.app", "discovery", "embedded-b.grafana.app", "routed.ext.grafana.app"}, groups())
+
+	// The OpenAPI index is kept the same way, under its own path.
+	index := []byte(`{"paths":{"apis/embedded-b.grafana.app/v1":{"serverRelativeURL":"/openapi/v3/apis/embedded-b.grafana.app/v1?hash=X"}}}`)
+	openapi := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(index)
+	})
+	for range 2 {
+		req := newAuthenticatedRequest(http.MethodGet, openapiV3Prefix, nil)
+		rec := httptest.NewRecorder()
+		svc.HandleFunc(rec, req, openapi)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Contains(t, rec.Body.String(), "apis/embedded-b.grafana.app/v1")
+		require.Contains(t, rec.Body.String(), "apis/added.ext.grafana.app/v1")
+	}
+	require.Equal(t, 2, svc.router.rootMemo.entries.Len())
+}
