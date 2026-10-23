@@ -49,6 +49,28 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | R3: the forward transport cache never evicted | Moot: the forward source no longer exists |
 | P15, P16: stale OpenAPI hashes on the ST path, standalone router as middleware | #135730 |
 | P22: a namespace check before dispatch | #135740 |
+| P18, P19, D1: plugin gRPC keepalive (5m, and pings only during calls), the settings flag read once, the cloud branch of `ProvideRoutesLoader` | #135742 |
+| F1 (partly), F3–F6, F12 (partly): aggregated `/apis` without a discovery manager, one proxy buffer pool, more idle ST connections, a cached tracer, no Debug access-log work when Debug is off, benchmarks for a proxied request, aggregated `/apis` and middleware root discovery | #135743 |
+| D2–D4, D6–D9, D11 (partly): the dead-code sweep | #135744 |
+| R1, R2: retired plugin handlers are destroyed once they drain, and managed plugin connections close with their last handler | #135809 |
+| R4, O4: a failing backend backs off per group, reconcile warnings are logged once, and the status page lists load failures | #135818 |
+
+### Not pursued
+
+| Item | Why |
+| --- | --- |
+| R5: no plugin handlers when nothing routes them | Loading them inside Grafana exercises their setup, and they will be routed soon (user decision, 2026-10-23). |
+| D5: drop the `/apis/discovery/v1alpha2/AGENTS` page and index | Kept (user decision, 2026-10-23). |
+| D10: config knobs to constants | Every knob is kept (user decision, 2026-10-23). |
+
+### Left from partly done items
+
+- **F1:** the aggregated document is still encoded twice per request (once for the ETag) and hashed. Memoizing it needs a key covering the discovery cache state and the exact bytes of the source's answer, so single-tenant callers never share a stack's document. F2 has the same constraint. Do both only if profiles call for it.
+- **F12:** benchmarks for an ST forward, a per-event watch flush and a plugin call.
+- **D3:** the `discoveryHost == nil` branches in the single-tenant fallback, which most fallback tests rely on.
+- **D4:** the `watching` and `endWatches` nil checks, which tests build entries without.
+- **D9:** the legacy `appmanifest_apiserver_url` guard, until deployments are confirmed migrated.
+- **D11:** sorting manifest backends once per publish, the marshal-error fallbacks in `buildAPIGroupList` and `buildOpenAPIV3Index`, the transport builders and trailing-slash handling.
 
 ## About the `router-review*` branches
 
@@ -68,20 +90,18 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## Suggested order
 
-1. **Correctness quick wins:** P18 and P19, then D1.
-2. **Performance:** F1, then F5, F6, F3, F4. Add the F12 benchmarks first, so each change has a
-   baseline.
-3. **Dead-code sweep:** D2–D4 and D6–D9, in one or two PRs.
-4. **Lifecycle:** R1 and R2 together, with R5. Then R4 with O4.
-5. **Readiness and small fixes:** O7, O6, O5, P14, P17, P20, P21.
-6. **Product decisions:** D5, D10, A4.
-7. **Restructure:** A2 with A5 and A8, then A6, then A1 and A7.
+1. **Done:** correctness quick wins, performance (F1, F3–F6, F12), the dead-code sweep, and
+   lifecycle (R1, R2, R4, O4).
+2. **Readiness and small fixes:** O5–O9, then P17, P20 and P21. P14 is open.
+3. **Metrics:** M5–M12 in `2026-10-08-router-metrics-review.md`.
+4. **Product decisions:** A4.
+5. **Restructure:** A2 with A5 and A8, then A6, then A1 and A7.
 
 ---
 
 ## R: Resource lifecycle
 
-- [ ] **R1. Retired plugin handlers are never destroyed.**
+- [x] **R1. Retired plugin handlers are never destroyed.**
   - **Problem:**
     - `pluginroute.NewHandler` builds a full API server per plugin.
     - `reconcile` (`router.go`) retires an entry when its key changes or its group goes away. It ends
@@ -97,18 +117,18 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   - **Test:** changing a managed plugin's key destroys the old handler after its request finishes,
     not before.
 
-- [ ] **R2. gRPC connections to removed plugin hosts stay open.** Connections are keyed by host and
+- [x] **R2. gRPC connections to removed plugin hosts stay open.** Connections are keyed by host and
   plugin ID (`pluginManifestsTarget.connections`), and close only when `run` returns. Have each handler
   hold a reference to its connection, and release it in `Destroy`. Depends on R1.
 
-- [ ] **R4. A backend that keeps failing is rebuilt about once a minute.**
+- [x] **R4. A backend that keeps failing is rebuilt about once a minute.**
   - **Problem:** a partial reconcile failure is retried at `reconcileRetryMax`. Each retry calls the
     failing `Load` again and logs at Error.
   - **Fix:** keep a failure count per group, keyed by backend key, and back off per group. A new key
     resets the count.
   - Do O4 in the same change.
 
-- [ ] **R5. Inside Grafana without the middleware flag, every plugin backend is still built.**
+- [x] **R5. Inside Grafana without the middleware flag, every plugin backend is still built.**
   - **Problem:** the `Service` now always runs, so that `/apis/discovery` stays current. `reconcile`
     therefore calls `Backend.Load` for every local manifest-bearing plugin and settings backend, and
     `HandleFunc` never serves one of them. The cost is an API server per plugin at startup (leaked,
@@ -169,7 +189,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   - **Fix:** set router-imposed deadlines with `context.WithTimeoutCause` and a distinct cause.
     Exclude only the caller's own cancellation.
 
-- [ ] **P18. The default plugin gRPC keepalive fights the plugin servers.**
+- [x] **P18. The default plugin gRPC keepalive fights the plugin servers.**
   - **Problem:** the default `keepalive_time` is 20 s, with `PermitWithoutStream`.
     - grafana-plugin-sdk-go and grafana-app-sdk servers keep gRPC's default enforcement policy: no
       pings more often than every 5 min, and none without an active stream.
@@ -179,7 +199,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   - **Fix:** default `keepalive_time` to `0` (off) or at least `5m`. Alternatively, set a matching
     enforcement policy in both SDKs.
 
-- [ ] **P19. `FlagApppluginsRegisterAPIServer` is read in two different ways.**
+- [x] **P19. `FlagApppluginsRegisterAPIServer` is read in two different ways.**
   - `newPluginSettingsBackend`'s caller (`plugin.go`) evaluates it through OpenFeature on every
     `Load`.
   - `middlewareEnabled` uses the static `IsEnabledGlobally`.
@@ -264,7 +284,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## O: Operability
 
-- [ ] **O4. Log reconcile skip warnings once.** The warnings for reserved, invalid and duplicate
+- [x] **O4. Log reconcile skip warnings once.** The warnings for reserved, invalid and duplicate
   groups (`router.go`) repeat on every reconcile, and R4's retries make that frequent. Log each one
   once per backend key. Do this with R4.
 
@@ -295,7 +315,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 or impossible configurations reach. No config in this repo sets any `[cloud_router]`,
 `[router.aggregate.*]` or `[router.backend_grpc]` key. Check the deployment config before D9 and D10.
 
-- [ ] **D1. Collapse the cloud branch of `ProvideRoutesLoader` and middleware-in-standalone.**
+- [x] **D1. Collapse the cloud branch of `ProvideRoutesLoader` and middleware-in-standalone.**
   - **Problem:**
     - `pkg/server/routes_loader.go` already calls `ProvideCloudRoutesLoader`, and falls back to the
       Wire injector only when it returns nil. The injector's `ProvideRoutesLoader` then parses the same
@@ -311,19 +331,19 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
     - Move `pkg/tests/apis/appplugin/router_test.go` to the factory.
   - **Saves:** about 25 lines, and one mode.
 
-- [ ] **D2. Move the dummy loader to tests.**
+- [x] **D2. Move the dummy loader to tests.**
   - `dummy.go` is reachable only when `deps.PluginSources == nil`, and Wire always provides it.
   - If it ever ran, it would advertise fake `dummy-backend-*` groups.
   - Move it into a `_test.go` file. Production should return an empty loader or an error.
 
-- [ ] **D3. `singleTenantFallback` as a `RoutesLoader` is test-only.**
+- [x] **D3. `singleTenantFallback` as a `RoutesLoader` is test-only.**
   - Delete `SingleTenantFallback()`, `Load`, `Notify` and the `discoveryHost == nil` branches
     (`st_fallback.go`). Tests can build it through `newCloudLoader`.
   - Unexport `LoaderWithSingleTenantFallback`, which has one production implementation and no
     external users.
   - **Saves:** about 40 lines.
 
-- [ ] **D4. Remove test-only paths from production code.**
+- [x] **D4. Remove test-only paths from production code.**
   - The `breakerState()` fallback to `breaker.State()` (`router.go`) breaks the AGENTS.md rule against
     reading `State()`. It runs only for test entries built without `newHandlerEntry`.
   - Remove the nil checks that only test literals need:
@@ -337,7 +357,7 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
   - Add a test helper for `servingEntry`.
   - **Saves:** about 35 lines.
 
-- [ ] **D5. The `/apis/discovery/v1alpha2/AGENTS` HTML page (product call).**
+- [x] **D5. The `/apis/discovery/v1alpha2/AGENTS` HTML page (product call).**
   - **Problem:** nothing in the repo uses it except tests. It is the router's only use of
     `russross/blackfriday/v2`, and the largest place where plugin-controlled text is rendered.
   - **Options:**
@@ -345,27 +365,27 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
       about 50 lines of code and 35 of tests.
     - Also drop the markdown `AGENTS.md` index. That saves about 270 lines of code and 150 of tests.
 
-- [ ] **D6. Dead dependency nil-ing in `pluginManifestsTarget.poll`.**
+- [x] **D6. Dead dependency nil-ing in `pluginManifestsTarget.poll`.**
   - Setting `PluginClient`, `ContextProvider`, `PluginSettings` and `DualWrite` to nil has no
     effect: only `loadSettings` reads them, and manifest backends never call it.
   - Copy the deps once in `newPluginManifestsTarget`, and drop the stale comment. This pairs with A8.
 
-- [ ] **D7. `PluginLoaderDependencies.AccessClient` is never read.**
+- [x] **D7. `PluginLoaderDependencies.AccessClient` is never read.**
   - It shadows the embedded `PluginDependencies.AccessClient`, which is the one used.
   - Optionally, replace the `ProvidePluginLoaderDependenciesWithClients` adapter (about 40 lines)
     with `wire.FieldsOf`, then run `make gen-go`.
 
-- [ ] **D8. `compileGroupPatterns` returns an error that can't happen.** `QuoteMeta` parts joined by
+- [x] **D8. `compileGroupPatterns` returns an error that can't happen.** `QuoteMeta` parts joined by
   `.*` always compile. Drop the error and its two call-site checks.
 
-- [ ] **D9. Leftovers from removed sources.**
+- [x] **D9. Leftovers from removed sources.**
   - The `appmanifest_apiserver_url`/`apiserver_url` guard (`cloud_router.go`, #134652): delete it once
     deployments are confirmed migrated.
   - The key-compatibility branch in `discoveredGroupKey`: keys live only in memory, so always hash.
   - Stale comments that mention forward backends or RouteBackend CRs: `discovery_cache.go`,
     `aggregate_router_test.go`, `metrics_test.go`.
 
-- [ ] **D10. Config knobs to constants (check the deployment config first).**
+- [x] **D10. Config knobs to constants (check the deployment config first).**
   - `[router.backend_grpc]`: keep `tls_*` and `retry_max`. Make `connect_*`, `keepalive_*`,
     `max_*_msg_size`, `retry_backoff` and `retry_jitter` constants unless something sets them. That
     saves about 80 lines of parsing.
@@ -373,7 +393,7 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
     `st_lookup_rate`.
   - Keep `discovery_auth = none`; it was added on purpose (#134461).
 
-- [ ] **D11. Small duplications, about 50 lines.**
+- [x] **D11. Small duplications, about 50 lines.**
   - Five sha256-hex helpers.
   - Three "write a cached doc with ETag and 304" paths: `serveCachedDoc`, the OpenAPI cache hit, and
     `serveStackDiscovery`.
@@ -402,7 +422,7 @@ GC is about 28% of CPU on the middleware path, so cutting allocations is the mai
 benchmarks never exercise a real proxy, aggregated `/apis`, the ST fallback or plugin calls, so
 add those first (F12).
 
-- [ ] **F1. Aggregated `/apis` is rebuilt on every request, and logs a line per group-version.**
+- [x] **F1. Aggregated `/apis` is rebuilt on every request, and logs a line per group-version.**
   - **Problem:**
     - `serveAggregatedDiscovery` (`discovery_handler.go`) builds a new
       `aggregated.NewResourceManager` and calls `SetGroups` per request.
@@ -433,21 +453,21 @@ add those first (F12).
     pointer.
   - Update the AGENTS.md wording "built on every request" to say "merged per source answer".
 
-- [ ] **F3. No `BufferPool` on any `ReverseProxy`.** Each proxied request allocates a 32 KB buffer.
+- [x] **F3. No `BufferPool` on any `ReverseProxy`.** Each proxied request allocates a 32 KB buffer.
   One shared `sync.Pool`-backed `httputil.BufferPool` takes a 1 KB proxied request from 41 KB to
   9 KB, and from 7.9 µs to 5.8 µs.
 
-- [ ] **F4. The ST transport allows 2 idle connections per host.**
+- [x] **F4. The ST transport allows 2 idle connections per host.**
   - Stacks speak plaintext HTTP/1.1, so there is no HTTP/2 multiplexing.
   - At 72 concurrent clients, measured 0.49 new dials per request, and a sustained run exhausted
     ephemeral ports.
   - Set `MaxIdleConnsPerHost` to about 32 and `MaxIdleConns` to about 1000.
 
-- [ ] **F5. `otel.Tracer()` per request takes a global mutex.** In the 100-group parallel benchmark,
+- [x] **F5. `otel.Tracer()` per request takes a global mutex.** In the 100-group parallel benchmark,
   that mutex is 93% of mutex contention (`tracing.go`). Use a package-level tracer. Measured:
   383 → 350 ns/op.
 
-- [ ] **F6. The access log builds its arguments when Debug is off.** That costs 6 allocs per request
+- [x] **F6. The access log builds its arguments when Debug is off.** That costs 6 allocs per request
   (`logging.go`). Return early for statuses below 400 when Debug isn't enabled. Measured: 80 → 4 ns,
   0 allocs.
 
@@ -480,7 +500,7 @@ add those first (F12).
   - Sort the manifest backends once per `publish`, not three times. That is about 30% of an
     unchanged reconcile.
 
-- [ ] **F12. Add benchmarks for the real hot paths:**
+- [x] **F12. Add benchmarks for the real hot paths:**
   - a proxy through an aggregate backend;
   - aggregated `/apis`;
   - middleware root discovery with a real `next`;
