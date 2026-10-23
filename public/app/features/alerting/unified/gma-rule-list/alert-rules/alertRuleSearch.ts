@@ -4,6 +4,7 @@ import * as z from 'zod';
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type AlertRuleSearchHit, alertRuleSearchHitSchema } from './alertRuleSearchHit';
@@ -27,20 +28,23 @@ const alertRuleSearchResponseSchema = z.object({
 
 type AlertRuleSearchResponse = z.infer<typeof alertRuleSearchResponseSchema>;
 
-/** Infinite query; the generated search is a POST mutation with no tags or page state. */
+/**
+ * Infinite query keyed by filter, so a new filter starts again from the first page. The generated
+ * search is a POST mutation with no tags or page state.
+ */
 const alertRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchAlertRules: build.infiniteQuery<AlertRuleSearchPage, void, string | undefined>({
+    searchAlertRules: build.infiniteQuery<AlertRuleSearchPage, RuleSearchFilter, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
       // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
-      query: ({ pageParam }) => ({
+      query: ({ queryArg, pageParam }) => ({
         url: '/searchAlertRules',
         method: 'POST',
-        body: buildAlertRuleSearchQuery(pageParam),
+        body: buildAlertRuleSearchQuery(queryArg, pageParam),
       }),
       rawResponseSchema: alertRuleSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.
@@ -57,8 +61,8 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
-export function useAlertRuleSearch() {
-  const query = useSearchAlertRulesInfiniteQuery();
+export function useAlertRuleSearch(filter: RuleSearchFilter) {
+  const query = useSearchAlertRulesInfiniteQuery(filter);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
   const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
