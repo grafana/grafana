@@ -67,6 +67,9 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		if pluginsTarget.cooldown, err = pluginManifestsCooldown(section, "plugins"); err != nil {
+			return nil, nil, err
+		}
 	}
 	if coreURL != "" {
 		client, err := newPluginManifestsClient(section, "core")
@@ -78,8 +81,22 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		if coreTarget.cooldown, err = pluginManifestsCooldown(section, "core"); err != nil {
+			return nil, nil, err
+		}
 	}
 	return pluginsTarget, coreTarget, nil
+}
+
+// pluginManifestsCooldown paces a plugin manifests source by its
+// <prefix>_poll_interval key, with the same default and backoff as an
+// aggregate target.
+func pluginManifestsCooldown(section *setting.DynamicSection, prefix string) (*cooldown, error) {
+	interval, err := parsePositiveDurationKey(section, prefix+"_poll_interval", defaultAggregatePollInterval)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+	}
+	return newCooldown(interval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff), nil
 }
 
 // newPluginManifestsClient builds the client that polls a plugin manifests
