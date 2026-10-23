@@ -4,6 +4,7 @@ import { type LocationService, locationService, type BackendSrv, type GrafanaBoo
 
 import { type AppChromeService } from '../components/AppChrome/AppChromeService';
 import { type NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
+import { type StPodReadinessService } from '../services/StPodReadinessService';
 import { type KeybindingSrv } from '../services/keybindingSrv';
 
 export interface GrafanaContextType {
@@ -13,6 +14,7 @@ export interface GrafanaContextType {
   chrome: AppChromeService;
   keybindings: KeybindingSrv;
   newAssetsChecker: NewFrontendAssetsChecker;
+  stPodReadiness: StPodReadinessService;
 }
 
 export const GrafanaContext = createContext<GrafanaContextType | undefined>(undefined);
