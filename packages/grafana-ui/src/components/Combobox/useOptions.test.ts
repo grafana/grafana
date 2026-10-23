@@ -52,6 +52,52 @@ describe('useOptions', () => {
     ]);
   });
 
+  it('shows published options before the async loader resolves and ignores a stale publish', async () => {
+    let publish: ((options: Array<{ label: string; value: string }>) => void) | undefined;
+    let resolveSearch: (() => void) | undefined;
+    const asyncOptions = jest.fn(
+      (_searchTerm: string, context: { publish: (options: Array<{ label: string; value: string }>) => void }) => {
+        publish = context.publish;
+        return new Promise<void>((resolve) => {
+          resolveSearch = resolve;
+        });
+      }
+    );
+    const { result } = renderHook(() => useOptions(asyncOptions, false));
+
+    act(() => {
+      result.current.updateOptions('');
+    });
+    await waitFor(() => expect(asyncOptions).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      publish?.([{ label: 'up', value: 'up' }]);
+    });
+
+    expect(result.current.asyncLoading).toBe(true);
+    expect(result.current.options).toEqual([{ label: 'up', value: 'up' }]);
+
+    const stalePublish = publish;
+    act(() => {
+      result.current.updateOptions('node');
+    });
+    await waitFor(() => expect(asyncOptions).toHaveBeenCalledTimes(2));
+
+    act(() => {
+      stalePublish?.([{ label: 'up', value: 'up' }]);
+      publish?.([{ label: 'node_cpu', value: 'node_cpu' }]);
+    });
+
+    expect(result.current.options).toEqual([{ label: 'node_cpu', value: 'node_cpu' }]);
+
+    await act(async () => {
+      resolveSearch?.();
+    });
+
+    expect(result.current.options).toEqual([{ label: 'node_cpu', value: 'node_cpu' }]);
+    expect(result.current.asyncLoading).toBe(false);
+  });
+
   it('should add a custom value if enabled', () => {
     const options = [
       { label: 'Apple', value: 'apple' },
@@ -98,6 +144,28 @@ describe('useOptions', () => {
     });
 
     expect(result.current.options).toEqual([{ label: 'Carrot', value: 'carrot' }]);
+  });
+
+  it('clears loading when the menu closes before the loader runs', () => {
+    jest.useFakeTimers();
+    const asyncOptions = jest.fn().mockResolvedValue([{ label: 'Async Option 1', value: '1' }]);
+    const { result } = renderHook(() => useOptions(asyncOptions, false));
+
+    act(() => {
+      result.current.updateOptions('Async');
+    });
+    expect(result.current.asyncLoading).toBe(true);
+
+    act(() => {
+      result.current.resetSearch();
+    });
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(result.current.asyncLoading).toBe(false);
+    expect(asyncOptions).not.toHaveBeenCalled();
+    jest.useRealTimers();
   });
 
   it('should handle errors in asynchronous options', async () => {
