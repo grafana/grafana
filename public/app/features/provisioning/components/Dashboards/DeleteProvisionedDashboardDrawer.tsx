@@ -18,16 +18,8 @@ export interface Props {
  */
 export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props) {
   const view = useDashboardRepositoryView(dashboard);
-  const {
-    defaultValues,
-    loadedFromRef,
-    readOnly,
-    canPushToConfiguredBranch,
-    isNew,
-    repository,
-    repoDataStatus,
-    error,
-  } = useProvisionedDashboardData(dashboard, view);
+  const { defaultValues, readOnly, canPushToConfiguredBranch, isNew, repository, repoDataStatus, error } =
+    useProvisionedDashboardData(dashboard, view);
 
   return (
     <ProvisionedFormGate
@@ -39,7 +31,6 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       <DeleteProvisionedDashboardForm
         dashboard={dashboard}
         defaultValues={defaultValues!}
-        loadedFromRef={loadedFromRef}
         readOnly={readOnly}
         repository={repository}
         isNew={isNew}
