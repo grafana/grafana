@@ -142,6 +142,58 @@ When you hover your cursor over either of the buttons, it displays what change w
 
 You can't restore a deleted notebook using undo or redo.
 
+## Work with visualizations
+
+Visualization blocks display query results within your notebook.
+You can edit the block's title and queries, choose a suggested visualization, or give the panel its own time range.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-visualization-editing-v13.3.png" max-width="750px" alt="Notebook in edit mode with a panel title, visualization controls, a locked time range, and query controls below the chart" >}}
+
+In edit mode, hover over a visualization to display its controls.
+Visualization blocks have the following controls:
+
+<!-- prettier-ignore-start -->
+| Control                                | Description                                                                                                                                              |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Add title** or **Edit panel title**  | Click **Add title** to add a panel title or the edit icon to update one. Press Enter to save it.                                                         |
+| **Lock panel time range**              | Set a time range for the panel distinct from the notebook time range. The locked range appears above the panel and remains visible in view mode. For more information, refer to the [Panel time range section](#panel-time-range)                                                                                                                                                |
+| **Edit query**                         | Click to open the query editor below the visualization. Expand a query row if it's collapsed. Click **Hide query editor** so that it no longer displays. |
+| **Change visualization**               | Click to see a list of suggested visualization type suggestions. Suggestions are only provided after you've run the query.                               |
+| **Open in Explore**                    | Click to open the panel's queries and time range in Explore in a new browser tab. This option is also available in view mode for panels that support Explore. Changes you make in Explore don't update the notebook.                                                                                                                                                               |
+<!-- prettier-ignore-end -->
+
+Title, query, and visualization editing aren't available for linked library panels in a notebook.
+
+### Panel time range
+
+Panels use the notebook's time range unless you set a separate range for a panel.
+Use a panel time lock to keep its range independent when you change the notebook's time range.
+
+The locked range appears above the panel and remains visible in view mode.
+To change it, return to edit mode and click the locked range.
+Click **Remove time lock** to make the panel follow the notebook's time range again.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-panel-time-range-v13.3.png" max-width="750px" alt="Panel time picker with relative ranges, absolute start and end fields, and the option to remove the time lock" >}}
+
+A relative range, such as **Last 30 minutes**, remains relative to the current time.
+To preserve a specific investigation window, use an absolute start and end time.
+Locking a time range doesn't save a snapshot of the query results.
+
+### Add panels from Dashboards or Explore
+
+You can bring a dashboard panel or an Explore query into a notebook without recreating it.
+To add a panel from a dashboard or Explore, follow these steps:
+
+1. Do one of the following:
+
+   - In Dashboards, open the menu of a panel and select **Add to notebook**.
+   - In Explore, click the **Add** menu and select **Add to notebook**.
+1. In the dialog box that opens, choose an existing notebook or create a new one.
+1. Click **Add to notebook**.
+
+You can then open the notebook to add notes or continue editing the visualization.
+Updating the added panel in the notebook doesn't change the panel in the source dashboard or Explore query.
+
 ## Create notebooks from Grafana Assistant Workspace
 
 When you complete a chat with the Grafana Assistant in Workspace, notebooks help you pick up where the canvas leaves off.
