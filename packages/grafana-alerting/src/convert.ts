@@ -12,9 +12,6 @@ export {
   type ConvertRulesOptions,
   type ConvertRulesFolderOptions,
   type ConvertAlertmanagerOptions,
-  getConvertRulesHeaders,
-  getConvertRulesFolderHeaders,
-  getConvertAlertmanagerHeaders,
 } from './convert/api/headers';
 
 // Types
