@@ -74,6 +74,7 @@ export default (env: Env = {}) => {
     ],
   };
 
+
   const mergedProdConfig = merge(common(env), prodConfig);
   return Object.assign([mergedProdConfig, swaggerConfig(env), bootConfig(env)], { parallelism: 2 });
 };

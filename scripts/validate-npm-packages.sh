@@ -15,13 +15,13 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   if ! NODE_OPTIONS="-C @grafana-app/source" npm exec --no -- attw "$file" --ignore-rules "false-cjs" --profile "node16"; then
     echo "attw check failed for $file"
     echo ""
-    failed_checks+=("$file - yarn attw")
+    failed_checks+=("$file - attw")
   fi
 
   if ! npm exec --no -- publint "$file"; then
     echo "publint check failed for $file"
     echo ""
-    failed_checks+=("$file - yarn publint")
+    failed_checks+=("$file - publint")
   fi
 done
 
