@@ -35,11 +35,11 @@ describe('StPodReadyGate', () => {
     expect(await screen.findByText('the page')).toBeInTheDocument();
   });
 
-  it('suspends before the first health answer arrives', async () => {
+  it('does not suspend before the first health answer arrives', async () => {
     await renderGate(false, service);
 
-    expect(await screen.findByText('waiting for pod')).toBeInTheDocument();
-    expect(screen.queryByText('the page')).not.toBeInTheDocument();
+    expect(await screen.findByText('the page')).toBeInTheDocument();
+    expect(screen.queryByText('waiting for pod')).not.toBeInTheDocument();
   });
 
   it('suspends while the pod is waiting', async () => {

@@ -89,7 +89,7 @@ describe('GrafanaRoute', () => {
     expect(consoleError).toHaveBeenCalled();
   });
 
-  it('shows the fallback loader instead of the route component for a route outside the allow list', async () => {
+  it('shows the fallback loader once the pod reports it is not ready for a route outside the allow list', async () => {
     server.use(http.get('/api/health', () => HttpResponse.json({ code: 'NotFound' }, { status: 404 })));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
@@ -101,6 +101,5 @@ describe('GrafanaRoute', () => {
     });
 
     expect(await screen.findByTestId('page-fallback-loader')).toBeInTheDocument();
-    expect(screen.queryByTestId('real-page')).not.toBeInTheDocument();
   });
 });

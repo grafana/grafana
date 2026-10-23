@@ -7,7 +7,7 @@ export const StPodReadyGate = ({ skip }: { skip: boolean }) => {
   const { stPodReadiness } = useGrafana();
   const status = stPodReadiness.useStatus();
 
-  if (skip || status === StPodStatus.Ready) {
+  if (skip || status === StPodStatus.Ready || status === StPodStatus.Unknown) {
     return null;
   }
 
