@@ -69,7 +69,7 @@ jest.mock('../services', () => ({
     };
   },
 }));
-type MockSettings = { type: string; uid: string } | undefined;
+type MockSettings = { type: string; uid: string; jsonData?: DataSourceJsonData } | undefined;
 const defaultInstanceSettings = (ref?: DataSourceRef): MockSettings => ({
   type: ref?.type ?? '<mocktype>',
   uid: ref?.uid ?? '<mockuid>',
@@ -546,9 +546,9 @@ describe('DataSourceWithBackend', () => {
     expect(obs).toBeDefined();
   });
 
-  test('check that getResource uses the data source UID', () => {
+  test('check that getResource uses the data source UID', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.getResource('foo');
+    await ds.getResource('foo');
 
     const args = mock.calls[0][0];
 
@@ -563,9 +563,9 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
-  test('check that postResource uses the data source UID', () => {
+  test('check that postResource uses the data source UID', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.postResource('foo');
+    await ds.postResource('foo');
 
     const args = mock.calls[0][0];
 
@@ -591,9 +591,9 @@ describe('DataSourceWithBackend', () => {
       mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
     });
 
-    test('check that callHealthCheck uses the data source UID', () => {
+    test('check that callHealthCheck uses the data source UID', async () => {
       const { mock, ds } = createMockDatasource();
-      ds.callHealthCheck();
+      await ds.callHealthCheck();
 
       const args = mock.calls[0][0];
 
@@ -608,12 +608,12 @@ describe('DataSourceWithBackend', () => {
       });
     });
 
-    test('uses the new URL when the plugin is in the health list', () => {
+    test('uses the new URL when the plugin is in the health list', async () => {
       mockGetObjectValue.mockImplementation((key, defaultValue) =>
         key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
       );
       const { mock, ds } = createMockDatasource();
-      ds.callHealthCheck();
+      await ds.callHealthCheck();
 
       expect(mock.calls.length).toBe(1);
       expect(mock.calls[0][0].url).toEqual(
@@ -621,9 +621,9 @@ describe('DataSourceWithBackend', () => {
       );
     });
 
-    test('uses the legacy URL when the health list is empty', () => {
+    test('uses the legacy URL when the health list is empty', async () => {
       const { mock, ds } = createMockDatasource();
-      ds.callHealthCheck();
+      await ds.callHealthCheck();
 
       expect(mock.calls.length).toBe(1);
       expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
@@ -631,10 +631,10 @@ describe('DataSourceWithBackend', () => {
 
     test.each([{ health: ['*'] }, { health: ['prometheus', '*'] }])(
       'uses the new health URL with wildcard list $health',
-      ({ health }) => {
+      async ({ health }) => {
         mockGetObjectValue.mockReturnValue({ health, resources: [] });
         const { mock, ds } = createMockDatasource({ type: 'community-datasource' });
-        ds.callHealthCheck();
+        await ds.callHealthCheck();
 
         expect(mock.calls[0][0].url).toEqual(
           '/apis/community-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
@@ -644,21 +644,21 @@ describe('DataSourceWithBackend', () => {
 
     test.each([{ health: ['prometheus'] }, { resources: ['dummy'] }, { resources: ['*'] }, { health: '*' }, {}, null])(
       'keeps health calls on the legacy API when the plugin is not allowed: %j',
-      (allowedTypes) => {
+      async (allowedTypes) => {
         mockGetObjectValue.mockReturnValue(allowedTypes);
         const { mock, ds } = createMockDatasource();
-        ds.callHealthCheck();
+        await ds.callHealthCheck();
 
         expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
       }
     );
 
-    test('uses meta.id over type in the new URL when meta is present', () => {
+    test('uses meta.id over type in the new URL when meta is present', async () => {
       mockGetObjectValue.mockImplementation((key, defaultValue) =>
         key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
       );
       const { mock, ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
-      ds.callHealthCheck();
+      await ds.callHealthCheck();
 
       expect(mock.calls.length).toBe(1);
       expect(mock.calls[0][0].url).toEqual(
@@ -666,12 +666,12 @@ describe('DataSourceWithBackend', () => {
       );
     });
 
-    test('falls back to type in the new URL when meta is not present', () => {
+    test('falls back to type in the new URL when meta is not present', async () => {
       mockGetObjectValue.mockImplementation((key, defaultValue) =>
         key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
       );
       const { mock, ds } = createMockDatasource({ meta: undefined });
-      ds.callHealthCheck();
+      await ds.callHealthCheck();
 
       expect(mock.calls.length).toBe(1);
       expect(mock.calls[0][0].url).toEqual(
@@ -912,24 +912,45 @@ describe('DataSourceWithBackend', () => {
       mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
     });
 
-    test('uses the new URL when the plugin is in the resources list', () => {
-      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+    test('uses the new URL when the plugin is in the resources list', async () => {
+      const url = await createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe(
         '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
       );
     });
 
-    test('uses the legacy URL when the resources list is empty', () => {
+    test.each([
+      { jsonData: { oauthPassThru: true }, prefix: '/api/' },
+      { jsonData: { azureCredentials: { authType: 'currentuser' } }, prefix: '/api/' },
+      { jsonData: {}, prefix: '/apis/' },
+    ])('uses resolved auth settings: $jsonData', async ({ jsonData, prefix }) => {
+      const { ds } = createMockDatasource();
+      mockGetDataSourceInstanceSettings.mockResolvedValue({ type: 'dummy', uid: 'abc', jsonData });
+
+      const url = await ds.buildResourcesDatasourceUrl('foo');
+
+      expect(mockGetDataSourceInstanceSettings).toHaveBeenCalledWith({ uid: 'abc' });
+      expect(url.startsWith(prefix)).toBe(true);
+    });
+
+    test('uses /apis when the settings lookup fails', async () => {
+      const { ds } = createMockDatasource();
+      mockGetDataSourceInstanceSettings.mockRejectedValue(new Error('Settings unavailable'));
+
+      await expect(ds.buildResourcesDatasourceUrl('foo')).resolves.toMatch(/^\/apis\//);
+    });
+
+    test('uses the legacy URL when the resources list is empty', async () => {
       mockGetObjectValue.mockReturnValue({ resources: [] });
-      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      const url = await createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
 
     test.each([{ resources: ['*'] }, { resources: ['prometheus', '*'] }])(
       'uses the new resources URL with wildcard list $resources',
-      ({ resources }) => {
+      async ({ resources }) => {
         mockGetObjectValue.mockReturnValue({ resources, health: [] });
-        const url = createMockDatasource({ type: 'community-datasource' }).ds.buildResourcesDatasourceUrl(
+        const url = await createMockDatasource({ type: 'community-datasource' }).ds.buildResourcesDatasourceUrl(
           'api/v1/labels'
         );
 
@@ -941,34 +962,34 @@ describe('DataSourceWithBackend', () => {
 
     test.each([{ resources: ['prometheus'] }, { health: ['dummy'] }, { health: ['*'] }, { resources: '*' }, {}, null])(
       'keeps resource calls on the legacy API when the plugin is not allowed: %j',
-      (allowedTypes) => {
+      async (allowedTypes) => {
         mockGetObjectValue.mockReturnValue(allowedTypes);
-        const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+        const url = await createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
 
         expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
       }
     );
 
-    test.each([true, false])('strips leading slashes from the path (new APIs: %s)', (enabled) => {
+    test.each([true, false])('strips leading slashes from the path (new APIs: %s)', async (enabled) => {
       mockGetObjectValue.mockReturnValue({ resources: enabled ? ['dummy'] : [] });
       const { ds } = createMockDatasource();
       const expectedUrl = enabled
         ? '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
         : '/api/datasources/uid/abc/resources/api/v1/labels';
-      expect(ds.buildResourcesDatasourceUrl('/api/v1/labels')).toBe(expectedUrl);
-      expect(ds.buildResourcesDatasourceUrl('//api/v1/labels')).toBe(expectedUrl);
+      await expect(ds.buildResourcesDatasourceUrl('/api/v1/labels')).resolves.toBe(expectedUrl);
+      await expect(ds.buildResourcesDatasourceUrl('//api/v1/labels')).resolves.toBe(expectedUrl);
     });
 
-    test('prefers meta.id over type when meta is present', () => {
+    test('prefers meta.id over type when meta is present', async () => {
       const { ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
-      const url = ds.buildResourcesDatasourceUrl('api/v1/labels');
+      const url = await ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe(
         '/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
       );
     });
 
-    test('falls back to type when meta is not present', () => {
-      const url = createMockDatasource({ meta: undefined }).ds.buildResourcesDatasourceUrl('api/v1/labels');
+    test('falls back to type when meta is not present', async () => {
+      const url = await createMockDatasource({ meta: undefined }).ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe(
         '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
       );

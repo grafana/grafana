@@ -390,7 +390,7 @@ class DataSourceWithBackend<
         method: 'GET',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         params: params ?? options?.params,
-        url: this.buildResourcesDatasourceUrl(path),
+        url: await this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
@@ -411,7 +411,7 @@ class DataSourceWithBackend<
         method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
-        url: this.buildResourcesDatasourceUrl(path),
+        url: await this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
@@ -420,9 +420,9 @@ class DataSourceWithBackend<
   /**
    * Internal function to build the datasource URL based on the feature toggle
    */
-  buildResourcesDatasourceUrl(rawPath: string): string {
+  async buildResourcesDatasourceUrl(rawPath: string): Promise<string> {
     const path = rawPath.replace(/^\/+/, '');
-    if (this.supportsDatasourceApi('resources')) {
+    if (await this.supportsDatasourceApi('resources')) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -431,7 +431,7 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
-  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
+  private async supportsDatasourceApi(endpoint: 'resources' | 'health'): Promise<boolean> {
     // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
     const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
       resources: [],
@@ -441,18 +441,23 @@ class DataSourceWithBackend<
       return false;
     }
     const pluginIds = allowedTypes[endpoint];
-    return (
-      Array.isArray(pluginIds) &&
-      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
-      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
-    );
+    if (!Array.isArray(pluginIds) || !(pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type))) {
+      return false;
+    }
+    try {
+      const settings = await getDataSourceInstanceSettings({ uid: this.uid });
+      return settings === undefined || isDatasourceAuthCompatible(settings);
+    } catch {
+      // A failed settings lookup should not prevent routing to /apis.
+      return true;
+    }
   }
 
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = this.supportsDatasourceApi('health');
+    const useNewApi = await this.supportsDatasourceApi('health');
     const healthCheckURL = useNewApi
       ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;
