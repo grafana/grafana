@@ -26,7 +26,9 @@ import (
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -319,13 +321,13 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	for _, conn := range connections {
 		require.Equal(t, connectivity.Shutdown, conn.GetState())
 	}
-	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app")
+	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app", nil)
 	require.ErrorContains(t, err, "closed")
 }
 
 func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
 	target := &pluginManifestsTarget{}
-	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app")
+	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app", nil)
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
 	require.Nil(t, clientV3)
@@ -607,4 +609,21 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 			require.Equal(t, tc.skipped, target.status.status(tc.source).Skipped)
 		})
 	}
+}
+
+func TestForwardRouteCredentials(t *testing.T) {
+	requester := &identity.StaticRequester{AccessToken: "access", IDToken: "id"}
+
+	header := http.Header{}
+	require.NoError(t, forwardRouteCredentials(identity.WithRequester(t.Context(), requester), header))
+	require.Equal(t, http.Header{"X-Access-Token": {"access"}, "X-Grafana-Id": {"id"}}, header,
+		"without a declared check the operator authorizes the route, so it gets the access token")
+
+	header = http.Header{}
+	require.NoError(t, forwardRouteCredentials(pluginroute.WithDeclaredAccessChecked(identity.WithRequester(t.Context(), requester)), header))
+	require.Equal(t, http.Header{"X-Grafana-Id": {"id"}}, header, "a declared check already authorized the route")
+
+	header = http.Header{}
+	require.NoError(t, forwardRouteCredentials(t.Context(), header))
+	require.Empty(t, header, "a request without a requester carries no credentials")
 }

@@ -364,6 +364,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
+			ctx = WithDeclaredAccessChecked(ctx)
 		}
 
 		if resource != "" {
@@ -412,6 +413,21 @@ func (w headResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
 
 // Unwrap lets http.ResponseController reach the underlying writer.
 func (w headResponseWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
+type declaredAccessKey struct{}
+
+// WithDeclaredAccessChecked records on a route request's ctx that a declared
+// access check authorized it.
+func WithDeclaredAccessChecked(ctx context.Context) context.Context {
+	return context.WithValue(ctx, declaredAccessKey{}, true)
+}
+
+// DeclaredAccessChecked reports whether a declared access check authorized the
+// route request in ctx. Without one, the plugin must authorize it itself.
+func DeclaredAccessChecked(ctx context.Context) bool {
+	checked, _ := ctx.Value(declaredAccessKey{}).(bool)
+	return checked
+}
 
 // routeCheck is a declared access check, complete but for what only a request
 // knows.
