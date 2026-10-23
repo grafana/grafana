@@ -596,11 +596,8 @@ abstract class DashboardScenePageStateManagerBase<T>
     const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
     if (scene && savedViewsEnabled && !isRenderTarget(options.route)) {
-      // Writes ?viewFilter= into the URL if the viewer has a stored default for this dashboard
-      // and the URL doesn't already name one -- see applyDefaultSavedViewToUrl's own comment for
-      // why this happens before the scene mounts rather than applying the view's state directly.
-      // Gated on !isRenderTarget: a scheduled report or embedded render has its own fixed
-      // parameters, which the viewer's personal default must never silently substitute.
+      // Writes the viewer's stored default into ?viewFilter= when the URL has none. Skipped for render
+      // targets (reports, embeds), whose fixed parameters a personal default must not replace.
       await applyDefaultSavedViewToUrl(scene);
     }
 

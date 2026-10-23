@@ -105,8 +105,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         setDefaultViewName(name);
       }
     });
-    // The pane can unmount mid-fetch (closing the sidebar) -- without this guard, a resolved
-    // fetch would setState on a stale closure after the component is gone.
+    // Closing the sidebar can unmount the pane mid-fetch.
     return () => {
       cancelled = true;
     };
@@ -264,9 +263,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         handleClearSelection();
       }
       if (uid && view.metadata.name === defaultViewName) {
-        // Clear proactively rather than leaving a dangling stored name -- otherwise the next
-        // cold load on this dashboard pays for a fetch of a view that no longer exists before
-        // DashboardSceneUrlSync's own self-heal discovers the same thing.
+        // Clear it now so the next load doesn't fetch a deleted view.
         setDefaultViewName(undefined);
         await setDefaultSavedView(uid, undefined);
       }
@@ -280,8 +277,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         return;
       }
       const isCurrentDefault = view.metadata.name === defaultViewName;
-      // Storage holds exactly one name per dashboard, so setting a new default implicitly
-      // un-defaults whichever view held it before -- no separate "clear the old one" step needed.
+      // Storage holds one name per dashboard, so setting a default replaces the old one.
       await setDefaultSavedView(uid, isCurrentDefault ? undefined : view.metadata.name);
       setDefaultViewName(isCurrentDefault ? undefined : view.metadata.name);
     });

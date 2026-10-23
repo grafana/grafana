@@ -112,8 +112,7 @@ describe('applyDefaultSavedViewToUrl', () => {
 
     await applyDefaultSavedViewToUrl(scene);
 
-    // The `true` second argument is the replace flag -- this write is initialization, not a real
-    // user navigation, so it must not push a second history entry for the same dashboard.
+    // Replace, not push: this is initialization, not a navigation.
     expect(partialSpy).toHaveBeenCalledWith({ viewFilter: 'view-1' }, true);
   });
 
