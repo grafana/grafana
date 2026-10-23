@@ -44,16 +44,34 @@ func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInf
 		return nil, false, err
 	}
 
-	obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	previous := &previousVersion{UpdatedObjectInfo: objInfo}
+	obj, created, err := d.Storage.Update(ctx, name, previous, createValidation, updateValidation, forceAllowCreate, options)
 	if err == nil && ns.OrgID > 0 && d.live != nil {
 		m, err := utils.MetaAccessor(obj)
-		if err == nil {
+		// An update that changed nothing keeps the resource version it started from. Announcing it
+		// anyway reloads the dashboard in every browser that has it open, and a client that applies
+		// its dashboards again and again (an operator at every resync) would do that each time.
+		if err == nil && (created || m.GetResourceVersion() != previous.resourceVersion) {
 			if err := d.live.DashboardSaved(ns.Value, name, m.GetResourceVersion()); err != nil {
 				logging.FromContext(ctx).Info("live dashboard update failed", "err", err)
 			}
 		}
 	}
 	return obj, created, err
+}
+
+// previousVersion notes the resource version of the object an update is applied to, so that an
+// update that changed nothing can be told from one that did.
+type previousVersion struct {
+	rest.UpdatedObjectInfo
+	resourceVersion string
+}
+
+func (p *previousVersion) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
+	if m, err := utils.MetaAccessor(oldObj); err == nil {
+		p.resourceVersion = m.GetResourceVersion()
+	}
+	return p.UpdatedObjectInfo.UpdatedObject(ctx, oldObj)
 }
 
 func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
