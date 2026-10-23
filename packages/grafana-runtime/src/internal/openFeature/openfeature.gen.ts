@@ -1540,10 +1540,10 @@ export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.panelActionsPopover`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaPanelActionsPopover = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.panelActionsPopover", false, options).value;
+  return useFlag("grafana.panelActionsPopover", true, options).value;
 };
 
 /**
