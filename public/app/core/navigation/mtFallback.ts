@@ -10,6 +10,11 @@ export const useIsUrlAllowed = (location: Pick<Location, 'pathname'>) => {
   return urlList?.length ? urlList.some((pattern) => matchPath(pattern, location.pathname) !== null) : true;
 };
 
+export const useIsMtFallbackConfigured = (): boolean => {
+  const flagValue = useFlagGrafanaMtFallback();
+  return Boolean(getAllowedList(flagValue)?.length);
+};
+
 const getAllowedList = (value: JsonValue): string[] | undefined => {
   if (typeof value !== 'object' || !value) {
     return;
