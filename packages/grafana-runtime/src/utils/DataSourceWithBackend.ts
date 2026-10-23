@@ -446,10 +446,9 @@ class DataSourceWithBackend<
     }
     try {
       const settings = await getDataSourceInstanceSettings({ uid: this.uid });
-      return settings === undefined || isDatasourceAuthCompatible(settings);
+      return settings !== undefined && isDatasourceAuthCompatible(settings);
     } catch {
-      // A failed settings lookup should not prevent routing to /apis.
-      return true;
+      return false;
     }
   }
 

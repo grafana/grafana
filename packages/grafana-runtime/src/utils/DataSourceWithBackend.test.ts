@@ -73,6 +73,7 @@ type MockSettings = { type: string; uid: string; jsonData?: DataSourceJsonData }
 const defaultInstanceSettings = (ref?: DataSourceRef): MockSettings => ({
   type: ref?.type ?? '<mocktype>',
   uid: ref?.uid ?? '<mockuid>',
+  jsonData: {},
 });
 const mockGetDataSourceInstanceSettings = jest.fn<MockSettings | Promise<MockSettings>, [DataSourceRef?]>(
   defaultInstanceSettings
@@ -933,11 +934,18 @@ describe('DataSourceWithBackend', () => {
       expect(url.startsWith(prefix)).toBe(true);
     });
 
-    test('uses /apis when the settings lookup fails', async () => {
+    test('uses /api when the settings are missing', async () => {
+      const { ds } = createMockDatasource();
+      mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
+
+      await expect(ds.buildResourcesDatasourceUrl('foo')).resolves.toBe('/api/datasources/uid/abc/resources/foo');
+    });
+
+    test('uses /api when the settings lookup fails', async () => {
       const { ds } = createMockDatasource();
       mockGetDataSourceInstanceSettings.mockRejectedValue(new Error('Settings unavailable'));
 
-      await expect(ds.buildResourcesDatasourceUrl('foo')).resolves.toMatch(/^\/apis\//);
+      await expect(ds.buildResourcesDatasourceUrl('foo')).resolves.toBe('/api/datasources/uid/abc/resources/foo');
     });
 
     test('uses the legacy URL when the resources list is empty', async () => {
