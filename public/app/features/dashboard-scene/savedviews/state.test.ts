@@ -139,9 +139,7 @@ describe('applySavedViewState', () => {
   });
 
   it('resets a variable the spec does not mention back to the baseline, not whatever it currently is', () => {
-    // Regression test: selecting a view is a full, deterministic switch, not a partial overlay --
-    // a variable the view is silent on (e.g. one added to the dashboard after the view was saved)
-    // must not keep whatever ad-hoc value a prior view or manual edit left it in.
+    // Variables the view omits reset to the baseline rather than keeping a previous value.
     const scene = buildScene({ env: 'dev' }); // 'dev' is left over from something else entirely
     const baseline: SavedDashboardViewSpec = {
       dashboardUID: 'dash-1',
@@ -206,13 +204,10 @@ describe('applySavedViewStateAsDefault', () => {
   };
 
   it('keeps an explicit time-range override that changed during this pass, but still defaults the untouched sub-field', () => {
-    // Regression test for the merge being per-sub-field, not one atomic unit: a link like
-    // "?viewFilter=view-1&from=now-15m" only changes `from` -- `to` must still pick up the saved
-    // spec's value, not get skipped just because `from` was overridden.
+    // from and to merge independently: overriding from must not skip the saved to.
     const scene = buildScene({ from: 'now-6h', to: 'now-1h' });
     const before = captureSavedViewState(scene);
-    // Simulate $timeRange's own updateFromUrl having already applied an explicit override for
-    // `from` only, during the same synchronous pass, before this deferred call runs.
+    // Simulates $timeRange.updateFromUrl applying only from in the same pass.
     scene.state.$timeRange?.setState({ from: 'now-15m' });
 
     applySavedViewStateAsDefault(scene, spec, before);

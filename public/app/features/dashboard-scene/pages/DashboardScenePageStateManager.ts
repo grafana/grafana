@@ -594,10 +594,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
-    // Only fetched eagerly here when a ?viewFilter= link needs it applied before the scene's URL
-    // sync runs (see loadSavedViews.ts) -- otherwise every dashboard load would pay for a fetch
-    // most dashboards never use. The Saved Views pane fetches lazily on its own if opened without
-    // this having already run.
+    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches lazily.
     if (
       scene &&
       getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&

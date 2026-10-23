@@ -141,11 +141,7 @@ describe('DashboardSceneUrlSync', () => {
 
       // state.viewFilter is a plain scalar on this scene, so it applies immediately.
       expect(scene.state.viewFilter).toBe('view-1');
-      // The actual time range/variable apply is deferred to a later tick -- applying it here,
-      // synchronously, would get clobbered a few lines later in the SAME url-sync pass by
-      // $timeRange's own updateFromUrl, which still sees the pre-mutation URL snapshot. This is
-      // the regression this test guards against: reverting to a synchronous applySavedViewState
-      // call would make this assertion fail (from would already be 'now-24h').
+      // The apply is deferred; done synchronously, $timeRange.updateFromUrl would revert it.
       expect(scene.state.$timeRange?.state.from).toBe('now-6h');
 
       jest.runAllTimers();
@@ -189,9 +185,7 @@ describe('DashboardSceneUrlSync', () => {
     });
 
     it('does not clobber an explicit time-range override that lands in the same url-sync pass', () => {
-      // Regression test for a link like "?viewFilter=view-1&from=now-15m": $timeRange's own
-      // updateFromUrl runs synchronously, in the SAME pass, right after this handler's -- before
-      // this test's simulated equivalent of that.
+      // e.g. "?viewFilter=view-1&from=now-15m": the explicit from must win over the view.
       const { scene } = buildSceneWithSavedViews();
       scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
       scene.state.$timeRange?.urlSync?.updateFromUrl({ from: 'now-15m' });
@@ -203,9 +197,7 @@ describe('DashboardSceneUrlSync', () => {
     });
 
     it('does not schedule a second apply when the url already matches the current viewFilter', () => {
-      // Pins the fix for SavedViewsPane.handleSelect's double-apply: it now sets viewFilter
-      // synchronously before the url round-trips, so by the time locationService.partial's change
-      // reaches here, this guard is already false and the branch never runs at all.
+      // SavedViewsPane sets viewFilter before the URL updates, so this branch must not re-apply.
       const { scene } = buildSceneWithSavedViews();
       scene.setState({ viewFilter: 'view-1' });
 
@@ -225,9 +217,7 @@ describe('DashboardSceneUrlSync', () => {
     });
 
     it('never overwrites savedViewBaseline on a later pass, even after a view or manual edit changed the scene', () => {
-      // Regression test: the baseline is the one thing a saved view falls back to for anything it
-      // doesn't mention -- if a later pass re-captured it, it would just be whatever the LAST view
-      // left behind, defeating the point (see SavedViewsPane.handleSelect / applySavedViewState).
+      // The baseline must not be recaptured, or it would reflect the last applied view.
       const { scene } = buildSceneWithSavedViews();
       scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
       jest.runAllTimers();

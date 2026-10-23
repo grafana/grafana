@@ -215,10 +215,7 @@ describe('DashboardSidebarRenderer', () => {
     });
 
     it('is hidden on a snapshot dashboard', async () => {
-      // Snapshot scenes retain the source dashboard's uid, so hasUid alone doesn't gate this out --
-      // a viewer on a frozen snapshot has no business creating/overwriting/deleting the live
-      // source dashboard's saved views, and an anonymous snapshot recipient has no permission on
-      // that dashboard's saved views at all.
+      // Snapshots keep the source uid, but their viewers shouldn't manage the live dashboard's views.
       const scene = buildTestSceneWithUid({ isSnapshot: true });
       act(() => activateFullSceneTree(scene));
       render(<DashboardSidebarSplitter dashboard={scene} />);
