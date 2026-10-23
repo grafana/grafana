@@ -32,6 +32,8 @@ type SavedDashboardViewSavedViewFilter struct {
 	Key      string `json:"key"`
 	Operator string `json:"operator"`
 	Value    string `json:"value"`
+	// values holds the selection for multi-value operators.
+	Values []string `json:"values,omitempty"`
 }
 
 // NewSavedDashboardViewSavedViewFilter creates a new SavedDashboardViewSavedViewFilter object.
