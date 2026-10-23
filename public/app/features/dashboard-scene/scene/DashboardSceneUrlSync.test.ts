@@ -8,7 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
-import { type SavedDashboardView } from '../savedviews/api';
+import { savedDashboardViewsApi, type SavedDashboardView } from '../savedviews/api';
 import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -19,6 +19,10 @@ import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+
+jest.mock('../savedviews/api', () => ({
+  savedDashboardViewsApi: { listForDashboard: jest.fn().mockResolvedValue([]) },
+}));
 
 describe('DashboardSceneUrlSync', () => {
   describe('library panel editor loading', () => {
@@ -159,13 +163,28 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.savedViewBaseline).toBeDefined();
     });
 
-    it('ignores a viewFilter that does not match any saved view', () => {
+    it('clears a viewFilter that still matches no saved view after refetching', async () => {
+      jest.mocked(savedDashboardViewsApi.listForDashboard).mockResolvedValueOnce([]);
       const { scene } = buildSceneWithSavedViews();
       scene.urlSync?.updateFromUrl({ viewFilter: 'does-not-exist' });
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
+      expect(savedDashboardViewsApi.listForDashboard).toHaveBeenCalledWith('dash-1');
       expect(scene.state.viewFilter).toBeUndefined();
       expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+    });
+
+    it('fetches and applies a view linked while its views are not loaded yet', async () => {
+      const { scene, view } = buildSceneWithSavedViews();
+      scene.setState({ savedViews: undefined });
+      jest.mocked(savedDashboardViewsApi.listForDashboard).mockResolvedValueOnce([view]);
+
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      expect(scene.urlSync?.getUrlState().viewFilter).toBe('view-1');
+      await jest.runAllTimersAsync();
+
+      expect(scene.state.viewFilter).toBe('view-1');
+      expect(scene.state.$timeRange?.state.from).toBe('now-24h');
     });
 
     it('clears viewFilter from state when removed from the url', () => {
