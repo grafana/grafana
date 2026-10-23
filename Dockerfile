@@ -35,6 +35,8 @@ RUN apk add --no-cache make build-base python3
 
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+# node:26 images no longer include yarn, so use the release checked in under .yarn/releases
+RUN ln -s /tmp/grafana/.yarn/releases/yarn-*.cjs /usr/local/bin/yarn
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
