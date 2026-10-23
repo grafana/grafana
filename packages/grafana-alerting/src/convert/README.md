@@ -8,7 +8,7 @@ This entry point holds functions, types and an RTKQ client. It has no React comp
 added: apps build their own forms from these and from the components `@grafana/alerting/unstable` already has.
 
 ```ts
-import { convertAPI, type ConvertRulesOptions, type RulerRuleGroupDTO } from '@grafana/alerting/convert';
+import { convertAPI, type NotificationSettings, type RulerRuleGroupDTO } from '@grafana/alerting/convert';
 ```
 
 ## What's in here
@@ -41,15 +41,19 @@ rule shapes.
 ### Headers (`api/headers.ts`)
 
 The convert API reads its options from headers instead of the request body. `convertAPI`'s endpoints take
-the options as plain fields and turn them into those headers, leaving out anything that isn't set. The option
-types are exported so apps can type their own calls:
+the options as plain fields and turn them into those headers, leaving out anything that isn't set:
 
-- `ConvertRulesOptions` for rule imports: data source, target data source, folder, paused state,
-  notification settings, extra labels, version message and provenance.
-- `ConvertRulesFolderOptions` for reading and deleting rules in a folder.
-- `ConvertAlertmanagerOptions` for Alertmanager imports: identifier, force replace, dry run and promote.
+- Rule imports: data source, target data source, folder, paused state, notification settings, extra labels,
+  version message and provenance.
+- Reading and deleting rules: the folder.
+- Alertmanager imports: identifier, force replace, dry run and promote.
 
-The functions that build the headers aren't exported. Call the API through `convertAPI`.
+Neither the functions that build the headers nor the option types are exported. Call the API through
+`convertAPI`. When you need an endpoint's argument type by name, take it from the endpoint:
+
+```ts
+type PostRuleGroupsArgs = typeof convertAPI.endpoints.postRuleGroups.Types.QueryArg;
+```
 
 ### RTKQ client (`api/client.ts`)
 

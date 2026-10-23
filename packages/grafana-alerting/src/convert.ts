@@ -8,11 +8,6 @@
 
 // API client
 export { convertAPI } from './convert/api/client';
-export {
-  type ConvertRulesOptions,
-  type ConvertRulesFolderOptions,
-  type ConvertAlertmanagerOptions,
-} from './convert/api/headers';
 
 // Types
 export {
