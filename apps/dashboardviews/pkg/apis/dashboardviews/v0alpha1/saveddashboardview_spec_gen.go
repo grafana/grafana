@@ -12,8 +12,7 @@ type SavedDashboardViewSavedViewVariable struct {
 	Name string `json:"name"`
 	// "adhoc" | "query" | "custom" | ...
 	Type string `json:"type"`
-	// value is the variable's scalar or multi-value selection (query/custom/datasource variables).
-	// Omitted for ad-hoc variables, which carry their state in filters instead.
+	// value is omitted for ad hoc variables, which use filters instead.
 	Value   *SavedDashboardViewStringOrArrayOfString `json:"value,omitempty"`
 	Filters []SavedDashboardViewSavedViewFilter      `json:"filters,omitempty"`
 }
@@ -49,11 +48,7 @@ func (SavedDashboardViewSavedViewFilter) OpenAPIModelName() string {
 type SavedDashboardViewSavedViewSectionFilter struct {
 	SectionKind SavedDashboardViewSavedViewSectionFilterSectionKind `json:"sectionKind"`
 	SectionKey  string                                              `json:"sectionKey"`
-	// sectionTitle is the tab/row's title at capture time, used to sanity-check on apply that the
-	// section resolved at sectionKey still looks like the same one -- layout edits (reordering,
-	// inserting, deleting tabs/rows) can leave sectionKey resolving successfully but to a
-	// different section. Optional for backward compatibility with views saved before this field
-	// existed; those still apply unconditionally, same as before.
+	// sectionTitle guards against layout edits leaving sectionKey pointing at a different section.
 	SectionTitle *string                               `json:"sectionTitle,omitempty"`
 	Variables    []SavedDashboardViewSavedViewVariable `json:"variables"`
 }
@@ -72,16 +67,13 @@ func (SavedDashboardViewSavedViewSectionFilter) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type SavedDashboardViewSpec struct {
-	// dashboardUID is the dashboard this view belongs to. A view only ever applies to the
-	// dashboard it was created on.
+	// dashboardUID is the dashboard this view belongs to.
 	DashboardUID string `json:"dashboardUID"`
-	// name is the user-facing label for this view (distinct from metadata.name, which is the
-	// resource's system-generated identifier).
+	// name is the user-facing title, distinct from the generated metadata.name.
 	Name      string                                  `json:"name"`
 	TimeRange SavedDashboardViewV0alpha1SpecTimeRange `json:"timeRange"`
 	Variables []SavedDashboardViewSavedViewVariable   `json:"variables"`
-	// sectionFilters captures ad-hoc filters scoped to a tab or row rather than the whole
-	// dashboard. Stretch goal — omitted entirely on dashboards that don't use tabs/rows.
+	// sectionFilters captures ad hoc filters scoped to a tab or row.
 	SectionFilters []SavedDashboardViewSavedViewSectionFilter `json:"sectionFilters,omitempty"`
 }
 

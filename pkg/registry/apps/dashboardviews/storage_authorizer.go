@@ -16,19 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-// GetNamespaceScopedStorageAuthorizer implements appinstaller.NamespaceScopedStorageAuthorizerProvider.
-// Without this, the generic storage for a namespace-scoped resource is left unwrapped — GetAuthorizer()
-// returning DecisionAllow (register.go) is the only gate, which is no gate at all. This is where the
-// real, per-object check lives, because it's the earliest point in the request path that has both the
-// object body (for spec.dashboardUID) and the caller's identity.
+// GetNamespaceScopedStorageAuthorizer is where the real per-object check lives: it's the first
+// point with both the object (for spec.dashboardUID) and the caller's identity.
 func (a *AppInstaller) GetNamespaceScopedStorageAuthorizer(_ schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
 	return &savedViewStorageAuthorizer{ac: a.ac, dashboardSvc: a.dashboardSvc}
 }
 
-// savedViewStorageAuthorizer gates every verb on the same check: the dashboard's existing View
-// permission (dashboards:read), scoped to the view's spec.dashboardUID. One action for every verb is
-// deliberate — any viewer, not just an editor, can list/apply/save/rename/overwrite/delete a dashboard's
-// Saved Views (spec section 2.2).
+// savedViewStorageAuthorizer gates every verb on dashboards:read for spec.dashboardUID. Writes too,
+// deliberately: any dashboard viewer can manage its saved views.
 type savedViewStorageAuthorizer struct {
 	ac           accesscontrol.AccessControl
 	dashboardSvc dashboards.DashboardService
@@ -41,8 +36,7 @@ func (s *savedViewStorageAuthorizer) BeforeCreate(ctx context.Context, obj runti
 	return s.checkDashboardExists(ctx, obj)
 }
 
-// BeforeUpdate rejects any change to spec.dashboardUID: a view belongs to the dashboard it was
-// created on, and checkDashboardExists only ever validated that UID at create time.
+// BeforeUpdate keeps spec.dashboardUID immutable, since checkDashboardExists only runs on create.
 func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	if err := s.checkAccess(ctx, oldObj); err != nil {
 		return err
@@ -69,10 +63,8 @@ func (s *savedViewStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.O
 	return s.checkAccess(ctx, obj)
 }
 
-// FilterList re-checks every item individually rather than trusting the request's fieldSelector, so an
-// unscoped LIST can't be used to enumerate Saved Views (and thus dashboard UIDs and filter values)
-// across dashboards the caller can't view. Only a permission denial drops an item; a missing
-// requester or an evaluation failure fails the whole request instead of returning a silently short list.
+// FilterList checks each item rather than trusting the fieldSelector, so an unscoped LIST can't leak
+// other dashboards' views. Only a denial drops an item; any other error fails the request.
 func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	views, ok := list.(*dashboardviewsv0alpha1.SavedDashboardViewList)
 	if !ok {
@@ -96,19 +88,13 @@ func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtim
 	return views, nil
 }
 
-// WatchFilter denies Watch outright. Saved Views have no live-update use case in this spec, so this is
-// deliberately the safe default rather than a filter for a path nothing calls.
+// WatchFilter denies Watch outright; nothing uses it.
 func (s *savedViewStorageAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
 	return storewrapper.RejectAllWatchFilter, nil
 }
 
-// checkAccess evaluates accesscontrol.AccessControl.Evaluate directly rather than the newer
-// authtypes.AccessClient/BatchCheck path. That matters here: Evaluate's globally-registered
-// "dashboards:uid:" scope resolver walks the full folder ancestry automatically, so a caller who can
-// only view the dashboard through a folder-level grant (not a direct one) is still allowed.
-// accessClient.BatchCheck has no equivalent — it requires the caller to resolve and pass the parent
-// folder itself (see the annotation app's DashboardFolderResolver), and silently falls back to
-// root-folder scoping if that step is skipped.
+// checkAccess uses AccessControl.Evaluate rather than AccessClient.BatchCheck because Evaluate's
+// dashboard scope resolver walks folder ancestry, so folder-level grants count.
 func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtime.Object) error {
 	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
 	if !ok {
@@ -134,25 +120,15 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 	return nil
 }
 
-// checkDashboardExists confirms spec.dashboardUID actually identifies a real dashboard, only on
-// create. checkAccess alone can't establish this: a caller with a wildcard dashboards:read scope
-// passes Evaluate without ever resolving a specific dashboard, so without this a create for a
-// deleted or made-up UID would otherwise succeed and become visible again if that UID is later
-// reused (dashboard restored, or newly created with the same UID). Update can't change the UID
-// (see BeforeUpdate), so update/delete/get/list all operate on a UID that already passed this
-// check at create time and don't repeat it.
-// Returns the same ErrUnauthorized as a denied permission, rather than a distinct not-found, so this
-// doesn't become an oracle for guessing which dashboard UIDs exist.
+// checkDashboardExists runs on create only: a wildcard dashboards:read grant passes checkAccess
+// for any UID. It returns ErrUnauthorized rather than not-found so it can't probe for UIDs.
 func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, obj runtime.Object) error {
 	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
 	if !ok {
 		return storewrapper.ErrUnexpectedType
 	}
 
-	// The dashboard being looked up belongs to this request's namespace, not necessarily to
-	// whatever org the caller's own identity resolves to -- those two diverge for a Grafana Admin
-	// or a service-identity caller, which a wildcard dashboards:read grant (the case this check
-	// exists for) is disproportionately likely to be.
+	// Use the request's namespace org, not the caller's; they differ for admins and service identities.
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return storewrapper.ErrUnauthorized

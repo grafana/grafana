@@ -21,20 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-// These tests exercise checkAccess's delegation to accesscontrol.AccessControl.Evaluate — the same
-// action and scope shape the canonical dashboard-load route uses — with real permission maps, using
-// the same acimpl.AccessControl the rest of the codebase's app-installer tests use (see
-// dashvalidator/register_test.go). They do NOT exercise the dashboards:uid: scope resolver's
-// folder-ancestry walk itself (that requires the dashboard/folder services' resolver registration,
-// which is an integration-level concern) — they confirm this code calls the right mechanism with a
-// direct grant, which is what a folder-inherited grant would also satisfy once resolved.
+// These use real permission maps with direct grants; the folder-ancestry scope resolver is
+// integration-level and not covered here.
 
 const testDashboardUID = "dash-1"
 
-// withTestNamespace mimics the namespace the real apiserver request pipeline always sets before
-// reaching storage -- checkDashboardExists derives OrgID from this, not from the requester, since
-// those two can diverge (Grafana Admin, service identity) for exactly the kind of caller a wildcard
-// dashboards:read grant is disproportionately likely to be.
+// withTestNamespace sets the namespace the apiserver pipeline would; checkDashboardExists reads
+// OrgID from it.
 func withTestNamespace(ctx context.Context, orgID int64) context.Context {
 	return genericapirequest.WithNamespace(ctx, claims.OrgNamespaceFormatter(orgID))
 }
@@ -63,9 +56,7 @@ func requesterWithNoPermissions() context.Context {
 	return withTestNamespace(ctx, 1)
 }
 
-// newTestAuthorizer's dashboard service always reports the dashboard as existing -- every test
-// exercising BeforeCreate (other than TestCheckDashboardExists, which sets up its own) cares about
-// permission behavior, not existence, so this keeps them unaffected by that separate check.
+// newTestAuthorizer's dashboard service always finds the dashboard, isolating permission checks.
 func newTestAuthorizer() *savedViewStorageAuthorizer {
 	return newTestAuthorizerWithDashboardService(fakeDashboardServiceAlwaysFound())
 }
@@ -181,17 +172,12 @@ func TestCheckDashboardExists(t *testing.T) {
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
 		authz := newTestAuthorizerWithDashboardService(svc)
 
-		// A wildcard-style grant would pass checkAccess's Evaluate without ever resolving a real
-		// dashboard -- requesterWithDashboardRead grants a direct scope on this exact UID, which is
-		// enough to reach checkDashboardExists regardless of how broad the grant actually is.
 		err := authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID))
 		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
 	})
 
 	t.Run("resolves the dashboard against the request's namespace, not the requester's own org", func(t *testing.T) {
-		// A Grafana Admin's own OrgID doesn't have to match the namespace they're operating in --
-		// the namespace authorizer explicitly allows that divergence. Using requester.GetOrgID()
-		// here would query org 1 for a dashboard that only exists in org 7, and wrongly deny.
+		// The requester is in org 1 but the dashboard only exists in org 7.
 		svc := &dashboards.FakeDashboardService{}
 		svc.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
 			return q.OrgID == 7

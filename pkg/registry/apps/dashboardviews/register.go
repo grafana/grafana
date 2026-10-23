@@ -30,9 +30,8 @@ type AppInstaller struct {
 	dashboardSvc dashboards.DashboardService
 }
 
-// GetAuthorizer gates the API on FlagGrafanaSavedDashboardViews, evaluated per request so it
-// can differ per tenant. Dashboard-scoped authorization happens per object in the storage
-// authorizer (storage_authorizer.go).
+// GetAuthorizer gates the API on the feature flag per request; per-object checks live in
+// storage_authorizer.go.
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(
 		ctx context.Context, attr authorizer.Attributes,
