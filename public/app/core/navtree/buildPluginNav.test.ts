@@ -545,6 +545,19 @@ describe('applyPluginNav', () => {
       expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-kept-app']);
     });
 
+    // The function-level guard went with the per-app check, so this is what now
+    // keeps every app away from a user with no app access at all
+    it('keeps no app when the scopes are unavailable and the action is not held', () => {
+      setupNavTestState({
+        orgRole: 'Admin',
+        openFeatureFlags: { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true },
+      });
+
+      const merged = merge(app('some-app', 'Some app', [page('Page', '/a/some-app/page')]));
+
+      expect(moreApps(merged)).toBeUndefined();
+    });
+
     // Without scopes the unscoped permission stands in, which is the behaviour
     // before this feature: every app the user can reach at all
     it('keeps every app while the scopes are unavailable', () => {

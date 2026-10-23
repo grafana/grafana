@@ -1,6 +1,3 @@
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-
 // The wildcard scopes that satisfy a plugins:id:<id> requirement, mirroring
 // the Go evaluator's WildcardsFromPrefixes('plugins:id:') derivation
 const PLUGIN_SCOPE_WILDCARDS = ['*', 'plugins:*', 'plugins:id:*'];
@@ -35,12 +32,10 @@ export function hasScopedAppAccess(scopes: ReadonlySet<string>, pluginId: string
 }
 
 /**
- * Whether the user may see the given app's nav items. With scopes this gates
- * each app on plugins:id:<id>, the way the server does. Without them the
- * unscoped action check stands in, and grants every app at once.
+ * The recorded scopes, or null when there are none to go on. Deliberately not
+ * combined with the unscoped permission check here: context_srv loads the
+ * permissions that fill this, so importing it back would close a cycle.
  */
-export function hasAppAccess(pluginId: string): boolean {
-  return appAccessScopes == null
-    ? contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)
-    : hasScopedAppAccess(appAccessScopes, pluginId);
+export function getAppAccessScopes(): ReadonlySet<string> | null {
+  return appAccessScopes;
 }

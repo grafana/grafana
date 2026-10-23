@@ -7,12 +7,25 @@ import {
 } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
-import { hasAppAccess } from './pluginAccess';
+import { getAppAccessScopes, hasScopedAppAccess } from './pluginAccess';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+
+/**
+ * Whether the user may see the given app's nav items. With scopes this gates each
+ * app on plugins:id:<id>, the way the server does. Without them the unscoped
+ * action check stands in, and grants every app at once. The fallback lives here
+ * rather than in pluginAccess, which must not import context_srv back.
+ */
+function hasAppAccess(scopes: ReadonlySet<string> | null, pluginId: string): boolean {
+  return scopes == null
+    ? contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)
+    : hasScopedAppAccess(scopes, pluginId);
+}
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -43,6 +56,7 @@ const collator = new Intl.Collator();
  */
 export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): NavModelItem[] {
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
+  const appAccessScopes = getAppAccessScopes();
   let next = tree;
 
   for (const app of byTitle(apps)) {
@@ -50,7 +64,7 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
       // Per app, because the server scopes plugins.app:access to plugins:id:<id>.
       // Where no scopes were recorded this is the unscoped check, which answers
       // the same for every app, so a user with no app access gets none of them.
-      if (!hasAppAccess(app.id)) {
+      if (!hasAppAccess(appAccessScopes, app.id)) {
         continue;
       }
       const { appLink, navChildren, standalonePages } = buildAppLink(app);

@@ -1,7 +1,4 @@
-import { AccessControlAction } from 'app/types/accessControl';
-
-import { hasAppAccess, hasScopedAppAccess, setAppAccessScopes } from './pluginAccess';
-import { setupNavTestState } from './test-utils';
+import { getAppAccessScopes, hasScopedAppAccess, setAppAccessScopes } from './pluginAccess';
 
 describe('hasScopedAppAccess', () => {
   it('matches the exact plugin scope', () => {
@@ -24,35 +21,24 @@ describe('hasScopedAppAccess', () => {
   });
 });
 
-describe('hasAppAccess', () => {
+describe('getAppAccessScopes', () => {
   afterEach(() => {
     setAppAccessScopes(null);
   });
 
-  it('evaluates the scopes per plugin once they have been recorded', () => {
-    setupNavTestState();
+  it('returns the scopes that were recorded', () => {
     setAppAccessScopes(new Set(['plugins:id:grafana-oncall-app']));
 
-    expect(hasAppAccess('grafana-oncall-app')).toBe(true);
-    expect(hasAppAccess('grafana-slo-app')).toBe(false);
+    expect(getAppAccessScopes()).toEqual(new Set(['plugins:id:grafana-oncall-app']));
   });
 
-  // Scopes stay null where the deployment never fetches permissions, or where
-  // the request failed. The unscoped action then grants every app at once,
-  // which is the behaviour without this feature.
-  it('falls back to the unscoped action while the scopes are unavailable', () => {
-    setupNavTestState({ permissions: [AccessControlAction.PluginsAppAccess] });
-    expect(hasAppAccess('grafana-oncall-app')).toBe(true);
+  // Null and empty mean different things to the caller: null is "no answer to go
+  // on", so it falls back to the unscoped check, while empty is a successful
+  // response carrying no app access at all
+  it('tells an absent answer apart from an empty one', () => {
+    expect(getAppAccessScopes()).toBeNull();
 
-    setupNavTestState();
-    expect(hasAppAccess('grafana-oncall-app')).toBe(false);
-  });
-
-  // A successful response carrying no app access is not the same as no response
-  it('denies every app when the recorded scope set is empty', () => {
-    setupNavTestState({ permissions: [AccessControlAction.PluginsAppAccess] });
     setAppAccessScopes(new Set());
-
-    expect(hasAppAccess('grafana-oncall-app')).toBe(false);
+    expect(getAppAccessScopes()).toEqual(new Set());
   });
 });
