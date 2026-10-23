@@ -1445,6 +1445,10 @@
         "no-rules": "No alert rules found",
         "rules-error": "Failed to load rules"
       },
+      "recording-rules": {
+        "no-rules": "No recording rules found",
+        "rules-error": "Failed to load recording rules"
+      },
       "result-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",

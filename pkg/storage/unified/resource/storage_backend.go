@@ -383,6 +383,10 @@ type KVBackendOptions struct {
 	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
 	// Zero uses the default (1s); a negative value disables waiting.
 	ResourceVersionMaxWait time.Duration
+
+	// FastLatestKeyLookup resolves latest-version reads with a single-row
+	// descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookup bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -401,6 +405,7 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		SearchLookback:          cfg.SearchLookback,
 		WatchOptions:            WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
@@ -480,10 +485,13 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
+	dataStore := newDataStore(kv, metrics)
+	dataStore.fastLatestKeyLookup = opts.FastLatestKeyLookup
+
 	backend := &kvStorageBackend{
 		kv:         kv,
 		bulkLock:   NewBulkLock(),
-		dataStore:  newDataStore(kv, metrics),
+		dataStore:  dataStore,
 		eventStore: eventStore,
 		notifier: newNotifier(eventStore, notifierOptions{
 			log:                logger,
@@ -1516,7 +1524,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
-	value, err := readAndClose(data)
+	value, err := kv.ReadAllAndClose(data)
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
@@ -1674,7 +1682,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 				Folder:          entry.key.Folder,
 			}
 			if hasPeek && peek.Key.String() == entry.key.String() {
-				value, err := readAndClose(peek.Value)
+				value, err := kv.ReadAllAndClose(peek.Value)
 				hasPeek = false
 				if err != nil {
 					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -1783,7 +1791,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		if stats != nil {
 			stats.bodiesConsumed++
 		}
-		value, err := readAndClose(obj.Value)
+		value, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			found(i, &BackendReadResponse{
 				Key:             requests[i].Key,
@@ -1833,7 +1841,7 @@ func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListK
 				return
 			}
 
-			value, err := readAndClose(obj.Value)
+			value, err := kv.ReadAllAndClose(obj.Value)
 			if err != nil {
 				yield(nil, err)
 				return
@@ -2151,7 +2159,7 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	if !i.keysOnly {
-		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		i.value, i.err = kv.ReadAllAndClose(i.currentDataObj.Value)
 		if i.err != nil {
 			return false
 		}
@@ -2770,7 +2778,7 @@ func (i *kvHistoryIterator) Next() bool {
 
 		i.currentDataObj = &dataObj
 
-		i.value, err = readAndClose(dataObj.Value)
+		i.value, err = kv.ReadAllAndClose(dataObj.Value)
 		if err != nil {
 			i.err = err
 			return false
@@ -2919,7 +2927,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			readFailed = true
 			break
 		}
-		data, err := readAndClose(obj.Value)
+		data, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
 			if unreadable == nil {
@@ -3409,13 +3417,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	return rsp
-}
-
-// readAndClose reads all data from a ReadCloser and ensures it's closed,
-// combining any errors from both operations.
-func readAndClose(r io.ReadCloser) ([]byte, error) {
-	data, err := io.ReadAll(r)
-	return data, errors.Join(err, r.Close())
 }
 
 // keysSubscriber is the subscriber search may watch written keys with: the one

@@ -1454,6 +1454,40 @@
       "saving": "Ukládání…",
       "title-error-saving-receiver": "Chyba při ukládání příjemce"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_few": "",
+        "alert-rules_many": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_few": "",
+        "recording-rules_many": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Chcete-li změnit nastavení správce výstrah, přejděte na stránku Správce upozorňování. Pokud nemáte přístup, obraťte se na správce.",
       "admin-hint-external": "Chcete-li změnit nastavení správce výstrah, přejděte na stránku Správce upozorňování. Pokud nemáte přístup, obraťte se na správce.",
@@ -1781,7 +1815,9 @@
         "autosync-tooltip-unsupported": "Automatická synchronizace není pro tento typ správce výstrah k dispozici. Vyberte zdroj dat Mimir nebo Cortex pro povolení.",
         "datasource": "Zdroj dat správce výstrah",
         "datasource-autosync-badge": "Automatická synchronizace",
+        "embedded-yaml-parse-error": "",
         "heading": "Importovat zdroje oznámení",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Nebyly nalezeny žádné zdroje dat správce výstrah",
         "no-permission-desc": "Nemáte oprávnění k importu zdrojů oznámení. Potřebujete oprávnění <strong>alerting.notifications:write</strong>. Tento krok můžete přeskočit.",
@@ -7522,6 +7558,59 @@
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_few": "",
+      "apply-title_many": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Přidat odkaz",
       "remove-link": "Odebrat odkaz",
@@ -7861,6 +7950,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Při ukládání došlo k neočekávané chybě."
     },
     "save-library-viz-panel-modal": {
@@ -8157,6 +8247,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otevřít podokno dotazu",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Otevřít podokno dotazu"
     },
     "viz-panel-links-renderer": {
@@ -13850,6 +13942,13 @@
       "save-tooltip": "Uložit"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Načítání…"
   },
@@ -15714,11 +15813,6 @@
       "original-query": "Původní dotaz",
       "trace-id": "(ID trasování: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Přidat dotaz",
-      "expression": "Výraz",
-      "title-data-source-help": "Nápověda pro zdroj dat"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15758,28 +15852,31 @@
     "accept": "Přijmout",
     "assistant-context-title": "Kontext spoluvytváření dotazu",
     "assistant-instructions-title": "Pokyny ke spoluvytváření dotazu",
-    "assistant-unavailable": "Asistent není k dispozici",
-    "assistant-unavailable-body": "Spoluvytváření dotazu vyžaduje Grafana Assistant.",
-    "building": "Vytváření dotazu…",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Kontrola dostupnosti asistenta…",
     "clarification-label": "Přidat další podrobnosti",
     "clarification-message": "Zpráva s vysvětlením",
-    "clarification-placeholder": "Přidat další podrobnosti…",
+    "clarification-placeholder": "",
     "clarification-title": "Požadovaná podrobnost",
     "close": "Zavřít spoluvytváření",
-    "context": "KONTEXT",
-    "context-error": "Nelze načíst kontext vybraného dotazu",
+    "context-error": "",
     "continue": "Pokračovat",
     "continue-here": "Pokračujte zde",
     "continue-in-assistant": "Pokračovat v asistentovi",
-    "continue-in-assistant-chat": "Pokračovat v chatu s asistentem",
     "dialog": "Spoluautor dotazu",
     "dismiss": "Zamítnout",
     "error": "Chyba spoluvytváření dotazu",
     "error-accept-failed": "Návrh dotazu se nepodařilo přijmout. Zkuste to znovu.",
     "error-multiple-responses": "Asistent vrátil protichůdné návrhy dotazů. Zkuste to znovu.",
     "error-preview-failed": "Náhled návrhu dotazu se nepodařilo zobrazit. Zkuste to znovu.",
+    "explain-failed": "",
     "explain-or-modify": "Vysvětlit nebo upravit",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Zrušit",
     "feedback-description": "Vaše zpětná vazba pomáhá zlepšit zážitek z dotazů v Grafaně.",
     "feedback-error": "Zpětnou vazbu se nepodařilo odeslat. Zkuste to znovu.",
@@ -15790,36 +15887,61 @@
     "feedback-not-helpful": "Neužitečné",
     "feedback-positive-placeholder": "Co se vám líbilo? Jak to mohlo být ještě lepší?",
     "feedback-positive-title": "Co bylo dobře?",
-    "feedback-privacy": "Vaše hodnocení, komentář a informace o tom, zda se jednalo o návrh nebo předání, jsou odeslány. Váš dotaz, výzva a odpověď asistenta nejsou zahrnuty.",
+    "feedback-privacy": "",
     "feedback-recipient": "Vaše zpětná vazba bude odeslána týmům, které pracují na dotazech.",
     "feedback-send": "Odeslat",
     "feedback-sending": "Odesílání…",
-    "focus": "ZAMĚŘENÍ",
-    "handoff-guidance": "Vaše změny možná budou muset zahrnovat jiný zdroj dat nebo další dotazy mimo ten, na který se zaměřujeme. Pokračujte v chatu s asistentem a proveďte větší změny.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Zvýrazněný dotaz",
-    "highlighted-query-summary": "Shrnutí zvýrazněného dotazu",
+    "hold-to-peek": "",
     "invalid-query-response": "Asistent nemohl po pokusu o opravu návrhu platný dotaz v jazyce {{language}}. Zkuste to znovu nebo přidejte další podrobnosti.",
     "iteration-nudge": "Pracujete na něčem velkém? Na větších úpravách pracujte postupně a s větším prostorem.",
-    "open-in-chat": "Otevřít v chatu",
-    "original-change": "Původní {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Náhled dotazu",
+    "previous-option": "",
     "prompt-label": "Popište změnu dotazu",
-    "prompt-placeholder": "Popište rychlou změnu…",
+    "prompt-placeholder": "",
     "proposal-details": "Podrobnosti o návrhu dotazu",
-    "proposed-change": "Navrženo {{kind}}",
-    "reading-highlighted-query": "Čtení zvýrazněného dotazu…",
+    "query-diff": "",
     "relevant-context": "Relevantní kontext dotazu",
     "request-failed": "Asistentovi se nepodařilo vytvořit návrh dotazu. Zkuste to znovu.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Zkusit znovu",
+    "retry-context": "",
     "running-updated-query": "Spouštění aktualizovaného dotazu…",
+    "select-to-accept": "",
     "selection-ready": "Výběr je součástí tohoto dotazu v jazyce {{language}}.",
     "selection-whole-query": "Celý dotaz v jazyce {{language}} je vybrán pro spoluvytváření.",
     "selection-with-type": "{{name}} je {{type}} {{kind}}.",
     "stale-query-response": "Zvýrazněný dotaz se změnil dříve, než byl návrh připraven. Zamítněte ho a znovu zvýrazněte.",
     "stop": "Zastavit",
     "submit": "Spoluautor",
-    "suggestion-updated": "Návrh byl aktualizován",
+    "submit-follow-up": "",
     "unchanged-query-response": "Asistent vrátil aktuální dotaz beze změn. Zkuste to znovu nebo přidejte další podrobnosti.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Veškeré neuložené úpravy panelu nebudou ztraceny.",
     "working-focus": "Zaměření dotazu"
   },
@@ -16455,14 +16577,7 @@
       "time-range": "Zamknout časový rozsah"
     },
     "export": {
-      "back-button": "Zpět na konfiguraci exportu",
-      "cancel-button": "Zrušit",
-      "info-text": "Exportovat tuto nástěnku.",
-      "loading": "Načítání…",
-      "save-button": "Uložit do souboru",
-      "share-externally-label": "Exportovat pro externí sdílení",
-      "view-button": "Zobrazit JSON",
-      "view-button-yaml": "Zobrazit YAML"
+      "share-externally-label": "Exportovat pro externí sdílení"
     },
     "image": {
       "actions": "Akce exportu obrázku",
@@ -16520,9 +16635,6 @@
       "dark": "Tmavý",
       "field-name": "Motiv",
       "light": "Světlý"
-    },
-    "view-json": {
-      "copy-button": "Kopírovat do schránky"
     }
   },
   "share-panel": {
@@ -17703,6 +17815,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Odebrat části výsledků dotazu pomocí vzoru regulárního výrazu."
       },
+      "deselect-all": "",
       "label-from-variable": "Z proměnné",
       "label-identifier": "Identifikátor",
       "label-use-variable": "Použít proměnnou",
@@ -17710,7 +17823,8 @@
       "name": {
         "filter-fields-by-name": "Filtrovat pole podle názvu"
       },
-      "placeholder-regular-expression-pattern": "Vzor regulárního výrazu"
+      "placeholder-regular-expression-pattern": "Vzor regulárního výrazu",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

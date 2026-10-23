@@ -198,7 +198,7 @@ func (p *privateCacheWriter) Write(b []byte) (int, error) {
 // complete is false when any version could not be read and is marked stale.
 func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveThroughBreaker(entry.breaker, name, entry.handler, w, r)
+		entry.serve(name, w, r)
 	})
 	var list apidiscoveryv2.APIGroupDiscoveryList
 	status, err := readDiscovery(req, handler, apisPrefix, aggregatedDiscoveryJSON, &list)
@@ -219,7 +219,9 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 		version := apidiscoveryv2.APIVersionDiscovery{Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale}
 		// Older backends may only support per-version resource discovery. An
 		// unavailable backend stays advertised as stale without hiding healthy groups.
-		if status == http.StatusOK || status == http.StatusNotFound {
+		// Once the fetch's deadline has passed, the rest are not read: each
+		// read would fail at once and count against the breaker again.
+		if (status == http.StatusOK || status == http.StatusNotFound) && req.Context().Err() == nil {
 			var resources metav1.APIResourceList
 			if _, err := readDiscovery(req, handler, apisPrefix+"/"+gv.GroupVersion, "application/json", &resources); err == nil && resources.Kind == "APIResourceList" {
 				if converted, err := endpoints.ConvertGroupVersionIntoToDiscovery(resources.APIResources); err == nil {
@@ -297,7 +299,7 @@ func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, 
 	if scoped {
 		// The fallback forwards to the caller's stack, and a slow stack must
 		// not hold discovery open when the defaults are available.
-		ctx, cancel := context.WithTimeout(req.Context(), discoveryFetchTimeout)
+		ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
 		defer cancel()
 		req = req.WithContext(ctx)
 	}

@@ -40,7 +40,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t 
 		"dir-a/dashboard.json": common.DashboardJSON("shared-uid", "Dashboard A", 1),
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	require.Equal(t, "dir-a/dashboard.json",
 		dashboardSourcePath(t, helper, "shared-uid"),
 		"after c1, shared-uid must be owned by dir-a")
@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t 
 	require.NoError(t, local.CreateFile("dir-b/dashboard.json", string(common.DashboardJSON("shared-uid", "Dashboard B", 1))))
 	gitCommitPush(t, local, "add dir-b with duplicate uid")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	require.Equal(t, "dir-b/dashboard.json",
 		dashboardSourcePath(t, helper, "shared-uid"),
 		"after c2, shared-uid ownership must have flipped to dir-b")

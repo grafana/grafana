@@ -890,6 +890,9 @@ type Cfg struct {
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
+	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
+	// single-row descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration

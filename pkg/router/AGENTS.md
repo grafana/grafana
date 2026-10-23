@@ -28,18 +28,28 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
+- **Tear down a retired handler only after it drains.** A handler that holds resources implements
+  `Destroy` (a plugin's API server, through `tracedPluginHandler`). When reconcile retires its
+  entry, the entry refuses new requests (503 with `Retry-After: 1`, for a request that read the
+  old snapshot), its watches end, and `Destroy` runs once the requests in flight finish
+  (`retire.go`). Never destroy a handler under a running request. A managed plugin's gRPC
+  connection is reference-counted by the handlers loaded on it (`acquireConnection`), so it closes
+  with the last one destroyed, never while a superseded handler may still serve.
 - **Build discovery from what is served,** meaning `r.served`, never the raw `Load` result. A group
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
   re-reads full state through `Load`. Drain the channel before calling `Load`. `Run` does an explicit
-  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil).
+  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil). Since every
+  reconcile sees the same routes, a warning about them (reserved, invalid or duplicate groups) is
+  logged when it first appears, not on every reconcile (`warn` in `reconcile`).
 - **`Ready` fails only when nothing is served.** A partial reconcile error is logged, but must not
   drain the router from its load balancer.
 - **The circuit breaker is passive only.** `gobreaker`'s two-step breaker, one per group, driven by
   the outcomes of real proxied requests; no active health probes. An outcome is reported as soon as
   the response status is written, never when the body ends, so a watch can't hold a half-open
   breaker's trial slot. Only requests whose own context ended (`errCallerGone`) are excluded from
-  breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
+  breaker accounting. A deadline the router sets on its own fetches, such as discovery, has the
+  cause `errRouterDeadline` (`callerGone`), so missing it counts against the backend. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
   `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
   `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
@@ -78,6 +88,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
   router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
+  A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
+  `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
+  Until then its error is reported again, so `Ready` and the reconcile log don't change. A new key
+  for the group is loaded at once.
 - **Authenticate, then check the namespace, before any dispatch.** Every `/apis` and `/openapi/v3`
   request needs a requester: one Grafana's middleware set, or one from a verified `X-Access-Token`
   (`authenticate`), or it gets a 401. A request whose path names a namespace
@@ -111,7 +125,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
     count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
     the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
-    deprecated `/watch/` path form is not supported either.
+    deprecated `/apis/<g>/<v>/watch/...` path form gets a 404 and is not counted as a watch
+    (`isDeprecatedWatchPath`).
 
 ## Package layout
 
@@ -147,6 +162,11 @@ Exactly one loader serves:
 3. **Otherwise no groups** (`noRoutesLoader`). The dummy loader that serves static groups is in
    `dummy_test.go`, for tests only.
 
+The cloud loader serves nothing until each of its sources has polled once, successfully or not
+(`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A
+source's first attempt wakes the router either way, even when it finds nothing. A source records a
+poll only after storing its snapshot, so a `Load` that sees the poll also sees its groups.
+
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:
 
@@ -180,7 +200,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status and shadowed groups. |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -230,7 +250,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     stored.
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
-    last good copy is served, marked `Stale`.
+    last good copy is served, marked `Stale`. Without one, an incomplete fetch serves what it did
+    read, such as the versions an older backend answered for.
   - The document is written by `writeAggregatedDiscovery`, never through a per-request
     `aggregated.ResourceManager`, which logs a line for every group version each time it is built.
     It must answer exactly as that manager would: groups sorted by name, versions in order, empty
@@ -345,6 +366,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
+| `plugins_poll_interval`, `core_poll_interval` | Positive polling duration for `plugins_url` and `core_url`, default `30s`, with the same backoff after a failure as an aggregate target's `poll_interval`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |

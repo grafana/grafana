@@ -695,6 +695,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.savedDashboardViews",
+			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardPreviewMode",
 			Description: "Enables Viewing and Editing modes for dynamic dashboards",
 			Stage:       FeatureStageExperimental,
@@ -971,7 +979,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -2626,9 +2634,9 @@ var (
 		{
 			Name:        "profilesHeatmap",
 			Description: "Enables heatmap visualization support for Pyroscope profiles",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -3198,7 +3206,7 @@ var (
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{
@@ -3235,14 +3243,6 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
-		},
-		{
-			Name:        "grafana.rspackBuild",
-			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
 		},
 		{
 			Name:        "pluginsForceTls13",
