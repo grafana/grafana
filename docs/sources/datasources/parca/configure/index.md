@@ -35,11 +35,11 @@ If you make any changes in the UI, select **Save & test** to preserve those chan
 
 Before you install the Parca data source, ensure you have:
 
-- **Grafana:** A self-managed Grafana instance, version 13.2 or later. The Parca data source isn't available in Grafana Cloud.
+- **Grafana:** A self-managed Grafana instance, version 12.3 or later. The Parca data source isn't available in Grafana Cloud.
 - **Server access:** Shell access to the host running Grafana, with permission to write to the plugin directory and restart Grafana.
 - **Grafana permissions:** `Organization administrator` role to add and configure the data source.
 - **Parca instance:** A running Parca instance (v0.19 or later) accessible from your Grafana server.
-- **Build tools:** Node.js 24 or later, npm 11.12.1 or later, and Go 1.26.5 or later. These are the versions the repository currently requires. Refer to `.nvmrc`, the `engines` field in `package.json`, and `go.mod` in the [data source repository](https://github.com/grafana/grafana-parca-datasource) for the authoritative versions.
+- **Build tools:** Node.js, npm, and Go. For the required versions, refer to the `engines` field in [`package.json`](https://github.com/grafana/grafana-parca-datasource/blob/main/package.json) and the `go` directive in [`go.mod`](https://github.com/grafana/grafana-parca-datasource/blob/main/go.mod) in the data source repository.
 
 ## Install the data source
 
@@ -120,13 +120,25 @@ If **Parca** doesn't appear, check the Grafana server log for plugin loading err
 
 ### Migrate from the bundled data source
 
-Grafana 13.1 and earlier bundled the Parca data source. If you're upgrading from one of those versions and you already have Parca data sources configured, install it as described in the preceding sections before you upgrade Grafana. The plugin ID is still `parca`, so your existing data sources continue to work once Grafana can load it.
+Grafana 13.1 and earlier include a bundled Parca data source. Grafana 13.2 and later don't, so you must install the external Parca data source, which you build from the [grafana/grafana-parca-datasource](https://github.com/grafana/grafana-parca-datasource) repository. Both use the plugin ID `parca`, so your existing Parca data sources work with the external Parca data source without any changes.
+
+The external Parca data source is available in Grafana 12.3 and later. If you already have Parca data sources configured, switch to the external Parca data source before you upgrade to Grafana 13.2:
+
+1. Build, deploy, and allow the external Parca data source. Refer to [Build the data source from source](#build-the-data-source-from-source), [Deploy the data source to Grafana](#deploy-the-data-source-to-grafana), and [Allow the unsigned plugin](#allow-the-unsigned-plugin).
+1. Add the following to your Grafana configuration file. Without this setting, Grafana 12.3 through 13.1 load the bundled Parca data source and ignore the external one.
+
+   ```ini
+   [plugin.parca]
+   as_external = true
+   ```
+
+1. Restart Grafana.
 
 {{< admonition type="caution" >}}
 Don't delete and recreate your existing Parca data sources. Dashboards and alert rules reference data sources by UID, so a new UID breaks those references. Keep the existing data source and its UID.
 {{< /admonition >}}
 
-If you upgrade Grafana before you install the data source, your existing Parca data sources and any panels that query them report the `parca` plugin isn't found. Installing it and restarting Grafana resolves this without any change to your data sources.
+If you upgrade to Grafana 13.2 or later before you install the external Parca data source, your existing Parca data sources and any panels that query them report the `parca` plugin isn't found. To resolve this, install the external Parca data source and restart Grafana. You don't need to change your data sources.
 
 ## Add the data source
 
