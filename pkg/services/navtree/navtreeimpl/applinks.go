@@ -458,7 +458,21 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		}
 	}
 
+	moveMachineLearningToMoreApps := plugin.ID == "grafana-ml-app" && s.features != nil &&
+		s.features.GetEnabled(c.Req.Context())[featuremgmt.FlagGrafanaNavigationInfoArchRefresh]
+	if moveMachineLearningToMoreApps {
+		sectionID = navtree.NavIDApps
+	}
+
 	sectionChildren := []*navtree.NavLink{appLink}
+	if moveMachineLearningToMoreApps {
+		for _, child := range appLink.Children {
+			child.SortWeight = -100 + child.SortWeight
+			idPath := strings.TrimPrefix(child.Url, s.cfg.AppSubURL+"/")
+			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(idPath, "/", "-")
+		}
+		sectionChildren = appLink.Children
+	}
 	// asserts pages expand to root Observability section instead of it's own node
 	if plugin.ID == "grafana-asserts-app" {
 		servicesURL := s.cfg.AppSubURL + assertsServicesPath

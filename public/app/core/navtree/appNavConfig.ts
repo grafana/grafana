@@ -1,6 +1,7 @@
 import { type IconName, type PluginInclude } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   APP_OBSERVABILITY_APP_ID,
   ASSERTS_APP_ID,
@@ -36,6 +37,9 @@ export interface AppNavConfig {
 
 export const ASSERTS_SERVICES_PATH = `/a/${ASSERTS_APP_ID}/services`;
 export const SLO_SERVICES_PATH = `/a/${SLO_APP_ID}/services`;
+
+const isInfoArchRefreshEnabled = () =>
+  getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNavigationInfoArchRefresh, false);
 
 // The assistant pages OSS deployments get (mirrors assistantOSSNavigationPaths
 // in the Go builder)
@@ -236,7 +240,12 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
       (include.path !== undefined && ASSISTANT_OSS_NAV_PATHS.has(include.path)),
   },
   'grafana-ml-app': {
-    sectionId: NavID.root,
+    get sectionId() {
+      return isInfoArchRefreshEnabled() ? NavID.apps : NavID.root;
+    },
+    get hoistPages() {
+      return isInfoArchRefreshEnabled() ? {} : undefined;
+    },
     sortWeight: NavWeight.aiAndMl,
     text: 'Machine Learning',
     subTitle: 'Explore AI and machine learning features',
