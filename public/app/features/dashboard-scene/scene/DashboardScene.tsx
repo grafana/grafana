@@ -71,7 +71,12 @@ import {
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { type ComposerSession } from '../composer/ComposerSession';
-import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
+import { canEnterComposer } from '../composer/composerAccess';
+import {
+  clearPendingComposerEnterRequest,
+  getPendingComposerEnterTarget,
+  requestComposerEnter,
+} from '../composer/composerEntryRequests';
 import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
 import { getPendingChangePreview, previewedDashboardUid } from '../lifecycle/pendingChangePreview';
 import { createMutationClient } from '../mutation-api/clientBridge';
@@ -359,9 +364,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Composer writes only through its session, which runs as an Assistant write.
     if (isComposerMode(this.state)) {
       return this._assistantWrites > 0;
-    }
-    if (dashboardModesEnabled() && getDashboardMode(this.state) === 'agent' && this._assistantWrites === 0) {
-      return this.setDashboardMode('edit', 'manual_change');
     }
     return !dashboardModesEnabled() || getDashboardMode(this.state) !== 'view' || this._assistantWrites > 0;
   }
@@ -683,9 +685,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     let mode = this.state.mode ?? 'edit';
     if (source === 'assistant' && currentMode === 'view') {
-      mode = 'agent';
-    } else if (source === 'user' && currentMode === 'agent') {
-      mode = 'edit';
+      // Stays in Viewing while Assistant takes the request, so leaving Composer returns to Viewing.
+      mode = trigger === 'assistant' && this.requestComposerForAssistantEdit() ? 'view' : 'edit';
     }
     if (!this.state.isEditing) {
       this._editSessionSource = source;
@@ -716,6 +717,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.reportModeChange(currentMode, trigger);
     }
   };
+
+  /** Asks Assistant to enter Composer for an edit it makes from Viewing; false when Composer cannot start. */
+  private requestComposerForAssistantEdit(): boolean {
+    const uid = this.state.uid;
+    if (!uid || !canEnterComposer(this).ok) {
+      return false;
+    }
+    if (getPendingComposerEnterTarget()?.uid === uid) {
+      return true;
+    }
+    return requestComposerEnter({ resource: 'dashboard', uid });
+  }
 
   public setDashboardMode(mode: DashboardMode, trigger: DashboardModeTrigger = 'navigation'): boolean {
     // Only a Composer session enters Composer (see enterComposerMode); any other mode request leaves it.
@@ -846,11 +859,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!isComposerMode(this.state)) {
       return;
     }
-    const modeBefore = this._composer?.modeBefore ?? 'edit';
+    const mode = this._composer?.modeBefore ?? 'edit';
     // An Assistant edit and its undo leave the dashboard dirty though it matches the saved version.
     this.clearDirtyIfUnchanged();
-    // Viewing with unsaved Assistant changes is what `agent` presents.
-    const mode = modeBefore === 'view' && this.state.isDirty ? 'agent' : modeBefore;
     this.setState({ mode });
     this.applyDashboardMode();
     if (mode === 'edit') {
@@ -868,17 +879,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Leaves Composer for Viewing or Editing (the mode picker). The session ends as on its own exit, which
-   * also stops a running turn. Editing takes the path manual-edit entry points use; Viewing keeps unsaved
-   * changes the way leaving Composer does.
+   * also stops a running turn. Editing takes the path manual-edit entry points use; Viewing first asks to
+   * save or discard unsaved changes, and Cancel stays in Composer with the session running.
    */
   public switchFromComposer(mode: 'view' | 'edit') {
     if (mode === 'edit') {
       this.openFullEditor();
       return;
     }
+    this.clearDirtyIfUnchanged();
+    if (!this.state.isDirty || this.managedResourceCannotBeEdited()) {
+      this.leaveComposerForViewing();
+      return;
+    }
+    this.showUnsavedChangesDialog(
+      () => this.leaveComposerForViewing(),
+      () => {
+        this.leaveComposerForViewing();
+        this.discardChangesAndKeepEditing();
+      }
+    );
+  }
+
+  private leaveComposerForViewing() {
     this.exitComposerMode();
     if (getDashboardMode(this.state) === 'edit') {
-      this.setDashboardMode(this.state.isDirty ? 'agent' : 'view', 'composer');
+      this.setDashboardMode('view', 'composer');
     }
   }
 

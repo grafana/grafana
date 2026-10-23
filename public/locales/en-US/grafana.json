@@ -6111,7 +6111,6 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
-      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask Assistant to change it.",
@@ -6127,7 +6126,6 @@
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
       "save-before-viewing": "Save the dashboard before switching to Viewing.",
-      "switch-to-composer": "Switch to Composer",
       "switch-to-editing": "Switch to Editing",
       "switch-to-viewing": "Switch to Viewing",
       "view": "Viewing",

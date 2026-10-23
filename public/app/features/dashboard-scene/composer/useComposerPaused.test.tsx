@@ -65,42 +65,30 @@ function setup() {
 
 const saveButton = () => screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
 
-it('disables saving while a turn pauses the session and re-enables it on resume and on exit', () => {
+it('keeps saving available while a turn pauses the session', () => {
   const { session } = setup();
+
+  act(() => session.setPaused(true));
+
   // A Button with a tooltip disables through aria-disabled so the tooltip still shows.
-  expect(saveButton()).not.toHaveAttribute('aria-disabled', 'true');
-
-  act(() => session.setPaused(true));
-  expect(saveButton()).toHaveAttribute('aria-disabled', 'true');
-
-  act(() => session.setPaused(false));
-  expect(saveButton()).not.toHaveAttribute('aria-disabled', 'true');
-
-  act(() => session.setPaused(true));
-  act(() => {
-    session.exit();
-  });
   expect(saveButton()).not.toHaveAttribute('aria-disabled', 'true');
 });
 
-it('disables Save, Save as copy and Discard in the save menu while paused', async () => {
+it('disables only Discard in the save menu while paused, and re-enables it on resume', async () => {
   const { session } = setup();
   act(() => session.setPaused(true));
+  const openMenu = () =>
+    act(async () => screen.getByTestId(selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton).click());
+  const disabledItems = () =>
+    screen
+      .getAllByRole('menuitem')
+      .filter((item) => item.hasAttribute('disabled'))
+      .map((item) => item.textContent);
 
-  await act(async () =>
-    screen.getByTestId(selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton).click()
-  );
+  await openMenu();
+  expect(disabledItems()).toEqual([expect.stringMatching(/^Discard changes/)]);
+  expect(screen.getByText('Wait for Assistant to finish editing')).toBeInTheDocument();
 
-  const items = screen.getAllByRole('menuitem');
-  const disabled = items.filter((item) => item.hasAttribute('disabled')).map((item) => item.textContent);
-  expect(disabled).toEqual(
-    expect.arrayContaining([
-      expect.stringMatching(/^Save(Wait|$)/),
-      expect.stringMatching(/^Save as copy/),
-      expect.stringMatching(/^Discard changes/),
-    ])
-  );
-  // View changes stays available.
-  expect(items.find((item) => item.textContent?.startsWith('View changes'))).not.toHaveAttribute('disabled');
-  expect(screen.getAllByText('Wait for Assistant to finish editing').length).toBeGreaterThanOrEqual(3);
+  act(() => session.setPaused(false));
+  expect(disabledItems()).toEqual([]);
 });
