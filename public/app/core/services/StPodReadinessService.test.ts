@@ -248,7 +248,7 @@ describe('StPodReadinessService', () => {
   });
 
   describe('lazy TTL expiry', () => {
-    it('getStatus returns unknown after TTL elapses without issuing a new request', async () => {
+    it('reads continue to return ready after TTL elapses until start is called', async () => {
       jest.useFakeTimers();
       const get = installBackend(podUp);
 
@@ -259,44 +259,11 @@ describe('StPodReadinessService', () => {
 
       jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
 
-      expect(service.getStatus()).toBe(StPodStatus.Unknown);
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
       expect(get).toHaveBeenCalledTimes(1);
     });
 
-    it('useStatus observes the expiry on next read', async () => {
-      jest.useFakeTimers();
-      installBackend(podUp);
-
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-      expect(service.state.getValue()).toBe(StPodStatus.Ready);
-
-      const seen: StPodStatus[] = [];
-      const subscription = service.state.subscribe((status) => seen.push(status));
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-      service.getStatus();
-
-      expect(seen).toEqual([StPodStatus.Ready, StPodStatus.Unknown]);
-      subscription.unsubscribe();
-    });
-
-    it('getReadyPromise suspends again after TTL expiry', async () => {
-      jest.useFakeTimers();
-      installBackend(podUp);
-
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-      await expect(service.getReadyPromise()).resolves.toBeUndefined();
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-
-      const fresh = service.getReadyPromise();
-      const stillPending = Symbol('still-pending');
-      await expect(Promise.race([fresh, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
-    });
-
-    it('start after expiry restarts the pod check', async () => {
+    it('start after TTL elapses resets to unknown and restarts the pod check', async () => {
       jest.useFakeTimers();
       const get = installBackend(podUp);
 

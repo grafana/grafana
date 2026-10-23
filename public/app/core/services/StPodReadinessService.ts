@@ -38,18 +38,15 @@ export class StPodReadinessService {
   private readyAt: number | null = null;
 
   getStatus(): StPodStatus {
-    this.expireStaleReady();
     return this.state.getValue();
   }
 
   useStatus(): StPodStatus {
-    this.expireStaleReady();
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.state, this.state.getValue());
   }
 
   getReadyPromise(): Promise<void> {
-    this.expireStaleReady();
     if (this.state.getValue() === StPodStatus.Ready) {
       return Promise.resolve();
     }
