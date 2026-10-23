@@ -376,6 +376,19 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     expect(await screen.findByText('Folder is required')).toBeInTheDocument();
   });
 
+  it('clears the folder validation message once a folder is selected', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText('Folder A'));
+
+    await waitFor(() => expect(screen.queryByText('Folder is required')).not.toBeInTheDocument());
+  });
+
   it('requires a group and POSTs to the legacy ruler API only', async () => {
     const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
     const appPlatformRequests = captureRequests(

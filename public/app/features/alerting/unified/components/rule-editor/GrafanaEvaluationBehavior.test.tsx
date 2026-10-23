@@ -252,8 +252,10 @@ describe('GrafanaEvaluationBehaviorStep — no folder selected', () => {
       />
     );
 
-    await user.hover(screen.getByRole('button', { name: /new evaluation group/i }));
+    await user.hover(screen.getByText('Select an evaluation group...'));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 
+    await user.hover(screen.getByRole('button', { name: /new evaluation group/i }));
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });

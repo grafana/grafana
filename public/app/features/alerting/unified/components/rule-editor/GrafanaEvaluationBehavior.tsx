@@ -316,7 +316,15 @@ export function GrafanaEvaluationBehaviorStep({
                         shouldWrap={!folder?.uid}
                         wrap={(children) => (
                           <Tooltip content={noFolderTooltip}>
-                            <div>{children}</div>
+                            <div
+                              role="group"
+                              aria-label={t(
+                                'alerting.rule-form.evaluation.evaluation-group-and-interval',
+                                'Evaluation group and interval'
+                              )}
+                            >
+                              {children}
+                            </div>
                           </Tooltip>
                         )}
                       >

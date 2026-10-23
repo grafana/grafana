@@ -24,7 +24,7 @@ export function FolderSelectorV2() {
 
   const handleFolderCreation = (folder: Folder) => {
     resetGroup();
-    setValue('folder', folder);
+    setValue('folder', folder, { shouldValidate: true });
   };
 
   return (
@@ -69,7 +69,7 @@ export function FolderSelectorV2() {
                     value={folder?.uid}
                     onChange={(uid, title) => {
                       if (uid && title) {
-                        setValue('folder', { title, uid });
+                        setValue('folder', { title, uid }, { shouldValidate: true });
                       } else {
                         setValue('folder', undefined);
                       }
