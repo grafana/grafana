@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -114,7 +115,13 @@ func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 	}
 	s.router.onBreakerChange = s.metrics.breakerChanged
 	s.router.onDiscovery = s.metrics.discoveryResult
-	reg.MustRegister(newRouterCollector(s.router))
+	// The collector reads this router's state, so another router's must not be
+	// reused for it. A second router on one registry, as in tests, goes
+	// unreported rather than panicking.
+	var already prometheus.AlreadyRegisteredError
+	if err := reg.Register(newRouterCollector(s.router)); err != nil && !errors.As(err, &already) {
+		panic(err)
+	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
 }

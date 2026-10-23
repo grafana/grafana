@@ -22,9 +22,11 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 )
 
 // Key prefixes for the backends of each plugin manifests source.
@@ -42,6 +44,9 @@ type pluginManifestsTarget struct {
 	patterns   []*regexp.Regexp
 	grpcConfig pluginGRPCConfig
 	deps       PluginDependencies
+	// httpTransport serves the baasbridge clients of deployments whose host is
+	// an HTTP URL.
+	httpTransport http.RoundTripper
 
 	cooldown *cooldown
 	status   pollStatus
@@ -103,6 +108,7 @@ func newPluginManifestsTarget(
 		client:          client,
 		patterns:        patterns,
 		grpcConfig:      grpcConfig,
+		httpTransport:   baasbridge.NewTransport(grpcConfig.TLS, backendResponseHeaderTimeout), //nolint:staticcheck
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
 		requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, source),
@@ -165,12 +171,13 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		t.status.recordFailure()
+		if t.status.recordFailure() {
+			wake(dirty)
+		}
 		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
-	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
@@ -188,8 +195,15 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 				continue
 			}
 
+			// A connection records its calls under one plugin_id. A core_url
+			// entry may have no plugin ID, so its connection is labeled by its
+			// API group instead, which keeps core APIs on one host apart.
+			connectionID := entry.Definition.JSONData.ID
+			if connectionID == "" {
+				connectionID = manifest.Group
+			}
 			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-				return t.pluginClients(entry.Host, entry.Definition.JSONData.ID)
+				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
 			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
@@ -203,8 +217,10 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			backend.info = entry.Definition.JSONData.Info
 			// Without a host, the deployment has no backend to call.
 			backend.hasBackend = entry.Host != ""
-			if host, pluginID := entry.Host, entry.Definition.JSONData.ID; host != "" {
-				backend.acquire = func() (func(), error) { return t.acquireConnection(host, pluginID) }
+			// An HTTP operator is reached through baasbridge, with no gRPC
+			// connection to hold.
+			if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+				backend.acquire = func() (func(), error) { return t.acquireConnection(host, connectionID) }
 			}
 
 			// The host is outside PluginDefinition, but changing it must reload the backend.
@@ -222,23 +238,46 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 	t.snapshot.Store(&backends)
 	t.status.recordSkipped(skipped)
+	first := t.status.recordSuccess(now)
 
+	// The first attempt ends the cloud loader's wait for this source, even
+	// when it finds nothing, so it wakes the router either way.
 	lastKeys := *t.lastKeys.Load()
-	if !sameKeySet(lastKeys, keys) {
+	changed := !sameKeySet(lastKeys, keys)
+	if changed {
 		t.lastKeys.Store(&keys)
-		select {
-		case dirty <- struct{}{}:
-		default: // already pending; coalesce
-		}
+	}
+	if changed || first {
+		wake(dirty)
 	}
 }
 
-func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Client, appclientv3.Client, error) {
+// pluginClients returns the clients for a deployment's host. A host that is an
+// http or https URL is an operator written for apiextensions-apiserver, which
+// serves only the v3 calls, over HTTP; manifest declares its admission hooks.
+func (t *pluginManifestsTarget) pluginClients(host, pluginID string, manifest *app.ManifestData) (plugins.Client, appclientv3.Client, error) {
 	if host == "" {
 		return nil, nil, nil // no client exists
 	}
 	t.connectionsMu.Lock()
 	defer t.connectionsMu.Unlock()
+	if t.closed {
+		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
+	}
+
+	// Temporarily support the BaaS HTTP style operators
+	if baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+		clientV3, err := baasbridge.NewClient(host, manifest, baasbridge.Options{ //nolint:staticcheck
+			HTTPClient:       &http.Client{Transport: t.httpTransport},
+			MaxResponseBytes: int64(t.grpcConfig.Message.MaxRecvSize),
+			RouteCredentials: forwardRouteCredentials,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		return nil, clientV3, nil
+	}
+
 	c, err := t.connectionLocked(pluginConnectionKey{host: host, pluginID: pluginID})
 	if err != nil {
 		return nil, nil, err
@@ -258,6 +297,27 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
 		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
 	}, clientV3, nil
+}
+
+// forwardRouteCredentials sends an HTTP operator's route the caller's identity
+// as apiextensions-apiserver's custom-route proxy does, with raw tokens: the ID
+// token always, and the access token, a bearer credential the operator could
+// replay, only when no declared check authorized the route, leaving the
+// operator to authorize it.
+func forwardRouteCredentials(ctx context.Context, header http.Header) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil
+	}
+	if token := requester.GetIDToken(); token != "" {
+		header.Set("X-Grafana-Id", token)
+	}
+	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
+		if token := requester.GetAccessToken(); token != "" {
+			header.Set("X-Access-Token", token)
+		}
+	}
+	return nil
 }
 
 // acquireConnection takes a reference to the connection for host and plugin,

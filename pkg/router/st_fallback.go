@@ -608,18 +608,20 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
-		st.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
 			next.backends = prev.backends
 		}
 		st.discovery.Store(next)
+		if st.status.recordFailure() {
+			wake(dirty)
+		}
 		return
 	}
 	st.cooldown.OnSuccess(now)
-	st.status.recordSuccess(now)
 	st.discovery.Store(&singleTenantDiscovery{backends: backends})
+	st.status.recordSuccess(now)
 
 	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
 		return

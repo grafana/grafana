@@ -723,14 +723,15 @@ func TestRouteHandlerDoesNotForwardCredentials(t *testing.T) {
 type fakeRouteClient struct {
 	appclientv3.Client
 	req *pluginv3.CallRouteRequest
+	ctx context.Context
 	err error
 }
 
-func (f *fakeRouteClient) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+func (f *fakeRouteClient) CallRoute(ctx context.Context, req *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	f.req = req
+	f.req, f.ctx = req, ctx
 	return &fakeRouteStream{}, nil
 }
 

@@ -28,8 +28,10 @@ import (
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -322,13 +324,13 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	for _, conn := range connections {
 		require.Equal(t, connectivity.Shutdown, conn.conn.GetState())
 	}
-	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app")
+	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app", nil)
 	require.ErrorContains(t, err, "closed")
 }
 
 func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
 	target := &pluginManifestsTarget{}
-	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app")
+	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app", nil)
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
 	require.Nil(t, clientV3)
@@ -612,6 +614,36 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 	}
 }
 
+// An HTTP operator gets only a v3 client, from baasbridge, and no connection.
+func TestPluginManifestsTargetHTTPClient(t *testing.T) {
+	target := &pluginManifestsTarget{}
+	clientV2, clientV3, err := target.pluginClients("http://127.0.0.1:8080", "grafana-appsdktest-app", &app.ManifestData{})
+	require.NoError(t, err)
+	require.Nil(t, clientV2)
+	require.True(t, baasbridge.IsClient(clientV3)) //nolint:staticcheck
+	require.Empty(t, target.connections)
+
+	_, _, err = target.pluginClients("http://", "grafana-appsdktest-app", nil)
+	require.ErrorContains(t, err, "absolute http or https URL")
+}
+
+func TestForwardRouteCredentials(t *testing.T) {
+	requester := &identity.StaticRequester{AccessToken: "access", IDToken: "id"}
+
+	header := http.Header{}
+	require.NoError(t, forwardRouteCredentials(identity.WithRequester(t.Context(), requester), header))
+	require.Equal(t, http.Header{"X-Access-Token": {"access"}, "X-Grafana-Id": {"id"}}, header,
+		"without a declared check the operator authorizes the route, so it gets the access token")
+
+	header = http.Header{}
+	require.NoError(t, forwardRouteCredentials(baasbridge.WithDeclaredAccessChecked(identity.WithRequester(t.Context(), requester)), header)) //nolint:staticcheck
+	require.Equal(t, http.Header{"X-Grafana-Id": {"id"}}, header, "a declared check already authorized the route")
+
+	header = http.Header{}
+	require.NoError(t, forwardRouteCredentials(t.Context(), header))
+	require.Empty(t, header, "a request without a requester carries no credentials")
+}
+
 // A connection lives as long as a loaded handler uses it: superseded
 // handlers keep it until they are destroyed, and the last release closes it.
 func TestPluginConnectionClosesWithItsLastHandler(t *testing.T) {
@@ -672,4 +704,53 @@ func TestPluginBackendLoadFailureReleases(t *testing.T) {
 			require.Equal(t, 1, released)
 		})
 	}
+}
+
+// Only a gRPC deployment holds a connection; an HTTP operator, reached
+// through baasbridge, takes no connection reference when it loads.
+func TestPluginManifestsTargetAcquiresConnectionsOnlyForGRPCHosts(t *testing.T) {
+	for host, acquires := range map[string]bool{
+		"localhost:50051":       true,
+		"http://127.0.0.1:8080": false,
+	} {
+		t.Run(host, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(`{"key": "k", "plugins": [{"host": "` + host + `", "definition": {"jsonData": {"id": "example-app", "type": "app"}, "manifests": [{
+					"appName": "example", "group": "example.ext.grafana.app",
+					"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
+			}))
+			defer srv.Close()
+			target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			require.NoError(t, err)
+			target.poll(t.Context(), make(chan struct{}, 1))
+			require.Len(t, target.Backends(), 1)
+			backend := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+			require.Equal(t, acquires, backend.acquire != nil)
+		})
+	}
+}
+
+// A core_url entry without a plugin ID reports no plugin, and its connection
+// records calls under its API group, so core APIs on one host stay apart.
+func TestCoreEntryWithoutPluginID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": [{"host": "localhost:50051", "definition": {"jsonData": {"type": "app"}, "manifests": [{
+			"appName": "playlist", "group": "playlist.grafana.app",
+			"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	backend := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+
+	_, ok := backend.PluginStatus()
+	require.False(t, ok)
+
+	release, err := backend.acquire()
+	require.NoError(t, err)
+	defer release()
+	require.Contains(t, target.connections, pluginConnectionKey{host: "localhost:50051", pluginID: "playlist.grafana.app"})
+	target.closeConnections()
 }
