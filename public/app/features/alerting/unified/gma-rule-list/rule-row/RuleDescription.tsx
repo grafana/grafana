@@ -17,11 +17,14 @@ export function RuleDescription({ lastError, summary }: RuleDescriptionProps) {
       </Tooltip>
     );
   }
-  return (
-    <Tooltip content={summary} placement="top">
-      <Text variant="bodySmall" color="secondary" truncate element="p" aria-label={summary}>
-        {summary}
-      </Text>
-    </Tooltip>
-  );
+  if (summary) {
+    return (
+      <Tooltip content={summary} placement="top">
+        <Text variant="bodySmall" color="secondary" truncate element="p" aria-label={summary}>
+          {summary}
+        </Text>
+      </Tooltip>
+    );
+  }
+  return null;
 }
