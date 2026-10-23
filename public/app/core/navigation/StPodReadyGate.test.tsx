@@ -3,14 +3,14 @@ import { act, getWrapper, render, screen } from 'test/test-utils';
 
 import { StPodReadinessService, StPodStatus } from '../services/StPodReadinessService';
 
-import { STPodReadinessCheck } from './STPodReadinessCheck';
+import { StPodReadyGate } from './StPodReadyGate';
 
 async function renderGate(skip: boolean, service: StPodReadinessService) {
   const wrapper = getWrapper({ grafanaContext: { stPodReadiness: service }, renderWithRouter: true });
   await act(async () => {
     render(
       <Suspense fallback={<div>waiting for pod</div>}>
-        <STPodReadinessCheck skip={skip} />
+        <StPodReadyGate skip={skip} />
         <div>the page</div>
       </Suspense>,
       { wrapper }
@@ -18,7 +18,7 @@ async function renderGate(skip: boolean, service: StPodReadinessService) {
   });
 }
 
-describe('STPodReadinessCheck', () => {
+describe('StPodReadyGate', () => {
   let service: StPodReadinessService;
 
   beforeEach(() => {

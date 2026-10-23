@@ -11,7 +11,7 @@ import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
-import { STPodReadinessCheck } from './STPodReadinessCheck';
+import { StPodReadyGate } from './StPodReadyGate';
 import { useIsMtFallbackConfigured, useIsUrlAllowed } from './mtFallback';
 import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
@@ -67,7 +67,7 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<PageFallbackLoader />}>
-            <STPodReadinessCheck skip={!stPodCheckEnabled} />
+            <StPodReadyGate skip={!stPodCheckEnabled} />
             <Suspense fallback={<PageLoader />}>
               <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
             </Suspense>
