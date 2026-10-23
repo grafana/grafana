@@ -3424,7 +3424,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 func readAndClose(r io.ReadCloser) ([]byte, error) {
 	// KV values that already hold their bytes skip the copy, which io.ReadAll
 	// would otherwise grow from 512 bytes to the value size.
-	if v, ok := r.(kv.BytesValue); ok {
+	if v, ok := r.(*kv.BytesValue); ok {
 		return v.Bytes(), r.Close()
 	}
 	data, err := io.ReadAll(r)

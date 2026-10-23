@@ -34,28 +34,21 @@ type KeyValue struct {
 	Value io.ReadCloser
 }
 
-// BytesValue is a value reader that already holds the whole value, so callers
-// reading all of it can take the bytes instead of copying them.
-type BytesValue interface {
-	io.ReadCloser
-	// Bytes returns the unread part of the value without copying it.
-	Bytes() []byte
-}
-
-// NewBytesValue returns a BytesValue over b. Only pass bytes the reader may
-// hand out, such as a freshly scanned row.
-func NewBytesValue(b []byte) BytesValue {
-	return &bytesValue{Buffer: *bytes.NewBuffer(b)}
-}
-
-var _ BytesValue = (*bytesValue)(nil)
-
-// bytesValue gets Read, WriteTo and Bytes (the unread part) from bytes.Buffer.
-type bytesValue struct {
+// BytesValue is a KV value that is already in memory. Callers reading all of
+// it can take Bytes (the unread part) instead of copying it.
+type BytesValue struct {
 	bytes.Buffer
 }
 
-func (*bytesValue) Close() error { return nil }
+var _ io.ReadCloser = (*BytesValue)(nil)
+
+// NewBytesValue returns a BytesValue over b. Only pass bytes the reader may
+// hand out, such as a freshly scanned row.
+func NewBytesValue(b []byte) *BytesValue {
+	return &BytesValue{Buffer: *bytes.NewBuffer(b)}
+}
+
+func (*BytesValue) Close() error { return nil }
 
 type SortOrder int
 
