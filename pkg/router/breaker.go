@@ -118,6 +118,22 @@ type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
 // its deadline passed. That says nothing about the backend's health.
 var errCallerGone = errors.New("router: caller's request ended")
 
+// errRouterDeadline is the cause of a deadline the router sets on its own
+// fetches, such as discovery. Unlike the caller leaving, missing it says the
+// backend was too slow, so it counts against the backend's breaker.
+var errRouterDeadline = errors.New("router: fetch deadline exceeded")
+
+// callerGone returns errCallerGone when ctx ended because its caller left or
+// the caller's own deadline passed, and nil otherwise, including when only a
+// deadline the router set has passed.
+func callerGone(ctx context.Context) error {
+	err := ctx.Err()
+	if err == nil || errors.Is(context.Cause(ctx), errRouterDeadline) {
+		return nil
+	}
+	return fmt.Errorf("%w: %w", errCallerGone, err)
+}
+
 // newGroupBreaker returns a circuit breaker with gobreaker's defaults (trips
 // after more than 5 consecutive failures, stays open 60s). Only errCallerGone
 // is excluded. Matching context errors instead would also exclude backend
@@ -188,8 +204,8 @@ func newObservedGroupBreaker(group string, onChange func(group string, to gobrea
 // backend), the recorded proxy failure, a backend-failure error for
 // isBackendFailure statuses, or nil.
 func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error {
-	if err := req.Context().Err(); err != nil {
-		return fmt.Errorf("%w: %w", errCallerGone, err)
+	if err := callerGone(req.Context()); err != nil {
+		return err
 	}
 	if failure.err != nil {
 		if errors.Is(failure.err, errBackendRedirect) {
@@ -203,6 +219,11 @@ func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error 
 	return nil
 }
 
+// requestRouter is a handler that hands each request to another handler.
+type requestRouter interface {
+	handlerFor(*http.Request) http.Handler
+}
+
 // serveThroughBreaker proxies one request to h through cb, streaming the
 // response straight to w. An open breaker (or a half-open one already running
 // its trial request) fails fast with a local 503, unless h gates its own client
@@ -212,6 +233,11 @@ func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error 
 // the body ends. A watch streams for as long as it lasts; holding its outcome
 // until then would keep a half-open breaker's only trial slot for that long.
 func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.ResponseWriter, req *http.Request) {
+	// A handler that sends some of a group's requests elsewhere picks the
+	// handler first, so only that handler's breakers see the request.
+	if router, ok := h.(requestRouter); ok {
+		h = router.handlerFor(req)
+	}
 	// A handler spanning multiple destinations must not also share a group-wide breaker.
 	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
 		h.ServeHTTP(w, req)

@@ -101,6 +101,9 @@ type HybridSearchResultItem struct {
 	FolderTitle string `json:"folderTitle,omitempty"`
 	// ManagedBy is absent for unmanaged resources or when lookup fails.
 	ManagedBy *HybridSearchManagedBy `json:"managedBy,omitempty"`
+	// Tags from the lexical index. Omitted when unavailable.
+	// +listType=atomic
+	Tags []string `json:"tags,omitempty"`
 
 	// Chunks contains matching text, best first. A lexical-only hit has a
 	// synthesized chunk containing the resource's title.

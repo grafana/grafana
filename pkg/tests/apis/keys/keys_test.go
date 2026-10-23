@@ -131,6 +131,14 @@ func servedSpecPaths(t *testing.T, helper *apis.K8sTestHelper) map[string]any {
 	return paths
 }
 
+func dig(v any, keys ...string) any {
+	for _, k := range keys {
+		m, _ := v.(map[string]any)
+		v = m[k]
+	}
+	return v
+}
+
 // Through the real apiserver: routing, the authorizer restatement, the namespace
 // off the path, and the projection. The handler unit tests see none of those.
 func TestIntegrationListKeys_ServesTheProjection(t *testing.T) {
@@ -255,6 +263,11 @@ func TestIntegrationListKeys_IsAdvertisedInTheSpec(t *testing.T) {
 			require.True(t, ok)
 			assert.Contains(t, ops, "post", "%s must be a POST", want)
 			assert.NotContains(t, ops, "get", "%s must not offer GET", want)
+
+			// Swagger UI pre-fills the body from the served example.
+			example, err := json.Marshal(dig(ops, "post", "requestBody", "content", "application/json", "example"))
+			require.NoError(t, err)
+			assert.JSONEq(t, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":100}`, string(example))
 		})
 	}
 }

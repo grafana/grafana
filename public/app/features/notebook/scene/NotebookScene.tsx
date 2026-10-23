@@ -56,7 +56,6 @@ export interface NotebookSceneState extends SceneObjectState {
   body: NotebookLayoutManager;
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
-  hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
   /**
@@ -198,6 +197,8 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return () => {
         window.removeEventListener('pagehide', onPageHide);
         window.removeEventListener('pageshow', onPageShow);
+        this.commitTitleEdit();
+        stopAutosave?.();
         // A toggle-off already ended the session and turned isEditing back off; this only catches
         // the case where the page itself goes away while a session was still open.
         if (this.state.isEditing) {
@@ -208,8 +209,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
-        this.commitTitleEdit();
-        stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
         stateSub.unsubscribe();

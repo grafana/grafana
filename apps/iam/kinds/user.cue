@@ -88,10 +88,12 @@ userv0alpha1: userKind & {
 				}
 				response: {
 					#UserTeam: {
-						user:       string
-						team:       string
-						permission: string
-						external:   bool
+						user: string
+						team: string
+						// Deprecated numeric team ID, when available, for legacy references.
+						teamInternalId?: int64
+						permission:      string
+						external:        bool
 					}
 					items: [...#UserTeam]
 				}

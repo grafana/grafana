@@ -2,10 +2,13 @@ package router
 
 import (
 	"context"
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sort"
+	"strings"
 	"sync"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -75,20 +78,17 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	groups := map[string]apidiscoveryv2.APIGroupDiscovery{}
 	var raw json.RawMessage
-	var meta metav1.TypeMeta
+	var fallback apidiscoveryv2.APIGroupDiscoveryList
 	callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &raw)
-	if err == nil {
-		_ = json.Unmarshal(raw, &meta) // anything undecodable has no Kind, and is ignored
+	if err == nil && json.Unmarshal(raw, &fallback) != nil {
+		fallback = apidiscoveryv2.APIGroupDiscoveryList{} // anything undecodable has no Kind, and is ignored
 	}
 	scoped := false
-	switch meta.Kind {
+	switch fallback.Kind {
 	case "APIGroupDiscoveryList":
-		var fallback apidiscoveryv2.APIGroupDiscoveryList
-		if json.Unmarshal(raw, &fallback) == nil {
-			scoped = callerScoped
-			for _, group := range fallback.Items {
-				groups[group.Name] = group
-			}
+		scoped = callerScoped
+		for _, group := range fallback.Items {
+			groups[group.Name] = group
 		}
 	case "APIGroupList":
 		// The caller's stack only serves legacy discovery. Answer in that format,
@@ -138,21 +138,38 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 		groups[f.name] = f.result
 	}
 	groups[discoveryGroup] = discoveryAggregated
-	items := make([]apidiscoveryv2.APIGroupDiscovery, 0, len(groups))
-	for _, group := range groups {
-		items = append(items, group)
-	}
-	manager := aggregated.NewResourceManager("apis")
-	manager.SetGroups(items)
-	for _, group := range items {
-		for i, version := range group.Versions {
-			manager.SetGroupVersionPriority(metav1.GroupVersion{Group: group.Name, Version: version.Version}, 1000, len(group.Versions)-i)
-		}
-	}
 	if _, callerScoped := r.discoverySource(next); callerScoped {
 		w = &privateCacheWriter{ResponseWriter: w}
 	}
-	manager.ServeHTTP(w, req)
+	writeAggregatedDiscovery(w, req, groups)
+}
+
+// writeAggregatedDiscovery serves groups as the apiserver's aggregated
+// discovery manager would, with the same order and ETag, but without building
+// one per request: that logs a line for every group version, every time.
+//
+// Every group has the same priority, so groups are sorted by name, and each
+// keeps its versions in order. A group without versions isn't listed, and
+// only a group's name and versions are kept.
+func writeAggregatedDiscovery(w http.ResponseWriter, req *http.Request, groups map[string]apidiscoveryv2.APIGroupDiscovery) {
+	list := &apidiscoveryv2.APIGroupDiscoveryList{Items: make([]apidiscoveryv2.APIGroupDiscovery, 0, len(groups))}
+	for _, group := range groups {
+		if len(group.Versions) > 0 {
+			list.Items = append(list.Items, apidiscoveryv2.APIGroupDiscovery{
+				ObjectMeta: metav1.ObjectMeta{Name: group.Name},
+				Versions:   group.Versions,
+			})
+		}
+	}
+	slices.SortFunc(list.Items, func(a, b apidiscoveryv2.APIGroupDiscovery) int { return strings.Compare(a.Name, b.Name) })
+	body, err := json.Marshal(list)
+	if err != nil {
+		http.Error(w, "encoding discovery: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Only v2 reaches here: serveAPIGroupList answers anything else in the
+	// legacy format.
+	aggregated.ServeHTTPWithETag(list, fmt.Sprintf("%X", sha512.Sum512(body)), apidiscoveryv2.SchemeGroupVersion, discoveryCodecs, w, req)
 }
 
 // privateCacheWriter replaces the Cache-Control: public that the aggregated
@@ -181,7 +198,7 @@ func (p *privateCacheWriter) Write(b []byte) (int, error) {
 // complete is false when any version could not be read and is marked stale.
 func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveThroughBreaker(entry.breaker, name, entry.handler, w, r)
+		entry.serve(name, w, r)
 	})
 	var list apidiscoveryv2.APIGroupDiscoveryList
 	status, err := readDiscovery(req, handler, apisPrefix, aggregatedDiscoveryJSON, &list)
@@ -202,7 +219,9 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 		version := apidiscoveryv2.APIVersionDiscovery{Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale}
 		// Older backends may only support per-version resource discovery. An
 		// unavailable backend stays advertised as stale without hiding healthy groups.
-		if status == http.StatusOK || status == http.StatusNotFound {
+		// Once the fetch's deadline has passed, the rest are not read: each
+		// read would fail at once and count against the breaker again.
+		if (status == http.StatusOK || status == http.StatusNotFound) && req.Context().Err() == nil {
 			var resources metav1.APIResourceList
 			if _, err := readDiscovery(req, handler, apisPrefix+"/"+gv.GroupVersion, "application/json", &resources); err == nil && resources.Kind == "APIResourceList" {
 				if converted, err := endpoints.ConvertGroupVersionIntoToDiscovery(resources.APIResources); err == nil {
@@ -280,7 +299,7 @@ func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, 
 	if scoped {
 		// The fallback forwards to the caller's stack, and a slow stack must
 		// not hold discovery open when the defaults are available.
-		ctx, cancel := context.WithTimeout(req.Context(), discoveryFetchTimeout)
+		ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
 		defer cancel()
 		req = req.WithContext(ctx)
 	}

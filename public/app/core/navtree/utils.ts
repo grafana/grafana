@@ -64,9 +64,9 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 // nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
 // RemoveEmptyDrilldownSection, plus Administration once its subsections go.
 //
-// "More apps" is not here: like the server, the client creates that section only
-// once it has an app to put in it, so it is never empty.
-const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
+// "More apps" is created on demand, so it is only ever empty when an override
+// has moved its last app elsewhere (maintenance windows, under SLO).
+const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown, NavID.apps];
 
 /** Depth-first search of a nav tree by item id */
 export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
@@ -100,7 +100,7 @@ export function findNavByUrl(nodes: NavModelItem[], match: (url: string) => bool
 }
 
 /** Returns a new tree with the matching node (at any depth) replaced by update(node) */
-function updateNavById(
+export function updateNavById(
   nodes: NavModelItem[],
   id: string,
   update: (node: NavModelItem) => NavModelItem
@@ -111,6 +111,13 @@ function updateNavById(
     }
     return node.children ? { ...node, children: updateNavById(node.children, id, update) } : node;
   });
+}
+
+/** Returns a new tree without the matching node (at any depth) */
+export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[] {
+  return nodes
+    .filter((node) => node.id !== id)
+    .map((node) => (node.children ? { ...node, children: removeNavById(node.children, id) } : node));
 }
 
 /**
@@ -154,9 +161,18 @@ export function applyAppSubUrl(tree: NavModelItem[]): NavModelItem[] {
   }
   return tree.map((node) => ({
     ...node,
-    url: node.url?.startsWith('/') ? `${config.appSubUrl}${node.url}` : node.url,
+    url: withAppSubUrl(node.url),
     children: node.children ? applyAppSubUrl(node.children) : node.children,
   }));
+}
+
+/**
+ * Prefixes a root-relative path with the app sub url. Absolute urls (plugin
+ * assets served from a CDN) and relative ones (which the index page's
+ * `<base href>` already resolves) are left alone.
+ */
+export function withAppSubUrl(path: string | undefined): string | undefined {
+  return path?.startsWith('/') ? `${config.appSubUrl}${path}` : path;
 }
 
 /**
@@ -200,3 +216,15 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
 
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
 export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
+
+/** Nav id of a plugin page rendered standalone inside a core section */
+export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;
+
+/**
+ * Nav id of a page hoisted out of its app. The path is flattened rather than
+ * used as-is: an id beginning `standalone-plugin-page-/` tells
+ * app/features/plugins/routes.tsx to route that page by its own url alone, and
+ * a hoisted app needs its app-wide route, since it has no node left to carry it.
+ */
+export const hoistedPluginPageId = (includePath: string) =>
+  standalonePluginPageId(includePath.replace(/^\//, '').replaceAll('/', '-'));

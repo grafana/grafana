@@ -10,6 +10,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUnifiedStorageQuotaResources(t *testing.T) {
+	for _, tc := range []struct {
+		name                        string
+		enforced, logged, loggedEnv string
+		wantEnforced, wantLogged    []string
+	}{
+		{name: "empty by default"},
+		{
+			name:         "independent comma-separated lists",
+			enforced:     " dashboard.grafana.app/dashboards, folder.grafana.app/folders ",
+			logged:       " playlist.grafana.app/playlists, , plugins.grafana.app/plugins, ",
+			wantEnforced: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"},
+			wantLogged:   []string{"playlist.grafana.app/playlists", "plugins.grafana.app/plugins"},
+		},
+		{
+			name:         "environment overrides the log-only list",
+			enforced:     "dashboard.grafana.app/dashboards",
+			logged:       "plugins.grafana.app/plugins",
+			loggedEnv:    "playlist.grafana.app/playlists, folder.grafana.app/folders",
+			wantEnforced: []string{"dashboard.grafana.app/dashboards"},
+			wantLogged:   []string{"playlist.grafana.app/playlists", "folder.grafana.app/folders"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			section := cfg.Raw.Section("unified_storage")
+			section.Key("enforce_quotas_resources").SetValue(tc.enforced)
+			section.Key("log_quotas_resources").SetValue(tc.logged)
+			if tc.loggedEnv != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_LOG_QUOTAS_RESOURCES", tc.loggedEnv)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.wantEnforced, cfg.EnforcedQuotaResources)
+			require.Equal(t, tc.wantLogged, cfg.LoggedQuotaResources)
+		})
+	}
+}
+
 func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
 	cfg := NewCfg()
 	cfg.setUnifiedStorageConfig()
@@ -94,6 +132,33 @@ func TestSeededWatchesEnabled(t *testing.T) {
 			}
 			cfg.setUnifiedStorageConfig()
 			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestFastLatestKeyLookupEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default off"},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("fast_latest_key_lookup_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_FAST_LATEST_KEY_LOOKUP_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.FastLatestKeyLookupEnabled)
 		})
 	}
 }
@@ -347,6 +412,26 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
 			assert.Equal(t, 8000, cfg.SearchPostRankAuthzFacetSampleSize)
+		})
+	})
+
+	t.Run("search_enforce_sort_capability", func(t *testing.T) {
+		t.Run("defaults to on", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchEnforceSortCapability)
+		})
+
+		t.Run("can be turned off", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			_, err = cfg.Raw.Section("unified_storage").NewKey("search_enforce_sort_capability", "false")
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchEnforceSortCapability)
 		})
 	})
 

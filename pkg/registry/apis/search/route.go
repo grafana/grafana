@@ -102,11 +102,11 @@ func (h *HybridHandler) HybridSearchRoute(group, version, resourceName, kindName
 	}
 }
 
-func (h *HybridHandler) GlobalHybridSearchRoute(targets map[schema.GroupResource]schema.GroupVersionKind, auth authorizer.Authorizer, defaultResources []searchv0.HybridSearchResource) Route {
+func (h *HybridHandler) GlobalHybridSearchRoute(targets map[schema.GroupResource]schema.GroupVersionKind, kinds map[schema.GroupResource]string, auth authorizer.Authorizer, defaultResources []searchv0.HybridSearchResource) Route {
 	return Route{
 		Path:    resource.GlobalSearchResource + "/" + searchPathSegment + "/" + searchv0.HybridSearchPathSegment,
 		Spec:    globalHybridSearchRouteSpec(),
-		Handler: h.GlobalHybridSearchFor(targets, auth, defaultResources),
+		Handler: h.GlobalHybridSearchFor(targets, kinds, auth, defaultResources),
 		Schemas: envelopeSchemas(hybridSearchQueryGoName, hybridSearchResultsGoName),
 	}
 }

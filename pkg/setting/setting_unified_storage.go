@@ -24,6 +24,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	SnapshotResource         = "snapshots.dashboard.grafana.app"
+	LibraryPanelResource     = "librarypanels.dashboard.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
@@ -39,6 +40,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
+	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
 	StarsResource:            false,
 	PreferencesResource:      true, // Only Mode5!
 	DataSourceResources:      false,
@@ -187,7 +189,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
-	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(false)
+	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(true)
 	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
@@ -250,6 +252,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
+	cfg.LoggedQuotaResources = parseCommaSeparatedList(section.Key("log_quotas_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -288,6 +291,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
+	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 
