@@ -6,6 +6,7 @@ import { byRole, byText } from 'testing-library-selector';
 import { base64UrlEncode } from '@grafana/alerting';
 
 import { setupMswServer } from '../../mockApi';
+import { convertResponse } from '../../mocks/convertApi';
 
 import { StagedConfiguration } from './StagedConfiguration';
 
@@ -235,7 +236,7 @@ describe('StagedConfiguration', () => {
     });
 
     it('opens the promote modal from the header action', async () => {
-      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json(convertResponse())));
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
       await user.click(ui.promoteButton.get());
@@ -269,7 +270,7 @@ describe('StagedConfiguration', () => {
     });
 
     it('warns in the promote modal that the sync stops', async () => {
-      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json(convertResponse())));
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
 
       await user.click(ui.promoteButton.get());

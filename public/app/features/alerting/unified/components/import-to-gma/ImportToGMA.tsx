@@ -26,7 +26,7 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerCloudRulesConfigDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
   trackImportToGMADryrunError,
@@ -38,7 +38,7 @@ import {
   trackImportToGMAWizardStarted,
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
-import { type ValidateAlertmanagerConfigImportArgs, convertToGMAApi } from '../../api/convertToGMAApi';
+import { type ValidateAlertmanagerConfigImportArgs, convertApi } from '../../api/convertToGMAApi';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
@@ -343,7 +343,7 @@ function ImportWizardContent() {
     currentData: dryRunRawData,
     isFetching: isDryRunFetching,
     error: dryRunRawError,
-  } = convertToGMAApi.useValidateAlertmanagerConfigImportQuery(dryRunArgs);
+  } = convertApi.useValidateAlertmanagerConfigImportQuery(dryRunArgs);
 
   const dryRunParsedResult = useMemo(
     () => (dryRunRawData ? parseDryRunResponse(dryRunRawData) : undefined),
@@ -359,7 +359,7 @@ function ImportWizardContent() {
     [isDryRunFetching, dryRunResult, dryRunErrorMessage]
   );
 
-  const [triggerDryRunCheck] = convertToGMAApi.useLazyValidateAlertmanagerConfigImportQuery();
+  const [triggerDryRunCheck] = convertApi.useLazyValidateAlertmanagerConfigImportQuery();
 
   // Sync step errors with dry-run state
   useEffect(() => {
@@ -508,7 +508,7 @@ function ImportWizardContent() {
       // never rules.
       if (willImportRules && values.rulesDatasourceUID) {
         // Get the filtered rules payload
-        let rulesPayload: RulerRulesConfigDTO = {};
+        let rulesPayload: RulerCloudRulesConfigDTO = {};
 
         if (values.rulesSource === 'datasource' && rulesFromDatasource) {
           const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, values.namespace, values.ruleGroup);

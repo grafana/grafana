@@ -338,6 +338,11 @@ export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
 export type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
 
+export type RulerCloudRuleGroupDTO = RulerRuleGroupDTO<RulerCloudRuleDTO>;
+
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
 
 export type RulerGrafanaRulesConfigDTO = { [namespace: string]: RulerGrafanaRuleGroupDTO[] };
+
+/** Rule groups with only data source (Prometheus-style) rules, e.g. from a data source ruler or a rules file. */
+export type RulerCloudRulesConfigDTO = { [namespace: string]: RulerCloudRuleGroupDTO[] };

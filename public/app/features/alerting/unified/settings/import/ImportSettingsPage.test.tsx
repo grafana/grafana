@@ -6,10 +6,11 @@ import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanag
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { convertApi } from '../../api/convertToGMAApi';
 import { setupGrafanaManagedServer } from '../../components/settings/mocks/server';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, grantUserRole } from '../../mocks';
+import { convertResponse } from '../../mocks/convertApi';
 import { setupDataSources } from '../../testSetup/datasources';
 
 import ImportSettingsPage from './ImportSettingsPage';
@@ -103,7 +104,7 @@ describe('Import settings tab', () => {
       ),
       http.post(CONVERT_URL, () => {
         isStaged = true;
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
 
@@ -116,9 +117,9 @@ describe('Import settings tab', () => {
     // Stage a config the way the wizard does. Driven through the store rather than the UI because the
     // wizard that triggers this mutation lives on another page.
     await store.dispatch(
-      convertToGMAApi.endpoints.convertAlertmanagerConfig.initiate({
-        alertmanagerConfig: stagedAlertmanagerConfig,
-        configIdentifier: stagedConfig.identifier,
+      convertApi.endpoints.postAlertmanagerConfig.initiate({
+        payload: { alertmanager_config: stagedAlertmanagerConfig, template_files: {} },
+        identifier: stagedConfig.identifier,
         forceReplace: true,
       })
     );
