@@ -1,4 +1,3 @@
-import { skipToken } from '@reduxjs/toolkit/query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
@@ -6,7 +5,6 @@ import { type ReactNode } from 'react';
 import { locationService } from '@grafana/runtime';
 import { QueryVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
-import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -23,22 +21,13 @@ jest.mock('./api', () => ({
   },
 }));
 
-const mockUseGetDisplayMappingQuery = jest.fn().mockReturnValue({ data: undefined });
-jest.mock('app/api/clients/iam/v0alpha1', () => ({
-  useGetDisplayMappingQuery: (...args: unknown[]) => mockUseGetDisplayMappingQuery(...args),
-}));
-
 const api = jest.mocked(savedDashboardViewsApi);
 
-function buildView(
-  name: string,
-  specOverrides?: Partial<SavedDashboardView['spec']>,
-  metadataOverrides?: Partial<SavedDashboardView['metadata']>
-): SavedDashboardView {
+function buildView(name: string, specOverrides?: Partial<SavedDashboardView['spec']>): SavedDashboardView {
   return {
     apiVersion: 'dashboardviews.grafana.app/v0alpha1',
     kind: 'SavedDashboardView',
-    metadata: { name, resourceVersion: '1', creationTimestamp: '', ...metadataOverrides },
+    metadata: { name, resourceVersion: '1', creationTimestamp: '' },
     spec: {
       dashboardUID: 'dash-1',
       name,
@@ -71,14 +60,9 @@ function renderPane(savedViews?: SavedDashboardView[]) {
   return { scene, pane };
 }
 
-async function toggleExpanded() {
-  await userEvent.click(screen.getByRole('button', { name: 'Show details' }));
-}
-
 describe('SavedViewsPane', () => {
   afterEach(() => {
     jest.clearAllMocks();
-    mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined });
   });
 
   it('shows a loading state and fetches views when not yet loaded', async () => {
@@ -267,9 +251,9 @@ describe('SavedViewsPane', () => {
     });
   });
 
-  it('preserves an existing description when overwriting', async () => {
-    api.update.mockResolvedValue(buildView('view-1', { name: 'My view', description: 'Original note' }));
-    const { scene } = renderPane([buildView('view-1', { name: 'My view', description: 'Original note' })]);
+  it('keeps the view name and saves the current state when saving changes', async () => {
+    api.update.mockResolvedValue(buildView('view-1', { name: 'My view' }));
+    const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
     act(() => scene.setState({ viewFilter: 'view-1' }));
     act(() => scene.state.$timeRange?.setState({ from: 'now-24h' }));
 
@@ -278,7 +262,7 @@ describe('SavedViewsPane', () => {
     await waitFor(() => expect(api.update).toHaveBeenCalled());
     expect(api.update).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ description: 'Original note' })
+      expect.objectContaining({ name: 'My view', timeRange: expect.objectContaining({ from: 'now-24h' }) })
     );
   });
 
@@ -297,29 +281,23 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
-  it('edits a view via the actions menu, including its description', async () => {
-    const updated = buildView('view-1', { name: 'Renamed view', description: 'New description' });
+  it('renames a view via the actions menu', async () => {
+    const updated = buildView('view-1', { name: 'Renamed view' });
     api.update.mockResolvedValue(updated);
-    renderPane([buildView('view-1', { name: 'My view', description: 'Old description' })]);
+    renderPane([buildView('view-1', { name: 'My view' })]);
 
     await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Edit' }));
 
     expect(screen.getByRole('heading', { name: 'Edit view' })).toBeInTheDocument();
     const nameInput = screen.getByDisplayValue('My view');
-    const descriptionInput = screen.getByDisplayValue('Old description');
 
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, 'Renamed view');
-    await userEvent.clear(descriptionInput);
-    await userEvent.type(descriptionInput, 'New description');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(api.update).toHaveBeenCalled());
-    expect(api.update).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ name: 'Renamed view', description: 'New description' })
-    );
+    expect(api.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ name: 'Renamed view' }));
     expect(screen.getByText('Renamed view')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Edit view' })).not.toBeInTheDocument();
   });
@@ -345,8 +323,8 @@ describe('SavedViewsPane', () => {
     expect(screen.getByText('No results found for your query')).toBeInTheDocument();
   });
 
-  it('opens a modal to save the current state as a new view, including a description', async () => {
-    const created = buildView('view-2', { name: 'New view', description: 'A note' });
+  it('opens a modal to save the current state as a new view', async () => {
+    const created = buildView('view-2', { name: 'New view' });
     api.create.mockResolvedValue(created);
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     renderPane([]);
@@ -356,13 +334,10 @@ describe('SavedViewsPane', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
 
     await userEvent.type(screen.getByPlaceholderText('New view name'), 'New view');
-    await userEvent.type(screen.getByPlaceholderText('Add a description (optional)'), 'A note');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(api.create).toHaveBeenCalled());
-    expect(api.create).toHaveBeenCalledWith(
-      expect.objectContaining({ dashboardUID: 'dash-1', name: 'New view', description: 'A note' })
-    );
+    expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ dashboardUID: 'dash-1', name: 'New view' }));
     expect(partialSpy).toHaveBeenCalledWith({ viewFilter: 'view-2' });
     expect(screen.queryByRole('heading', { name: 'Save new view' })).not.toBeInTheDocument();
     partialSpy.mockRestore();
@@ -384,42 +359,5 @@ describe('SavedViewsPane', () => {
 
     expect(screen.queryByRole('heading', { name: 'Save new view' })).not.toBeInTheDocument();
     expect(api.create).not.toHaveBeenCalled();
-  });
-
-  describe('compact/expanded toggle', () => {
-    it('hides description and author by default, and reveals them when expanded', async () => {
-      mockUseGetDisplayMappingQuery.mockReturnValue({
-        data: { display: [{ identity: { type: 'user', name: 'abc123' }, displayName: 'Jane Doe' }] },
-      });
-      renderPane([
-        buildView(
-          'view-1',
-          { name: 'My view', description: 'A helpful note' },
-          { annotations: { [AnnoKeyCreatedBy]: 'user:abc123' } }
-        ),
-      ]);
-
-      expect(screen.queryByText('A helpful note')).not.toBeInTheDocument();
-      expect(screen.queryByText('Created by Jane Doe')).not.toBeInTheDocument();
-
-      await toggleExpanded();
-
-      expect(screen.getByText('A helpful note')).toBeInTheDocument();
-      expect(screen.getByText('Created by Jane Doe')).toBeInTheDocument();
-    });
-
-    it('does not query for display names while compact', () => {
-      renderPane([buildView('view-1', { name: 'My view' }, { annotations: { [AnnoKeyCreatedBy]: 'user:abc123' } })]);
-
-      expect(mockUseGetDisplayMappingQuery).toHaveBeenCalledWith(skipToken);
-    });
-
-    it('omits the meta row entirely when a view has neither a description nor a resolvable author', async () => {
-      renderPane([buildView('view-1', { name: 'My view' })]);
-
-      await toggleExpanded();
-
-      expect(screen.queryByText(/Created by/)).not.toBeInTheDocument();
-    });
   });
 });

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -30,11 +29,8 @@ import {
   Sidebar,
   Stack,
   Text,
-  TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
-import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -42,18 +38,15 @@ import { savedDashboardViewsApi, type SavedDashboardView } from './api';
 import { loadSavedViews } from './loadSavedViews';
 import { applySavedViewState, captureSavedViewState, getSavedViewDiff } from './state';
 
-type ViewMode = 'compact' | 'expanded';
-
 interface SavedViewsPaneState extends SceneObjectState {
   searchQuery: string;
-  viewMode: ViewMode;
 }
 
 export class SavedViewsPane extends SceneObjectBase<SavedViewsPaneState> {
   public static Component = SavedViewsPaneRenderer;
 
   constructor(state?: Partial<SavedViewsPaneState>) {
-    super({ ...state, searchQuery: state?.searchQuery ?? '', viewMode: state?.viewMode ?? 'compact' });
+    super({ ...state, searchQuery: state?.searchQuery ?? '' });
   }
 
   public getId() {
@@ -65,62 +58,28 @@ export class SavedViewsPane extends SceneObjectBase<SavedViewsPaneState> {
       this.setState({ searchQuery });
     }
   }
-
-  public setViewMode(viewMode: ViewMode): void {
-    if (this.state.viewMode !== viewMode) {
-      this.setState({ viewMode });
-    }
-  }
 }
 
 interface SavedViewFormFieldsProps {
   name: string;
   onNameChange: (name: string) => void;
   namePlaceholder: string;
-  description: string;
-  onDescriptionChange: (description: string) => void;
 }
 
-function SavedViewFormFields({
-  name,
-  onNameChange,
-  namePlaceholder,
-  description,
-  onDescriptionChange,
-}: SavedViewFormFieldsProps) {
+function SavedViewFormFields({ name, onNameChange, namePlaceholder }: SavedViewFormFieldsProps) {
   return (
-    <>
-      <Field
-        noMargin
-        label={
-          <Label htmlFor="saved-view-name">{t('dashboard.sidebar.saved-views.new-name-label', 'View name')}</Label>
-        }
-      >
-        <Input
-          id="saved-view-name"
-          autoFocus
-          placeholder={namePlaceholder}
-          value={name}
-          onChange={(e) => onNameChange(e.currentTarget.value)}
-        />
-      </Field>
-      <Field
-        noMargin
-        label={
-          <Label htmlFor="saved-view-description">
-            {t('dashboard.sidebar.saved-views.description-label', 'Description')}
-          </Label>
-        }
-      >
-        <TextArea
-          id="saved-view-description"
-          rows={3}
-          placeholder={t('dashboard.sidebar.saved-views.description-placeholder', 'Add a description (optional)')}
-          value={description}
-          onChange={(e) => onDescriptionChange(e.currentTarget.value)}
-        />
-      </Field>
-    </>
+    <Field
+      noMargin
+      label={<Label htmlFor="saved-view-name">{t('dashboard.sidebar.saved-views.new-name-label', 'View name')}</Label>}
+    >
+      <Input
+        id="saved-view-name"
+        autoFocus
+        placeholder={namePlaceholder}
+        value={name}
+        onChange={(e) => onNameChange(e.currentTarget.value)}
+      />
+    </Field>
   );
 }
 
@@ -128,14 +87,12 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
   const { savedViews, viewFilter, uid, savedViewBaseline } = dashboard.useState();
-  const { searchQuery, viewMode } = model.useState();
+  const { searchQuery } = model.useState();
   const [pendingDelete, setPendingDelete] = useState<SavedDashboardView | undefined>();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [saveModalName, setSaveModalName] = useState('');
-  const [saveModalDescription, setSaveModalDescription] = useState('');
   const [editingView, setEditingView] = useState<SavedDashboardView | undefined>();
   const [editName, setEditName] = useState('');
-  const [editDescription, setEditDescription] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [loadFailed, setLoadFailed] = useState(false);
@@ -159,35 +116,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     setLoadFailed(false);
     loadSavedViews(dashboard).then((ok) => setLoadFailed(!ok));
   }
-
-  const authorUids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (savedViews ?? [])
-            .map((v) => v.metadata.annotations?.[AnnoKeyCreatedBy])
-            .filter((uid): uid is string => Boolean(uid))
-        )
-      ),
-    [savedViews]
-  );
-  // Only asked for while the list is expanded -- collapsed rows never show an author, so there is
-  // nothing to justify the extra IAM lookup traffic.
-  const { data: displayMapping } = useGetDisplayMappingQuery(
-    viewMode === 'expanded' && authorUids.length > 0 ? { key: authorUids } : skipToken
-  );
-  const authorNames = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const entry of displayMapping?.display ?? []) {
-      if (entry.identity.name) {
-        map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
-      }
-      if (entry.internalId) {
-        map.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
-      }
-    }
-    return map;
-  }, [displayMapping]);
 
   if (savedViews === undefined) {
     return (
@@ -252,14 +180,12 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
 
   function openSaveModal() {
     setSaveModalName('');
-    setSaveModalDescription('');
     setIsSaveModalOpen(true);
   }
 
   function closeSaveModal() {
     setIsSaveModalOpen(false);
     setSaveModalName('');
-    setSaveModalDescription('');
   }
 
   function handleSaveModalConfirm() {
@@ -268,12 +194,10 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       if (!uid || !name) {
         return;
       }
-      const description = saveModalDescription.trim();
       const spec = {
         ...captureSavedViewState(dashboard),
         dashboardUID: uid,
         name,
-        description: description || undefined,
       };
       const created = await savedDashboardViewsApi.create(spec);
       dashboard.setState({ savedViews: [...(dashboard.state.savedViews ?? []), created] });
@@ -291,9 +215,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         ...captureSavedViewState(dashboard),
         dashboardUID: selectedView.spec.dashboardUID,
         name: selectedView.spec.name,
-        // Overwrite only replaces the described state (time range + variables), not the label/description --
-        // carry the existing one forward or update() would silently wipe it (it replaces the whole spec).
-        description: selectedView.spec.description,
       };
       const updated = await savedDashboardViewsApi.update(selectedView, spec);
       dashboard.setState({
@@ -307,13 +228,11 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   function openEditModal(view: SavedDashboardView) {
     setEditingView(view);
     setEditName(view.spec.name);
-    setEditDescription(view.spec.description ?? '');
   }
 
   function closeEditModal() {
     setEditingView(undefined);
     setEditName('');
-    setEditDescription('');
   }
 
   function handleEditConfirm() {
@@ -325,12 +244,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       if (!name) {
         return;
       }
-      const description = editDescription.trim();
-      const updated = await savedDashboardViewsApi.update(editingView, {
-        ...editingView.spec,
-        name,
-        description: description || undefined,
-      });
+      const updated = await savedDashboardViewsApi.update(editingView, { ...editingView.spec, name });
       dashboard.setState({
         savedViews: (dashboard.state.savedViews ?? []).map((v) =>
           v.metadata.name === updated.metadata.name ? updated : v
@@ -358,24 +272,12 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       <Sidebar.PaneHeader title={t('dashboard.sidebar.saved-views.pane-header', 'Saved views')} />
       {savedViews.length > 0 && (
         <div className={styles.searchContainer}>
-          <Stack gap={1} alignItems="center">
-            <FilterInput
-              placeholder={t('dashboard.sidebar.saved-views.search-placeholder', 'Search views')}
-              value={searchQuery}
-              onChange={(query) => model.setSearchQuery(query)}
-              escapeRegex={false}
-              className={styles.searchInput}
-            />
-            <IconButton
-              name={viewMode === 'expanded' ? 'table-collapse-all' : 'table-expand-all'}
-              tooltip={
-                viewMode === 'expanded'
-                  ? t('dashboard.sidebar.saved-views.view-mode-compact', 'Show compact list')
-                  : t('dashboard.sidebar.saved-views.view-mode-expanded', 'Show details')
-              }
-              onClick={() => model.setViewMode(viewMode === 'expanded' ? 'compact' : 'expanded')}
-            />
-          </Stack>
+          <FilterInput
+            placeholder={t('dashboard.sidebar.saved-views.search-placeholder', 'Search views')}
+            value={searchQuery}
+            onChange={(query) => model.setSearchQuery(query)}
+            escapeRegex={false}
+          />
         </div>
       )}
       <ScrollContainer showScrollIndicators>
@@ -396,11 +298,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
               <Stack direction="column" gap={0}>
                 {filteredViews.map((view) => {
                   const isSelected = view.metadata.name === viewFilter;
-                  const authorUid = view.metadata.annotations?.[AnnoKeyCreatedBy];
-                  const authorName = authorUid
-                    ? (authorNames.get(authorUid) ??
-                      t('dashboard.sidebar.saved-views.author-unknown', 'Unknown author'))
-                    : undefined;
 
                   return (
                     <div key={view.metadata.name} className={cx(styles.row, isSelected && styles.rowSelected)}>
@@ -448,24 +345,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                           />
                         </Dropdown>
                       </Stack>
-
-                      {viewMode === 'expanded' && (view.spec.description || authorName) && (
-                        <div className={styles.rowMeta}>
-                          {view.spec.description && (
-                            <Text variant="bodySmall" color="secondary">
-                              {view.spec.description}
-                            </Text>
-                          )}
-                          {authorName && (
-                            <Text variant="bodySmall" color="secondary">
-                              {t('dashboard.sidebar.saved-views.author', 'Created by %AUTHOR%').replace(
-                                '%AUTHOR%',
-                                authorName
-                              )}
-                            </Text>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -495,8 +374,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
               name={saveModalName}
               onNameChange={setSaveModalName}
               namePlaceholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
-              description={saveModalDescription}
-              onDescriptionChange={setSaveModalDescription}
             />
             <Modal.ButtonRow>
               <Button variant="secondary" onClick={closeSaveModal}>
@@ -522,8 +399,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
               name={editName}
               onNameChange={setEditName}
               namePlaceholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
-              description={editDescription}
-              onDescriptionChange={setEditDescription}
             />
             <Modal.ButtonRow>
               <Button variant="secondary" onClick={closeEditModal}>
@@ -559,9 +434,6 @@ function getStyles(theme: GrafanaTheme2) {
     searchContainer: css({
       padding: theme.spacing(1, 1, 0, 1),
     }),
-    searchInput: css({
-      flex: 1,
-    }),
     footer: css({
       flexShrink: 0,
       // Sidebar's own openPane wrapper already reserves paddingBottom: theme.spacing(2) below its
@@ -583,8 +455,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       minWidth: 0,
       justifyContent: 'flex-start',
-      // Zeroed out so the title text lines up horizontally with the description/author text
-      // below it, which has no button chrome of its own.
+      // Zeroed out so the title text lines up with the search input's left edge.
       padding: 0,
       // The row itself already highlights on hover -- suppress the Button's own
       // hover/focus background so it doesn't show as a second, differently-colored rectangle.
@@ -595,12 +466,6 @@ function getStyles(theme: GrafanaTheme2) {
         minWidth: 0,
         textOverflow: 'ellipsis',
       },
-    }),
-    rowMeta: css({
-      marginTop: theme.spacing(0.5),
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(0.25),
     }),
   };
 }
