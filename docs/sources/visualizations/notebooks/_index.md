@@ -6,27 +6,21 @@ labels:
     - oss
 title: Notebooks
 weight: 85
-description: Create and manage notebooks, a linear, narrative artifact for investigations that include text and panel blocks.
+description: Combine notes, queries, and visualizations in Grafana notebooks to investigate problems, document findings, and share supporting data with your team
 ---
 
 # Notebooks
 
 {{< docs/public-preview product="Notebooks" featureFlag="`dashboard.notebooks`" >}}
 
-A notebook is a page of text and panel blocks arranged in sequence.
-Text blocks capture notes and context, and panel blocks display query results inline.
-It brings Dashboard panels, Explore queries, and Grafana Assistant findings into one editable artifact.
-You can add your reasoning alongside these findings, and then share and collaborate on the notebook with your teammates.
+Notebooks combine notes, queries, and visualizations in a single document in Grafana.
+They provide a way to investigate a problem, explain what you found, and share the supporting data with your team.
+You can start a notebook yourself or create one with Grafana Assistant.
 
-Every block is directly editable, and you can rewrite, reorder, remove, or add more context, as needed.
+Text blocks capture notes and context, and you can add panels from dashboards or queries from Explore.
+Every block is directly editable, including queries and visualizations, and you can reorder or remove blocks as your investigation develops.
 
-You can use a notebook to explore a question about your data, document an investigation, or prepare a post-incident review.
-In addition, a notebook:
-
-- Provides a space to persist what you learned from your Grafana Assistant chats.
-- Keeps your notes within Grafana rather than in external tools, like chat apps, wikis, or stand-alone documents.
-- Removes the need for incident-specific dashboards that contribute to dashboard sprawl.
-- Doesn't require you to declare an incident to be able to generate an investigation artifact, providing a space for pre-escalation work.
+Notebooks facilitate troubleshooting, investigation handoffs, and post-incident reviews.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-v13.3.png" max-width="750px" alt="A notebook with an investigation into excessive series" >}}
 
