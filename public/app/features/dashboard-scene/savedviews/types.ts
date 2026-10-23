@@ -1,15 +1,12 @@
 import { type VariableValue } from '@grafana/scenes';
 import { type VariableType } from '@grafana/schema';
 
-export const SAVED_DASHBOARD_VIEW_GROUP = 'dashboardviews.grafana.app';
-export const SAVED_DASHBOARD_VIEW_VERSION = 'v0alpha1';
-export const SAVED_DASHBOARD_VIEW_RESOURCE = 'saveddashboardviews';
-export const SAVED_DASHBOARD_VIEW_KIND = 'SavedDashboardView';
-
 interface SavedViewFilter {
   key: string;
   operator: string;
   value: string;
+  /** The selection for multi-value operators. */
+  values?: string[];
 }
 
 export interface SavedViewVariable {
