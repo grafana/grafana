@@ -585,6 +585,21 @@ describe('FolderReadmePanel', () => {
   // Parsing and the table's layout are covered in markdownFrontmatter.test.ts and
   // MarkdownFrontmatterTable.test.tsx; these check the document is split and wired up.
   describe('front matter', () => {
+    it('resolves body links without interpreting front matter as markdown', async () => {
+      const requests = setResources([resourceItem('dashboards/team-a/cpu.json', 'abc')]);
+      setReadmeResult({
+        markdownContent: '---\ntitle: "See [metadata](metadata.json)"\n---\n[CPU](cpu.json)',
+      });
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/abc'));
+      const table = screen.getByRole('table', { name: 'Document metadata' });
+      expect(within(table).getByRole('cell', { name: 'See [metadata](metadata.json)' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'metadata' })).not.toBeInTheDocument();
+      expect(requests.mock.calls.map(([, body]) => body)).toEqual([{ paths: ['dashboards/team-a/cpu.json'] }]);
+    });
+
     it('renders a leading YAML block as a metadata table and the rest as the document', () => {
       setReadmeResult({
         markdownContent: ['---', 'title: Team A', 'tags:', '  - as-code', '---', '# Hello', '', 'Body.'].join('\n'),
