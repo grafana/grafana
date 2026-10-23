@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import { forwardRef } from 'react';
+import { forwardRef, useContext } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
@@ -7,6 +7,8 @@ import { type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/da
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Button } from '../Button/Button';
+
+import { HoverSlotItemsContext } from './PanelChromeHeaderControlsContext';
 
 type TitleItemProps = {
   className?: string;
@@ -22,6 +24,9 @@ type TitleItemElement = HTMLAnchorElement & HTMLButtonElement;
 export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
   ({ className, children, href, onClick, target, title, ...rest }, ref) => {
     const styles = useStyles2(getStyles);
+    const isInHoverSlot = useContext(HoverSlotItemsContext);
+    // `className` comes last so explicit colors, e.g. the alert state, still win over the hover slot styles.
+    const slotClassName = isInHoverSlot ? styles.hoverSlotItem : undefined;
 
     if (href) {
       return (
@@ -31,7 +36,7 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
           onClick={onClick}
           target={target}
           title={title}
-          className={cx(styles.linkItem, className)}
+          className={cx(styles.linkItem, slotClassName, className)}
           {...rest}
         >
           {children}
@@ -41,7 +46,7 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
       return (
         <Button
           ref={ref}
-          className={cx(styles.buttonItem, className)}
+          className={cx(styles.buttonItem, slotClassName, className)}
           variant="secondary"
           fill="text"
           onClick={onClick}
@@ -51,7 +56,7 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
       );
     } else {
       return (
-        <span ref={ref} className={cx(styles.item, className)} {...rest}>
+        <span ref={ref} className={cx(styles.item, slotClassName, className)} {...rest}>
           {children}
         </span>
       );
@@ -90,5 +95,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     item,
     linkItem: cx(item, css({ cursor: 'pointer' })),
     buttonItem: cx(item, css({ cursor: 'pointer' })),
+    hoverSlotItem: css({
+      padding: 0,
+      height: 'auto',
+      minWidth: 0,
+      color: theme.colors.text.primary,
+      '&:hover': {
+        boxShadow: 'none',
+        background: 'transparent',
+        color: theme.colors.text.maxContrast,
+      },
+    }),
   };
 };
