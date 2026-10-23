@@ -160,6 +160,9 @@ type GrafanaRouter struct {
 	// reconcile so discovery only advertises what is actually served.
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
+	// rootMemo keeps the root discovery documents merged with a source's
+	// answer, in middleware mode and with the single-tenant fallback.
+	rootMemo *rootDiscoveryMemo
 
 	// manifestDocs is the /discovery tree, published from served with the
 	// root documents. manifestFingerprint is the group/key set it was built
@@ -205,9 +208,10 @@ type GrafanaRouter struct {
 
 func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *GrafanaRouter {
 	r := &GrafanaRouter{
-		loader: loader,
-		authn:  tokens,
-		served: map[string]*handlerEntry{},
+		rootMemo: newRootDiscoveryMemo(),
+		loader:   loader,
+		authn:    tokens,
+		served:   map[string]*handlerEntry{},
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
@@ -521,7 +525,7 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(doc.body)
+	_, _ = w.Write(doc.body) //nolint:gosec // G705: a JSON document the router encoded, served as application/json.
 }
 
 // serveOpenAPIV3 serves the /openapi/v3 index and per-group-version documents.
@@ -964,6 +968,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	}
 	r.snapshot.Store(&snap)
 	r.discoveryCache.retain(snap)
+	r.rootMemo.purge()
 	r.retainOpenAPIDocs(snap)
 
 	groupList := buildAPIGroupList(ctx, backends)

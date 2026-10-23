@@ -43,24 +43,47 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	var fallback metav1.APIGroupList
-	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback)
-	if err != nil || fallback.Kind != "APIGroupList" {
+	var answer json.RawMessage
+	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &answer)
+	if err != nil {
 		serveCachedDoc(w, req, r.apiGroupList.Load())
 		return
 	}
-	r.serveMergedAPIGroupList(w, req, fallback, scoped)
+	r.serveMergedAPIGroupList(w, req, answer, scoped)
 }
 
 // serveMergedAPIGroupList serves the source's APIGroupList with the router's
-// groups added. When scoped, the source's answer replaces the caller-scoped
-// defaults.
-func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http.Request, fallback metav1.APIGroupList, scoped bool) {
+// groups added, or the router's own when the answer is not one.
+func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http.Request, answer json.RawMessage, scoped bool) {
+	snapshot := r.snapshot.Load()
+	key := r.rootMemo.key(apisPrefix, snapshot, scoped, answer)
+	if doc, ok := r.rootMemo.get(key, answer); ok {
+		serveCachedDoc(w, req, doc)
+		return
+	}
+	var fallback metav1.APIGroupList
+	if json.Unmarshal(answer, &fallback) != nil || fallback.Kind != "APIGroupList" {
+		serveCachedDoc(w, req, r.apiGroupList.Load())
+		return
+	}
+	doc, err := discoveryDoc(mergeAPIGroupList(*snapshot, fallback, scoped))
+	if err != nil {
+		logging.FromContext(req.Context()).Error("router: failed to marshal discovery", "error", err)
+		http.Error(w, "failed to marshal discovery", http.StatusInternalServerError)
+		return
+	}
+	r.rootMemo.add(key, answer, doc)
+	serveCachedDoc(w, req, doc)
+}
+
+// mergeAPIGroupList adds the served groups to the source's APIGroupList. When
+// scoped, the source's answer replaces the caller-scoped defaults.
+func mergeAPIGroupList(snapshot map[string]servingEntry, fallback metav1.APIGroupList, scoped bool) metav1.APIGroupList {
 	groups := make(map[string]metav1.APIGroup, len(fallback.Groups))
 	for _, group := range fallback.Groups {
 		groups[group.Name] = group
 	}
-	for name, entry := range *r.snapshot.Load() {
+	for name, entry := range snapshot {
 		// The source answered for this caller, so it replaces the defaults.
 		if !entry.callerScoped || !scoped {
 			groups[name] = entry.group
@@ -72,7 +95,7 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 		fallback.Groups = append(fallback.Groups, group)
 	}
 	sort.Slice(fallback.Groups, func(i, j int) bool { return fallback.Groups[i].Name < fallback.Groups[j].Name })
-	serveDiscoveryJSON(w, req, fallback)
+	return fallback
 }
 
 func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
@@ -236,13 +259,37 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 
 func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	r.setRootDiscoveryCacheControl(w, next)
-	var fallback handler3.OpenAPIV3Discovery
-	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback)
-	if err != nil || fallback.Paths == nil {
+	var answer json.RawMessage
+	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &answer)
+	if err != nil {
 		serveCachedDoc(w, req, r.openapiIndex.Load())
 		return
 	}
-	handlers := *r.snapshot.Load()
+	snapshot := r.snapshot.Load()
+	key := r.rootMemo.key(openapiV3Prefix, snapshot, scoped, answer)
+	if doc, ok := r.rootMemo.get(key, answer); ok {
+		serveCachedDoc(w, req, doc)
+		return
+	}
+	var fallback handler3.OpenAPIV3Discovery
+	if json.Unmarshal(answer, &fallback) != nil || fallback.Paths == nil {
+		serveCachedDoc(w, req, r.openapiIndex.Load())
+		return
+	}
+	doc, err := discoveryDoc(mergeOpenAPIIndex(*snapshot, fallback, scoped))
+	if err != nil {
+		logging.FromContext(req.Context()).Error("router: failed to marshal discovery", "error", err)
+		http.Error(w, "failed to marshal discovery", http.StatusInternalServerError)
+		return
+	}
+	r.rootMemo.add(key, answer, doc)
+	serveCachedDoc(w, req, doc)
+}
+
+// mergeOpenAPIIndex replaces the source's entries for served groups with the
+// router's. When scoped, the source's answer replaces the caller-scoped
+// defaults.
+func mergeOpenAPIIndex(handlers map[string]servingEntry, fallback handler3.OpenAPIV3Discovery, scoped bool) handler3.OpenAPIV3Discovery {
 	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
 	fallback.Paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
 	for path := range fallback.Paths {
@@ -262,7 +309,7 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 			}
 		}
 	}
-	serveDiscoveryJSON(w, req, fallback)
+	return fallback
 }
 
 // serveLegacyInsteadOfAggregated answers an aggregated discovery request with
@@ -278,7 +325,7 @@ func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, re
 		http.Error(w, "the caller's stack serves only legacy discovery", http.StatusNotAcceptable)
 		return
 	}
-	r.serveMergedAPIGroupList(w, req, list, true)
+	r.serveMergedAPIGroupList(w, req, raw, true)
 }
 
 // setRootDiscoveryCacheControl keeps root discovery out of shared caches when
@@ -328,12 +375,11 @@ func readDiscovery(req *http.Request, handler http.Handler, path, accept string,
 	return rec.statusCode, json.Unmarshal(rec.body.Bytes(), into)
 }
 
-func serveDiscoveryJSON(w http.ResponseWriter, req *http.Request, value any) {
+// discoveryDoc encodes a discovery document with its ETag.
+func discoveryDoc(value any) (*cachedDoc, error) {
 	body, err := json.Marshal(value)
 	if err != nil {
-		logging.FromContext(req.Context()).Error("router: failed to marshal discovery", "error", err)
-		http.Error(w, "failed to marshal discovery", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
-	serveCachedDoc(w, req, &cachedDoc{body: body, etag: quoteETag(hashHex(string(body)))})
+	return &cachedDoc{body: body, etag: quoteETag(hashHexBytes(body))}, nil
 }
