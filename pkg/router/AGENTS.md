@@ -125,7 +125,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
     count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
     the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
-    deprecated `/watch/` path form is not supported either.
+    deprecated `/apis/<g>/<v>/watch/...` path form gets a 404 and is not counted as a watch
+    (`isDeprecatedWatchPath`).
 
 ## Package layout
 
