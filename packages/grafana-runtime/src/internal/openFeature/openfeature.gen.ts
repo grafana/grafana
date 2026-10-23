@@ -1373,10 +1373,10 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  *
  * **Details:**
  * - flag key: `grafana.filterablePanels`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.filterablePanels", false, options).value;
+  return useFlag("grafana.filterablePanels", true, options).value;
 };
 
 /**
@@ -1681,10 +1681,10 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.thresholdsInterpolation`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.thresholdsInterpolation", false, options).value;
+  return useFlag("grafana.thresholdsInterpolation", true, options).value;
 };
 
 /**

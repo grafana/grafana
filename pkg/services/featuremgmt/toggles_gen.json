@@ -2843,15 +2843,18 @@
     {
       "metadata": {
         "name": "grafana.filterablePanels",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-21T15:31:42Z"
+        "resourceVersion": "1792678966723",
+        "creationTimestamp": "2026-07-21T15:31:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 14:22:46.723307 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3377,15 +3380,18 @@
     {
       "metadata": {
         "name": "grafana.thresholdsInterpolation",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-28T12:16:44Z"
+        "resourceVersion": "1792678966723",
+        "creationTimestamp": "2026-07-28T12:16:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 14:22:46.723307 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables using dashboard variables in panel threshold values",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
