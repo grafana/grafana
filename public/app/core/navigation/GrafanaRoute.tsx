@@ -18,18 +18,18 @@ import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome, keybindings, stPodReadiness } = useGrafana();
+  const { chrome, keybindings, stPodReady } = useGrafana();
   const isMtFallbackConfigured = useIsMtFallbackConfigured();
   const isUrlAllowed = useIsUrlAllowed(props.location);
-  const stPodCheckEnabled = isMtFallbackConfigured && !isUrlAllowed;
+  const stPodReadyGateEnabled = isMtFallbackConfigured && !isUrlAllowed;
 
   chrome.setMatchedRoute(props.route);
 
   useEffect(() => {
-    if (stPodCheckEnabled) {
-      stPodReadiness.start();
+    if (stPodReadyGateEnabled) {
+      stPodReady.start();
     }
-  }, [stPodCheckEnabled, stPodReadiness]);
+  }, [stPodReadyGateEnabled, stPodReady]);
 
   useLayoutEffect(() => {
     keybindings.clearAndInitGlobalBindings(props.route);
@@ -67,7 +67,7 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<PageFallbackLoader />}>
-            <StPodReadyGate skip={!stPodCheckEnabled} />
+            <StPodReadyGate skip={!stPodReadyGateEnabled} />
             <Suspense fallback={<PageLoader />}>
               <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
             </Suspense>

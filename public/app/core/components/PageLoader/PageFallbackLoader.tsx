@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StPodStatus } from 'app/core/services/StPodReadinessService';
+import { StPodStatus } from 'app/core/services/StPodReadyService';
 import { useSelector } from 'app/types/store';
 
 import { Page } from '../Page/Page';
@@ -47,11 +47,11 @@ interface PageFallbackLoaderProps {
 
 export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   const styles = useStyles2(getStyles);
-  const { chrome, stPodReadiness } = useGrafana();
+  const { chrome, stPodReady } = useGrafana();
   const location = useLocation();
   const navTree = useSelector((state) => state.navBarTree);
   const navIndex = useSelector((state) => state.navIndex);
-  const stPodStatus = stPodReadiness.useStatus();
+  const stPodStatus = stPodReady.useStatus();
   const hasTimedOut = stPodStatus === StPodStatus.Timeout;
 
   const matchedNavItem = useMemo(
@@ -87,9 +87,9 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
       <div data-testid="page-fallback-loader" className={styles.wrapper}>
         {hasTimedOut && (
           <div className={styles.timeoutBanner}>
-            <Alert severity="warning" title={t('st-pod-check.timeout.title', 'Taking longer than expected')}>
+            <Alert severity="warning" title={t('st-pod-ready.timeout.title', 'Taking longer than expected')}>
               {t(
-                'st-pod-check.timeout.body',
+                'st-pod-ready.timeout.body',
                 'We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.'
               )}
             </Alert>

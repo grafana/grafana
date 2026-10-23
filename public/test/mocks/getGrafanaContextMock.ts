@@ -2,7 +2,7 @@ import { type GrafanaBootConfig, type LocationService } from '@grafana/runtime';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { type NewFrontendAssetsChecker } from 'app/core/services/NewFrontendAssetsChecker';
-import { StPodReadinessService } from 'app/core/services/StPodReadinessService';
+import { StPodReadyService } from 'app/core/services/StPodReadyService';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type KeybindingSrv } from 'app/core/services/keybindingSrv';
 
@@ -26,7 +26,7 @@ export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {
       start: jest.fn(),
       reloadIfUpdateDetected: jest.fn(),
     } as unknown as NewFrontendAssetsChecker,
-    stPodReadiness: new StPodReadinessService(),
+    stPodReady: new StPodReadyService(),
     ...overrides,
   };
 }

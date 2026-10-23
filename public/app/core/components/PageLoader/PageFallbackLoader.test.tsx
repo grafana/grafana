@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { getWrapper, render } from 'test/test-utils';
 
-import { StPodReadinessService, StPodStatus } from 'app/core/services/StPodReadinessService';
+import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { configureStore } from 'app/store/configureStore';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';
@@ -131,10 +131,10 @@ describe('PageFallbackLoader', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('renders a timeout banner over the loader when the pod readiness service reports timeout', () => {
-    const stPodReadiness = new StPodReadinessService();
-    stPodReadiness.state.next(StPodStatus.Timeout);
-    const wrapper = getWrapper({ grafanaContext: { stPodReadiness }, renderWithRouter: true });
+  it('renders a timeout banner over the loader when the pod ready service reports timeout', () => {
+    const stPodReady = new StPodReadyService();
+    stPodReady.state.next(StPodStatus.Timeout);
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
 
     render(<PageFallbackLoader />, { wrapper });
 

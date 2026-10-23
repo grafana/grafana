@@ -1,7 +1,7 @@
 import { setBackendSrv, type BackendSrv } from '@grafana/runtime';
 
-import { StPodReadinessService, StPodStatus } from './StPodReadinessService';
-import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadinessConstants';
+import { StPodReadyService, StPodStatus } from './StPodReadyService';
+import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
 
 const podUp = () => Promise.resolve({ database: 'ok' });
 const podDown = () => Promise.resolve({ database: 'failing' });
@@ -15,11 +15,11 @@ const installBackend = (handler: () => Promise<unknown>): jest.Mock => {
 
 const flushMicrotasks = () => Promise.resolve();
 
-describe('StPodReadinessService', () => {
-  let service: StPodReadinessService;
+describe('StPodReadyService', () => {
+  let service: StPodReadyService;
 
   beforeEach(() => {
-    service = new StPodReadinessService();
+    service = new StPodReadyService();
   });
 
   afterEach(() => {

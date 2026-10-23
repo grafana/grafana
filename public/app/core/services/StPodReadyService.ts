@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { useObservable } from '@grafana/data/unstable';
 import { getBackendSrv } from '@grafana/runtime';
 
-import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadinessConstants';
+import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
 
 export enum StPodStatus {
   Unknown = 'unknown',
@@ -29,7 +29,7 @@ const createPending = (): PendingResolver => {
   return { promise, resolve };
 };
 
-export class StPodReadinessService {
+export class StPodReadyService {
   readonly state = new BehaviorSubject<StPodStatus>(StPodStatus.Unknown);
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;

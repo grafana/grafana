@@ -2,17 +2,17 @@ import { act, getWrapper, render } from 'test/test-utils';
 
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { StPodReadinessService, StPodStatus } from 'app/core/services/StPodReadinessService';
+import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 
 import { StPodPendingEllipsis } from './StPodPendingEllipsis';
 
 const queryDots = () => document.querySelector('.st-pod-dots');
 
 describe('StPodPendingEllipsis', () => {
-  let service: StPodReadinessService;
+  let service: StPodReadyService;
 
   beforeEach(async () => {
-    service = new StPodReadinessService();
+    service = new StPodReadyService();
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards'] } });
     });
@@ -26,7 +26,7 @@ describe('StPodPendingEllipsis', () => {
   });
 
   const renderEllipsis = (url: string) => {
-    const wrapper = getWrapper({ grafanaContext: { stPodReadiness: service }, renderWithRouter: true });
+    const wrapper = getWrapper({ grafanaContext: { stPodReady: service }, renderWithRouter: true });
     return render(<StPodPendingEllipsis url={url} />, { wrapper });
   };
 

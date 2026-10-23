@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
 import { act, getWrapper, render, screen } from 'test/test-utils';
 
-import { StPodReadinessService, StPodStatus } from '../services/StPodReadinessService';
+import { StPodReadyService, StPodStatus } from '../services/StPodReadyService';
 
 import { StPodReadyGate } from './StPodReadyGate';
 
-async function renderGate(skip: boolean, service: StPodReadinessService) {
-  const wrapper = getWrapper({ grafanaContext: { stPodReadiness: service }, renderWithRouter: true });
+async function renderGate(skip: boolean, service: StPodReadyService) {
+  const wrapper = getWrapper({ grafanaContext: { stPodReady: service }, renderWithRouter: true });
   await act(async () => {
     render(
       <Suspense fallback={<div>waiting for pod</div>}>
@@ -19,10 +19,10 @@ async function renderGate(skip: boolean, service: StPodReadinessService) {
 }
 
 describe('StPodReadyGate', () => {
-  let service: StPodReadinessService;
+  let service: StPodReadyService;
 
   beforeEach(() => {
-    service = new StPodReadinessService();
+    service = new StPodReadyService();
   });
 
   afterEach(() => {

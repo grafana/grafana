@@ -16736,7 +16736,7 @@
     "generate-suggestion": "Generate suggestion",
     "improve-query": "Improve query"
   },
-  "st-pod-check": {
+  "st-pod-ready": {
     "timeout": {
       "body": "We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.",
       "title": "Taking longer than expected"
