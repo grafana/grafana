@@ -13,9 +13,9 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -232,7 +232,30 @@ func BuildGlobalHybridSearch(
 	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers))
 	handler := searchapi.NewHybridHandler(index, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
-	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
+	// A process that serves none of the types, such as the standalone search API
+	// server, still names results from the manifests it has.
+	kinds := manifestKinds(manifests)
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, kinds, auth)}})
+}
+
+// manifestKinds names the kind of every namespaced resource the manifests
+// declare. A resource declared in several versions takes its kind from the
+// version the targets would pick, so the two always agree.
+func manifestKinds(manifests []*app.ManifestData) map[schema.GroupResource]string {
+	versions := map[schema.GroupVersion]bool{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			versions[schema.GroupVersion{Group: m.Group, Version: version.Name}] = true
+		}
+	}
+	kinds := map[schema.GroupResource]string{}
+	for gr, gvk := range globalHybridSearchTargets(manifests, versions) {
+		kinds[gr] = gvk.Kind
+	}
+	return kinds
 }
 
 // globalHybridSearchTargets selects a registered version for API authorization

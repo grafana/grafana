@@ -33,6 +33,7 @@ import { ScopeFiltersEditBanner } from '../components/ScopeFiltersEditBanner';
 import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { DashboardLifecycleBanner } from '../lifecycle/DashboardLifecycleBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
@@ -72,6 +73,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  // Selects which pending changes the same dashboard previews, and whether it shows them or the
+  // saved dashboard (see pendingChangePreview.ts).
+  const pendingChanges = queryParams.pendingChanges;
+  const pendingChangesView = queryParams.pendingChangesView;
   const prevParams = useRef<Params<string>>(params);
 
   useScenesFlickeringFix();
@@ -116,6 +121,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     queryParams.gnetId,
     queryParams.dashboardTemplateUid,
     queryParams.editTemplate,
+    pendingChanges,
+    pendingChangesView,
   ]);
 
   useEffect(() => {
@@ -187,6 +194,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
       <ScopeFiltersEditBanner dashboard={dashboard} key={`scope-filters-edit-banner-${dashboard.state.key}`} />
+      <DashboardLifecycleBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {showCustomTemplates && <TemplateDashboardModal />}

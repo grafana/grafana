@@ -55,10 +55,7 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		return nil, nil, err
 	}
 	if pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
+		patterns := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
 		client, err := newPluginManifestsClient(section, "plugins")
 		if err != nil {
 			return nil, nil, err
@@ -301,9 +298,11 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	var discoveryErr error
 	var shadowed []shadowedGroup
 	// put adds b, recording any backend for the same group it overrides.
+	// Overriding the single-tenant fallback is the expected migration path,
+	// not a conflict, so it is not recorded.
 	put := func(b Backend) {
 		group := b.Group().Name
-		if previous, ok := lookup[group]; ok {
+		if previous, ok := lookup[group]; ok && previous.Source() != sourceSingleTenant {
 			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
 		}
 		lookup[group] = b
@@ -341,6 +340,12 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		}
 	}
 	l.recordShadowed(ctx, shadowed)
+
+	if l.singleTenantFallback != nil {
+		if b, ok := lookup[singleTenantResourcesGroup]; ok && b.Source() != sourceSingleTenant {
+			lookup[singleTenantResourcesGroup] = &singleTenantResourcesBackend{Backend: b, st: l.singleTenantFallback}
+		}
+	}
 
 	if len(lookup) == 0 && discoveryErr != nil {
 		return nil, discoveryErr

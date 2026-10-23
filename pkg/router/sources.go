@@ -11,7 +11,6 @@ const (
 	sourcePluginsURL    = "plugins_url"
 	sourceCoreURL       = "core_url"
 	sourceLocalPlugin   = "local-plugin"
-	sourceDummy         = "dummy"
 	aggregateSourceName = "aggregate:"
 )
 
@@ -30,7 +29,8 @@ type sourceStatus struct {
 }
 
 // shadowedGroup is a group that one source offered but a higher-priority
-// source serves instead.
+// source serves instead. The single-tenant fallback is never reported, since
+// every other source is meant to override it.
 type shadowedGroup struct {
 	Group  string `json:"group"`
 	Source string `json:"source"`

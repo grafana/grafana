@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -55,8 +56,15 @@ type pluginManifestsTarget struct {
 	requestRetries *prometheus.CounterVec
 
 	connectionsMu sync.Mutex
-	connections   map[pluginConnectionKey]*grpc.ClientConn
+	connections   map[pluginConnectionKey]*pluginConnection
 	closed        bool
+}
+
+// pluginConnection is a connection to a plugin deployment, and the number of
+// loaded handlers that use it. It closes when the last one is destroyed.
+type pluginConnection struct {
+	conn *grpc.ClientConn
+	refs int
 }
 
 // pluginConnectionKey identifies a connection by plugin as well as host,
@@ -84,6 +92,9 @@ func newPluginManifestsTarget(
 		return nil, fmt.Errorf("router: %s must be absolute (scheme and host required): url=%q", source, rawURL)
 	}
 
+	// Managed plugins have no local plugin settings for the legacy app-access
+	// check, so it always grants access (pluginManifestAccessControl).
+	deps.AccessControl = pluginManifestAccessControl{}
 	t := &pluginManifestsTarget{
 		keyPrefix:       keyPrefix,
 		source:          source,
@@ -101,6 +112,23 @@ func newPluginManifestsTarget(
 	emptyKeys := map[string]struct{}{}
 	t.lastKeys.Store(&emptyKeys)
 	return t, nil
+}
+
+// validatePluginID checks an entry's plugin ID before any backend is built for
+// it. Tokens the router sends a plugin name its ID as their audience, so the ID
+// must have the shape of an app plugin ID, as local plugins must. Core APIs may
+// have no ID; their tokens name their API group instead.
+func (t *pluginManifestsTarget) validatePluginID(id string) error {
+	if id == "" {
+		if t.source == sourceCoreURL {
+			return nil
+		}
+		return errors.New("missing plugin ID")
+	}
+	if !isAppPluginID(id) {
+		return fmt.Errorf("invalid app plugin ID %q", id)
+	}
+	return nil
 }
 
 // Backends returns the current polled-and-filtered backend snapshot. Safe
@@ -148,6 +176,13 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	keys := make(map[string]struct{}, len(deployment.Plugins))
 	skipped := 0
 	for _, entry := range deployment.Plugins {
+		if err := t.validatePluginID(entry.Definition.JSONData.ID); err != nil {
+			if len(entry.Definition.Manifests) > 0 {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+			}
+			continue
+		}
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
 				continue
@@ -157,16 +192,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 				return t.pluginClients(entry.Host, entry.Definition.JSONData.ID)
 			}
 
-			// Remove any dependencies that may try to load settings
-			// After the manifest CRUD works, we can explore getting these wired properly
-			deps := t.deps
-			deps.PluginClient = nil
-			deps.ContextProvider = nil
-			deps.PluginSettings = nil
-			deps.DualWrite = nil
-			deps.AccessControl = pluginManifestAccessControl{}
-
-			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, deps, nil)
+			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
 
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
@@ -177,6 +203,9 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			backend.info = entry.Definition.JSONData.Info
 			// Without a host, the deployment has no backend to call.
 			backend.hasBackend = entry.Host != ""
+			if host, pluginID := entry.Host, entry.Definition.JSONData.ID; host != "" {
+				backend.acquire = func() (func(), error) { return t.acquireConnection(host, pluginID) }
+			}
 
 			// The host is outside PluginDefinition, but changing it must reload the backend.
 			key, keyErr := pluginDeploymentKey(t.keyPrefix, entry, manifest)
@@ -210,25 +239,11 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 	}
 	t.connectionsMu.Lock()
 	defer t.connectionsMu.Unlock()
-	if t.closed {
-		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
+	c, err := t.connectionLocked(pluginConnectionKey{host: host, pluginID: pluginID})
+	if err != nil {
+		return nil, nil, err
 	}
-	key := pluginConnectionKey{host: host, pluginID: pluginID}
-	conn := t.connections[key]
-	if conn == nil {
-		labels := prometheus.Labels{"plugin_id": pluginID}
-		requestDuration := t.requestDuration.MustCurryWith(labels).(*prometheus.HistogramVec)
-		requestRetries := t.requestRetries.MustCurryWith(labels)
-		var err error
-		conn, err = grpc.NewClient(host, t.grpcConfig.dialOptions(requestDuration, requestRetries)...)
-		if err != nil {
-			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
-		}
-		if t.connections == nil {
-			t.connections = make(map[pluginConnectionKey]*grpc.ClientConn)
-		}
-		t.connections[key] = conn
-	}
+	conn := c.conn
 	// Caller authentication is added by PluginBackend.Load.
 	clientV3, err := grpcplugin.NewClientV3FromConn(conn, grpcplugin.ClientV3Options{})
 	if err != nil {
@@ -245,12 +260,64 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 	}, clientV3, nil
 }
 
+// acquireConnection takes a reference to the connection for host and plugin,
+// for a handler about to be loaded. The returned release drops it, when the
+// handler is destroyed or fails to load, and the connection closes with its
+// last reference. A handler from a superseded entry keeps its connection
+// until it is destroyed, since the router may still serve it.
+func (t *pluginManifestsTarget) acquireConnection(host, pluginID string) (func(), error) {
+	key := pluginConnectionKey{host: host, pluginID: pluginID}
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	c, err := t.connectionLocked(key)
+	if err != nil {
+		return nil, err
+	}
+	c.refs++
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			t.connectionsMu.Lock()
+			defer t.connectionsMu.Unlock()
+			c.refs--
+			// After closeConnections, every connection is already closed.
+			if c.refs == 0 && !t.closed && t.connections[key] == c {
+				_ = c.conn.Close()
+				delete(t.connections, key)
+			}
+		})
+	}, nil
+}
+
+// connectionLocked returns the connection for key, creating it if needed.
+func (t *pluginManifestsTarget) connectionLocked(key pluginConnectionKey) (*pluginConnection, error) {
+	if t.closed {
+		return nil, fmt.Errorf("router: plugin manifests target is closed")
+	}
+	if c := t.connections[key]; c != nil {
+		return c, nil
+	}
+	labels := prometheus.Labels{"plugin_id": key.pluginID}
+	requestDuration := t.requestDuration.MustCurryWith(labels).(*prometheus.HistogramVec)
+	requestRetries := t.requestRetries.MustCurryWith(labels)
+	conn, err := grpc.NewClient(key.host, t.grpcConfig.dialOptions(requestDuration, requestRetries)...)
+	if err != nil {
+		return nil, fmt.Errorf("router: creating plugin client for %q: %w", key.host, err)
+	}
+	if t.connections == nil {
+		t.connections = make(map[pluginConnectionKey]*pluginConnection)
+	}
+	c := &pluginConnection{conn: conn}
+	t.connections[key] = c
+	return c, nil
+}
+
 func (t *pluginManifestsTarget) closeConnections() {
 	t.connectionsMu.Lock()
 	defer t.connectionsMu.Unlock()
 	t.closed = true
-	for _, conn := range t.connections {
-		_ = conn.Close()
+	for _, c := range t.connections {
+		_ = c.conn.Close()
 	}
 	t.connections = nil
 }

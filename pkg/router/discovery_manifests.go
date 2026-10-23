@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -269,10 +270,6 @@ func (s *manifestSelector) String() string {
 	return s.labels.String() + "\x00" + s.fields.String()
 }
 
-func (d *manifestDocs) writeList(w io.Writer) error {
-	return writeManifestList(w, d.items)
-}
-
 func writeManifestList(w io.Writer, items []*cachedDoc) error {
 	if _, err := io.WriteString(w, manifestListPrefix); err != nil {
 		return err
@@ -320,12 +317,6 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 	r.manifestFingerprint = fingerprint.String()
 }
 
-// buildManifestDocs builds the documents for backends without a cache.
-func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
-	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
-	return docs
-}
-
 // buildManifestDocsFrom converts each served manifest to an AppManifest,
 // reusing the documents in cache, which is keyed by backend key. It returns
 // the cache for the next build, holding only these backends. A manifest that
@@ -366,6 +357,38 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 	}
 	docs.listETag = quoteETag(hex.EncodeToString(listHash.Sum(nil))[:16])
 	return docs, next
+}
+
+var _ resource.ManifestDiscovery = (*GrafanaRouter)(nil)
+
+// ListManifests returns the published manifests, decoded from the documents
+// /apis/discovery serves, so in-process readers see exactly what HTTP clients
+// do. Each call decodes fresh copies the caller may keep or change.
+func (r *GrafanaRouter) ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
+	docs := r.manifestDocs.Load()
+	list := &appmanifestv1alpha2.AppManifestList{
+		TypeMeta: metav1.TypeMeta{APIVersion: appmanifestv1alpha2.GroupVersion.String(), Kind: "AppManifestList"},
+		Items:    make([]appmanifestv1alpha2.AppManifest, len(docs.items)),
+	}
+	for i, doc := range docs.items {
+		if err := json.Unmarshal(doc.body, &list.Items[i]); err != nil {
+			return nil, fmt.Errorf("decoding app manifest %q: %w", docs.names[i], err)
+		}
+	}
+	return list, nil
+}
+
+// GetManifest returns the published manifest of group.
+func (r *GrafanaRouter) GetManifest(ctx context.Context, group string) (*appmanifestv1alpha2.AppManifest, error) {
+	doc, ok := r.manifestDocs.Load().manifests[group]
+	if !ok {
+		return nil, apierrors.NewNotFound(manifestsResource, group)
+	}
+	manifest := &appmanifestv1alpha2.AppManifest{}
+	if err := json.Unmarshal(doc.body, manifest); err != nil {
+		return nil, fmt.Errorf("decoding app manifest %q: %w", group, err)
+	}
+	return manifest, nil
 }
 
 func backendManifest(b Backend) (*app.ManifestData, bool) {

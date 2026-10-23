@@ -26,7 +26,7 @@ import { refetchChildren } from '../../../../features/browse-dashboards/state/ac
 import { handleError } from '../../../utils';
 import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
+export const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
   if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
     if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
       const statusError: Status = e.error.data;
@@ -181,13 +181,6 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       // Testing a submitted spec touches nothing on the server, so the generated
       // invalidation would only refetch every Repository-tagged query for nothing.
       invalidatesTags: [],
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        try {
-          await queryFulfilled;
-        } catch (e) {
-          handleProvisioningFormError(e, dispatch, 'Error validating repository');
-        }
-      },
     },
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {

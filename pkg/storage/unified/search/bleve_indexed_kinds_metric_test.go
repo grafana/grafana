@@ -70,7 +70,7 @@ func buildIndexedKindsTestIndex(t *testing.T, be *bleveBackend, key resource.Nam
 				doc("trashed", new(true)),
 			},
 		})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 }
 

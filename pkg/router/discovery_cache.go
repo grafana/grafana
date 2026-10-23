@@ -13,7 +13,8 @@ import (
 
 const (
 	// Bounds staleness for backends whose resources can change without a key
-	// change, such as a forward backend redeployed with a new kind.
+	// change, such as an aggregate target that serves only legacy discovery,
+	// redeployed with a new kind.
 	discoveryCacheTTL = 5 * time.Minute
 	// A slow backend must not stall discovery for every other group.
 	discoveryFetchTimeout = 5 * time.Second

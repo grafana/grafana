@@ -17,6 +17,8 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
   const spec = resource.spec;
   // No cast needed: TimeSettingsSpec is structurally identical across the notebook and dashboard
   // schemas, so it satisfies the shared builder's dashboard-typed signature directly.
+  // `hideTimepicker` is deliberately not read: a notebook has no way to show the picker again, so a
+  // stored `true` is ignored and the next save writes `false` back.
   const timeSettings = spec.timeSettings;
 
   const scene = new NotebookScene({
@@ -35,7 +37,6 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
       intervals: spec.timeSettings.autoRefreshIntervals,
       withText: true,
     }),
-    hideTimeControls: spec.timeSettings.hideTimepicker,
   });
 
   // A freshly built scene's autosave has never saved anything through this instance, so without this
