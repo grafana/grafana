@@ -72,8 +72,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(router, reg)
 	s.standalone = standaloneRouter(cfg)
 	s.middleware = middlewareEnabled(cfg, features)
-	// Inside Grafana without the flag, HandleFunc serves only /apis/discovery.
-	router.manifestsOnly = !s.standalone && !s.middleware
 	if lifecycle, ok := loader.(services.Service); ok {
 		s.loaderLifecycle = lifecycle
 		s.loaderFailures = services.NewFailureWatcher()

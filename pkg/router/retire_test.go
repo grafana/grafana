@@ -1,19 +1,14 @@
 package router
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const retireGroup = "retire.ext.grafana.app"
@@ -163,40 +158,4 @@ func TestHandlersWithoutTeardownAreNotTracked(t *testing.T) {
 	router := NewGrafanaRouter(loader, nil)
 	require.NoError(t, router.reconcile(t.Context()))
 	require.Nil(t, router.served["plain.ext.grafana.app"].use)
-}
-
-// loadCountingBackend is a backend with a manifest that counts its loads.
-type loadCountingBackend struct {
-	fakeManifestBackend
-	loads atomic.Int32
-}
-
-func (b *loadCountingBackend) Load(ctx context.Context) (http.Handler, error) {
-	b.loads.Add(1)
-	return b.fakeManifestBackend.Load(ctx)
-}
-
-// Inside Grafana without the middleware flag, the router serves only
-// /apis/discovery, so it publishes manifests without loading any handler.
-func TestRouterWithoutRoutingLoadsNoHandlers(t *testing.T) {
-	for _, tc := range []struct {
-		name  string
-		flags []any
-		loads int32
-	}{
-		{"grafana", nil, 0},
-		{"grafana with the router middleware", []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, 1}, //nolint:staticcheck
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			backend := &loadCountingBackend{fakeManifestBackend: *testManifestBackends()[0].(*fakeManifestBackend)}
-			svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(tc.flags...), &mutableLoader{backends: []Backend{backend}}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
-			require.NoError(t, err)
-			require.NoError(t, svc.router.reconcile(t.Context()))
-			require.Equal(t, tc.loads, backend.loads.Load())
-
-			rec := httptest.NewRecorder()
-			svc.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests/"+manifestTestGroup, nil), http.NotFoundHandler())
-			require.Equal(t, http.StatusOK, rec.Code, "the manifest is published either way")
-		})
-	}
 }

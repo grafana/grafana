@@ -132,12 +132,6 @@ type GrafanaRouter struct {
 
 	loader RoutesLoader
 
-	// manifestsOnly is set when the router routes nothing and serves only the
-	// /apis/discovery tree, inside Grafana without the middleware flag. Then
-	// reconcile publishes each backend's group and manifest, but never loads
-	// a handler that nothing would serve.
-	manifestsOnly bool
-
 	authn authn.TokenAuthenticator
 
 	// served is the desired-state map, keyed by group: the groups actually
@@ -780,15 +774,12 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
 
-		var handler http.Handler
-		if !r.manifestsOnly {
-			var err error
-			if handler, err = loadBackend(ctx, b); err != nil {
-				// Keep last-known-good for this group. lastKey is not advanced, so
-				// Run's retry loads it again.
-				errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
-				continue
-			}
+		handler, err := loadBackend(ctx, b)
+		if err != nil {
+			// Keep last-known-good for this group. lastKey is not advanced, so
+			// Run's retry loads it again.
+			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
+			continue
 		}
 
 		if !ok {

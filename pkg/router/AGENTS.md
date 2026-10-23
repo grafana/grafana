@@ -332,8 +332,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
-  `next`, and the router publishes groups and manifests without loading any handler
-  (`manifestsOnly`), since none would be served. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
+  `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
   in-process storage as a `resource.ManifestDiscovery`. `ProvideService` then attaches the loader.
   The loader depends on storage, so this order keeps the graph acyclic.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
