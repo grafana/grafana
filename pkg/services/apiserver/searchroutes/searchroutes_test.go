@@ -781,7 +781,7 @@ func TestBuildGlobalHybridSearch(t *testing.T) {
 				assert.Equal(t, "widgets", attr.GetResource())
 				return authorizer.DecisionDeny, "", nil
 			})
-			routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, tc.builders, tc.installers, auth, nil)
+			routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, tc.builders, tc.installers, auth)
 			assert.Equal(t, map[string][]string{searchv0.APIVERSION: {"global/search/hybrid"}}, paths(routes))
 			require.Len(t, routes, 1)
 			require.Len(t, routes[0].Routes.Namespace, 1)
@@ -792,7 +792,7 @@ func TestBuildGlobalHybridSearch(t *testing.T) {
 			assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
 		})
 	}
-	assert.Nil(t, BuildGlobalHybridSearch(nil, nil, nil, installers, nil, nil))
+	assert.Nil(t, BuildGlobalHybridSearch(nil, nil, nil, installers, nil))
 }
 
 func TestBuildGlobalHybridSearchUsesConfiguredDefaults(t *testing.T) {
@@ -811,7 +811,7 @@ func TestBuildGlobalHybridSearchUsesConfiguredDefaults(t *testing.T) {
 		authorized = append(authorized, attr.GetAPIGroup()+"/"+attr.GetResource())
 		return authorizer.DecisionDeny, "", nil
 	})
-	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, []builder.APIGroupBuilder{b}, nil, auth, cfg.HybridSearchDefaultResources)
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, []builder.APIGroupBuilder{b}, nil, auth, cfg.HybridSearchDefaultResources...)
 	require.Len(t, routes, 1)
 	require.Len(t, routes[0].Routes.Namespace, 1)
 	r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu"}`))
@@ -843,7 +843,7 @@ func TestBuildGlobalHybridSearch_NamesKindsItDoesNotServe(t *testing.T) {
 		t.Fatal("types this server does not serve are authorized by the search backend")
 		return authorizer.DecisionDeny, "", nil
 	})
-	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), client, nil, nil, auth, nil)
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), client, nil, nil, auth)
 	require.Len(t, routes, 1)
 	require.Len(t, routes[0].Routes.Namespace, 1)
 

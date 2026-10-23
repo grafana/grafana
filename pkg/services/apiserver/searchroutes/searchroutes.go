@@ -221,7 +221,7 @@ func BuildGlobalHybridSearch(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 	auth authorizer.Authorizer,
-	defaultResourcePairs []string,
+	defaultResourcePairs ...string,
 ) []builder.GroupVersionRoutes {
 	if index == nil {
 		return nil
