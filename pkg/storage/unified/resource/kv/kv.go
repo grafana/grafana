@@ -40,10 +40,8 @@ type bytesValue struct {
 	bytes.Buffer
 }
 
-// NewBytesValue returns a value reader over b that ReadAllAndClose hands out
-// without copying. b belongs to the reader from then on: callers must not use
-// or modify it, so only pass bytes no one else holds, such as a freshly read
-// value.
+// NewBytesValue returns a reader whose bytes ReadAllAndClose hands out without
+// copying, so b must not be used or modified afterwards.
 func NewBytesValue(b []byte) io.ReadCloser {
 	return &bytesValue{Buffer: *bytes.NewBuffer(b)}
 }
