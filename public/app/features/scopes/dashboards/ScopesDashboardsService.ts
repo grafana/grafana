@@ -311,6 +311,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     if (forScopeNames.length === 0) {
       this.updateState({
         dashboards: [],
+        scopeNavigations: [],
         filteredFolders: {},
         folders: {},
         forScopeNames: [],
