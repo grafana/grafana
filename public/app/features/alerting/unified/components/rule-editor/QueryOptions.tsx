@@ -7,7 +7,6 @@ import {
   Button,
   Field,
   Icon,
-  InlineField,
   RelativeTimeRangePicker,
   Stack,
   Toggletip,
