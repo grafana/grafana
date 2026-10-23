@@ -1041,4 +1041,8 @@ const (
 	// FlagDatasourcesGatewayAuditPolicy
 	// Enable support for the query gateway audit policies
 	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
+
+	// FlagDashboardsDisablePublicDashboards
+	// Disables public dashboards for the stack
+	FlagDashboardsDisablePublicDashboards = "dashboards.disablePublicDashboards"
 )
