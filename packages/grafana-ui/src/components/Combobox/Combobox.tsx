@@ -419,10 +419,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
-  // The full value on hover, for when the input clips it: a native title, so nothing new becomes focusable.
-  // Dropped while open, when the value is the placeholder and the list has the full text.
-  const title = (isOpen ? undefined : itemToString(selectedItem)) || undefined;
-
   const loading = loadingProp || fieldContext.loading || asyncLoading;
 
   const inputSuffix = (
@@ -469,7 +465,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         invalid={invalid}
         className={styles.input}
         suffix={inputSuffix}
-        title={title}
         {...getInputProps({
           ref: inputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718

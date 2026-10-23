@@ -265,25 +265,6 @@ describe('Combobox', () => {
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  describe('value title', () => {
-    it('carries the full value as the title while closed, so a clipped value is readable on hover', async () => {
-      render(<Combobox options={options} value="1" onChange={onChangeHandler} />);
-      const input = screen.getByRole('combobox');
-
-      expect(input).toHaveAttribute('title', 'Option 1');
-
-      // Open: the value is the placeholder and the list shows it in full.
-      await user.click(input);
-      expect(input).not.toHaveAttribute('title');
-    });
-
-    it('has no title without a selected value', () => {
-      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
-
-      expect(screen.getByRole('combobox')).not.toHaveAttribute('title');
-    });
-  });
-
   it('does not show a hanging 0 when the value is 0', async () => {
     render(
       <Combobox options={numericOptions} value={numericOptions[0].value} onChange={onChangeHandler} isClearable />
