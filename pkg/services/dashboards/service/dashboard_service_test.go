@@ -10,12 +10,14 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/ini.v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -40,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -55,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -1541,7 +1546,9 @@ func TestGetDashboardTags(t *testing.T) {
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+		facet, ok := req.Facet["tags"]
+		return req.Limit == 0 && req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+			ok && facet.Field == "tags" && facet.Limit == 100000
 	})).Return(&resourcepb.ResourceSearchResponse{
 		Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 			"tags": {
@@ -1562,6 +1569,219 @@ func TestGetDashboardTags(t *testing.T) {
 	result, err := service.GetDashboardTags(ctx, query)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
+}
+
+func TestGetDashboardTagsErrors(t *testing.T) {
+	embedded := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "tags search denied"}
+	transport := status.Error(codes.Unavailable, "tags search unavailable")
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+		want error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: embedded}, want: resource.StatusError(embedded)},
+		{name: "transport nil response", err: transport, want: transport},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.resp, tc.err).Once()
+			service := &DashboardServiceImpl{k8sclient: cli}
+			got, err := service.GetDashboardTags(t.Context(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+			require.Equal(t, tc.want, err)
+			require.Nil(t, got)
+			if tc.err != nil {
+				require.Same(t, tc.err, err)
+			}
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+type dashboardTagSearchClient struct {
+	dashboardclient.K8sHandlerWithFallback
+	index         resource.ResourceIndex
+	access        *dashboardTagSearchAccess
+	mode          string
+	calls         int
+	responseBytes int
+	rows          int
+	facet         *resourcepb.ResourceSearchResponse_Facet
+}
+
+func (c *dashboardTagSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	c.calls++
+	req.Options = &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards",
+	}}
+	// Compare request shapes without changing the production caller.
+	switch c.mode {
+	case "all-fields":
+		req.Limit, req.Fields = 100000, nil
+	case "name-only":
+		req.Limit, req.Fields = 100000, []string{resource.SEARCH_FIELD_NAME}
+	case "facets-only":
+		req.Limit, req.Fields = 0, nil
+	}
+	res, err := c.index.Search(ctx, c.access, req, nil, nil)
+	if err == nil && res != nil {
+		c.facet = res.Facet["tags"]
+		if c.responseBytes == 0 {
+			c.responseBytes = proto.Size(res)
+			c.rows = len(res.Rows)
+		}
+	}
+	return res, err
+}
+
+type dashboardTagSearchAccess struct {
+	claims.AccessClient
+	allowedFolders map[string]bool
+	checked        int
+}
+
+func (c *dashboardTagSearchAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	c.checked += len(req.Checks)
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		results[check.CorrelationID] = claims.BatchCheckResult{Allowed: c.allowedFolders == nil || c.allowedFolders[check.Folder]}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func newDashboardTagSearchService(t testing.TB, count int, cfg unifiedsearch.PostRankAuthzConfig) (*DashboardServiceImpl, *dashboardTagSearchClient) {
+	t.Helper()
+	backend, err := unifiedsearch.NewBleveBackend(unifiedsearch.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        100,
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(t.Context(), resource.NamespacedResource{
+		Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards",
+	}, int64(count), "test", func(idx resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, count)
+		for i := range items {
+			name := fmt.Sprintf("dashboard-%05d", i)
+			parent := "readable"
+			if i%2 == 1 {
+				parent = "hidden"
+			}
+			var tags []string
+			if i%11 != 0 {
+				tags = []string{"metrics", parent, fmt.Sprintf("service-%03d", i%100)}
+			}
+			items[i] = &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: name,
+					},
+					Name: name, Title: name, Folder: parent, RV: 1, Tags: tags,
+					Description: "Service health, request latency, error rates and resource usage.",
+					Created:     1700000000000,
+					Updated:     1700000001000,
+					CreatedBy:   "user:creator",
+					UpdatedBy:   "user:editor",
+					Labels: map[string]string{
+						utils.LabelKeyDeprecatedInternalID: fmt.Sprint(i + 1), //nolint:staticcheck
+						"team":                             "observability",
+					},
+					Manager: &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repository"},
+				},
+			}
+		}
+		return int64(count), idx.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 1})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	cli := &dashboardTagSearchClient{index: index, access: &dashboardTagSearchAccess{AccessClient: claims.FixedAccessClient(true)}}
+	return &DashboardServiceImpl{k8sclient: cli}, cli
+}
+
+func TestGetDashboardTagsSearchVariants(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		count          int
+		allowedFolders map[string]bool
+		cfg            unifiedsearch.PostRankAuthzConfig
+	}{
+		{name: "empty"},
+		{name: "all readable", count: 64},
+		{name: "restricted", count: 64, allowedFolders: map[string]bool{"readable": true}},
+		{name: "denied", count: 64, allowedFolders: map[string]bool{}},
+		{name: "sample budget", count: 64, allowedFolders: map[string]bool{"readable": true},
+			cfg: unifiedsearch.PostRankAuthzConfig{MaxWindow: 7, MaxCandidates: 11, FacetSampleSize: 20}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service, cli := newDashboardTagSearchService(t, tc.count, tc.cfg)
+			cli.access.allowedFolders = tc.allowedFolders
+			ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+			query := &dashboards.GetDashboardTagsQuery{OrgID: 1}
+			baseline, err := service.GetDashboardTags(ctx, query)
+			require.NoError(t, err)
+			baselineFacet := cli.facet
+			for _, mode := range []string{"all-fields", "name-only", "facets-only"} {
+				cli.mode = mode
+				got, err := service.GetDashboardTags(ctx, query)
+				require.NoError(t, err)
+				require.Equal(t, baseline, got)
+				require.True(t, proto.Equal(baselineFacet, cli.facet), "facet terms, counts, missing values and sample totals must match")
+			}
+			if tc.allowedFolders != nil {
+				for _, tag := range baseline {
+					require.NotEqual(t, "hidden", tag.Term)
+				}
+			}
+		})
+	}
+}
+
+// In-process timings exclude RPC transport and real authorization-service latency.
+func BenchmarkGetDashboardTags(b *testing.B) {
+	for _, count := range []int{1000, 10000, 20000} {
+		for _, restricted := range []bool{false, true} {
+			for _, mode := range []string{"all-fields", "name-only", "facets-only"} {
+				b.Run(fmt.Sprintf("docs=%d/restricted=%t/%s", count, restricted, mode), func(b *testing.B) {
+					service, cli := newDashboardTagSearchService(b, count, unifiedsearch.PostRankAuthzConfig{})
+					if restricted {
+						cli.access.allowedFolders = map[string]bool{"readable": true}
+					}
+					ctx := claims.WithAuthInfo(b.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+					query := &dashboards.GetDashboardTagsQuery{OrgID: 1}
+					baseline, err := service.GetDashboardTags(ctx, query)
+					require.NoError(b, err)
+					baselineFacet := cli.facet
+					cli.mode, cli.responseBytes = mode, 0
+					got, err := service.GetDashboardTags(ctx, query)
+					require.NoError(b, err)
+					require.Equal(b, baseline, got)
+					require.True(b, proto.Equal(baselineFacet, cli.facet))
+					cli.calls, cli.access.checked = 0, 0
+					b.ReportAllocs()
+					for b.Loop() {
+						tags, err := service.GetDashboardTags(ctx, query)
+						if err != nil {
+							b.Fatal(err)
+						}
+						if len(tags) != len(baseline) {
+							b.Fatalf("got %d tag terms, want %d", len(tags), len(baseline))
+						}
+					}
+					b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
+					b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+					b.ReportMetric(float64(cli.rows), "unused-rows/op")
+					b.ReportMetric(float64(cli.responseBytes), "response-bytes")
+				})
+			}
+		}
+	}
 }
 
 func TestQuotaCount(t *testing.T) {

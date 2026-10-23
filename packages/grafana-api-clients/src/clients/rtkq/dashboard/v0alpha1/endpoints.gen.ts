@@ -957,6 +957,8 @@ export type HybridSearchResultItem = {
   resource: ResourceRef;
   /** Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances. */
   score: number;
+  /** Tags from the lexical index. Omitted when unavailable. */
+  tags?: string[];
   title: string;
 };
 export type HybridSearchResults = {
@@ -1311,6 +1313,8 @@ export type SnapshotSpec = {
   expires?: number;
   /** When set to true, the snapshot exists in a remote server */
   external?: boolean;
+  /** The server-provided URL for deleting the external snapshot */
+  externalDeleteUrl?: string;
   /** The external URL where the snapshot can be seen */
   externalUrl?: string;
   /** The URL that created the dashboard originally */

@@ -71,7 +71,7 @@ const AlertLabel = (props: Props) => {
 
 type TagColors = { background: string; text: string };
 
-function getAccessibleTagColor(name: string | undefined, theme: GrafanaTheme2): TagColors | undefined {
+export function getAccessibleTagColor(name: string | undefined, theme: GrafanaTheme2): TagColors | undefined {
   if (!name) {
     return;
   }
@@ -138,28 +138,51 @@ function getReadableFontColor(bg: string, fallback: string): string {
     .toHexString();
 }
 
-const getStyles = (theme: GrafanaTheme2, color?: string, textColor?: string, size?: string) => {
-  const backgroundColor = color ?? theme.colors.secondary.main;
+export type AlertLabelColors = {
+  background: string;
+  border: string;
+  text: string;
+  valueBackground: string;
+  valueText: string;
+};
+
+/**
+ * Works out the colors an AlertLabel uses for a given tag color, so other label-like components can match them.
+ */
+export function getAlertLabelColors(theme: GrafanaTheme2, color?: string, textColor?: string): AlertLabelColors {
+  const background = color ?? theme.colors.secondary.main;
 
   // the visual refresh tag palette pairs each background with an accessible text color, so use it
   // instead of deriving one from the background
   const paletteTextColor = theme.flags.visualDesignRefresh ? textColor : undefined;
 
-  const borderColor = theme.isDark
-    ? tinycolor2(backgroundColor).lighten(5).toString()
-    : tinycolor2(backgroundColor).darken(5).toString();
+  const border = theme.isDark
+    ? tinycolor2(background).lighten(5).toString()
+    : tinycolor2(background).darken(5).toString();
 
-  const valueBackgroundColor = theme.isDark
-    ? tinycolor2(backgroundColor).darken(5).toString()
-    : tinycolor2(backgroundColor).lighten(5).toString();
+  const valueBackground = theme.isDark
+    ? tinycolor2(background).darken(5).toString()
+    : tinycolor2(background).lighten(5).toString();
 
-  const labelFontColor = color
-    ? (paletteTextColor ?? getReadableFontColor(backgroundColor, theme.colors.text.primary))
+  const text = color
+    ? (paletteTextColor ?? getReadableFontColor(background, theme.colors.text.primary))
     : theme.colors.text.primary;
 
-  const valueFontColor = color
-    ? (paletteTextColor ?? getReadableFontColor(valueBackgroundColor, theme.colors.text.primary))
+  const valueText = color
+    ? (paletteTextColor ?? getReadableFontColor(valueBackground, theme.colors.text.primary))
     : theme.colors.text.primary;
+
+  return { background, border, text, valueBackground, valueText };
+}
+
+const getStyles = (theme: GrafanaTheme2, color?: string, textColor?: string, size?: string) => {
+  const {
+    background: backgroundColor,
+    border: borderColor,
+    text: labelFontColor,
+    valueBackground: valueBackgroundColor,
+    valueText: valueFontColor,
+  } = getAlertLabelColors(theme, color, textColor);
 
   let padding: CSSProperties['padding'] = theme.spacing(0.33, 1);
 

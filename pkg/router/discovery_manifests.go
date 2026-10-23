@@ -270,10 +270,6 @@ func (s *manifestSelector) String() string {
 	return s.labels.String() + "\x00" + s.fields.String()
 }
 
-func (d *manifestDocs) writeList(w io.Writer) error {
-	return writeManifestList(w, d.items)
-}
-
 func writeManifestList(w io.Writer, items []*cachedDoc) error {
 	if _, err := io.WriteString(w, manifestListPrefix); err != nil {
 		return err
@@ -319,12 +315,6 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 	r.manifestDocs.Store(docs)
 	r.manifestCache = cache
 	r.manifestFingerprint = fingerprint.String()
-}
-
-// buildManifestDocs builds the documents for backends without a cache.
-func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
-	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
-	return docs
 }
 
 // buildManifestDocsFrom converts each served manifest to an AppManifest,

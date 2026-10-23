@@ -132,7 +132,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if middleware {
-			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{AccessToken: "access"}))
+			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", AccessToken: "access"}))
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
@@ -185,6 +185,9 @@ func TestWatchThroughEveryBackendAndMode(t *testing.T) {
 			mode := "standalone"
 			if middleware {
 				mode = "middleware"
+			}
+			if middleware && kind == "single-tenant" {
+				continue // only the standalone router has the single-tenant fallback
 			}
 			t.Run(kind+"/"+mode, func(t *testing.T) {
 				t.Parallel()
@@ -356,5 +359,55 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 			require.Contains(t, string(body), "watch over WebSocket is not supported")
 			require.Empty(t, rig.backend.queries, "the backend must not be called")
 		})
+	}
+}
+
+func TestRequestVerbIsParsedOncePerRequest(t *testing.T) {
+	req, outcome := withRequestOutcome(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things?watch=true", nil))
+	require.Equal(t, "watch", requestVerb(req))
+	require.Equal(t, "watch", outcome.verb)
+
+	// A later call reads the recorded verb instead of parsing the request.
+	outcome.verb = "recorded"
+	require.Equal(t, "recorded", requestVerb(req))
+
+	// Without an outcome, as for the router's own sub-requests, it parses.
+	require.Equal(t, "list", requestVerb(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things", nil)))
+}
+
+// The deprecated path form puts "watch" before the namespace. The router
+// doesn't serve it, on routed groups or the fallback, and doesn't count it
+// as a watch.
+func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
+	router := NewGrafanaRouter(&mutableLoader{}, nil)
+	served := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		served = true
+		w.WriteHeader(http.StatusNoContent)
+	})
+	snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
+	router.snapshot.Store(&snapshot)
+	router.unregisteredGroupHandler = handler
+	for _, path := range []string{
+		"/apis/example/v1/watch/namespaces/stacks-1/widgets",
+		"/apis/example/v1/watch/widgets",
+		"/apis/unknown/v1/watch/namespaces/stacks-1/widgets",
+	} {
+		req := newAuthenticatedRequest(http.MethodGet, path, nil)
+		require.Equal(t, "get", requestVerb(req), path)
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, req, handler)
+		require.Equal(t, http.StatusNotFound, rec.Code, path)
+	}
+	require.False(t, served)
+
+	// A resource or object named watch is still served.
+	for _, path := range []string{
+		"/apis/example/v1/namespaces/stacks-1/watch",
+		"/apis/example/v1/namespaces/stacks-1/widgets/watch",
+	} {
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil), handler)
+		require.Equal(t, http.StatusNoContent, rec.Code, path)
 	}
 }

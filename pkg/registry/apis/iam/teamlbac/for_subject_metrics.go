@@ -3,19 +3,25 @@ package teamlbac
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type forSubjectMetrics struct {
-	requestsTotal   *prometheus.CounterVec
-	durationSeconds *prometheus.HistogramVec
-	missingTeams    prometheus.Counter
+	requestsTotal                 *prometheus.CounterVec
+	durationSeconds               *prometheus.HistogramVec
+	teamEvaluationDurationSeconds *prometheus.HistogramVec
+	missingTeams                  prometheus.Counter
+	listedTeamsWithoutLegacyID    prometheus.Counter
 }
 
 type forSubjectOutcome string
@@ -60,15 +66,37 @@ func newForSubjectMetrics(reg prometheus.Registerer) *forSubjectMetrics {
 			Help:      "IAM Team LBAC for-subject request duration in seconds",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"outcome", "error_class", "datasource_type"}),
+		// Most requests have no stored rules and never evaluate Teams. Mixing
+		// those fast requests into the same quantile hid slow membership checks,
+		// including checks that eventually returned no rules for the user.
+		teamEvaluationDurationSeconds: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_team_lbac_for_subject_team_evaluation_duration_seconds",
+			Help:    "Time spent listing Teams and selecting subject rules for non-empty policies, including evaluations returning no applicable rules or errors",
+			Buckets: prometheus.DefBuckets,
+		}, []string{"datasource_type"}),
 		missingTeams: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: "team_lbac_for_subject",
 			Name:      "missing_teams_total",
 			Help:      "Team LBAC rule references to missing teams during for-subject evaluation",
 		}),
+		// Numeric LBAC keys depend on the original Team IDs. Losing an ID can
+		// make required rules look like references to a deleted Team and omit
+		// them from the result. This detects missing/invalid IDs, not replacement
+		// of an original ID with a different positive ID.
+		listedTeamsWithoutLegacyID: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "grafana_team_lbac_for_subject_listed_teams_without_legacy_id_total",
+			Help: "Listed Team observations without a valid positive legacy numeric ID during for-subject evaluation; repeated evaluations count the same Team again",
+		}),
 	}
 	reg.MustRegister(m.requestsTotal, m.durationSeconds, m.missingTeams)
 	return m
+}
+
+func (m *forSubjectMetrics) observeTeamEvaluation(datasourceName string, start time.Time) {
+	if m != nil {
+		m.teamEvaluationDurationSeconds.WithLabelValues(forSubjectDatasourceType(datasourceName)).Observe(time.Since(start).Seconds())
+	}
 }
 
 func (m *forSubjectMetrics) observe(outcome forSubjectOutcome, errorClass forSubjectErrorClass, datasourceName string, start time.Time) {
@@ -90,10 +118,24 @@ func forSubjectDatasourceType(name string) string {
 	}
 }
 
-func (m *forSubjectMetrics) incMissingTeam() {
+func (m *forSubjectMetrics) countMissingTeams(count int) {
 	if m != nil {
-		m.missingTeams.Inc()
+		m.missingTeams.Add(float64(count))
 	}
+}
+
+func (m *forSubjectMetrics) countTeamsWithoutLegacyIDs(teams []iamv0.Team) {
+	if m == nil {
+		return
+	}
+	count := 0
+	for i := range teams {
+		id, err := strconv.ParseInt(teams[i].Labels[apiutils.LabelKeyDeprecatedInternalID], 10, 64) //nolint:staticcheck // observe missing legacy IDs used by numeric rules
+		if err != nil || id <= 0 {
+			count++
+		}
+	}
+	m.listedTeamsWithoutLegacyID.Add(float64(count))
 }
 
 func classifyForSubjectError(err error) forSubjectErrorClass {

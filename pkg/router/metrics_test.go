@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// metricsService serves group through a real forward proxy to upstream.
+// metricsService serves group through a real reverse proxy to upstream.
 func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend := proxyBackend(t, group, upstream, &http.Transport{})
@@ -111,7 +111,7 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 	serve := func(target string) int {
 		recorder := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, target, nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "*"}))
 		svc.HandleFunc(recorder, req, embedded)
 		return recorder.Code
 	}
@@ -200,7 +200,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 	second := proxyBackend(t, "second.ext.grafana.app", "https://second.example.com", &http.Transport{})
 	loader := &statusLoader{
 		backends: []Backend{first, second, &dummyBackend{group: "dummy.ext.grafana.app"}},
-		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: sourceSingleTenant, By: aggregateSource("test")}},
+		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: aggregateSource("second"), By: aggregateSource("test")}},
 		sources: []sourceStatus{
 			{Source: sourceCoreURL, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
 			{Source: sourceSingleTenant, Failures: 2},
@@ -249,9 +249,9 @@ grafana_router_reconcile_errors_total 1
 # HELP grafana_router_reconciles_total Number of completed route reconciles.
 # TYPE grafana_router_reconciles_total counter
 grafana_router_reconciles_total 2
-# HELP grafana_router_shadowed_groups Number of API groups a source offered that a higher-priority source serves instead, in the latest load.
+# HELP grafana_router_shadowed_groups Number of API groups a source other than the single-tenant fallback offered that a higher-priority source serves instead, in the latest load.
 # TYPE grafana_router_shadowed_groups gauge
-grafana_router_shadowed_groups{source="single-tenant"} 1
+grafana_router_shadowed_groups{source="aggregate:second"} 1
 # HELP grafana_router_skipped_backends Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.
 # TYPE grafana_router_skipped_backends gauge
 grafana_router_skipped_backends{source="core_url"} 0
@@ -379,4 +379,21 @@ func TestPluginManifestsSkips(t *testing.T) {
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Empty(t, target.Backends())
 	require.Equal(t, 2, target.status.status(sourcePluginsURL).Skipped)
+}
+
+// Building the router twice on one registry, as tests and some module
+// combinations do, shares its metrics instead of panicking.
+func TestServicesShareOneRegistry(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	first := newService(NewGrafanaRouter(&mutableLoader{}, nil), reg)
+	var second *Service
+	require.NotPanics(t, func() { second = newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
+	require.Same(t, first.metrics.requests, second.metrics.requests)
+
+	require.NotPanics(t, func() {
+		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
+		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
+		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+	})
 }

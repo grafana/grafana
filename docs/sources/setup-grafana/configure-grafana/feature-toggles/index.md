@@ -42,7 +42,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
-| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
+| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
@@ -70,7 +70,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
-| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         |                    |
+| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         | Yes                |
 | `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                     | Yes                |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
 
@@ -82,8 +82,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
-| `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
+| `dashboard.notebooks`              | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |

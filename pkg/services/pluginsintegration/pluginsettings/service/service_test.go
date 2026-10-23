@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -97,6 +98,20 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		require.Empty(t, password)
 		require.True(t, ok)
 	})
+}
+
+func TestService_UpdatePluginSetting_JSONDataSize(t *testing.T) {
+	// A nil store proves the size check runs before any database access.
+	psService := ProvideService(nil, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+
+	err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
+		PluginID: "test-app",
+		OrgID:    1,
+		JSONData: map[string]any{"k": strings.Repeat("a", maxJSONDataBytes)},
+	})
+	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingJSONDataTooLarge)
+
+	require.NoError(t, validateJSONDataSize(map[string]any{"k": strings.Repeat("a", maxJSONDataBytes-len(`{"k":""}`))}))
 }
 
 func TestIntegrationPluginSettings(t *testing.T) {

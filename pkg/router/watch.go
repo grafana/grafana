@@ -21,11 +21,30 @@ var requestInfoFactory = &request.RequestInfoFactory{
 // or "get" for reads, and so on. Paths outside the resource API, such as
 // discovery and OpenAPI, return the lowercased HTTP method.
 func requestVerb(req *http.Request) string {
-	info, err := requestInfoFactory.NewRequestInfo(req)
-	if err != nil || info.Verb == "" {
-		return strings.ToLower(req.Method)
+	outcome := outcomeOf(req)
+	if outcome != nil && outcome.verb != "" {
+		return outcome.verb
 	}
-	return info.Verb
+	var verb string
+	if isDeprecatedWatchPath(req.URL.Path) {
+		// Rejected, so it is not a watch.
+		verb = strings.ToLower(req.Method)
+	} else if info, err := requestInfoFactory.NewRequestInfo(req); err == nil && info.Verb != "" {
+		verb = info.Verb
+	} else {
+		verb = strings.ToLower(req.Method)
+	}
+	if outcome != nil {
+		outcome.verb = verb
+	}
+	return verb
+}
+
+// isDeprecatedWatchPath reports whether path is the deprecated
+// /apis/<group>/<version>/watch/... form, which the router doesn't serve.
+func isDeprecatedWatchPath(path string) bool {
+	rest, ok := pathAfterVersion(path)
+	return ok && strings.HasPrefix(rest, "watch/")
 }
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a

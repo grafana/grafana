@@ -16,6 +16,7 @@ const (
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
 
 	routeUnauthenticated = "unauthenticated" // rejected because the caller did not authenticate
+	routeForbidden       = "forbidden"       // rejected because the caller may not use the namespace in the path
 )
 
 // Why a request's backend failed, for grafana_router_backend_failures_total.
@@ -37,6 +38,8 @@ type requestOutcome struct {
 	route    string
 	pluginID string
 	failure  string
+	// verb caches requestVerb, which parses the request each time.
+	verb string
 }
 
 func withRequestOutcome(req *http.Request) (*http.Request, *requestOutcome) {
@@ -83,7 +86,7 @@ func setPluginID(req *http.Request, pluginID string) {
 // failureReason classifies a proxy failure. A request the caller abandoned
 // is not the backend's failure and has no reason.
 func failureReason(req *http.Request, err error) string {
-	if req.Context().Err() != nil {
+	if callerGone(req.Context()) != nil {
 		return ""
 	}
 	var netErr net.Error

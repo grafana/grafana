@@ -264,14 +264,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.userAttribution",
-			Description: "Author Git Sync commits as the acting Grafana user",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{Go: true, React: true},
-		},
-		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
 			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).`,
 			Stage:        FeatureStageExperimental,
@@ -689,7 +681,7 @@ var (
 		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
@@ -971,7 +963,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -1160,7 +1152,7 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "pluginProxyPreserveTrailingSlash",
@@ -1244,7 +1236,7 @@ var (
 		{
 			Name:            "reloadDashboardsOnParamsChange",
 			Description:     "Enables reload of dashboards on scopes, time range and variables changes",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:        Generate{LegacyFrontend: true, React: true},
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
@@ -1893,7 +1885,7 @@ var (
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "newInfluxDSConfigPageDesign",
@@ -1944,15 +1936,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "restrictedPluginApis",
-			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "true",
 		},
 		{
 			Name:        "favoriteDatasources",
@@ -2226,6 +2209,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dashboardVariablesMigration",
+			Description: "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "smoothingTransformation",
 			Description: "Enables the ASAP smoothing transformation for time series data",
 			Stage:       FeatureStageExperimental,
@@ -2440,16 +2431,6 @@ var (
 		{
 			Name:            "appplugins.loadAppManifest",
 			Description:     "Load app manifest when loading plugin definitions",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			Generate:        Generate{Go: true},
-			RequiresRestart: true,
-			Expression:      "false",
-			HideFromDocs:    true,
-		},
-		{
-			Name:            "appplugins.loadAppManifestAndKeepSettings",
-			Description:     "Continue to expose settings when a manifest exists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			Generate:        Generate{Go: true},
@@ -2899,6 +2880,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "search.perResourceFolderTree",
+			Description:  "Allow recursive folder filters in per-resource search APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "alerting.hybridSearch",
 			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
 			Stage:       FeatureStageExperimental,
@@ -2927,6 +2917,14 @@ var (
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboard.artifacts",
+			Description: "Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
@@ -3130,15 +3128,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "grafana.ofrepRootUrl",
-			Description:  "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBackendServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:        "assistant.dashboardPlanning",
 			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
 			Stage:       FeatureStageExperimental,
@@ -3201,7 +3190,7 @@ var (
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{
@@ -3238,14 +3227,6 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
-		},
-		{
-			Name:        "grafana.rspackBuild",
-			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
 		},
 		{
 			Name:        "pluginsForceTls13",
@@ -3437,6 +3418,23 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "grafana.geomapProtomapsBasemap",
+			Description:  "Adds an experimental Protomaps vector basemap to the geomap panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "reporting.removeLogoUrlField",
+			Description: "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
