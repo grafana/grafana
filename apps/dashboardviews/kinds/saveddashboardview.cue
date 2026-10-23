@@ -3,6 +3,11 @@ package kinds
 saveddashboardviewv0alpha1: {
 	kind:       "SavedDashboardView" // note: must be uppercase
 	pluralName: "SavedDashboardViews"
+	// Generic read routes would bypass the per-dashboard checks in the storage authorizer.
+	listKeys: false
+	search: {
+		endpoint: false
+	}
 	schema: {
 		spec: {
 			// dashboardUID is the dashboard this view belongs to.
