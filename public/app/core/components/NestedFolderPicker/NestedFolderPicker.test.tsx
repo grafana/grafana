@@ -15,7 +15,8 @@ import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { getCustomRootFolderItem } from './utils';
 
-const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
+const [folderTree, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] =
+  getFolderFixtures();
 
 setupMockServer();
 setBackendSrv(backendSrv);
@@ -628,27 +629,37 @@ describe('NestedFolderPicker', () => {
   describe('read only folders', () => {
     const readOnlyFlags = { 'grafana.folderPickerFolderEditAccess': true, foldersAppPlatformAPI: true };
 
-    // The shared mock search handler ignores `permission`, so answer the name-scoped selectability checks here and
-    // let every other search fall through to it
-    function useSelectableFoldersHandler(selectableNames: string[]) {
-      server.use(
-        http.get(searchRoute, ({ request }) => {
-          const url = new URL(request.url);
-          const names = url.searchParams.getAll('name');
-          if (url.searchParams.get('permission') !== 'create' || names.length === 0) {
-            return undefined;
-          }
+    let searchURLs: URL[] = [];
 
-          const hits = names
-            .filter((name) => selectableNames.includes(name))
-            .map((name) => ({ resource: 'folders', name, title: name, field: {} }));
-          return HttpResponse.json({ totalHits: hits.length, hits });
-        })
+    // The shared mock search handler ignores `include`, so mark each folder here, and record every search so tests
+    // can check the picker only asks once
+    function useCanCreateHandler(creatableNames: string[]) {
+      const hits = folderTree.flatMap(({ item }) =>
+        item.kind === 'folder'
+          ? [
+              {
+                resource: 'folders',
+                name: item.uid,
+                title: item.title,
+                folder: item.parentUID,
+                canCreate: creatableNames.includes(item.uid),
+              },
+            ]
+          : []
       );
+      server.use(getCustomSearchHandler(hits));
     }
 
     beforeEach(() => {
-      useSelectableFoldersHandler([folderA.item.uid]);
+      searchURLs = [];
+      useCanCreateHandler([folderA.item.uid]);
+      server.events.on('request:start', ({ request }) => {
+        searchURLs.push(new URL(request.url));
+      });
+    });
+
+    afterEach(() => {
+      server.events.removeAllListeners('request:start');
     });
 
     it('shows folders the user cannot pick as read only, and does not select them', async () => {
@@ -669,27 +680,28 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
     });
 
-    it('keeps folders reachable but not selectable when the selectability check fails', async () => {
+    it('asks for canCreate in the same search as the folders', async () => {
       setTestFlags(readOnlyFlags);
-      server.use(
-        http.get(searchRoute, ({ request }) =>
-          new URL(request.url).searchParams.get('permission') === 'create'
-            ? HttpResponse.json({ message: 'authz unavailable' }, { status: 500 })
-            : undefined
-        )
-      );
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+      await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
+
+      const folderSearches = searchURLs.filter((url) => url.pathname.endsWith('/search'));
+      expect(folderSearches.length).toBeGreaterThan(0);
+      for (const url of folderSearches) {
+        expect(url.searchParams.get('include')).toBe('canCreate');
+        expect(url.searchParams.get('permission')).toBeNull();
+      }
+    });
+
+    it('shows the error when the search fails', async () => {
+      setTestFlags(readOnlyFlags);
+      server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'authz unavailable' }, { status: 500 })));
       const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
-      const folderRow = await screen.findByRole('treeitem', { name: new RegExp(folderA.item.title) });
-      expect(folderRow).toHaveAttribute('aria-disabled', 'true');
       expect(await screen.findByText('Error loading some folders')).toBeInTheDocument();
-
-      await user.click(within(folderRow).getByText(folderA.item.title));
-      expect(mockOnChange).not.toHaveBeenCalled();
-
-      await user.click(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
-      expect(await screen.findByRole('treeitem', { name: new RegExp(folderA_folderA.item.title) })).toBeInTheDocument();
+      expect(screen.queryByRole('treeitem', { name: new RegExp(folderA.item.title) })).not.toBeInTheDocument();
     });
 
     it('does not select a read only folder with the keyboard', async () => {
@@ -712,11 +724,10 @@ describe('NestedFolderPicker', () => {
       setTestFlags(readOnlyFlags);
       server.use(
         getCustomSearchHandler([
-          { resource: 'folders', name: 'searchable-editable', title: 'Searchable editable' },
-          { resource: 'folders', name: 'searchable-view-only', title: 'Searchable view only' },
+          { resource: 'folders', name: 'searchable-editable', title: 'Searchable editable', canCreate: true },
+          { resource: 'folders', name: 'searchable-view-only', title: 'Searchable view only', canCreate: false },
         ])
       );
-      useSelectableFoldersHandler(['searchable-editable']);
 
       const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));

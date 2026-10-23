@@ -36,13 +36,13 @@ jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   },
 }));
 
-const folderHits = (prefix: string, count: number, readOnly?: (index: number) => boolean) =>
+const folderHits = (prefix: string, count: number, canCreate: (index: number) => boolean = () => true) =>
   Array.from({ length: count }, (_, i) => ({
     name: `${prefix}-${i}`,
     title: `${prefix} ${String(i).padStart(2, '0')}`,
     folder: 'general',
     resource: 'folders',
-    readOnly: readOnly?.(i),
+    canCreate: canCreate(i),
   }));
 
 const loadedPage = (hits: ReturnType<typeof folderHits>) => ({ status: QueryStatus.fulfilled, data: { hits } });
@@ -96,7 +96,7 @@ describe('useFoldersQueryAppPlatform', () => {
   it('normalizes the canonical root folder sentinel', () => {
     mockPagesByOffset = {
       0: loadedPage([
-        { name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders', readOnly: undefined },
+        { name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders', canCreate: true },
       ]),
     };
     const { result } = renderFoldersQuery();
@@ -108,7 +108,7 @@ describe('useFoldersQueryAppPlatform', () => {
   });
 
   it('asks for read only folders to be marked, and disables them', () => {
-    mockPagesByOffset = { 0: loadedPage(folderHits('folder', 2, (i) => i === 1)) };
+    mockPagesByOffset = { 0: loadedPage(folderHits('folder', 2, (i) => i === 0)) };
     const { result } = renderFoldersQuery(true);
 
     loadNextPage(result);
@@ -121,13 +121,27 @@ describe('useFoldersQueryAppPlatform', () => {
       disabled: true,
       readOnly: true,
     });
+    expect(result.current.items.find((treeItem) => treeItem.item.uid === 'sharedwithme')).not.toHaveProperty(
+      'readOnly'
+    );
+  });
+
+  it('ignores canCreate when read only folders are not shown', () => {
+    mockPagesByOffset = { 0: loadedPage(folderHits('folder', 1, () => false)) };
+    const { result } = renderFoldersQuery();
+
+    loadNextPage(result);
+
+    expect(result.current.items.find((treeItem) => treeItem.item.uid === 'folder-0')).toMatchObject({
+      disabled: false,
+    });
   });
 
   it('loads the next page after a full one, and appends it in server order', () => {
     mockPagesByOffset = {
       0: loadedPage(folderHits('first', PAGE_SIZE)),
       [PAGE_SIZE]: loadedPage([
-        { name: 'last', title: 'aardvark', folder: 'general', resource: 'folders', readOnly: undefined },
+        { name: 'last', title: 'aardvark', folder: 'general', resource: 'folders', canCreate: true },
       ]),
     };
     const { result } = renderFoldersQuery(true);

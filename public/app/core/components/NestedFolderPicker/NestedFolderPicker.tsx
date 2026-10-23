@@ -9,7 +9,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagFoldersAppPlatformAPI, useFlagGrafanaFolderPickerFolderEditAccess } from '@grafana/runtime/internal';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
-import { dashboardAPIv0alpha1, getSelectableFoldersArgs } from 'app/api/clients/dashboard/v0alpha1';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -22,7 +21,6 @@ import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 import { type PermissionLevel } from 'app/types/acl';
-import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -75,28 +73,28 @@ export interface NestedFolderPickerProps {
 const debouncedSearch = debounce(getSearchResults, 300);
 
 type SearchResults = QueryResponse & {
-  items: DashboardViewItem[];
-  /** Names of the results the user can pick, when read only folders are shown */
-  selectableNames?: Set<string>;
+  items: Array<{ item: DashboardViewItem; readOnly: boolean }>;
 };
 
 async function getSearchResults(
   searchQuery: string,
   permission?: PermissionLevel,
-  getSelectableNames?: (names: string[]) => Promise<Set<string>>
+  showReadOnly?: boolean
 ): Promise<SearchResults> {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
-    // With read only folders shown, every folder is listed and selectability comes from a separate check
-    permission: getSelectableNames ? undefined : permission,
+    // With read only folders shown, every folder is listed and the server marks which ones can be picked
+    permission: showReadOnly ? undefined : permission,
+    includeCanCreate: showReadOnly,
   });
 
-  const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-  const selectableNames =
-    getSelectableNames && items.length > 0 ? await getSelectableNames(items.map((item) => item.uid)) : undefined;
-  return { ...queryResponse, items, selectableNames };
+  const items = queryResponse.view.map((v) => ({
+    item: queryResultToViewItem(v, queryResponse.view),
+    readOnly: Boolean(showReadOnly) && v.canCreate !== true,
+  }));
+  return { ...queryResponse, items };
 }
 
 export function NestedFolderPicker({
@@ -114,30 +112,12 @@ export function NestedFolderPicker({
   disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
 
   const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
   // Selectability comes from the search API, which only backs the picker with the app platform folder API
   const isFoldersAppPlatformAPIEnabled = useFlagFoldersAppPlatformAPI();
   const showReadOnly = isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && permission === 'edit';
-
-  const getSelectableNames = useCallback(
-    async (names: string[]) => {
-      try {
-        const response = await dispatch(
-          dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(getSelectableFoldersArgs(names), {
-            subscribe: false,
-          })
-        ).unwrap();
-        return new Set(response.hits.map((hit) => hit.name));
-      } catch {
-        // Show the results as read only rather than selectable when the check fails
-        return new Set<string>();
-      }
-    },
-    [dispatch]
-  );
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -192,7 +172,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission, showReadOnly ? getSelectableNames : undefined).then((queryResponse) => {
+    debouncedSearch(search, permission, showReadOnly).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -203,7 +183,7 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission, showReadOnly, getSelectableNames]);
+  }, [search, permission, showReadOnly]);
 
   // the order of middleware is important!
   const middleware = [
@@ -299,10 +279,8 @@ export function NestedFolderPicker({
         flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       }
     } else {
-      const selectableNames = searchResults?.selectableNames;
-      flatTree = (searchResults?.items ?? []).map((item) => {
+      flatTree = (searchResults?.items ?? []).map(({ item, readOnly }) => {
         const treeItem = { isOpen: false, level: 0, item };
-        const readOnly = selectableNames !== undefined && !selectableNames.has(item.uid);
         return readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
       });
     }
@@ -314,7 +292,6 @@ export function NestedFolderPicker({
     folderFilter,
     isBrowsing,
     searchResults?.items,
-    searchResults?.selectableNames,
     showRootFolder,
     teamFolderTreeItems,
     starredFolderTreeItems,

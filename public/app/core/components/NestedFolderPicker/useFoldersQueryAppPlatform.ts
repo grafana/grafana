@@ -2,8 +2,9 @@ import { createSelector } from '@reduxjs/toolkit';
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { t } from '@grafana/i18n';
-import { dashboardAPIv0alpha1, type FolderChildrenPage } from 'app/api/clients/dashboard/v0alpha1';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { isRootFolderUID } from 'app/features/search/constants';
@@ -68,8 +69,8 @@ export function useFoldersQueryAppPlatform({
           isLoading = true;
         }
 
-        if (!error) {
-          error = response.error ?? response.data?.selectabilityError;
+        if (!error && response.error) {
+          error = response.error;
         }
 
         const parentName = response.originalArgs?.folder;
@@ -150,7 +151,7 @@ export function useFoldersQueryAppPlatform({
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
       // Pages keep the server's title order, so each new page only appends to the rows already shown
-      let folders: FolderChildrenPage['hits'] = pages.flatMap((page) => page.data?.hits ?? []);
+      let folders: DashboardHit[] = pages.flatMap((page) => page.data?.hits ?? []);
 
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
       // This is backed by the same search endpoint, using `folder=sharedwithme`.
@@ -178,7 +179,9 @@ export function useFoldersQueryAppPlatform({
             parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
           },
         };
-        const flatItem = item.readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
+        // A folder the server didn't mark as creatable is read only, so it's never picked by mistake
+        const readOnly = showReadOnly && name !== sharedWithMeFolderToken && item.canCreate !== true;
+        const flatItem = readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
 
         const childPages = folderIsOpen ? state.pagesByParent[name] : undefined;
         if (childPages?.length) {
@@ -209,7 +212,7 @@ export function useFoldersQueryAppPlatform({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, showReadOnly]);
 
   return {
     emptyFolders,

@@ -36,6 +36,8 @@ export interface SearchQuery {
   from?: number;
   starred?: boolean;
   permission?: PermissionLevel;
+  // Mark each folder hit with whether the user can create dashboards in it. Only supported for folders
+  includeCanCreate?: boolean;
   deleted?: boolean;
   // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
@@ -54,6 +56,8 @@ export interface DashboardQueryResult {
   isDeleted?: boolean;
   // When the object was deleted, as an ISO timestamp. Only deleted results carry it.
   deletionTimestamp?: string;
+  // Only set when the search asked for includeCanCreate
+  canCreate?: boolean;
 
   /**
    * Who manages this resource (e.g. provisioning). From unified search this is
