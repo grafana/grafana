@@ -55,10 +55,7 @@ export class StPodReadinessService {
     if (this.state.getValue() === StPodStatus.Ready) {
       return Promise.resolve();
     }
-    if (!this.pending) {
-      this.pending = createPending();
-    }
-    return this.pending.promise;
+    return this.ensurePending().promise;
   }
 
   start(): void {
@@ -94,9 +91,20 @@ export class StPodReadinessService {
   private reset(): void {
     this.clearTimers();
     this.readyAt = null;
+    this.resolvePending();
+    this.state.next(StPodStatus.Unknown);
+  }
+
+  private resolvePending(): void {
     this.pending?.resolve();
     this.pending = null;
-    this.state.next(StPodStatus.Unknown);
+  }
+
+  private ensurePending(): PendingResolver {
+    if (!this.pending) {
+      this.pending = createPending();
+    }
+    return this.pending;
   }
 
   private beginPolling(): void {
@@ -130,7 +138,7 @@ export class StPodReadinessService {
     }
     this.readyAt = Date.now();
     this.state.next(StPodStatus.Ready);
-    this.pending?.resolve();
+    this.resolvePending();
     this.clearTimers();
   }
 
@@ -138,9 +146,7 @@ export class StPodReadinessService {
     if (this.state.getValue() === StPodStatus.Waiting) {
       return;
     }
-    if (!this.pending) {
-      this.pending = createPending();
-    }
+    this.ensurePending();
     this.state.next(StPodStatus.Waiting);
   }
 
