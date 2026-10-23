@@ -7,6 +7,7 @@ import {
   type AdHocFilterWithLabels,
   behaviors,
   ConstantVariable,
+  CustomVariable,
   DataSourceVariable,
   GroupByVariable,
   IntervalVariable,
@@ -82,7 +83,6 @@ import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiVal
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
-import { ResettingCustomVariable } from './custom-variables/ResettingCustomVariable';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
@@ -399,7 +399,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   }
 
   if (variable.kind === defaultCustomVariableKind().kind) {
-    return new ResettingCustomVariable({
+    return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
