@@ -3,6 +3,7 @@ package rendering
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -74,35 +75,29 @@ type ErrorOpts struct {
 	ErrorRenderUnavailable bool
 }
 
+// Result contains either a local file or in-memory content, according to the configured store.
 type Result struct {
 	FilePath string
 	FileName string
+	Data     []byte
 }
 
-type RenderResult struct {
-	FilePath string
+type RenderResult Result
+type RenderCSVResult Result
+
+type RenderCredentials struct {
+	Key     string
+	Headers http.Header
 }
 
-type RenderCSVResult struct {
-	FilePath string
-	FileName string
+// RenderKeyProvider authenticates the renderer's callback to Grafana.
+type RenderKeyProvider interface {
+	Get(ctx context.Context, opts AuthOpts) (RenderCredentials, error)
+	Release(ctx context.Context, credentials RenderCredentials)
+	Validate(ctx context.Context, key string) (*RenderUser, bool)
 }
 
-type renderFunc func(ctx context.Context, renderType RenderType, renderKey string, options Opts) (*RenderResult, error)
-type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
-
-type renderKeyProvider interface {
-	get(ctx context.Context, opts AuthOpts) (string, error)
-	afterRequest(ctx context.Context, opts AuthOpts, renderKey string)
-	validate(ctx context.Context, key string) (*RenderUser, bool)
-}
-
-type CapabilitySupportRequestResult struct {
-	IsSupported      bool
-	SemverConstraint string
-}
-
-//go:generate go run go.uber.org/mock/mockgen@v0.5.2 -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
+//go:generate go run go.uber.org/mock/mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
 	IsAvailable(ctx context.Context) bool
 	Version() string
@@ -110,6 +105,4 @@ type Service interface {
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, err error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
-	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
-	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
 }

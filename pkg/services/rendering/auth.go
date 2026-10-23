@@ -31,7 +31,7 @@ type renderJWT struct {
 }
 
 func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
-	if rs.perRequestRenderKeyProvider == nil {
+	if rs.keys == nil {
 		// Rendering is not configured. Just reject the token; it has no reasonable use here.
 		return nil, false
 	}
@@ -39,14 +39,14 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 	var from string
 	start := time.Now()
 
-	renderUser, found := rs.perRequestRenderKeyProvider.validate(ctx, key)
+	renderUser, found := rs.keys.Validate(ctx, key)
 	success := strconv.FormatBool(found)
 	metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
 
 	return renderUser, found
 }
 
-func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
+func setRenderKey(cache remotecache.CacheStorage, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
 	buf := bytes.NewBuffer(nil)
 	err := gob.NewEncoder(buf).Encode(&RenderUser{
 		OrgID:   opts.OrgID,
@@ -60,7 +60,7 @@ func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts Auth
 	return cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), buf.Bytes(), expiry)
 }
 
-func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {
+func generateAndSetRenderKey(cache remotecache.CacheStorage, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {
 	key, err := util.GetRandomString(32)
 	if err != nil {
 		return "", err
@@ -74,7 +74,7 @@ func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context
 	return key, nil
 }
 
-func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context.Context, renderKey string) {
+func deleteRenderKey(cache remotecache.CacheStorage, log log.Logger, ctx context.Context, renderKey string) {
 	err := cache.Delete(ctx, fmt.Sprintf(renderKeyPrefix, renderKey))
 	if err != nil {
 		log.Error("Failed to delete render key", "error", err)
@@ -82,20 +82,21 @@ func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context
 }
 
 type perRequestRenderKeyProvider struct {
-	cache     *remotecache.RemoteCache
+	cache     remotecache.CacheStorage
 	log       log.Logger
 	keyExpiry time.Duration
 }
 
-func (r *perRequestRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
-	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry)
+func (r *perRequestRenderKeyProvider) Get(ctx context.Context, opts AuthOpts) (RenderCredentials, error) {
+	key, err := generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry)
+	return RenderCredentials{Key: key}, err
 }
 
-func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOpts, renderKey string) {
-	deleteRenderKey(r.cache, r.log, ctx, renderKey)
+func (r *perRequestRenderKeyProvider) Release(ctx context.Context, credentials RenderCredentials) {
+	deleteRenderKey(r.cache, r.log, ctx, credentials.Key)
 }
 
-func (r *perRequestRenderKeyProvider) validate(ctx context.Context, key string) (*RenderUser, bool) {
+func (r *perRequestRenderKeyProvider) Validate(ctx context.Context, key string) (*RenderUser, bool) {
 	val, err := r.cache.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		r.log.Error("Could not get render user from remote cache", "err", err)
@@ -120,9 +121,10 @@ type jwtRenderKeyProvider struct {
 	keyExpiry time.Duration
 }
 
-func (j *jwtRenderKeyProvider) get(_ context.Context, opts AuthOpts) (string, error) {
+func (j *jwtRenderKeyProvider) Get(_ context.Context, opts AuthOpts) (RenderCredentials, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, j.buildJWTClaims(opts))
-	return token.SignedString(j.authToken)
+	key, err := token.SignedString(j.authToken)
+	return RenderCredentials{Key: key}, err
 }
 
 func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
@@ -138,11 +140,11 @@ func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
 	}
 }
 
-func (j *jwtRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ string) {
+func (j *jwtRenderKeyProvider) Release(_ context.Context, _ RenderCredentials) {
 	// do nothing - the JWT will just expire
 }
 
-func (j *jwtRenderKeyProvider) validate(_ context.Context, key string) (*RenderUser, bool) {
+func (j *jwtRenderKeyProvider) Validate(_ context.Context, key string) (*RenderUser, bool) {
 	if !looksLikeJWT(key) {
 		return nil, false
 	}

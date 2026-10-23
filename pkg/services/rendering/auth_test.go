@@ -22,7 +22,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 
 	assertNotAuthenticated := func(t *testing.T, key string) {
 		t.Helper()
-		user, found := j.validate(t.Context(), key)
+		user, found := j.Validate(t.Context(), key)
 		require.False(t, found)
 		require.Nil(t, user)
 	}
@@ -39,7 +39,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			},
 		})
 
-		renderUser, found := j.validate(t.Context(), key)
+		renderUser, found := j.Validate(t.Context(), key)
 		require.True(t, found)
 		require.NotNil(t, renderUser)
 		require.Equal(t, &RenderUser{OrgID: 1, UserID: 2, OrgRole: "Viewer"}, renderUser)

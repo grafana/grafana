@@ -119,13 +119,11 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	}
 
 	hs := &HTTPServer{
-		authnService: &authntest.FakeService{},
-		Cfg:          cfg,
-		Features:     features,
-		License:      &licensing.OSSLicensingService{Cfg: cfg},
-		RenderService: &rendering.RenderingService{
-			Cfg: cfg,
-		},
+		authnService:          &authntest.FakeService{},
+		Cfg:                   cfg,
+		Features:              features,
+		License:               &licensing.OSSLicensingService{Cfg: cfg},
+		RenderService:         &rendering.RenderingService{},
 		SQLStore:              db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
