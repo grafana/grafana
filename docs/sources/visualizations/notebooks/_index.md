@@ -15,7 +15,7 @@ description: Combine notes, queries, and visualizations in Grafana notebooks to 
 
 Notebooks combine notes, queries, and visualizations in a single document in Grafana.
 They provide a way to investigate a problem, explain what you found, and share the supporting data with your team.
-You can start a notebook yourself or create one with Grafana Assistant.
+You can start a notebook yourself or [create one with Grafana Assistant](#create-notebooks-from-grafana-assistant-workspace).
 
 Text blocks capture notes and context, and you can add panels from dashboards or queries from Explore.
 Every block is directly editable, including queries and visualizations, and you can reorder or remove blocks as your investigation develops.
@@ -23,15 +23,6 @@ Every block is directly editable, including queries and visualizations, and you 
 Notebooks facilitate troubleshooting, investigation handoffs, and post-incident reviews.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-v13.3.png" max-width="750px" alt="A notebook with an investigation into excessive series" >}}
-
-## When to use notebooks
-
-Dashboards, the Workspace canvas, and notebooks each help you work with your data in a different way.
-They differ in design effort, ease of editing, and reuse.
-
-- **Dashboards** are reusable, curated views. Building one while you're still exploring requires design decisions, and adding exploratory work can make the dashboard less curated.
-- **The Workspace canvas** is a temporary exploration space. You can explore without design work, but because an agent creates the canvas, you can't edit it, and it doesn't persist.
-- **Notebooks** are a scratchpad you can refine. A notebook picks up where the Workspace canvas leaves off. You write and edit it as you explore, then clean it up into a reusable record.
 
 ## Manage notebooks
 
