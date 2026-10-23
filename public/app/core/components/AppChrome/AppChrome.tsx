@@ -21,7 +21,11 @@ import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
-import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
+import {
+  FLOATING_EXTENSION_SIDEBAR_MAX_WIDTH,
+  MAX_EXTENSION_SIDEBAR_WIDTH,
+  MIN_EXTENSION_SIDEBAR_WIDTH,
+} from './ExtensionSidebar/constants';
 import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
 import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
@@ -407,7 +411,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
     sidebarContainerFloatingBar: css({
       // `Resizable` sets width and height inline.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(480px, calc(100% - ${theme.spacing(4)})) !important` as 'auto',
+      width: `min(${FLOATING_EXTENSION_SIDEBAR_MAX_WIDTH}px, calc(100% - ${theme.spacing(4)})) !important` as 'auto',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
