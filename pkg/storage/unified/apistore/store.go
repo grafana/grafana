@@ -514,8 +514,14 @@ func (s *Storage) Delete(
 			return fmt.Errorf("unable to read object %w", err)
 		}
 		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
-			return err
+			// Nothing left in git to delete, so remove the resource here rather than strand it.
+			if !s.isOrphanedRepositoryRootFolder(ctx, meta) {
+				_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+				if !errors.Is(err, errManagerGone) {
+					return err
+				}
+			}
+			logging.FromContext(ctx).Info("deleting managed resource whose repository is gone", "key", key)
 		}
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()

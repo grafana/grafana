@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -1924,7 +1925,6 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
-	t.Skip("flaky: times out")
 	helper := sharedHelper(t)
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
@@ -2803,4 +2803,48 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
 		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "root folder title should be updated after sync")
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedManagedResources covers resources that outlive the
+// repository managing them: the root folder, which has a manager but no source path, and a synced
+// dashboard, whose write is routed to a repository that is no longer there.
+func TestIntegrationProvisioning_DeleteOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphaned-resources"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{"all-panels.json": "dashboard.json"},
+	})
+
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 1)
+	dashboardName := dashboards[0].GetName()
+
+	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, rootFolder.GetAnnotations(), utils.AnnoKeySourcePath,
+		"the root folder represents the repository, not a file")
+
+	// Keep only the cleanup finalizer, so deleting the repository leaves its resources behind.
+	finalizerPatch := []byte(fmt.Sprintf(`[{"op":"replace","path":"/metadata/finalizers","value":[%q]}]`,
+		repository.CleanFinalizer))
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, finalizerPatch, metav1.PatchOptions{})
+	require.NoError(t, err)
+
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+	helper.WaitForRepositoryDeleted(t, repo)
+
+	_, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err, "the root folder should have outlived its repository")
+
+	t.Run("an orphaned dashboard can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), dashboardName, metav1.DeleteOptions{}))
+		helper.RequireDashboardsNotFound(t, dashboardName)
+	})
+
+	t.Run("an orphaned root folder can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+		helper.RequireFoldersNotFound(t, repo)
+	})
 }
