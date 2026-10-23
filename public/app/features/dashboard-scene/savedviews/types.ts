@@ -30,7 +30,6 @@ export interface SavedViewTimeRange {
 export interface SavedDashboardViewSpec {
   dashboardUID: string;
   name: string;
-  description?: string;
   timeRange: SavedViewTimeRange;
   variables: SavedViewVariable[];
 }
