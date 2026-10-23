@@ -74,7 +74,7 @@ func TestParents(t *testing.T) {
 			},
 			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{
 				{Name: "test", Parent: "parent"},
-				{Name: "parent", Detached: true, Description: "custom error message"},
+				{Name: "parent", Detached: true, Description: "Unable to read parent folder"},
 			}},
 		},
 		{
@@ -90,7 +90,7 @@ func TestParents(t *testing.T) {
 			},
 			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{
 				{Name: "test", Parent: "parent"},
-				{Name: "parent", Detached: true, Description: "expected folder, found: *unstructured.Unstructured"},
+				{Name: "parent", Detached: true, Description: "Unable to read parent folder"},
 			}},
 		},
 		{

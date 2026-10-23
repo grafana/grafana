@@ -160,7 +160,7 @@ export class K8sDashboardV2API
 
     const requestOptions = getRequestOptions(options);
 
-    if (obj.metadata.name) {
+    if (obj.metadata.name && !options.create) {
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
     }

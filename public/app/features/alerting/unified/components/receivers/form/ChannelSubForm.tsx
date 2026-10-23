@@ -1,13 +1,12 @@
-import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
 import { type JSX, useEffect, useMemo } from 'react';
 import { Controller, type FieldErrors, useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Box, Button, Field, Select, Stack, Text } from '@grafana/ui';
 import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import {
@@ -64,7 +63,6 @@ export function ChannelSubForm<R extends ChannelValues>({
   canEditProtectedFields,
   customValidators = {},
 }: Props<R>): JSX.Element {
-  const styles = useStyles2(getStyles);
   const { control, watch, register, trigger, formState, setValue, getValues, unregister } =
     useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
@@ -243,147 +241,157 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
-    <div className={styles.wrapper} data-testid="item-container">
-      <div className={styles.topRow}>
-        <div>
-          <Field
-            label={t('alerting.channel-sub-form.label-integration', 'Integration')}
-            htmlFor={contactPointTypeInputId}
-            data-testid={selectors.pages.Alerting.ContactPointForm.integrationTypeField(pathPrefix)}
-            noMargin
-          >
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Controller
-                name={typeFieldPath}
-                control={control}
-                defaultValue={defaultValues.type}
-                render={({ field: { ref, onChange, ...field } }) => (
-                  <Select
-                    disabled={!isEditable}
-                    inputId={contactPointTypeInputId}
-                    {...field}
-                    width={37}
-                    options={typeOptions}
-                    onChange={(value) => onChange(value?.value)}
+    <Box
+      marginY={2}
+      padding={2}
+      borderStyle="solid"
+      borderColor="medium"
+      borderRadius="lg"
+      data-testid="item-container"
+    >
+      <Stack direction="column" gap={2}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-end" wrap="wrap" gap={2}>
+          <Box minWidth={0} maxWidth="100%">
+            <Field
+              label={t('alerting.channel-sub-form.label-integration', 'Integration')}
+              htmlFor={contactPointTypeInputId}
+              data-testid={selectors.pages.Alerting.ContactPointForm.integrationTypeField(pathPrefix)}
+              noMargin
+            >
+              <Stack direction="row" alignItems="center" wrap="wrap" gap={1}>
+                <Box width={37} maxWidth="100%" minWidth={0}>
+                  <Controller
+                    name={typeFieldPath}
+                    control={control}
+                    defaultValue={defaultValues.type}
+                    render={({ field: { ref, onChange, ...field } }) => (
+                      <Select
+                        disabled={!isEditable}
+                        inputId={contactPointTypeInputId}
+                        {...field}
+                        options={typeOptions}
+                        onChange={(value) => onChange(value?.value)}
+                      />
+                    )}
+                  />
+                </Box>
+                {notifierIsDeprecated && (
+                  <Badge
+                    text={t('alerting.channel-sub-form.badge-deprecated', 'Deprecated')}
+                    color="orange"
+                    icon="exclamation-triangle"
+                    tooltip={t(
+                      'alerting.channel-sub-form.tooltip-deprecated',
+                      'This integration is deprecated and will be removed in a future release.'
+                    )}
                   />
                 )}
-              />
-              {notifierIsDeprecated && (
-                <Badge
-                  text={t('alerting.channel-sub-form.badge-deprecated', 'Deprecated')}
-                  color="orange"
-                  icon="exclamation-triangle"
-                  tooltip={t(
-                    'alerting.channel-sub-form.tooltip-deprecated',
-                    'This integration is deprecated and will be removed in a future release.'
-                  )}
+                {isLegacy && integrationVersion && (
+                  <Badge
+                    text={getLegacyVersionLabel(integrationVersion)}
+                    color="orange"
+                    icon="exclamation-triangle"
+                    tooltip={t(
+                      'alerting.channel-sub-form.tooltip-legacy-version',
+                      'This is a legacy integration (version: {{version}}). It cannot be modified.',
+                      { version: integrationVersion }
+                    )}
+                  />
+                )}
+              </Stack>
+            </Field>
+          </Box>
+          <Stack direction="row" wrap="wrap" gap={1}>
+            {isTestable && onTest && isTestAvailable && (
+              <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
+                <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
+              </Button>
+            )}
+            {isEditable && (
+              <>
+                {/* Only show duplicate button if the notifier type can be created */}
+                {notifier && canCreateNotifier(notifier.dto) && (
+                  <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+                    <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    data-testid={`${pathPrefix}delete-button`}
+                    size="xs"
+                    variant="secondary"
+                    type="button"
+                    onClick={() => onDelete()}
+                    icon="trash-alt"
+                  >
+                    <Trans i18nKey="alerting.channel-sub-form.delete">Delete</Trans>
+                  </Button>
+                )}
+              </>
+            )}
+          </Stack>
+        </Stack>
+        {notifier && (
+          <Box width="100%" maxWidth={67}>
+            {showTelegramWarning && (
+              <Alert
+                title={t(
+                  'alerting.contact-points.telegram.parse-mode-warning-title',
+                  'Telegram messages are limited to 4096 UTF-8 characters.'
+                )}
+                severity="warning"
+              >
+                <Trans i18nKey="alerting.contact-points.telegram.parse-mode-warning-body">
+                  If you use a <Text variant="code">parse_mode</Text> option other than <Text variant="code">None</Text>
+                  , truncation may result in an invalid message, causing the notification to fail. For longer messages,
+                  we recommend using an alternative contact method.
+                </Trans>
+              </Alert>
+            )}
+            <ChannelOptions<R>
+              defaultValues={defaultValues}
+              selectedChannelOptions={mandatoryOptions.length ? mandatoryOptions : optionalOptions}
+              errors={errors}
+              onResetSecureField={onResetSecureField}
+              onDeleteSubform={onDeleteSubform}
+              integrationPrefix={channelFieldPath}
+              readOnly={!isEditable}
+              canEditProtectedFields={canEditProtectedFields}
+              customValidators={customValidators}
+            />
+            {!!(mandatoryOptions.length && optionalOptions.length) && (
+              <CollapsibleSection
+                label={t('alerting.channel-sub-form.label-section', 'Optional {{name}} settings', {
+                  name: notifier.dto.name,
+                })}
+              >
+                {notifier.dto.info && (
+                  <Alert title="" severity="info">
+                    {notifier.dto.info}
+                  </Alert>
+                )}
+                <ChannelOptions<R>
+                  defaultValues={defaultValues}
+                  selectedChannelOptions={optionalOptions}
+                  onResetSecureField={onResetSecureField}
+                  onDeleteSubform={onDeleteSubform}
+                  errors={errors}
+                  integrationPrefix={channelFieldPath}
+                  readOnly={!isEditable}
+                  canEditProtectedFields={canEditProtectedFields}
+                  customValidators={customValidators}
                 />
-              )}
-              {isLegacy && integrationVersion && (
-                <Badge
-                  text={getLegacyVersionLabel(integrationVersion)}
-                  color="orange"
-                  icon="exclamation-triangle"
-                  tooltip={t(
-                    'alerting.channel-sub-form.tooltip-legacy-version',
-                    'This is a legacy integration (version: {{version}}). It cannot be modified.',
-                    { version: integrationVersion }
-                  )}
-                />
-              )}
-            </Stack>
-          </Field>
-        </div>
-        <div className={styles.buttons}>
-          {isTestable && onTest && isTestAvailable && (
-            <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
-              <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
-            </Button>
-          )}
-          {isEditable && (
-            <>
-              {/* Only show duplicate button if the notifier type can be created */}
-              {notifier && canCreateNotifier(notifier.dto) && (
-                <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                  <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
-                </Button>
-              )}
-              {onDelete && (
-                <Button
-                  data-testid={`${pathPrefix}delete-button`}
-                  size="xs"
-                  variant="secondary"
-                  type="button"
-                  onClick={() => onDelete()}
-                  icon="trash-alt"
-                >
-                  <Trans i18nKey="alerting.channel-sub-form.delete">Delete</Trans>
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-      {notifier && (
-        <div className={styles.innerContent}>
-          {showTelegramWarning && (
-            <Alert
-              title={t(
-                'alerting.contact-points.telegram.parse-mode-warning-title',
-                'Telegram messages are limited to 4096 UTF-8 characters.'
-              )}
-              severity="warning"
-            >
-              <Trans i18nKey="alerting.contact-points.telegram.parse-mode-warning-body">
-                If you use a <Text variant="code">parse_mode</Text> option other than <Text variant="code">None</Text>,
-                truncation may result in an invalid message, causing the notification to fail. For longer messages, we
-                recommend using an alternative contact method.
-              </Trans>
-            </Alert>
-          )}
-          <ChannelOptions<R>
-            defaultValues={defaultValues}
-            selectedChannelOptions={mandatoryOptions.length ? mandatoryOptions : optionalOptions}
-            errors={errors}
-            onResetSecureField={onResetSecureField}
-            onDeleteSubform={onDeleteSubform}
-            integrationPrefix={channelFieldPath}
-            readOnly={!isEditable}
-            canEditProtectedFields={canEditProtectedFields}
-            customValidators={customValidators}
-          />
-          {!!(mandatoryOptions.length && optionalOptions.length) && (
+              </CollapsibleSection>
+            )}
             <CollapsibleSection
-              label={t('alerting.channel-sub-form.label-section', 'Optional {{name}} settings', {
-                name: notifier.dto.name,
-              })}
+              label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
             >
-              {notifier.dto.info && (
-                <Alert title="" severity="info">
-                  {notifier.dto.info}
-                </Alert>
-              )}
-              <ChannelOptions<R>
-                defaultValues={defaultValues}
-                selectedChannelOptions={optionalOptions}
-                onResetSecureField={onResetSecureField}
-                onDeleteSubform={onDeleteSubform}
-                errors={errors}
-                integrationPrefix={channelFieldPath}
-                readOnly={!isEditable}
-                canEditProtectedFields={canEditProtectedFields}
-                customValidators={customValidators}
-              />
+              <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
             </CollapsibleSection>
-          )}
-          <CollapsibleSection
-            label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
-          >
-            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
-          </CollapsibleSection>
-        </div>
-      )}
-    </div>
+          </Box>
+        )}
+      </Stack>
+    </Box>
   );
 }
 
@@ -396,28 +404,3 @@ function getDefaultNotifierSettings(notifier: Notifier): Record<string, string> 
   });
   return defaultSettings;
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  buttons: css({
-    '& > * + *': {
-      marginLeft: theme.spacing(1),
-    },
-  }),
-  innerContent: css({
-    maxWidth: '536px',
-  }),
-  wrapper: css({
-    margin: theme.spacing(2, 0),
-    padding: theme.spacing(1),
-    border: `solid 1px ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.lg,
-  }),
-  topRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  }),
-  channelSettingsHeader: css({
-    marginTop: theme.spacing(2),
-  }),
-});

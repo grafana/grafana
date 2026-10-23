@@ -800,13 +800,15 @@ func (allUncheckedClient) IsCompatibleWithRBAC(string, string) bool { return fal
 // recordingIndex answers every search with no hits and keeps the last request.
 type recordingIndex struct {
 	*MockResourceIndex
-	req *resourcepb.ResourceSearchRequest
+	req     *resourcepb.ResourceSearchRequest
+	indexes *SearchIndexes
 	// duringSearch, if set, runs while the index is searched.
 	duringSearch func()
 }
 
-func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, indexes *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	r.req = req
+	r.indexes = indexes
 	if r.duringSearch != nil {
 		r.duringSearch()
 	}

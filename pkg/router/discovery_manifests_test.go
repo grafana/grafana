@@ -2,7 +2,9 @@ package router
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -692,4 +694,14 @@ func TestManifestDiscoveryBeforeFirstReconcile(t *testing.T) {
 
 	_, err = r.GetManifest(t.Context(), manifestTestGroup)
 	require.True(t, apierrors.IsNotFound(err))
+}
+
+// buildManifestDocs builds the documents for backends without a cache.
+func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
+	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
+	return docs
+}
+
+func (d *manifestDocs) writeList(w io.Writer) error {
+	return writeManifestList(w, d.items)
 }

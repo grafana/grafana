@@ -710,7 +710,7 @@ type hybridFakeIndex struct {
 	gotManagedByReq *resourcepb.ResourceSearchRequest
 }
 
-func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if req.Options.GetKey().GetResource() == "folders" {

@@ -96,7 +96,7 @@ function CommandPaletteContents() {
     ref
   );
 
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('command-palette.dialog-label', 'Command palette') }, ref);
 
   // Report interaction when opened/closed
   useEffect(() => {
