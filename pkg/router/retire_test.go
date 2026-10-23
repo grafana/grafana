@@ -48,7 +48,7 @@ func (h *destroyableHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	case h.release != nil:
 		<-h.release
 	}
-	_, _ = w.Write([]byte(h.name))
+	_, _ = w.Write([]byte(h.name)) // nolint:gosec // G705: XSS via taint analysis (gosec)
 }
 
 func (h *destroyableHandler) Destroy() { close(h.destroyed) }
