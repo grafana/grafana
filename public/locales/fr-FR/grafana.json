@@ -1440,6 +1440,36 @@
       "saving": "Enregistrement en cours...",
       "title-error-saving-receiver": "Erreur lors de l’enregistrement du récepteur"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Pour modifier la configuration de votre Alertmanager, accédez à la page d’administration des alertes. Si vous n’y avez pas accès, contactez votre administrateur.",
       "admin-hint-external": "Pour modifier la configuration de votre Alertmanager, accédez à la page d’administration des alertes. Si vous n’y avez pas accès, contactez votre administrateur.",
@@ -1765,7 +1795,9 @@
         "autosync-tooltip-unsupported": "La synchronisation automatique n’est pas disponible pour ce type d’Alertmanager. Pour l’activer, sélectionnez une source de données Mimir ou Cortex.",
         "datasource": "Source de données Alertmanager",
         "datasource-autosync-badge": "Synchronisation automatique",
+        "embedded-yaml-parse-error": "",
         "heading": "Importer des ressources de notification",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Aucune source de données Alertmanager trouvée",
         "no-permission-desc": "Vous n’avez pas l’autorisation d’importer des ressources de notification. Vous avez besoin de l’autorisation <strong>alerting.notifications:write</strong>. Vous pouvez ignorer cette étape.",
@@ -7420,6 +7452,57 @@
       "usage-count_one": "Utilisé sur {{count}} tableaux de bord",
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Ajouter un lien",
       "remove-link": "Supprimer le lien",
@@ -7745,6 +7828,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Une erreur inattendue est survenue lors de l’enregistrement."
     },
     "save-library-viz-panel-modal": {
@@ -8037,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Ouvrir le volet de requête",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Ouvrir le volet de requête"
     },
     "viz-panel-links-renderer": {
@@ -13634,6 +13720,13 @@
       "save-tooltip": "Enregistrer"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Chargement…"
   },
@@ -15460,11 +15553,6 @@
       "original-query": "Requête d’origine",
       "trace-id": "(ID de trace : {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Ajouter une requête",
-      "expression": "Expression",
-      "title-data-source-help": "Aide sur la source de données"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Intervalle = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15592,31 @@
     "accept": "Accepter",
     "assistant-context-title": "Contexte de co-création de requêtes",
     "assistant-instructions-title": "Instructions de co-création de requêtes",
-    "assistant-unavailable": "L’assistant n’est pas disponible",
-    "assistant-unavailable-body": "La co-création de requêtes nécessite Grafana Assistant.",
-    "building": "Génération de la requête…",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Vérification de la disponibilité de l’assistant…",
     "clarification-label": "Ajoutez des détails supplémentaires",
     "clarification-message": "Message de clarification",
-    "clarification-placeholder": "Ajoutez des détails supplémentaires…",
+    "clarification-placeholder": "",
     "clarification-title": "Détails demandés",
     "close": "Fermer la co-création",
-    "context": "CONTEXTE",
-    "context-error": "Impossible de lire le contexte de la requête sélectionnée",
+    "context-error": "",
     "continue": "Continuer",
     "continue-here": "Continuer ici",
     "continue-in-assistant": "Continuer dans l’assistant",
-    "continue-in-assistant-chat": "Continuer dans le chat de l’assistant",
     "dialog": "Coauteur de la requête",
     "dismiss": "Ignorer",
     "error": "Erreur de co-création de requête",
     "error-accept-failed": "La proposition de requête n’a pas pu être acceptée. Réessayez.",
     "error-multiple-responses": "L’assistant a renvoyé des propositions de requête contradictoires. Réessayez.",
     "error-preview-failed": "Impossible de prévisualiser la proposition de requête. Réessayez.",
+    "explain-failed": "",
     "explain-or-modify": "Expliquer ou modifier",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Annuler",
     "feedback-description": "Vos commentaires contribuent à améliorer l’expérience des requêtes dans Grafana.",
     "feedback-error": "Les commentaires n’ont pas pu être envoyés. Réessayez.",
@@ -15536,36 +15627,61 @@
     "feedback-not-helpful": "Inutile",
     "feedback-positive-placeholder": "Qu’avez-vous aimé ? Comment l’expérience aurait-elle pu être encore meilleure ?",
     "feedback-positive-title": "Qu’est-ce qui s’est bien passé ?",
-    "feedback-privacy": "Votre note, votre commentaire et le type d’interaction (proposition ou transfert) sont envoyés. Votre requête, votre prompt et la réponse de l’assistant ne sont pas inclus.",
+    "feedback-privacy": "",
     "feedback-recipient": "Vos commentaires seront transmis aux équipes en charge des requêtes.",
     "feedback-send": "Envoyer",
     "feedback-sending": "Envoi en cours…",
-    "focus": "FOCUS",
-    "handoff-guidance": "Vos modifications devront peut-être s’étendre à une autre source de données ou à des requêtes supplémentaires en dehors de celle sur laquelle nous nous concentrons. Continuez dans le chat de l’assistant pour effectuer des modifications plus importantes.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Requête mise en surbrillance",
-    "highlighted-query-summary": "Résumé de la requête en surbrillance",
+    "hold-to-peek": "",
     "invalid-query-response": "L’assistant n’a pas pu générer de code {{language}} valide après avoir tenté de réparer la proposition. Réessayez ou ajoutez plus de détails.",
     "iteration-nudge": "Vous travaillez sur un projet important ? Itérez sur des modifications plus larges avec plus d’espace.",
-    "open-in-chat": "Ouvrir dans le chat",
-    "original-change": "{{kind}} d’origine",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Aperçu de la requête",
+    "previous-option": "",
     "prompt-label": "Décrire une modification de requête",
-    "prompt-placeholder": "Décrivez un changement rapide…",
+    "prompt-placeholder": "",
     "proposal-details": "Détails de la proposition de requête",
-    "proposed-change": "{{kind}} proposé",
-    "reading-highlighted-query": "Lecture de la requête en surbrillance…",
+    "query-diff": "",
     "relevant-context": "Contexte de requête pertinent",
     "request-failed": "L’assistant n’a pas pu générer de proposition de requête. Réessayez.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Réessayer",
+    "retry-context": "",
     "running-updated-query": "Exécution de la requête mise à jour…",
+    "select-to-accept": "",
     "selection-ready": "La sélection fait partie de cette requête {{language}}.",
     "selection-whole-query": "La requête {{language}} complète est sélectionnée pour la co-création.",
     "selection-with-type": "{{name}} est un {{type}} {{kind}}.",
     "stale-query-response": "La requête en surbrillance a changé avant que la suggestion ne soit prête. Ignorez-la et mettez-la à nouveau en surbrillance.",
     "stop": "Arrêter",
     "submit": "Coauteur",
-    "suggestion-updated": "Suggestion mise à jour",
+    "submit-follow-up": "",
     "unchanged-query-response": "L’assistant a renvoyé la requête actuelle sans modification. Réessayez ou ajoutez plus de détails.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Les modifications non enregistrées du panneau ne seront pas perdues.",
     "working-focus": "Focus de la requête"
   },
@@ -16181,14 +16297,7 @@
       "time-range": "Verrouiller la période temporelle"
     },
     "export": {
-      "back-button": "Retour à la configuration de l'exportation",
-      "cancel-button": "Annuler",
-      "info-text": "Exporter ce tableau de bord.",
-      "loading": "Chargement en cours...",
-      "save-button": "Enregistrer dans un fichier",
-      "share-externally-label": "Exporter pour un partage externe",
-      "view-button": "Afficher au format JSON",
-      "view-button-yaml": "Afficher le fichier YAML"
+      "share-externally-label": "Exporter pour un partage externe"
     },
     "image": {
       "actions": "Actions d’exportation d’image",
@@ -16246,9 +16355,6 @@
       "dark": "Sombre",
       "field-name": "Thème",
       "light": "Clair"
-    },
-    "view-json": {
-      "copy-button": "Copier dans le presse-papier"
     }
   },
   "share-panel": {
@@ -17427,6 +17533,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Supprimez des parties des résultats de requête à l’aide d’un motif d’expression régulière."
       },
+      "deselect-all": "",
       "label-from-variable": "À partir de la variable",
       "label-identifier": "Identifiant",
       "label-use-variable": "Utiliser la variable",
@@ -17434,7 +17541,8 @@
       "name": {
         "filter-fields-by-name": "Filtrer les champs par nom"
       },
-      "placeholder-regular-expression-pattern": "Modèle d’expression régulière"
+      "placeholder-regular-expression-pattern": "Modèle d’expression régulière",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
