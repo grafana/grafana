@@ -190,7 +190,7 @@ func TestIntegrationAnnotationsAlertDiscriminator(t *testing.T) {
 		addAnnotation(t, store, annotations.Item{Text: "alert id and uid", AlertID: 3, AlertUID: "rule-c"}),
 		addAnnotation(t, store, annotations.Item{Text: "alert uid only", AlertUID: "rule-d"}),
 	}
-	dashboardID := addAnnotation(t, store, annotations.Item{Text: "dashboard", DashboardUID: "dash"})
+	dashboardID := addAnnotation(t, store, annotations.Item{Text: "dashboard", DashboardID: 5, DashboardUID: "dash"}) //nolint:staticcheck // Exercise legacy field compatibility.
 	apiIDs := []int64{
 		addAnnotation(t, store, annotations.Item{Text: "api"}),
 	}

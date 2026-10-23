@@ -24,7 +24,7 @@ func NewMySQLReader(db *sql.DB) *MySQLReader {
 // Totals reads the count and the highest id in one aggregate
 func (r *MySQLReader) Totals(ctx context.Context, orgID int64) (LegacyTotals, error) {
 	const query = "SELECT COUNT(*), COALESCE(MAX(id), 0) FROM annotation " +
-		"WHERE org_id = ? AND alert_id = 0"
+		"WHERE org_id = ? AND alert_id = 0 AND alert_uid = ''"
 
 	var totals LegacyTotals
 	if err := r.db.QueryRowContext(ctx, query, orgID).Scan(&totals.Count, &totals.MaxID); err != nil {
@@ -36,7 +36,7 @@ func (r *MySQLReader) Totals(ctx context.Context, orgID int64) (LegacyTotals, er
 // LatestChange returns the newest point on the legacy `updated` timeline.
 func (r *MySQLReader) LatestChange(ctx context.Context, orgID int64) (UpdateCursor, error) {
 	const query = "SELECT COALESCE(a.updated, 0), a.id FROM annotation a " +
-		"WHERE a.org_id = ? AND a.alert_id = 0 " +
+		"WHERE a.org_id = ? AND a.alert_id = 0 AND a.alert_uid = '' " +
 		"ORDER BY a.updated DESC, a.id DESC " +
 		"LIMIT 1"
 
@@ -63,7 +63,7 @@ const legacySelectFrom = "SELECT a.id, a.epoch, COALESCE(a.epoch_end, 0), " +
 
 func (r *MySQLReader) ReadBatch(ctx context.Context, orgID, afterID int64, limit int) ([]LegacyAnnotation, error) {
 	const query = legacySelectFrom +
-		"WHERE a.org_id = ? AND a.alert_id = 0 AND a.id > ? " +
+		"WHERE a.org_id = ? AND a.alert_id = 0 AND a.alert_uid = '' AND a.id > ? " +
 		"ORDER BY a.id ASC " +
 		"LIMIT ?"
 
@@ -75,7 +75,7 @@ func (r *MySQLReader) ReadChangedBatch(ctx context.Context, orgID, sinceUpdated,
 	// millisecond timestamp, the (updated = ? AND id > ?) branch resumes within a
 	// group of rows sharing the same updated value
 	const query = legacySelectFrom +
-		"WHERE a.org_id = ? AND a.alert_id = 0 " +
+		"WHERE a.org_id = ? AND a.alert_id = 0 AND a.alert_uid = '' " +
 		"AND (a.updated > ? OR (a.updated = ? AND a.id > ?)) " +
 		"ORDER BY a.updated ASC, a.id ASC " +
 		"LIMIT ?"

@@ -26,7 +26,7 @@ func newMockReader(t *testing.T) (*MySQLReader, sqlmock.Sqlmock) {
 
 func TestMySQLReader_Totals(t *testing.T) {
 	r, mock := newMockReader(t)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM annotation WHERE org_id = ? AND alert_id = 0")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM annotation WHERE org_id = ? AND alert_id = 0 AND alert_uid = ''")).
 		WithArgs(int64(7)).
 		WillReturnRows(sqlmock.NewRows([]string{"count", "max_id"}).AddRow(int64(42), int64(913)))
 
@@ -52,8 +52,8 @@ func TestMySQLReader_TotalsOnEmptyTenant(t *testing.T) {
 func TestMySQLReader_ReadBatch_MapsRowsAndResolvesTags(t *testing.T) {
 	r, mock := newMockReader(t)
 
-	// Only user annotations (alert_id = 0), keyset on id.
-	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.id > ?")).
+	// Only user annotations (no alert_id or alert_uid), keyset on id.
+	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.alert_uid = '' AND a.id > ?")).
 		WithArgs(int64(1), int64(0), 2).
 		WillReturnRows(sqlmock.NewRows(annotationCols).
 			AddRow(int64(10), int64(1000), int64(2000), "dash", int64(5), "deploy", `{"k":1}`, int64(500), int64(600), "user-uid", int64(0)).
@@ -97,7 +97,7 @@ func TestMySQLReader_ReadChangedBatch_KeysetAndOrdering(t *testing.T) {
 	r, mock := newMockReader(t)
 
 	// The cursor is bound twice: once for `updated >`, once for `updated =`.
-	pattern := `a\.updated > \? OR \(a\.updated = \? AND a\.id > \?\).*ORDER BY a\.updated ASC, a\.id ASC`
+	pattern := `a\.alert_id = 0 AND a\.alert_uid = '' AND \(a\.updated > \? OR \(a\.updated = \? AND a\.id > \?\).*ORDER BY a\.updated ASC, a\.id ASC`
 	mock.ExpectQuery(pattern).
 		WithArgs(int64(1), int64(100), int64(100), int64(5), 10).
 		WillReturnRows(sqlmock.NewRows(annotationCols).
@@ -117,7 +117,7 @@ func TestMySQLReader_ReadChangedBatch_KeysetAndOrdering(t *testing.T) {
 
 func TestMySQLReader_LatestChange(t *testing.T) {
 	r, mock := newMockReader(t)
-	mock.ExpectQuery(`ORDER BY a\.updated DESC, a\.id DESC.*LIMIT 1`).
+	mock.ExpectQuery(`a\.alert_id = 0 AND a\.alert_uid = '' ORDER BY a\.updated DESC, a\.id DESC.*LIMIT 1`).
 		WithArgs(int64(7)).
 		WillReturnRows(sqlmock.NewRows([]string{"updated", "id"}).AddRow(int64(1700), int64(42)))
 
@@ -153,7 +153,7 @@ func TestMySQLReader_LatestChange_PropagatesQueryError(t *testing.T) {
 
 func TestMySQLReader_ReadBatch_EmptySkipsTagQuery(t *testing.T) {
 	r, mock := newMockReader(t)
-	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.id > ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.alert_uid = '' AND a.id > ?")).
 		WithArgs(int64(1), int64(999), 2).
 		WillReturnRows(sqlmock.NewRows(annotationCols))
 
@@ -166,7 +166,7 @@ func TestMySQLReader_ReadBatch_EmptySkipsTagQuery(t *testing.T) {
 
 func TestMySQLReader_ReadBatch_PropagatesQueryError(t *testing.T) {
 	r, mock := newMockReader(t)
-	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.id > ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.alert_uid = '' AND a.id > ?")).
 		WithArgs(int64(1), int64(0), 2).
 		WillReturnError(errors.New("boom"))
 
