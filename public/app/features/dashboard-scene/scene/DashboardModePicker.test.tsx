@@ -370,16 +370,44 @@ describe('while Composer is active', () => {
     expect(assistant).not.toHaveBeenCalled();
   });
 
-  it('ends the session and switches to Viewing, keeping unsaved changes', async () => {
-    const { user, scene } = await openPicker(enterComposer(true));
+  it('ends the session and switches to Viewing without a prompt when nothing is unsaved', async () => {
+    const { user, scene } = await openPicker(enterComposer(false));
 
     await user.click(screen.getByRole('menuitemradio', { name: /Viewing/ }));
 
+    expect(screen.queryByRole('dialog', { name: 'Unsaved changes' })).not.toBeInTheDocument();
     expect(session.signal.aborted).toBe(true);
-    // Viewing with unsaved changes, as leaving Composer presents it.
-    expect(getDashboardMode(scene.state)).toBe('agent');
-    expect(scene.state.title).toBe('Unsaved title');
-    expect(scene.state.isDirty).toBe(true);
+    expect(getDashboardMode(scene.state)).toBe('view');
+  });
+
+  describe('switching to Viewing with unsaved changes', () => {
+    async function chooseViewing() {
+      const opened = await openPicker(enterComposer(true));
+      await opened.user.click(screen.getByRole('menuitemradio', { name: /Viewing/ }));
+      expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+      return opened;
+    }
+
+    it('stays in Composer with the session and changes when the prompt is cancelled', async () => {
+      const { user, scene } = await chooseViewing();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(getDashboardMode(scene.state)).toBe('composer');
+      expect(session.signal.aborted).toBe(false);
+      expect(scene.state.title).toBe('Unsaved title');
+    });
+
+    it('ends the session, discards the changes and switches to Viewing on Discard', async () => {
+      const { user, scene } = await chooseViewing();
+
+      await user.click(screen.getByRole('button', { name: 'Discard' }));
+
+      expect(session.signal.aborted).toBe(true);
+      expect(getDashboardMode(scene.state)).toBe('view');
+      expect(scene.state.title).toBe('Picker');
+      expect(scene.state.isDirty).toBe(false);
+    });
   });
 
   it('ends the session and switches to Editing, keeping unsaved changes', async () => {

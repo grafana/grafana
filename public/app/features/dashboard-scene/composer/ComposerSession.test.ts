@@ -190,8 +190,7 @@ describe('entering and leaving Composer', () => {
     session.exit();
 
     expect(session.signal.aborted).toBe(true);
-    // Entered from Viewing with an unsaved Assistant edit, which `agent` presents.
-    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(getDashboardMode(scene.state)).toBe('view');
     expect(scene.state.isDirty).toBe(true);
     expect(scene.state.title).toBe('Composer title');
     expect(scene.getComposerSession()).toBeUndefined();
@@ -223,7 +222,7 @@ describe('entering and leaving Composer', () => {
     expect(scene.state.isDirty).toBe(false);
   });
 
-  it('keeps Agent editing and the dirty flag when a real change remains', async () => {
+  it('returns to Viewing and keeps the dirty flag when a real change remains', async () => {
     const scene = setup();
     const session = enter(scene);
     const { spec, revision } = await retitled(session, 'Still changed');
@@ -231,7 +230,7 @@ describe('entering and leaving Composer', () => {
 
     session.exit();
 
-    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(getDashboardMode(scene.state)).toBe('view');
     expect(scene.state.isDirty).toBe(true);
   });
 

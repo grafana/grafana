@@ -6116,7 +6116,6 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
-      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask Assistant to change it.",

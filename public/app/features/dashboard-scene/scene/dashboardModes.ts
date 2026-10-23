@@ -4,11 +4,10 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type DashboardSceneState } from './types/dashboard';
 
 /**
- * `composer` is a presentation over the edit session, like `agent`: Assistant edits are unsaved
- * changes with native undo, but every manual edit surface is hidden and only the bound Composer
- * session writes.
+ * `composer` is a presentation over the edit session: Assistant edits are unsaved changes with
+ * native undo, but every manual edit surface is hidden and only the bound Composer session writes.
  */
-export type DashboardMode = 'view' | 'edit' | 'agent' | 'composer';
+export type DashboardMode = 'view' | 'edit' | 'composer';
 
 export function dashboardModesEnabled(): boolean {
   return Boolean(
@@ -34,6 +33,5 @@ export function canManuallyEditDashboard(state: Pick<DashboardSceneState, 'mode'
 }
 
 export function isViewingDashboard(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
-  const mode = getDashboardMode(state);
-  return mode === 'view' || mode === 'agent';
+  return getDashboardMode(state) === 'view';
 }

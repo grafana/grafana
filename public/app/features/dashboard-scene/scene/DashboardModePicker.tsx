@@ -66,11 +66,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     },
   ];
   const current =
-    mode === 'agent'
-      ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
-      : mode === 'composer'
-        ? { label: t('dashboard.modes.composer', 'Composer'), icon: 'ai-sparkle' as const }
-        : options.find((option) => option.value === mode)!;
+    mode === 'composer'
+      ? { label: t('dashboard.modes.composer', 'Composer'), icon: 'ai-sparkle' as const }
+      : options.find((option) => option.value === mode)!;
   // From Composer, Viewing and Editing first end the session, as its own exit does.
   const choose = (value: 'view' | 'edit') =>
     mode === 'composer' ? dashboard.switchFromComposer(value) : dashboard.setDashboardMode(value, 'picker');
