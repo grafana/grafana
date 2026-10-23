@@ -9,7 +9,7 @@ import { EditorField } from '@grafana/plugin-ui';
 import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType, type QueryEditorFunctionExpression } from '../../expressions';
-import { type DB, QueryFormat, type SQLExpression, type SQLQuery } from '../../types';
+import { type SQLQueryBuilderDB, QueryFormat, type SQLExpression, type SQLQuery } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
 import { useSqlChange } from '../../utils/useSqlChange';
 
@@ -18,7 +18,7 @@ import { SelectFunctionParameters } from './SelectFunctionParameters';
 interface SelectRowProps {
   query: SQLQuery;
   onQueryChange: (sql: SQLQuery) => void;
-  db: DB;
+  db: SQLQueryBuilderDB;
   columns: Array<SelectableValue<string>>;
 }
 
