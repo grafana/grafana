@@ -383,6 +383,10 @@ type KVBackendOptions struct {
 	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
 	// Zero uses the default (1s); a negative value disables waiting.
 	ResourceVersionMaxWait time.Duration
+
+	// FastLatestKeyLookup resolves latest-version reads with a single-row
+	// descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookup bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -401,6 +405,7 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		SearchLookback:          cfg.SearchLookback,
 		WatchOptions:            WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
@@ -480,10 +485,13 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
+	dataStore := newDataStore(kv, metrics)
+	dataStore.fastLatestKeyLookup = opts.FastLatestKeyLookup
+
 	backend := &kvStorageBackend{
 		kv:         kv,
 		bulkLock:   NewBulkLock(),
-		dataStore:  newDataStore(kv, metrics),
+		dataStore:  dataStore,
 		eventStore: eventStore,
 		notifier: newNotifier(eventStore, notifierOptions{
 			log:                logger,
