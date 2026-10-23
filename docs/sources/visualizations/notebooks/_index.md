@@ -76,8 +76,10 @@ PDF exports retain the rendered visualizations.
 
 To create a notebook from the **Notebooks** page, follow these steps:
 
-1. Navigate to **Notebooks**.
 1. Click **+ New notebook**.
+
+   You can also create a notebook from the **New** menu in Grafana or by searching for **New notebook** in the command palette.
+
 1. (Optional) Update the title of the notebook to something descriptive and searchable.
 1. (Optional) Add tags to further define the subject of your notebook.
 1. Start typing to create a text block or click one of the following buttons below the block:
@@ -112,8 +114,6 @@ To update the notebook, click **Edit** in the toolbar again.
 Notebooks automatically save your changes.
 For more information, refer to the [Save status section](#save-status)
 
-<!--TODO: Do I wanna add this here? You can also create a notebook from the **New** menu in Grafana or by searching for **New notebook** in the command palette.-->
-
 ### Save status
 
 Notebooks save your edits automatically, including changes made with [undo and redo](#undo-and-redo-changes).
@@ -136,9 +136,7 @@ Notebooks automatically save your changes.
 
 You can also edit notebooks by undoing or redoing changes.
 The undo and redo icons are in the toolbar at the top of a notebook.
-When you hover your cursor over either of the buttons, it displays what change will be reverted or reinstated:
-
-<!-- TODO: SCREENSHOT HERE -->
+When you hover your cursor over either of the buttons, a tooltip displays the change being reverted or reinstated.
 
 You can't restore a deleted notebook using undo or redo.
 
@@ -147,8 +145,7 @@ You can't restore a deleted notebook using undo or redo.
 Visualization blocks display query results within your notebook.
 You can edit the block's title and queries, choose a suggested visualization, or give the panel its own time range.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-visualization-editing-v13.3.png" max-width="750px" alt="Notebook in edit mode with a panel title, visualization controls, a locked time range, and query controls below the chart" >}}
-<!-- TODO: redo screenshot-->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-viz-block-v13.3.png" max-width="750px" alt="Notebook in edit mode with a panel title, visualization controls, a locked time range, and query controls below the chart" >}}
 
 In edit mode, hover over a visualization to display its controls.
 Visualization blocks have the following controls:
@@ -174,8 +171,7 @@ The locked range appears above the panel and remains visible in view mode.
 To change it, return to edit mode and click the locked range.
 Click **Remove time lock** to make the panel follow the notebook's time range again.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-panel-time-range-v13.3.png" max-width="750px" alt="Panel time picker with relative ranges, absolute start and end fields, and the option to remove the time lock" >}}
-<!-- TODO: redo screenshot-->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-panel-time-lock-v13.3.png" max-width="750px" alt="Panel time picker and the option to remove the time lock" >}}
 
 A relative range, such as **Last 30 minutes**, remains relative to the current time.
 To preserve a specific investigation window, use an absolute start and end time.
@@ -190,6 +186,7 @@ To add a panel from Dashboards or Explore, follow these steps:
 
    - In Dashboards, open the menu of a panel and select **Add to notebook**.
    - In Explore, click the **Add** menu and select **Add to notebook**.
+
 1. In the dialog box that opens, choose an existing notebook or create a new one.
 1. Click **Add to notebook**.
 
