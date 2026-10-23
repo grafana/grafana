@@ -13,8 +13,9 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { GraphiteDatasource } from 'app/plugins/datasource/graphite/datasource';
+import { type GraphiteQuery } from 'app/plugins/datasource/graphite/types';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
 import { type ExpressionQuery, ExpressionQueryType } from './types';
@@ -132,56 +133,33 @@ describe('ExpressionDatasourceApi', () => {
     });
 
     describe('when several queries share a data source', () => {
-      // Mirrors a data source such as Graphite that resolves `#A` references from sibling queries.
-      type GraphiteQuery = DataQuery & { target: string };
-      // The expression path types every query as `ExpressionQuery`, even data source queries.
-      const asExpressionQuery = (query: GraphiteQuery) => query as unknown as ExpressionQuery;
-      const resolveSiblingRefs = (queries: GraphiteQuery[]) => {
-        const targets = new Map(queries.map((q) => [q.refId, q.target]));
-        return queries.map((q) => ({
-          ...q,
-          targetFull: q.target.replace(/#([A-Z])/g, (match, ref) => targets.get(ref) ?? match),
-        }));
-      };
-
       const mockDataSources = (byUid: Record<string, object>) => {
         mockGetDatasource.mockImplementation(async (ref: { uid: string }) => byUid[ref.uid]);
       };
 
-      it('interpolates them in one call so a query can resolve a hidden sibling it references', async () => {
+      it('lets Graphite resolve a reference to a hidden sibling query', async () => {
         const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
-        const hiddenSource = asExpressionQuery({
-          refId: 'A',
-          hide: true,
-          target: 'metric.a',
-          datasource: { uid: 'graphite', type: 'graphite' },
-        });
-        const nested = asExpressionQuery({
-          refId: 'B',
-          target: 'sumSeries(#A)',
-          datasource: { uid: 'graphite', type: 'graphite' },
-        });
+        const graphite = new GraphiteDatasource({ uid: 'graphite', type: 'graphite', jsonData: {} });
+        const datasource = { uid: 'graphite', type: 'graphite' };
+        // The expression path types every query as `ExpressionQuery`, even data source queries.
+        const asExpressionQuery = (query: GraphiteQuery) => query as unknown as ExpressionQuery;
+        const hiddenSource = asExpressionQuery({ refId: 'A', hide: true, target: 'metric.$input', datasource });
+        const nested = asExpressionQuery({ refId: 'B', target: 'sumSeries(#A)', datasource });
         const sql: ExpressionQuery = {
           type: ExpressionQueryType.sql,
           refId: 'C',
           expression: 'SELECT * FROM B',
           datasource: { uid: '__expr__', type: '__expr__' },
         };
-        const graphite = { uid: 'graphite', interpolateVariablesInQueries: jest.fn(resolveSiblingRefs) };
-        const expr = { uid: '__expr__', interpolateVariablesInQueries: jest.fn((queries) => queries) };
-        mockDataSources({ graphite, __expr__: expr });
+        mockDataSources({ graphite, __expr__: ds });
         const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
 
         await lastValueFrom(ds.query(buildRequest([hiddenSource, nested, sql], {})));
 
-        expect(graphite.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
-        expect(graphite.interpolateVariablesInQueries).toHaveBeenCalledWith([hiddenSource, nested], {}, []);
-        expect(expr.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
-        expect(expr.interpolateVariablesInQueries).toHaveBeenCalledWith([sql], {}, []);
         expect(querySpy).toHaveBeenCalledTimes(1);
         expect(querySpy.mock.calls[0][0].targets).toEqual([
-          { ...hiddenSource, targetFull: 'metric.a' },
-          { ...nested, targetFull: 'sumSeries(metric.a)' },
+          expect.objectContaining({ refId: 'A', target: 'metric.10' }),
+          expect.objectContaining({ refId: 'B', targetFull: 'sumSeries(metric.10)' }),
           sql,
         ]);
       });
