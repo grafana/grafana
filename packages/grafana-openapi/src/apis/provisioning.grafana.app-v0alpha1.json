@@ -3452,6 +3452,50 @@
           "kind": "ResourceList"
         }
       },
+      "post": {
+        "tags": ["Repository"],
+        "description": "Resolve up to 50 exact paths relative to the configured repository root. Returns only synced resources readable by the caller. Directory paths select the folder itself; / selects the repository root folder. This operation does not modify resources.",
+        "operationId": "lookupRepositoryResources",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["paths"],
+                "properties": {
+                  "paths": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceList"
+        }
+      },
       "parameters": [
         {
           "name": "name",
