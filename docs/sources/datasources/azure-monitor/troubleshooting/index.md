@@ -122,6 +122,21 @@ These errors occur when credentials configured in the data source or in Azure ar
 | Private key doesn't match the certificate | Ensure the private key corresponds to the certificate uploaded to Azure. Regenerate the certificate and key pair if needed.                                     |
 | Certificate not uploaded to Azure         | Verify the public certificate is uploaded to the app registration under **Certificates & secrets** > **Certificates** in the Azure Portal.                      |
 
+### Current User authentication errors
+
+**Symptoms:**
+
+- Queries fail for signed-in users with an error that includes `AADSTS240002`, for example `Input id_token cannot be used as 'urn:ietf:params:oauth:grant-type:jwt-bearer' grant`
+- Queries fail with an error that includes `AADSTS65001`, for example `The user or administrator has not consented to use the application`
+
+**Possible causes and solutions:**
+
+| Cause                                                                                                       | Solution                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AADSTS240002`: Grafana sent the user's ID token, and the App Registration doesn't issue ID tokens          | Use the access token instead: add `<client-id>/.default` to the Grafana login scopes, then have users sign out and sign in again. Refer to [Choose how Grafana exchanges the user's token](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#choose-how-grafana-exchanges-the-users-token). Alternatively, enable **ID tokens** under **Implicit grant and hybrid flows**. |
+| `AADSTS240002` after changing the login scopes                                                              | The user's session started before the change. Ask the user to sign out of Grafana and sign in again.                                                                                                                                                                                                                                                                                                             |
+| `AADSTS65001`: the App Registration hasn't been granted consent for an Azure API that the data source calls | In the Azure Portal, open the App Registration, select **API Permissions**, and select **Grant admin consent** for your directory.                                                                                                                                                                                                                                                                               |
+
 ## Grafana server configuration errors
 
 These errors occur when the Grafana server `.ini` configuration is missing settings required by Managed Identity, Workload Identity, or Current User authentication. If your Azure credentials are correct but authentication still fails, check this section.
