@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -169,7 +170,23 @@ func (f *fakeGithub) serveAPI(w http.ResponseWriter, r *http.Request) {
 		var comment github.IssueComment
 		_ = json.NewDecoder(r.Body).Decode(&comment)
 		repo.comments = append(repo.comments, comment.GetBody())
-		webhooksuite.WriteJSON(w, http.StatusCreated, &github.IssueComment{ID: new(int64(1)), Body: new(comment.GetBody())})
+		webhooksuite.WriteJSON(w, http.StatusCreated, &github.IssueComment{ID: new(int64(len(repo.comments))), Body: new(comment.GetBody())})
+	case strings.HasPrefix(sub, "issues/") && strings.HasSuffix(sub, "/comments") && r.Method == http.MethodGet:
+		var list []*github.IssueComment
+		for i, body := range repo.comments {
+			list = append(list, &github.IssueComment{ID: new(int64(i + 1)), Body: new(body)})
+		}
+		webhooksuite.WriteJSON(w, http.StatusOK, list)
+	case strings.HasPrefix(sub, "issues/comments/") && r.Method == http.MethodPatch:
+		id, err := strconv.Atoi(strings.TrimPrefix(sub, "issues/comments/"))
+		if err != nil || id < 1 || id > len(repo.comments) {
+			webhooksuite.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})
+			return
+		}
+		var comment github.IssueComment
+		_ = json.NewDecoder(r.Body).Decode(&comment)
+		repo.comments[id-1] = comment.GetBody()
+		webhooksuite.WriteJSON(w, http.StatusOK, &github.IssueComment{ID: new(int64(id)), Body: new(comment.GetBody())})
 	default:
 		webhooksuite.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})
 	}
