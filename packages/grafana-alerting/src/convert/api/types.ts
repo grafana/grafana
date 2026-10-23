@@ -52,23 +52,40 @@ export interface RulerRuleGroupDTO {
 /** Rule groups keyed by namespace. A namespace is a folder title on the Grafana side. */
 export type RulerRulesConfigDTO = Record<string, RulerRuleGroupDTO[]>;
 
-/**
- * Notification settings in the shape the Ruler API uses (`AlertRuleNotificationSettings` in Grafana's
- * `cortex-ruler.go`). The convert API takes it JSON-encoded in the `X-Grafana-Alerting-Notification-Settings`
- * header, and Grafana's own ruler API returns it as `notification_settings` on each rule.
- *
- * Either `policy` (a named routing tree) or `receiver` (a contact point, with optional overrides) is set.
- */
-export interface RulerNotificationSettingsDTO {
-  receiver?: string;
+// Overrides for how alerts sent straight to a contact point are grouped and timed.
+interface RoutingOverridesDTO {
   group_by?: string[];
   group_wait?: string;
   group_interval?: string;
   repeat_interval?: string;
   mute_time_intervals?: string[];
   active_time_intervals?: string[];
-  policy?: string;
 }
+
+/** Send straight to a contact point, optionally with grouping, timing and time interval overrides. */
+export type RulerContactPointRoutingDTO = RoutingOverridesDTO & { receiver: string; policy?: undefined };
+
+// A policy carries no overrides. They're listed as `undefined` so code can read them without first checking
+// which kind of settings it has.
+type NoRoutingOverrides = { [Key in keyof RoutingOverridesDTO]?: undefined };
+
+/**
+ * Route through a named notification policy tree. Grafana's ruler API also sends `receiver: ''` with it,
+ * since its `receiver` field is always written out.
+ */
+export interface RulerPolicyRoutingDTO extends NoRoutingOverrides {
+  policy: string;
+  receiver?: '';
+}
+
+/**
+ * Notification settings in the shape the Ruler API uses (`AlertRuleNotificationSettings` in Grafana's
+ * `cortex-ruler.go`). The convert API takes it JSON-encoded in the `X-Grafana-Alerting-Notification-Settings`
+ * header, and Grafana's own ruler API returns it as `notification_settings` on each rule.
+ *
+ * Exactly one of `receiver` (a contact point) or `policy` (a named routing tree) is set.
+ */
+export type RulerNotificationSettingsDTO = RulerContactPointRoutingDTO | RulerPolicyRoutingDTO;
 
 export interface ConvertPrometheusResponse {
   status: string;

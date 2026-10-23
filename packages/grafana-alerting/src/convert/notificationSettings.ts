@@ -1,4 +1,4 @@
-import { type RulerNotificationSettingsDTO } from './api/types';
+import { type RulerContactPointRoutingDTO, type RulerNotificationSettingsDTO } from './api/types';
 
 // Send straight to one contact point, optionally overriding the grouping, timings and time intervals.
 interface SimplifiedRoutingSettings {
@@ -63,7 +63,7 @@ export function fromRulerNotificationSettings(
     return { type: 'NamedRoutingTree', routingTree: settings.policy };
   }
 
-  if (!settings?.receiver) {
+  if (!settings || !isContactPointRouting(settings)) {
     return null;
   }
 
@@ -77,6 +77,11 @@ export function fromRulerNotificationSettings(
     muteTimeIntervals: settings.mute_time_intervals,
     activeTimeIntervals: settings.active_time_intervals,
   });
+}
+
+// A policy's `receiver` is at most '', so a non-empty one means the settings send to a contact point.
+function isContactPointRouting(settings: RulerNotificationSettingsDTO): settings is RulerContactPointRoutingDTO {
+  return Boolean(settings.receiver);
 }
 
 // A copy without unset, blank or empty-list fields. The API rejects an empty duration, and an empty list

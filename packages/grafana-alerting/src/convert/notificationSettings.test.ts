@@ -1,3 +1,4 @@
+import { type RulerNotificationSettingsDTO } from './api/types';
 import {
   type NotificationSettings,
   fromRulerNotificationSettings,
@@ -54,8 +55,13 @@ describe('toRulerNotificationSettings', () => {
 });
 
 describe('fromRulerNotificationSettings', () => {
-  it.each([undefined, null, {}, { receiver: '' }])('reads %p as default routing', (settings) => {
+  it.each([undefined, null])('reads %p as default routing', (settings) => {
     expect(fromRulerNotificationSettings(settings)).toBeNull();
+  });
+
+  // Not valid settings, but a rule read back from the API could still have them.
+  it.each([{}, { receiver: '' }])('reads malformed settings %p as default routing', (settings) => {
+    expect(fromRulerNotificationSettings(settings as RulerNotificationSettingsDTO)).toBeNull();
   });
 
   it('reads a policy as a named routing tree, even next to an empty receiver', () => {
@@ -63,6 +69,13 @@ describe('fromRulerNotificationSettings', () => {
       type: 'NamedRoutingTree',
       routingTree: 'team-a',
     });
+  });
+
+  it('lets the policy win when settings have both a receiver and a policy', () => {
+    // @ts-expect-error The type allows a contact point or a policy, never both.
+    const both: RulerNotificationSettingsDTO = { receiver: 'oncall', policy: 'team-a' };
+
+    expect(fromRulerNotificationSettings(both)).toStrictEqual({ type: 'NamedRoutingTree', routingTree: 'team-a' });
   });
 
   it('reads a receiver and its overrides as a contact point', () => {
