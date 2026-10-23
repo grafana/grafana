@@ -36,7 +36,12 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
     return {
       name: variable.state.name,
       type: variable.state.type,
-      filters: variable.state.filters.map(({ key, operator, value }) => ({ key, operator, value })),
+      filters: variable.state.filters.map(({ key, operator, value, values }) => ({
+        key,
+        operator,
+        value,
+        ...(values ? { values } : {}),
+      })),
     };
   }
   if (variable instanceof MultiValueVariable) {

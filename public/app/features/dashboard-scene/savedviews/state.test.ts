@@ -45,6 +45,14 @@ describe('captureSavedViewState', () => {
       { name: 'env', type: 'query', value: 'prod' },
     ]);
   });
+
+  it('keeps every selected value of a multi-value ad hoc filter', () => {
+    const scene = buildScene({ adhocFilters: [{ key: 'host', operator: '=|', value: 'a', values: ['a', 'b'] }] });
+
+    expect(captureSavedViewState(scene).variables[0].filters).toEqual([
+      { key: 'host', operator: '=|', value: 'a', values: ['a', 'b'] },
+    ]);
+  });
 });
 
 describe('applySavedViewState', () => {
