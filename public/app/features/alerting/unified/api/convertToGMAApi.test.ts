@@ -2,8 +2,9 @@ import { HttpResponse, http } from 'msw';
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from '../mockApi';
+import { convertResponse } from '../mocks/convertApi';
 
-import { convertToGMAApi } from './convertToGMAApi';
+import { convertApi } from './convertToGMAApi';
 
 const server = setupMswServer();
 const CONVERT_URL = '/api/convert/api/v1/alerts';
@@ -22,7 +23,7 @@ function countRequests() {
   server.use(
     http.post(CONVERT_URL, () => {
       count += 1;
-      return HttpResponse.json({ status: 'success' });
+      return HttpResponse.json(convertResponse());
     })
   );
   return () => count;
@@ -30,13 +31,13 @@ function countRequests() {
 
 describe('validateAlertmanagerConfigImport', () => {
   it('resolves the config and returns a successful response', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())));
     // Built once, outside the render callback: `File`'s `lastModified` defaults to `Date.now()`
     // when omitted, so constructing a fresh File on every render would churn the signature-based
     // cache key each render and the query would never settle on one key long enough to resolve.
     const args = { source: 'yaml' as const, yamlFile: yamlFile(), configIdentifier: 'prod' };
 
-    const { result } = renderHook(() => convertToGMAApi.useValidateAlertmanagerConfigImportQuery(args), { wrapper });
+    const { result } = renderHook(() => convertApi.useValidateAlertmanagerConfigImportQuery(args), { wrapper });
 
     await waitFor(() => expect(result.current.currentData?.status).toBe('success'), { timeout: 5000 });
   });
@@ -46,12 +47,12 @@ describe('validateAlertmanagerConfigImport', () => {
     server.use(
       http.post(CONVERT_URL, ({ request }) => {
         headers.push(request.headers);
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     const args = { source: 'yaml' as const, yamlFile: yamlFile(), configIdentifier: 'prod' };
 
-    const { result } = renderHook(() => convertToGMAApi.useValidateAlertmanagerConfigImportQuery(args), { wrapper });
+    const { result } = renderHook(() => convertApi.useValidateAlertmanagerConfigImportQuery(args), { wrapper });
 
     await waitFor(() => expect(result.current.currentData).toBeDefined());
     expect(headers).toHaveLength(1);
@@ -64,7 +65,7 @@ describe('validateAlertmanagerConfigImport', () => {
     const getRequestCount = countRequests();
     const args = { source: 'yaml' as const, yamlFile: yamlFile(INVALID_YAML, 'broken.yaml'), configIdentifier: 'prod' };
 
-    const { result } = renderHook(() => convertToGMAApi.useValidateAlertmanagerConfigImportQuery(args), { wrapper });
+    const { result } = renderHook(() => convertApi.useValidateAlertmanagerConfigImportQuery(args), { wrapper });
 
     await waitFor(() => expect(result.current.error).toBeDefined());
     expect(result.current.error).toMatchObject({ message: expect.stringMatching(/syntax error/i) });
@@ -76,7 +77,7 @@ describe('validateAlertmanagerConfigImport', () => {
       http.post(CONVERT_URL, async ({ request }) => {
         const body = await request.clone().json();
         // Echo the config content back so each response is distinguishable by its own request.
-        return HttpResponse.json({ status: 'success', error: body.alertmanager_config });
+        return HttpResponse.json(convertResponse({ error: body.alertmanager_config }));
       })
     );
 
@@ -87,10 +88,10 @@ describe('validateAlertmanagerConfigImport', () => {
       configIdentifier: 'prod',
     };
 
-    const { result: resultA } = renderHook(() => convertToGMAApi.useValidateAlertmanagerConfigImportQuery(argsA), {
+    const { result: resultA } = renderHook(() => convertApi.useValidateAlertmanagerConfigImportQuery(argsA), {
       wrapper,
     });
-    const { result: resultB } = renderHook(() => convertToGMAApi.useValidateAlertmanagerConfigImportQuery(argsB), {
+    const { result: resultB } = renderHook(() => convertApi.useValidateAlertmanagerConfigImportQuery(argsB), {
       wrapper,
     });
 
@@ -105,7 +106,7 @@ describe('validateAlertmanagerConfigImport', () => {
     const args = { source: 'yaml' as const, yamlFile: yamlFile(), configIdentifier: 'prod' };
 
     const { result, rerender } = renderHook(
-      (queryArgs) => convertToGMAApi.useValidateAlertmanagerConfigImportQuery(queryArgs),
+      (queryArgs) => convertApi.useValidateAlertmanagerConfigImportQuery(queryArgs),
       { wrapper, initialProps: args }
     );
 
