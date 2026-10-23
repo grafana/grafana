@@ -251,4 +251,101 @@ describe('StPodReadinessService', () => {
     expect(seen).toEqual([StPodStatus.Unknown, StPodStatus.Ready]);
     subscription.unsubscribe();
   });
+
+  describe('lazy TTL expiry', () => {
+    it('getStatus returns unknown after TTL elapses without issuing a new request', async () => {
+      jest.useFakeTimers();
+      const get = installBackend(podUp);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
+      expect(get).toHaveBeenCalledTimes(1);
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+
+      expect(service.getStatus()).toBe(StPodStatus.Unknown);
+      expect(get).toHaveBeenCalledTimes(1);
+    });
+
+    it('useStatus observes the expiry on next read', async () => {
+      jest.useFakeTimers();
+      installBackend(podUp);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(service.state.getValue()).toBe(StPodStatus.Ready);
+
+      const seen: StPodStatus[] = [];
+      const subscription = service.state.subscribe((status) => seen.push(status));
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+      service.getStatus();
+
+      expect(seen).toEqual([StPodStatus.Ready, StPodStatus.Unknown]);
+      subscription.unsubscribe();
+    });
+
+    it('getReadyPromise suspends again after TTL expiry', async () => {
+      jest.useFakeTimers();
+      installBackend(podUp);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      await expect(service.getReadyPromise()).resolves.toBeUndefined();
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+
+      const fresh = service.getReadyPromise();
+      const stillPending = Symbol('still-pending');
+      await expect(Promise.race([fresh, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
+    });
+
+    it('start after expiry restarts the pod check', async () => {
+      jest.useFakeTimers();
+      const get = installBackend(podUp);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(get).toHaveBeenCalledTimes(1);
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
+    });
+
+    it('preserves subscribers across the expiry transition', async () => {
+      jest.useFakeTimers();
+      installBackend(podUp);
+      const seen: StPodStatus[] = [];
+      const subscription = service.state.subscribe((status) => seen.push(status));
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(seen).toEqual([StPodStatus.Unknown, StPodStatus.Ready, StPodStatus.Unknown, StPodStatus.Ready]);
+      subscription.unsubscribe();
+    });
+
+    it('does not fire any wall-clock timer at the TTL boundary', async () => {
+      jest.useFakeTimers();
+      const get = installBackend(podUp);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(get).toHaveBeenCalledTimes(1);
+
+      await jest.advanceTimersByTimeAsync(ST_POD_READY_TTL_MS * 2);
+
+      expect(get).toHaveBeenCalledTimes(1);
+      expect(service.state.getValue()).toBe(StPodStatus.Ready);
+    });
+  });
 });
