@@ -34,6 +34,33 @@ type KeyValue struct {
 	Value io.ReadCloser
 }
 
+// BytesValue is a value reader that already holds the whole value, so callers
+// reading all of it can take the bytes instead of copying them.
+type BytesValue interface {
+	io.ReadCloser
+	// Bytes returns the unread part of the value without copying it.
+	Bytes() []byte
+}
+
+// NewBytesValue returns a BytesValue over b. Only pass bytes the reader may
+// hand out, such as a freshly scanned row.
+func NewBytesValue(b []byte) BytesValue {
+	return &bytesValue{Reader: bytes.NewReader(b), b: b}
+}
+
+var _ BytesValue = (*bytesValue)(nil)
+
+type bytesValue struct {
+	*bytes.Reader
+	b []byte
+}
+
+func (*bytesValue) Close() error { return nil }
+
+func (v *bytesValue) Bytes() []byte {
+	return v.b[len(v.b)-v.Len():]
+}
+
 type SortOrder int
 
 const (
@@ -181,7 +208,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 		return nil, err
 	}
 
-	return io.NopCloser(bytes.NewReader(value)), nil
+	return NewBytesValue(value), nil
 }
 
 func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -234,7 +261,7 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 
 			kv := KeyValue{
 				Key:   key,
-				Value: io.NopCloser(bytes.NewReader(value)),
+				Value: NewBytesValue(value),
 			}
 
 			if !yield(kv, nil) {
