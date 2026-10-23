@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
@@ -74,7 +75,6 @@ type PluginLoaderDependencies struct {
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
-	AccessClient   types.AccessClient
 }
 
 func ProvidePluginLoaderDependencies(
@@ -102,7 +102,6 @@ func ProvidePluginLoaderDependencies(
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
-		AccessClient:   accessClient,
 		PluginDependencies: PluginDependencies{
 			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
@@ -216,9 +215,8 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 type PluginLoader struct {
 	deps PluginLoaderDependencies
 
-	// settings is whether the loader may serve app plugin settings, when
-	// appplugins.registerAPIServer is enabled. The standalone router never does
-	// (see standaloneRouter).
+	// settings is whether the loader serves app plugin settings
+	// (settingsEnabled).
 	settings bool
 }
 
@@ -254,14 +252,13 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 }
 
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
-	settings := pl.settings && openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx))
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
 		client := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 			return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, id), nil
 		}
 
-		if settings {
+		if pl.settings {
 			if backend, err := newPluginSettingsBackend(plugin, client, pl.deps.PluginDependencies); err != nil {
 				logging.FromContext(ctx).Warn("router: skipping app plugin settings", "pluginId", plugin.JSONData.ID, "err", err)
 			} else {
@@ -419,10 +416,18 @@ type PluginBackend struct {
 	// hasBackend is whether the plugin runs a backend process, for the
 	// status page.
 	hasBackend bool
+
+	// acquire, when set, takes what each loaded handler holds until it is
+	// destroyed, such as a reference to a managed plugin's connection.
+	acquire func() (release func(), err error)
 }
 
-// PluginStatus implements [PluginStatusProvider].
+// PluginStatus implements [PluginStatusProvider]. A core_url entry without a
+// plugin ID serves no plugin, so it reports none.
 func (b *PluginBackend) PluginStatus() (PluginStatus, bool) {
+	if b.pluginID == "" {
+		return PluginStatus{}, false
+	}
 	return PluginStatus{ID: b.pluginID, Version: b.info.Version, HasBackend: b.hasBackend}, true
 }
 
@@ -443,6 +448,30 @@ func (b *PluginBackend) Key() string {
 }
 
 func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
+	release := func() {}
+	if b.acquire != nil {
+		var err error
+		if release, err = b.acquire(); err != nil {
+			return nil, err
+		}
+	}
+	// Release unless the handler takes it over, also when load panics: the
+	// router recovers the panic and retries the load.
+	loaded := false
+	defer func() {
+		if !loaded {
+			release()
+		}
+	}()
+	handler, err := b.load(ctx)
+	if err != nil {
+		return nil, err
+	}
+	loaded = true
+	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name, release: release}, nil
+}
+
+func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) {
 	clientV2, clientV3, err := b.client(ctx, b.pluginID)
 	if err != nil {
 		return nil, err
@@ -463,16 +492,10 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)
 	}
 
-	var handler *pluginroute.Handler
 	if b.settings != nil {
-		handler, err = b.loadSettings(ctx, cfg, opts, clientV2)
-	} else {
-		handler, err = b.loadManifest(cfg, opts, clientV3)
+		return b.loadSettings(ctx, cfg, opts, clientV2)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name}, nil
+	return b.loadManifest(cfg, opts, clientV3)
 }
 
 // loadSettings serves the settings API, which calls the plugin through its
@@ -502,15 +525,21 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 // loadManifest serves a manifest's kinds and routes, which call the plugin
 // through its v3 client only.
 func (b *PluginBackend) loadManifest(cfg *setting.Cfg, opts pluginroute.Options, client appclientv3.Client) (*pluginroute.Handler, error) {
+	// A baasbridge client forwards the requester's own credentials, so an
+	// exchanged token would go unused.
+	bridged := baasbridge.IsClient(client) //nolint:staticcheck
 	if client != nil {
 		client = &breakerPluginClientV3{Client: client}
 	}
-	// Keep authentication outside the breaker: token exchange failures do not
-	// indicate whether the plugin is reachable.
-	client, err := v3.WithAuthentication(client, b.pluginID, []string{b.group.Name},
-		withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
-	if err != nil {
-		return nil, err
+	if !bridged {
+		// Keep authentication outside the breaker: token exchange failures do not
+		// indicate whether the plugin is reachable.
+		var err error
+		client, err = v3.WithAuthentication(client, b.pluginID, []string{b.group.Name},
+			withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
+		if err != nil {
+			return nil, err
+		}
 	}
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	opts.ClientV3 = client

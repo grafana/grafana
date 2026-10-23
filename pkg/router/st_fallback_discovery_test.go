@@ -46,7 +46,7 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 					}
 					return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 				})
-				var loader RoutesLoader = st
+				var loader RoutesLoader = fallbackLoader{st}
 				if useCloud {
 					cloud, err := newCloudLoader(nil, nil, nil, st)
 					require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestSingleTenantDiscoveryNotificationsCoalesceAndStop(t *testing.T) {
 			}
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			dirty, err := st.Notify(ctx)
+			dirty, err := fallbackLoader{st}.Notify(ctx)
 			require.NoError(t, err)
 			synctest.Wait()
 			if configured {
@@ -244,7 +244,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(strings.NewReader(string(data)))}, nil
 	})
 
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -395,7 +395,7 @@ func TestSingleTenantDiscoveryFromLegacyOnlyStack(t *testing.T) {
 		require.NoError(t, err)
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(string(body)))}, nil
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))

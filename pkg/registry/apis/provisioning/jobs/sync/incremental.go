@@ -25,11 +25,8 @@ import (
 func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
 	syncStart := time.Now()
 	if previousRef == currentRef {
-		// We still need to detect missing folder metadata if the flag is enabled
-		if folderMetadataEnabled {
-			if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer); err != nil {
-				return err
-			}
+		if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer); err != nil {
+			return err
 		}
 		progress.SetFinalMessage(ctx, "same commit as last time")
 		return nil
@@ -57,9 +54,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 	diff = splitRenamesOntoNonResources(diff, folderMetadataEnabled)
 
-	var replaced []replacedFolder
-	var relocations map[string][]string
-	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	// Build a path→hash index of existing resources so the apply phase can
 	// detect unchanged content. When a resource is re-parented (folder UID
 	// change) without any content edit, the existing hash will match the new
@@ -67,43 +61,41 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	// prevents legacy resources from being rejected by rules introduced after
 	// they were first persisted.
 	existingHashes := make(map[string]string)
-	if folderMetadataEnabled {
-		readerRepo, ok := repo.(repository.Reader)
-		if !ok {
-			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
-		}
-
-		target, err := repositoryResources.List(ctx)
-		if err != nil {
-			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
-		}
-
-		for i := range target.Items {
-			if target.Items[i].Hash != "" {
-				existingHashes[target.Items[i].Path] = target.Items[i].Hash
-			}
-		}
-
-		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
-		diff, relocations, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
-		if err != nil {
-			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
-		}
-
-		logger := logging.FromContext(ctx)
-		logger.Info("folder metadata diff built",
-			"replacedFolders", len(replaced),
-			"invalidMetadata", len(invalidFolderMetadata),
-			"diffSize", len(diff),
-		)
-
-		// Incremental sync normally starts with an empty folder tree, but folder
-		// metadata handling needs the current managed path->UID state before apply:
-		// - invalid `_folder.json` falls back to the existing folder at that path
-		// - folders cannot overtake existing UIDs
-		tree := resources.NewFolderTreeFromResourceList(target)
-		repositoryResources.SetTree(tree)
+	readerRepo, ok := repo.(repository.Reader)
+	if !ok {
+		return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
 	}
+
+	target, err := repositoryResources.List(ctx)
+	if err != nil {
+		return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+	}
+
+	for i := range target.Items {
+		if target.Items[i].Hash != "" {
+			existingHashes[target.Items[i].Path] = target.Items[i].Hash
+		}
+	}
+
+	folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
+	diff, relocations, replaced, invalidFolderMetadata, err := folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
+	if err != nil {
+		return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
+	}
+
+	logger := logging.FromContext(ctx)
+	logger.Info("folder metadata diff built",
+		"replacedFolders", len(replaced),
+		"invalidMetadata", len(invalidFolderMetadata),
+		"diffSize", len(diff),
+	)
+
+	// Incremental sync normally starts with an empty folder tree, but folder
+	// metadata handling needs the current managed path->UID state before apply:
+	// - invalid `_folder.json` falls back to the existing folder at that path
+	// - folders cannot overtake existing UIDs
+	tree := resources.NewFolderTreeFromResourceList(target)
+	repositoryResources.SetTree(tree)
 
 	// Temporarily raise the quota limit for net-zero folder replacements so
 	// TryAcquire succeeds when creating the new folder before the old one is
@@ -144,11 +136,9 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	// Run after deleteFolders so its informational warnings (e.g. missing
 	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
-	if folderMetadataEnabled {
-		recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
-		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
-			return err
-		}
+	recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
+	if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
+		return err
 	}
 
 	return nil
@@ -461,10 +451,9 @@ func splitsRename(change repository.VersionedFileChange, folderMetadataEnabled b
 		return false
 	}
 	if resources.IsFolderMetadataFile(change.PreviousPath) {
-		// With folder metadata off a _folder.json is not synced, so there is nothing to remove. With it
-		// on, the folder is reverted by the deletion of the file, wherever the file went (a metadata
+		// The folder is reverted by the deletion of _folder.json, wherever the file went (a metadata
 		// file moved onto another _folder.json is the metadata builder's own case).
-		return folderMetadataEnabled && !resources.IsFolderMetadataFile(change.Path)
+		return !resources.IsFolderMetadataFile(change.Path)
 	}
 	return !resources.HasResourceExtension(change.Path)
 }

@@ -64,6 +64,7 @@ func TestHybridSearchHandler(t *testing.T) {
 		{
 			Key:   &resourcepb.ResourceKey{Namespace: "tenant-b", Group: testKind.group, Resource: testKind.resource, Name: "z"},
 			Score: 0.9, Title: "CPU", Folder: "f1", FolderTitle: "Operations", ManagedByKind: "repo", ManagedById: "repository",
+			Tags: []string{"prod", "team-a"},
 			Chunks: []*resourcepb.HybridSearchChunk{
 				{Subresource: "panel/7", Content: "CPU by host", Metadata: []byte(`{"language":"promql"}`)},
 				{Subresource: "panel/9", Content: "CPU total"},
@@ -105,6 +106,7 @@ func TestHybridSearchHandler(t *testing.T) {
 			{"resource":{"group":"dashboard.grafana.app","resource":"dashboards","kind":"Dashboard","name":"z"},
 			 "score":0.9,"title":"CPU","folder":"f1","folderTitle":"Operations",
 			 "managedBy":{"kind":"repo","id":"repository"},
+			 "tags":["prod","team-a"],
 			 "chunks":[{"subresource":"panel/7","content":"CPU by host"},{"subresource":"panel/9","content":"CPU total"}]},
 			{"resource":{"group":"dashboard.grafana.app","resource":"dashboards","kind":"Dashboard","name":"a"},"score":0,"title":"","folder":"","chunks":[]}
 		]

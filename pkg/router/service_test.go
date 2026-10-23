@@ -223,7 +223,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	cfg.Target = []string{"router"}
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	cloud := loader.(*cloudLoader)
 	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
@@ -346,30 +346,33 @@ func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
 
 // App plugin settings are only served by the router, so enabling them inside
 // Grafana also enables the router middleware. The standalone router has no
-// embedded API server, so the settings flag does not change it.
+// embedded API server, so no flag makes it middleware.
 func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 	grafana := setting.NewCfg()
 	standalone := setting.NewCfg()
 	standalone.Target = []string{"router"}
 	for _, tc := range []struct {
-		name     string
-		cfg      *setting.Cfg
-		flags    []any
-		expected bool
+		name       string
+		cfg        *setting.Cfg
+		flags      []any
+		middleware bool
+		settings   bool
 	}{
-		{"no flags", grafana, nil, false},
-		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
-		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true},
-		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false},
-		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
+		{"no flags", grafana, nil, false, false},
+		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true, false},
+		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true, true},
+		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false, false},
+		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tc.flags...)
-			require.Equal(t, tc.expected, middlewareEnabled(tc.cfg, features))
+			require.Equal(t, tc.middleware, middlewareEnabled(tc.cfg, features))
+			require.Equal(t, tc.settings, settingsEnabled(tc.cfg, features))
 			svc, err := ProvideService(tc.cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
 			require.NoError(t, err)
-			require.Equal(t, tc.expected, svc.middleware)
+			require.Equal(t, tc.middleware, svc.middleware)
 		})
 	}
 	require.False(t, middlewareEnabled(grafana, nil))
+	require.False(t, settingsEnabled(grafana, nil))
 }

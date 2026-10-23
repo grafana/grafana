@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
@@ -92,11 +93,13 @@ func newSingleTenantResourcesLoader(t *testing.T, mt, stack string) *cloudLoader
 	dashboards.discovery = &apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: "dashboard.grafana.app"}}
 	backends := []Backend{dashboards, proxyBackend(t, "folder.grafana.app", mt, http.DefaultTransport)}
 	target.snapshot.Store(&backends)
+	target.status.recordSuccess(time.Now())
 
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 10, resolveHost: func(context.Context, int64) (singleTenantStack, error) {
 		return singleTenantStack{URL: stack}, nil
 	}})
 	require.NoError(t, err)
+	st.status.recordSuccess(time.Now())
 	loader, err := newCloudLoader([]*aggregateTarget{target}, nil, nil, st)
 	require.NoError(t, err)
 	return loader

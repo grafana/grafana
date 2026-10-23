@@ -2843,15 +2843,18 @@
     {
       "metadata": {
         "name": "grafana.filterablePanels",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-21T15:31:42Z"
+        "resourceVersion": "1792678966723",
+        "creationTimestamp": "2026-07-21T15:31:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 14:22:46.723307 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3253,12 +3256,29 @@
       "metadata": {
         "name": "grafana.rspackBuild",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-10T08:36:48Z"
+        "creationTimestamp": "2026-08-10T08:36:48Z",
+        "deletionTimestamp": "2026-10-09T07:26:33Z"
       },
       "spec": {
         "description": "Switches the backend to load frontend assets built with rspack instead of webpack",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.savedDashboardViews",
+        "resourceVersion": "1792708487109",
+        "creationTimestamp": "2026-10-22T21:16:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 22:34:47.109907 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },
@@ -3376,15 +3396,18 @@
     {
       "metadata": {
         "name": "grafana.thresholdsInterpolation",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-28T12:16:44Z"
+        "resourceVersion": "1792678966723",
+        "creationTimestamp": "2026-07-28T12:16:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 14:22:46.723307 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables using dashboard variables in panel threshold values",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4883,9 +4906,9 @@
       },
       "spec": {
         "description": "Enables heatmap visualization support for Pyroscope profiles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5443,6 +5466,35 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.removeLogoUrlField",
+        "resourceVersion": "1792683652313",
+        "creationTimestamp": "2026-10-22T15:40:52Z"
+      },
+      "spec": {
+        "description": "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.sunsetLogoUrlField",
+        "resourceVersion": "1792680911466",
+        "creationTimestamp": "2026-10-22T14:55:11Z",
+        "deletionTimestamp": "2026-10-22T15:40:52Z"
+      },
+      "spec": {
+        "description": "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

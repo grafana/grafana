@@ -531,3 +531,75 @@ func TestSchemaFromFrameUniqueNames(t *testing.T) {
 	require.Equal(t, []string{"host", "Host_3", "host_2", "value", "host_4"}, names)
 	require.Equal(t, "Host", frame.Fields[1].Name, "the input frame must not change")
 }
+
+func TestQueryFrames_EnumField(t *testing.T) {
+	enumConfig := &data.FieldConfig{TypeConfig: &data.FieldTypeConfig{
+		Enum: &data.EnumFieldConfig{Text: []string{"Unknown", "Up", "Down"}},
+	}}
+	one, three := data.EnumItemIndex(1), data.EnumItemIndex(3)
+
+	input := data.NewFrame("A",
+		data.NewField("id", nil, []int64{1, 2, 3, 4}),
+		data.NewField("state", nil, []data.EnumItemIndex{0, 1, 2, 7}).SetConfig(enumConfig),
+		data.NewField("nullableState", nil, []*data.EnumItemIndex{&one, nil, &three, nil}).SetConfig(enumConfig),
+		data.NewField("noConfig", nil, []data.EnumItemIndex{0, 1, 2, 3}),
+	).SetRefID("A")
+
+	tests := []struct {
+		name     string
+		query    string
+		expected []*data.Field
+	}{
+		{
+			name:  "SELECT returns the enum text",
+			query: `SELECT state, nullableState, noConfig FROM A ORDER BY id`,
+			expected: []*data.Field{
+				data.NewField("state", nil, []string{"Unknown", "Up", "Down", "7"}),
+				data.NewField("nullableState", nil, []*string{new("Up"), nil, new("3"), nil}),
+				data.NewField("noConfig", nil, []string{"0", "1", "2", "3"}),
+			},
+		},
+		{
+			name:  "text filter matches the enum text",
+			query: `SELECT id FROM A WHERE state IN ('Up', 'Down') ORDER BY id`,
+			expected: []*data.Field{
+				data.NewField("id", nil, []int64{2, 3}),
+			},
+		},
+		{
+			name:  "GROUP BY groups on the enum text",
+			query: `SELECT state, COUNT(*) AS n FROM A GROUP BY state ORDER BY state`,
+			expected: []*data.Field{
+				data.NewField("state", nil, []string{"7", "Down", "Unknown", "Up"}),
+				data.NewField("n", nil, []int64{1, 1, 1, 1}),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := DB{}
+			frame, err := db.QueryFrames(context.Background(), &testTracer{}, "B", tt.query, data.Frames{input})
+			require.NoError(t, err)
+			if diff := cmp.Diff(tt.expected, frame.Fields, data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestSampleRow_EnumField(t *testing.T) {
+	enumConfig := &data.FieldConfig{TypeConfig: &data.FieldTypeConfig{
+		Enum: &data.EnumFieldConfig{Text: []string{"Unknown", "Up", "Down"}},
+	}}
+	one := data.EnumItemIndex(1)
+
+	frame := data.NewFrame("A",
+		data.NewField("id", nil, []int64{1, 2}),
+		data.NewField("state", nil, []data.EnumItemIndex{1, 7}).SetConfig(enumConfig),
+		data.NewField("nullableState", nil, []*data.EnumItemIndex{&one, nil}).SetConfig(enumConfig),
+	)
+
+	require.Equal(t, []any{int64(1), "Up", new("Up")}, SampleRow(frame, 0))
+	require.Equal(t, []any{int64(2), "7", (*data.EnumItemIndex)(nil)}, SampleRow(frame, 1))
+}

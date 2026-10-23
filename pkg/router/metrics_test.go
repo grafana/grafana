@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// metricsService serves group through a real forward proxy to upstream.
+// metricsService serves group through a real reverse proxy to upstream.
 func metricsService(t *testing.T, group, upstream string) *Service {
 	t.Helper()
 	backend := proxyBackend(t, group, upstream, &http.Transport{})
@@ -111,7 +111,7 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 	serve := func(target string) int {
 		recorder := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, target, nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "*"}))
 		svc.HandleFunc(recorder, req, embedded)
 		return recorder.Code
 	}
@@ -379,4 +379,21 @@ func TestPluginManifestsSkips(t *testing.T) {
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Empty(t, target.Backends())
 	require.Equal(t, 2, target.status.status(sourcePluginsURL).Skipped)
+}
+
+// Building the router twice on one registry, as tests and some module
+// combinations do, shares its metrics instead of panicking.
+func TestServicesShareOneRegistry(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	first := newService(NewGrafanaRouter(&mutableLoader{}, nil), reg)
+	var second *Service
+	require.NotPanics(t, func() { second = newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
+	require.Same(t, first.metrics.requests, second.metrics.requests)
+
+	require.NotPanics(t, func() {
+		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
+		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
+		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+	})
 }

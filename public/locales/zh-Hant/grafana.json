@@ -1433,6 +1433,34 @@
       "saving": "正在儲存…",
       "title-error-saving-receiver": "儲存接收器時發生錯誤"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_other": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "若要變更 Alertmanager 設定，請前往「警報管理」頁面。如果您沒有存取權限，請聯絡您的管理員。",
       "admin-hint-external": "若要變更 Alertmanager 設定，請前往「警報管理」頁面。如果您沒有存取權限，請聯絡您的管理員。",
@@ -1757,7 +1785,9 @@
         "autosync-tooltip-unsupported": "此 Alertmanager 類型不支援自動同步。選取 Mimir 或 Cortex 資料來源以啟用此功能。",
         "datasource": "Alertmanager 資料來源",
         "datasource-autosync-badge": "自動同步",
+        "embedded-yaml-parse-error": "",
         "heading": "匯入通知資源",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "找不到 Alertmanager 資料來源",
         "no-permission-desc": "您沒有匯入通知資源的權限。您需要 <strong>alerting.notifications:write</strong> 權限。可以跳過此步驟。",
@@ -7369,6 +7399,56 @@
       "last-edited": "<person />在 {{timeAgo}}前",
       "usage-count_other": "用於 {{count}} 個儀表板"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "新增連結",
       "remove-link": "移除連結",
@@ -7687,6 +7767,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "儲存時發生未預期的錯誤。"
     },
     "save-library-viz-panel-modal": {
@@ -7977,6 +8058,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "開啟查詢窗格",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "開啟查詢窗格"
     },
     "viz-panel-links-renderer": {
@@ -13526,6 +13609,13 @@
       "save-tooltip": "儲存"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "正在載入…"
   },
@@ -15333,11 +15423,6 @@
       "original-query": "原始查詢",
       "trace-id": "（追蹤 ID：{{traceId}}）"
     },
-    "query-group": {
-      "add-query": "新增查詢",
-      "expression": "表達式",
-      "title-data-source-help": "資料來源說明"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "間隔 = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15377,28 +15462,31 @@
     "accept": "接受",
     "assistant-context-title": "查詢共同編寫內容",
     "assistant-instructions-title": "查詢共同編寫指示",
-    "assistant-unavailable": "Assistant 無法使用",
-    "assistant-unavailable-body": "查詢共同編寫需要 Grafana Assistant。",
-    "building": "正在建立查詢…",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "正在檢查 Assistant 可用性…",
     "clarification-label": "新增額外詳細資訊",
     "clarification-message": "釐清訊息",
-    "clarification-placeholder": "新增額外詳細資訊...",
+    "clarification-placeholder": "",
     "clarification-title": "已請求詳細資訊",
     "close": "關閉共同撰寫",
-    "context": "內容",
-    "context-error": "無法讀取選取的查詢內容",
+    "context-error": "",
     "continue": "繼續",
     "continue-here": "在此繼續",
     "continue-in-assistant": "在 Assistant 中繼續",
-    "continue-in-assistant-chat": "在 Assistant 中繼續",
     "dialog": "查詢共同編寫",
     "dismiss": "關閉",
     "error": "查詢共同編寫錯誤",
     "error-accept-failed": "無法接受查詢建議。再試一次。",
     "error-multiple-responses": "Assistant 傳回了互相衝突的查詢建議。再試一次。",
     "error-preview-failed": "無法預覽查詢建議。再試一次。",
+    "explain-failed": "",
     "explain-or-modify": "說明或修改",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "取消",
     "feedback-description": "您的意見回饋有助於改善 Grafana 的查詢體驗。",
     "feedback-error": "無法傳送意見回饋。再試一次。",
@@ -15409,36 +15497,61 @@
     "feedback-not-helpful": "沒有幫助",
     "feedback-positive-placeholder": "您喜歡哪些部分？還有哪些地方可以做得更好？",
     "feedback-positive-title": "哪些地方做得不錯？",
-    "feedback-privacy": "系統會傳送您的評分、留言，以及這是建議還是移交。您的查詢、提示和 Assistant 回應不會包含在內。",
+    "feedback-privacy": "",
     "feedback-recipient": "您的意見回饋將傳送給負責查詢功能的團隊。",
     "feedback-send": "傳送",
     "feedback-sending": "正在傳送…",
-    "focus": "焦點",
-    "handoff-guidance": "您的變更可能需要涵蓋其他資料來源，或目前所關注查詢以外的其他查詢。請在 Assistant 聊天中繼續，以進行較大幅度的變更。",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "醒目提示的查詢",
-    "highlighted-query-summary": "醒目提示的查詢摘要",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant 嘗試修正建議後，仍無法產生有效的{{language}}。請再試一次或新增更多詳細資訊。",
     "iteration-nudge": "正在處理較大型的工作嗎？使用更多空間反覆調整較大幅度的變更。",
-    "open-in-chat": "在聊天中開啟",
-    "original-change": "原始 {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "正在預覽查詢",
+    "previous-option": "",
     "prompt-label": "描述查詢變更",
-    "prompt-placeholder": "描述快速變更...",
+    "prompt-placeholder": "",
     "proposal-details": "查詢建議詳細資料",
-    "proposed-change": "建議的 {{kind}}",
-    "reading-highlighted-query": "正在讀取醒目提示的查詢...",
+    "query-diff": "",
     "relevant-context": "相關查詢內容",
     "request-failed": "Assistant 無法建立查詢建議。再試一次。",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "再試一次",
+    "retry-context": "",
     "running-updated-query": "正在執行更新後的查詢...",
+    "select-to-accept": "",
     "selection-ready": "選取的內容是此 {{language}} 查詢的一部分。",
     "selection-whole-query": "已選取完整的 {{language}} 查詢進行共同編寫。",
     "selection-with-type": "{{name}} 是 {{type}}{{kind}}。",
     "stale-query-response": "醒目提示的查詢在建議準備完成前已發生變更。請關閉此建議，然後再次醒目提示該查詢。",
     "stop": "停止",
     "submit": "共同編寫",
-    "suggestion-updated": "建議已更新",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistant 傳回了目前的查詢，但未進行任何變更。請再試一次或新增更多詳細資訊。",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "任何尚未儲存的面板編輯都不會遺失。",
     "working-focus": "查詢焦點"
   },
@@ -16044,14 +16157,7 @@
       "time-range": "鎖定時間範圍"
     },
     "export": {
-      "back-button": "返回匯出設定",
-      "cancel-button": "取消",
-      "info-text": "匯出此儀表板。",
-      "loading": "正在載入…",
-      "save-button": "儲存至檔案",
-      "share-externally-label": "匯出以外部分享",
-      "view-button": "檢視 JSON",
-      "view-button-yaml": "檢視 YAML"
+      "share-externally-label": "匯出以外部分享"
     },
     "image": {
       "actions": "圖片匯出動作",
@@ -16109,9 +16215,6 @@
       "dark": "深色",
       "field-name": "主題",
       "light": "淺色"
-    },
-    "view-json": {
-      "copy-button": "複製到剪貼簿"
     }
   },
   "share-panel": {
@@ -17289,6 +17392,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "使用正則運算式模式移除部分查詢結果。"
       },
+      "deselect-all": "",
       "label-from-variable": "從變數",
       "label-identifier": "標識符",
       "label-use-variable": "使用變數",
@@ -17296,7 +17400,8 @@
       "name": {
         "filter-fields-by-name": "按名稱篩選欄位"
       },
-      "placeholder-regular-expression-pattern": "規則運算式模式"
+      "placeholder-regular-expression-pattern": "規則運算式模式",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

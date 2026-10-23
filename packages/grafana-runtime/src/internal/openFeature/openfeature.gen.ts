@@ -234,6 +234,8 @@ export const FlagKeys = {
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
+  GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -340,6 +342,8 @@ export const FlagKeys = {
   ReloadDashboardsOnParamsChange: "reloadDashboardsOnParamsChange",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option */
+  ReportingRemoveLogoUrlField: "reporting.removeLogoUrlField",
   /** Enables the configurable footer settings for PDF reports */
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
@@ -1371,10 +1375,10 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  *
  * **Details:**
  * - flag key: `grafana.filterablePanels`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.filterablePanels", false, options).value;
+  return useFlag("grafana.filterablePanels", true, options).value;
 };
 
 /**
@@ -1609,6 +1613,17 @@ export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEv
 };
 
 /**
+ * Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+ *
+ * **Details:**
+ * - flag key: `grafana.savedDashboardViews`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedDashboardViews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedDashboardViews", false, options).value;
+};
+
+/**
  * Enables the dedicated Saved queries page and its navigation entry
  *
  * **Details:**
@@ -1679,10 +1694,10 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.thresholdsInterpolation`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.thresholdsInterpolation", false, options).value;
+  return useFlag("grafana.thresholdsInterpolation", true, options).value;
 };
 
 /**
@@ -2189,6 +2204,17 @@ export const useFlagReloadDashboardsOnParamsChange = (options?: ReactFlagEvaluat
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option
+ *
+ * **Details:**
+ * - flag key: `reporting.removeLogoUrlField`
+ * - default value: `false`
+ */
+export const useFlagReportingRemoveLogoUrlField = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reporting.removeLogoUrlField", false, options).value;
 };
 
 /**
