@@ -51,7 +51,7 @@ const searchTeamsHandler = () =>
     const items = Array.from(mockTeamsMap.values()).map(({ team }) => team);
     const filteredItems = items
       .filter((item) => item.spec.title.toLowerCase().includes(searchQuery.toLowerCase()))
-      .map((team) => ({ name: team.metadata.name, title: team.spec.title }));
+      .map((team) => ({ name: team.metadata.name, title: team.spec.title, email: team.spec.email }));
     return HttpResponse.json({
       totalHits: filteredItems.length,
       hits: filteredItems,
