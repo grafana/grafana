@@ -1,10 +1,7 @@
 import { UserStorage } from '@grafana/runtime/internal';
 
-// Constructed lazily, on first use, rather than at module scope: this file is imported
-// transitively (via DashboardSceneUrlSync) by every dashboard-scene module, so an eager
-// `new UserStorage(...)` here runs during module evaluation of anything that pulls this in --
-// including test files mocking `UserStorage` with a jest.fn() declared below their own imports,
-// which would otherwise see that mock fn before it's initialized.
+// Created lazily: this module loads with every dashboard-scene import, and an eager instance
+// would hit tests' UserStorage mocks before they're initialized.
 let userStorage: UserStorage | undefined;
 function storage(): UserStorage {
   if (!userStorage) {
@@ -13,10 +10,7 @@ function storage(): UserStorage {
   return userStorage;
 }
 
-// One key per dashboard, not one blob keyed by dashboard the way some UserStorage consumers do --
-// a user's dashboard count is unbounded and grows over the account's life, so a shared blob would
-// mean every dashboard's default-check parses an ever-growing object and every write contends on
-// the same per-service UserStorage write lock.
+// One key per dashboard rather than one shared blob, which would grow with every dashboard.
 const getDefaultViewKey = (dashboardUID: string) => `default-view-${dashboardUID}`;
 
 /** Stores `metadata.name` (the immutable resource id), never `spec.name` (the renamable label). */

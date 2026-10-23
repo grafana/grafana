@@ -31,17 +31,9 @@ export async function loadSavedViews(dashboard: DashboardScene): Promise<boolean
 }
 
 /**
- * Writes `?viewFilter=<default>` into the URL, before the scene mounts, when the viewer has a
- * per-user default saved view for this dashboard (spec 2.1.1 stretch: "each user can mark one
- * view as their default... applied automatically on open") and the URL doesn't already name one.
- *
- * Deliberately writes the URL rather than applying the view's state directly: on mount, the
- * scene's own url-sync pass always treats the current URL as authoritative for $timeRange and
- * every variable, so anything applied here beforehand would just be reverted moments later by
- * that pass reconciling against a URL that doesn't yet reflect it. Writing `viewFilter` into the
- * URL first makes a default indistinguishable, timing-wise, from a real `?viewFilter=` link, and
- * lets the already-correct, already-tested explicit-viewFilter handling in
- * `DashboardSceneUrlSync.updateFromUrl` do the rest.
+ * Writes the viewer's default view into `?viewFilter=` before the scene mounts, when the URL names
+ * none. Writing the URL rather than applying state matters: URL sync would revert state applied
+ * before mount, while a `?viewFilter=` param goes through the normal link handling.
  */
 export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Promise<void> {
   if (typeof locationService.getSearchObject().viewFilter === 'string') {
@@ -67,10 +59,7 @@ export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Pro
   try {
     view = await savedDashboardViewsApi.get(defaultViewName);
   } catch (err) {
-    // Only self-heal on a TERMINAL failure -- the view is genuinely gone (404) or no longer
-    // accessible (403/401). A transient network error, timeout, or server-side 5xx doesn't mean
-    // that; clearing the stored preference on one of those would cause silent, permanent
-    // preference loss from what's actually a one-off blip.
+    // Only clear the default when the view is gone or inaccessible, not on transient errors.
     const status = getStatusFromError(err);
     if (status === 404 || status === 401 || status === 403) {
       setDefaultSavedView(uid, undefined).catch(() => {});
@@ -78,24 +67,17 @@ export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Pro
     return;
   }
 
-  // The dashboard this default was captured for isn't necessarily the one currently loading
-  // anymore: if the viewer navigated away to a different dashboard while any of the above awaits
-  // were in flight, writing viewFilter now would apply THIS dashboard's default onto THAT one.
+  // The viewer may have navigated to another dashboard while this was awaiting.
   if (typeof locationService.getSearchObject().viewFilter === 'string' || !isStillOnDashboard(uid)) {
     return;
   }
 
-  // Initialization, not a real user navigation -- replace rather than push, or the viewer's first
-  // Back press would land on the no-viewFilter version of this same dashboard instead of wherever
-  // they actually came from.
+  // Replace, not push, so Back doesn't land on this same dashboard without the view.
   locationService.partial({ viewFilter: view.metadata.name }, true);
 }
 
 /**
- * Best-effort staleness guard, not a full cancellation-token system: dashboard urls are
- * "/d/<uid>/...", so this is enough to catch the common case (a fast navigation to a different
- * dashboard while this function's own awaits are still in flight) without needing to thread a
- * cancellation signal through every caller.
+ * Best-effort staleness check against the "/d/<uid>/..." URL, rather than full cancellation.
  */
 function isStillOnDashboard(uid: string): boolean {
   // Exact segment match: a substring check would treat /d/web-prod/... as still being on `web`.
