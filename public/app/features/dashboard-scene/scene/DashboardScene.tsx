@@ -247,8 +247,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._modePickerOpened = true;
   }
 
-  // Edit periods are tracked regardless of dashboard modes, so manual and Assistant editing can be
-  // measured on instances that don't have modes enabled.
   private startEditPeriod(source: 'user' | 'assistant') {
     if (this._editSession) {
       return;
