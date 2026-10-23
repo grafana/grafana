@@ -4,6 +4,8 @@ import { TextLink } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
+import { RuleDescription } from '../rule-row/RuleDescription';
+import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
@@ -28,6 +30,8 @@ export function AlertRuleRow({ searchHit, folderPath }: AlertRuleRowProps) {
           {searchHit.title}
         </TextLink>
       }
+      description={<RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />}
+      right={<RuleInterval interval={searchHit.interval} />}
       meta={[folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />]}
     />
   );
