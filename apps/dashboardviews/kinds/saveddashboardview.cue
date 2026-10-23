@@ -36,6 +36,8 @@ SavedViewFilter: {
 	key:      string
 	operator: string
 	value:    string
+	// values holds the selection for multi-value operators.
+	values?: [...string]
 }
 
 SavedViewSectionFilter: {
