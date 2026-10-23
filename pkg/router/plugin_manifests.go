@@ -190,8 +190,15 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 				continue
 			}
 
+			// A connection records its calls under one plugin_id. A core_url
+			// entry may have no plugin ID, so its connection is labeled by its
+			// API group instead, which keeps core APIs on one host apart.
+			connectionID := entry.Definition.JSONData.ID
+			if connectionID == "" {
+				connectionID = manifest.Group
+			}
 			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-				return t.pluginClients(entry.Host, entry.Definition.JSONData.ID)
+				return t.pluginClients(entry.Host, connectionID)
 			}
 
 			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
@@ -205,8 +212,8 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			backend.info = entry.Definition.JSONData.Info
 			// Without a host, the deployment has no backend to call.
 			backend.hasBackend = entry.Host != ""
-			if host, pluginID := entry.Host, entry.Definition.JSONData.ID; host != "" {
-				backend.acquire = func() (func(), error) { return t.acquireConnection(host, pluginID) }
+			if host := entry.Host; host != "" {
+				backend.acquire = func() (func(), error) { return t.acquireConnection(host, connectionID) }
 			}
 
 			// The host is outside PluginDefinition, but changing it must reload the backend.
