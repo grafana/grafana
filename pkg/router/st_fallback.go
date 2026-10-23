@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -421,19 +423,36 @@ func isSingleTenantDiscoveryPath(path string) bool {
 }
 
 type tracedTransport struct {
-	base   http.RoundTripper
-	traced http.RoundTripper
+	base http.RoundTripper
+	// meterProvider is the global meter provider the wrapper was built with.
+	meterProvider any
+	traced        http.RoundTripper
 }
 
 // backendTransport returns st.transport wrapped for tracing. The wrapper is
-// cached for that transport, which tests replace after construction.
+// cached for that transport, which tests replace after construction, and for
+// the global meter provider it captured, which Grafana may replace. It takes
+// its tracer from each request, and reads the global propagator on each
+// request (newBackendTransport).
 func (st *singleTenantFallback) backendTransport() http.RoundTripper {
-	if cached := st.tracedTransport.Load(); cached != nil && cached.base == http.RoundTripper(st.transport) {
+	meterProvider := otel.GetMeterProvider()
+	if cached := st.tracedTransport.Load(); cached != nil && cached.base == http.RoundTripper(st.transport) &&
+		sameProvider(cached.meterProvider, meterProvider) {
 		return cached.traced
 	}
 	traced := newBackendTransport(st.transport)
-	st.tracedTransport.Store(&tracedTransport{base: st.transport, traced: traced})
+	st.tracedTransport.Store(&tracedTransport{base: st.transport, meterProvider: meterProvider, traced: traced})
 	return traced
+}
+
+// sameProvider reports whether a and b are the same provider. A provider of a
+// type that can't be compared counts as changed.
+func sameProvider(a, b any) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	typ := reflect.TypeOf(a)
+	return typ == reflect.TypeOf(b) && typ.Comparable() && a == b
 }
 
 // forward proxies req to host. An empty group means discovery. observe, when
