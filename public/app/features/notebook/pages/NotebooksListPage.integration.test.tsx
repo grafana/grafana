@@ -1,21 +1,20 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor, act } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
+import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
 // Deliberately no jest.mock of the api-client modules here: the point of this suite is to exercise
-// the real RTK Query wiring, including the claim that creating a notebook invalidates the
-// 'Notebook' tag and refetches the search-backed list. The mocked suite next door covers the
-// rendering cases.
+// the real RTK Query wiring, and to hold the real endpoint still so the test can say whether it was
+// called at all. The mocked suite next door covers the rendering cases.
 
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
@@ -25,7 +24,7 @@ const NOTEBOOKS_SEARCH_URL = `${NOTEBOOKS_URL}/search`;
 setBackendSrv(backendSrv);
 setupMockServer();
 
-/** A notebook as the LIST endpoint returns it — used only for the fallback case. */
+/** A notebook as the API returns it, for the create response. */
 function notebook(name: string, title: string) {
   return {
     metadata: {
@@ -60,30 +59,43 @@ function hit(name: string, title: string) {
   };
 }
 
-/** Serves a search-backed list that grows once the create endpoint is hit, counting searches. */
+/** Serves a search-backed list, counting searches and any attempt to create a notebook. */
 function setupNotebooksApi() {
   const items = [hit('nb1', 'Checkout error spike')];
   let searchRequests = 0;
+  let createRequests = 0;
   const bodies: Array<Record<string, unknown>> = [];
 
   server.use(
     http.post(NOTEBOOKS_SEARCH_URL, async ({ request }) => {
-      searchRequests++;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- shape asserted by the test
-      bodies.push((await request.json()) as Record<string, unknown>);
+      const body = (await request.json()) as Record<string, unknown>;
+      // The tag filter's facet shares this path. It is not a search for rows, so it is answered
+      // without being counted as one — otherwise "the list refetched" could pass on a facet.
+      if (body.facets) {
+        return HttpResponse.json({ metadata: { totalHits: 0, totalHitsRelation: 'eq' }, items: [] });
+      }
+      searchRequests++;
+      bodies.push(body);
       return HttpResponse.json({
         metadata: { totalHits: items.length, totalHitsRelation: 'eq' },
         items,
       });
     }),
+    // Still served, so a create would succeed rather than error. A test that only proved the request
+    // failed would pass for the wrong reason.
     http.post(NOTEBOOKS_URL, async () => {
-      const created = notebook('nb2', 'New notebook');
+      createRequests++;
       items.push(hit('nb2', 'New notebook'));
-      return HttpResponse.json(created);
+      return HttpResponse.json(notebook('nb2', 'New notebook'));
     })
   );
 
-  return { getSearchRequests: () => searchRequests, getBodies: () => bodies };
+  return {
+    getSearchRequests: () => searchRequests,
+    getCreateRequests: () => createRequests,
+    getBodies: () => bodies,
+  };
 }
 
 describe('NotebooksListPage (integration)', () => {
@@ -91,8 +103,10 @@ describe('NotebooksListPage (integration)', () => {
 
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    __resetSearchAvailabilityForTests();
-    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+    contextSrv.user.permissions = {
+      [AccessControlAction.NotebooksWrite]: true,
+      [AccessControlAction.NotebooksCreate]: true,
+    };
   });
 
   afterEach(async () => {
@@ -130,22 +144,24 @@ describe('NotebooksListPage (integration)', () => {
     });
   });
 
-  it('refetches the list after creating a notebook', async () => {
+  // The whole point of the blank route: a click that somebody thinks better of should leave nothing
+  // behind. This asserts against the real endpoint rather than a mocked hook, because "no notebook was
+  // written" is a claim about the wire.
+  it('writes no notebook when the create button is clicked', async () => {
     const api = setupNotebooksApi();
 
     const { user } = render(<NotebooksListPage />);
 
     expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
-    const searchRequestsBefore = api.getSearchRequests();
 
     await user.click(screen.getByRole('button', { name: 'New notebook' }));
 
-    // The create mutation invalidates the 'Notebook' tag. The search query tags itself into that
-    // same namespace rather than the 'Search' one, which is what makes this rerun.
     await waitFor(() => {
-      expect(api.getSearchRequests()).toBeGreaterThan(searchRequestsBefore);
+      expect(locationService.getLocation().pathname).toBe('/notebooks/new');
     });
-    expect(await screen.findByRole('link', { name: 'New notebook' })).toBeInTheDocument();
+    expect(api.getCreateRequests()).toBe(0);
+    // No new row either, so nothing was written that the list would have picked up.
+    expect(screen.queryByRole('link', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
   // The endpoint pages with an opaque cursor, and the list is only honest once the walk finishes:
@@ -161,7 +177,12 @@ describe('NotebooksListPage (integration)', () => {
     server.use(
       http.post(NOTEBOOKS_SEARCH_URL, async ({ request }) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test-local shape
-        const body = (await request.json()) as { continue?: string };
+        const body = (await request.json()) as { continue?: string; facets?: string[] };
+        // The tag filter's facet is a POST to this same path. It asks for no rows and carries no
+        // cursor, so recording it here would count it as a page of the walk.
+        if (body.facets) {
+          return HttpResponse.json({ metadata: { totalHits: 0, totalHitsRelation: 'eq' }, items: [] });
+        }
         cursors.push(body.continue);
         // Tokens are named for the page they lead to, so the cursor doubles as the index.
         const page = body.continue ? pages[Number(body.continue.replace('cursor-', '')) - 1] : pages[0];
@@ -182,24 +203,5 @@ describe('NotebooksListPage (integration)', () => {
 
     // The first request carries no cursor; each one after it carries the previous page's token.
     expect(cursors).toEqual([undefined, 'cursor-2', 'cursor-3']);
-  });
-
-  it('falls back to LIST where the search endpoint is not served', async () => {
-    // What an apiserver without `enable_search_api` answers: the path parses as a request for a
-    // resource named "search".
-    server.use(
-      http.post(NOTEBOOKS_SEARCH_URL, () =>
-        HttpResponse.json({ kind: 'Status', status: 'Failure', code: 404, reason: 'NotFound' }, { status: 404 })
-      ),
-      http.get(NOTEBOOKS_URL, () =>
-        HttpResponse.json({ metadata: {}, items: [notebook('nb1', 'Checkout error spike')] })
-      )
-    );
-
-    render(<NotebooksListPage />);
-
-    // The list renders anyway, and the 404 never reaches the user as an error.
-    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
-    expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
   });
 });

@@ -129,10 +129,7 @@ func (fileV1 *AlertingFileV1) mapRules(alertingFile *AlertingFile) error {
 		alertingFile.Groups = append(alertingFile.Groups, group)
 	}
 	for _, ruleDeleteV1 := range fileV1.DeleteRules {
-		orgID := ruleDeleteV1.OrgID.Value()
-		if orgID < 1 {
-			orgID = 1
-		}
+		orgID := max(ruleDeleteV1.OrgID.Value(), 1)
 		ruleDelete := RuleDelete{
 			UID:   ruleDeleteV1.UID.Value(),
 			OrgID: orgID,

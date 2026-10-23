@@ -95,7 +95,7 @@ func splitHeaders(headers []string) []string {
 	out := []string{}
 	for _, v := range headers {
 		if strings.Contains(v, ",") {
-			for _, sub := range strings.Split(v, ",") {
+			for sub := range strings.SplitSeq(v, ",") {
 				out = append(out, strings.TrimSpace(sub))
 			}
 		} else {

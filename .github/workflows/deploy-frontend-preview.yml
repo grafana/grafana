@@ -123,15 +123,12 @@ jobs:
         with:
           ref: ${{ needs.check.outputs.head-sha }}
           persist-credentials: false
-
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install dependencies
-        uses: ./.github/actions/yarn-install
 
-      - name: Build frontend
-        run: yarn build
+      - name: Restore or build frontend
+        uses: ./.github/actions/build-frontend
 
       - name: Upload build artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
@@ -257,7 +254,8 @@ jobs:
 
             ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
-            Each new push to this PR builds and deploys the preview again automatically.
+            - Each new push to this PR builds and deploys the preview again automatically.
+            - Share the above link for others to preview it in their browsers too.
 
   comment-failure:
     name: Comment that the deploy failed

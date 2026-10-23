@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // EmbeddingDim is the fixed width of the `embedding halfvec(N)` column. Models
@@ -62,6 +64,12 @@ type VectorBackend interface {
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
 
+	// UpdateMetadata patches metadata on rows matching f within (namespace,
+	// resource), spanning all models. set is merged (JSON object, may be
+	// empty), then unset keys are removed. At least one of set/unset must be
+	// non-empty. Returns the number of rows updated.
+	UpdateMetadata(ctx context.Context, namespace, resource string, f *filter.Filter, set json.RawMessage, unset []string) (int64, error)
+
 	// DeleteNamespace removes every row belonging to a namespace across all
 	// resources and models, plus its cached query embeddings, rate buckets, and
 	// promotion log rows. Used when a tenant is hard-deleted. Returns the number
@@ -88,6 +96,11 @@ type VectorBackend interface {
 
 	// UpdateContentVersion stamps every row of the uid so version-stale scans stop revisiting content a version bump didn't change.
 	UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error
+
+	// UpdateFolder refreshes the authorization folder of existing rows without
+	// changing their content, embedding, metadata, or content version.
+	// resource is the collection's partition key.
+	UpdateFolder(ctx context.Context, namespace, model, resource, uid, folder string) error
 
 	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
@@ -159,13 +172,14 @@ type VectorBackend interface {
 // as JSON {"r":<resource>,"t":<continue token>} so resume picks the
 // correct Builder.
 type BackfillJob struct {
-	ID          int64
-	Model       string
-	Resource    string // empty = all registered resources for this model
-	StoppingRV  int64
-	LastSeenKey string // empty when starting from the beginning
-	IsComplete  bool
-	LastError   string
+	ID             int64
+	Model          string
+	Resource       string // empty = all registered resources for this model
+	StoppingRV     int64
+	ContentVersion int
+	LastSeenKey    string // empty when starting from the beginning
+	IsComplete     bool
+	LastError      string
 }
 
 // EmbeddingCount is the stored row count for one (partition key, model).
@@ -198,6 +212,7 @@ type Vector struct {
 type VectorMeta struct {
 	Subresource string
 	Title       string
+	Folder      string
 	Metadata    json.RawMessage
 }
 
@@ -207,6 +222,9 @@ type DeleteSelector struct {
 	UIDs  []string
 	All   bool
 	Limit int // page size when All; 0 means defaultDeleteAllPageSize
+	// Filter selects rows by metadata using the filter dialect. Paged by
+	// Limit like All; exactly one of UIDs/All/Filter must be set.
+	Filter *filter.Filter
 	// AllModels drops the model scope: rows under every embedding model are
 	// deleted. External collections use this — they have no backfill, so
 	// rows from a previous model are unreachable orphans otherwise.

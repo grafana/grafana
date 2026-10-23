@@ -40,7 +40,7 @@ func TestTicker(t *testing.T) {
 
 		require.Equal(t, clk.Now(), getStartTick(clk, interval))
 		now := clk.Now()
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			delta := time.Duration(rand.Int63n(interval.Nanoseconds()))
 			clk.Set(now.Add(delta))
 			require.Equal(t, now, getStartTick(clk, interval))

@@ -175,19 +175,19 @@ export function ModalEditor(props: ModalEditorProps) {
       </div>
       <Modal.ButtonRow>
         <Button
-          variant="primary"
-          onClick={onClickApply}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton}
-        >
-          <Trans i18nKey="dashboard-scene.query-variable-editor.modal.apply">Apply</Trans>
-        </Button>
-        <Button
           variant="secondary"
           fill="outline"
           onClick={onCloseModal}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
         >
           <Trans i18nKey="dashboard-scene.query-variable-editor.modal.discard">Discard</Trans>
+        </Button>
+        <Button
+          variant="primary"
+          onClick={onClickApply}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton}
+        >
+          <Trans i18nKey="dashboard-scene.query-variable-editor.modal.apply">Apply</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>
@@ -249,6 +249,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
 
   const onClickApply = async () => {
     edit({
+      meta: { actionId: 'variable.changeQuery', scope: 'query' },
       source: variable,
       description: t('dashboard-scene.query-variable-editor.modal.apply-description', 'Change variable query'),
       perform: async () => {

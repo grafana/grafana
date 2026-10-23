@@ -64,6 +64,8 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		ResourceVersion:         event.ResourceVersion,
 		Folder:                  event.Folder,
 		PreviousResourceVersion: event.PreviousRV,
+		PreviousType:            actionToWatchNotificationType(event.PreviousAction),
+		PreviousFolder:          event.PreviousFolder,
 	})
 	if err != nil {
 		k.metrics.recordWatchNotificationPublishFailure(event)

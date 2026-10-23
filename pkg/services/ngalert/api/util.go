@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -42,12 +43,7 @@ var (
 )
 
 func isPrometheusCompatible(dsType string) bool {
-	for _, t := range prometheusCompatibleDsTypes {
-		if dsType == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(prometheusCompatibleDsTypes, dsType)
 }
 
 func isLotexRulerCompatible(dsType string) bool {

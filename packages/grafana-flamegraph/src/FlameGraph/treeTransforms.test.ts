@@ -1,5 +1,8 @@
+import { type LevelItem } from './dataTransform';
 import { levelsToString, textToDataContainer, trimLevelsString } from './testHelpers';
 import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
+
+const diffData = { getLabel: (index: number) => String(index) };
 
 describe('mergeSubtrees', () => {
   it('correctly merges trees', () => {
@@ -76,9 +79,42 @@ describe('mergeSubtrees', () => {
       `)
     );
   });
+
+  it('sums valueRight for diff profiles', () => {
+    const root1: LevelItem = { start: 0, value: 10, valueRight: 4, itemIndexes: [0], children: [], level: 0 };
+    const root2: LevelItem = { start: 0, value: 6, valueRight: 6, itemIndexes: [1], children: [], level: 0 };
+    const merged = mergeSubtrees([root1, root2], diffData);
+    expect(merged[0][0]).toMatchObject({ value: 16, valueRight: 10 });
+  });
+
+  it('leaves valueRight undefined for non-diff profiles', () => {
+    const root1: LevelItem = { start: 0, value: 10, itemIndexes: [0], children: [], level: 0 };
+    const root2: LevelItem = { start: 0, value: 6, itemIndexes: [1], children: [], level: 0 };
+    const merged = mergeSubtrees([root1, root2], diffData);
+    expect(merged[0][0].valueRight).toBeUndefined();
+  });
 });
 
 describe('mergeParentSubtrees', () => {
+  it('propagates valueRight through the rebased parent chain for diff profiles', () => {
+    const parent: LevelItem = { start: 0, value: 20, valueRight: 8, itemIndexes: [1], children: [], level: 0 };
+    const leaf: LevelItem = {
+      start: 0,
+      value: 5,
+      valueRight: 2,
+      itemIndexes: [0],
+      children: [],
+      level: 1,
+      parents: [parent],
+    };
+
+    const merged = mergeParentSubtrees([leaf], diffData);
+
+    // Both the rebased parent and the original leaf should carry the leaf's valueRight, not undefined.
+    expect(merged[0][0]).toMatchObject({ value: 5, valueRight: 2 });
+    expect(merged[1][0]).toMatchObject({ value: 5, valueRight: 2 });
+  });
+
   it('correctly merges trees', () => {
     const container = textToDataContainer(`
       [0/////////////]

@@ -1,5 +1,6 @@
 import { type ComponentType } from 'react';
 
+import { type RestrictedGrafanaApisContextType } from '../context/plugins/RestrictedGrafanaApis';
 import { throwIfAngular } from '../utils/throwIfAngular';
 
 import { type KeyValue } from './data';
@@ -63,6 +64,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _addedComponentConfigs: PluginExtensionAddedComponentConfig[] = [];
   private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
   private _addedFunctionConfigs: PluginExtensionAddedFunctionConfig[] = [];
+  private _restrictedApisListeners: Array<(apis: RestrictedGrafanaApisContextType) => void> = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -118,12 +120,47 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._addedFunctionConfigs;
   }
 
+  get restrictedApisListeners() {
+    return this._restrictedApisListeners;
+  }
+
+  /**
+   * Hands the plugin's module code the restricted Grafana APIs shared with this plugin, for code that runs
+   * before any of its roots mounts. Inside a root or extension component, use `useRestrictedGrafanaApis()`.
+   *
+   * - Call it while the module evaluates, like `addLink`: Grafana answers once, after the module has loaded,
+   *   and never answers a later call. Older Grafana versions lack the method, so check for it first.
+   * - The APIs are resolved for the id Grafana loaded the module for, with the same allow and block lists as
+   *   the hook, and they are the same objects the hook returns.
+   * - APIs behind a feature flag are included if the flag is on at load and are not updated afterwards, so
+   *   they check their flag on every call. APIs tied to a mounted root (the Dashboard Mutation API) are not
+   *   included.
+   *
+   * @alpha
+   */
+  onRestrictedApis(listener: (apis: RestrictedGrafanaApisContextType) => void) {
+    this._restrictedApisListeners.push(listener);
+
+    return this;
+  }
+
+  /**
+   * Adds a link to an extension point. The actual registration is done during the plugin import inside grafana.
+   * This means that if the link isn't added at the time the import, later calls to addLink won't register the link.
+   * @param linkConfig
+   */
   addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
     this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
     return this;
   }
 
+  /**
+   * Adds a component to an extension point. The actual registration is done during the plugin import inside grafana.
+   * This means that if the component isn't added at the time the import, later calls to addComponent won't
+   * register the component.
+   * @param linkConfig
+   */
   addComponent<Props = {}>(addedComponentConfig: PluginExtensionAddedComponentConfig<Props>) {
     this._addedComponentConfigs.push(addedComponentConfig as PluginExtensionAddedComponentConfig);
 

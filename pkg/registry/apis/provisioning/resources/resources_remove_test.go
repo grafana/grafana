@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -31,9 +32,7 @@ func managedGrafanaObj(name, namespace string, extraAnnotations map[string]any) 
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 		utils.AnnoKeyManagerIdentity: testRepoName,
 	}
-	for k, v := range extraAnnotations {
-		annotations[k] = v
-	}
+	maps.Copy(annotations, extraAnnotations)
 	return &unstructured.Unstructured{Object: map[string]any{
 		"metadata": map[string]any{
 			"name":        name,
@@ -208,6 +207,23 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	})
 }
 
+// createHook records how RenameResourceFile used its BeforeCreate hook.
+type createHook struct {
+	err    error // when set, the hook refuses the create
+	called int
+	undone int
+}
+
+func (h *createHook) fn() BeforeCreate {
+	return func(context.Context, string) (func(), error) {
+		h.called++
+		if h.err != nil {
+			return nil, h.err
+		}
+		return func() { h.undone++ }, nil
+	}
+}
+
 func TestRenameResourceFile(t *testing.T) {
 	dashboardGVK := schema.GroupVersionKind{
 		Group:   "dashboard.grafana.app",
@@ -260,7 +276,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "same-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step is expected to fail (no client)")
 		require.Contains(t, err.Error(), "failed to write resource")
@@ -315,7 +331,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step fails (no client)")
 		require.Contains(t, err.Error(), "failed to write resource")
@@ -350,7 +366,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(nil, fmt.Errorf("invalid json"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to parse new file")
@@ -366,10 +382,413 @@ func TestRenameResourceFile(t *testing.T) {
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to read previous file")
+	})
+
+	t.Run("old file parse error still attempts to write new resource", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		// Client.Create fails, isolating whether the write was even attempted
+		// from whether it succeeded.
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "new-uid")
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, fmt.Errorf("permission denied"))
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+
+		require.Error(t, err, "write step is expected to fail")
+		require.Contains(t, err.Error(), "failed to write resource",
+			"the new resource must be attempted even when the previous file cannot be parsed")
+		require.Empty(t, folderName, "old resource's identity is unknown, so no folder cleanup signal can be produced")
+	})
+
+	t.Run("old file parse error, byte-identical rename, still skips strict validation", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		existingObj := managedGrafanaObj("new-uid", "default", nil)
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).Return(existingObj, nil).Once()
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(newObj, nil)
+
+		hook := &createHook{}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.NoError(t, err, "the found object is updated in place -- nothing left to clean up")
+		require.Equal(t, "new-uid", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
+		mockClient.AssertNumberOfCalls(t, "Get", 1)
+		require.Zero(t, hook.called, "an update never asks to create")
+	})
+
+	t.Run("old file parse error, brand new resource, uses Create with strict validation", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "old-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "brand-new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "new-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		// Hash differs (rename-with-edits), but quota must still be checked
+		// exactly like the hash-match not-found case -- Bugbot's finding that
+		// this branch used to skip the check entirely.
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "brand-new-uid")
+		mockClient.On("Get", mock.Anything, "brand-new-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		hook := &createHook{}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.NoError(t, err, "the old path was never parseable, so nothing is left to clean up and the rename succeeded")
+		require.Equal(t, "brand-new-uid", name)
+		mockClient.AssertCalled(t, "Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything)
+		require.Equal(t, 1, hook.called, "a create with no matching delete is a net-new resource the caller must account for")
+		require.Zero(t, hook.undone, "a create keeps what it reserved")
+	})
+
+	t.Run("old file parse error for a reason other than path support stays fatal", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{`), Path: "old/dash.json"}
+		repo.On("Read", mock.Anything, "old/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("unexpected end of JSON input"))
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "new-uid"},
+			}},
+			GVK:  dashboardGVK,
+			Repo: testRepoInfo(),
+		}, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse previous file")
+		require.NotContains(t, err.Error(), "manual cleanup",
+			"a non-path parse failure on the old file is a real problem, not one a rename should paper over")
+		require.Empty(t, folderName)
+	})
+
+	t.Run("old file parse error, byte-identical rename, destination never synced keeps strict validation", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "never-synced-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		// Hash matches, but the object was never actually created -- equal
+		// hash alone must not be read as "already admitted" (Copilot's gap).
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "never-synced-uid")
+		mockClient.On("Get", mock.Anything, "never-synced-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound).Once()
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		hook := &createHook{}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.NoError(t, err, "never having existed means nothing was orphaned")
+		mockClient.AssertNumberOfCalls(t, "Get", 1)
+		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		require.Equal(t, "never-synced-uid", name)
+		mockClient.AssertCalled(t, "Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything)
+		require.Equal(t, 1, hook.called)
+		require.Zero(t, hook.undone)
+	})
+
+	t.Run("old file parse error, never synced, quota exceeded blocks the create", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "quota-blocked-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "quota-blocked-uid")
+		mockClient.On("Get", mock.Anything, "quota-blocked-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
+
+		hook := &createHook{err: errors.New("create refused")}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.ErrorIs(t, err, hook.err, "the hook's refusal is returned as it is")
+		require.Equal(t, 1, hook.called)
+		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("old file parse error, never synced, ForceCreate falls back to update on AlreadyExists", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "raced-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		// The pre-check misses it (a race, or an identity mismatch reading as
+		// NotFound); Create then hits AlreadyExists, and the same fallback a
+		// normal create uses finds it on retry, updating instead of failing.
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "raced-uid")
+		existingObj := managedGrafanaObj("raced-uid", "default", nil)
+		mockClient.On("Get", mock.Anything, "raced-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound).Once()
+		alreadyExists := apierrors.NewAlreadyExists(schema.GroupResource{}, "raced-uid")
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, alreadyExists).Once()
+		mockClient.On("Get", mock.Anything, "raced-uid", metav1.GetOptions{}, mock.Anything).Return(existingObj, nil).Once()
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		// Reserved for the create it thought it was about to do; must be
+		// given back once it turns out to be an update instead.
+		hook := &createHook{}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.NoError(t, err)
+		require.Equal(t, "raced-uid", name)
+		require.Equal(t, 1, hook.called)
+		require.Equal(t, 1, hook.undone, "it ended up an update, so what was reserved is given back")
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("old file parse error, never synced, failed write releases quota", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "failed-create-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "failed-create-uid")
+		mockClient.On("Get", mock.Anything, "failed-create-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, fmt.Errorf("permission denied"))
+
+		hook := &createHook{}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.Error(t, err)
+		require.Equal(t, 1, hook.called)
+		require.Equal(t, 1, hook.undone, "a failed write gives back what was reserved")
+	})
+
+	t.Run("old file parse error, existence check errors transiently, stays fatal", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "flaky-get-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		// Fails once, then self-heals to NotFound on Run()'s own retry -- a
+		// persistent error is already caught by Run()'s own default case, so
+		// it wouldn't distinguish this fix from having no fix at all.
+		mockClient.On("Get", mock.Anything, "flaky-get-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, fmt.Errorf("etcdserver: request timed out")).Once()
+		notFound := apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "flaky-get-uid")
+		mockClient.On("Get", mock.Anything, "flaky-get-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, notFound)
+		mockClient.On("Update", mock.Anything, mock.Anything, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, mock.Anything, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		hook := &createHook{}
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+
+		require.Error(t, err)
+		require.Zero(t, hook.called, "stays fatal before anyone is asked to create")
+		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {
@@ -412,7 +831,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "dash-uid"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step fails (no client on newParsed)")
 		require.Contains(t, err.Error(), "failed to write resource")
@@ -474,7 +893,7 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
-		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref")
+		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "dash-uid", name)
@@ -537,7 +956,7 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
-		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref")
+		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "dash-uid", name)
@@ -603,7 +1022,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-name", name)
@@ -617,7 +1036,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-name", name)
@@ -633,7 +1052,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-name", name)

@@ -7,25 +7,29 @@ export interface LogDetailsContextData {
   currentLog: LogListModel | undefined;
   closeDetails: () => void;
   detailsDisplayed: (rowIndex: number) => boolean;
+  displayedRowIndices: number[];
   enableLogDetails: boolean;
   logs: LogListModel[];
   prettifyDetailsJSON: boolean;
   replaceDetails: (log: LogListModel) => void;
   setCurrentLog: (log: LogListModel) => void;
+  setDisplayedRowIndices: (rowIndices: number[]) => void;
   setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   showDetails: LogListModel[];
-  toggleDetails: (log: number | LogListModel) => void;
+  toggleDetails: (log: number | LogListModel, withModifierKey?: boolean) => void;
 }
 
 export const emptyContextData: LogDetailsContextData = {
   currentLog: undefined,
   closeDetails: () => {},
   detailsDisplayed: () => false,
+  displayedRowIndices: [],
   enableLogDetails: false,
   logs: [],
   prettifyDetailsJSON: true,
   replaceDetails: () => {},
   setCurrentLog: () => {},
+  setDisplayedRowIndices: () => {},
   setPrettifyDetailsJSON: () => {},
   showDetails: [],
   toggleDetails: () => {},
@@ -58,6 +62,7 @@ export const LogDetailsContextProvider = ({
 }: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
+  const [displayedRowIndices, setDisplayedRowIndicesState] = useState<number[]>([]);
   const [prettifyDetailsJSON, setPrettifyDetailsJSONState] = useState(
     prettifyDetailsJSONProp ??
       (logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyDetailsJSON`, true) : true)
@@ -100,7 +105,7 @@ export const LogDetailsContextProvider = ({
   );
 
   const toggleDetails = useCallback(
-    (logRef: number | LogListModel) => {
+    (logRef: number | LogListModel, withModifierKey?: boolean) => {
       if (!enableLogDetails) {
         return;
       }
@@ -110,6 +115,13 @@ export const LogDetailsContextProvider = ({
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
+
+      if (!withModifierKey && !found) {
+        setCurrentLog(log);
+        setShowDetails([log]);
+        return;
+      }
+
       if (found) {
         const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== log.uid);
         setShowDetails(newShowDetails);
@@ -156,11 +168,13 @@ export const LogDetailsContextProvider = ({
         closeDetails,
         currentLog,
         detailsDisplayed,
+        displayedRowIndices,
         enableLogDetails,
         logs,
         prettifyDetailsJSON,
         replaceDetails,
         setCurrentLog,
+        setDisplayedRowIndices: setDisplayedRowIndicesState,
         setPrettifyDetailsJSON,
         showDetails,
         toggleDetails,

@@ -17,7 +17,7 @@ import { type DataFrame, type DataQueryError, LoadingState } from '@grafana/data
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import type {
   FrameSchema,
   FieldSchema,
@@ -52,7 +52,7 @@ function deepInterpolate(sceneObj: SceneObject, value: unknown): unknown {
   return value;
 }
 
-function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
+export function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
   // A missing/unknown plugin throws on import and sets `_pluginLoadError`; a module
   // that fails to compile resolves to an error plugin (`loadError`) without throwing.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- loadError is set ad-hoc by getPanelPluginError, not on the PanelPlugin type

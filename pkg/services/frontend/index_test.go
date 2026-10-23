@@ -50,9 +50,12 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 
 	// Create test assets manifest
 	urlPrefix := "public/" + dir
+	// Mirrors real builds: only the rspack manifest declares esModule.
+	esModule := dir == "build/rspack"
 
 	manifest := fmt.Sprintf(`{
 		"entrypoints": {
+			"esModule": %[2]t,
 			"app": {
 				"assets": {
 					"js": [
@@ -87,7 +90,7 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 			"src": "%[1]s/app.js",
 			"integrity": "sha256-test456"
 		}
-	}`, urlPrefix)
+	}`, urlPrefix, esModule)
 
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0644)
 	require.NoError(tb, err)
@@ -123,32 +126,62 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		// The response should contain references to the assets
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/runtime.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/app.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/app.js\"")
+		assert.Contains(t, body, "type=\"text/javascript\"")
 	})
 
-	t.Run("should serve preview assets when the preview cookie is set", func(t *testing.T) {
+	t.Run("should serve the matching preview build when the rspack flag changes", func(t *testing.T) {
 		const folder = "pr_grafana_123456"
 		bucket := newPreviewBucketServer(t, folder)
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
 		previewURL := bucket.URL + "/" + folder + "/"
 
-		req := newPreviewRequest("/")
-		req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: folder})
-		recorder := httptest.NewRecorder()
-		mux.ServeHTTP(recorder, req)
+		render := func(t *testing.T) string {
+			t.Helper()
+			req := newPreviewRequest("/")
+			req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: folder})
+			recorder := httptest.NewRecorder()
+			mux.ServeHTTP(recorder, req)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			body := recorder.Body.String()
+			assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
+			return body
+		}
 
-		assert.Equal(t, 200, recorder.Code)
-		body := recorder.Body.String()
+		t.Run("webpack", func(t *testing.T) {
+			body := render(t)
+			assert.Contains(t, body, previewURL+"public/build/runtime.preview.js")
+			assert.Contains(t, body, previewURL+"public/build/app.preview.js")
+			assert.Contains(t, body, previewURL+"public/build/grafana.app.preview.css")
+			assert.Contains(t, body, `integrity="sha256-webpack-runtime"`)
+			assert.Contains(t, body, `integrity="sha256-webpack-app"`)
+			assert.Contains(t, body, `type="text/javascript"`)
+			assert.Contains(t, body, "// test boot stub for build")
+			assert.NotContains(t, body, previewURL+"public/build/rspack/")
+			assert.NotContains(t, body, "sha256-rspack")
+		})
 
-		// Asset URLs should point at the preview build
-		assert.Contains(t, body, previewURL+"public/build/runtime.preview.js")
-		assert.Contains(t, body, previewURL+"public/build/app.preview.js")
-		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
-		assert.NotContains(t, body, "src=\"public/build/app.js\"")
+		t.Run("rspack after webpack was cached", func(t *testing.T) {
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+			body := render(t)
+			assert.Contains(t, body, previewURL+"public/build/rspack/runtime.preview.js")
+			assert.Contains(t, body, previewURL+"public/build/rspack/app.preview.js")
+			assert.Contains(t, body, previewURL+"public/build/rspack/grafana.app.preview.css")
+			assert.Contains(t, body, `integrity="sha256-rspack-runtime"`)
+			assert.Contains(t, body, `integrity="sha256-rspack-app"`)
+			assert.Contains(t, body, `type="module"`)
+			assert.Contains(t, body, "// test boot stub for build/rspack")
+			assert.NotContains(t, body, previewURL+"public/build/runtime.preview.js")
+			assert.NotContains(t, body, "sha256-webpack")
+		})
 
-		// The page should flag that preview assets are active
-		assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
+		t.Run("webpack after rspack was cached", func(t *testing.T) {
+			body := render(t)
+			assert.Contains(t, body, previewURL+"public/build/runtime.preview.js")
+			assert.Contains(t, body, `integrity="sha256-webpack-runtime"`)
+			assert.NotContains(t, body, previewURL+"public/build/rspack/runtime.preview.js")
+		})
 	})
 
 	t.Run("should fall back to default assets when the preview build cannot be loaded", func(t *testing.T) {
@@ -164,6 +197,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
 		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -233,10 +267,14 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/app.js\"")
+		assert.Contains(t, body, "type=\"module\"")
 		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
 		assert.Contains(t, body, "// test boot stub for build/rspack")
+		// Static images are copied into the build directory, so they move with it.
+		assert.Contains(t, body, "href=\"public/build/rspack/img/fav32.png\"")
+		assert.NotContains(t, body, "href=\"public/build/img/fav32.png\"")
 	})
 
 	t.Run("should start without an rspack build and fail the request when the flag is on", func(t *testing.T) {

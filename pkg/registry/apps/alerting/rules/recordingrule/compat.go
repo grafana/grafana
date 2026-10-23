@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -28,7 +28,7 @@ func convertToK8sResource(
 	rule *ngmodels.AlertRule,
 	managerProps utils.ManagerProperties,
 	namespaceMapper request.NamespaceMapper,
-) (*model.RecordingRule, error) {
+) (*v1beta1.RecordingRule, error) {
 	if rule.Type() != ngmodels.RuleTypeRecording {
 		return nil, errInvalidRule
 	}
@@ -36,7 +36,10 @@ func convertToK8sResource(
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
 	}
-	k8sRule := &model.RecordingRule{
+	k8sRule := &v1beta1.RecordingRule{
+		// The apiserver converts the object to the requested version, which
+		// starts from the version named here.
+		TypeMeta: ResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
 			UID:             types.UID(rule.GUID),
@@ -44,15 +47,15 @@ func convertToK8sResource(
 			ResourceVersion: fmt.Sprint(rule.Version),
 			Labels:          make(map[string]string),
 		},
-		Spec: model.RecordingRuleSpec{
+		Spec: v1beta1.RecordingRuleSpec{
 			Title:       rule.Title,
-			Expressions: make(model.RecordingRuleExpressionMap),
-			Trigger: model.RecordingRuleIntervalTrigger{
-				Interval: model.RecordingRulePromDuration(interval.String()),
+			Expressions: make(v1beta1.RecordingRuleExpressionMap),
+			Trigger: v1beta1.RecordingRuleIntervalTrigger{
+				Interval: v1beta1.RecordingRulePromDuration(interval.String()),
 			},
-			Labels:              make(map[string]model.RecordingRuleTemplateString),
-			Metric:              model.RecordingRuleMetricName(rule.Record.Metric),
-			TargetDatasourceUID: model.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
+			Labels:              make(map[string]v1beta1.RecordingRuleTemplateString),
+			Metric:              v1beta1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v1beta1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 		},
 	}
 
@@ -61,12 +64,12 @@ func convertToK8sResource(
 	}
 
 	if rule.RuleGroup != "" && !ngmodels.IsNoGroupRuleGroup(rule.RuleGroup) {
-		k8sRule.Labels[model.GroupLabelKey] = rule.RuleGroup
-		k8sRule.Labels[model.GroupIndexLabelKey] = strconv.Itoa(rule.RuleGroupIndex)
+		k8sRule.Labels[v1beta1.GroupLabelKey] = rule.RuleGroup
+		k8sRule.Labels[v1beta1.GroupIndexLabelKey] = strconv.Itoa(rule.RuleGroupIndex)
 	}
 
 	for k, v := range rule.Labels {
-		k8sRule.Spec.Labels[k] = model.RecordingRuleTemplateString(v)
+		k8sRule.Spec.Labels[k] = v1beta1.RecordingRuleTemplateString(v)
 	}
 
 	for _, query := range rule.Data {
@@ -80,7 +83,7 @@ func convertToK8sResource(
 	meta.SetFolder(rule.NamespaceUID)
 	// Keep metadata label in sync with folder annotation for downstream consumers
 	if rule.NamespaceUID != "" {
-		k8sRule.Labels[model.FolderLabelKey] = rule.NamespaceUID
+		k8sRule.Labels[v1beta1.FolderLabelKey] = rule.NamespaceUID
 	}
 	if rule.UpdatedBy != nil {
 		meta.SetUpdatedBy(string(*rule.UpdatedBy))
@@ -101,17 +104,25 @@ func convertToK8sResource(
 		if k8sRule.Annotations == nil {
 			k8sRule.Annotations = make(map[string]string, 1)
 		}
-		k8sRule.Annotations[model.PrometheusRuleDefinitionAnnotationKey] = def
+		k8sRule.Annotations[v1beta1.PrometheusRuleDefinitionAnnotationKey] = def
 	}
 
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
+
+	if len(rule.K8sStatus) > 0 {
+		// Status is best-effort: a malformed blob degrades to empty status rather
+		// than failing the rule read. Versions/tombstones carry no status blob, so
+		// they naturally serialize with empty status.
+		_ = json.Unmarshal(rule.K8sStatus, &k8sRule.Status)
+	}
+
 	return k8sRule, nil
 }
 
-func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) model.RecordingRuleExpression {
-	expression := model.RecordingRuleExpression{
+func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) v1beta1.RecordingRuleExpression {
+	expression := v1beta1.RecordingRuleExpression{
 		Model: query.Model,
 	}
 	if query.QueryType != "" {
@@ -119,12 +130,12 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 	}
 	// DatasourceUID is optional and defaults to expr datasource
 	if !expr.IsDataSource(query.DatasourceUID) {
-		expression.DatasourceUID = new(model.RecordingRuleDatasourceUID(query.DatasourceUID))
+		expression.DatasourceUID = new(v1beta1.RecordingRuleDatasourceUID(query.DatasourceUID))
 	}
 	if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
-		expression.RelativeTimeRange = &model.RecordingRuleRelativeTimeRange{
-			From: model.RecordingRulePromDurationWMillis(query.RelativeTimeRange.From.String()),
-			To:   model.RecordingRulePromDurationWMillis(query.RelativeTimeRange.To.String()),
+		expression.RelativeTimeRange = &v1beta1.RecordingRuleRelativeTimeRange{
+			From: v1beta1.RecordingRulePromDurationWMillis(query.RelativeTimeRange.From.String()),
+			To:   v1beta1.RecordingRulePromDurationWMillis(query.RelativeTimeRange.To.String()),
 		}
 	}
 	if rule.Record != nil && rule.Record.From == query.RefID {
@@ -139,12 +150,12 @@ func convertToK8sResources(
 	managerPropsMap map[string]utils.ManagerProperties,
 	namespaceMapper request.NamespaceMapper,
 	continueToken string,
-) (*model.RecordingRuleList, error) {
-	k8sRules := &model.RecordingRuleList{
+) (*v1beta1.RecordingRuleList, error) {
+	k8sRules := &v1beta1.RecordingRuleList{
 		ListMeta: metav1.ListMeta{
 			Continue: continueToken,
 		},
-		Items: make([]model.RecordingRule, 0, len(rules)),
+		Items: make([]v1beta1.RecordingRule, 0, len(rules)),
 	}
 	for _, rule := range rules {
 		managerProps := managerPropsMap[rule.UID]
@@ -164,7 +175,7 @@ func convertVersionToK8sResource(
 	orgID int64,
 	version *ngmodels.AlertRuleVersion,
 	namespaceMapper request.NamespaceMapper,
-) (*model.RecordingRule, error) {
+) (*v1beta1.RecordingRule, error) {
 	if version == nil {
 		return nil, fmt.Errorf("nil version")
 	}
@@ -188,8 +199,8 @@ func convertVersionsToK8sResources(
 	orgID int64,
 	versions []*ngmodels.AlertRuleVersion,
 	namespaceMapper request.NamespaceMapper,
-) (*model.RecordingRuleList, error) {
-	out := &model.RecordingRuleList{Items: make([]model.RecordingRule, 0, len(versions))}
+) (*v1beta1.RecordingRuleList, error) {
+	out := &v1beta1.RecordingRuleList{Items: make([]v1beta1.RecordingRule, 0, len(versions))}
 	for _, v := range versions {
 		k8sRule, err := convertVersionToK8sResource(orgID, v, namespaceMapper)
 		if err != nil {
@@ -209,8 +220,8 @@ func convertDeletedToK8sResources(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
 	namespaceMapper request.NamespaceMapper,
-) (*model.RecordingRuleList, error) {
-	out := &model.RecordingRuleList{Items: make([]model.RecordingRule, 0, len(rules))}
+) (*v1beta1.RecordingRuleList, error) {
+	out := &v1beta1.RecordingRuleList{Items: make([]v1beta1.RecordingRule, 0, len(rules))}
 	for _, rule := range rules {
 		// Tombstone rows clear the UID; the converter requires a non-empty Name, so fall back to the GUID.
 		copy := *rule
@@ -231,7 +242,7 @@ func convertDeletedToK8sResources(
 	return out, nil
 }
 
-func convertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
+func convertToDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
 	domainRule, err := convertToBaseDomainModel(orgID, k8sRule)
 	if err != nil {
 		return nil, utils.ManagerProperties{}, fmt.Errorf("failed to convert to domain model: %w", err)
@@ -259,13 +270,13 @@ func convertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.
 
 	// Fall back to the provenance annotation for objects that pre-date ManagerProperties.
 	sourceProv := k8sRule.GetProvenanceStatus()
-	if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
+	if !slices.Contains(v1beta1.AcceptedProvenanceStatuses, sourceProv) {
 		return nil, utils.ManagerProperties{}, fmt.Errorf("invalid provenance status: %s", sourceProv)
 	}
 	return domainRule, ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv)), nil
 }
 
-func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, error) {
+func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodels.AlertRule, error) {
 	domainRule := &ngmodels.AlertRule{
 		OrgID:    orgID,
 		UID:      k8sRule.Name,
@@ -280,10 +291,10 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 		},
 	}
 
-	if group, ok := k8sRule.Labels[model.GroupLabelKey]; ok {
+	if group, ok := k8sRule.Labels[v1beta1.GroupLabelKey]; ok {
 		domainRule.RuleGroup = group
 	}
-	if groupIndexStr, ok := k8sRule.Labels[model.GroupIndexLabelKey]; ok {
+	if groupIndexStr, ok := k8sRule.Labels[v1beta1.GroupIndexLabelKey]; ok {
 		groupIndex, err := strconv.Atoi(groupIndexStr)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse group index: %w", err)
@@ -307,7 +318,13 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 	for k, v := range k8sRule.Spec.Labels {
 		domainRule.Labels[k] = string(v)
 	}
-	for refID, expression := range k8sRule.Spec.Expressions {
+	refIDs := make([]string, 0, len(k8sRule.Spec.Expressions))
+	for refID := range k8sRule.Spec.Expressions {
+		refIDs = append(refIDs, refID)
+	}
+	slices.Sort(refIDs)
+	for _, refID := range refIDs {
+		expression := k8sRule.Spec.Expressions[refID]
 		domainQuery, err := convertToDomainQuery(expression, refID)
 		if err != nil {
 			return nil, err
@@ -324,7 +341,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 		return nil, fmt.Errorf("no query marked as source")
 	}
 
-	if def := k8sRule.Annotations[model.PrometheusRuleDefinitionAnnotationKey]; def != "" {
+	if def := k8sRule.Annotations[v1beta1.PrometheusRuleDefinitionAnnotationKey]; def != "" {
 		domainRule.Metadata.PrometheusStyleRule = &ngmodels.PrometheusStyleRule{
 			OriginalRuleDefinition: def,
 		}
@@ -333,7 +350,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 	return domainRule, nil
 }
 
-func convertToDomainQuery(expression model.RecordingRuleExpression, refID string) (ngmodels.AlertQuery, error) {
+func convertToDomainQuery(expression v1beta1.RecordingRuleExpression, refID string) (ngmodels.AlertQuery, error) {
 	modelJson, err := json.Marshal(expression.Model)
 	if err != nil {
 		return ngmodels.AlertQuery{}, fmt.Errorf("failed to marshal model: %w", err)

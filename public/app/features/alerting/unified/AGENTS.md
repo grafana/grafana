@@ -29,13 +29,18 @@ This file provides context for AI agents when working on the Grafana Alerting co
 2. **Testing Guidelines**: [../../../../../contribute/style-guides/testing.md](../../../../../contribute/style-guides/testing.md)
    - React Testing Library, query priorities, user event setup
 
-3. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
+3. **`frontend-testing-strategy` skill** — invoke with the Skill tool for this repo's testing
+   conventions: assert real behavior (not existence), avoiding AI-slop tests, and the anti-flake
+   rules. Read it before writing or reviewing tests here, alongside the Alerting Testing Guide
+   below.
+
+4. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
    - Emotion usage, `useStyles2` hook patterns
 
-4. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
+5. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
    - Redux Toolkit patterns, reducer testing
 
-5. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
+6. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
    - MSW API mocking, permission mocking, data source setup
 
 ### Alerting-Specific Conventions
@@ -311,13 +316,31 @@ mockFolder();
 
 A full list of features can be found in `pkg/services/featuremgmt/toggles_gen.csv` – focus on feature toggles owned by `@grafana/alerting-squad`.
 
-```typescript
-import { config } from '@grafana/runtime';
+Read flags through OpenFeature. Reading `config.featureToggles` is blocked by the
+`@grafana/no-config-feature-toggles` lint rule — that map is empty in the multi-tenant frontend
+service, so flags read from it are always `false` there.
 
-if (config.featureToggles.alertingTriage) {
+```typescript
+import { useFlagAlertingTriage } from '@grafana/runtime/internal';
+
+const isTriageEnabled = useFlagAlertingTriage();
+if (isTriageEnabled) {
   // Render triage view
 }
 ```
+
+Outside React — including the page-access predicates in `utils/pageAccess.ts`, which run during
+redux store creation — use the client instead:
+
+```typescript
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+
+getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false);
+```
+
+If a flag has no OpenFeature target yet, see the migration steps in
+`contribute/feature-toggles.md`. In tests, gate migrated flags with `setTestFlags` from
+`@grafana/test-utils/unstable` rather than `testWithFeatureToggles`.
 
 A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
 

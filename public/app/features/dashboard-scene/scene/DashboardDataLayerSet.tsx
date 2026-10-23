@@ -1,5 +1,5 @@
 import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   type SceneDataLayerProviderState,
   type SceneDataLayerProvider,
@@ -12,7 +12,7 @@ import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
 
 export const NEW_ANNOTATION_NAME = 'New annotation';
-export const NEW_ANNOTATION_COLOR = 'red';
+const NEW_ANNOTATION_COLOR = 'red';
 
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;

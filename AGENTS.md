@@ -18,11 +18,19 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 ## Principles
 
 - Follow existing patterns in the surrounding code
-- Write tests for new functionality
+- Write tests for new functionality — for frontend code, use the `frontend-testing-strategy`
+  skill for this repo's testing conventions (and `panel-testing-strategy` on top of it for
+  visualization/panel code)
 - Keep changes focused — avoid over-engineering
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
 - Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
+
+## Code Review Rules
+
+### Metrics
+
+- Review metric changes against `contribute/backend/instrumentation.md`, especially registration, duplicate registration, label cardinality, and the impact of renames on dashboards and alerts.
 
 ## Comments
 
@@ -137,6 +145,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 ## Key Notes
 
+- When calling a unified storage gRPC client, handle both error forms (transport `err` and response `Error`) with the helpers described in `pkg/storage/unified/resource/doc.go`; never check only one of them.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.
@@ -145,6 +154,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
 - **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
 - **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
+- **Metrics**: Before adding, renaming or registering metrics, read `contribute/backend/instrumentation.md` for naming and registration conventions.
 - **Service compatibility**: Unified storage/search (`pkg/storage/unified/`) can be deployed as separate services at a different cadence than the Grafana API layer. Changes spanning API-layer callers and `pkg/storage/unified/` must be backwards compatible in both directions — see `pkg/storage/unified/AGENTS.md`.
 
 ## Cursor Cloud specific instructions

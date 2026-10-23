@@ -170,6 +170,12 @@ export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWith
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
 }
 
+// counts every route nested under this one, so callers can warn before removing a route with children
+export function countChildRoutes(route: RouteWithID): number {
+  const children = route.routes ?? [];
+  return children.reduce((total, child) => total + 1 + countChildRoutes(child), 0);
+}
+
 /**
  * This function converts an object into a unique hash by sorting the keys and applying a simple integer hash
  */

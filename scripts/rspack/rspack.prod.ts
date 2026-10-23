@@ -3,8 +3,9 @@ import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { merge } from 'webpack-merge';
 
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
-import common, { type Env } from './rspack.common.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
+import bootConfig from './rspack.boot.ts';
+import common, { type Env, PUBLIC_PATH } from './rspack.common.ts';
 import swaggerConfig from './rspack.swagger.ts';
 
 export default (env: Env = {}) => {
@@ -15,6 +16,11 @@ export default (env: Env = {}) => {
 
     output: {
       crossOriginLoading: 'anonymous',
+      // Lazy chunks load through <script> tags rather than import(), which can't carry an
+      // integrity attribute and would leave them unchecked when SRI checks are enabled. Kept out
+      // of the dev config because HMR there fetches its ES module update manifest as JSON.
+      chunkFormat: 'array-push',
+      chunkLoading: 'jsonp',
     },
 
     optimization: {
@@ -22,7 +28,7 @@ export default (env: Env = {}) => {
       minimize: Number(env.noMinify) !== 1,
       minimizer: [
         new rspack.SwcJsMinimizerRspackPlugin(),
-        // `targets: []` means "minify, do not transpile" — postcss already handles prefixes.
+        // `targets: []` means "minify, do not transpile".
         new rspack.LightningCssMinimizerRspackPlugin({ minimizerOptions: { targets: [] } }),
       ],
       runtimeChunk: 'single',
@@ -56,7 +62,7 @@ export default (env: Env = {}) => {
     plugins: [
       new rspack.SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH)),
       function (this: Compiler) {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {
@@ -69,5 +75,5 @@ export default (env: Env = {}) => {
   };
 
   const mergedProdConfig = merge(common(env), prodConfig);
-  return Object.assign([mergedProdConfig, swaggerConfig(env)], { parallelism: 2 });
+  return Object.assign([mergedProdConfig, swaggerConfig(env), bootConfig(env)], { parallelism: 2 });
 };

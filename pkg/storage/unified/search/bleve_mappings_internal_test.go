@@ -3,6 +3,7 @@ package search
 import (
 	"maps"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,42 @@ func flatMappings(t *testing.T, def resource.SearchFieldDefinition) map[string]*
 		out[name] = sub.Fields[0]
 	}
 	return out
+}
+
+func TestDeletedResourceVersionMappingOverrideIsTopLevelOnly(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{
+			Name: resource.SEARCH_FIELD_DELETED_RV,
+			Type: resource.SearchFieldTypeInt64,
+			Capabilities: []resource.SearchCapability{
+				resource.SearchCapabilityFilter,
+				resource.SearchCapabilitySort,
+				resource.SearchCapabilityRetrieve,
+			},
+		}},
+	}, nil)
+
+	indexMapping, err := GetBleveMappings(provider, gvr.Group, gvr.Resource, nil)
+	require.NoError(t, err)
+	impl := indexMapping.(*mapping.IndexMappingImpl)
+
+	topLevel := impl.DefaultMapping.Properties[resource.SEARCH_FIELD_DELETED_RV]
+	require.NotNil(t, topLevel)
+	require.Len(t, topLevel.Fields, 1)
+	assert.Equal(t, "text", topLevel.Fields[0].Type)
+	assert.False(t, topLevel.Fields[0].Index)
+
+	fields := impl.DefaultMapping.Properties[strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, ".")]
+	require.NotNil(t, fields)
+	custom := fields.Properties[resource.SEARCH_FIELD_DELETED_RV]
+	require.NotNil(t, custom)
+	require.Len(t, custom.Fields, 1)
+	assert.Equal(t, "number", custom.Fields[0].Type)
+	assert.True(t, custom.Fields[0].Index)
+	assert.True(t, custom.Fields[0].Store)
+	assert.True(t, custom.Fields[0].DocValues)
+	assert.NotContains(t, fields.Properties, resource.SEARCH_FIELD_DELETED_RV_SORT)
 }
 
 func TestAddCapabilityFieldMappings_FilterRetrieve_LegacyShape(t *testing.T) {
@@ -661,6 +698,53 @@ func TestRequirementQuery_TextFilterDispatch(t *testing.T) {
 	assert.Equal(t, note, mq.Field())
 }
 
+func TestRequirementQuery_RegexFieldDispatch(t *testing.T) {
+	b := regexRequirementTestIndex(t)
+	tag := resource.SEARCH_FIELD_PREFIX + "tag"
+	for _, tc := range []struct {
+		name   string
+		regex  string
+		prefix string
+	}{
+		{name: "literal prefix", regex: "X.*", prefix: "X"},
+		{name: "case insensitive expression", regex: "(?i)X.*"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: tag, Operator: string(resource.OperatorRegex), Values: []string{tc.regex}})
+			require.Nil(t, errRes)
+			regex, ok := q.(*boundedRegexQuery)
+			require.True(t, ok)
+			assert.Equal(t, tag, regex.field)
+			assert.Equal(t, tc.prefix, regex.literalPrefix)
+		})
+	}
+
+	for _, tc := range []struct {
+		name   string
+		field  string
+		values []string
+	}{
+		{name: "lowercased keyword field", field: resource.SEARCH_FIELD_PREFIX + "note", values: []string{"N.*"}},
+		{name: "text-only field", field: resource.SEARCH_FIELD_PREFIX + "summary", values: []string{"S.*"}},
+		{name: "lowercased title", field: resource.SEARCH_FIELD_TITLE, values: []string{"T.*"}},
+		{name: "missing value", field: tag},
+		{name: "multiple values", field: tag, values: []string{"X.*", "Y.*"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertBadRequest(t, b, tc.field, string(resource.OperatorRegex), tc.values...)
+		})
+	}
+}
+
+func regexRequirementTestIndex(t *testing.T) *bleveIndex {
+	t.Helper()
+	return customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "tag", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+	)
+}
+
 func TestRequirementQuery_ExactPathFromCapabilities(t *testing.T) {
 	b := customFieldsIndex(t,
 		resource.SearchFieldDefinition{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
@@ -905,7 +989,7 @@ func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "in", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req, nil)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	mq, ok := queries[0].(*query.MatchQuery)
@@ -921,7 +1005,7 @@ func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "notin", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req, nil)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	bq, ok := queries[0].(*query.BooleanQuery)
@@ -959,9 +1043,9 @@ func labelIndex(t *testing.T, keywordLabels bool, key string, values ...string) 
 func labelFilterHits(t *testing.T, idx bleve.Index, key, operator string, values ...string) []string {
 	t.Helper()
 	b := &bleveIndex{index: idx, labelsAreKeyword: labelAnalyzerIsKeyword(idx), standard: resource.StandardSearchFields()}
-	queries, errRes := b.filterQueries(&resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+	queries, errRes := b.filterQueries(t.Context(), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
-	}})
+	}}, nil)
 	require.Nil(t, errRes)
 	require.Len(t, queries, 1)
 	res, err := idx.Search(bleve.NewSearchRequest(queries[0]))
@@ -1033,7 +1117,7 @@ func TestFilterQueries_DoesNotMutateRequest(t *testing.T) {
 	// Search can re-run the builder on the post-rank authz cursor fallback, so
 	// two passes must leave the shared requirements untouched (no double-prefix).
 	for range 2 {
-		_, e := b.filterQueries(req)
+		_, e := b.filterQueries(t.Context(), req, nil)
 		require.Nil(t, e)
 	}
 	assert.Equal(t, "team", req.Options.Labels[0].Key)
@@ -1090,27 +1174,25 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	// An explicit title field fans out the same way.
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: resource.SEARCH_FIELD_TITLE}})))
 
-	// A per-kind field resolves to fields.* and keeps its requested boost. The
-	// requested type is dropped: the backend derives it from the mapping.
-	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_KEYWORD, Boost: 3}})
+	// A per-kind field resolves to fields.* and keeps its requested boost.
+	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Boost: 3}})
 	require.Len(t, got, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"panel_title", got[0].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_DEFAULT, got[0].Type)
 	assert.Equal(t, float32(3), got[0].Boost)
 
 	// title + per-kind field: title variants first, then the resolved field.
 	assert.Equal(t, append(append([]string{}, titleVariants...), resource.SEARCH_FIELD_PREFIX+"panel_title"),
 		names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{
 			{Name: resource.SEARCH_FIELD_TITLE},
-			{Name: "panel_title", Type: resourcepb.QueryFieldType_TEXT},
+			{Name: "panel_title"},
 		})))
 
 	// When the caller already names the physical title variants (legacy dashboard
 	// search), the logical title is not re-expanded, so nothing is duplicated.
 	legacy := []*resourcepb.ResourceSearchRequest_QueryField{
-		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Type: resourcepb.QueryFieldType_KEYWORD, Boost: 10},
-		{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.QueryFieldType_TEXT, Boost: 2},
-		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Type: resourcepb.QueryFieldType_TEXT, Boost: 1},
+		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Boost: 10},
+		{Name: resource.SEARCH_FIELD_TITLE, Boost: 2},
+		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Boost: 1},
 	}
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields(legacy)))
 }
@@ -1212,7 +1294,7 @@ func TestBulkIndexPopulatesFieldVariants(t *testing.T) {
 				},
 			}},
 		})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	bi, ok := index.(*bleveIndex)

@@ -1,4 +1,5 @@
 import { type BootData } from '@grafana/data';
+import { type LegacyFeatureToggleMode } from '@grafana/runtime/internal';
 export declare global {
   interface Window {
     __grafanaSceneContext: SceneObject;
@@ -26,6 +27,16 @@ export declare global {
     __grafanaLegacyAPIMode?: string;
 
     /**
+     * How the frontend handles reads of the legacy `config.featureToggles` map.
+     * Controlled by the `grafana.frontendLegacyFeatureToggleHandling` feature flag.
+     * - `off`: reads are left untouched
+     * - `log`: reads resolve normally, and each toggle is warned about in the console once
+     * - `alert`: as `log`, and each toggle also raises a warning alert once
+     * - `block`: as `log`, and reads resolve to undefined
+     */
+    __grafanaLegacyFeatureToggleMode?: LegacyFeatureToggleMode;
+
+    /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.
      * Required in new index.html to fetch necessary data before app init()
      **/
@@ -47,15 +58,14 @@ export declare global {
      */
     __grafanaRenderBindingSupported?: boolean;
 
-    /**
-     * Controls whether the frontend OFREP client uses the root `/ofrep/v1` route
-     * instead of the namespaced route. Evaluated server-side since OpenFeature
-     * isn't set up yet when the OFREP provider's baseUrl is constructed.
-     */
-    __grafanaOFREPRootUrlEnabled?: boolean;
-
     /** Selects the Luxon-backed implementation before the application bundle loads. */
     __grafanaUseLuxon?: boolean;
+
+    /**
+     * Set by the frontend service to the preview folder name when this page is
+     * serving frontend assets from a PR preview build instead of the release assets.
+     */
+    __grafanaPreviewAssets?: string;
   }
 
   // Augment DOMParser to accept TrustedType sanitised content

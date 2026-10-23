@@ -20,18 +20,14 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -691,9 +687,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	interval2, err = adminClient.Create(ctx, interval2, resource.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	require.NoError(t, db.SetProvenance(ctx, &v1model.TimeInterval{
 		Title: interval2.Spec.Name,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
@@ -749,9 +743,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -760,7 +752,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use time interval
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	mtis := make([]v1model.TimeInterval, 0, len(amConfig.AlertmanagerConfig.MuteTimeIntervals))

@@ -1,0 +1,2884 @@
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Profiler, useCallback, useLayoutEffect, useRef, useState } from 'react';
+
+import {
+  createTheme,
+  type DataQuery,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+
+import { QueryCoauthoring } from './QueryCoauthoring';
+import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringContextV1,
+  type QueryEditorCoauthoringSnapshotV1,
+} from './internalCoauthoringContract';
+import { startQueryPreview } from './queryPreview';
+import { useQueryProposalTransaction } from './useQueryProposalTransaction';
+
+const mockGenerate = jest.fn().mockImplementation(() => new Promise<void>(() => undefined));
+const mockCancel = jest.fn();
+const mockReset = jest.fn();
+const mockOpenAssistant = jest.fn();
+const mockPost = jest.fn();
+const mockReportInteraction = jest.fn();
+const VIEWPORT_TEST_MARGIN = 8;
+let mockIsGenerating = false;
+let mockAssistantAvailable = true;
+let mockAssistantLoading = false;
+
+jest.mock('@grafana/assistant', () => ({
+  createAssistantContextItem: (type: string, params: Record<string, unknown>) => ({
+    node: { data: { type, params, data: params.data } },
+  }),
+  createTool: (
+    invoke: (input: Record<string, unknown>) => Promise<string>,
+    options: {
+      name: string;
+      validate: (input: Record<string, unknown>) => unknown;
+    }
+  ) => ({
+    ...options,
+    invoke: async (input: Record<string, unknown>) => invoke(options.validate(input) as Record<string, unknown>),
+  }),
+  openAssistant: (...args: unknown[]) => mockOpenAssistant(...args),
+  useAssistant: () => ({
+    isLoading: mockAssistantLoading,
+    isAvailable: mockAssistantAvailable,
+    openAssistant: mockAssistantAvailable ? mockOpenAssistant : undefined,
+    closeAssistant: undefined,
+    toggleAssistant: undefined,
+  }),
+  useInlineAssistant: () => ({
+    generate: mockGenerate,
+    isGenerating: mockIsGenerating,
+    content: '',
+    error: null,
+    cancel: mockCancel,
+    reset: mockReset,
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    post: (...args: unknown[]) => mockPost(...args),
+  }),
+  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
+}));
+
+function QueryEditorFixture({
+  query,
+  adapter,
+  onChange,
+}: {
+  query: DataQuery;
+  adapter: QueryEditorCoauthoringAdapterV1;
+  onChange: (query: DataQuery) => void;
+}) {
+  const source = 'expr' in query && typeof query.expr === 'string' ? query.expr : '';
+  const latest = useRef({ source, query, onChange });
+  latest.current = { source, query, onChange };
+  const handleContentChange = useCallback(
+    (value: string) => {
+      if (value === latest.current.source) {
+        return;
+      }
+      adapter.dismiss();
+      const updated: DataQuery & { expr: string } = { ...latest.current.query, expr: value };
+      latest.current.onChange(updated);
+    },
+    [adapter]
+  );
+  useLayoutEffect(() => handleContentChange(source), [handleContentChange, source]);
+  return (
+    <textarea
+      aria-label="Query editor"
+      value={source}
+      onChange={(event) => handleContentChange(event.currentTarget.value)}
+    />
+  );
+}
+
+async function setup(
+  anchorTop = 0,
+  waitForPrompt = true,
+  context: QueryEditorCoauthoringContextV1 = {
+    revision: '1',
+    query: 'rate(http_requests_total[5m])',
+    focusRanges: [{ from: 0, to: 4 }],
+    language: {
+      id: 'promql',
+      displayName: 'PromQL',
+      guidance: [
+        'Treat slash-separated label names as alternatives.',
+        'For a counter breakdown, apply rate before aggregating.',
+      ],
+    },
+    metadata: [
+      {
+        kind: 'metric',
+        name: 'http_requests_total',
+        attributes: { type: 'counter', help: 'Total HTTP requests.' },
+      },
+    ],
+  },
+  props: {
+    isPreviewRunning?: boolean;
+    entry?: boolean;
+    transaction?: boolean;
+    realPreview?: boolean;
+    onCommit?: VoidFunction;
+  } = {}
+) {
+  const stagePreview = jest.fn(
+    (_invocationId: string, source: string): ReturnType<QueryEditorCoauthoringAdapterV1['prepareProposal']> => ({
+      status: 'ready',
+      query: { refId: 'A', expr: source } as DataQuery,
+      changes: [
+        {
+          id: 'change-1',
+          focus: 'inside',
+          original: 'rate',
+          proposed: 'increase',
+          kind: 'function',
+        },
+      ],
+    })
+  );
+  const dismissInvocation = jest.fn();
+  const onAccept = jest.fn((_query: DataQuery, _originalRefId?: string) => true);
+  const onPreview = jest.fn(() => true);
+  const onRevertPreview = jest.fn();
+  const onBaseline = jest.fn(() => true);
+  const anchorElement = document.createElement('div');
+  const baseline = { refId: 'A', expr: context.query } as DataQuery;
+  const panelResult = (value: number): PanelData => ({
+    state: LoadingState.Done,
+    series: [toDataFrame({ refId: 'A', fields: [{ name: 'value', values: [value] }] })],
+    timeRange: getDefaultTimeRange(),
+  });
+  const baselineData = panelResult(10);
+  const queryRunner = new SceneQueryRunner({ queries: [baseline], data: baselineData });
+  const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+  const previewRequests: SceneQueryRunner[] = [];
+  if (props.realPreview) {
+    jest.spyOn(SceneQueryRunner.prototype, 'cancelQuery').mockImplementation();
+    jest.spyOn(SceneQueryRunner.prototype, 'runQueries').mockImplementation(function (this: SceneQueryRunner) {
+      previewRequests.push(this);
+      this.setState({ data: { state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() } });
+    });
+    onAccept.mockImplementation((query: DataQuery) => {
+      queryRunner.setState({ queries: [query] });
+      return true;
+    });
+  }
+  const readInvocation = jest.fn().mockResolvedValue({ baseline, context });
+  let snapshot: QueryEditorCoauthoringSnapshotV1 = props.entry
+    ? { mode: 'selection', portalTarget: anchorElement }
+    : { mode: 'invoked', invocationId: context.revision, portalTarget: anchorElement };
+  const listeners = new Set<VoidFunction>();
+  const adapter: QueryEditorCoauthoringAdapterV1 = {
+    getSnapshot: () => snapshot,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    invoke: jest.fn(() => {
+      snapshot = { mode: 'invoked', invocationId: context.revision, portalTarget: anchorElement };
+      listeners.forEach((listener) => listener());
+    }),
+    readInvocation,
+    prepareProposal: stagePreview,
+    dismiss: dismissInvocation,
+  };
+  if (props.transaction) {
+    dismissInvocation.mockImplementation(() => {
+      snapshot = { mode: 'hidden' };
+      listeners.forEach((listener) => listener());
+    });
+  }
+  jest.spyOn(anchorElement, 'getBoundingClientRect').mockReturnValue({
+    top: anchorTop,
+    bottom: anchorTop,
+    left: 0,
+    right: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: anchorTop,
+    toJSON: () => undefined,
+  });
+  document.body.append(anchorElement);
+
+  const queryCoauthoringProps = {
+    adapter,
+    invocationId: context.revision,
+    portalTarget: anchorElement,
+    datasourceType: 'prometheus',
+    onBaseline,
+    onAccept,
+    onPreview,
+    onRevertPreview,
+    timeRange: { from: 1_000, to: 2_000 },
+  };
+  function TransactionHarness() {
+    const { data } = queryRunner.useState();
+    const transaction = useQueryProposalTransaction({
+      query: baseline,
+      queries: [baseline],
+      queryKey: 'prometheus:A',
+      adapter,
+      updateQuery: onAccept,
+      runQueries: jest.fn(),
+      startQueryPreview: props.realPreview
+        ? (refId, query) => startQueryPreview(panel, refId, query)
+        : () => ({
+            dispose: () => undefined,
+            select: () => true,
+            peek: () => true,
+            stopPeek: () => undefined,
+            subscribeToState: () => () => undefined,
+            subscribeToData: () => () => undefined,
+          }),
+    });
+    return (
+      <>
+        {transaction.editorQuery && (
+          <QueryEditorFixture query={transaction.editorQuery} adapter={adapter} onChange={transaction.onChange} />
+        )}
+        <QueryCoauthoringSurface
+          adapter={adapter}
+          onBaseline={transaction.synchronizeBaseline}
+          host={{
+            datasourceType: 'prometheus',
+            timeRange: data?.timeRange
+              ? { from: data.timeRange.from.valueOf(), to: data.timeRange.to.valueOf() }
+              : undefined,
+            previewPhase: transaction.previewPhase,
+            previewData: transaction.previewData,
+            readPreviewData: transaction.readPreviewData,
+            preview: transaction.preview,
+            peek: transaction.peek,
+            stopPeek: transaction.stopPeek,
+            accept: transaction.accept,
+            revert: transaction.revert,
+          }}
+        />
+      </>
+    );
+  }
+  const surface = props.transaction ? (
+    <TransactionHarness />
+  ) : props.entry ? (
+    <QueryCoauthoringSurface
+      adapter={adapter}
+      onBaseline={onBaseline}
+      host={{
+        datasourceType: 'prometheus',
+        previewPhase: 'idle',
+        preview: onPreview,
+        accept: onAccept,
+        revert: onRevertPreview,
+      }}
+    />
+  ) : (
+    <QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning={props.isPreviewRunning} />
+  );
+  const result = render(
+    props.onCommit ? (
+      <Profiler id="query-coauthoring" onRender={props.onCommit}>
+        {surface}
+      </Profiler>
+    ) : (
+      surface
+    )
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  if (waitForPrompt) {
+    await screen.findByRole('textbox', { name: 'Describe a query change' });
+  }
+
+  return {
+    anchorElement,
+    capability: adapter,
+    context,
+    dismissInvocation,
+    baseline,
+    queryText: context.query,
+    onAccept,
+    onBaseline,
+    onPreview,
+    onRevertPreview,
+    queryCoauthoringProps,
+    readInvocation,
+    stagePreview,
+    baselineData,
+    queryRunner,
+    panelResult,
+    previewRequests,
+    user: userEvent.setup(),
+    ...result,
+  };
+}
+
+describe('QueryCoauthoring', () => {
+  it('shows the selected token diff above why, using Core Focus ranges rather than adapter annotations', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockImplementation((_id, source) => {
+      const query: DataQuery & { expr: string } = { refId: 'A', expr: source };
+      return {
+        status: 'ready',
+        query,
+        changes: [
+          {
+            id: 'misleading',
+            original: 'wrong-original',
+            proposed: 'wrong-proposed',
+            focus: 'inside',
+            kind: 'expression',
+          },
+        ],
+      };
+    });
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'sum(rate(http_requests_total[5m]))',
+            why: ['Aggregate the rate.'],
+            unconfirmedValues: ['code="999"'],
+          },
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Count the requests.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const diff = screen.getByLabelText('Query diff');
+    expect(within(diff).getAllByLabelText('Change outside Focus')).toHaveLength(2);
+    expect(
+      diff.compareDocumentPosition(screen.getByText('Aggregate the rate.')) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.queryByText('wrong-original')).not.toBeInTheDocument();
+    expect(screen.getByText('Unconfirmed:')).toBeVisible();
+    expect(screen.getByTestId('icon-exclamation-triangle')).toHaveAttribute('aria-hidden', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByLabelText('Query diff')).toHaveTextContent('increase');
+    expect(
+      within(screen.getByLabelText('Query diff')).queryByLabelText('Change outside Focus')
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.queryByLabelText('Query diff')).not.toBeInTheDocument();
+  });
+
+  it('keeps the editor and selected card together through rapid option and Original switches', async () => {
+    const { user, dismissInvocation, onAccept } = await setup(0, true, undefined, { transaction: true });
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    act(() => {
+      fireEvent.click(screen.getByRole('tab', { name: 'Option 2' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Original' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Option 1' }));
+    });
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(onAccept).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Query editor' }), {
+      target: { value: 'sum(http_requests_total)' },
+    });
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: 'sum(http_requests_total)' }, 'A');
+    expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+    expect(dismissInvocation).toHaveBeenCalled();
+  });
+
+  it('keeps the real preview transaction alive on Original, reuses cached data, and accepts the selected query', async () => {
+    const { user, baseline, baselineData, queryRunner, panelResult, previewRequests } = await setup(
+      0,
+      true,
+      undefined,
+      {
+        transaction: true,
+        realPreview: true,
+      }
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByText('Running updated query...')).toBeVisible();
+    expect(queryRunner.state.data).toEqual(baselineData);
+    const first = panelResult(11);
+    act(() => previewRequests[0].setState({ data: first }));
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByText('Total.')).toBeVisible();
+    expect(queryRunner.state.data).toEqual(first);
+    const second = panelResult(12);
+    act(() => previewRequests[1].setState({ data: second }));
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(queryRunner.state.data).toEqual(baselineData);
+    expect(queryRunner.state.queries).toEqual([baseline]);
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(queryRunner.state.data).toEqual(second);
+    expect(previewRequests).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(queryRunner.state.queries).toEqual([{ refId: 'A', expr: 'sum(increase(http_requests_total[5m]))' }]);
+    expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+  });
+
+  it('keeps long, short and Original card content current in every commit through uncached, cached and rapid chip clicks', async () => {
+    const firstReasons = [
+      'Counts selected requests.',
+      'Computes the increase across the entire five-minute window.',
+      'Preserves the existing labels for each individual request series.',
+      'Accounts for counter resets without combining unrelated series.',
+      'Compare the window count with the original per-second request rate.',
+    ];
+    const secondReasons = ['Totals request rates by code, handler, method and status.'];
+    const first = {
+      tab: 'Option 1',
+      reasons: firstReasons,
+      forbidden: secondReasons,
+      diff: 'rateincrease(http_requests_total[5m])',
+      source: 'increase(http_requests_total[5m])',
+    };
+    const second = {
+      tab: 'Option 2',
+      reasons: secondReasons,
+      forbidden: firstReasons,
+      diff: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+      source: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+    };
+    const original = {
+      tab: 'Original',
+      reasons: [],
+      forbidden: [...firstReasons, ...secondReasons],
+      diff: '',
+      source: 'rate(http_requests_total[5m])',
+    };
+    let expectedSelection = first;
+    let recording = false;
+    const commits: Array<{ text: string; diff: string; selection: typeof first }> = [];
+    const onCommit = () => {
+      if (recording) {
+        commits.push({
+          text: screen.queryByRole('region', { name: 'Query proposal details' })?.textContent ?? '',
+          diff: screen.queryByLabelText('Query diff')?.textContent ?? '',
+          selection: expectedSelection,
+        });
+      }
+    };
+    const { user, previewRequests, panelResult, readInvocation } = await setup(0, true, undefined, {
+      transaction: true,
+      realPreview: true,
+      onCommit,
+    });
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: firstReasons },
+          {
+            proposedQuery: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+            why: secondReasons,
+          },
+        ],
+      });
+      request.onComplete('');
+      previewRequests[0].setState({ data: panelResult(11) });
+    });
+    const expectCommittedContent = () => {
+      expect(commits.length).toBeGreaterThan(0);
+      for (const commit of commits) {
+        for (const reason of commit.selection.reasons) {
+          expect(commit.text).toContain(reason);
+        }
+        for (const reason of commit.selection.forbidden) {
+          expect(commit.text).not.toContain(reason);
+        }
+        expect(commit.diff).toBe(commit.selection.diff);
+      }
+    };
+    for (const selection of [second, first, original, second, original, first]) {
+      const tab = screen.getByRole('tab', { name: selection.tab });
+      tab.addEventListener(
+        'click',
+        () => {
+          commits.length = 0;
+          recording = true;
+          expectedSelection = selection;
+        },
+        { capture: true, once: true }
+      );
+      await user.click(tab);
+      if (
+        selection.tab === 'Option 2' &&
+        previewRequests.length === 2 &&
+        previewRequests[1].state.data?.state === LoadingState.Loading
+      ) {
+        act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      }
+      expectCommittedContent();
+      recording = false;
+      expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue(selection.source);
+    }
+    commits.length = 0;
+    recording = true;
+    act(() => {
+      for (const selection of [second, original, first, original, second]) {
+        expectedSelection = selection;
+        fireEvent.click(screen.getByRole('tab', { name: selection.tab }));
+      }
+    });
+    expectCommittedContent();
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue(
+      'sum by (code, handler, method, status) (rate(http_requests_total[5m]))'
+    );
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(previewRequests).toHaveLength(2);
+  });
+
+  it('shows a retryable error when an option cannot be previewed instead of leaving a selected card over Baseline', async () => {
+    const { user, onPreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    onPreview.mockReturnValue(false);
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByText('The query proposal could not be previewed. Try again.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+
+  async function setupPeek() {
+    const fixture = await setup(0, true, undefined, { transaction: true, realPreview: true });
+    await fixture.user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+    await fixture.user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            title: 'Count increases',
+            why: ['Counts selected requests.'],
+          },
+          { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const selected = fixture.panelResult(11);
+    act(() => fixture.previewRequests[0].setState({ data: selected }));
+    return { ...fixture, selected };
+  }
+
+  function mockProposalGeometry(dialog: HTMLElement) {
+    const rect = () => {
+      const selected = screen.getByRole('tab', { selected: true }).textContent;
+      const height = selected === 'Original' ? 176 : selected?.includes('2') ? 310 : 336;
+      const width = Number.parseFloat(dialog.style.width) || 440;
+      const left = dialog.style.position === 'fixed' ? Number.parseFloat(dialog.style.left) : 200;
+      const top = dialog.style.position === 'fixed' ? Number.parseFloat(dialog.style.top) : 642 - height;
+      return {
+        left,
+        top,
+        width,
+        height,
+        bottom: top + height,
+        right: left + width,
+        x: left,
+        y: top,
+        toJSON: () => undefined,
+      };
+    };
+    jest.spyOn(dialog, 'getBoundingClientRect').mockImplementation(rect);
+    const tabs = screen.getByRole('tablist');
+    jest.spyOn(tabs, 'getBoundingClientRect').mockImplementation(() => {
+      const bounds = rect();
+      return { ...bounds, top: bounds.top + 12, y: bounds.top + 12 };
+    });
+    return tabs;
+  }
+
+  async function resizeProposal(user: ReturnType<typeof userEvent.setup>, width: number) {
+    const bounds = screen.getByRole('dialog').getBoundingClientRect();
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByRole('separator', { name: 'Resize proposal from right' }),
+      coords: { x: bounds.right, y: bounds.top + 40 },
+    });
+    await user.pointer({ target: document.body, coords: { x: bounds.left + width, y: bounds.top + 140 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+  }
+
+  it('matches compact proposal chrome and spacing while keeping the full-width view and width-only handles', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    const tabs = mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const explanation = tabs.parentElement!;
+    const actions = screen.getByRole('button', { name: 'Accept' }).parentElement!.parentElement!;
+    const proposal = explanation.parentElement!;
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    expect(screen.queryByText('Suggestion updated')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    for (const chip of screen.getAllByRole('tab')) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    await resizeProposal(user, 419);
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveTextContent('Cancel');
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toHaveTextContent('Open in Chat');
+    expect(explanation).toHaveStyle({ padding: '12px' });
+    expect(actions).toHaveStyle({ padding: '12px' });
+    for (const chip of screen.getAllByRole('tab')) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    await resizeProposal(user, 279);
+    expect(explanation).toHaveStyle({ padding: '4px' });
+    expect(tabs).toHaveStyle({ justifyContent: 'center', gap: '8px', padding: '8px' });
+    const trio = [
+      screen.getByRole('button', { name: 'Previous option' }),
+      screen.getByRole('tab', { selected: true }),
+      screen.getByRole('button', { name: 'Next option' }),
+    ];
+    for (const chip of trio) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(trio[0]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
+    expect(trio[2]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
+    expect(actions).toHaveStyle({ minHeight: '0', padding: '4px 12px' });
+    expect(actions).not.toHaveStyle({ alignSelf: 'flex-end' });
+    expect(screen.getByRole('button', { name: 'Accept' }).parentElement).toHaveStyle({ marginLeft: 'auto' });
+    expect(screen.getByRole('button', { name: 'Accept' }).parentElement).toHaveStyle({ gap: '12px' });
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    expect(screen.getAllByRole('separator')).toHaveLength(2);
+    for (const handle of screen.getAllByRole('separator')) {
+      expect(handle).toHaveStyle({ width: '8px', top: '0', bottom: '0', cursor: 'ew-resize' });
+    }
+    expect(dialog.style.height).toBe('');
+    expect(details).toHaveStyle({ overflowY: 'auto' });
+    await resizeProposal(user, 420);
+    expect(screen.getByRole('button', { name: 'Accept' })).toHaveTextContent('Accept');
+    expect(proposal).toHaveStyle({ gap: '8px' });
+  });
+
+  it.each([
+    {
+      kind: 'error',
+      title: 'Preview error',
+      body: 'Vector matching requires unique labels',
+      role: 'alert',
+      icon: 'exclamation-circle',
+    },
+    {
+      kind: 'no-data',
+      title: 'No data',
+      body: 'Try another option or widen the time range.',
+      role: 'alert',
+      icon: 'exclamation-triangle',
+    },
+    {
+      kind: 'no-signal',
+      title: 'No signal',
+      body: 'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.',
+      role: 'status',
+      icon: 'info-circle',
+    },
+    { kind: 'ok', title: '', body: 'Results were truncated', role: 'status', icon: 'info-circle' },
+  ])(
+    'keeps the full $kind callout at narrow width and only its icon and title at tiny width',
+    async ({ kind, title, body, role, icon }) => {
+      const { user, previewRequests, panelResult } = await setupPeek();
+      const dialog = screen.getByRole('dialog');
+      mockProposalGeometry(dialog);
+      fireEvent.animationEnd(dialog);
+      const result = panelResult(kind === 'no-signal' ? 0 : 11);
+      if (kind === 'error') {
+        result.state = LoadingState.Error;
+        result.errors = [{ refId: 'A', message: body }];
+      } else if (kind === 'no-data') {
+        result.series = [];
+      } else if (kind === 'ok') {
+        result.series[0].meta = { notices: [{ severity: 'warning', text: body }] };
+      }
+      act(() => previewRequests[0].setState({ data: result }));
+      await resizeProposal(user, 419);
+      const slot = screen.getByRole('region', { name: 'Preview result' });
+      expect(within(slot).getByText(body)).toBeVisible();
+      expect(within(slot).getByRole(role)).toHaveTextContent(body);
+      await resizeProposal(user, 279);
+      expect(screen.getByRole('tab', { selected: true })).toHaveTextContent('Option 1');
+      if (kind === 'ok') {
+        expect(screen.queryByText(body)).not.toBeInTheDocument();
+      } else {
+        const compact = within(slot).getByRole(role);
+        expect(compact).toHaveTextContent(title);
+        expect(compact).not.toHaveTextContent(body);
+        expect(within(compact).getByTestId(`icon-${icon}`)).toBeVisible();
+        expect(compact).toHaveStyle({ whiteSpace: 'nowrap' });
+      }
+      await resizeProposal(user, 420);
+      expect(within(slot).getByText(body)).toBeVisible();
+    }
+  );
+
+  it('freezes the group and chip row screen top after entrance across different option heights and Original', async () => {
+    const { user, anchorElement } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    const tabs = mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const groupTop = dialog.getBoundingClientRect().top;
+    const chipTop = tabs.getBoundingClientRect().top;
+    expect(groupTop).toBe(306);
+    expect(chipTop).toBe(318);
+    const originalCard = screen.getByRole('region', { name: 'Query proposal details' });
+    const originalFooter = screen.getByRole('button', { name: 'Accept' }).parentElement?.parentElement;
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(tabs.getBoundingClientRect().top).toBe(chipTop);
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(tabs.getBoundingClientRect().top).toBe(chipTop);
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(screen.getByRole('region', { name: 'Query proposal details' })).toBe(originalCard);
+    expect(originalFooter?.contains(screen.getByRole('button', { name: 'Accept' }))).toBe(true);
+    expect(anchorElement.contains(dialog)).toBe(false);
+  });
+
+  it('grows to the rest width and freezes only after the width transition settles', async () => {
+    await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveStyle({ width: '720px' });
+    let width = 500;
+    jest.spyOn(dialog, 'getBoundingClientRect').mockImplementation(() => ({
+      left: 200,
+      top: 300,
+      width,
+      height: 300,
+      bottom: 600,
+      right: 200 + width,
+      x: 200,
+      y: 300,
+      toJSON: () => undefined,
+    }));
+    fireEvent.animationEnd(dialog);
+    expect(dialog.style.position).not.toBe('fixed');
+    width = 720;
+    fireEvent(dialog, Object.assign(new Event('transitionend', { bubbles: true }), { propertyName: 'width' }));
+    expect(dialog).toHaveStyle({ position: 'fixed', left: '200px', top: '300px', width: '720px' });
+  });
+
+  it('hides feedback first and keeps the diff and why text in the compact range', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    await resizeProposal(user, 500);
+    expect(screen.queryByRole('button', { name: 'Helpful' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Query diff')).toBeVisible();
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+
+  it('drags only from the handle without dimming, leaves card text selectable, and reports adjustment once', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const handle = dialog.querySelector<HTMLElement>('[data-proposal-drag-handle]')!;
+    await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { x: 250, y: 310 } });
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ target: document.body, coords: { x: 280, y: 330 } });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+    expect(dialog.getBoundingClientRect().top).toBe(326);
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+
+    const why = screen.getByText('Counts selected requests.');
+    expect(fireEvent.pointerDown(why, { button: 0 })).toBe(true);
+    fireEvent.pointerUp(why);
+    await user.pointer({ keys: '[MouseLeft>]', target: why, coords: { x: 250, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 400, y: 450 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+    const footer = screen.getByRole('button', { name: 'Accept' }).parentElement!;
+    await user.pointer({ keys: '[MouseLeft>]', target: footer, coords: { x: 250, y: 600 } });
+    await user.pointer({ target: document.body, coords: { x: 270, y: 610 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+
+    await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { x: 250, y: 310 } });
+    await user.pointer({ target: document.body, coords: { x: 270, y: 320 } });
+    fireEvent.pointerCancel(document, { pointerId: 2 });
+    expect(dialog.getBoundingClientRect().left).toBe(250);
+    const adjusted = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
+    );
+    expect(adjusted.map(([, properties]) => properties)).toEqual([{ dragged: true, resized: false }]);
+  });
+
+  it('resizes the same mounted surfaces through narrow and tiny reflow, retaining keyboard selection and labelled Accept', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const why = screen.getByText('Counts selected requests.');
+    const diff = screen.getByLabelText('Query diff');
+    const accept = screen.getByRole('button', { name: 'Accept' });
+    const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
+    expect(why).toBeVisible();
+    expect(diff).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    expect(dialog).toHaveStyle({ width: '720px' });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 310, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '390px' });
+    expect(why).not.toBeVisible();
+    expect(diff).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Helpful' })).not.toBeInTheDocument();
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 310, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 170, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '250px' });
+    expect(screen.getByText('Counts selected requests.')).toBe(why);
+    expect(screen.getByLabelText('Query diff')).toBe(diff);
+    expect(screen.getAllByRole('tab')).toHaveLength(1);
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Previous option' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Next option' })).toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Cancel' })).getByText('Cancel')).not.toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Cancel' })).getByTestId('icon-times')).toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Open in Chat' })).getByText('Open in Chat')).not.toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBe(accept);
+    expect(accept).toHaveTextContent('Accept');
+    for (const [name, tooltip] of [
+      ['Previous option', 'Preview original query'],
+      ['Next option', 'Preview option 2'],
+      ['Cancel', 'Cancel'],
+      ['Open in Chat', 'Open in Chat'],
+    ]) {
+      await user.hover(screen.getByRole('button', { name }));
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(tooltip);
+      await user.unhover(screen.getByRole('button', { name }));
+      await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+    }
+    await user.click(screen.getByRole('button', { name: 'Previous option' }));
+    expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Next option' }));
+    expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 170, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 640, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '720px' });
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.getByLabelText('Query diff')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeVisible();
+    const adjusted = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
+    );
+    expect(adjusted.map(([, properties]) => properties)).toEqual([{ dragged: false, resized: true }]);
+  });
+
+  it('resizes from the left with the right edge fixed and clamps dragging and width to the viewport', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const left = screen.getByRole('separator', { name: 'Resize proposal from left' });
+    await user.pointer({ keys: '[MouseLeft>]', target: left, coords: { x: 200, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 300, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().left).toBe(300);
+    expect(dialog.getBoundingClientRect().right).toBe(920);
+    expect(dialog).toHaveStyle({ width: '620px' });
+    const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 920, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 2000, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth - 8);
+    const handle = dialog.querySelector<HTMLElement>('[data-proposal-drag-handle]')!;
+    await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { x: 350, y: 310 } });
+    await user.pointer({ target: document.body, coords: { x: -1000, y: -1000 } });
+    expect(dialog.getBoundingClientRect().left).toBe(8);
+    expect(dialog.getBoundingClientRect().top).toBe(8);
+    fireEvent.blur(window);
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+  });
+
+  it('shows option titles on hover and the hold hint only on the active chip', async () => {
+    const { user } = await setupPeek();
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    await user.hover(first);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Count increases');
+    expect(tooltip).toHaveTextContent('Hold to peek');
+    expect(first).toHaveAttribute('aria-describedby', tooltip.id);
+    expect(first).toHaveAttribute('tabindex', '0');
+    await user.unhover(first);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+
+    const second = screen.getByRole('tab', { name: 'Option 2' });
+    await user.hover(second);
+    const fallback = await screen.findByRole('tooltip');
+    expect(fallback).toHaveTextContent('Preview option 2');
+    expect(fallback).not.toHaveTextContent('Hold to peek');
+    expect(second).toHaveAttribute('tabindex', '-1');
+    await user.unhover(second);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+
+    await user.hover(screen.getByRole('tab', { name: 'Original' }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Original query$/);
+  });
+
+  it('hides the tooltip while the active chip is held', async () => {
+    const { user } = await setupPeek();
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    await user.hover(first);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    await user.pointer({ keys: '[MouseLeft>]', target: first });
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 }));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.pointer({ keys: '[/MouseLeft]', target: first });
+  });
+
+  it('peeks only while the active chip is held, and holding another chip selects it on release', async () => {
+    const { user, previewRequests, panelResult, queryRunner, selected } = await setupPeek();
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    await user.pointer({ keys: '[MouseLeft>]', target: first });
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 }));
+    expect(queryRunner.state.data).toEqual(selected);
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    await user.pointer({ keys: '[/MouseLeft]', target: first });
+    expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    expect(queryRunner.state.data).toEqual(selected);
+
+    const second = screen.getByRole('tab', { name: 'Option 2' });
+    await user.pointer({ keys: '[MouseLeft>]', target: second });
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ keys: '[/MouseLeft]', target: second });
+    expect(second).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => expect(previewRequests).toHaveLength(2));
+    const secondData = panelResult(12);
+    act(() => previewRequests[1].setState({ data: secondData }));
+    expect(queryRunner.state.data).toEqual(secondData);
+    const peeks = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_option_peeked'
+    );
+    expect(peeks.map(([, properties]) => properties)).toEqual([{ rank: 1 }]);
+  });
+
+  it.each(['accept', 'pointercancel', 'blur', 'lostpointercapture', 'outside-release', 'unmount', 'close'])(
+    'restores a press-and-hold peek on %s and Accept always commits the selected option',
+    async (ending) => {
+      const { user, queryRunner, onAccept, selected, baselineData, unmount } = await setupPeek();
+      const chip = screen.getByRole('tab', { name: 'Option 1' });
+      await user.pointer({ keys: '[MouseLeft>]', target: chip });
+      await waitFor(() => expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 }));
+      if (ending === 'accept') {
+        fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+        expect(onAccept).toHaveBeenLastCalledWith(
+          expect.objectContaining({ expr: 'increase(http_requests_total[5m])' }),
+          'A'
+        );
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      } else if (ending === 'unmount' || ending === 'close') {
+        if (ending === 'unmount') {
+          unmount();
+        } else {
+          fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+        }
+        expect(queryRunner.state.data).toEqual(baselineData);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      } else {
+        if (ending === 'outside-release') {
+          await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+        } else if (ending === 'blur') {
+          fireEvent.blur(window);
+        } else if (ending === 'pointercancel') {
+          fireEvent.pointerCancel(chip);
+        } else {
+          fireEvent.lostPointerCapture(chip);
+        }
+        expect(queryRunner.state.data).toEqual(selected);
+        expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+        await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+      }
+    }
+  );
+
+  it.each([
+    {
+      kind: 'error',
+      text: 'Vector matching requires unique labels',
+      severity: 'error',
+      errorMessage: 'Vector matching requires unique labels',
+    },
+    { kind: 'error', text: 'The query preview failed.', severity: 'error', errorMessage: '' },
+    { kind: 'no-data', text: 'Try another option or widen the time range.', severity: 'warning' },
+    {
+      kind: 'no-signal',
+      text: 'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.',
+      severity: undefined,
+    },
+    { kind: 'ok', text: 'Results were truncated', severity: undefined },
+  ])(
+    'shows the $kind preview callout below why and reclassifies cached selections without logging returned text',
+    async ({ kind, text, severity, errorMessage }) => {
+      const { user, previewRequests, panelResult } = await setup(0, true, undefined, {
+        transaction: true,
+        realPreview: true,
+      });
+      await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const request = mockGenerate.mock.calls[0][0];
+      await act(async () => {
+        await request.tools[0].invoke({
+          options: [
+            { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts selected requests.'] },
+            { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
+          ],
+        });
+        request.onComplete('');
+      });
+      const result = panelResult(kind === 'no-signal' ? 0 : 11);
+      if (kind === 'error') {
+        result.state = LoadingState.Error;
+        result.errors = [{ refId: 'A', message: errorMessage }];
+      } else if (kind === 'no-data') {
+        result.series = [];
+      } else if (kind === 'ok') {
+        result.series[0].meta = { notices: [{ severity: 'warning', text }] };
+      }
+      act(() => previewRequests[0].setState({ data: result }));
+      const slot = await screen.findByRole('region', { name: 'Preview result' });
+      expect(within(slot).getByText(text)).toBeVisible();
+      if (severity) {
+        expect(within(slot).getByTestId(selectors.components.Alert.alertV2(severity))).toBeInTheDocument();
+      } else {
+        expect(within(slot).getByRole('status')).toHaveTextContent(text);
+      }
+      expect(
+        slot.compareDocumentPosition(screen.getByText('Counts selected requests.')) & Node.DOCUMENT_POSITION_PRECEDING
+      ).toBeTruthy();
+      await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+      expect(screen.getByText('Uses the latest two samples.')).toBeVisible();
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+      act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      await user.click(screen.getByRole('tab', { name: 'Original' }));
+      expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+      await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+      expect(within(screen.getByRole('region', { name: 'Preview result' })).getByText(text)).toBeVisible();
+      expect(previewRequests).toHaveLength(2);
+      const outcomes = mockReportInteraction.mock.calls.filter(
+        ([name]) => name === 'grafana_query_coauthoring_preview_outcome_shown'
+      );
+      expect(outcomes.map(([, properties]) => properties)).toContainEqual({ kind });
+      for (const [, properties] of outcomes) {
+        expect(Object.keys(properties)).toEqual(['kind']);
+      }
+      expect(JSON.stringify(outcomes)).not.toContain(text);
+    }
+  );
+
+  it('ranks surviving options, selects Original with the keyboard, and accepts the exact selected query', async () => {
+    const { user, stagePreview, onPreview, onAccept, baseline, dismissInvocation } = await setup();
+    stagePreview.mockImplementation((_id, source) => {
+      if (source === 'invalid(') {
+        return { status: 'rejected', reason: 'invalid' };
+      }
+      const query: DataQuery & { expr: string } = { refId: 'A', expr: source };
+      return { status: 'ready', query, changes: [] };
+    });
+    await user.type(screen.getByRole('textbox'), 'Show request counts');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    const second = 'sum( increase(http_requests_total[5m]) )';
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts per series.'] },
+          { proposedQuery: 'invalid(', why: ['Rejected syntax.'] },
+          { proposedQuery: second, why: ['Total counts.'], unconfirmedValues: ['handler="unknown"'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const original = screen.getByRole('tab', { name: 'Original' });
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('tab', { name: 'Option 3' })).not.toBeInTheDocument();
+    act(() => first.focus());
+    await user.keyboard('{ArrowLeft}');
+    expect(original).toHaveFocus();
+    expect(original).toHaveAttribute('aria-selected', 'true');
+    expect(onPreview).toHaveBeenLastCalledWith(baseline, { debounce: true });
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeEnabled();
+    await user.keyboard('{End}');
+    expect(screen.getByText('Total counts.')).toBeInTheDocument();
+    expect(screen.getByText('handler="unknown"')).toBeInTheDocument();
+    expect(onPreview).toHaveBeenLastCalledWith({ refId: 'A', expr: second }, { debounce: true });
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: second });
+  });
+
+  it('drops whitespace-only Baseline changes and duplicate options without requesting a repair', async () => {
+    const { user, stagePreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: ' rate(http_requests_total[5m]) ', why: ['Whitespace only.'] },
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['First ranked answer.'] },
+          { proposedQuery: ' increase(http_requests_total[5m]) ', why: ['Duplicate.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
+    expect(screen.getByText('First ranked answer.')).toBeInTheDocument();
+    expect(stagePreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('hands off all ranked options and Original selection and sends only rank and count with feedback', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(mockPost.mock.calls[0][1].metadata).toEqual({ outcome: 'proposal', selectedOptionRank: 2, optionCount: 2 });
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_option_selected', { rank: 2 });
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
+    const handoff = mockOpenAssistant.mock.calls[0][0];
+    expect(handoff.context[0].node.data.data).toMatchObject({
+      currentQuery: 'rate(http_requests_total[5m])',
+      inlineProposals: [
+        { query: 'increase(http_requests_total[5m])', explanation: ['Counts.'] },
+        { query: 'sum(increase(http_requests_total[5m]))', explanation: ['Total.'] },
+      ],
+      selectedOption: 'original',
+    });
+    expect(JSON.stringify(handoff)).not.toContain('submit_query_proposal');
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPost.mockResolvedValue({ id: 'feedback-id' });
+    mockIsGenerating = false;
+    mockAssistantAvailable = true;
+    mockAssistantLoading = false;
+  });
+
+  const mentionContext: QueryEditorCoauthoringContextV1 = {
+    revision: '1',
+    query: 'rate(http_requests_total[5m])',
+    focusRanges: [{ from: 0, to: 4 }],
+    language: { id: 'promql', displayName: 'PromQL' },
+    metadata: [
+      { kind: 'metric', name: 'http_inflight_requests', attributes: { labels: ['instance', 'origin'] } },
+      { kind: 'metric', name: 'pending_requests_total', attributes: { labels: ['instance', 'origin'] } },
+    ],
+  };
+
+  it('shows the nested code label with its tag icon for @co', async () => {
+    const { user } = await setup(0, true, {
+      ...mentionContext,
+      metadata: [
+        {
+          kind: 'metric',
+          name: 'prometheus_http_requests_total',
+          attributes: { labels: ['code', 'handler'] },
+        },
+      ],
+    });
+    const input = screen.getByRole('textbox');
+    await user.type(input, 'Group by @co');
+    const option = await screen.findByRole('option', { name: 'code (Label)' });
+    expect(within(option).getByTestId('icon-tag-alt')).toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    expect(input).toHaveValue('Group by code ');
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('keeps metrics first, deduplicates nested and top-level labels, and ignores non-array labels', async () => {
+    const { user } = await setup(0, true, {
+      ...mentionContext,
+      metadata: [
+        { kind: 'label', name: 'job' },
+        { kind: 'label', name: 'code' },
+        { kind: 'metric', name: 'http_requests_total', attributes: { labels: ['code', 'instance'] } },
+        { kind: 'metric', name: 'http_request_duration_seconds', attributes: { labels: ['code', 'instance'] } },
+        { kind: 'metric', name: 'up', attributes: { labels: 'invalid_label' } },
+      ],
+    });
+    await user.type(screen.getByRole('textbox'), '@');
+    const options = await screen.findAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual([
+      'http_requests_total',
+      'http_request_duration_seconds',
+      'up',
+      'job',
+      'code',
+      'instance',
+    ]);
+    expect(within(options[3]).getByTestId('icon-tag-alt')).toBeInTheDocument();
+  });
+
+  it('matches metric and label substrings with their icons and caps suggestions at six', async () => {
+    const { user, unmount } = await setup(0, true, mentionContext);
+    await user.type(screen.getByRole('textbox'), 'Use @in');
+    const options = await screen.findAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual([
+      'http_inflight_requests',
+      'pending_requests_total',
+      'instance',
+      'origin',
+    ]);
+    expect(within(options[0]).getByTestId('icon-graph-bar')).toBeInTheDocument();
+    expect(within(options[1]).getByTestId('icon-graph-bar')).toBeInTheDocument();
+    expect(within(options[2]).getByTestId('icon-tag-alt')).toBeInTheDocument();
+    expect(within(options[3]).getByTestId('icon-tag-alt')).toBeInTheDocument();
+    unmount();
+    await setup(0, true, {
+      ...mentionContext,
+      metadata: [
+        { kind: 'metric', name: 'in_a', attributes: { labels: ['in_c', 'in_d'] } },
+        { kind: 'metric', name: 'in_b', attributes: { labels: ['in_c', 'in_d'] } },
+        { kind: 'metric', name: 'in_e', attributes: { labels: ['in_f'] } },
+        { kind: 'metric', name: 'in_g', attributes: { labels: ['in_h'] } },
+      ],
+    });
+    await user.type(screen.getByRole('textbox'), '@in');
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'in_a',
+      'in_b',
+      'in_e',
+      'in_g',
+      'in_c',
+      'in_d',
+    ]);
+  });
+
+  it('moves mention selection with arrow keys and inserts with Enter before a later Enter submits', async () => {
+    const { user } = await setup(0, true, mentionContext);
+    const input = screen.getByRole('textbox');
+    await user.type(input, 'Use @in');
+    expect(screen.getByRole('option', { name: 'http_inflight_requests (Metric)' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('option', { name: 'pending_requests_total (Metric)' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await user.keyboard('{ArrowUp}{ArrowUp}');
+    expect(screen.getByRole('option', { name: 'origin (Label)' })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    expect(input).toHaveValue('Use pending_requests_total ');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_mention_inserted', {
+      kind: 'metric',
+    });
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[0][0].prompt).toBe('Use pending_requests_total');
+  });
+
+  it.each([
+    { view: 'Modify', suffix: ' and job', value: 'Group by origin and job', caret: 15 },
+    { view: 'Modify', suffix: 'and job', value: 'Group by origin and job', caret: 16 },
+    { view: 'Explain', suffix: ' and job', value: 'Group by origin and job', caret: 15 },
+    { view: 'Explain', suffix: 'and job', value: 'Group by origin and job', caret: 16 },
+  ])(
+    'inserts a mention before "$suffix" in $view and restores the caret to $caret',
+    async ({ view, suffix, value, caret }) => {
+      const { user } = await setup(0, true, {
+        ...mentionContext,
+        metadata: [...mentionContext.metadata, { kind: 'metric', name: 'up' }],
+      });
+      if (view === 'Explain') {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+      }
+      const input = screen.getByRole<HTMLTextAreaElement>('textbox');
+      await user.type(input, `Group by @ori${suffix}`);
+      fireEvent.select(input, { target: { selectionStart: 13, selectionEnd: 13 } });
+      expect(await screen.findByRole('option', { name: 'origin (Label)' })).toBeInTheDocument();
+
+      await user.keyboard('{Enter}');
+
+      expect(input).toHaveValue(value);
+      expect(input).toHaveFocus();
+      expect(input.selectionStart).toBe(caret);
+      expect(input.selectionEnd).toBe(caret);
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(mockGenerate).toHaveBeenCalledTimes(view === 'Explain' ? 1 : 0);
+    }
+  );
+
+  it('clicks a portal mention item without dismissing an untouched prompt and reports only its kind', async () => {
+    const { user, dismissInvocation } = await setup(0, true, mentionContext);
+    const input = screen.getByRole('textbox');
+    await user.type(input, 'Group by @in');
+    const listbox = await screen.findByRole('listbox');
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).not.toContainElement(listbox);
+    expect(listbox).toHaveStyle({ position: 'fixed' });
+    await user.click(screen.getByRole('option', { name: 'instance (Label)' }));
+    expect(input).toHaveValue('Group by instance ');
+    expect(input).toHaveFocus();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_mention_inserted', { kind: 'label' });
+  });
+
+  it.each([false, true])(
+    'Escape closes only the mention menu before applying engaged=%s close rules',
+    async (engaged) => {
+      const { user, dismissInvocation } = await setup(0, true, mentionContext);
+      if (engaged) {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+      }
+      await user.type(screen.getByRole('textbox'), 'Use @in');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.getByRole('textbox')).toHaveValue('Use @in');
+      expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+      await user.keyboard('{Escape}');
+      expect(dismissInvocation).toHaveBeenCalledTimes(engaged ? 0 : 1);
+    }
+  );
+
+  it.each(['prompt', 'follow-up'])(
+    'keeps the %s mention menu closed after one Escape and select until typing or leaving the token',
+    async (view) => {
+      const { user, dismissInvocation } = await setup(0, true, mentionContext);
+      if (view === 'follow-up') {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+      }
+      const input = screen.getByRole<HTMLTextAreaElement>('textbox');
+      await user.type(input, 'Use @in');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      const caret = input.value.length - 1;
+      fireEvent.select(input, { target: { selectionStart: caret, selectionEnd: caret } });
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+      await user.keyboard('{End}s');
+      expect(input).toHaveValue('Use @ins');
+      expect(await screen.findByRole('option', { name: 'instance (Label)' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      fireEvent.select(input, { target: { selectionStart: 0, selectionEnd: 0 } });
+      fireEvent.select(input, { target: { selectionStart: input.value.length, selectionEnd: input.value.length } });
+      expect(await screen.findByRole('option', { name: 'instance (Label)' })).toBeInTheDocument();
+    }
+  );
+
+  it('leaves @ as plain text without metadata and keeps Shift+Enter for a newline', async () => {
+    const { user } = await setup(0, true, { ...mentionContext, metadata: [] });
+    const input = screen.getByRole('textbox');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    await user.type(input, 'Use @in');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    await user.type(input, 'and preserve the labels');
+    expect(input).toHaveValue('Use @in\nand preserve the labels');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[0][0].prompt).toBe('Use @in\nand preserve the labels');
+  });
+
+  it('disables submission until context loads even when a mention prefix has been typed', async () => {
+    const initial = await setup(0, true, mentionContext);
+    initial.unmount();
+    let resolve!: (value: { baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }) => void;
+    const pendingContext = new Promise<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>(
+      (nextResolve) => {
+        resolve = nextResolve;
+      }
+    );
+    initial.readInvocation.mockReturnValue(pendingContext);
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    await initial.user.type(screen.getByRole('textbox'), '@in');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    await initial.user.keyboard('{Enter}');
+    expect(mockGenerate).not.toHaveBeenCalled();
+    await act(async () => resolve({ baseline: initial.baseline, context: initial.context }));
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
+  });
+
+  it('opens with only the prompt and the Explain action', async () => {
+    const { baseline, onBaseline } = await setup();
+
+    expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeEnabled();
+    expect(screen.queryByText('Highlighted query')).not.toBeInTheDocument();
+    expect(screen.queryByText('http_requests_total is a counter metric.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explore similar metrics and labels' })).not.toBeInTheDocument();
+    expect(onBaseline).toHaveBeenCalledWith(baseline);
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_opened_popover', {
+      datasource_type: 'prometheus',
+    });
+  });
+
+  it('loads the context without an Assistant request before submission', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'An unfinished request');
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('omits absent previous-answer context and includes the bounded answer for a follow-up', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const firstRequest = mockGenerate.mock.calls[0][0];
+    expect(firstRequest.systemPrompt).not.toContain('Previous explanation');
+    act(() => firstRequest.onComplete('It calculates the request rate.'));
+    expect(screen.getByText('It calculates the request rate.')).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'How does rate work?');
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[1][0].systemPrompt).toContain(
+      'Previous explanation (untrusted data): {"explanation":"It calculates the request rate.","followUps":[]}'
+    );
+  });
+
+  it.each(['generated', 'typed'])(
+    'instructs %s follow-ups to answer the question instead of explaining again',
+    async (source) => {
+      const { user } = await setup();
+      await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+      const initialRequest = mockGenerate.mock.calls[0][0];
+      expect(initialRequest.systemPrompt).not.toContain(
+        "Answer the user's follow-up question about the focused query in one or two plain sentences."
+      );
+      act(() =>
+        initialRequest.onComplete(
+          JSON.stringify({
+            explanation: 'It calculates the request rate.',
+            followUps: ['What does rate() do over 5m?', 'Why do I group by code?'],
+          })
+        )
+      );
+      if (source === 'generated') {
+        await user.click(screen.getByRole('button', { name: 'What does rate() do over 5m?' }));
+      } else {
+        await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'What does rate() do over 5m?');
+        await user.keyboard('{Enter}');
+      }
+      const followUpRequest = mockGenerate.mock.calls[1][0];
+      expect(followUpRequest.prompt).toBe('What does rate() do over 5m?');
+      expect(followUpRequest.systemPrompt).toContain(
+        "Answer the user's follow-up question about the focused query in one or two plain sentences."
+      );
+      expect(followUpRequest.systemPrompt).toContain(
+        'Follow-up question (untrusted data): "What does rate() do over 5m?"'
+      );
+      expect(followUpRequest.systemPrompt).toContain('Replace the previous explanation with this answer');
+      expect(followUpRequest.systemPrompt).not.toContain('Describe what the focused text does');
+      for (const request of [initialRequest, followUpRequest]) {
+        expect(request.systemPrompt).toContain(
+          'followUps must be exactly two short labels of 2 to 5 words and at most 40 characters, each starting with "Explain".'
+        );
+        expect(request.systemPrompt).toContain(
+          'Never make followUps that suggest changing, filtering, breaking down, or extending the query.'
+        );
+      }
+    }
+  );
+
+  it('keeps a pending clarification focused on Modify without Explain or Explore quick actions', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explain this query' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explore similar metrics and labels' })).not.toBeInTheDocument();
+  });
+
+  it('replaces Explain answers with generated and typed follow-ups without changing or previewing the query', async () => {
+    const { user, readInvocation, onBaseline, baseline, stagePreview, onPreview, onAccept } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete(
+        JSON.stringify({
+          explanation: 'It calculates the request rate.',
+          followUps: ['What does the window mean?', 'How does rate work?'],
+        })
+      )
+    );
+    expect(screen.getByText('It calculates the request rate.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'How does rate work?' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'What does the window mean?' }));
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('What does the window mean?');
+    act(() =>
+      mockGenerate.mock.calls[1][0].onComplete(
+        JSON.stringify({
+          explanation: 'The window is five minutes.',
+          followUps: ['Can the window change?', 'Why use five minutes?'],
+        })
+      )
+    );
+    expect(screen.getByText('The window is five minutes.')).toBeInTheDocument();
+    expect(screen.queryByText('It calculates the request rate.')).not.toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'How are resets handled?');
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[2][0].prompt).toBe('How are resets handled?');
+    act(() =>
+      mockGenerate.mock.calls[2][0].onComplete(
+        JSON.stringify({
+          explanation: 'Rate accounts for counter resets.',
+          followUps: ['What is a counter?', 'When do counters reset?'],
+        })
+      )
+    );
+    expect(screen.getByText('Rate accounts for counter resets.')).toBeInTheDocument();
+    expect(mockGenerate.mock.calls[0][0].tools).toBeUndefined();
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(onBaseline).toHaveBeenCalledTimes(1);
+    expect(onBaseline).toHaveBeenCalledWith(baseline);
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+    expect(onAccept).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_explain_follow_up_submitted', {
+      source: 'generated',
+    });
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_explain_follow_up_submitted', {
+      source: 'typed',
+    });
+  });
+
+  it.each([
+    'The request rate is averaged over five minutes.',
+    JSON.stringify({
+      explanation: 'The request rate is averaged over five minutes.',
+      followUps: ['How would I break down this rate by response code to see which fail?', 7],
+    }),
+  ])('degrades malformed structured Explain output to the explanation alone: %s', async (completion) => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete(completion));
+    expect(screen.getByText('The request rate is averaged over five minutes.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /How would I break down this rate/ })).not.toBeInTheDocument();
+  });
+
+  it('shows at most two short follow-up chips below the follow-up input', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete(
+        JSON.stringify({
+          explanation: 'It calculates the request rate.',
+          followUps: [
+            'Explain 5m window',
+            'Explain the full meaning of every label and function in this query',
+            'Explain http_requests_total',
+            'Explain sum',
+          ],
+        })
+      )
+    );
+    const input = screen.getByRole('textbox', { name: 'Ask a follow up' });
+    const chips = [
+      screen.getByRole('button', { name: 'Explain 5m window' }),
+      screen.getByRole('button', { name: 'Explain http_requests_total' }),
+    ];
+    expect(screen.queryByRole('button', { name: /full meaning/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explain sum' })).not.toBeInTheDocument();
+    for (const chip of chips) {
+      expect(input.compareDocumentPosition(chip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    await user.click(chips[0]);
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('Explain 5m window');
+  });
+
+  it('moves from Explain to Modify in the same engaged invocation and does not count Explain toward the nudge', async () => {
+    const { user, readInvocation, stagePreview, dismissInvocation } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    for (let i = 0; i < 4; i++) {
+      act(() =>
+        mockGenerate.mock.calls[i][0].onComplete(
+          JSON.stringify({
+            explanation: 'It calculates the request rate.',
+            followUps: ['How does rate work?', 'What is a counter?'],
+          })
+        )
+      );
+      if (i < 3) {
+        await user.click(screen.getByRole('button', { name: 'How does rate work?' }));
+      }
+    }
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[4][0].onComplete('Which label should I group by?'));
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it.each(['Escape', 'outside click'])('closes Modify opened from Explain with %s', async (gesture) => {
+    const { user, dismissInvocation } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    if (gesture === 'Escape') {
+      act(() => screen.getByRole('textbox', { name: 'Describe a query change' }).focus());
+      await user.keyboard('{Escape}');
+    } else {
+      await user.click(document.body);
+    }
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['prompt', 'Explain'])(
+    'restores the prior %s and submitted text on Stop and ignores late Explain completion',
+    async (prior) => {
+      const { user, dismissInvocation } = await setup();
+      await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+      if (prior === 'Explain') {
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+        await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'Why use a counter?');
+        await user.keyboard('{Enter}');
+      }
+      const pending = mockGenerate.mock.calls.at(-1)[0];
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+      if (prior === 'Explain') {
+        expect(screen.getByText('It calculates the request rate.')).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toHaveValue('Why use a counter?');
+      } else {
+        expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue(
+          'Explain the focused part of this existing PromQL query.'
+        );
+      }
+      act(() => pending.onComplete('This late answer should be ignored.'));
+      expect(screen.queryByText('This late answer should be ignored.')).not.toBeInTheDocument();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+    }
+  );
+
+  it('requests a privacy-bounded explanation only after selecting Explain', async () => {
+    const { user, queryText, dismissInvocation } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const request = mockGenerate.mock.calls[0][0];
+    expect(request).toMatchObject({
+      origin: 'grafana/panel-edit-next/query-coauthoring/explain',
+      agentName: 'query-coauthor-explain',
+      agentId: 'grafana.query.coauthor.explain.v1',
+      prompt: 'Explain the focused part of this existing PromQL query.',
+    });
+    expect(request.systemPrompt).toContain(JSON.stringify(queryText));
+    expect(request.systemPrompt).toContain('Focused text: ["rate"]');
+    expect(request.systemPrompt).not.toContain('dashboardTitle');
+    await user.click(document.body);
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    act(() => request.onComplete('Calculates the per-second request rate.'));
+    expect(screen.getByText('Calculates the per-second request rate.')).toBeInTheDocument();
+    expect(screen.getByText('Highlighted query')).toBeInTheDocument();
+  });
+
+  it('does not request an explanation when the prompt takes focus', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('textbox', { name: 'Describe a query change' }));
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeInTheDocument();
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('does not request an explanation when the host time range changes after context loads', async () => {
+    const { queryCoauthoringProps, rerender } = await setup();
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} timeRange={{ from: 3_000, to: 4_000 }} />);
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeEnabled();
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('does not reload an invocation when baseline synchronization rerenders the row owner', async () => {
+    const { queryCoauthoringProps, readInvocation, unmount } = await setup(0, false);
+
+    function RowOwner() {
+      const [baselineSyncCount, setBaselineSyncCount] = useState(0);
+
+      return (
+        <QueryCoauthoring
+          {...queryCoauthoringProps}
+          onBaseline={() => {
+            if (baselineSyncCount === 0) {
+              setBaselineSyncCount(1);
+            }
+            return true;
+          }}
+        />
+      );
+    }
+
+    unmount();
+    readInvocation.mockClear();
+    render(<RowOwner />);
+
+    await screen.findByRole('textbox', { name: 'Describe a query change' });
+
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('requests a holistic explanation when the whole query is focused', async () => {
+    const query = 'rate(http_requests_total[5m])';
+    const { user } = await setup(0, true, {
+      revision: '1',
+      query,
+      focusRanges: [{ from: 0, to: query.length }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: [{ kind: 'metric', name: 'http_requests_total', attributes: { type: 'counter' } }],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const request = mockGenerate.mock.calls[0][0];
+    expect(request.prompt).toBe('Explain this existing PromQL query as a whole.');
+    expect(request.systemPrompt).toContain('Focus scope: whole query.');
+    expect(request.systemPrompt).toContain('Explain how the complete query works as one expression.');
+
+    act(() => request.onComplete(''));
+    expect(screen.getByText(/The complete PromQL query is selected for coauthoring\./)).toBeInTheDocument();
+  });
+
+  it('uses the datasource-provided language and guidance without PromQL assumptions', async () => {
+    await setup(0, true, {
+      revision: '1',
+      query: '{service_name="checkout"} |= "error"',
+      focusRanges: [{ from: 0, to: 26 }],
+      language: {
+        id: 'logql',
+        displayName: 'LogQL',
+        guidance: ['Preserve the stream selector unless the user explicitly asks to change it.'],
+      },
+      metadata: [{ kind: 'stream label', name: 'service_name', attributes: { values: ['checkout'] } }],
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const explanationRequest = mockGenerate.mock.calls[0][0];
+    expect(explanationRequest).toMatchObject({
+      agentName: 'query-coauthor-explain',
+      prompt: 'Explain the focused part of this existing LogQL query.',
+    });
+    expect(explanationRequest.systemPrompt).toContain('Query language: {"id":"logql"');
+    expect(explanationRequest.systemPrompt).not.toContain('PromQL');
+
+    act(() => explanationRequest.onComplete('It filters checkout errors.'));
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    await user.type(screen.getByRole('textbox'), 'Match timeout errors');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[1][0];
+    expect(request.agentName).toBe('query-coauthor');
+    expect(request.systemPrompt).toContain('You help LogQL novices');
+    expect(request.systemPrompt).toContain('Preserve the stream selector');
+    expect(request.systemPrompt).not.toContain('PromQL');
+    expect(request.tools[0].description).toContain('current LogQL query');
+  });
+
+  it('shows an explicit dismissal path when Assistant is unavailable', async () => {
+    mockAssistantAvailable = false;
+    const { user, dismissInvocation, readInvocation } = await setup(0, false);
+
+    expect(await screen.findByText('Assistant unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
+    expect(readInvocation).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+
+    expect(dismissInvocation).toHaveBeenCalled();
+  });
+
+  it('offers the entry pill without Assistant and opens the informational unavailable view', async () => {
+    mockAssistantAvailable = false;
+    const { user, readInvocation } = await setup(0, false, undefined, { entry: true });
+    await user.click(screen.getByRole('button', { name: /Explain or modify/ }));
+    expect(await screen.findByText('Assistant unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
+    expect(readInvocation).not.toHaveBeenCalled();
+  });
+
+  it('closes an untouched prompt on an outside click even after typing', async () => {
+    const { user, dismissInvocation } = await setup();
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'A pending instruction');
+    await user.click(document.body);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('recovers prompt focus when the editor reclaims it after opening, so Escape closes the untouched session', async () => {
+    let nextFrameId = 1;
+    const frames = new Map<number, FrameRequestCallback>();
+    const requestFrame = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextFrameId++;
+      frames.set(id, callback);
+      return id;
+    });
+    const cancelFrame = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => frames.delete(id));
+    const editor = document.createElement('textarea');
+    editor.setAttribute('aria-label', 'Monaco editor');
+    document.body.append(editor);
+    editor.focus();
+    try {
+      const { user, dismissInvocation } = await setup();
+      const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+      prompt.addEventListener('focus', () => requestAnimationFrame(() => editor.focus()), { once: true });
+      while (frames.size > 0) {
+        const [[id, callback]] = frames;
+        frames.delete(id);
+        act(() => callback(0));
+      }
+      expect(prompt).toHaveFocus();
+      await user.keyboard('{Escape}');
+      expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    } finally {
+      editor.remove();
+      requestFrame.mockRestore();
+      cancelFrame.mockRestore();
+    }
+  });
+
+  it.each([false, true])('handles an outside click that stops propagation with engaged=%s', async (engaged) => {
+    const { user, dismissInvocation } = await setup();
+    const chart = document.createElement('div');
+    chart.addEventListener('pointerdown', (event) => event.stopPropagation());
+    document.body.append(chart);
+    try {
+      expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+      if (engaged) {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+      }
+      await user.click(chart);
+      if (engaged) {
+        expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+        expect(dismissInvocation).not.toHaveBeenCalled();
+      } else {
+        expect(dismissInvocation).toHaveBeenCalledTimes(1);
+      }
+    } finally {
+      chart.remove();
+    }
+  });
+
+  it.each(['clarification', 'error', 'nudge'])('keeps an engaged %s open on outside click and Escape', async (view) => {
+    const { user, dismissInvocation } = await setup();
+    const attempts = view === 'nudge' ? 3 : 1;
+    for (let i = 0; i < attempts; i++) {
+      await user.type(screen.getByRole('textbox'), 'Group the requests');
+      await user.click(screen.getByRole('button', { name: i ? 'Continue' : 'Coauthor' }));
+      act(() => {
+        const request = mockGenerate.mock.calls[i][0];
+        if (view === 'error') {
+          request.onError(new Error('Request failed'));
+        } else {
+          request.onComplete('Which label should I group by?');
+        }
+      });
+    }
+    const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+    await user.click(document.body);
+    act(() => dialog.focus());
+    await user.keyboard('{Escape}');
+    expect(dialog).toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    if (view === 'nudge') {
+      await user.click(screen.getByRole('button', { name: 'Continue here' }));
+      expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(dismissInvocation).not.toHaveBeenCalled();
+    }
+  });
+
+  it('keeps an engaged working session open on outside click and Escape', async () => {
+    const { user, rerender, queryCoauthoringProps, dismissInvocation } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    await user.click(document.body);
+    act(() => screen.getByRole('dialog', { name: 'Query coauthor' }).focus());
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it('shows the selected focus and only counts extra metrics in the working context chip, then restores text on Stop', async () => {
+    const context: QueryEditorCoauthoringContextV1 = {
+      revision: '1',
+      query: 'rate(http_requests_total[5m])',
+      focusRanges: [{ from: 0, to: 4 }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: [
+        { kind: 'metric', name: 'http_requests_total', attributes: { labels: ['handler', 'job'] } },
+        { kind: 'metric', name: 'http_request_duration_seconds', attributes: { labels: ['handler', 'job'] } },
+        { kind: 'metric', name: 'http_requests_failed_total', attributes: { labels: ['handler', 'job'] } },
+      ],
+    };
+    const { user, rerender, queryCoauthoringProps } = await setup(0, true, context);
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total +2');
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    mockIsGenerating = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+  });
+
+  it('answers a clarification with the specified copy within the same invocation', async () => {
+    const { user, readInvocation, stagePreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    const input = screen.getByRole('textbox', { name: 'Add extra detail' });
+    expect(input).toHaveAttribute('placeholder', 'Add extra detail…');
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();
+    await user.type(input, 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    const request = mockGenerate.mock.calls[1][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: ['Group by handler.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(stagePreview).toHaveBeenCalledWith('1', 'sum by (handler) (rate(http_requests_total[5m]))');
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts initial Modify reached from Explain and clarification submissions for the nudge', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[1][0].onComplete('Which label should I group by?'));
+    await user.type(screen.getByRole('textbox'), 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    act(() => mockGenerate.mock.calls[2][0].onComplete('Which range should I use?'));
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
+    await user.type(screen.getByRole('textbox'), 'Use ten minutes');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    act(() => mockGenerate.mock.calls[3][0].onComplete('Should I keep the labels?'));
+    expect(screen.getByRole('button', { name: 'Continue in Assistant' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continue here' }));
+    expect(screen.getByText('Should I keep the labels?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+  });
+
+  it('retries a context failure in the prompt slot without reopening the invocation', async () => {
+    const initial = await setup();
+    initial.unmount();
+    initial.readInvocation.mockClear();
+    initial.readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    await initial.user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByRole('button', { name: 'Explain this query' })).toBeEnabled();
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
+    expect(initial.readInvocation).toHaveBeenNthCalledWith(2, '1');
+    expect(initial.capability.invoke).not.toHaveBeenCalled();
+  });
+
+  it.each(['Cancel'])('keeps the proposal preview until explicit %s', async (action) => {
+    const { user, onPreview, onRevertPreview, dismissInvocation } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [{ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] }],
+      });
+      request.onComplete('');
+    });
+    await user.click(document.body);
+    act(() => screen.getByRole('dialog', { name: 'Query coauthor' }).focus());
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onRevertPreview).not.toHaveBeenCalled();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: action }));
+    expect(onRevertPreview).toHaveBeenCalledTimes(1);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps long proposal messages and the inline diff in a bounded body with actions outside it', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockReturnValue({
+      status: 'ready',
+      query: { refId: 'A', expr: 'sum by (handler) (rate(http_requests_total[5m]))' } as DataQuery,
+      changes: Array.from({ length: 4 }, (_, index) => ({
+        id: `change-${index}`,
+        focus: 'inside',
+        original: `original_expression_${index}`,
+        proposed: `proposed_expression_${index}`,
+        kind: 'expression',
+      })),
+    });
+
+    await user.type(screen.getByRole('textbox'), 'Break down by handler');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: Array.from(
+              { length: 5 },
+              (_, index) => `Detailed explanation ${index} for the proposed query change.`
+            ),
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    expect(details).toBe(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
+    expect(details.children[0]).toHaveStyle({ flex: '0 0 auto' });
+    expect(within(details).getByLabelText('Query diff').textContent).toBe(
+      'sum by (handler) (rate(http_requests_total[5m]))'
+    );
+    expect(within(details).queryByLabelText(/^Original expression$/)).not.toBeInTheDocument();
+    expect(within(details).queryByLabelText(/^Proposed expression$/)).not.toBeInTheDocument();
+    expect(within(details).queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();
+  });
+
+  it('keeps the captured query focus visible while building', async () => {
+    const { user, rerender, queryCoauthoringProps } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Building query…');
+    expect(await screen.findByLabelText('Query focus')).toHaveTextContent('Focus');
+    expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total');
+    expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
+  });
+
+  it('constrains the popover to the viewport below its editor anchor', async () => {
+    await setup(500);
+
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toHaveStyle({
+      maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px`,
+    });
+  });
+
+  it('recalculates the viewport constraint when the editor anchor moves after its content changes', async () => {
+    let notifyResize: VoidFunction | undefined;
+    const resizeObserver: ResizeObserver = {
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    };
+    const resizeObserverSpy = jest
+      .spyOn(globalThis, 'ResizeObserver')
+      .mockImplementation((callback: ResizeObserverCallback) => {
+        notifyResize = () => callback([], resizeObserver);
+        return resizeObserver;
+      });
+    const { anchorElement } = await setup(500);
+
+    jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+      top: 600,
+      bottom: 600,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 600,
+      toJSON: () => undefined,
+    });
+    act(() => notifyResize?.());
+
+    expect(resizeObserver.observe).toHaveBeenCalledWith(anchorElement);
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toHaveStyle({
+      maxHeight: `${window.innerHeight - 600 - VIEWPORT_TEST_MARGIN}px`,
+    });
+    resizeObserverSpy.mockRestore();
+  });
+
+  it('does not resize a loaded popover when its own content is scrolled', async () => {
+    const { anchorElement } = await setup(500);
+    const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+    expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
+
+    jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+      top: 440,
+      bottom: 440,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 440,
+      toJSON: () => undefined,
+    });
+    fireEvent.scroll(screen.getByRole('textbox', { name: 'Describe a query change' }));
+
+    expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
+  });
+
+  it('settles the loaded explanation height after Monaco relocates the surface', async () => {
+    let notifyResize: VoidFunction | undefined;
+    let nextAnimationFrameId = 1;
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const resizeObserver: ResizeObserver = {
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    };
+    const resizeObserverSpy = jest
+      .spyOn(globalThis, 'ResizeObserver')
+      .mockImplementation((callback: ResizeObserverCallback) => {
+        notifyResize = () => callback([], resizeObserver);
+        return resizeObserver;
+      });
+    const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextAnimationFrameId++;
+      animationFrames.set(id, callback);
+      return id;
+    });
+    const cancelAnimationFrameSpy = jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((id) => animationFrames.delete(id));
+    const runOnlyAnimationFrame = (timestamp: number) => {
+      expect(animationFrames.size).toBe(1);
+      const [[id, callback]] = animationFrames;
+      animationFrames.delete(id);
+      act(() => callback(timestamp));
+    };
+    const drainInitialAnimationFrames = () => {
+      while (animationFrames.size > 0) {
+        const [[id, callback]] = animationFrames;
+        animationFrames.delete(id);
+        act(() => callback(0));
+      }
+    };
+
+    try {
+      const { anchorElement } = await setup(600);
+      const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+      expect(animationFrames.size).toBe(2);
+      drainInitialAnimationFrames();
+      expect(animationFrames.size).toBe(0);
+
+      act(() => notifyResize?.());
+      expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 600 - VIEWPORT_TEST_MARGIN}px` });
+      expect(animationFrames.size).toBe(1);
+
+      runOnlyAnimationFrame(0);
+      expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 600 - VIEWPORT_TEST_MARGIN}px` });
+      expect(animationFrames.size).toBe(1);
+
+      jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+        top: 440,
+        bottom: 440,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 440,
+        toJSON: () => undefined,
+      });
+      runOnlyAnimationFrame(16);
+
+      expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 440 - VIEWPORT_TEST_MARGIN}px` });
+      expect(animationFrames.size).toBe(0);
+    } finally {
+      resizeObserverSpy.mockRestore();
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
+    }
+  });
+
+  it('recalculates the viewport constraint for ancestor scrolling', async () => {
+    const { anchorElement } = await setup(500);
+    const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+
+    jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+      top: 440,
+      bottom: 440,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 440,
+      toJSON: () => undefined,
+    });
+    fireEvent.scroll(document.body);
+
+    expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 440 - VIEWPORT_TEST_MARGIN}px` });
+  });
+
+  it('discards a typed draft when closed', async () => {
+    const { user, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
+    const cancelCalls = mockCancel.mock.calls.length;
+    const resetCalls = mockReset.mock.calls.length;
+    await user.keyboard('{Escape}');
+
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    expect(mockReset).toHaveBeenCalledTimes(resetCalls + 1);
+    expect(dismissInvocation).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Continue coauthoring' })).not.toBeInTheDocument();
+  });
+
+  it('closes an untouched interaction when the background is clicked', async () => {
+    const { user, dismissInvocation } = await setup();
+
+    await user.click(document.body);
+
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('reverts an active proposal when closed', async () => {
+    const { user, dismissInvocation, onRevertPreview } = await setup();
+
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onRevertPreview).toHaveBeenCalledTimes(1);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Resume suggestion' })).not.toBeInTheDocument();
+  });
+
+  it('cancels an in-flight request when closed and ignores a late proposal', async () => {
+    const { user, dismissInvocation, onPreview, stagePreview } = await setup();
+
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    const cancelCalls = mockCancel.mock.calls.length;
+
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    stagePreview.mockClear();
+    onPreview.mockClear();
+
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+  });
+
+  it('shows a plain-text clarification and lets the user answer it', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Break this down by route/handler');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Should I group by handler, route, or both?'));
+
+    expect(screen.getByText('Should I group by handler, route, or both?')).toBeInTheDocument();
+    expect(screen.queryByText(/did not return a valid PromQL proposal/i)).not.toBeInTheDocument();
+
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('Use handler');
+  });
+
+  it('remounts and focuses the clarification prompt after generation settles', async () => {
+    let nextAnimationFrameId = 1;
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextAnimationFrameId++;
+      animationFrames.set(id, callback);
+      return id;
+    });
+    const cancelAnimationFrameSpy = jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((id) => animationFrames.delete(id));
+    const drainAnimationFrames = () => {
+      while (animationFrames.size > 0) {
+        const [[id, callback]] = animationFrames;
+        animationFrames.delete(id);
+        act(() => callback(0));
+      }
+    };
+
+    try {
+      const { queryCoauthoringProps, rerender, user } = await setup();
+      const initialPrompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+      drainAnimationFrames();
+      expect(initialPrompt).toHaveFocus();
+      expect(initialPrompt).not.toHaveAttribute('aria-describedby');
+
+      await user.type(initialPrompt, 'Break this down by route/handler');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const request = mockGenerate.mock.calls[0][0];
+
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      expect(screen.getByRole('status')).toHaveTextContent('Building query…');
+
+      mockIsGenerating = false;
+      act(() => request.onComplete('Should I group by handler, route, or both?'));
+
+      const clarificationMessage = screen.getByText('Should I group by handler, route, or both?');
+      const clarificationPrompt = screen.getByRole('textbox', { name: 'Add extra detail' });
+      expect(clarificationMessage).toHaveAttribute('id');
+      expect(clarificationPrompt).toHaveAttribute('aria-describedby', clarificationMessage.id);
+
+      drainAnimationFrames();
+
+      expect(clarificationPrompt).toHaveFocus();
+
+      await user.type(clarificationPrompt, 'Use handler');
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+      const secondRequest = mockGenerate.mock.calls[1][0];
+
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      expect(screen.getByRole('status')).toHaveTextContent('Building query…');
+
+      mockIsGenerating = false;
+      act(() => secondRequest.onComplete('Would you also group by status code?'));
+
+      const secondClarificationPrompt = screen.getByRole('textbox', { name: 'Add extra detail' });
+      expect(secondClarificationPrompt).not.toBe(clarificationPrompt);
+
+      drainAnimationFrames();
+
+      expect(secondClarificationPrompt).toHaveFocus();
+    } finally {
+      mockIsGenerating = false;
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
+    }
+  });
+
+  it('keeps focus in the dialog while moving from the prompt through building to a proposal', async () => {
+    let nextAnimationFrameId = 1;
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextAnimationFrameId++;
+      animationFrames.set(id, callback);
+      return id;
+    });
+    const cancelAnimationFrameSpy = jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((id) => animationFrames.delete(id));
+    const drainAnimationFrames = () => {
+      while (animationFrames.size > 0) {
+        const [[id, callback]] = animationFrames;
+        animationFrames.delete(id);
+        act(() => callback(0));
+      }
+    };
+
+    try {
+      const { queryCoauthoringProps, rerender, stagePreview, user } = await setup();
+      const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+      drainAnimationFrames();
+      expect(prompt).toHaveFocus();
+
+      await user.type(prompt, 'Use increase');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const request = mockGenerate.mock.calls[0][0];
+
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      drainAnimationFrames();
+
+      const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+      expect(screen.getByRole('status')).toHaveTextContent('Building query…');
+      expect(dialog).toHaveFocus();
+
+      mockIsGenerating = false;
+      await act(async () => {
+        await request.tools[0].invoke({
+          options: [
+            {
+              proposedQuery: 'increase(http_requests_total[5m])',
+              why: ['Returns the increase over the selected range.'],
+            },
+          ],
+        });
+        request.onComplete('');
+      });
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      drainAnimationFrames();
+
+      expect(stagePreview).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+      expect(dialog).toHaveFocus();
+    } finally {
+      mockIsGenerating = false;
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
+    }
+  });
+
+  it('restores initial prompt focus when query context loads after Assistant drawer autofocus', async () => {
+    let nextAnimationFrameId = 1;
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextAnimationFrameId++;
+      animationFrames.set(id, callback);
+      return id;
+    });
+    const cancelAnimationFrameSpy = jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((id) => animationFrames.delete(id));
+    const drainAnimationFrames = () => {
+      while (animationFrames.size > 0) {
+        const [[id, callback]] = animationFrames;
+        animationFrames.delete(id);
+        act(() => callback(0));
+      }
+    };
+    const assistantDrawerInput = document.createElement('textarea');
+    assistantDrawerInput.setAttribute('aria-label', 'Prompt message input');
+    document.body.append(assistantDrawerInput);
+
+    try {
+      const { capability, context, baseline, queryCoauthoringProps, unmount } = await setup();
+      unmount();
+      let resolve!: (value: { baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }) => void;
+      const pendingContext = new Promise<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>(
+        (nextResolve) => {
+          resolve = nextResolve;
+        }
+      );
+      jest.mocked(capability.readInvocation).mockReturnValue(pendingContext);
+      render(<QueryCoauthoring {...queryCoauthoringProps} />);
+      const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+      drainAnimationFrames();
+      expect(prompt).toHaveFocus();
+      assistantDrawerInput.focus();
+      await act(async () => resolve({ baseline, context }));
+      drainAnimationFrames();
+
+      expect(prompt).toHaveFocus();
+    } finally {
+      assistantDrawerInput.remove();
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
+    }
+  });
+
+  it('normalizes Markdown clarification output to compact plain text', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Make this less noisy');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete('Choose one:\n1. **Aggregate by `method`**\n2. **Filter traffic**')
+    );
+
+    expect(screen.getByText('Choose one: 1. Aggregate by method 2. Filter traffic')).toBeInTheDocument();
+    expect(screen.queryByText(/\*\*|`/)).not.toBeInTheDocument();
+  });
+
+  it('keeps a slightly overlong query-local clarification inline', async () => {
+    const { user } = await setup();
+    const clarification =
+      'I can help make this query less busy by reducing the high cardinality. ' +
+      'To group the data and reduce the number of time series, which labels would you prefer to group by—for example, method and cluster, or job and namespace, or something else?';
+
+    await user.type(screen.getByRole('textbox'), "Let's make this less busy");
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete(clarification));
+
+    expect(screen.getByText(clarification)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByText(/Open in Chat to make larger changes/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps clarification response controls outside the scrollable message region', async () => {
+    const { user } = await setup();
+    const longClarification =
+      'Would you like to aggregate by method, filter specific traffic, or smooth the resulting series? '.repeat(2);
+
+    await user.type(screen.getByRole('textbox'), 'Make this less noisy');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete(longClarification));
+
+    const message = screen.getByRole('region', { name: 'Clarification message' });
+    expect(message).toBe(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
+    expect(message).toHaveTextContent(/aggregate by method/);
+    expect(within(message).queryByRole('textbox')).not.toBeInTheDocument();
+    expect(within(message).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
+  });
+
+  it('submits privacy-bounded feedback for a query proposal', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
+    expect(screen.getByText(/feedback will be sent to the teams working on querying/i)).toBeInTheDocument();
+    expect(screen.getByText(/your query, prompt, and assistant response are not included/i)).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The explanation was clear.');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(mockPost).toHaveBeenCalledWith('/api/plugins/grafana-assistant-app/resources/api/v1/feedback', {
+      targetKind: 'query-coauthoring',
+      targetId: 'grafana.query.coauthor.v1',
+      rating: 1,
+      comment: 'The explanation was clear.',
+      metadata: { outcome: 'proposal', selectedOptionRank: 1, optionCount: 1 },
+    });
+  });
+
+  it('cancels negative feedback without sending anything', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Not helpful' }));
+    expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The change was too broad.');
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'What went wrong?' })).getByRole('button', { name: 'Cancel' })
+    );
+
+    expect(mockPost).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog', { name: 'What went wrong?' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+  });
+
+  it('closes feedback on Escape without dismissing the proposal', async () => {
+    const { user, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog', { name: 'What went well?' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it('keeps Enter available for multiline feedback instead of accepting the proposal', async () => {
+    const { user, onAccept, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Not helpful' }));
+    const feedbackInput = screen.getByRole('textbox', { name: 'Share feedback' });
+    await user.type(feedbackInput, 'The grouping is wrong.{enter}I expected handler.');
+
+    expect(feedbackInput).toHaveValue('The grouping is wrong.\nI expected handler.');
+    expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
+    expect(onAccept).not.toHaveBeenCalled();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it('does not accept a proposal when Enter activates another control', async () => {
+    const unrelatedAction = jest.fn();
+    const unrelatedButton = document.createElement('button');
+    unrelatedButton.textContent = 'Unrelated page action';
+    unrelatedButton.addEventListener('click', unrelatedAction);
+    document.body.append(unrelatedButton);
+    const { user, onAccept, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+
+    unrelatedButton.focus();
+    await user.keyboard('{Enter}');
+    expect(unrelatedAction).toHaveBeenCalledTimes(1);
+    expect(onAccept).not.toHaveBeenCalled();
+
+    act(() => screen.getByRole('button', { name: 'Helpful' }).focus());
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
+    expect(onAccept).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+
+    act(() => screen.getByRole('button', { name: 'Cancel' }).focus());
+    await user.keyboard('{Enter}');
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(onAccept).not.toHaveBeenCalled();
+    unrelatedButton.remove();
+  });
+
+  it('leaves Escape to an overlay focused outside the coauthoring surface', async () => {
+    const outsideOverlay = document.createElement('button');
+    outsideOverlay.textContent = 'Assistant drawer control';
+    const outsideKeyDown = jest.fn();
+    outsideOverlay.addEventListener('keydown', outsideKeyDown);
+    document.body.append(outsideOverlay);
+    const { user, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
+      });
+      request.onComplete('');
+    });
+    outsideOverlay.focus();
+    await user.keyboard('{Escape}');
+
+    expect(outsideKeyDown).toHaveBeenCalledTimes(1);
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    outsideOverlay.remove();
+  });
+
+  it('discards on Escape', async () => {
+    const { user, onAccept, dismissInvocation } = await setup();
+    const cancelCalls = mockCancel.mock.calls.length;
+    const resetCalls = mockReset.mock.calls.length;
+
+    screen.getByRole('textbox', { name: 'Describe a query change' }).focus();
+    await user.keyboard('{Escape}');
+
+    expect(onAccept).not.toHaveBeenCalled();
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    expect(mockReset).toHaveBeenCalledTimes(resetCalls + 1);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Continue coauthoring' })).not.toBeInTheDocument();
+  });
+
+  it('keeps Escape with the coauthoring dialog when the dialog itself owns focus', async () => {
+    const panelEditEscape = jest.fn();
+    const outsideButton = document.createElement('button');
+    document.body.append(outsideButton);
+    document.addEventListener('keydown', panelEditEscape);
+    const { user, dismissInvocation } = await setup();
+
+    try {
+      outsideButton.focus();
+      const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+      dialog.focus();
+
+      expect(dialog).toHaveFocus();
+      await user.keyboard('{Escape}');
+
+      expect(dismissInvocation).toHaveBeenCalledTimes(1);
+      expect(panelEditEscape).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', panelEditEscape);
+      outsideButton.remove();
+    }
+  });
+});

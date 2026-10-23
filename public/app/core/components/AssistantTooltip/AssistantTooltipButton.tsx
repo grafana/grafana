@@ -1,23 +1,12 @@
 import { css } from '@emotion/css';
 
-import { ASSISTANT_PLUGIN_ID, useAssistant } from '@grafana/assistant';
-import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, store } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, usePluginContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
-import {
-  getComponentMetaFromComponentId,
-  useExtensionSidebarContext,
-} from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
+import { useAddToAssistant } from 'app/core/assistant/useAddToAssistant';
 
 import { type AssistantTooltipContext, buildDatapointAssistantContext } from './buildAssistantContext';
-
-// Active conversation id stored by the assistant app.
-const ACTIVE_ASSISTANT_CHAT_ID_KEY = 'grafana-assistant-active-chat-id';
-
-function getActiveAssistantChatId(): string | undefined {
-  return store.get(ACTIVE_ASSISTANT_CHAT_ID_KEY) ?? undefined;
-}
 
 interface AssistantTooltipButtonProps {
   series: DataFrame;
@@ -37,20 +26,13 @@ export function AssistantTooltipButton({
   context,
   xVal,
 }: AssistantTooltipButtonProps) {
-  const { isAvailable, openAssistant } = useAssistant();
-  const { isOpen, dockedComponentId } = useExtensionSidebarContext();
-  const { fullscreenWorkspaceActive } = useFullscreenWorkspace();
+  const { isAvailable, addToAssistant } = useAddToAssistant({ origin: 'grafana/panel-tooltip' });
+  const pluginContext = usePluginContext();
   const styles = useStyles2(getStyles);
 
-  if (!isAvailable || !openAssistant) {
+  if (!isAvailable) {
     return null;
   }
-
-  // Reuse the open chat when the assistant is visible: docked in the sidebar or in fullscreen
-  // workspace (where the sidebar is closed but the chat stays active).
-  const isAssistantSidebarOpen =
-    isOpen && getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
-  const isAssistantOpen = isAssistantSidebarOpen || fullscreenWorkspaceActive;
 
   const handleClick = () => {
     const items = buildDatapointAssistantContext({
@@ -66,13 +48,11 @@ export function AssistantTooltipButton({
       return;
     }
 
-    openAssistant({
-      origin: 'grafana/panel-tooltip',
-      context: items,
-      autoSend: false,
-      appendContext: true,
-      chatId: isAssistantOpen ? getActiveAssistantChatId() : undefined,
+    reportInteraction('grafana_tooltip_add_to_assistant_clicked', {
+      visualizationType: pluginContext?.meta?.id ?? 'unknown',
     });
+
+    addToAssistant(items);
   };
 
   return (

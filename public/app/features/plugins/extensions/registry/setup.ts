@@ -1,11 +1,14 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
-import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
+import { FlagKeys, getAppPluginMetas, getCachedPromise, getFeatureFlagClient } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
-import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
+import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
+import { DashboardViewLazy } from 'app/features/dashboard-scene/embedding/DashboardViewLazy';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
+import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
+import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -15,7 +18,7 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { type PluginExtensionRegistries } from './types';
 
-function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
+export function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
   const exposedComponentsRegistry = new ExposedComponentsRegistry(apps);
   const addedLinksRegistry = new AddedLinksRegistry(apps);
@@ -56,7 +59,7 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,
         title: 'Create alert from panel',
         description: 'Modal to create an alert rule from panel data',
-        component: CreateAlertFromPanelExposedComponent,
+        component: CreateAlertFromPanelExposedComponentLazy,
       },
       {
         id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
@@ -64,6 +67,42 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         description: 'Access to the Query Library',
         component: OpenQueryLibraryExposedComponent,
       },
+      {
+        id: PluginExtensionExposedComponents.NotebookViewV1,
+        title: 'Notebook',
+        description: 'An editable notebook, for a host rendering one outside the notebooks route',
+        component: NotebookViewLazy,
+      },
+      // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
+      ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
+        ? [
+            {
+              id: PluginExtensionExposedComponents.AddToNotebookFormV1,
+              title: 'Add to notebook form',
+              description: 'Add to notebook form',
+              component: AddToNotebookFormExposedComponent,
+            },
+            // The same component. Its own id is how a plugin tells that this Grafana accepts `cells`.
+            {
+              id: PluginExtensionExposedComponents.AddToNotebookFormV2,
+              title: 'Add to notebook form',
+              description: 'Add to notebook form, with ordered cells',
+              component: AddToNotebookFormExposedComponent,
+            },
+          ]
+        : []),
+      // Only with plugin-provided pending changes on (`assistant.dashboard.artifacts`).
+      ...(getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardArtifacts, false)
+        ? [
+            {
+              id: PluginExtensionExposedComponents.DashboardViewV1,
+              title: 'Dashboard',
+              description:
+                'A saved dashboard with its pending changes banner, for a host rendering one outside the dashboard route',
+              component: DashboardViewLazy,
+            },
+          ]
+        : []),
     ],
   });
 }

@@ -41,11 +41,15 @@ type changeInfo struct {
 	// Files we tried to read
 	Changes []fileChangeInfo
 
-	// More files changed than we processed
-	SkippedFiles int
+	// UnprocessedFiles is how many changed files Evaluate never got to -- e.g.
+	// because the job's context was canceled/expired partway through a large
+	// PR. Zero means every file in the diff was evaluated.
+	UnprocessedFiles int
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
+
+	UnsupportedFork bool
 }
 
 func (c changeInfo) GrafanaHost() string {
@@ -139,21 +143,40 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
+	progress.SetTotal(ctx, len(changes))
 
-	for i, change := range changes {
-		// process maximum 10 files
-		if i >= 10 {
-			info.SkippedFiles = len(changes) - i
-			logger.Info("skipping remaining files", "count", info.SkippedFiles)
+	for _, change := range changes {
+		if ctx.Err() != nil {
+			info.UnprocessedFiles = len(changes) - len(info.Changes)
+			logger.Error("stopping pull request evaluation early", "reason", ctx.Err(), "processed", len(info.Changes), "unprocessed", info.UnprocessedFiles)
 			break
 		}
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender))
+		fileInfo := e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender)
+		info.Changes = append(info.Changes, fileInfo)
+		progress.RecordDryRun(ctx, previewResult(fileInfo))
 	}
 
 	return info, nil
+}
+
+func previewResult(info fileChangeInfo) jobs.JobResourceResult {
+	action := info.Change.Action
+	if info.Error != "" && info.Parsed == nil {
+		action = repository.FileActionIgnored
+	}
+
+	result := jobs.NewPathOnlyResult(info.Change.Path).
+		WithAction(action).
+		WithPreviousPath(info.Change.PreviousPath)
+
+	if info.Parsed != nil && info.Parsed.Obj != nil {
+		result.WithGVK(info.Parsed.GVK).WithName(info.Parsed.Obj.GetName())
+	}
+
+	return result.Build()
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
@@ -322,14 +345,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
 			if info.GrafanaURL != "" {
-				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
 			}
 
 			if info.PreviewURL != "" {
-				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
@@ -391,7 +414,8 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 }
 
 func renderScreenshotFromGrafanaURL(ctx context.Context,
-	baseURL string,
+	grafanaBaseURL string,
+	screenshotBaseURL string,
 	renderer ScreenshotRenderer,
 	repo provisioning.ResourceRepositoryInfo,
 	grafanaURL string,
@@ -413,7 +437,7 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	// an orgId here would make OrgRedirect try to switch the render user instead.
 	query := parsed.Query()
 	query.Del("orgId")
-	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), query)
+	snap, err := renderer.RenderScreenshot(ctx, repo, renderPath(grafanaBaseURL, parsed.Path), query)
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
 		return "", fmt.Errorf("error rendering screenshot: %w", err)
@@ -421,13 +445,35 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	if strings.Contains(snap, "://") {
 		return snap, nil // it is a full URL already (can happen when the blob storage returns CDN urls)
 	}
-	base, err := url.Parse(baseURL)
+	base, err := url.Parse(screenshotBaseURL)
 	if err != nil {
-		logger.Warn("invalid base", "url", baseURL, "err", err)
+		logger.Warn("invalid base", "url", screenshotBaseURL, "err", err)
 		return "", err
 	}
 	outcome = utils.SuccessOutcome
 	return base.JoinPath(snap).String(), nil
+}
+
+// renderPath converts an absolute Grafana URL path into the form
+// RenderScreenshot expects: relative to Grafana's root URL, without a leading
+// slash.
+//
+// The renderer resolves the path against [rendering] callback_url, which
+// already includes any sub-path configured through server.serve_from_sub_path.
+// Trimming only the leading slash leaves that sub-path in place and the
+// renderer then requests /grafana/grafana/d/..., which matches no route, so
+// the screenshot captures Grafana's own "Page not found" page instead of the
+// dashboard. Strip the base URL's path so the sub-path is contributed once.
+func renderPath(grafanaBaseURL, urlPath string) string {
+	path := strings.TrimPrefix(urlPath, "/")
+	base, err := url.Parse(grafanaBaseURL)
+	if err != nil {
+		return path
+	}
+	if subPath := strings.Trim(base.Path, "/"); subPath != "" {
+		path = strings.TrimPrefix(path, subPath+"/")
+	}
+	return path
 }
 
 // hasRemovedMetadata returns true if the original object (from the file)

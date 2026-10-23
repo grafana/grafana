@@ -9,7 +9,8 @@ import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';

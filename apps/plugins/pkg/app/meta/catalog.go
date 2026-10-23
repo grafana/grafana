@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -24,32 +23,37 @@ const (
 // CatalogProvider retrieves plugin metadata from the grafana.com API.
 type CatalogProvider struct {
 	httpClient         *http.Client
-	grafanaComAPIURL   string
+	grafanaComAPIURL   *url.URL
 	grafanaComAPIToken string
 	ttl                time.Duration
 	logger             logging.Logger
 }
 
 // NewCatalogProvider creates a new CatalogProvider that fetches metadata from grafana.com.
-func NewCatalogProvider(logger logging.Logger, grafanaComAPIURL, grafanaComAPIToken string) *CatalogProvider {
+func NewCatalogProvider(logger logging.Logger, grafanaComAPIURL, grafanaComAPIToken string) (*CatalogProvider, error) {
 	return NewCatalogProviderWithTTL(logger, grafanaComAPIURL, grafanaComAPIToken, defaultCatalogTTL)
 }
 
 // NewCatalogProviderWithTTL creates a new CatalogProvider with a custom TTL.
-func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaComAPIToken string, ttl time.Duration) *CatalogProvider {
+func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaComAPIToken string, ttl time.Duration) (*CatalogProvider, error) {
 	if grafanaComAPIURL == "" {
 		grafanaComAPIURL = "https://grafana.com/api/plugins"
+	}
+
+	u, err := url.Parse(grafanaComAPIURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid grafana.com API URL: %w", err)
 	}
 
 	return &CatalogProvider{
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		grafanaComAPIURL:   grafanaComAPIURL,
+		grafanaComAPIURL:   u,
 		grafanaComAPIToken: grafanaComAPIToken,
 		ttl:                ttl,
 		logger:             logger,
-	}
+	}, nil
 }
 
 // Name returns the name of the provider.
@@ -67,9 +71,11 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		logger = logger.With("requestNamespace", ns.Value)
 	}
 
-	u, err := url.Parse(p.grafanaComAPIURL)
-	if err != nil {
-		return nil, fmt.Errorf("invalid grafana.com API URL: %w", err)
+	// An empty version would collapse the URL below to the "list all versions"
+	// endpoint instead of "get this version"
+	if ref.Version == "" {
+		logger.Debug("Version is required to fetch plugin metadata from grafana.com API")
+		return nil, &FetchError{Reason: "missing_version", Err: ErrMetaNotFound}
 	}
 
 	// Determine which plugin ID to use for the API request
@@ -78,8 +84,10 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		lookupID = ref.GetParentID()
 	}
 
-	u.Path = path.Join(u.Path, lookupID, "versions", ref.Version)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	// Copy the base URL so we don't mutate the shared p.grafanaComAPIURL across requests.
+	catalogURL := *p.grafanaComAPIURL
+	catalogURL.Path = path.Join(catalogURL.Path, lookupID, "versions", ref.Version)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, catalogURL.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -95,8 +103,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		if errors.As(err, &netErr) && netErr.Timeout() {
 			errType = "timeout"
 		}
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), errType).Inc()
-		return nil, fmt.Errorf("failed to fetch plugin metadata: %w", err)
+		return nil, &FetchError{Reason: errType, Err: ErrMetaNotFound}
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
@@ -105,28 +112,30 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), strconv.Itoa(resp.StatusCode)).Inc()
+		// Every non-200 maps to ErrMetaNotFound because that is the signal the manager uses to try the
+		// next provider. It does not mean the plugin is absent. Reason keeps the real status for metrics.
+		statusErr := &FetchError{Reason: strconv.Itoa(resp.StatusCode), Err: ErrMetaNotFound}
 		if resp.StatusCode == http.StatusNotFound {
-			logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", u.String())
-			return nil, ErrMetaNotFound
+			logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", catalogURL.String())
+			return nil, statusErr
 		}
-		return nil, fmt.Errorf("unexpected status code %d from grafana.com API", resp.StatusCode)
+		logger.Error(fmt.Sprintf("unexpected status code %d from grafana.com API", resp.StatusCode))
+		return nil, statusErr
 	}
 
 	var gcomMeta grafanaComPluginVersionMeta
 	if err = json.NewDecoder(resp.Body).Decode(&gcomMeta); err != nil {
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "decode").Inc()
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, &FetchError{Reason: "decode", Err: fmt.Errorf("failed to decode plugin version API response from %s: %w", p.grafanaComAPIURL, err)}
 	}
 
 	// If we're looking up a child plugin, filter for it in the children field
 	if ref.HasParent() {
-		return p.findChildMeta(ctx, ref.ID, gcomMeta, logger)
+		return p.findChildMeta(ref, gcomMeta, logger)
 	}
 
 	metaSpec, err := grafanaComPluginVersionMetaToMetaSpec(logger, gcomMeta, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert plugin metadata: %w", err)
+		return nil, convertError(logger, ref, fmt.Errorf("failed to convert plugin metadata: %w", err))
 	}
 	return &Result{
 		Meta: metaSpec,
@@ -135,12 +144,12 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 }
 
 // findChildMeta searches for a child plugin in the parent's children field.
-func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, parentMeta grafanaComPluginVersionMeta, logger logging.Logger) (*Result, error) {
+func (p *CatalogProvider) findChildMeta(childRef PluginRef, parentMeta grafanaComPluginVersionMeta, logger logging.Logger) (*Result, error) {
 	for _, child := range parentMeta.Children {
-		if child.JSON.Id == childID {
+		if child.JSON.Id == childRef.ID {
 			metaSpec, err := grafanaComChildPluginVersionToMetaSpec(logger, child, parentMeta)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert child plugin metadata: %w", err)
+				return nil, convertError(logger, childRef, fmt.Errorf("failed to convert child plugin metadata: %w", err))
 			}
 			return &Result{
 				Meta: metaSpec,
@@ -150,9 +159,18 @@ func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, par
 	}
 
 	logger.Debug("Child plugin not found in parent's children",
-		"childId", childID,
+		"childId", childRef.ID,
 		"parentId", parentMeta.PluginSlug,
 		"childrenCount", len(parentMeta.Children),
 	)
 	return nil, ErrMetaNotFound
+}
+
+// convertError classifies a conversion failure for the fetch error metric.
+func convertError(logger logging.Logger, ref PluginRef, err error) error {
+	if errors.Is(err, ErrMissingCDNURL) {
+		logger.Warn("grafana.com plugin version is missing cdnUrl", "pluginId", ref.ID, "version", ref.Version)
+		return &FetchError{Reason: "missing_cdn_url", Err: err}
+	}
+	return &FetchError{Reason: "conversion", Err: err}
 }

@@ -10,6 +10,7 @@ import { type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
 import * as permissions from './permissions';
@@ -56,7 +57,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+    // foldersAppPlatformAPI defaults to on, but this suite's folder handlers are the legacy ones.
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true, foldersAppPlatformAPI: false });
     server.use(
       http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () => {
         return HttpResponse.json({
@@ -117,8 +119,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('displays folder-scoped variables returned by the API', async () => {
@@ -126,9 +128,10 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
     expect(await screen.findByText('env')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'env' })).toBeInTheDocument();
   });
 
-  it('disables "New folder variable" when the user cannot edit the folder', async () => {
+  it('does not display "New folder variable" when the user cannot edit the folder', async () => {
     server.use(
       http.get('/api/folders/:uid', () => {
         return HttpResponse.json({
@@ -144,7 +147,28 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     );
     render(<BrowseFolderVariablesPage />);
 
-    expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeDisabled();
+    expect(await screen.findByText('env')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New folder variable' })).not.toBeInTheDocument();
+  });
+
+  it('does not display "New folder variable" without variables:create', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.VariablesCreate);
+    render(<BrowseFolderVariablesPage />);
+
+    expect(await screen.findByText('env')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New folder variable' })).not.toBeInTheDocument();
+  });
+
+  it('does not make variable names edit links without variables:write', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.VariablesWrite);
+    render(<BrowseFolderVariablesPage />);
+
+    expect(await screen.findByText('env')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'env' })).not.toBeInTheDocument();
   });
 
   it('displays an empty state when the folder has no variables', async () => {

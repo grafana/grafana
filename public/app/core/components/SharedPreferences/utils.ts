@@ -1,19 +1,24 @@
 import { css } from '@emotion/css';
 
 import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1';
-import { type ThemeRegistryItem } from '@grafana/data';
+import { type SelectableValue, type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 
-export interface Props {
-  resourceUri: string;
-  disabled?: boolean;
-  /** @deprecated No used in the new functional component */
-  preferenceType: 'org' | 'team' | 'user';
-  onConfirm?: () => Promise<boolean>;
-}
+import { type DashboardPickerDTO } from '../Select/DashboardPicker';
 
 export type PrefsState = UserPreferencesDTO;
+
+/**
+ * Reserved homeDashboardUID that stops the user > team > org fallback and shows the instance default home.
+ * Mirrors the backend's preferences.GlobalHomeDashboardUID.
+ */
+export const GLOBAL_HOME_DASHBOARD_UID = 'global-home';
+
+export const getGlobalHomeOption = (): SelectableValue<DashboardPickerDTO> => {
+  const label = t('shared-preferences.fields.home-dashboard-global-home', 'Grafana home');
+  return { value: { uid: GLOBAL_HOME_DASHBOARD_UID, name: label }, label, icon: 'home-alt' };
+};
 
 const compareStrings = (() => {
   let collator: Intl.Collator | undefined;

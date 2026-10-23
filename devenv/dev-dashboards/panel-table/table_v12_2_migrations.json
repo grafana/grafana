@@ -2479,7 +2479,7 @@
     "variables": [
       {
         "kind": "AdhocVariable",
-        "group": "",
+        "group": "grafana-testdata-datasource",
         "datasource": {},
         "spec": {
           "name": "Filters",

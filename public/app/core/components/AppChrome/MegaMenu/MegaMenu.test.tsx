@@ -1,9 +1,9 @@
 import { HttpResponse } from 'msw';
-import { act, render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -22,6 +22,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
+import { HIDDEN_NAV_ITEMS } from './utils';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
@@ -140,6 +141,71 @@ describe('MegaMenu', () => {
 
     expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+
+  describe('information architecture refresh exclusions', () => {
+    let originalAppSubUrl: string;
+
+    beforeEach(() => {
+      originalAppSubUrl = config.appSubUrl;
+      HIDDEN_NAV_ITEMS.add('child2');
+      HIDDEN_NAV_ITEMS.add('dashboards/playlists');
+    });
+
+    afterEach(() => {
+      config.appSubUrl = originalAppSubUrl;
+      HIDDEN_NAV_ITEMS.delete('child2');
+      HIDDEN_NAV_ITEMS.delete('dashboards/playlists');
+    });
+
+    it.each(['', '/grafana'])(
+      'hides plugin URL keys while preserving ID keys under subpath "%s"',
+      async (appSubUrl) => {
+        config.appSubUrl = appSubUrl;
+        setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+        const { user } = renderMegaMenu({
+          navBarTree: [
+            {
+              id: 'plugin-page-grafana-adaptive-metrics-app',
+              text: 'Adaptive Metrics',
+              url: `${appSubUrl}/a/grafana-adaptive-metrics-app/overview`,
+              children: [
+                { text: 'Configuration', url: `${appSubUrl}/a/grafana-adaptive-metrics-app/configuration` },
+                { id: 'dashboards/playlists', text: 'Playlists', url: `${appSubUrl}/playlists` },
+                { text: 'Customizations', url: `${appSubUrl}/a/grafana-adaptive-metrics-app/customizations` },
+              ],
+            },
+            { id: 'home', text: 'Home', url: `${appSubUrl}/` },
+          ],
+        });
+
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Adaptive Metrics' }));
+
+        expect(screen.getByRole('link', { name: 'Customizations' })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Configuration' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Playlists' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+      }
+    );
+
+    it.each([false, true])(
+      'applies hard-coded exclusions only when the refresh flag is enabled: %s',
+      async (enabled) => {
+        setTestFlags({ 'grafana.navigationInfoArchRefresh': enabled });
+        const { user } = renderMegaMenu({ navBarTree: nestedNavTree });
+
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+        await user.click(screen.getByRole('button', { name: 'Expand section: Child1' }));
+
+        expect(screen.getByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
+        if (enabled) {
+          expect(screen.queryByRole('link', { name: 'Child2' })).not.toBeInTheDocument();
+        } else {
+          expect(screen.getByRole('link', { name: 'Child2' })).toBeInTheDocument();
+        }
+        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+      }
+    );
   });
 
   describe('customisation', () => {
@@ -577,12 +643,10 @@ describe('MegaMenu', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
     // Flag cleanup is handled by the outer afterEach (act-wrapped, since setTestFlags fires
     // OpenFeature events into the still-mounted menu).
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     });
 
     it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {

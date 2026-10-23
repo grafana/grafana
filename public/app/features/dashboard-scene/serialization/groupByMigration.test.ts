@@ -4,7 +4,7 @@ import {
   LoadingState,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import type { AdhocVariableKind, GroupByVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { migrateGroupByVariablesV1, migrateGroupByVariablesV2 } from './groupByMigration';
@@ -15,22 +15,14 @@ function setUrl(query: string) {
 
 describe('groupByMigration', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = true;
     locationService.replace('/');
   });
 
   afterEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = false;
     locationService.replace('/');
   });
 
   describe('migrateGroupByVariablesV1', () => {
-    it('should return variables unchanged when FF is off', () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      const vars = [makeAdhocV1(), makeGroupByV1()];
-      expect(migrateGroupByVariablesV1(vars)).toBe(vars);
-    });
-
     it('should return variables unchanged when there are no groupBy variables', () => {
       const vars: TypedVariableModel[] = [makeAdhocV1()];
       expect(migrateGroupByVariablesV1(vars)).toBe(vars);
@@ -215,12 +207,6 @@ describe('groupByMigration', () => {
   });
 
   describe('migrateGroupByVariablesV2', () => {
-    it('should return variables unchanged when FF is off', () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      const vars = [makeAdhocV2(), makeGroupByV2()];
-      expect(migrateGroupByVariablesV2(vars)).toBe(vars);
-    });
-
     it('should remove groupBy variable and enable groupBy on matching adhoc', () => {
       const adhoc = makeAdhocV2();
       const groupBy = makeGroupByV2({ current: { text: '', value: '' } });

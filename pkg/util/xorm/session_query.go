@@ -143,7 +143,7 @@ func value2String(rawValue *reflect.Value) (str string, err error) {
 func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string, err error) {
 	result := make(map[string]string)
 	scanResultContainers := make([]interface{}, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		var scanResultContainer interface{}
 		scanResultContainers[i] = &scanResultContainer
 	}
@@ -171,7 +171,7 @@ func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string,
 func row2sliceStr(rows *core.Rows, fields []string) (results []string, err error) {
 	result := make([]string, 0, len(fields))
 	scanResultContainers := make([]interface{}, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		var scanResultContainer interface{}
 		scanResultContainers[i] = &scanResultContainer
 	}
@@ -179,7 +179,7 @@ func row2sliceStr(rows *core.Rows, fields []string) (results []string, err error
 		return nil, err
 	}
 
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		rawValue := reflect.Indirect(reflect.ValueOf(scanResultContainers[i]))
 		// if row is null then as empty string
 		if rawValue.Interface() == nil {
@@ -281,7 +281,7 @@ func (session *Session) QuerySliceString(sqlOrArgs ...interface{}) ([][]string, 
 func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]interface{}, err error) {
 	resultsMap = make(map[string]interface{}, len(fields))
 	scanResultContainers := make([]interface{}, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		var scanResultContainer interface{}
 		scanResultContainers[i] = &scanResultContainer
 	}

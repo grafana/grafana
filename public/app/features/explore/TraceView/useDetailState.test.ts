@@ -23,6 +23,30 @@ describe('useDetailState', () => {
     expect(result.current.detailStates.size).toBe(0);
   });
 
+  it('opens detail and keeps it open when opened again', async () => {
+    const { result } = renderHook(() => useDetailState(sampleFrame));
+
+    act(() => result.current.openDetail('span1'));
+    expect(result.current.detailStates.has('span1')).toBe(true);
+
+    act(() => result.current.detailTagsToggle('span1'));
+    expect(result.current.detailStates.get('span1')?.isTagsOpen).toBe(false);
+
+    act(() => result.current.openDetail('span1'));
+    expect(result.current.detailStates.has('span1')).toBe(true);
+    // Reopening must not reset subsections the user already collapsed.
+    expect(result.current.detailStates.get('span1')?.isTagsOpen).toBe(false);
+  });
+
+  it('leaves other open details alone when opening a detail', async () => {
+    const { result } = renderHook(() => useDetailState(sampleFrame));
+
+    act(() => result.current.openDetail('span1'));
+    act(() => result.current.openDetail('span2'));
+
+    expect([...result.current.detailStates.keys()]).toEqual(['span1', 'span2']);
+  });
+
   it('toggles logs and logs items', async () => {
     const { result } = renderHook(() => useDetailState(sampleFrame));
     act(() => result.current.toggleDetail('span1'));

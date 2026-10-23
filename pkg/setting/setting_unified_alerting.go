@@ -41,10 +41,15 @@ const (
 	}
 }
 `
+	// DefaultDeletedRuleRetention is exported so callers that construct a RuleStore outside the
+	// normal ini-driven Cfg path (e.g. a standalone folder apiserver's cascade delete) can default
+	// to the same retention as a standard deployment instead of duplicating the literal.
+	DefaultDeletedRuleRetention             = 30 * 24 * time.Hour
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
+	schedulerDefaultRuleStatusSyncInterval  = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultInitialRetryDelay       = 1 * time.Second
@@ -71,6 +76,11 @@ const (
 	lokiDefaultMaxQuerySize                = 65536 // 64kb
 	defaultHistorianPrometheusWriteTimeout = 10 * time.Second
 	defaultHistorianPrometheusMetricName   = "GRAFANA_ALERTS"
+	// Below this, a large recording rule degenerates into roughly one request per series.
+	recordingRulesMinWriteBatchSize = 65536 // 64kb
+	// Fan-out is per rule evaluation and multiplies with the number of rules
+	// evaluating at once, so keep it well under the default idle connection pool (100).
+	recordingRulesMaxWriteConcurrency = 32
 )
 
 var (
@@ -139,6 +149,7 @@ type UnifiedAlertingSettings struct {
 	StatePeriodicSaveInterval      time.Duration
 	StatePeriodicSaveBatchSize     int
 	StatePeriodicSaveJitterEnabled bool
+	RuleStatusSyncInterval         time.Duration
 	RulesPerRuleGroupLimit         int64
 
 	// Retention period for Alertmanager notification log entries.
@@ -180,6 +191,12 @@ type UnifiedAlertingSettings struct {
 	// Configured via the [unified_alerting] ini key "external_ruler_uid" or the
 	// GF_UNIFIED_ALERTING_EXTERNAL_RULER_UID environment variable.
 	ExternalRulerUID string
+
+	// FolderLabelFullSyncInterval is how often the folder label syncer walks every folder to correct
+	// any drift in the has-rules label, on top of the pass it makes at startup.
+	// Configured via the [unified_alerting] ini key "folder_label_full_sync_interval" or the
+	// GF_UNIFIED_ALERTING_FOLDER_LABEL_FULL_SYNC_INTERVAL environment variable.
+	FolderLabelFullSyncInterval time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -187,6 +204,12 @@ type RecordingRuleSettings struct {
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
+	// MaxWriteBatchSize splits a write larger than this many (estimated) bytes
+	// into several requests. 0 never splits.
+	MaxWriteBatchSize int
+	// MaxWriteConcurrency bounds how many split requests run in parallel.
+	// Ignored if MaxWriteBatchSize is 0. 0 defaults to 1 (sequential).
+	MaxWriteConcurrency int
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -200,6 +223,7 @@ type RemoteAlertmanagerSettings struct {
 }
 
 type UnifiedAlertingScreenshotSettings struct {
+	IncludeAlertHistory        bool
 	Capture                    bool
 	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
@@ -266,6 +290,13 @@ func (u *UnifiedAlertingStateHistorySettings) QueriesServedByLoki() bool {
 		return isStateHistoryBackend(u.MultiPrimary, stateHistoryBackendLoki)
 	}
 	return isStateHistoryBackend(u.Backend, stateHistoryBackendLoki)
+}
+
+// HasAlertStateMetrics returns true if a Prometheus data source is set for the alert state metrics.
+// The alert activity page reads them from there. The backend setting is not checked on purpose: on
+// Grafana Cloud a separate ruler service writes these metrics, while this Grafana only writes to Loki.
+func (u *UnifiedAlertingStateHistorySettings) HasAlertStateMetrics() bool {
+	return u.Enabled && u.PrometheusTargetDatasourceUID != ""
 }
 
 // isStateHistoryBackend normalizes the configured value the same way historian.ParseBackendType does.
@@ -388,7 +419,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
-		for _, peer := range strings.Split(peers, ",") {
+		for peer := range strings.SplitSeq(peers, ",") {
 			peer = strings.TrimSpace(peer)
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
@@ -501,10 +532,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MinInterval = uaMinInterval
 
-	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
-	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
-		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
-	}
+	uaCfg.DefaultRuleEvaluationInterval = max(uaMinInterval, DefaultRuleEvaluationInterval)
 
 	quotas := iniFile.Section("quota")
 	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
@@ -531,6 +559,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+	uaCfgScreenshots.IncludeAlertHistory = screenshots.Key("include_alert_history").MustBool(true)
 
 	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
 	if captureTimeout > screenshotsMaxCaptureTimeout {
@@ -604,6 +633,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
+		MaxWriteBatchSize:    rr.Key("max_write_batch_size").MustInt(0),
+		MaxWriteConcurrency:  rr.Key("max_write_concurrency").MustInt(0),
+	}
+	if bs := uaCfgRecordingRules.MaxWriteBatchSize; bs != 0 && bs < recordingRulesMinWriteBatchSize {
+		return fmt.Errorf("setting 'max_write_batch_size' is invalid, only 0 or a value of at least %d bytes is allowed", recordingRulesMinWriteBatchSize)
+	}
+	if c := uaCfgRecordingRules.MaxWriteConcurrency; c < 0 || c > recordingRulesMaxWriteConcurrency {
+		return fmt.Errorf("setting 'max_write_concurrency' is invalid, only values between 0 and %d are allowed", recordingRulesMaxWriteConcurrency)
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")
@@ -641,7 +678,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
 
-	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	uaCfg.RuleStatusSyncInterval = ua.Key("rule_status_sync_interval").MustDuration(schedulerDefaultRuleStatusSyncInterval)
+	if uaCfg.RuleStatusSyncInterval <= 0 {
+		return fmt.Errorf("setting 'rule_status_sync_interval' is invalid, only a positive duration is allowed")
+	}
+
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(DefaultDeletedRuleRetention)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}
@@ -659,6 +701,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 	uaCfg.ExternalAlertmanagerUID = ua.Key("external_alertmanager_uid").MustString("")
 	uaCfg.ExternalRulerUID = ua.Key("external_ruler_uid").MustString("")
+
+	uaCfg.FolderLabelFullSyncInterval = ua.Key("folder_label_full_sync_interval").MustDuration(10 * time.Minute)
+	if uaCfg.FolderLabelFullSyncInterval <= 0 {
+		return fmt.Errorf("setting 'folder_label_full_sync_interval' is invalid, only a positive duration is allowed")
+	}
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

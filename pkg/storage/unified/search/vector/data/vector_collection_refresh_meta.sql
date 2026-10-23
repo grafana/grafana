@@ -1,11 +1,12 @@
 UPDATE embeddings AS e
     SET {{ .Ident "title" }}      = v.title,
+        {{ .Ident "folder" }}     = v.folder,
         {{ .Ident "metadata" }}   = v.metadata::jsonb,
         {{ .Ident "updated_at" }} = CURRENT_TIMESTAMP
     FROM (VALUES
         {{ range $i, $r := .Rows }}{{ if $i }},
-        {{ end }}({{ $.Arg $r.Subresource }}, {{ $.Arg $r.Title }}, {{ $.Arg $r.Metadata }}){{ end }}
-    ) AS v(subresource, title, metadata)
+        {{ end }}({{ $.Arg $r.Subresource }}, {{ $.Arg $r.Title }}, {{ $.Arg $r.Folder }}, {{ $.Arg $r.Metadata }}){{ end }}
+    ) AS v(subresource, title, folder, metadata)
     WHERE e.{{ .Ident "resource" }}  = {{ .Arg .Resource }}
     AND e.{{ .Ident "namespace" }} = {{ .Arg .Namespace }}
     AND e.{{ .Ident "model" }}     = {{ .Arg .Model }}

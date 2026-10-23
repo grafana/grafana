@@ -130,6 +130,30 @@ func TestTranslateSearchQuery_TextAndFilters(t *testing.T) {
 	assert.Equal(t, "dashboards", req.Options.Key.Resource)
 }
 
+func TestTranslateSearchQuery_Regex(t *testing.T) {
+	// A regex leaf on a keyword field, ANDed with a positive one that negates, so
+	// both operators and the whole-pattern (including '*', which is a quantifier
+	// here and must not be treated as a wildcard) are exercised in one pass.
+	q := searchQuery(&searchv0.WhereNode{
+		And: []searchv0.WhereNode{
+			{Regex: &searchv0.RegexPredicate{Field: "folder", Pattern: "team-(a|b).*"}},
+			{Regex: &searchv0.RegexPredicate{Field: "panel_type", Pattern: "row|graph", Negate: true}},
+		},
+	})
+
+	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 2)
+
+	assert.Equal(t, "folder", req.Options.Fields[0].Key)
+	assert.Equal(t, string(resource.OperatorRegex), req.Options.Fields[0].Operator)
+	assert.Equal(t, []string{"team-(a|b).*"}, req.Options.Fields[0].Values)
+
+	assert.Equal(t, "panel_type", req.Options.Fields[1].Key)
+	assert.Equal(t, string(resource.OperatorNotRegex), req.Options.Fields[1].Operator)
+	assert.Equal(t, []string{"row|graph"}, req.Options.Fields[1].Values)
+}
+
 func TestTranslateSearchQuery_SingleLeaf(t *testing.T) {
 	q := searchQuery(&searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: "cpu"}})
 	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
@@ -278,6 +302,15 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 			wantField: "where.filter.operator",
 		},
 		{
+			// A field holding one value cannot hold two, so this can never match. An
+			// empty result would not tell the caller that.
+			name: "All with several values on a field holding a single value",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "All", Values: []string{"a", "b"}}}
+			},
+			wantField: "where.filter.operator",
+		},
+		{
 			name: "filter wildcard value",
 			mutate: func(q *searchv0.SearchQuery) {
 				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "In", Values: []string{"a*"}}}
@@ -383,6 +416,35 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "nope", GT: new(1.0)}}
 			},
 			wantField: "where.range.field",
+		},
+		{
+			name: "regex unknown field",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: "nope", Pattern: "a.*"}}
+			},
+			wantField: "where.regex.field",
+		},
+		{
+			// A regex matches whole string terms, so a non-string field is refused.
+			name: "regex on a numeric field",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: "panel_id", Pattern: "a.*"}}
+			},
+			wantField: "where.regex.field",
+		},
+		{
+			name: "regex on a field that cannot be filtered",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: "panel_title", Pattern: "a.*"}}
+			},
+			wantField: "where.regex.field",
+		},
+		{
+			name: "regex with an empty pattern",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: "folder", Pattern: ""}}
+			},
+			wantField: "where.regex.pattern",
 		},
 		{
 			name: "whitespace-only text value",
@@ -503,6 +565,59 @@ func TestTranslateTrashQuery_ExplicitFieldsAddDeletedRV(t *testing.T) {
 	assert.Equal(t, []string{"title", trashFieldDeletedRV}, req.Fields)
 }
 
+// Deleted documents keep their tags, so a caller listing trash can show them and
+// narrow the list to one, exactly as live search does. Faceting and sorting are
+// out: trash rejects facets outright, and ordering by a list of values has no
+// defined meaning.
+func TestTranslateTrashQuery_Tags(t *testing.T) {
+	t.Run("returnable", func(t *testing.T) {
+		q := trashQuery(nil)
+		q.Fields = []string{trashFieldTitle, trashFieldTags}
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		assert.Equal(t, []string{trashFieldTitle, trashFieldTags, trashFieldDeletedRV}, req.Fields)
+	})
+
+	t.Run("filterable", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "In", Values: []string{"prod", "team-a"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, trashFieldTags, req.Options.Fields[0].Key)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"prod", "team-a"}, req.Options.Fields[0].Values)
+	})
+
+	t.Run("filterable with NotIn", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "NotIn", Values: []string{"prod"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "notin", req.Options.Fields[0].Operator)
+	})
+
+	t.Run("not sortable", func(t *testing.T) {
+		q := trashQuery(nil)
+		q.Sort = []searchv0.SortField{{Field: trashFieldTags, Direction: "asc"}}
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		assert.Nil(t, req)
+		require.NotEmpty(t, errs)
+		assert.Equal(t, "sort[0].field", errs[0].Field)
+	})
+
+	t.Run("not facetable", func(t *testing.T) {
+		q := trashQuery(nil)
+		q.Fields = []string{trashFieldTags}
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		assert.Empty(t, req.Facet, "trash never facets")
+	})
+}
+
 func TestTranslateTrashQuery_TextAndFilter(t *testing.T) {
 	q := trashQuery(&searchv0.WhereNode{
 		And: []searchv0.WhereNode{
@@ -589,6 +704,67 @@ func TestTranslateSearchQuery_ContinueToken(t *testing.T) {
 	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
 	require.Empty(t, errs)
 	assert.Equal(t, []string{"cursor-value"}, req.SearchAfter)
+}
+
+// All asks the field to hold every value, which the backend expresses as "=".
+func TestTranslateSearchQuery_FilterAll(t *testing.T) {
+	t.Run("several values on a list field", func(t *testing.T) {
+		q := searchQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: "tags", Operator: "All", Values: []string{"prod", "eu-west"}},
+		})
+		req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "tags", req.Options.Fields[0].Key)
+		assert.Equal(t, "=", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"prod", "eu-west"}, req.Options.Fields[0].Values)
+	})
+
+	t.Run("one value means the same as In", func(t *testing.T) {
+		q := searchQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "All", Values: []string{"platform"}},
+		})
+		req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+	})
+}
+
+// Tags on trash are what prompted All, so check the shared validators give it
+// there too.
+func TestTranslateTrashQuery_FilterAll(t *testing.T) {
+	t.Run("several tags", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "All", Values: []string{"prod", "team-a"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "=", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"prod", "team-a"}, req.Options.Fields[0].Values)
+	})
+
+	t.Run("several folders is rejected", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldFolder, Operator: "All", Values: []string{"a", "b"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		assert.Nil(t, req)
+		require.NotEmpty(t, errs)
+		assert.Equal(t, "where.filter.operator", errs[0].Field)
+		assert.Contains(t, errs[0].Detail, trashFieldFolder)
+	})
+
+	t.Run("one tag means the same as In", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "All", Values: []string{"prod"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+	})
 }
 
 // Boolean and numeric filters reach the backend as the strings it parses back,
@@ -723,4 +899,150 @@ func TestTranslateSearchQuery_BoundValuesSurviveTheHandover(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTranslateSearchQuery_FolderTree(t *testing.T) {
+	for _, gvr := range []schema.GroupVersionResource{
+		dashboardsGVR,
+		{Group: "folder.grafana.app", Version: "v1", Resource: "folders"},
+	} {
+		for _, values := range [][]string{{"team-a"}, {"team-a", "team-b"}, {"general"}} {
+			t.Run(gvr.Resource+"/"+strconv.Itoa(len(values))+"/"+values[0], func(t *testing.T) {
+				q := searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+					Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "In", Values: values,
+				}})
+				req, errs := translateSearchQuery(q, gvr, "tenant-a", newFieldSet(gvr, nil, true))
+				require.Empty(t, errs)
+				require.Len(t, req.Options.Fields, 1)
+				assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, req.Options.Fields[0].Key)
+				assert.Equal(t, "in", req.Options.Fields[0].Operator)
+				assert.Equal(t, values, req.Options.Fields[0].Values)
+				assert.Equal(t, "tenant-a", req.Options.Key.Namespace)
+				assert.Equal(t, gvr.Group, req.Options.Key.Group)
+				assert.Equal(t, gvr.Resource, req.Options.Key.Resource)
+				assert.Empty(t, req.Federated)
+			})
+		}
+	}
+
+	q := searchQuery(&searchv0.WhereNode{And: []searchv0.WhereNode{
+		{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "In", Values: []string{"team-a"}}},
+		{Filter: &searchv0.FilterPredicate{Field: "panel_type", Operator: "In", Values: []string{"timeseries"}}},
+		{Text: &searchv0.TextPredicate{Value: "cpu"}},
+	}})
+	req, errs := translateSearchQuery(q, dashboardsGVR, "default", newFieldSet(dashboardsGVR, testProvider(), true))
+	require.Empty(t, errs)
+	assert.Equal(t, "cpu", req.Query)
+	require.Len(t, req.Options.Fields, 2)
+	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, req.Options.Fields[0].Key)
+	assert.Equal(t, "panel_type", req.Options.Fields[1].Key)
+}
+
+func TestTranslateSearchQuery_FolderTreeValidation(t *testing.T) {
+	filter := func(operator string, values ...string) *searchv0.SearchQuery {
+		return searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+			Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: operator, Values: values,
+		}})
+	}
+	for _, tc := range []struct {
+		name      string
+		query     *searchv0.SearchQuery
+		wantField string
+	}{
+		{"NotIn", filter("NotIn", "team-a"), "where.filter.operator"},
+		{"All", filter("All", "team-a", "team-b"), "where.filter.operator"},
+		{"empty values", filter("In"), "where.filter.values"},
+		{"empty root", filter("In", "team-a", ""), "where.filter.values[1]"},
+		{"wildcard", filter("In", "team-*"), "where.filter.values[0]"},
+		{"regex", searchQuery(&searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Pattern: "team-.*"}}), "where.regex.field"},
+		{"range", searchQuery(&searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, GT: new(1.0)}}), "where.range.field"},
+		{"text", searchQuery(&searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: "cpu", Fields: []string{resource.SEARCH_FIELD_FOLDER_TREE}}}), "where.text.fields[0]"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req, errs := translateSearchQuery(tc.query, dashboardsGVR, "default", newFieldSet(dashboardsGVR, nil, true))
+			assert.Nil(t, req)
+			require.Len(t, errs, 1)
+			assert.Equal(t, tc.wantField, errs[0].Field)
+		})
+	}
+	for _, tc := range []struct {
+		name      string
+		mutate    func(*searchv0.SearchQuery)
+		wantField string
+	}{
+		{"return", func(q *searchv0.SearchQuery) { q.Fields = []string{resource.SEARCH_FIELD_FOLDER_TREE} }, "fields[0]"},
+		{"sort", func(q *searchv0.SearchQuery) {
+			q.Sort = []searchv0.SortField{{Field: resource.SEARCH_FIELD_FOLDER_TREE}}
+		}, "sort[0].field"},
+		{"facet", func(q *searchv0.SearchQuery) { q.Facets = []string{resource.SEARCH_FIELD_FOLDER_TREE} }, "facets[0]"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q := searchQuery(nil)
+			tc.mutate(q)
+			_, errs := translateSearchQuery(q, dashboardsGVR, "default", newFieldSet(dashboardsGVR, nil, true))
+			require.Len(t, errs, 1)
+			assert.Equal(t, tc.wantField, errs[0].Field)
+		})
+	}
+}
+
+func TestTranslateSearchQuery_ManifestCannotEnableFolderTree(t *testing.T) {
+	provider := &fakeProvider{fields: []resource.SearchFieldDefinition{{
+		Name: resource.SEARCH_FIELD_FOLDER_TREE, Type: resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+	}}}
+	q := searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+		Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "In", Values: []string{"team-a"},
+	}})
+	_, errs := TranslateSearchQuery(q, dashboardsGVR, "default", provider)
+	require.Len(t, errs, 1)
+	assert.Equal(t, "where.filter.field", errs[0].Field)
+	assert.Contains(t, errs[0].Detail, "unknown field")
+
+	q = searchQuery(nil)
+	q.Fields = []string{resource.SEARCH_FIELD_FOLDER_TREE}
+	_, errs = translateSearchQuery(q, dashboardsGVR, "default", newFieldSet(dashboardsGVR, provider, true))
+	require.Len(t, errs, 1)
+	assert.Equal(t, "fields[0]", errs[0].Field)
+}
+
+func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
+	filter := func(operator string, values ...string) *searchv0.SearchQuery {
+		return searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+			Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: operator, Values: values,
+		}})
+	}
+
+	req, errs := TranslateGlobalSearchQuery(filter("In", "a", "b"), "default")
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 1)
+	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, req.Options.Fields[0].Key)
+	assert.Equal(t, "in", req.Options.Fields[0].Operator)
+	assert.Equal(t, []string{"a", "b"}, req.Options.Fields[0].Values)
+
+	for _, tc := range []struct {
+		name      string
+		q         *searchv0.SearchQuery
+		wantField string
+	}{
+		{"NotIn", filter("NotIn", "a"), "where.filter.operator"},
+		{"All", filter("All", "a"), "where.filter.operator"},
+		{"All with several values, reported once", filter("All", "a", "b"), "where.filter.operator"},
+		{"regex", searchQuery(&searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Pattern: "team-.*"}}), "where.regex.field"},
+		{"negated regex", searchQuery(&searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Pattern: "team-.*", Negate: true}}), "where.regex.field"},
+		{"an empty folder for the root", filter("In", "a", ""), "where.filter.values[1]"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, errs := TranslateGlobalSearchQuery(tc.q, "default")
+			require.Len(t, errs, 1, errs)
+			assert.Equal(t, tc.wantField, errs[0].Field)
+		})
+	}
+
+	t.Run("not on a search of one kind without opt-in", func(t *testing.T) {
+		_, errs := TranslateSearchQuery(filter("In", "a"), dashboardsGVR, "default", testProvider())
+		require.Len(t, errs, 1, errs)
+		assert.Equal(t, "where.filter.field", errs[0].Field)
+		assert.Contains(t, errs[0].Detail, "unknown field")
+	})
 }

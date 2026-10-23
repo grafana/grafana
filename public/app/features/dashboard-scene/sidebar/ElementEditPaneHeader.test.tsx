@@ -32,6 +32,7 @@ jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
     trackDeleteDashboardElement: jest.fn(),
+    panelActionClicked: jest.fn(),
   },
 }));
 
@@ -48,7 +49,7 @@ describe('ElementEditPaneHeader', () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
 
-      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Row');
+      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Row', 'edit_pane');
     });
 
     it('should call DashboardInteractions.trackDeleteDashboardElement when deleting a tab', async () => {
@@ -59,7 +60,7 @@ describe('ElementEditPaneHeader', () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
 
-      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Tab');
+      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Tab', 'edit_pane');
     });
   });
 
@@ -71,7 +72,35 @@ describe('ElementEditPaneHeader', () => {
     const user = userEvent.setup();
     await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
 
-    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Panel');
+    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Panel', 'edit_pane');
+  });
+
+  describe('tracking panel actions', () => {
+    it('should report edit_pane as the source when duplicating a panel', async () => {
+      const { panel, mockEditPane } = setup('panel');
+      const editableElement = getEditableElementFor(panel!)!;
+      renderEditPaneHeader(editableElement, mockEditPane);
+
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId(selectors.components.EditPaneHeader.duplicate));
+
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+        'duplicate',
+        expect.any(Number),
+        'edit_pane'
+      );
+    });
+
+    it('should report edit_pane as the source when copying a panel', async () => {
+      const { panel, mockEditPane } = setup('panel');
+      const editableElement = getEditableElementFor(panel!)!;
+      renderEditPaneHeader(editableElement, mockEditPane);
+
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId(selectors.components.EditPaneHeader.copy));
+
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', expect.any(Number), 'edit_pane');
+    });
   });
 });
 

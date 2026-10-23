@@ -23,8 +23,7 @@ func (hs *HTTPServer) GetPluginDashboards(c *contextmodel.ReqContext) response.R
 	}
 	list, err := hs.pluginDashboardService.ListPluginDashboards(c.Req.Context(), listReq)
 	if err != nil {
-		var notFound plugins.NotFoundError
-		if errors.As(err, &notFound) {
+		if notFound, ok := errors.AsType[plugins.NotFoundError](err); ok {
 			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 

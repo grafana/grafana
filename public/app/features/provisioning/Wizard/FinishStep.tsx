@@ -35,13 +35,13 @@ export const FinishStep = memo(function FinishStep() {
     'repository.email',
   ]);
 
-  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
+  const emailWebhookDisabled = githubAuthType === 'pat' && type === 'bitbucket' && !email?.trim();
 
   const isGitBased = isGitProvider(type);
 
-  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
+  const [connections] = useConnectionList(githubAuthType !== 'pat' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
-    if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
+    if (githubAuthType === 'pat' || !wizardConnectionName || !connections) {
       return false;
     }
     const conn = connections.find((c) => c.metadata?.name === wizardConnectionName);

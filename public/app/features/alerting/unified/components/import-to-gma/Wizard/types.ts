@@ -10,15 +10,6 @@ export enum StepKey {
 
 export type ImportMethod = 'stage' | 'legacy-datasource-rules';
 
-/**
- * Minimal form shape for cross-cutting `useWatch` calls inside `Wizard/` (e.g.
- * `useIsRulesForcedSkipped`) — avoids an import cycle with `ImportToGMA.tsx`.
- */
-export interface WizardFormValues {
-  autoSyncNotificationsEnabled?: boolean;
-  notificationsSource: 'yaml' | 'datasource';
-}
-
 export enum StepState {
   Idle = 'idle',
   Visited = 'visited',

@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
@@ -72,8 +72,7 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const defaultValues = (normalizedConfig ?? {
+  const defaultValues: ReceiverFormValues<R> = normalizedConfig ?? {
     name: '',
     items: [
       {
@@ -81,7 +80,7 @@ export function ReceiverForm<R extends ChannelValues>({
         __id: String(Math.random()),
       },
     ],
-  }) as ReceiverFormValues<R>;
+  };
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -139,7 +138,7 @@ export function ReceiverForm<R extends ChannelValues>({
       )}
 
       <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
-        <Stack justifyContent="space-between" alignItems="center">
+        <Stack justifyContent="space-between" alignItems="center" wrap="wrap">
           <h2 className={styles.heading}>
             {!isEditable && t('alerting.receiver-form.contact-point', 'Contact point')}
             {isEditable && initialValues && t('alerting.receiver-form.contact-point-update', 'Update contact point')}
@@ -157,28 +156,29 @@ export function ReceiverForm<R extends ChannelValues>({
             />
           )}
         </Stack>
-        <Field
-          label={t('alerting.receiver-form.label-name', 'Name')}
-          invalid={!!errors.name}
-          error={errors.name && errors.name.message}
-          required
-          noMargin
-        >
-          <Input
-            readOnly={!isEditable}
-            id="name"
-            data-testid={selectors.pages.Alerting.ContactPointForm.nameInput}
-            {...register('name', {
-              required: 'Name is required',
-              validate: async (value) => {
-                const existingValue = initialValues?.name;
-                return validateContactPointName(value, existingValue);
-              },
-            })}
-            width={39}
-            placeholder={t('alerting.receiver-form.name-placeholder-name', 'Name')}
-          />
-        </Field>
+        <Box width="100%" maxWidth={39}>
+          <Field
+            label={t('alerting.receiver-form.label-name', 'Name')}
+            invalid={!!errors.name}
+            error={errors.name && errors.name.message}
+            required
+            noMargin
+          >
+            <Input
+              readOnly={!isEditable}
+              id="name"
+              data-testid={selectors.pages.Alerting.ContactPointForm.nameInput}
+              {...register('name', {
+                required: 'Name is required',
+                validate: async (value) => {
+                  const existingValue = initialValues?.name;
+                  return validateContactPointName(value, existingValue);
+                },
+              })}
+              placeholder={t('alerting.receiver-form.name-placeholder-name', 'Name')}
+            />
+          </Field>
+        </Box>
         {fields.map((field, index) => {
           const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
@@ -226,30 +226,32 @@ export function ReceiverForm<R extends ChannelValues>({
             <Trans i18nKey="alerting.receiver-form.add-contact-point-integration">Add contact point integration</Trans>
           </Button>
         )}
-        <div className={styles.buttons}>
-          {isEditable && (
-            <>
-              {isSubmitting && (
-                <Button disabled={true} icon="spinner" variant="primary">
-                  <Trans i18nKey="alerting.receiver-form.saving">Saving...</Trans>
-                </Button>
-              )}
-              {!isSubmitting && (
-                <Button type="submit" data-testid={selectors.pages.Alerting.ContactPointForm.saveButton}>
-                  <Trans i18nKey="alerting.receiver-form.save-contact-point">Save contact point</Trans>
-                </Button>
-              )}
-            </>
-          )}
-          <LinkButton
-            disabled={isSubmitting}
-            variant="secondary"
-            data-testid="cancel-button"
-            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
-          >
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </LinkButton>
-        </div>
+        <Box marginTop={4}>
+          <Stack direction="row" wrap="wrap" gap={1}>
+            {isEditable && (
+              <>
+                {isSubmitting && (
+                  <Button disabled={true} icon="spinner" variant="primary">
+                    <Trans i18nKey="alerting.receiver-form.saving">Saving...</Trans>
+                  </Button>
+                )}
+                {!isSubmitting && (
+                  <Button type="submit" data-testid={selectors.pages.Alerting.ContactPointForm.saveButton}>
+                    <Trans i18nKey="alerting.receiver-form.save-contact-point">Save contact point</Trans>
+                  </Button>
+                )}
+              </>
+            )}
+            <LinkButton
+              disabled={isSubmitting}
+              variant="secondary"
+              data-testid="cancel-button"
+              href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+            >
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            </LinkButton>
+          </Stack>
+        </Box>
       </form>
     </FormProvider>
   );
@@ -258,13 +260,6 @@ export function ReceiverForm<R extends ChannelValues>({
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({
     margin: theme.spacing(2, 0, 3, 0),
-  }),
-  buttons: css({
-    marginTop: theme.spacing(4),
-
-    '& > * + *': {
-      marginLeft: theme.spacing(1),
-    },
   }),
   wrapper: css({
     maxWidth: `${theme.breakpoints.values.xl}px`,

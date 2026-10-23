@@ -23,9 +23,6 @@ type DataSourceConnectionQuery struct {
 
 	// The datasource identifier inside the group/version (or UID within legacy grafana apis)
 	Name string `json:"name,omitempty"`
-
-	// The plugin ID
-	Plugin string `json:"plugin,omitempty"`
 }
 
 func (DataSourceConnectionQuery) OpenAPIModelName() string {
@@ -46,7 +43,7 @@ type DataSourceConnection struct {
 
 	Plugin string `json:"plugin,omitempty"`
 
-	// TODO: labels? things the UI would need to show in a list
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func (DataSourceConnection) OpenAPIModelName() string {

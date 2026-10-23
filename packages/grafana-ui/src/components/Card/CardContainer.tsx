@@ -141,7 +141,7 @@ export const getCardContainerStyles = (
       }),
 
       ...(isSelected && {
-        outline: `solid 2px ${theme.colors.primary.border}`,
+        outline: `solid 1px ${theme.colors.accent.border}`,
       }),
     }),
     oldContainer: css({

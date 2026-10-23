@@ -136,7 +136,7 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 			Name:      name,
 			Title:     name,
 			RV:        rv,
-			IsDeleted: ptr(true),
+			IsDeleted: new(true),
 			DeletedRV: &rvs,
 		}
 		doc.DeletionTime = at
@@ -155,9 +155,7 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 				Title: "live",
 			}},
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
-
-func ptr[T any](v T) *T { return &v }

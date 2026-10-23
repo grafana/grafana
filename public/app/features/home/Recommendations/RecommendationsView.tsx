@@ -4,13 +4,14 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { HomeGrid } from '../HomeGrid';
 import { recommendationsShown } from '../analytics/main';
 import { type Solution, type SolutionId } from '../solutions/types';
 
 import { RecommendationCard } from './RecommendationCard';
-import { RecommendationExisting } from './RecommendationExisting';
+import { RecommendationExisting, RecommendationExistingSkeleton } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
 import { type BaseRow } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
@@ -135,7 +136,7 @@ export function RecommendationsView({
 
       {cardsMounted && (
         <div className={styles.cards} hidden={collapsed}>
-          <Grid gap={0} columns={hasRecommendations ? { xs: 1, md: 2 } : 1}>
+          <HomeGrid columns={hasRecommendations ? 2 : 1} gap={0}>
             <div className={styles.card}>
               <RecommendationExisting onSelectionChange={setActiveSolution} solutions={solutions} />
 
@@ -217,9 +218,10 @@ export function RecommendationsView({
                   <div className={styles.outer}>
                     <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
                       {items.map((recommendation, i) => (
-                        <div
+                        <Box
                           key={recommendation.id}
-                          className={styles.item}
+                          display="flex"
+                          minWidth="100%"
                           aria-hidden={i !== safeIndex}
                           inert={i !== safeIndex}
                         >
@@ -228,13 +230,13 @@ export function RecommendationsView({
                             startingState={startingState}
                             solution={activeSolution ?? undefined}
                           />
-                        </div>
+                        </Box>
                       ))}
                     </div>
                   </div>
                 </div>
               ))}
-          </Grid>
+          </HomeGrid>
         </div>
       )}
     </div>
@@ -257,9 +259,35 @@ function RecommendedCardSkeleton() {
   );
 }
 
+/**
+ * Stands in for the whole region while the plugin list and probes resolve, built from the same card shell and
+ * column skeletons the view shows while its facts settle, so the region keeps one height from skeleton to content.
+ */
+export function RecommendationsSkeleton() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div data-testid="recommendations-skeleton">
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <Skeleton width={280} height={24} />
+        <Skeleton width={60} height={24} />
+      </Stack>
+
+      <div className={styles.cards}>
+        <HomeGrid columns={2} gap={0}>
+          <div className={styles.card}>
+            <RecommendationExistingSkeleton />
+          </div>
+          <RecommendedCardSkeleton />
+        </HomeGrid>
+      </div>
+    </div>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
+  // The pills, header line and arrow flip with the recommendations HomeGrid at the page's md breakpoint.
   pills: css({
-    [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.container.down('md', 'page')]: {
       order: 1,
     },
   }),
@@ -267,7 +295,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 0%',
   }),
   line: css({
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.container.up('md', 'page')]: {
       background: theme.colors.border.medium,
       height: '1px',
     },
@@ -307,7 +335,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: '100%',
     transform: 'translate(-50%, -50%) rotate(90deg)',
 
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.container.up('md', 'page')]: {
       top: theme.spacing(2),
       left: '100%',
       transform: 'translate(-50%, 0)',
@@ -381,9 +409,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference')]: {
       transition: theme.transitions.create(['transform']),
     },
-  }),
-  item: css({
-    display: 'flex',
-    minWidth: '100%',
   }),
 });

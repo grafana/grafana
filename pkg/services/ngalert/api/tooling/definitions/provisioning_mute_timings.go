@@ -68,6 +68,7 @@ import (
 //       201: MuteTimeInterval
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route PUT /v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
 //

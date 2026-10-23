@@ -12,15 +12,16 @@ import (
 
 type extra struct {
 	resolver *LocalFolderResolver
+	metrics  *repository.OperationMetrics
 }
 
-func Extra(homePath string, permittedPrefixes []string) repository.Extra {
+func Extra(homePath string, permittedPrefixes []string, metrics *repository.OperationMetrics) repository.Extra {
 	resolver := &LocalFolderResolver{
 		PermittedPrefixes: permittedPrefixes,
 		HomePath:          safepath.Clean(homePath),
 	}
 
-	return &extra{resolver: resolver}
+	return &extra{resolver: resolver, metrics: metrics}
 }
 
 func (e *extra) Type() provisioning.RepositoryType {
@@ -28,7 +29,7 @@ func (e *extra) Type() provisioning.RepositoryType {
 }
 
 func (e *extra) Build(_ context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	return NewRepository(r, e.resolver), nil
+	return NewRepository(r, e.resolver, e.metrics), nil
 }
 
 func (e *extra) Mutate(_ context.Context, _ runtime.Object, _ runtime.Object) error {

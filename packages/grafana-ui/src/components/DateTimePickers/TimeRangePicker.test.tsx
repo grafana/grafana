@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
+import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
-import { TimeRangeProvider } from './TimeRangeContext';
+import { TimeRangeProvider } from '../../graveyard/TimeRangeContext/TimeRangeContext';
+
 import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
 
 const selectors = e2eSelectors.components.TimePicker;
@@ -94,6 +95,107 @@ describe('TimePicker', () => {
     expect(overlayContent).not.toBeInTheDocument();
   });
 
+  it('renders the open overlay outside the control and fixed to the viewport', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    const openButton = screen.getByTestId(selectors.openButton);
+    const control = openButton.closest('.button-group');
+    if (!control) {
+      throw new Error('time picker control not found');
+    }
+
+    await userEvent.click(openButton);
+
+    const overlay = screen.getByTestId(selectors.overlayContent);
+    // Outside the control, so an overflow ancestor can't clip it.
+    expect(control.contains(overlay)).toBe(false);
+    const dialog = overlay.querySelector<HTMLElement>('[role="dialog"]');
+    expect(dialog).toHaveStyle({ position: 'fixed' });
+    // A transform would misplace the fixed time zone Select menu inside.
+    expect(dialog?.style.transform).toBe('');
+    // Toasts portal at zIndex.portal (1061) and must stay above the panel.
+    expect(overlay.parentElement).toHaveStyle({ zIndex: '1060' });
+  });
+
+  it('closes when the backdrop is clicked', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+    const overlay = screen.getByTestId(selectors.overlayContent);
+    const backdrop = overlay.querySelector('[role="presentation"]');
+    if (!backdrop) {
+      throw new Error('backdrop not found');
+    }
+
+    // jsdom has no PointerEvent, so react-aria listens for mouse events, which userEvent.click skips here.
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.mouseDown(backdrop);
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.mouseUp(backdrop);
+
+    expect(screen.queryByTestId(selectors.overlayContent)).not.toBeInTheDocument();
+  });
+
+  it('shows the "change time settings" footer by default', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        timeZone="utc"
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    expect(screen.getByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)).toBeInTheDocument();
+  });
+
+  it('hides the "change time settings" footer when hideTimeZone is set, without affecting the from/to fields', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        timeZone="utc"
+        hideTimeZone
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    expect(
+      screen.queryByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.fromField)).toHaveValue(dateTimeFormat(value.raw.from, { timeZone: 'utc' }));
+    expect(screen.getByTestId(selectors.toField)).toHaveValue(dateTimeFormat(value.raw.to, { timeZone: 'utc' }));
+  });
+
+  // TODO: Delete this test when TimeRangeProvider is removed.
   it('shows a sync button if two are rendered inside a TimeRangeProvider', async () => {
     const onChange1 = jest.fn();
     const onChange2 = jest.fn();

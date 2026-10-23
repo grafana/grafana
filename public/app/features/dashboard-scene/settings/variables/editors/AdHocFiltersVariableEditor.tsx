@@ -9,8 +9,7 @@ import {
   getDataSourceRef,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -48,7 +47,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const groupByOriginFilters = useMemo(() => originalFilters.filter(isGroupByOriginFilter), [originalFilters]);
 
-  const groupByEnabled = config.featureToggles.dashboardUnifiedDrilldownControls && enableGroupBy;
+  const groupByEnabled = Boolean(enableGroupBy && datasourceRef);
 
   const updateOriginalFilters = useCallback(
     (filters: AdHocFilterWithLabels[]) => {
@@ -60,10 +59,6 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   );
 
   const originFiltersController = useMemo(() => {
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return undefined;
-    }
-
     return new AdHocOriginFiltersController(
       adhocOriginFilters,
       (filters) => {
@@ -121,9 +116,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     variable.setState({
       datasource: dsRef,
       supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
-      ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
-        enableGroupBy: !!dsInstance?.getGroupByKeys,
-      }),
+      enableGroupBy: !!dsInstance?.getGroupByKeys,
     });
   };
 
@@ -155,7 +148,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       datasource={datasourceRef ?? undefined}
       infoText={message}
       allowCustomValue={allowCustomValue}
-      enableGroupBy={enableGroupBy}
+      enableGroupBy={enableGroupBy ?? !datasourceRef}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}

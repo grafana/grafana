@@ -16,7 +16,7 @@ import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem'
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
-import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { serializeResultLayoutItem } from './panelSerialization';

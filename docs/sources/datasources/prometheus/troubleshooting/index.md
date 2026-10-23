@@ -188,7 +188,7 @@ This token caching behavior is a known issue that has received code fixes in rec
 
 ### LBAC not restricting data on non-Mimir backends
 
-**Symptom:** You've enabled `teamHttpHeadersMimir` and configured Team LBAC rules, but users can still see all metrics regardless of their team assignments.
+**Symptom:** You've configured Team LBAC rules, but users can still see all metrics regardless of their team assignments.
 
 **Cause:** Label-Based Access Control (LBAC) for the Prometheus data source only works when the backend is **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. It doesn't work with Google Managed Prometheus, self-managed Prometheus, Thanos, or other Prometheus-compatible endpoints. The LBAC enforcement relies on Mimir-specific HTTP headers (`X-Scope-OrgID` and team-scoped label matchers) that other backends ignore.
 

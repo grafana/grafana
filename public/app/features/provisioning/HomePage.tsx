@@ -4,7 +4,10 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagProvisioningExport } from '@grafana/runtime/internal';
 import { ConfirmModal, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  useDeletecollectionRepositoryMutation,
+  useGetFrontendSettingsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
@@ -20,6 +23,7 @@ export default function HomePage() {
   const [items, isLoadingRepos] = useRepositoryList({ watch: true });
   const [connections, isLoadingConnections, connectionsError] = useConnectionList({ watch: true });
   const [deleteAll] = useDeletecollectionRepositoryMutation();
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -104,7 +108,11 @@ export default function HomePage() {
     switch (activeTab) {
       case 'connections':
         return (
-          <LinkButton variant="primary" href={`${CONNECTIONS_URL}/new`}>
+          <LinkButton
+            variant="primary"
+            href={`${CONNECTIONS_URL}/new`}
+            disabled={!frontendSettings?.availableConnectionTypes?.length}
+          >
             <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>
           </LinkButton>
         );

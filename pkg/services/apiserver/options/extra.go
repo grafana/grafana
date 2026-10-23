@@ -22,15 +22,14 @@ type ExtraOptions struct {
 	APIURL          string
 	Verbosity       int
 	RequestTimeout  time.Duration
-	// EnableSearchAPI is the flag equivalent of [grafana-apiserver]
-	// enable_search_api, for servers configured by flags rather than an ini file.
-	EnableSearchAPI bool
+	// EnableHybridAPI is the flag equivalent of [grafana-apiserver]
+	// enable_hybrid_api.
+	EnableHybridAPI bool
 
-	// EnableTrashAPI is the flag equivalent of [grafana-apiserver]
-	// enable_trash_api. Separate from EnableSearchAPI because trash authorizes on a
-	// different rule that has not been reviewed yet, so enabling search must not
-	// expose it.
-	EnableTrashAPI bool
+	// EnableKeysAPI is the flag equivalent of [grafana-apiserver]
+	// enable_keys_api. Defaults off, matching the ini default: search and trash
+	// have shipped long enough to default on, list-keys has not.
+	EnableKeysAPI bool
 }
 
 func NewExtraOptions() *ExtraOptions {
@@ -38,7 +37,7 @@ func NewExtraOptions() *ExtraOptions {
 		DevMode:         false,
 		Verbosity:       0,
 		RequestTimeout:  10 * time.Minute,
-		EnableSearchAPI: true,
+		EnableHybridAPI: true,
 	}
 }
 
@@ -47,10 +46,10 @@ func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.ExternalAddress, "grafana-apiserver-host", o.ExternalAddress, "Host")
 	fs.StringVar(&o.APIURL, "grafana-apiserver-api-url", o.APIURL, "API URL")
 	fs.IntVar(&o.Verbosity, "verbosity", o.Verbosity, "Verbosity")
-	fs.BoolVar(&o.EnableSearchAPI, "grafana-apiserver-enable-search-api", o.EnableSearchAPI,
-		"Serve the per-resource search endpoints")
-	fs.BoolVar(&o.EnableTrashAPI, "grafana-apiserver-enable-trash-api", o.EnableTrashAPI,
-		"Serve the per-resource trash endpoints")
+	fs.BoolVar(&o.EnableHybridAPI, "grafana-apiserver-enable-hybrid-api", o.EnableHybridAPI,
+		"Serve the per-resource hybrid search endpoints")
+	fs.BoolVar(&o.EnableKeysAPI, "grafana-apiserver-enable-keys-api", o.EnableKeysAPI,
+		"Serve the per-resource list-keys endpoints")
 }
 
 func (o *ExtraOptions) Validate() []error {

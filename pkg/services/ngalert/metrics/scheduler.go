@@ -33,6 +33,7 @@ type Scheduler struct {
 	EvaluationMissed                    *prometheus.CounterVec
 	SimplifiedEditorRules               *prometheus.GaugeVec
 	PrometheusImportedRules             *prometheus.GaugeVec
+	PluginOriginRules                   *prometheus.GaugeVec
 }
 
 func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
@@ -202,6 +203,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org", "state"},
 		),
+		PluginOriginRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "plugin_origin_rules",
+				Help:      "The number of alert rules created by a plugin, by origin.",
+			},
+			[]string{"org", "origin"},
+		),
 	}
 }
 
@@ -211,6 +221,7 @@ func (s *Scheduler) ResetRuleMetrics() {
 	s.Groups.Reset()
 	s.SimplifiedEditorRules.Reset()
 	s.PrometheusImportedRules.Reset()
+	s.PluginOriginRules.Reset()
 	s.SchedulableAlertRules.Set(0)
 	s.SchedulableAlertRulesHash.Set(0)
 }

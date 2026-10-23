@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -247,10 +248,8 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 	}
 
 	for _, allowedGroup := range s.info.AllowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
+		if slices.Contains(groups, allowedGroup) {
+			return true
 		}
 	}
 
@@ -260,13 +259,13 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 func (s *SocialBase) retrieveRawJWTPayload(token any) ([]byte, error) {
 	tokenString, ok := token.(string)
 	if !ok {
-		return nil, fmt.Errorf("token is not a string: %v", token)
+		return nil, fmt.Errorf("token is not a string")
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(tokenString)
 	if matched == nil {
-		return nil, fmt.Errorf("token is not in JWT format: %s", tokenString)
+		return nil, fmt.Errorf("token is not in JWT format")
 	}
 
 	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
@@ -371,8 +370,8 @@ func getCacheExpiration(header string) time.Duration {
 	}
 
 	// Cache-Control: public, max-age=14400 (or "max-age = 14400" with spaces)
-	cacheControl := strings.Split(header, ",")
-	for _, v := range cacheControl {
+	cacheControl := strings.SplitSeq(header, ",")
+	for v := range cacheControl {
 		if strings.Contains(v, "max-age") {
 			parts := strings.Split(v, "=")
 			if len(parts) == 2 {

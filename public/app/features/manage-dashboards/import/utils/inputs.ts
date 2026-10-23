@@ -1,10 +1,6 @@
 import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import {
-  getDataSourceInstance,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
 import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -778,7 +774,6 @@ function replaceVariableDatasources(
           },
           options: [],
           current: { text: '', value: '' },
-          refresh: 'onDashboardLoad' as const,
         },
       };
     }
@@ -1048,7 +1043,12 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable) {
+  // adhoc and groupby variables carry the same `datasource` shape as query variables, so they
+  // need the same placeholder resolution. The v2 path already remaps all three.
+  if (
+    (variableType === 'query' || variableType === 'adhoc' || variableType === 'groupby') &&
+    'datasource' in variable
+  ) {
     const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
     if (resolved) {
       return { ...variable, datasource: resolved };
