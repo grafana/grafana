@@ -5,7 +5,6 @@ description: Learn how to use Google Cloud KMS to encrypt secrets in the Grafana
 labels:
   products:
     - enterprise
-    - oss
 title: Encrypt database secrets using Google Cloud KMS
 weight: 100
 ---
