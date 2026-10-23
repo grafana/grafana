@@ -240,10 +240,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
-	frontendSettings.Navigation = dtos.FrontendSettingsNavigationDTO{
-		AppSections:        readNavigationPlacements(cfg, "navigation.app_sections"),
-		AppStandalonePages: readNavigationPlacements(cfg, "navigation.app_standalone_pages"),
-	}
+	frontendSettings.Navigation = ReadNavigationSettings(cfg)
 
 	// Set the kubernetes namespace
 
@@ -261,6 +258,16 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 		return commitHash[:maxLength]
 	}
 	return commitHash
+}
+
+// ReadNavigationSettings reads the operator nav placement overrides. The
+// frontend service sends these in its own slim settings as well, since the
+// client-built nav tree reads them at boot.
+func ReadNavigationSettings(cfg *setting.Cfg) dtos.FrontendSettingsNavigationDTO {
+	return dtos.FrontendSettingsNavigationDTO{
+		AppSections:        readNavigationPlacements(cfg, "navigation.app_sections"),
+		AppStandalonePages: readNavigationPlacements(cfg, "navigation.app_standalone_pages"),
+	}
 }
 
 // readNavigationPlacements reads one of the operator nav override sections,
