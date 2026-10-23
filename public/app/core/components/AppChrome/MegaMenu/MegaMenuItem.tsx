@@ -15,8 +15,8 @@ import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@g
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { toComparablePath } from 'app/core/navigation/comparablePath';
 import { useIsMtFallbackConfigured, useIsUrlAllowed } from 'app/core/navigation/mtFallback';
-import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { StPodStatus } from 'app/core/services/StPodReadinessService';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -88,7 +88,7 @@ export function MegaMenuItem({
   childrenLoadError,
   disabled,
 }: Props) {
-  const { chrome } = useGrafana();
+  const { chrome, stPodReadiness } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
   // An item is effectively hidden if it's hidden itself or any ancestor is — children of a hidden
@@ -98,7 +98,11 @@ export function MegaMenuItem({
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isMtFallbackConfigured = useIsMtFallbackConfigured();
   const isUrlAllowed = useIsUrlAllowed({ pathname: toComparablePath(link.url ?? '', config.appSubUrl) });
-  const isStPodLoading = useIsStPodLoading(isMtFallbackConfigured && !isUrlAllowed);
+  const stPodStatus = stPodReadiness.useStatus();
+  const isStPodLoading =
+    isMtFallbackConfigured &&
+    !isUrlAllowed &&
+    (stPodStatus === StPodStatus.Unknown || stPodStatus === StPodStatus.Waiting);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.

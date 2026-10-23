@@ -11,7 +11,6 @@ import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
-import { STPodHealthPoller } from './STPodHealthPoller';
 import { STPodReadinessCheck } from './STPodReadinessCheck';
 import { useIsMtFallbackConfigured, useIsUrlAllowed } from './mtFallback';
 import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
@@ -19,12 +18,18 @@ import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome, keybindings } = useGrafana();
+  const { chrome, keybindings, stPodReadiness } = useGrafana();
   const isMtFallbackConfigured = useIsMtFallbackConfigured();
   const isUrlAllowed = useIsUrlAllowed(props.location);
   const stPodCheckEnabled = isMtFallbackConfigured && !isUrlAllowed;
 
   chrome.setMatchedRoute(props.route);
+
+  useEffect(() => {
+    if (stPodCheckEnabled) {
+      stPodReadiness.start();
+    }
+  }, [stPodCheckEnabled, stPodReadiness]);
 
   useLayoutEffect(() => {
     keybindings.clearAndInitGlobalBindings(props.route);
@@ -61,15 +66,12 @@ export function GrafanaRoute(props: Props) {
         }
 
         return (
-          <>
-            <STPodHealthPoller skip={!isMtFallbackConfigured} />
-            <Suspense fallback={<PageFallbackLoader />}>
-              <STPodReadinessCheck skip={!stPodCheckEnabled} />
-              <Suspense fallback={<PageLoader />}>
-                <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
-              </Suspense>
+          <Suspense fallback={<PageFallbackLoader />}>
+            <STPodReadinessCheck skip={!stPodCheckEnabled} />
+            <Suspense fallback={<PageLoader />}>
+              <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
             </Suspense>
-          </>
+          </Suspense>
         );
       }}
     </ErrorBoundary>

@@ -90,7 +90,7 @@ describe('StPodReadinessService', () => {
     expect(get).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves the pending promise when the pod gives up', async () => {
+  it('reaches timeout but keeps the pending promise pending so the loader stays mounted', async () => {
     jest.useFakeTimers();
     installBackend(podDown);
     const pending = service.getReadyPromise();
@@ -99,7 +99,8 @@ describe('StPodReadinessService', () => {
     await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
 
     expect(service.getStatus()).toBe(StPodStatus.Timeout);
-    await expect(pending).resolves.toBeUndefined();
+    const stillPending = Symbol('still-pending');
+    await expect(Promise.race([pending, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
   });
 
   it('polls again after the poll interval while the pod is not ready', async () => {
@@ -159,7 +160,7 @@ describe('StPodReadinessService', () => {
     service.start();
     const timedOut = service.getReadyPromise();
     await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
-    await expect(timedOut).resolves.toBeUndefined();
+    expect(service.getStatus()).toBe(StPodStatus.Timeout);
 
     service.start();
     const fresh = service.getReadyPromise();

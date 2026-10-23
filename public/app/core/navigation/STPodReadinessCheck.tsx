@@ -1,21 +1,17 @@
 import { use } from 'react';
 
-import { createStPodTimeoutError, getStPodReadyPromise, getStPodStatus, StPodStatus } from './stPodReadiness';
+import { useGrafana } from '../context/GrafanaContext';
+import { StPodStatus } from '../services/StPodReadinessService';
 
 export const STPodReadinessCheck = ({ skip }: { skip: boolean }) => {
-  if (skip) {
+  const { stPodReadiness } = useGrafana();
+  const status = stPodReadiness.useStatus();
+
+  if (skip || status === StPodStatus.Ready) {
     return null;
   }
 
-  const status = getStPodStatus();
-
-  if (status === StPodStatus.Timeout) {
-    throw createStPodTimeoutError();
-  }
-
-  if (status !== StPodStatus.Ready) {
-    use(getStPodReadyPromise());
-  }
+  use(stPodReadiness.getReadyPromise());
 
   return null;
 };

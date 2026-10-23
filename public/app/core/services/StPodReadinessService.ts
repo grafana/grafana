@@ -136,7 +136,6 @@ export class StPodReadinessService {
       return;
     }
     this.state.next(StPodStatus.Timeout);
-    this.pending?.resolve();
     this.clearTimers();
   }
 

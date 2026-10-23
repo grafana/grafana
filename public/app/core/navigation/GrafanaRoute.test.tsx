@@ -12,7 +12,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, type Props } from './GrafanaRoute';
-import { invalidateStPodReadiness } from './stPodReadiness';
 import { type GrafanaRouteComponentProps } from './types';
 
 setBackendSrv(backendSrv);
@@ -45,7 +44,6 @@ async function setup(overrides: Partial<Props>) {
 describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
-    invalidateStPodReadiness();
     server.use(http.get('/api/health', () => HttpResponse.json({ database: 'ok' })));
   });
 

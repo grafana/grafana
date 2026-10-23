@@ -5,9 +5,10 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { StPodStatus } from 'app/core/services/StPodReadinessService';
 import { useSelector } from 'app/types/store';
 
 import { Page } from '../Page/Page';
@@ -46,10 +47,12 @@ interface PageFallbackLoaderProps {
 
 export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   const styles = useStyles2(getStyles);
-  const { chrome } = useGrafana();
+  const { chrome, stPodReadiness } = useGrafana();
   const location = useLocation();
   const navTree = useSelector((state) => state.navBarTree);
   const navIndex = useSelector((state) => state.navIndex);
+  const stPodStatus = stPodReadiness.useStatus();
+  const hasTimedOut = stPodStatus === StPodStatus.Timeout;
 
   const matchedNavItem = useMemo(
     () => findNavItemForPath(navTree, location.pathname, config.appSubUrl),
@@ -82,6 +85,16 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   return (
     <Page layout={PageLayoutType.Custom}>
       <div data-testid="page-fallback-loader" className={styles.wrapper}>
+        {hasTimedOut && (
+          <div className={styles.timeoutBanner}>
+            <Alert severity="warning" title={t('st-pod-check.timeout.title', 'Taking longer than expected')}>
+              {t(
+                'st-pod-check.timeout.body',
+                'We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.'
+              )}
+            </Alert>
+          </div>
+        )}
         <DotFieldBackdrop />
         <div
           className={styles.progressPill}
@@ -245,6 +258,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.circle,
       border: `1.5px solid ${theme.colors.text.primary}`,
       boxSizing: 'border-box',
+    }),
+    timeoutBanner: css({
+      position: 'absolute',
+      top: theme.spacing(10),
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 2,
+      maxWidth: 'min(560px, calc(100% - 32px))',
+      width: '100%',
     }),
   };
 };

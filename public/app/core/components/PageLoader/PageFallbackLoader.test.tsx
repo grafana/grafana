@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { getWrapper, render } from 'test/test-utils';
 
+import { StPodReadinessService, StPodStatus } from 'app/core/services/StPodReadinessService';
 import { configureStore } from 'app/store/configureStore';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';
@@ -122,6 +123,22 @@ describe('PageFallbackLoader', () => {
     const state = chrome.state.getValue();
     expect(state.sectionNav.node.text).toBe('Explore');
     expect(state.pageNav?.text).toBe('Explore');
+  });
+
+  it('does not render the timeout banner while the pod is still being probed', () => {
+    render(<PageFallbackLoader />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('renders a timeout banner over the loader when the pod readiness service reports timeout', () => {
+    const stPodReadiness = new StPodReadinessService();
+    stPodReadiness.state.next(StPodStatus.Timeout);
+    const wrapper = getWrapper({ grafanaContext: { stPodReadiness }, renderWithRouter: true });
+
+    render(<PageFallbackLoader />, { wrapper });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Taking longer than expected');
   });
 
   it('skips chrome breadcrumbs when the matched item has no entry in navIndex', () => {

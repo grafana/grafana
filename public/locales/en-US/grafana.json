@@ -16736,6 +16736,12 @@
     "generate-suggestion": "Generate suggestion",
     "improve-query": "Improve query"
   },
+  "st-pod-check": {
+    "timeout": {
+      "body": "We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.",
+      "title": "Taking longer than expected"
+    }
+  },
   "stars": {
     "mark-as-starred": "Mark as favorite",
     "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
