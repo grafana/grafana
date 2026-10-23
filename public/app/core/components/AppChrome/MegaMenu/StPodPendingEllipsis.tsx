@@ -5,7 +5,7 @@ import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 
 import { StPodPendingDots } from './StPodPendingDots';
 
-export const StPodPendingEllipsis = ({ url }: { url: string }) => {
+export const StPodPendingEllipsis = ({ url, itemName }: { url: string; itemName?: string }) => {
   const isMtFallbackConfigured = useIsMtFallbackConfigured();
   const isUrlAllowed = useIsUrlAllowed({ pathname: toComparablePath(url, config.appSubUrl) });
   const isStPodLoading = useIsStPodLoading(isMtFallbackConfigured && !isUrlAllowed);
@@ -14,5 +14,5 @@ export const StPodPendingEllipsis = ({ url }: { url: string }) => {
     return null;
   }
 
-  return <StPodPendingDots />;
+  return <StPodPendingDots itemName={itemName} />;
 };

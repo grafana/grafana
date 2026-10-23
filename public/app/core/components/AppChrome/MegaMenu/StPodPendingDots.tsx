@@ -1,12 +1,24 @@
 import { css, cx, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 const SIZE = 14;
 
-export function StPodPendingDots() {
+interface Props {
+  itemName?: string;
+}
+
+export function StPodPendingDots({ itemName }: Props) {
   const styles = useStyles2(getStyles);
+
+  const label = itemName
+    ? t('app-chrome.st-loading.pending-dots-aria-label-named', '{{itemName}} is starting up', {
+        itemName,
+        interpolation: { escapeValue: false },
+      })
+    : t('app-chrome.st-loading.pending-dots-aria-label', 'Page is starting up');
 
   return (
     <svg
@@ -15,7 +27,8 @@ export function StPodPendingDots() {
       height={SIZE}
       viewBox="0 0 14 14"
       fill="none"
-      aria-hidden
+      role="img"
+      aria-label={label}
       focusable="false"
     >
       <circle className={styles.dot} cx={2.5} cy={7} r={1.5} />
