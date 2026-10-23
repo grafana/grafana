@@ -177,6 +177,114 @@ func (_c *MockPullRequestRepo_Config_Call) RunAndReturn(run func() *v0alpha1.Rep
 	return _c
 }
 
+// EditPullRequestComment provides a mock function with given fields: ctx, prNumber, commentID, comment
+func (_m *MockPullRequestRepo) EditPullRequestComment(ctx context.Context, prNumber int, commentID int64, comment string) error {
+	ret := _m.Called(ctx, prNumber, commentID, comment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EditPullRequestComment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int64, string) error); ok {
+		r0 = rf(ctx, prNumber, commentID, comment)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockPullRequestRepo_EditPullRequestComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EditPullRequestComment'
+type MockPullRequestRepo_EditPullRequestComment_Call struct {
+	*mock.Call
+}
+
+// EditPullRequestComment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - prNumber int
+//   - commentID int64
+//   - comment string
+func (_e *MockPullRequestRepo_Expecter) EditPullRequestComment(ctx interface{}, prNumber interface{}, commentID interface{}, comment interface{}) *MockPullRequestRepo_EditPullRequestComment_Call {
+	return &MockPullRequestRepo_EditPullRequestComment_Call{Call: _e.mock.On("EditPullRequestComment", ctx, prNumber, commentID, comment)}
+}
+
+func (_c *MockPullRequestRepo_EditPullRequestComment_Call) Run(run func(ctx context.Context, prNumber int, commentID int64, comment string)) *MockPullRequestRepo_EditPullRequestComment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int), args[2].(int64), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockPullRequestRepo_EditPullRequestComment_Call) Return(_a0 error) *MockPullRequestRepo_EditPullRequestComment_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockPullRequestRepo_EditPullRequestComment_Call) RunAndReturn(run func(context.Context, int, int64, string) error) *MockPullRequestRepo_EditPullRequestComment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListPullRequestComments provides a mock function with given fields: ctx, prNumber
+func (_m *MockPullRequestRepo) ListPullRequestComments(ctx context.Context, prNumber int) ([]PullRequestComment, error) {
+	ret := _m.Called(ctx, prNumber)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPullRequestComments")
+	}
+
+	var r0 []PullRequestComment
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]PullRequestComment, error)); ok {
+		return rf(ctx, prNumber)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []PullRequestComment); ok {
+		r0 = rf(ctx, prNumber)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]PullRequestComment)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, prNumber)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockPullRequestRepo_ListPullRequestComments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPullRequestComments'
+type MockPullRequestRepo_ListPullRequestComments_Call struct {
+	*mock.Call
+}
+
+// ListPullRequestComments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - prNumber int
+func (_e *MockPullRequestRepo_Expecter) ListPullRequestComments(ctx interface{}, prNumber interface{}) *MockPullRequestRepo_ListPullRequestComments_Call {
+	return &MockPullRequestRepo_ListPullRequestComments_Call{Call: _e.mock.On("ListPullRequestComments", ctx, prNumber)}
+}
+
+func (_c *MockPullRequestRepo_ListPullRequestComments_Call) Run(run func(ctx context.Context, prNumber int)) *MockPullRequestRepo_ListPullRequestComments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int))
+	})
+	return _c
+}
+
+func (_c *MockPullRequestRepo_ListPullRequestComments_Call) Return(_a0 []PullRequestComment, _a1 error) *MockPullRequestRepo_ListPullRequestComments_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockPullRequestRepo_ListPullRequestComments_Call) RunAndReturn(run func(context.Context, int) ([]PullRequestComment, error)) *MockPullRequestRepo_ListPullRequestComments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MergeBase provides a mock function with given fields: ctx, headRef
 func (_m *MockPullRequestRepo) MergeBase(ctx context.Context, headRef string) (string, error) {
 	ret := _m.Called(ctx, headRef)

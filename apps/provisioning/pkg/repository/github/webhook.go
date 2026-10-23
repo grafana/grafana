@@ -159,6 +159,14 @@ func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumb
 	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
 }
 
+func (r *githubWebhookRepository) ListPullRequestComments(ctx context.Context, prNumber int) ([]repository.PullRequestComment, error) {
+	return r.Client().ListPullRequestComments(ctx, prNumber)
+}
+
+func (r *githubWebhookRepository) EditPullRequestComment(ctx context.Context, _ int, commentID int64, comment string) error {
+	return r.Client().EditPullRequestComment(ctx, commentID, comment)
+}
+
 func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
 	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
 }

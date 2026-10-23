@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -185,11 +186,36 @@ func (f *mockGithub) serveAPI(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(sub, "compare/"):
 		repo.MergeBaseCalls++
 		common.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})
+	case strings.HasPrefix(sub, "issues/"):
+		f.serveComments(w, r, repo, sub)
+	default:
+		common.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})
+	}
+}
+
+func (f *mockGithub) serveComments(w http.ResponseWriter, r *http.Request, repo *githubRepo, sub string) {
+	switch {
 	case strings.HasPrefix(sub, "issues/") && strings.HasSuffix(sub, "/comments") && r.Method == http.MethodPost:
 		var comment github.IssueComment
 		_ = json.NewDecoder(r.Body).Decode(&comment)
 		repo.Comments = append(repo.Comments, comment.GetBody())
-		common.WriteJSON(w, http.StatusCreated, &github.IssueComment{ID: new(int64(1)), Body: new(comment.GetBody())})
+		common.WriteJSON(w, http.StatusCreated, &github.IssueComment{ID: new(int64(len(repo.Comments))), Body: new(comment.GetBody())})
+	case strings.HasPrefix(sub, "issues/") && strings.HasSuffix(sub, "/comments") && r.Method == http.MethodGet:
+		list := make([]*github.IssueComment, 0, len(repo.Comments))
+		for i, body := range repo.Comments {
+			list = append(list, &github.IssueComment{ID: new(int64(i + 1)), Body: new(body)})
+		}
+		common.WriteJSON(w, http.StatusOK, list)
+	case strings.HasPrefix(sub, "issues/comments/") && r.Method == http.MethodPatch:
+		id, err := strconv.Atoi(strings.TrimPrefix(sub, "issues/comments/"))
+		if err != nil || id < 1 || id > len(repo.Comments) {
+			common.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})
+			return
+		}
+		var comment github.IssueComment
+		_ = json.NewDecoder(r.Body).Decode(&comment)
+		repo.Comments[id-1] = comment.GetBody()
+		common.WriteJSON(w, http.StatusOK, &github.IssueComment{ID: new(int64(id)), Body: new(comment.GetBody())})
 	default:
 		common.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})
 	}

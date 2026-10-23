@@ -30,6 +30,7 @@ func Run(t *testing.T, newHelper func(t *testing.T) *common.GitTestHelper, p Pro
 		{"UnsupportedEventNotImplemented", testUnsupportedEventNotImplemented},
 		{"PushOverIncrementalLimitUsesFullSync", testPushOverIncrementalLimitUsesFullSync},
 		{"PullRequestWebhookPostsComment", testPullRequestWebhookPostsComment},
+		{"PullRequestWebhookEditsPreviewComment", testPullRequestWebhookEditsPreviewComment},
 		{"PullRequestFromForkSkipsPreview", testPullRequestFromForkSkipsPreview},
 		{"DeletionBlockedByWebhook", testDeletionBlockedByWebhook},
 		{"WebhookRecreatedWhenStatusCleared", testWebhookRecreatedWhenStatusCleared},
@@ -282,6 +283,39 @@ func testDeletionBlockedByWebhook(t *testing.T, helper *common.GitTestHelper, p 
 			helper.WaitForRepositoryDeleted(t, repoName)
 		})
 	}
+}
+
+func testPullRequestWebhookEditsPreviewComment(t *testing.T, helper *common.GitTestHelper, p Provider) {
+	repoName := p.Name() + "-pr-edit-comment"
+	const dashboardPath = "dashboard.json"
+	local := p.CreateRepo(t, helper, repoName, map[string][]byte{
+		dashboardPath: common.DashboardJSON("pr-edit-dash", "PR Edit Dashboard", 1),
+	}, RepoOptions{})
+	WaitForWebhook(t, helper, repoName, p.HookID(repoName))
+	helper.SyncAndWait(t, repoName)
+	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, "pr-edit-dash", repoName, dashboardPath)
+
+	const branchName = "feature-pr-edit-comment"
+	_, err := local.Git("checkout", "-b", branchName)
+	require.NoError(t, err, "failed to create feature branch")
+	for version, title := range []string{"PR Edit Dashboard First", "PR Edit Dashboard Second"} {
+		require.NoError(t, local.UpdateFile(dashboardPath, string(common.DashboardJSON("pr-edit-dash", title, version+2))))
+		_, err = local.Git("commit", "-am", title)
+		require.NoError(t, err, "failed to commit dashboard update")
+		headSHA, err := local.Git("rev-parse", "HEAD")
+		require.NoError(t, err, "failed to resolve feature branch SHA")
+		_, err = local.Git("push", "-u", "origin", branchName)
+		require.NoError(t, err, "failed to push feature branch")
+
+		header, body := p.Event(repoName, Event{Kind: PullRequestEvent, Number: 124, Branch: branchName, SHA: strings.TrimSpace(headSHA)})
+		finished := helper.AwaitJob(t, PostWebhook(t, helper, p, repoName, header, body))
+		require.Equal(t, string(provisioning.JobStateSuccess), common.MustNestedString(finished.Object, "status", "state"))
+	}
+
+	comments := p.State(repoName).Comments
+	require.Len(t, comments, 1, "the second preview must edit the first comment instead of posting a new one")
+	require.Contains(t, comments[0], "PR Edit Dashboard Second")
+	require.NotContains(t, comments[0], "PR Edit Dashboard First")
 }
 
 func testWebhookRecreatedWhenStatusCleared(t *testing.T, helper *common.GitTestHelper, p Provider) {

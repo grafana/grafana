@@ -282,6 +282,11 @@ type RepoIDHandler interface {
 	ShouldUpdateRepoID() bool
 }
 
+type PullRequestComment struct {
+	ID   int64
+	Body string
+}
+
 // PullRequestRepo is implemented by repositories that can be evaluated and
 // commented on as part of a pull request preview job.
 //
@@ -292,4 +297,6 @@ type PullRequestRepo interface {
 	MergeBase(ctx context.Context, headRef string) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
+	ListPullRequestComments(ctx context.Context, prNumber int) ([]PullRequestComment, error)
+	EditPullRequestComment(ctx context.Context, prNumber int, commentID int64, comment string) error
 }

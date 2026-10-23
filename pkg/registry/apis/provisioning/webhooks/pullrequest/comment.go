@@ -13,6 +13,8 @@ import (
 
 const maxErrorLength = 256
 
+const previewCommentMarker = `[//]: # "grafana-git-sync-preview"`
+
 const unsupportedForkMessage = "Grafana doesn't currently support previews for pull requests from forks."
 
 // maxDisplayedChanges caps how many rows the comment table renders. PR jobs now
@@ -61,6 +63,27 @@ func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRe
 	comment, err := c.generateComment(ctx, info)
 	if err != nil {
 		return fmt.Errorf("unable to generate comment text: %w", err)
+	}
+
+	comment = previewCommentMarker + "\n\n" + comment
+
+	existing, err := prRepo.ListPullRequestComments(ctx, pr)
+	if err != nil {
+		return fmt.Errorf("list pull request comments: %w", err)
+	}
+
+	var previewCommentID int64
+	for _, c := range existing {
+		if c.ID > previewCommentID && strings.HasPrefix(c.Body, previewCommentMarker) {
+			previewCommentID = c.ID
+		}
+	}
+
+	if previewCommentID != 0 {
+		if err := prRepo.EditPullRequestComment(ctx, pr, previewCommentID, comment); err != nil {
+			return fmt.Errorf("edit pull request comment: %w", err)
+		}
+		return nil
 	}
 
 	if err := prRepo.CommentPullRequest(ctx, pr, comment); err != nil {
