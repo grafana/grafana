@@ -84,7 +84,7 @@ To create a notebook from the **Notebooks** page, follow these steps:
    - **Heading**: Adds an H1 heading.
    - **Paragraph**: Adds a text block that you can format with Markdown.
    - **Code**: Adds a code block. Select a language, like Go, SQL, or plain text.
-   - **Visualization**: Adds an empty visualization with its query editor below it.
+   - **Visualization**: Adds an empty visualization with its query editor below it. For more details on configuring visualizations in notebooks, refer to the [Visualization blocks section](#visualization-blocks). 
 
    You can also type a forward slash (`/`) to open a list of block types from which to select.
 
