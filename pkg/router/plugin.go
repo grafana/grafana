@@ -422,8 +422,12 @@ type PluginBackend struct {
 	acquire func() (release func(), err error)
 }
 
-// PluginStatus implements [PluginStatusProvider].
+// PluginStatus implements [PluginStatusProvider]. A core_url entry without a
+// plugin ID serves no plugin, so it reports none.
 func (b *PluginBackend) PluginStatus() (PluginStatus, bool) {
+	if b.pluginID == "" {
+		return PluginStatus{}, false
+	}
 	return PluginStatus{ID: b.pluginID, Version: b.info.Version, HasBackend: b.hasBackend}, true
 }
 

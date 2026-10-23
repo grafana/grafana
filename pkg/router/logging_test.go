@@ -22,7 +22,7 @@ func TestLogRequestIncludesPropagatedTraceID(t *testing.T) {
 	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 	req = req.WithContext(logging.Context(req.Context(), logger))
 
-	logRequest(req, "example.grafana.app", http.StatusUnauthorized, time.Millisecond)
+	logRequest(req, "example.grafana.app", http.StatusConflict, time.Millisecond)
 
 	var line map[string]any
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &line))
@@ -40,7 +40,9 @@ func TestLogRequestHonorsTheLoggerLevel(t *testing.T) {
 	}{
 		{"success, debug on", slog.LevelDebug, http.StatusOK, true},
 		{"success, debug off", slog.LevelInfo, http.StatusOK, false},
-		{"client error, debug off", slog.LevelInfo, http.StatusNotFound, true},
+		{"routine client error, debug off", slog.LevelInfo, http.StatusNotFound, false},
+		{"routine client error, debug on", slog.LevelDebug, http.StatusUnauthorized, true},
+		{"client error, debug off", slog.LevelInfo, http.StatusConflict, true},
 		{"server error, debug off", slog.LevelInfo, http.StatusBadGateway, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

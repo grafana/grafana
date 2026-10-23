@@ -729,3 +729,28 @@ func TestPluginManifestsTargetAcquiresConnectionsOnlyForGRPCHosts(t *testing.T) 
 		})
 	}
 }
+
+// A core_url entry without a plugin ID reports no plugin, and its connection
+// records calls under its API group, so core APIs on one host stay apart.
+func TestCoreEntryWithoutPluginID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": [{"host": "localhost:50051", "definition": {"jsonData": {"type": "app"}, "manifests": [{
+			"appName": "playlist", "group": "playlist.grafana.app",
+			"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	backend := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+
+	_, ok := backend.PluginStatus()
+	require.False(t, ok)
+
+	release, err := backend.acquire()
+	require.NoError(t, err)
+	defer release()
+	require.Contains(t, target.connections, pluginConnectionKey{host: "localhost:50051", pluginID: "playlist.grafana.app"})
+	target.closeConnections()
+}
