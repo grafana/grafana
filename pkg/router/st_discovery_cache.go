@@ -183,7 +183,7 @@ func (st *singleTenantFallback) forwardDiscovery(host *singleTenantTarget, w htt
 func (st *singleTenantFallback) fetchDiscovery(host *singleTenantTarget, key string, req *http.Request) fetchedStackDiscovery {
 	// Shared by every caller waiting on it, so one caller leaving must not
 	// cancel it.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(req.Context()), singleTenantDiscoveryFetchTimeout)
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(req.Context()), singleTenantDiscoveryFetchTimeout, errRouterDeadline)
 	defer cancel()
 	// Without conditional headers the stack sends a body to cache, never a 304.
 	proxyReq := req.Clone(ctx)

@@ -86,7 +86,7 @@ func setPluginID(req *http.Request, pluginID string) {
 // failureReason classifies a proxy failure. A request the caller abandoned
 // is not the backend's failure and has no reason.
 func failureReason(req *http.Request, err error) string {
-	if req.Context().Err() != nil {
+	if callerGone(req.Context()) != nil {
 		return ""
 	}
 	var netErr net.Error

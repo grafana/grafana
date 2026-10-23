@@ -124,7 +124,7 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 	results := c.fetches.DoChan(key, func() (any, error) {
 		defer c.fetchDone(key)
 		// Shared by concurrent callers, so one caller leaving must not cancel it.
-		ctx, cancel := context.WithDeadline(context.WithoutCancel(req.Context()), deadline)
+		ctx, cancel := context.WithDeadlineCause(context.WithoutCancel(req.Context()), deadline, errRouterDeadline)
 		defer cancel()
 		d, complete := backendDiscovery(req.WithContext(ctx), name, entry)
 		if complete {

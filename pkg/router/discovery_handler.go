@@ -297,7 +297,7 @@ func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, 
 	if scoped {
 		// The fallback forwards to the caller's stack, and a slow stack must
 		// not hold discovery open when the defaults are available.
-		ctx, cancel := context.WithTimeout(req.Context(), discoveryFetchTimeout)
+		ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
 		defer cancel()
 		req = req.WithContext(ctx)
 	}
