@@ -335,13 +335,13 @@ In `custom.ini`, set `vector_allowed_read_services` to a JSON object mapping eac
 
 ```ini
 [unified_storage]
-vector_allowed_read_services = {"assistant.inframemories.ext.grafana.app/inframemories":["assistant"]}
+vector_allowed_read_services = {"example.ext.grafana.app/records":["example-service"]}
 ```
 
 A restricted collection accepts searches only from an authenticated access-policy token with exactly one matching service identity.
-Assistant must send its own `assistant` service token; user and on-behalf-of tokens are denied.
+Callers must send their own service token; user and on-behalf-of tokens are denied.
 Existing tenant and resource `get` checks still apply.
-Assistant must filter returned records for the requesting user because its service grant can authorize tenant records without user-specific filtering.
+Services acting for users must filter returned records for the requesting user because service grants can authorize tenant records without user-specific filtering.
 
 The restriction covers vector and hybrid searches, including lexical fallback, and direct or explicitly federated `ResourceSearch` requests.
 A denied explicit target rejects the whole request; implicit global searches omit denied types and fail if none remain.
