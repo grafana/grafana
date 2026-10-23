@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -65,6 +65,14 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [pendingDelete, setPendingDelete] = useState<SavedDashboardView | undefined>();
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftName, setDraftName] = useState('');
+  const draftRowRef = useRef<HTMLDivElement>(null);
+  // autoFocus only scrolls the input itself into view, which leaves the row's own padding clipped
+  // against the footer when the draft lands at the bottom of a long list.
+  useEffect(() => {
+    if (isDrafting) {
+      draftRowRef.current?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [isDrafting]);
   const [editingView, setEditingView] = useState<SavedDashboardView | undefined>();
   const [editName, setEditName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -366,7 +374,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                 })}
 
                 {isDrafting && (
-                  <div className={styles.row}>
+                  <div ref={draftRowRef} className={styles.row}>
                     <Box flex={1} minWidth={0}>
                       <Input
                         autoFocus
