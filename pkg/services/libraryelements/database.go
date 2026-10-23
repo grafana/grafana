@@ -803,7 +803,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c, signedInUser.GetOrgID(), signedInUser), signedInUser.GetOrgID(), signedInUser, folderUID)
 }
 
-// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without checking folder permissions.
+// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without checking folder permissions; elements still connected to a dashboard are kept and block the delete.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
 	if l.ConnectedDashboardsFinder == nil {
 		return model.ErrConnectedDashboardsFinderNotConfigured

@@ -1890,7 +1890,12 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return err
 		}
 		if !canSave {
-			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user", user.GetUID())
+			// GetUID() isn't safe to call on a typed-nil user, which AccessControl.Evaluate above tolerates.
+			userUID := ""
+			if user != nil && !user.IsNil() {
+				userUID = user.GetUID()
+			}
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user", userUID)
 			return folder.ErrAccessDenied
 		}
 	}
