@@ -601,6 +601,22 @@ describe('applyPluginNav', () => {
       expect(findById(merged, NavID.observability)).toBeUndefined();
     });
 
+    // A config may name a section and no weight, which means "wherever it lands",
+    // not the weight the app link was built with
+    it('places an app whose config gives no weight at its appended position', () => {
+      setup({ permissions: ['datasources:read', 'datasources:create'] });
+      jest.spyOn(appNavConfig, 'appNavConfigFor').mockReturnValue({ sectionId: NavID.connections });
+
+      const merged = merge(app('some-app', 'Some app', [page('Page', '/a/some-app/page')]));
+
+      // after the section's own children, which carry no weight either
+      expect(ids(findById(merged, NavID.connections)?.children ?? [])).toEqual([
+        'connections-add-new-connection',
+        'connections-datasources',
+        'plugin-page-some-app',
+      ]);
+    });
+
     it('keeps the built-in weight when the override gives none', () => {
       setup({ config: { navigation: { appSections: { 'grafana-irm-app': { sectionId: NavID.cfg } } } } });
 

@@ -234,7 +234,9 @@ function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: Standalo
 function withNavConfig(link: NavModelItem, { sortWeight, text, subTitle, isNew, icon }: AppNavConfig): NavModelItem {
   return {
     ...link,
-    ...(sortWeight !== undefined && { sortWeight }),
+    // A config that names no weight means the appended position, as a zero weight
+    // does server-side — not "keep the default the link was built with"
+    sortWeight: sortWeight ?? 0,
     ...(text !== undefined && { text }),
     ...(subTitle !== undefined && { subTitle }),
     ...(isNew !== undefined && { isNew }),
