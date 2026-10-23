@@ -23,6 +23,18 @@ import (
 // standalone router tries ProvideCloudRoutesLoader first, and calls this only
 // when [cloud_router] configures none, and Grafana itself never polls them.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+	loader, err := provideLocalRoutesLoader(cfg, deps)
+	if err != nil {
+		return nil, err
+	}
+	// A cloud stack also serves the multi-tenant router's groups it lacks.
+	if middlewareEnabled(cfg, deps.Features) {
+		return newMTRoutesFromConfig(cfg, loader)
+	}
+	return loader, nil
+}
+
+func provideLocalRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
 	if deps.PluginSources != nil {
 		if middlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
