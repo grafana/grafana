@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"strings"
+	"time"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
@@ -102,6 +103,9 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 			if math.IsNaN(v) || math.IsInf(v, 0) {
 				continue
 			}
+		case time.Time:
+			// The engine converts timestamps to UTC but hashes and formats raw row values, so rows carry UTC too.
+			val = v.UTC()
 		}
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument

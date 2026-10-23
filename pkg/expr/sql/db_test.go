@@ -247,6 +247,109 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	}
 }
 
+func TestQueryFramesTimeLocation(t *testing.T) {
+	instants := []time.Time{time.Unix(1700000000, 0), time.Unix(1700000015, 0), time.Unix(1700000030, 0)}
+	inZone := func(loc *time.Location) []time.Time {
+		out := make([]time.Time, len(instants))
+		for i, ts := range instants {
+			out[i] = ts.In(loc)
+		}
+		return out
+	}
+	utcFrame := data.NewFrame("", data.NewField("ts", nil, inZone(time.UTC)))
+	utcFrame.RefID = "A"
+	plusTwo := inZone(time.FixedZone("UTC+2", 2*60*60))
+	zonedFrame := data.NewFrame("",
+		data.NewField("ts", nil, plusTwo),
+		data.NewField("nts", nil, []*time.Time{&plusTwo[0], nil, &plusTwo[2]}),
+	)
+	zonedFrame.RefID = "B"
+
+	tests := []struct {
+		name  string
+		query string
+		want  []any
+	}{
+		{
+			name:  "group by matches the same instant across frames",
+			query: "SELECT COUNT(*) AS v FROM (SELECT ts FROM A UNION ALL SELECT ts FROM B) t GROUP BY ts ORDER BY ts",
+			want:  []any{int64(2), int64(2), int64(2)},
+		},
+		{
+			name:  "count distinct matches the same instant across frames",
+			query: "SELECT COUNT(DISTINCT ts) AS v FROM (SELECT ts FROM A UNION ALL SELECT ts FROM B) t",
+			want:  []any{int64(3)},
+		},
+		{
+			name:  "union removes the same instant across frames",
+			query: "SELECT COUNT(*) AS v FROM (SELECT ts FROM A UNION SELECT ts FROM B) t",
+			want:  []any{int64(3)},
+		},
+		{
+			name:  "cast to text shows the UTC wall clock",
+			query: "SELECT CAST(ts AS CHAR) AS v FROM B ORDER BY ts LIMIT 1",
+			want:  []any{"2023-11-14 22:13:20"},
+		},
+		{
+			name:  "cast of a nullable time to text shows the UTC wall clock",
+			query: "SELECT CAST(nts AS CHAR) AS v FROM B WHERE nts IS NOT NULL ORDER BY nts LIMIT 1",
+			want:  []any{"2023-11-14 22:13:20"},
+		},
+	}
+
+	db := DB{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			frame, err := db.QueryFrames(context.Background(), &testTracer{}, "C", tt.query, []*data.Frame{utcFrame, zonedFrame})
+			require.NoError(t, err)
+			require.Len(t, frame.Fields, 1)
+			got := make([]any, frame.Fields[0].Len())
+			for i := range got {
+				got[i], _ = frame.Fields[0].ConcreteAt(i)
+			}
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestQueryFramesUsesUTCWhateverTheHostZone(t *testing.T) {
+	hostZone := time.Local
+	time.Local = time.FixedZone("UTC+5", 5*60*60)
+	t.Cleanup(func() { time.Local = hostZone })
+
+	frame := data.NewFrame("", data.NewField("ts", nil, []time.Time{time.Unix(1700000000, 0).In(time.Local)}))
+	frame.RefID = "A"
+
+	tests := []struct {
+		name  string
+		query string
+		want  any
+	}{
+		{
+			name:  "from_unixtime gives the UTC wall clock",
+			query: "SELECT CAST(FROM_UNIXTIME(1700000000) AS CHAR) AS v",
+			want:  "2023-11-14 22:13:20",
+		},
+		{
+			name:  "a time cast to text parses back to the same instant",
+			query: "SELECT CAST(UNIX_TIMESTAMP(CAST(ts AS CHAR)) AS SIGNED) AS v FROM A",
+			want:  int64(1700000000),
+		},
+	}
+
+	db := DB{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := db.QueryFrames(context.Background(), &testTracer{}, "C", tt.query, []*data.Frame{frame})
+			require.NoError(t, err)
+			require.Len(t, result.Fields, 1)
+			require.Equal(t, 1, result.Fields[0].Len())
+			got, _ := result.Fields[0].ConcreteAt(0)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestNaNBecomesNull(t *testing.T) {
 	f := &data.Frame{
 		RefID: "a",
