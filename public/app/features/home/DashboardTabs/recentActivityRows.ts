@@ -1,6 +1,5 @@
-import { locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
+import { type IconName, locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type BadgeColor } from '@grafana/ui';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { PLUMBING_PARAMS } from 'app/core/services/pageHistory/hasNothingToResume';
 import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
@@ -13,9 +12,10 @@ import { type RecentActivityItem } from './useRecentActivity';
 interface PageKindMeta {
   /** Plural, for the kind filter. */
   filterLabel: string;
-  /** Singular, for the row badge. */
+  /** Singular, for the row icon's tooltip. */
   badge: string;
-  color: BadgeColor;
+  /** Row icon; nav-section icons where a kind has one, so the row reads like its menu entry. */
+  icon: IconName;
 }
 
 export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
@@ -24,31 +24,31 @@ export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
       return {
         filterLabel: t('home.recent-activity-tab.filter-dashboards', 'Dashboards'),
         badge: t('home.recent-activity-tab.kind-dashboard', 'Dashboard'),
-        color: 'blue',
+        icon: 'apps',
       };
     case 'page':
       return {
         filterLabel: t('home.recent-activity-tab.filter-pages', 'Pages'),
         badge: t('home.recent-activity-tab.kind-page', 'Page'),
-        color: 'green',
+        icon: 'ai-sparkle',
       };
     case 'explore':
       return {
         filterLabel: t('home.recent-activity-tab.filter-explore', 'Explore'),
         badge: t('home.recent-activity-tab.kind-explore', 'Explore'),
-        color: 'orange',
+        icon: 'compass',
       };
     case 'alerting':
       return {
         filterLabel: t('home.recent-activity-tab.filter-alerting', 'Alerting'),
         badge: t('home.recent-activity-tab.kind-alerting', 'Alerting'),
-        color: 'red',
+        icon: 'bell',
       };
     case 'app':
       return {
         filterLabel: t('home.recent-activity-tab.filter-apps', 'Apps'),
         badge: t('home.recent-activity-tab.kind-app', 'App'),
-        color: 'purple',
+        icon: 'layer-group',
       };
   }
 }

@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
@@ -102,7 +102,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
   }
 
   // Rows seeded from the recently-viewed impressions carry no visit time. When none of the shown rows has one,
-  // the time column would be blank the whole way down, so the badges take the right edge instead.
+  // the time column would be blank the whole way down, so the kind icons take the right edge instead.
   const showTime = items.some((item) => item.lastVisited !== undefined);
 
   return (
@@ -110,7 +110,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
       {items.map((item, position) => {
         const href = item.pathname + item.search;
         const { title, subtitle } = toRow(item, navTree, foldersByUid);
-        const { badge, color } = getPageKindMeta(item.kind);
+        const { badge, icon } = getPageKindMeta(item.kind);
         return (
           <li key={href}>
             <ListRow
@@ -142,9 +142,11 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
                       />
                     )}
                   </span>
-                  <span className={styles.kind}>
-                    <Badge text={badge} color={color} />
-                  </span>
+                  <Tooltip content={badge}>
+                    <span className={styles.kind} role="img" aria-label={badge}>
+                      <Icon name={icon} />
+                    </span>
+                  </Tooltip>
                   {showTime && <TimeAgoCell date={item.lastVisited} />}
                 </Stack>
               }
@@ -162,13 +164,14 @@ const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
     padding: theme.spacing(0, compact ? 0 : 0.5),
     margin: 0,
   }),
-  // Fixed column sized for the widest badge ("Dashboard"), badges centered in it, so the column
-  // reads as one block next to the right-aligned times.
+  // One accent colour for every kind: the icon says which, the tooltip spells it out.
   kind: css({
     display: 'inline-flex',
-    flexShrink: 0,
+    alignItems: 'center',
     justifyContent: 'center',
-    minWidth: theme.spacing(10),
+    flexShrink: 0,
+    width: theme.spacing(3),
+    color: theme.flags.visualDesignRefresh ? theme.colors.accent.main : theme.visualization.getColorByName('orange'),
   }),
   // Only dashboards can be starred. The slot is the button's size on every row so the badge and time columns
   // start at the same place and rows stay one height whether the button is there or not.
