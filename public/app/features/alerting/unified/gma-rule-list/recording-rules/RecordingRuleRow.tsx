@@ -32,7 +32,7 @@ export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProp
         </TextLink>
       }
       description={<RuleDescription lastError={searchHit.lastError} />}
-      right={<RuleInterval interval={searchHit.interval} />}
+      right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
       meta={[folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />]}
     />
   );

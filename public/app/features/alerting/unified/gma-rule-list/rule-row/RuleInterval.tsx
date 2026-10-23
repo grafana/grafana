@@ -2,15 +2,11 @@ import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip } from '@grafana/ui';
 
 interface RuleIntervalProps {
-  interval?: string;
+  interval: string;
 }
 
-/** Evaluation interval indicator for the row's right column. */
+/** Evaluation interval indicator for the row's right column. Always renders; let the caller guard on presence. */
 export function RuleInterval({ interval }: RuleIntervalProps) {
-  if (!interval) {
-    return null;
-  }
-
   const label = t('alerting.gma-rule-list.interval', 'Evaluated every {{interval}}', { interval });
 
   return (

@@ -20,10 +20,4 @@ describe('RuleInterval', () => {
 
     expect(await screen.findByLabelText('Evaluated every 1h')).toBeInTheDocument();
   });
-
-  it('renders nothing when interval is absent', () => {
-    const { container } = render(<RuleInterval />);
-
-    expect(container).toBeEmptyDOMElement();
-  });
 });
