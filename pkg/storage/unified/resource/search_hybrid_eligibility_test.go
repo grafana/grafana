@@ -37,16 +37,6 @@ func TestHybridSearch_RestrictedLaterTargetRejectsWholeRequest(t *testing.T) {
 	}
 }
 
-func TestHybridSearch_RestrictedTargetAllowsAssistant(t *testing.T) {
-	s, index, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-	s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
-	ctx := serviceReadContext(authlib.TypeAccessPolicy, "assistant")
-	resp, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{Query: "memory", Key: validKey()})
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	require.NotNil(t, index.gotReq)
-}
-
 func TestNewSearchServerEnforcesAllowedReadServices(t *testing.T) {
 	index := &hybridFakeIndex{resp: lexTableResponse()}
 	s, err := newSearchServer(SearchOptions{

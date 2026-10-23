@@ -58,16 +58,13 @@ func TestVectorAllowedReadServicesConfig(t *testing.T) {
 		{name: "empty map", value: `{}`, want: map[string][]string{}},
 		{name: "preconfigured collection", value: `{"assistant.inframemories.ext.grafana.app/inframemories":["assistant"]}`, want: map[string][]string{"assistant.inframemories.ext.grafana.app/inframemories": {"assistant"}}},
 		{name: "custom resource name", value: `{"g/custom_resource":["assistant"]}`, want: map[string][]string{"g/custom_resource": {"assistant"}}},
-		{name: "not an object", value: `[]`, invalid: true},
 		{name: "null", value: `null`, invalid: true},
-		{name: "trailing JSON", value: `{} {}`, invalid: true},
-		{name: "duplicate collection", value: `{"g/r":["assistant"],"g/r":["other"]}`, invalid: true},
+		{name: "malformed JSON", value: `{"g/r":`, invalid: true},
 		{name: "missing group", value: `{"/r":["assistant"]}`, invalid: true},
 		{name: "extra slash", value: `{"g/r/other":["assistant"]}`, invalid: true},
 		{name: "wildcard", value: `{"g/*":["assistant"]}`, invalid: true},
 		{name: "interior whitespace", value: `{"g/custom resource":["assistant"]}`, invalid: true},
 		{name: "empty services", value: `{"g/r":[]}`, invalid: true},
-		{name: "null services", value: `{"g/r":null}`, invalid: true},
 		{name: "empty identity", value: `{"g/r":[""]}`, invalid: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

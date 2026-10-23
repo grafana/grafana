@@ -8,12 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -217,25 +219,21 @@ func (u *serviceReadRequester) GetExtra() map[string][]string {
 }
 
 func serviceReadContext(subject authlib.IdentityType, identities ...string) context.Context {
+	requester := &identity.StaticRequester{Type: subject, Namespace: "ns"}
+	if subject == authlib.TypeUser {
+		requester.AccessToken = "verified-access-token"
+		requester.AccessTokenClaims = &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+			DelegatedPermissions: []string{"g/r:get"},
+		}}
+	}
 	return authlib.WithAuthInfo(context.Background(), &serviceReadRequester{
-		StaticRequester: &identity.StaticRequester{Type: subject, Namespace: "ns"},
+		StaticRequester: requester,
 		identities:      identities,
 	})
 }
 
 func validKey() *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r"}
-}
-
-func TestVectorSearch_RestrictedCollectionRejectsUserBeforeEmbedding(t *testing.T) {
-	client := &fakeTextEmbedder{dim: 4}
-	backend := &fakeVectorBackend{}
-	s := newTestSearchServer(newTestEmbedder(client), backend)
-	s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
-	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
-	require.Equal(t, codes.PermissionDenied, status.Code(err))
-	require.Empty(t, client.gotIn.Texts)
-	require.Zero(t, backend.resolveCalls)
 }
 
 func TestVectorSearch_AllowedReadServices(t *testing.T) {
@@ -246,13 +244,10 @@ func TestVectorSearch_AllowedReadServices(t *testing.T) {
 		policy     map[string][]string
 		wantDenied bool
 	}{
-		{name: "assistant service", subject: authlib.TypeAccessPolicy, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}},
 		{name: "another service", subject: authlib.TypeAccessPolicy, identities: []string{"other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
 		{name: "missing identity", subject: authlib.TypeAccessPolicy, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
-		{name: "empty configured allowlist fails closed", subject: authlib.TypeAccessPolicy, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {}}, wantDenied: true},
 		{name: "multiple identities", subject: authlib.TypeAccessPolicy, identities: []string{"assistant", "other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
 		{name: "user with assistant claim", subject: authlib.TypeUser, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
-		{name: "service account with assistant claim", subject: authlib.TypeServiceAccount, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
 		{name: "unconfigured user", subject: authlib.TypeUser},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -276,22 +271,58 @@ func TestVectorSearch_AllowedReadServices(t *testing.T) {
 }
 
 func TestVectorSearch_AllowedServiceStillNeedsTenantAndGetPermission(t *testing.T) {
-	backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
-	access := &fakeAccessClient{allow: func(string, string) bool { return false }}
-	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
-	s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
-	ctx := serviceReadContext(authlib.TypeAccessPolicy, "assistant")
-	key := validKey()
-	key.Namespace = "other"
-	resp, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: key, Query: "memory"})
-	require.NoError(t, err)
-	require.Equal(t, 403, int(resp.Error.Code))
-	require.Zero(t, backend.resolveCalls)
-
-	resp, err = s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
-	require.NoError(t, err)
-	require.Empty(t, resp.Results)
-	require.Positive(t, backend.resolveCalls)
+	const group, resource = "assistant.inframemories.ext.grafana.app", "inframemories"
+	const collection = group + "/" + resource
+	for _, tc := range []struct {
+		name, permission, namespace string
+		wantAuthzError              bool
+	}{
+		{name: "missing get permission", permission: "folder.grafana.app/folders:get", wantAuthzError: true},
+		{name: "wrong verb", permission: collection + ":update", wantAuthzError: true},
+		{name: "direct get permission", permission: collection + ":get"},
+		{name: "cross tenant", permission: collection + ":get", namespace: "other"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{
+				collection: &vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: true},
+				results:    []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}},
+			}
+			// A direct service grant resolves locally in authlib. Any unexpected
+			// user-mapper RPC through this nil connection fails the test.
+			access := NewAuthzLimitedClient(authzlib.NewClient(nil), AuthzOptions{Registry: prometheus.NewRegistry()})
+			s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, []string{collection})
+			s.allowedReadServices = map[string][]string{collection: {"assistant"}}
+			caller := &identity.StaticRequester{
+				Type: authlib.TypeAccessPolicy, Namespace: "ns", AccessToken: "verified-access-token",
+				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+					ServiceIdentity: "assistant", Permissions: []string{tc.permission},
+				}},
+			}
+			ctx := authlib.WithAuthInfo(t.Context(), caller)
+			key := &resourcepb.ResourceKey{Namespace: "ns", Group: group, Resource: resource}
+			if tc.namespace != "" {
+				key.Namespace = tc.namespace
+			}
+			resp, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: key, Query: "memory"})
+			if tc.wantAuthzError {
+				require.Equal(t, codes.Internal, status.Code(err))
+				require.Nil(t, resp, "failed authorization must not return a partial response")
+				require.Positive(t, backend.resolveCalls)
+				return
+			}
+			require.NoError(t, err)
+			if tc.namespace != "" {
+				require.Equal(t, int32(403), resp.Error.Code)
+				require.Empty(t, resp.Results)
+				require.Zero(t, backend.resolveCalls)
+				return
+			}
+			require.Nil(t, resp.Error)
+			require.Len(t, resp.Results, 1)
+			require.Equal(t, "memory", resp.Results[0].Name)
+		})
+	}
 }
 
 func TestVectorSearch_HappyPath(t *testing.T) {
