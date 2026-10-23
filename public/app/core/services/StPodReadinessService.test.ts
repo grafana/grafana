@@ -79,6 +79,15 @@ describe('StPodReadinessService', () => {
     expect(service.getStatus()).toBe(StPodStatus.Waiting);
   });
 
+  it('suppresses the global error toast on failed health requests', async () => {
+    const get = installBackend(podError);
+
+    service.start();
+    await flushMicrotasks();
+
+    expect(get).toHaveBeenCalledWith('/api/health', undefined, undefined, { showErrorAlert: false });
+  });
+
   it('start is idempotent while already polling', async () => {
     const get = installBackend(podDown);
 

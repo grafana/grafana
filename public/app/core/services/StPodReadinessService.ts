@@ -101,7 +101,9 @@ export class StPodReadinessService {
 
   private async poll(): Promise<void> {
     try {
-      const response: HealthResponse = await getBackendSrv().get('/api/health');
+      const response: HealthResponse = await getBackendSrv().get('/api/health', undefined, undefined, {
+        showErrorAlert: false,
+      });
       if (response?.database === 'ok') {
         this.markReady();
       } else {
