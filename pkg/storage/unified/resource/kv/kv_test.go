@@ -47,7 +47,7 @@ func (r *failingReadCloser) Close() error {
 func TestReadAllAndClose(t *testing.T) {
 	t.Run("hands out owned values without copying and consumes them", func(t *testing.T) {
 		value := []byte("stored value")
-		r := newBytesValue(value)
+		r := NewBytesValue(value)
 		got, err := ReadAllAndClose(r)
 		require.NoError(t, err)
 		require.Equal(t, value, got)
@@ -57,13 +57,13 @@ func TestReadAllAndClose(t *testing.T) {
 		require.Zero(t, n)
 		require.ErrorIs(t, err, io.EOF)
 
-		_, err = r.Write([]byte("overwrite"))
+		_, err = r.(io.Writer).Write([]byte("overwrite"))
 		require.NoError(t, err)
 		require.Equal(t, []byte("stored value"), got)
 	})
 
 	t.Run("returns only the unread part of an owned value", func(t *testing.T) {
-		r := newBytesValue([]byte("stored value"))
+		r := NewBytesValue([]byte("stored value"))
 		_, err := io.ReadFull(r, make([]byte, len("stored ")))
 		require.NoError(t, err)
 		got, err := ReadAllAndClose(r)
