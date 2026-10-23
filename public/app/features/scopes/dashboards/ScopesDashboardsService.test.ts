@@ -276,6 +276,40 @@ describe('ScopesDashboardsService', () => {
       expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
     });
 
+    it('does not crash on a location change that arrives right after scopes are cleared, with the mega-menu flag on', async () => {
+      setMegaMenuFlag(true);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      const testService = new ScopesDashboardsService(mockApiClient);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // Clear scopes, e.g. the user removes the scope selection entirely. fetchDashboards' early
+      // return for an empty forScopeNames wipes dashboards/folders but must also wipe
+      // scopeNavigations - otherwise the stale entry for /d/dashboard1 below still matches and
+      // onLocationChange reaches into the now-empty folders map.
+      await testService.fetchDashboards([]);
+
+      // A location change (e.g. the URL update that drops the `scopes` param) can still arrive right
+      // after clearing, while still pointing at the dashboard that used to match. Calling the
+      // private handler directly (rather than through the location Subject) avoids RxJS's Subscriber
+      // swallowing a synchronous throw from inside a `next` callback, which would otherwise mask this.
+      expect(() =>
+        (testService as unknown as { onLocationChange: (p: string) => void }).onLocationChange('/d/dashboard1')
+      ).not.toThrow();
+
+      expect(testService.state.scopeNavigations).toEqual([]);
+    });
+
     it('should not expand folders containing different dashboards', async () => {
       // Mock current location to be a specific dashboard
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
