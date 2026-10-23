@@ -244,7 +244,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     stored.
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
-    last good copy is served, marked `Stale`.
+    last good copy is served, marked `Stale`. Without one, an incomplete fetch serves what it did
+    read, such as the versions an older backend answered for.
   - The document is written by `writeAggregatedDiscovery`, never through a per-request
     `aggregated.ResourceManager`, which logs a line for every group version each time it is built.
     It must answer exactly as that manager would: groups sorted by name, versions in order, empty
