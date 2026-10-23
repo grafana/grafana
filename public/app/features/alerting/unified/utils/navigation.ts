@@ -156,7 +156,10 @@ export const rulesNav = {
  * Links to a Grafana-managed rule by its UID alone, for pages that have no rules source or group to encode.
  */
 export const grafanaRulesNav = {
-  viewLink: (uid: string) => createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
+  viewLink: (uid: string, options?: { includeReturnTo?: boolean }) => {
+    const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
+    return createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`, params);
+  },
   /** Absolute and subpath-aware, for copying outside Grafana. */
   shareLink: (uid: string) => createAbsoluteUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
   editLink: (uid: string) => createRelativeUrl(`/alerting/${encodeURIComponent(uid)}/edit`),

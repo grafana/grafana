@@ -35,12 +35,14 @@ describe('RecordingRuleRow', () => {
     );
   });
 
-  it('labels the row by its title link to the rule view', () => {
-    render(<RecordingRuleRow hit={baseHit()} fullRule={LOADING_RULE} />);
+  it('labels the row by its title link to the rule view, returning to the current list', () => {
+    render(<RecordingRuleRow searchHit={baseHit()} fullRule={LOADING_RULE} />, {
+      historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] },
+    });
 
     expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toHaveAttribute(
       'href',
-      '/alerting/grafana/rule-1/view'
+      '/alerting/grafana/rule-1/view?returnTo=%2Falerting%2Frules%2Frecording%3Fsearch%3Dcpu'
     );
     expect(screen.getByRole('listitem', { name: 'cpu_usage:avg' })).toBeInTheDocument();
   });
@@ -50,13 +52,13 @@ describe('RecordingRuleRow', () => {
     { name: 'Error health', props: { health: 'Error' }, label: 'Failed to evaluate rule' },
     { name: 'a missing status', props: {}, label: 'Status unavailable' },
   ])('shows the "$label" status icon for $name', ({ props, label }) => {
-    render(<RecordingRuleRow hit={baseHit(props)} fullRule={LOADING_RULE} />);
+    render(<RecordingRuleRow searchHit={baseHit(props)} fullRule={LOADING_RULE} />);
 
     expect(screen.getByLabelText(label)).toBeInTheDocument();
   });
 
   it('shows the last error as the description', () => {
-    render(<RecordingRuleRow hit={baseHit({ lastError: 'query timed out' })} fullRule={LOADING_RULE} />);
+    render(<RecordingRuleRow searchHit={baseHit({ lastError: 'query timed out' })} fullRule={LOADING_RULE} />);
 
     expect(screen.getByText('query timed out')).toBeInTheDocument();
   });
@@ -65,7 +67,7 @@ describe('RecordingRuleRow', () => {
     it('comes after the folder path and before the queried data sources, with the target after "to"', () => {
       render(
         <RecordingRuleRow
-          hit={baseHit({
+          searchHit={baseHit({
             lastError: 'query timed out',
             metric: 'cpu_usage:avg',
             targetDataSourceUid: 'prom-1',
@@ -88,22 +90,22 @@ describe('RecordingRuleRow', () => {
     it.each([
       {
         name: 'only the target when the metric is unknown',
-        hit: { targetDataSourceUid: 'prom-1' },
+        searchHit: { targetDataSourceUid: 'prom-1' },
         text: 'Records to',
       },
       {
         name: 'only the metric when the target data source cannot be resolved',
-        hit: { metric: 'cpu_usage:avg', targetDataSourceUid: 'gone' },
+        searchHit: { metric: 'cpu_usage:avg', targetDataSourceUid: 'gone' },
         text: 'Records cpu_usage:avg',
       },
-    ])('names $name', ({ hit, text }) => {
-      render(<RecordingRuleRow hit={baseHit(hit)} fullRule={LOADING_RULE} />);
+    ])('names $name', ({ searchHit, text }) => {
+      render(<RecordingRuleRow searchHit={baseHit(searchHit)} fullRule={LOADING_RULE} />);
 
       expect(screen.getByText(text)).toBeInTheDocument();
     });
 
     it('is omitted when neither metric nor a resolvable target is known', () => {
-      render(<RecordingRuleRow hit={baseHit({ targetDataSourceUid: 'gone' })} fullRule={LOADING_RULE} />);
+      render(<RecordingRuleRow searchHit={baseHit({ targetDataSourceUid: 'gone' })} fullRule={LOADING_RULE} />);
 
       expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toBeInTheDocument();
       expect(screen.queryByText(/Records/)).not.toBeInTheDocument();

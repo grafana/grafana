@@ -30,6 +30,10 @@ describe('buildRecordingRuleSearchQuery', () => {
     });
   });
 
+  it('passes the continuation token through', () => {
+    expect(buildRecordingRuleSearchQuery(createEmptyFilter(), 'opaque-token').continue).toBe('opaque-token');
+  });
+
   it('metric filters by exact match', () => {
     const filter: RuleSearchFilter = { ...createEmptyFilter(), metric: 'cpu_usage' };
     expect(buildRecordingRuleSearchQuery(filter).where).toEqual({

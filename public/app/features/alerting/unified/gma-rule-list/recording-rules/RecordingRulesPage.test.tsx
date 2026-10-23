@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { Suspense } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
@@ -57,6 +57,29 @@ function renderPage(options?: Parameters<typeof render>[1]) {
       options
     )
   );
+}
+
+/** Serves the first page with a continuation token; `nextPage` answers every request that carries one. */
+function mockPagedSearch(nextPage: (token: string) => Response | Promise<Response>) {
+  const continuations: Array<string | null> = [];
+  server.use(
+    http.post(ruleSearchUrl('recording'), async ({ request }) => {
+      const { continue: token } = (await request.json()) as { continue?: string };
+      continuations.push(token ?? null);
+      if (!token) {
+        return HttpResponse.json({
+          items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+          metadata: { continue: 'tok' },
+        });
+      }
+      return nextPage(token);
+    })
+  );
+  return continuations;
+}
+
+function secondPage() {
+  return HttpResponse.json({ items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')], metadata: {} });
 }
 
 describe('RecordingRulesPage', () => {
@@ -126,47 +149,11 @@ describe('RecordingRulesPage', () => {
 
     const { user } = await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load recording rules');
 
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByText('cpu_usage:avg')).toBeInTheDocument();
-  });
-
-  it('keeps loaded rows when Load more fails, and repeats the same continuation on Retry', async () => {
-    const continuations: Array<string | null> = [];
-    let failNext = true;
-    server.use(
-      http.post(RECORDING_SEARCH_URL, async ({ request }) => {
-        const { continue: token = null } = (await request.json()) as { continue?: string };
-        continuations.push(token);
-        if (!token) {
-          return HttpResponse.json({
-            items: [recordingRule('rule-1', 'cpu_usage:avg', 'folder-1')],
-            metadata: { continue: 'tok' },
-          });
-        }
-        if (failNext) {
-          failNext = false;
-          return HttpResponse.json({ message: 'boom' }, { status: 500 });
-        }
-        return HttpResponse.json({ items: [recordingRule('rule-2', 'mem_usage:avg', 'folder-2')], metadata: {} });
-      })
-    );
-
-    const { user } = await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
-
-    await screen.findByText('cpu_usage:avg');
-    await user.click(screen.getByRole('button', { name: 'Load more' }));
-
-    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
-    expect(screen.getByText('cpu_usage:avg')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok']);
-
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
-
-    expect(await screen.findByText('mem_usage:avg')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok', 'tok']);
   });
 
   it('starts a new filter at the first page and never shows a late response for the replaced filter', async () => {
@@ -408,6 +395,182 @@ describe('RecordingRulesPage', () => {
       expect(ruleSearchBodies.map((body) => body.where)).toEqual([
         { filter: { field: 'health', operator: 'In', values: ['Error'] } },
       ]);
+    });
+  });
+
+  describe('in List mode', () => {
+    // An explicit empty search skips the default saved search that other tests in this file set.
+    it('lists the Recording rules in the order the search returns them, each with its folder path', async () => {
+      mockRuleSearch('recording', () => ({
+        items: [
+          ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1'),
+          ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2'),
+        ],
+        metadata: {},
+      }));
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      const rows = await screen.findAllByRole('listitem');
+      expect(rows.map((row) => row.querySelector('a')?.textContent)).toEqual(['cpu:usage:rate5m', 'disk:usage:rate5m']);
+      expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+      expect(await screen.findByText('Infra')).toBeInTheDocument();
+    });
+
+    it('asks searchRecordingRules for 40 rules sorted by title, with no filter', async () => {
+      let body: unknown;
+      mockRuleSearch('recording', (received) => {
+        body = received;
+        return { items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')], metadata: {} };
+      });
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
+      expect(body).toMatchObject({ kind: 'SearchQuery', sort: [{ field: 'title', direction: 'asc' }], limit: 40 });
+      expect(body).not.toHaveProperty('where');
+    });
+
+    it("shows the first page's total as the result count", async () => {
+      mockRuleSearch('recording', () => ({
+        items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+        metadata: { totalHits: 42, totalHitsRelation: 'eq' },
+      }));
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      expect(await screen.findByText('42 recording rules')).toBeInTheDocument();
+    });
+
+    it('shows skeleton rows in a busy list until the first page arrives', async () => {
+      let releasePage: () => void = () => {};
+      const pageGate = new Promise<void>((resolve) => {
+        releasePage = resolve;
+      });
+      server.use(
+        http.post(ruleSearchUrl('recording'), async () => {
+          await pageGate;
+          return HttpResponse.json({
+            items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+            metadata: {},
+          });
+        })
+      );
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      expect(await screen.findByRole('list', { name: 'Loading rules' })).toHaveAttribute('aria-busy', 'true');
+      releasePage();
+      expect(await screen.findByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
+      expect(screen.queryByRole('list', { name: 'Loading rules' })).not.toBeInTheDocument();
+    });
+
+    it('shows the empty state after a successful empty response', async () => {
+      mockRuleSearch('recording', () => ({ items: [], metadata: {} }));
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      expect(await screen.findByText('No recording rules found')).toBeInTheDocument();
+    });
+
+    it('keeps loaded rows when Load more fails, and reloads them with fresh tokens on Retry', async () => {
+      const continuations: Array<string | null> = [];
+      let firstPages = 0;
+      let failNext = true;
+      server.use(
+        http.post(ruleSearchUrl('recording'), async ({ request }) => {
+          const { continue: token } = (await request.json()) as { continue?: string };
+          continuations.push(token ?? null);
+          if (!token) {
+            firstPages += 1;
+            return HttpResponse.json({
+              items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+              // The reloaded first page hands out a new token, so a replayed one is detectable.
+              metadata: { continue: firstPages === 1 ? 'tok' : 'tok-fresh' },
+            });
+          }
+          if (token === 'tok' || token === 'tok-fresh') {
+            return HttpResponse.json({
+              items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')],
+              metadata: { continue: 'tok-2' },
+            });
+          }
+          if (failNext) {
+            failNext = false;
+            return HttpResponse.json({ message: 'expired' }, { status: 410 });
+          }
+          return HttpResponse.json({
+            items: [ruleItem('recording', 'rule-3', 'mem:usage:rate5m', 'folder-1')],
+            metadata: {},
+          });
+        })
+      );
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+      await screen.findByText('disk:usage:rate5m');
+      await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+      expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+      expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+      // Retry reloads both loaded pages from the first one, taking the second page's token from the reloaded first page.
+      await waitFor(() => expect(continuations).toEqual([null, 'tok', 'tok-2', null, 'tok-fresh']));
+      expect(await screen.findByRole('button', { name: 'Load more' })).toBeEnabled();
+      expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
+      expect(screen.getByText('disk:usage:rate5m')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+      expect(await screen.findByText('mem:usage:rate5m')).toBeInTheDocument();
+    });
+
+    it('keeps loaded rows and names the refresh as failed when the reload on Retry fails too', async () => {
+      let calls = 0;
+      server.use(
+        http.post(ruleSearchUrl('recording'), () => {
+          calls += 1;
+          if (calls === 1) {
+            return HttpResponse.json({
+              items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
+              metadata: { continue: 'tok' },
+            });
+          }
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        })
+      );
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+      await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+      expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
+      expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
+    });
+
+    it('loads one page once when Load more is double clicked', async () => {
+      let releasePage: () => void = () => {};
+      const pageGate = new Promise<void>((resolve) => {
+        releasePage = resolve;
+      });
+      const continuations = mockPagedSearch(async () => {
+        await pageGate;
+        return secondPage();
+      });
+
+      await renderPage({ historyOptions: { initialEntries: ['/?view=list&search='] } });
+
+      await screen.findByText('cpu:usage:rate5m');
+      await userEvent.dblClick(screen.getByRole('button', { name: 'Load more' }));
+
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Load more' })).toBeDisabled());
+      releasePage();
+
+      expect(await screen.findByText('disk:usage:rate5m')).toBeInTheDocument();
+      expect(continuations).toEqual([null, 'tok']);
     });
   });
 });

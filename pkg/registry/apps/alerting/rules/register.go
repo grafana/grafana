@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	alertingv1beta1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	rulesManifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
@@ -272,8 +273,8 @@ func newRuleRefResolver(ng *ngalert.AlertNG) func(ctx context.Context, uid strin
 
 // newNotificationSettingsValidator returns a callback that validates notification
 // receiver configuration against the Alertmanager config.
-func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Context, ns alertingv0alpha1.AlertRuleNotificationSettings) error {
-	return func(ctx context.Context, ns alertingv0alpha1.AlertRuleNotificationSettings) error {
+func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
+	return func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
 		if err := validateNotificationSettingsFields(ns); err != nil {
 			return err
 		}
@@ -299,7 +300,7 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 	}
 }
 
-func validateNotificationSettingsFields(ns alertingv0alpha1.AlertRuleNotificationSettings) error {
+func validateNotificationSettingsFields(ns alertingv1beta1.AlertRuleNotificationSettings) error {
 	if ns.SimplifiedRouting != nil && ns.SimplifiedRouting.Receiver == "" {
 		return errors.New("receiver is empty")
 	}
@@ -405,20 +406,23 @@ func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.Stor
 	}
 }
 
+// GetLegacyStorage matches on the resource alone: it is requested for every
+// served version, and the legacy store is not tied to one, because the
+// apiserver converts to the hub version before storage is called.
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	// The same access-control service (and evaluators) the rule mutation path
 	// authorizes writes and deletes against, reused here to compute the
 	// canWrite/canDelete response annotations rather than re-deriving them.
 	ruleAccess := ngalertaccesscontrol.NewRuleService(a.ng.Api.AccessControl)
-	switch gvr {
-	case recordingrule.ResourceInfo.GroupVersionResource():
+	switch gvr.GroupResource() {
+	case recordingrule.ResourceInfo.GroupResource():
 		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer, ruleAccess)
-	case alertrule.ResourceInfo.GroupVersionResource():
+	case alertrule.ResourceInfo.GroupResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer, ruleAccess)
-	case rulesequence.ResourceInfo.GroupVersionResource():
+	case rulesequence.ResourceInfo.GroupResource():
 		return nil
-	case config.ResourceInfo.GroupVersionResource():
+	case config.ResourceInfo.GroupResource():
 		// Config has no legacy backend — returning nil makes the apiserver serve
 		// it directly from unified storage (no dual writer).
 		return nil
@@ -430,13 +434,13 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 // GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
 // kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
 // legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
-// via the shared rule store.
+// via the shared rule store. Matched on the resource alone, as in GetLegacyStorage.
 func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
-	switch gvr {
-	case recordingrule.ResourceInfo.GroupVersionResource():
+	switch gvr.GroupResource() {
+	case recordingrule.ResourceInfo.GroupResource():
 		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
-	case alertrule.ResourceInfo.GroupVersionResource():
+	case alertrule.ResourceInfo.GroupResource():
 		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
 	default:
 		return nil

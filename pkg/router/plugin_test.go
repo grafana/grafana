@@ -632,15 +632,10 @@ func TestPluginLoaderServesSettingsUnderPluginID(t *testing.T) {
 		return out
 	}
 
-	backends, err := (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
+	backends, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)
-	require.Equal(t, []string{"example.ext.grafana.app"}, groups(backends), "settings are only served behind the feature flag")
+	require.Equal(t, []string{"example.ext.grafana.app"}, groups(backends), "a loader without settings serves only manifests")
 	manifestKey := backends[0].Key()
-
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
-	standalone, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
-	require.NoError(t, err)
-	require.Equal(t, []string{"example.ext.grafana.app"}, groups(standalone), "a loader without settings ignores the feature flag")
 
 	backends, err = (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)

@@ -6,6 +6,7 @@ import {
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
+import { labels, optionalBoolean, optionalCount, optionalString, stringArray } from '../rule-search/searchHitFields';
 
 export interface AlertRuleSearchHit {
   uid: string;
@@ -44,24 +45,6 @@ const ALERT_RULE_HEALTHS = {
   NoData: 'NoData',
 } satisfies Record<AlertRuleAlertRuleHealth, AlertRuleAlertRuleHealth>;
 
-const optionalString = z.string().optional().catch(undefined);
-const optionalCount = z.number().optional().catch(undefined);
-const stringArray = z.array(z.unknown()).transform((values) => values.filter((v) => typeof v === 'string'));
-
-/** Labels are indexed and returned as `key=value` strings, not an object. */
-const labelsSchema = stringArray.transform((entries) => {
-  const labels: Record<string, string> = {};
-  for (const entry of entries) {
-    const separatorIndex = entry.indexOf('=');
-    if (separatorIndex === -1) {
-      labels[entry] = '';
-    } else {
-      labels[entry.slice(0, separatorIndex)] = entry.slice(separatorIndex + 1);
-    }
-  }
-  return labels;
-});
-
 /** Indexed as one JSON-encoded object string; only the string values are kept. */
 const annotationsSchema = z.string().transform((value): Record<string, string> => {
   try {
@@ -80,12 +63,10 @@ const annotationsSchema = z.string().transform((value): Record<string, string> =
   }
 });
 
-// Search fields are untyped in the API. A field that is missing or fails its check reads as absent
-// instead of failing the whole hit.
 const alertRuleSearchFieldsSchema = z.object({
   title: optionalString,
   folder: optionalString,
-  paused: z.boolean().optional().catch(undefined),
+  paused: optionalBoolean,
   interval: optionalString,
   state: z.enum(ALERT_RULE_STATES).optional().catch(undefined),
   health: z.enum(ALERT_RULE_HEALTHS).optional().catch(undefined),
@@ -97,8 +78,8 @@ const alertRuleSearchFieldsSchema = z.object({
   totalsNoData: optionalCount,
   totalsError: optionalCount,
   annotations: annotationsSchema.catch({}),
-  labels: labelsSchema.catch({}),
-  datasourceUIDs: stringArray.catch([]),
+  labels,
+  datasourceUIDs: stringArray,
   notificationType: optionalString,
   receiver: optionalString,
   routingTree: optionalString,

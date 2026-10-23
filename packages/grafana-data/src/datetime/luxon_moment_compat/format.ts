@@ -21,10 +21,13 @@ const TOKEN_MAP: Record<string, string> = {
 
   YYYY: 'yyyy',
   YY: 'yy',
+  Q: 'q',
   MMMM: 'LLLL',
   MMM: 'LLL',
   MM: 'LL',
   M: 'L',
+  DDDD: 'ooo',
+  DDD: 'o',
   DD: 'dd',
   D: 'd',
   dddd: 'cccc',

@@ -31,7 +31,7 @@ export function RecordingRulesListView({ filter }: ListViewProps) {
   if (error !== undefined) {
     return (
       <InlineRequestError
-        title={t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load rules')}
+        title={t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load recording rules')}
         error={error}
         onRetry={retry}
       />
@@ -51,8 +51,8 @@ export function RecordingRulesListView({ filter }: ListViewProps) {
     <Stack direction="column" gap={0.5}>
       <ResultCount kind="recording" total={total} />
       <RuleRowList>
-        {items.map((hit) => (
-          <RecordingRuleListEntry key={hit.uid} hit={hit} showFolderPath />
+        {items.map((searchHit) => (
+          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

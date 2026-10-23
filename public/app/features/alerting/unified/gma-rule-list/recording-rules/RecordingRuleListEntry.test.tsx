@@ -11,7 +11,7 @@ import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
 setupMswServer();
 
-const hit: RecordingRuleSearchHit = {
+const searchHit: RecordingRuleSearchHit = {
   uid: 'rule-1',
   title: 'cpu_usage:avg',
   folderUid: 'folder-1',
@@ -38,7 +38,7 @@ function mockFolderPath() {
 function renderEntry(showFolderPath: boolean) {
   return render(
     <ul>
-      <RecordingRuleListEntry hit={hit} showFolderPath={showFolderPath} />
+      <RecordingRuleListEntry searchHit={searchHit} showFolderPath={showFolderPath} />
     </ul>
   );
 }

@@ -1440,6 +1440,36 @@
       "saving": "Mentés...",
       "title-error-saving-receiver": "Hiba a címzett mentésekor"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "A riasztáskezelő beállításainak módosításához lépjen a Riasztási rendszergazda oldalra. Ha nincs hozzáférése, forduljon a rendszergazdához.",
       "admin-hint-external": "A riasztáskezelő beállításainak módosításához lépjen a Riasztási rendszergazda oldalra. Ha nincs hozzáférése, forduljon a rendszergazdához.",
@@ -1765,7 +1795,9 @@
         "autosync-tooltip-unsupported": "Az automatikus szinkronizálás nem érhető el ehhez az Alertmanager-típushoz. Válasszon egy Mimir- vagy Cortex-adatforrást az engedélyezéséhez.",
         "datasource": "Riasztáskezelési adatforrás",
         "datasource-autosync-badge": "Automatikus szinkronizálás",
+        "embedded-yaml-parse-error": "",
         "heading": "Értesítési erőforrások importálása",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Nem található riasztáskezelési adatforrás",
         "no-permission-desc": "Nincs engedélye értesítési erőforrások importálására. Az <strong>alerting.notifications:write</strong> engedélyre van szüksége. Ezt a lépést kihagyhatja.",
@@ -7420,6 +7452,57 @@
       "usage-count_one": "{{count}} irányítópulton használatos",
       "usage-count_other": "{{count}} irányítópulton használatos"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Hivatkozás hozzáadása",
       "remove-link": "Hivatkozás eltávolítása",
@@ -7745,6 +7828,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Váratlan hiba történt a mentés során."
     },
     "save-library-viz-panel-modal": {
@@ -8037,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Lekérdezési ablaktábla megnyitása"
     },
     "viz-panel-links-renderer": {
@@ -13634,6 +13720,13 @@
       "save-tooltip": "Mentés"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Betöltés…"
   },
@@ -15460,11 +15553,6 @@
       "original-query": "Eredeti lekérdezés",
       "trace-id": "(Nyomkövetési azonosító: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Lekérdezés hozzáadása",
-      "expression": "Kifejezés",
-      "title-data-source-help": "Adatforrás súgója"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Intervallum = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15592,31 @@
     "accept": "Elfogadás",
     "assistant-context-title": "Lekérdezési társszerzői kontextus",
     "assistant-instructions-title": "Lekérdezési társszerzői utasítások",
-    "assistant-unavailable": "Az Asszisztens nem érhető el",
-    "assistant-unavailable-body": "A lekérdezési társszerzői munkához Grafana Asszisztens szükséges.",
-    "building": "Lekérdezés létrehozása…",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Az Asszisztens elérhetőségének ellenőrzése...",
     "clarification-label": "További részlet hozzáadása",
     "clarification-message": "Pontosítási üzenet",
-    "clarification-placeholder": "További részlet hozzáadása...",
+    "clarification-placeholder": "",
     "clarification-title": "Részlet igényelve",
     "close": "Társszerzői munka bezárása",
-    "context": "KONTEXTUS",
-    "context-error": "Nem sikerült beolvasni a kiválasztott lekérdezési kontextust",
+    "context-error": "",
     "continue": "Folytatás",
     "continue-here": "Folytatás itt",
     "continue-in-assistant": "Folytatás az Asszisztensben",
-    "continue-in-assistant-chat": "Folytatás az Asszisztens-csevegésben",
     "dialog": "A lekérdezés társszerzője",
     "dismiss": "Elvetés",
     "error": "Lekérdezési társszerzői hiba",
     "error-accept-failed": "A lekérdezési javaslatot nem lehetett elfogadni. Próbálja újra.",
     "error-multiple-responses": "Az Asszisztens egymásnak ellentmondó lekérdezésjavaslatokat adott vissza. Próbálja újra.",
     "error-preview-failed": "A lekérdezési javaslat előnézetét nem lehetett megjeleníteni. Próbálja újra.",
+    "explain-failed": "",
     "explain-or-modify": "Magyarázat vagy módosítás",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Mégse",
     "feedback-description": "Visszajelzése segít javítani a Grafana lekérdezési élményét.",
     "feedback-error": "A visszajelzést nem sikerült elküldeni. Próbálja újra.",
@@ -15536,36 +15627,61 @@
     "feedback-not-helpful": "Nem volt hasznos",
     "feedback-positive-placeholder": "Mi tetszett? Hogyan lehetett volna még jobb?",
     "feedback-positive-title": "Mi ment jól?",
-    "feedback-privacy": "Elküldjük az értékelését, a megjegyzését, valamint azt, hogy ez javaslat vagy átadás volt-e. A lekérdezése, a prompt és az Asszisztens válasza nem szerepelnek benne.",
+    "feedback-privacy": "",
     "feedback-recipient": "Visszajelzését elküldjük a lekérdezéseken dolgozó csapatoknak.",
     "feedback-send": "Küldés",
     "feedback-sending": "Küldés…",
-    "focus": "FÓKUSZ",
-    "handoff-guidance": "Előfordulhat, hogy a módosításainak egy másik adatforrásra vagy további lekérdezésekre is ki kell terjedniük azon kívül, amelyre összpontosítunk. Folytassa az Asszisztens-csevegésben a nagyobb módosítások elvégzéséhez.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Kiemelt lekérdezés",
-    "highlighted-query-summary": "Kiemelt lekérdezés összefoglalása",
+    "hold-to-peek": "",
     "invalid-query-response": "Az Asszisztensnek nem sikerült az érvényes {{language}} létrehozása, miután megpróbálta kijavítani a javaslatot. Próbálkozzon újra, vagy adjon meg további részleteket.",
     "iteration-nudge": "Valami nagyon dolgozik? Ismételje meg a nagyobb módosításokat több hellyel.",
-    "open-in-chat": "Megnyitás a csevegésben",
-    "original-change": "Eredeti {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "A lekérdezés előnézete",
+    "previous-option": "",
     "prompt-label": "A lekérdezésmódosítás leírása",
-    "prompt-placeholder": "A gyors módosítás leírása...",
+    "prompt-placeholder": "",
     "proposal-details": "A lekérdezési javaslat részletei",
-    "proposed-change": "Javasolt {{kind}}",
-    "reading-highlighted-query": "Kiemelt lekérdezés olvasása…",
+    "query-diff": "",
     "relevant-context": "Releváns lekérdezési kontextus",
     "request-failed": "Az Asszisztensnek nem sikerült lekérdezési javaslatot létrehoznia. Próbálja újra.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Próbálja újra",
+    "retry-context": "",
     "running-updated-query": "A frissített lekérdezés futtatása...",
+    "select-to-accept": "",
     "selection-ready": "A kijelölés ennek ennek a(z) {{language}}-lekérdezésnek a része.",
     "selection-whole-query": "A teljes {{language}}-lekérdezés ki van választva a társszerzői munkához.",
     "selection-with-type": "A(z) {{name}} egy {{type}} {{kind}}.",
     "stale-query-response": "A kiemelt lekérdezés megváltozott, mielőtt a javaslat készen állt volna. Vesse el, és jelölje ki újra.",
     "stop": "Állj",
     "submit": "Társszerző",
-    "suggestion-updated": "A javaslat frissítve",
+    "submit-follow-up": "",
     "unchanged-query-response": "Az Asszisztens módosítások nélkül adta vissza az aktuális lekérdezést. Próbálkozzon újra, vagy adjon meg további részleteket.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "A nem mentett panelmódosítások nem vesznek el.",
     "working-focus": "A lekérdezés fókusza"
   },
@@ -16181,14 +16297,7 @@
       "time-range": "Időtartomány zárolása"
     },
     "export": {
-      "back-button": "Vissza az exportálási konfigurációhoz",
-      "cancel-button": "Mégse",
-      "info-text": "Exportálja ezt az irányítópultot.",
-      "loading": "Betöltés...",
-      "save-button": "Mentés fájlba",
-      "share-externally-label": "Exportálás külső megosztáshoz",
-      "view-button": "JSON megtekintése",
-      "view-button-yaml": "YAML megtekintése"
+      "share-externally-label": "Exportálás külső megosztáshoz"
     },
     "image": {
       "actions": "Képexportálási műveletek",
@@ -16246,9 +16355,6 @@
       "dark": "Sötét",
       "field-name": "Téma",
       "light": "Világos"
-    },
-    "view-json": {
-      "copy-button": "Másolás a vágólapra"
     }
   },
   "share-panel": {
@@ -17427,6 +17533,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "A lekérdezési eredmények egyes részeinek eltávolítása regex-minta használatával."
       },
+      "deselect-all": "",
       "label-from-variable": "Változóból",
       "label-identifier": "Azonosító",
       "label-use-variable": "Változó használata",
@@ -17434,7 +17541,8 @@
       "name": {
         "filter-fields-by-name": "Mezők szűrése név alapján"
       },
-      "placeholder-regular-expression-pattern": "A reguláris kifejezés mintája"
+      "placeholder-regular-expression-pattern": "A reguláris kifejezés mintája",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

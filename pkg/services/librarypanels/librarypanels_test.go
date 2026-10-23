@@ -87,6 +87,7 @@ type orderTrackingLibraryElementService struct {
 	*libraryelementsfake.LibraryElementService
 	denyFolderUID string
 	deletedUIDs   []string
+	deletedOrgIDs []int64
 }
 
 func (f *orderTrackingLibraryElementService) RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error {
@@ -96,8 +97,9 @@ func (f *orderTrackingLibraryElementService) RequireEditPermissionsOnFolder(ctx 
 	return nil
 }
 
-func (f *orderTrackingLibraryElementService) DeleteLibraryElementsInFolderUnchecked(ctx context.Context, signedInUser identity.Requester, folderUID string) error {
+func (f *orderTrackingLibraryElementService) DeleteLibraryElementsInFolderUnchecked(ctx context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
 	f.deletedUIDs = append(f.deletedUIDs, folderUID)
+	f.deletedOrgIDs = append(f.deletedOrgIDs, orgID)
 	return nil
 }
 
@@ -113,6 +115,17 @@ func TestDeleteInFolders_ChecksAllFoldersBeforeDeletingAny(t *testing.T) {
 	require.ErrorIs(t, err, folder.ErrAccessDenied)
 	require.Empty(t, fakeElementService.deletedUIDs,
 		"folder-a must not be deleted when folder-b, checked later in the same batch, fails its permission check")
+}
+
+func TestDeleteInFoldersUnchecked_UsesTargetOrgNotRequesterOrg(t *testing.T) {
+	fakeElementService := &orderTrackingLibraryElementService{LibraryElementService: &libraryelementsfake.LibraryElementService{}}
+	lps := LibraryPanelService{LibraryElementService: fakeElementService}
+
+	// A Grafana Admin cascading a folder in an org other than their own: orgID is the target org, distinct from admin.OrgID.
+	admin := &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: true}
+	require.NoError(t, lps.DeleteInFoldersUnchecked(context.Background(), 2, []string{"folder-a"}, admin))
+
+	require.Equal(t, []int64{2}, fakeElementService.deletedOrgIDs, "must delete in the target org, not the requester's own org")
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {

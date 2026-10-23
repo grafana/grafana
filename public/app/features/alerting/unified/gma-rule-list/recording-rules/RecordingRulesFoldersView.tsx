@@ -136,7 +136,7 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
     return (
       <li>
         <InlineRequestError
-          title={t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load rules')}
+          title={t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load recording rules')}
           error={error}
           onRetry={retry}
         />
@@ -154,8 +154,8 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
 
   return (
     <>
-      {items.map((hit) => (
-        <RecordingRuleListEntry key={hit.uid} hit={hit} showFolderPath={false} />
+      {items.map((searchHit) => (
+        <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath={false} />
       ))}
       {(hasMore || failure) && (
         <li>

@@ -20,31 +20,36 @@ import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
 interface RecordingRuleRowProps {
-  hit: RecordingRuleSearchHit;
+  searchHit: RecordingRuleSearchHit;
   fullRule: RuleResourceState<RecordingRule>;
   /** List mode only; Folders mode shows the folder on the folder row. */
   folderPath?: string[];
   actions?: ReactNode;
 }
 
-export function RecordingRuleRow({ hit, fullRule, folderPath, actions }: RecordingRuleRowProps) {
-  const pluginId = getPluginId(hit.labels);
+export function RecordingRuleRow({ searchHit, fullRule, folderPath, actions }: RecordingRuleRowProps) {
+  const pluginId = getPluginId(searchHit.labels);
   const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
-  const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
-  const hasDisplayLabels = Object.keys(getDisplayLabels(hit.labels)).length > 0;
-  const titleId = `recording-rule-title-${hit.uid}`;
-  const target = hit.targetDataSourceUid ? getDataSourceByUid(hit.targetDataSourceUid) : undefined;
-  const hasRecordsTo = Boolean(hit.metric) || target !== undefined;
+  const hasQueriedDataSources = searchHit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
+  const hasDisplayLabels = Object.keys(getDisplayLabels(searchHit.labels)).length > 0;
+  const titleId = `recording-rule-title-${searchHit.uid}`;
+  const target = searchHit.targetDataSourceUid ? getDataSourceByUid(searchHit.targetDataSourceUid) : undefined;
+  const hasRecordsTo = Boolean(searchHit.metric) || target !== undefined;
 
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="recording" health={hit.health} paused={hit.paused} />}
+      icon={<RuleStatusIcon kind="recording" health={searchHit.health} paused={searchHit.paused} />}
       title={
         <Stack direction="row" alignItems="center" gap={1}>
-          <TextLink id={titleId} href={grafanaRulesNav.viewLink(hit.uid)} color="primary" inline={false}>
-            {hit.title}
+          <TextLink
+            id={titleId}
+            href={grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true })}
+            color="primary"
+            inline={false}
+          >
+            {searchHit.title}
           </TextLink>
           {pluginId === undefined ? (
             isOwnedElsewhere && <ProvisioningBadge managerKind={managerKind} />
@@ -53,15 +58,15 @@ export function RecordingRuleRow({ hit, fullRule, folderPath, actions }: Recordi
           )}
         </Stack>
       }
-      description={<RuleListItemDescription error={hit.lastError} />}
+      description={<RuleListItemDescription error={searchHit.lastError} />}
       // Gate on data: the list item only drops falsy entries, so an empty element leaves a stray separator.
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
-        hasRecordsTo && <RecordsTo key="records-to" metric={hit.metric} target={target} />,
-        hasQueriedDataSources && <DataSourcesMeta key="data-sources" uids={hit.dataSourceUids} />,
-        hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
+        hasRecordsTo && <RecordsTo key="records-to" metric={searchHit.metric} target={target} />,
+        hasQueriedDataSources && <DataSourcesMeta key="data-sources" uids={searchHit.dataSourceUids} />,
+        hasDisplayLabels && <LabelsMeta key="labels" labels={searchHit.labels} />,
       ]}
-      metaRight={<IntervalIndicator interval={hit.interval} />}
+      metaRight={<IntervalIndicator interval={searchHit.interval} />}
       actions={actions}
     />
   );
