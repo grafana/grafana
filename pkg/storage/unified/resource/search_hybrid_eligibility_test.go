@@ -51,8 +51,10 @@ func TestHybridSearch_AllowedReadServices(t *testing.T) {
 		policy     map[string][]string
 		wantDenied bool
 	}{
+		{name: "another service", subject: authlib.TypeAccessPolicy, identities: []string{"other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
 		{name: "missing identity", subject: authlib.TypeAccessPolicy, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
 		{name: "multiple identities", subject: authlib.TypeAccessPolicy, identities: []string{"assistant", "other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "user with assistant claim and delegated grant", subject: authlib.TypeUser, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
 		{name: "unconfigured user", subject: authlib.TypeUser},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
