@@ -219,7 +219,9 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 		version := apidiscoveryv2.APIVersionDiscovery{Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale}
 		// Older backends may only support per-version resource discovery. An
 		// unavailable backend stays advertised as stale without hiding healthy groups.
-		if status == http.StatusOK || status == http.StatusNotFound {
+		// Once the fetch's deadline has passed, the rest are not read: each
+		// read would fail at once and count against the breaker again.
+		if (status == http.StatusOK || status == http.StatusNotFound) && req.Context().Err() == nil {
 			var resources metav1.APIResourceList
 			if _, err := readDiscovery(req, handler, apisPrefix+"/"+gv.GroupVersion, "application/json", &resources); err == nil && resources.Kind == "APIResourceList" {
 				if converted, err := endpoints.ConvertGroupVersionIntoToDiscovery(resources.APIResources); err == nil {

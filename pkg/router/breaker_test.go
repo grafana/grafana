@@ -618,3 +618,34 @@ func TestDiscoveryFetchDeadlineCountsAgainstTheBreaker(t *testing.T) {
 		require.EqualValues(t, 1, router.served[cachedGroup].breaker.Counts().ConsecutiveFailures)
 	})
 }
+
+// An older backend's per-version discovery that hangs misses the deadline
+// once. The versions after it are not read on the expired context, so the
+// one fetch counts one failure, not one per version.
+func TestDiscoveryFetchDeadlineCountsOnceForPerVersionDiscovery(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base, err := url.Parse("https://backend.invalid")
+		require.NoError(t, err)
+		hanging := fallbackRoundTripper(func(req *http.Request) (*http.Response, error) {
+			if req.URL.Path == apisPrefix {
+				return &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{}, Body: http.NoBody, Request: req}, nil
+			}
+			<-req.Context().Done()
+			return nil, req.Context().Err()
+		})
+		var versions []metav1.GroupVersionForDiscovery
+		for _, v := range []string{"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"} {
+			versions = append(versions, metav1.GroupVersionForDiscovery{GroupVersion: cachedGroup + "/" + v, Version: v})
+		}
+		backend, err := newAggregateBackend("older", metav1.APIGroup{Name: cachedGroup, Versions: versions}, base, hanging)
+		require.NoError(t, err)
+		router := NewGrafanaRouter(&mutableLoader{backends: []Backend{backend}}, nil)
+		require.NoError(t, router.reconcile(t.Context()))
+
+		group := aggregatedDiscovery(t, router)[cachedGroup]
+		synctest.Wait()
+		require.Len(t, group.Versions, len(versions), "every version is still listed, as stale")
+		require.Equal(t, "closed", router.served[cachedGroup].breakerView.State().String(), "one fetch must not open the breaker")
+		require.EqualValues(t, 1, router.served[cachedGroup].breaker.Counts().ConsecutiveFailures)
+	})
+}
