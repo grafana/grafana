@@ -380,3 +380,20 @@ func TestPluginManifestsSkips(t *testing.T) {
 	require.Empty(t, target.Backends())
 	require.Equal(t, 2, target.status.status(sourcePluginsURL).Skipped)
 }
+
+// Building the router twice on one registry, as tests and some module
+// combinations do, shares its metrics instead of panicking.
+func TestServicesShareOneRegistry(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	first := newService(NewGrafanaRouter(&mutableLoader{}, nil), reg)
+	var second *Service
+	require.NotPanics(t, func() { second = newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
+	require.Same(t, first.metrics.requests, second.metrics.requests)
+
+	require.NotPanics(t, func() {
+		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
+		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
+		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+	})
+}
