@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/sony/gobreaker/v2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // statusRecorder is a passthrough http.ResponseWriter that records the status
@@ -19,8 +19,14 @@ type statusRecorder struct {
 	status      int
 	wroteHeader bool
 
-	// onStatus, when set, is called once with the final status as soon as it is written.
-	onStatus func(status int)
+	// call, when set, reports the final status to the group breaker as soon
+	// as it is written.
+	call *breakerCall
+
+	// span and spanCtx are the router span traceRouterRequest started, which
+	// endSpan ends.
+	span    trace.Span
+	spanCtx context.Context
 }
 
 func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
@@ -34,8 +40,8 @@ func (r *statusRecorder) WriteHeader(code int) {
 	if code >= 200 || code == http.StatusSwitchingProtocols {
 		r.status = code
 		r.wroteHeader = true
-		if r.onStatus != nil {
-			r.onStatus(code)
+		if r.call != nil {
+			r.call.reportStatus(code)
 		}
 	}
 	r.ResponseWriter.WriteHeader(code)
@@ -51,6 +57,15 @@ func (r *statusRecorder) Write(body []byte) (int, error) {
 func (r *statusRecorder) FlushError() error {
 	if !r.wroteHeader {
 		r.WriteHeader(http.StatusOK)
+	}
+	// A watch flushes after every event, so skip building a controller when
+	// the writer flushes itself.
+	switch w := r.ResponseWriter.(type) {
+	case interface{ FlushError() error }:
+		return w.FlushError()
+	case http.Flusher:
+		w.Flush()
+		return nil
 	}
 	return http.NewResponseController(r.ResponseWriter).Flush()
 }
@@ -227,8 +242,8 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 		h.ServeHTTP(w, req)
 		return
 	}
-	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
-	defer endSpan()
+	rec, req := traceRouterRequest(w, req, "router.backend", group)
+	defer rec.endSpan()
 	w = rec.writer()
 	// Client-scoped breakers leave requests that do not call the client available.
 	if _, clientScoped := h.(interface{ breaksOnClientCalls() }); clientScoped {
@@ -241,25 +256,47 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	req, failure := withProxyFailure(req)
-	var once sync.Once
-	report := func(outcome error) { once.Do(func() { done(outcome) }) }
-	rec.onStatus = func(status int) { report(breakerOutcome(req, status, failure)) }
+	call := &breakerCall{done: done}
+	req = req.WithContext(context.WithValue(req.Context(), proxyFailureKey{}, &call.failure))
+	call.req = req
+	rec.call = call
 	defer func() {
 		if p := recover(); p != nil {
-			outcome := breakerOutcome(req, rec.status, failure)
+			outcome := breakerOutcome(req, rec.status, &call.failure)
 			if outcome == nil {
 				outcome = fmt.Errorf("router: backend handler panicked: %v", p)
 			}
-			report(outcome)
+			call.report(outcome)
 			panic(p)
 		}
-		report(breakerOutcome(req, rec.status, failure))
-		if failure.err != nil {
-			if reason := failureReason(req, failure.err); reason != "" {
+		call.reportStatus(rec.status)
+		if call.failure.err != nil {
+			if reason := failureReason(req, call.failure.err); reason != "" {
 				setFailure(req, reason)
 			}
 		}
 	}()
 	h.ServeHTTP(w, req)
+}
+
+// breakerCall reports one request's outcome to its group breaker, once: when
+// the status is written, or when the handler returns or panics. One value
+// holds what closures and a separate proxyFailure used to, so a request
+// allocates it once. The status can be written from another goroutine than
+// the handler's, so only the first report counts.
+type breakerCall struct {
+	done     func(error)
+	req      *http.Request
+	failure  proxyFailure
+	reported atomic.Bool
+}
+
+func (c *breakerCall) reportStatus(status int) {
+	c.report(breakerOutcome(c.req, status, &c.failure))
+}
+
+func (c *breakerCall) report(outcome error) {
+	if c.reported.CompareAndSwap(false, true) {
+		c.done(outcome)
+	}
 }

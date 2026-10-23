@@ -127,6 +127,22 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 	}, []string{"plugin_id", "method"})
 }
 
+// statusCodeLabels holds the status_code label of each valid HTTP status, so
+// counting a request doesn't format one.
+var statusCodeLabels = func() (labels [600]string) {
+	for code := 100; code < len(labels); code++ {
+		labels[code] = strconv.Itoa(code)
+	}
+	return labels
+}()
+
+func statusCodeLabel(status int) string {
+	if status >= 100 && status < len(statusCodeLabels) {
+		return statusCodeLabels[status]
+	}
+	return strconv.Itoa(status)
+}
+
 // requestGroup returns the group a request is for: the group of an
 // /apis/<group>/... path, as apiGroup reads it, or of an
 // /openapi/v3/apis/<group>/<version> document, which is served by the same
@@ -183,7 +199,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		return metricGroup
 	}
 	finish := func(duration time.Duration) {
-		m.requests.WithLabelValues(resultGroup(), verb, route(), strconv.Itoa(rec.status)).Inc()
+		m.requests.WithLabelValues(resultGroup(), verb, route(), statusCodeLabel(rec.status)).Inc()
 		if outcome.failure != "" {
 			m.backendFailures.WithLabelValues(resultGroup(), outcome.pluginID, outcome.failure).Inc()
 		}

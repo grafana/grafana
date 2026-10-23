@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"errors"
 	"net"
 	"net/http"
@@ -47,11 +46,6 @@ type proxyFailureKey struct{}
 // proxyFailure records why a proxy could not relay a backend response, so the
 // breaker classifies the failure itself rather than inferring it from a 502.
 type proxyFailure struct{ err error }
-
-func withProxyFailure(req *http.Request) (*http.Request, *proxyFailure) {
-	failure := &proxyFailure{}
-	return req.WithContext(context.WithValue(req.Context(), proxyFailureKey{}, failure)), failure
-}
 
 // proxyErrorHandler is the ReverseProxy ErrorHandler for every proxy. It
 // records the failure for the breaker and answers 504 for a timeout and 502

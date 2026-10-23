@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -474,4 +475,54 @@ func TestStoreOpenAPIDocRevalidatesTheBackend(t *testing.T) {
 	require.False(t, stored("served/v2"))
 	router.storeOpenAPIDoc("removed", "removed/v1", openapiCacheEntry{key: current})
 	require.False(t, stored("removed/v1"))
+}
+
+// The path parsers split with strings.Cut, or into a stack array, instead of
+// strings.Split. They must answer as the strings.Split versions did.
+func TestPathParsersMatchStringsSplit(t *testing.T) {
+	paths := []string{
+		"", "/", "/apis", "/apis/", "/apis/g", "/apis/g/", "/apis/g/v1", "/apis/g/v1/", "/apis//v1",
+		"/apis/g/v1/things", "/apis/g/v1/namespaces", "/apis/g/v1/namespaces/", "/apis/g/v1/namespaces/ns",
+		"/apis/g/v1/namespaces/ns/things", "/apis/g/v1/namespaces/ns/things/a/status",
+		"/apis/g/v1/namespaces//things", "/openapi/v3", "/openapi/v3/apis/g", "/openapi/v3/apis/g/v1",
+		"/openapi/v3/apis/g/v1/", "/openapi/v3/apis//v1", "/openapi/v3/apis/g/v1/extra", "/openapi/v3/apis/g/",
+	}
+	splitParseOpenAPI := func(path string) (string, string, bool) {
+		rest, ok := strings.CutPrefix(path, openapiV3Prefix+"/")
+		if !ok || rest == "" {
+			return "", "", false
+		}
+		rest, ok = strings.CutPrefix(rest, "apis/")
+		if !ok || rest == "" {
+			return "", "", false
+		}
+		parts := strings.Split(rest, "/")
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return "", "", false
+		}
+		return parts[0], parts[1], true
+	}
+	splitDiscovery := func(path string) bool {
+		if isRootDiscoveryPath(path) {
+			return true
+		}
+		path = strings.TrimSuffix(path, "/")
+		if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
+			parts := strings.Split(rest, "/")
+			return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
+		}
+		_, _, ok := splitParseOpenAPI(path)
+		return ok
+	}
+	for _, path := range paths {
+		g, v, ok := parseOpenAPIGroupVersionPath(path)
+		wg, wv, wok := splitParseOpenAPI(path)
+		require.Equal(t, []any{wg, wv, wok}, []any{g, v, ok}, path)
+		require.Equal(t, splitDiscovery(path), isSingleTenantDiscoveryPath(path), path)
+
+		var buf [6]string
+		parts := pathParts(path, buf[:0])
+		split := strings.Split(strings.TrimPrefix(path, "/"), "/")
+		require.Equal(t, split[:min(len(split), 6)], parts, path)
+	}
 }

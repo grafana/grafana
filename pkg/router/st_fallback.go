@@ -123,6 +123,9 @@ type singleTenantFallback struct {
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
+	// tracedTransport is transport wrapped for tracing, built once for the
+	// transport it wraps instead of on every request.
+	tracedTransport atomic.Pointer[tracedTransport]
 
 	// discovery is written only by run's goroutine; nil until the first poll.
 	discovery atomic.Pointer[singleTenantDiscovery]
@@ -300,7 +303,8 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	var buf [6]string
+	parts := pathParts(req.URL.Path, buf[:0])
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])
 		if errors.Is(err, errStackLookupThrottled) {
@@ -409,11 +413,27 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	}
 	path = strings.TrimSuffix(path, "/")
 	if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
-		parts := strings.Split(rest, "/")
-		return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
+		group, version, hasVersion := strings.Cut(rest, "/")
+		return group != "" && (!hasVersion || (version != "" && !strings.Contains(version, "/")))
 	}
 	_, _, ok := parseOpenAPIGroupVersionPath(path)
 	return ok
+}
+
+type tracedTransport struct {
+	base   http.RoundTripper
+	traced http.RoundTripper
+}
+
+// backendTransport returns st.transport wrapped for tracing. The wrapper is
+// cached for that transport, which tests replace after construction.
+func (st *singleTenantFallback) backendTransport() http.RoundTripper {
+	if cached := st.tracedTransport.Load(); cached != nil && cached.base == http.RoundTripper(st.transport) {
+		return cached.traced
+	}
+	traced := newBackendTransport(st.transport)
+	st.tracedTransport.Store(&tracedTransport{base: st.transport, traced: traced})
+	return traced
 }
 
 // forward proxies req to host. An empty group means discovery. observe, when
@@ -425,7 +445,7 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport:     newBackendTransport(st.transport),
+		Transport:     st.backendTransport(),
 		ErrorHandler:  proxyErrorHandler,
 		FlushInterval: streamingFlushInterval,
 		BufferPool:    proxyBuffers,
