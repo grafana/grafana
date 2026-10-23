@@ -705,6 +705,50 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 
 // countingKV counts data and event reads so tests can verify storage round trips
 // and detect per-event lookups.
+// closeTrackingKV hands out data values as plain readers, like the streaming
+// gRPC KV client, and counts how many of them get closed.
+type closeTrackingKV struct {
+	KV
+	closed atomic.Int32
+}
+
+type closeTrackingReader struct {
+	io.Reader
+	closed *atomic.Int32
+}
+
+func (r closeTrackingReader) Close() error {
+	r.closed.Add(1)
+	return nil
+}
+
+func (k *closeTrackingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	r, err := k.KV.Get(ctx, section, key)
+	if err != nil {
+		return nil, err
+	}
+	return closeTrackingReader{Reader: r, closed: &k.closed}, nil
+}
+
+func TestKvStorageBackend_GetValueFromDataStoreClosesReader(t *testing.T) {
+	store := &closeTrackingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(store))
+	_, rv := createAndWriteTestObject(t, backend)
+
+	store.closed.Store(0)
+	value, err := backend.getValueFromDataStore(context.Background(), DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            "test-resource",
+		ResourceVersion: rv,
+		Action:          DataActionCreated,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, value)
+	require.Equal(t, int32(1), store.closed.Load())
+}
+
 type countingKV struct {
 	KV
 	mu         sync.Mutex

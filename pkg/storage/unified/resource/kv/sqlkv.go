@@ -335,7 +335,7 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 		return nil, fmt.Errorf("failed to get key: %w", err)
 	}
 
-	return newBytesValue(value), nil
+	return NewBytesValue(value), nil
 }
 
 func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -370,7 +370,7 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 
 			kv := KeyValue{
 				Key:   strings.TrimPrefix(key, section+"/"),
-				Value: newBytesValue(value),
+				Value: NewBytesValue(value),
 			}
 			if shouldYield = yield(kv, nil); !shouldYield {
 				return
