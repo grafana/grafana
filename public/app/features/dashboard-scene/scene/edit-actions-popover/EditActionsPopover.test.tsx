@@ -1,5 +1,5 @@
 import { type JSX, type ReactNode } from 'react';
-import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/test-utils';
+import { act, createEvent, fireEvent, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { LazyLoader } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
@@ -172,6 +172,176 @@ describe('<EditActionsPopover />', () => {
       await hoverAndRest(elements.children());
 
       expect(elements.queryPopoverContent()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when showOutsideEditMode is set', () => {
+    test('resting the pointer shows floating content while element selection is not enabled', async () => {
+      render(
+        <EditActionsPopover showOutsideEditMode content={<span>popover-actions</span>}>
+          <div data-testid="reference-child">panel</div>
+        </EditActionsPopover>
+      );
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(screen.getByText('popover-actions')).toBeInTheDocument();
+    });
+  });
+
+  describe('when keepOpen is set', () => {
+    test('unhovering the reference does not hide floating content', async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const tree = (keepOpen: boolean) => (
+        <EditActionsPopover showOutsideEditMode keepOpen={keepOpen} content={<span>popover-actions</span>}>
+          <div data-testid="reference-child">panel</div>
+        </EditActionsPopover>
+      );
+      const { rerender } = render(tree(false));
+
+      await user.hover(screen.getByTestId('reference-child'));
+      act(() => {
+        jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+      });
+      rerender(tree(true));
+      await act(async () => {
+        await user.unhover(screen.getByTestId('reference-child'));
+      });
+
+      expect(screen.getByText('popover-actions')).toBeInTheDocument();
+
+      rerender(tree(false));
+
+      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when keyboardAccessible is set', () => {
+    function renderKeyboardAccessible() {
+      return render(
+        <>
+          <button>before</button>
+          <EditActionsPopover
+            showOutsideEditMode
+            keyboardAccessible
+            ariaLabel="Panel actions"
+            content={<button>action</button>}
+          >
+            <div data-testid="reference-child">
+              <button>inside reference</button>
+            </div>
+          </EditActionsPopover>
+        </>
+      );
+    }
+
+    test('keyboard focus within the reference shows the content as a labelled toolbar', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+
+      expect(screen.getByRole('button', { name: 'inside reference' })).toHaveFocus();
+      expect(screen.getByRole('toolbar', { name: 'Panel actions' })).toBeInTheDocument();
+    });
+
+    test('the content is next in the tab order after the reference', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+      await user.tab();
+
+      expect(screen.getByRole('button', { name: 'action' })).toHaveFocus();
+    });
+
+    test('pressing Escape hides the content', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
+    });
+
+    test('pressing Escape on an action returns focus to the reference', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'action' })).toHaveFocus();
+
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: 'inside reference' })).toHaveFocus());
+    });
+  });
+
+  describe('when openOnTap is set', () => {
+    function renderOpenOnTap() {
+      return render(
+        <>
+          <div data-testid="outside">outside</div>
+          <EditActionsPopover showOutsideEditMode openOnTap content={<span>popover-actions</span>}>
+            <div data-testid="reference-child">panel</div>
+          </EditActionsPopover>
+        </>
+      );
+    }
+
+    // Browsers don't always send mouseenter for a tap, so this sends only the pointer events and click of a tap.
+    function tap(element: HTMLElement) {
+      fireEvent.pointerDown(element, { pointerType: 'touch' });
+      fireEvent.pointerUp(element, { pointerType: 'touch' });
+      fireEvent.click(element);
+    }
+
+    test('a touch tap on the reference shows the content, and a tap outside hides it', async () => {
+      renderOpenOnTap();
+
+      tap(screen.getByTestId('reference-child'));
+
+      expect(await screen.findByText('popover-actions')).toBeInTheDocument();
+
+      tap(screen.getByTestId('outside'));
+
+      await waitFor(() => expect(screen.queryByText('popover-actions')).not.toBeInTheDocument());
+    });
+
+    test('the keyboard keeps working in controls inside the reference', async () => {
+      const user = userEvent.setup();
+      render(
+        <EditActionsPopover showOutsideEditMode openOnTap content={<span>popover-actions</span>}>
+          <div data-testid="reference-child">
+            <input aria-label="filter" />
+            <input type="checkbox" aria-label="show series" />
+          </div>
+        </EditActionsPopover>
+      );
+
+      await user.tab();
+      await user.keyboard('a b{Enter}');
+
+      expect(screen.getByRole('textbox', { name: 'filter' })).toHaveValue('a b');
+      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+
+      await user.tab();
+      await user.keyboard(' ');
+
+      expect(screen.getByRole('checkbox', { name: 'show series' })).toBeChecked();
+    });
+
+    test('a mouse click on the reference does not show the content without the pointer resting', async () => {
+      const { user } = renderOpenOnTap();
+
+      await user.click(screen.getByTestId('reference-child'));
+
+      expect(screen.getByText('panel')).toBeInTheDocument();
+      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
     });
   });
 

@@ -220,6 +220,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables a new version of log details optimized for displaying OTel logs */
   GrafanaOtelLogDetails: "grafana.otelLogDetails",
+  /** Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode */
+  GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
@@ -418,7 +420,7 @@ export const useFlagAlertEnrichment = (options?: ReactFlagEvaluationOptions): bo
  *
  * **Details:**
  * - flag key: `alertRuleRestore`
- * - default value: `true`
+ * - default value: `true` (preview only; `false` in unit tests)
  */
 export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertRuleRestore", true, options).value;
@@ -1533,6 +1535,18 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.otelLogDetails", false, options).value;
+};
+
+/**
+ * Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelActionsPopover`
+ * - default value: `true`
+ */
+export const useFlagGrafanaPanelActionsPopover = (options?: ReactFlagEvaluationOptions): boolean => {
+  // Preview only: on by default outside unit tests, which expect the original default.
+  return useFlag("grafana.panelActionsPopover", process.env.NODE_ENV !== 'test', options).value;
 };
 
 /**
