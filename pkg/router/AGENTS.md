@@ -162,7 +162,8 @@ Exactly one loader serves:
 
 The cloud loader serves nothing until each of its sources has polled once, successfully or not
 (`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A
-source's first attempt wakes the router either way.
+source's first attempt wakes the router either way, even when it finds nothing. A source records a
+poll only after storing its snapshot, so a `Load` that sees the poll also sees its groups.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:

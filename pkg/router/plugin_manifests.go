@@ -172,7 +172,6 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		return
 	}
 	t.cooldown.OnSuccess(now)
-	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
@@ -231,14 +230,17 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 	t.snapshot.Store(&backends)
 	t.status.recordSkipped(skipped)
+	first := t.status.recordSuccess(now)
 
+	// The first attempt ends the cloud loader's wait for this source, even
+	// when it finds nothing, so it wakes the router either way.
 	lastKeys := *t.lastKeys.Load()
-	if !sameKeySet(lastKeys, keys) {
+	changed := !sameKeySet(lastKeys, keys)
+	if changed {
 		t.lastKeys.Store(&keys)
-		select {
-		case dirty <- struct{}{}:
-		default: // already pending; coalesce
-		}
+	}
+	if changed || first {
+		wake(dirty)
 	}
 }
 

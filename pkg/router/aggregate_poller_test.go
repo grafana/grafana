@@ -293,3 +293,35 @@ func TestNewAggregateTarget_NormalizesTrailingSlash(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "https://baas.example.invalid", target.base.String())
 }
+
+// A source's first successful poll ends the cloud loader's wait for it even
+// when it finds nothing, so it wakes the router. Later empty polls don't.
+func TestFirstEmptyPollWakesTheRouter(t *testing.T) {
+	emptyDiscovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`))
+	}))
+	defer emptyDiscovery.Close()
+	aggregate, err := newAggregateTarget(aggregateTargetConfig{Name: "empty", URL: emptyDiscovery.URL}, emptyDiscovery.Client(), emptyDiscovery.Client().Transport)
+	require.NoError(t, err)
+
+	emptyManifests := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": []}`))
+	}))
+	defer emptyManifests.Close()
+	manifests, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, emptyManifests.URL, nil, emptyManifests.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+
+	for name, poll := range map[string]func(context.Context, chan<- struct{}){
+		"aggregate":        aggregate.poll,
+		"plugin manifests": manifests.poll,
+	} {
+		t.Run(name, func(t *testing.T) {
+			dirty := make(chan struct{}, 1)
+			poll(t.Context(), dirty)
+			require.Len(t, dirty, 1, "the first empty poll wakes the router")
+			<-dirty
+			poll(t.Context(), dirty)
+			require.Empty(t, dirty, "a later empty poll doesn't")
+		})
+	}
+}

@@ -58,9 +58,13 @@ type pollStatus struct {
 	skipped     atomic.Int64
 }
 
-func (p *pollStatus) recordSuccess(now time.Time) {
+// recordSuccess records a successful attempt, and reports whether it was the
+// source's first attempt (see recordFailure). Call it only once the attempt's
+// snapshot is stored: the cloud loader serves a source once it has polled,
+// and must then see the source's groups.
+func (p *pollStatus) recordSuccess(now time.Time) (first bool) {
 	p.lastSuccess.Store(now.UnixNano())
-	p.successes.Add(1)
+	return p.successes.Add(1) == 1 && p.failures.Load() == 0
 }
 
 // recordFailure records a failed attempt, and reports whether it was the
