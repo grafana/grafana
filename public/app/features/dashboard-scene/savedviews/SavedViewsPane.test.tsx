@@ -406,6 +406,14 @@ describe('SavedViewsPane', () => {
       expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
     });
 
+    it('scrolls the whole draft row into view, not just its input', async () => {
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Save new' }));
+
+      expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+    });
+
     it('replaces the empty state with the draft row when there are no views yet', async () => {
       renderPane([]);
 
