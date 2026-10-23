@@ -307,9 +307,6 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionPullRequest {
 		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
 	}
-	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
-		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
-	}
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
 	}

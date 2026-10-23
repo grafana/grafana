@@ -355,10 +355,7 @@ func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts r
 
 func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	if isDir {
-		if c.folderMetadataEnabled {
-			return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
-		}
-		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
+		return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
 	}
 
 	data, err := readBody(r, c.maxFileSize)
