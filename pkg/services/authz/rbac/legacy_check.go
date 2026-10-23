@@ -10,6 +10,7 @@ import (
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // LegacyCheck is a deprecated compatibility RPC used by ST callers during the
@@ -19,7 +20,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
-	//   - Permissions: NoOrgID globals, contextual team grants and SharedWithMe.
+	//   - Permissions: NoOrgID globals.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
@@ -40,30 +41,12 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	// AccessControl denies an identity when its full permission map is empty.
-	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:71 (AccessControl.evaluate).
-	//
-	// Our queries only load permissions for the actions in this request. An empty
-	// result may mean the identity has permissions for other actions.
-	// An empty ALL returns true even with no permissions. Evaluate(nil) checks
-	// whether this expression can do that.
-	//
-	// After direct evaluation denies, AccessControl attempts scope mutation if
-	// the full permission map is non-empty, even if it only contains other actions.
-	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:82 (AccessControl.evaluate).
-	//
-	// If either case applies and our queries return nothing, check for other
-	// permissions before allowing the request or skipping resolution.
-	checkUnrelatedPermissions := evaluator.Evaluate(nil) ||
-		(!req.GetSkipScopeResolution() && s.legacyScopeResolvers.HasResolvers())
-
 	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
 		ctx,
 		ns,
 		idType,
 		userUID,
 		actions,
-		checkUnrelatedPermissions,
 		req.GetSkipCache(),
 	)
 	if err != nil {
@@ -105,7 +88,6 @@ func (s *Service) getLegacyIdentityScopes(
 	idType types.IdentityType,
 	userUID string,
 	action string,
-	checkUnrelatedPermissions bool,
 	skipCache bool,
 ) ([]string, bool, error) {
 	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
@@ -114,7 +96,6 @@ func (s *Service) getLegacyIdentityScopes(
 		idType,
 		userUID,
 		[]string{action},
-		checkUnrelatedPermissions,
 		skipCache,
 	)
 	if err != nil {
@@ -125,16 +106,14 @@ func (s *Service) getLegacyIdentityScopes(
 }
 
 // getLegacyIdentityPermissions returns grants for the requested actions and whether
-// any permissions were found. The boolean can be true even when the map is empty:
-// render identities have fixed grants, and checkUnrelatedPermissions enables a
-// lookup for grants on other actions when the requested actions have none.
+// the identity has any effective permissions. The filtered map can be empty even
+// though the identity has the SharedWithMe grant or fixed renderer grants.
 func (s *Service) getLegacyIdentityPermissions(
 	ctx context.Context,
 	ns types.NamespaceInfo,
 	idType types.IdentityType,
 	userUID string,
 	actions []string,
-	checkUnrelatedPermissions bool,
 	skipCache bool,
 ) (map[string][]string, bool, error) {
 	permissions := make(map[string][]string, len(actions))
@@ -185,24 +164,18 @@ func (s *Service) getLegacyIdentityPermissions(
 		for _, grant := range grants {
 			permissions[action] = append(permissions[action], grant.Scope)
 		}
+
+		if action == folder.ActionFoldersRead {
+			sharedWithMeScope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID)
+			permissions[action] = append(permissions[action], sharedWithMeScope)
+		}
 	}
 
-	if len(permissions) > 0 {
-		return permissions, true, nil
-	}
-	if !checkUnrelatedPermissions {
-		return permissions, false, nil
-	}
-
-	// AccessControl skips resolvers only when the entire permission set is empty.
-	// A filtered action query cannot establish that, so check for any grant using
-	// the same identity/role/team restrictions without an action filter.
-	hasAnyPermissions, err := s.permissionStore.HasUserPermissions(ctx, ns, query)
-	if err != nil {
-		return nil, false, fmt.Errorf("could not check user permissions: %w", err)
-	}
-
-	return permissions, hasAnyPermissions, nil
+	// The legacy permission loader adds SharedWithMe for users, service accounts
+	// and anonymous identities even without stored grants (legacypermissions/loader.go).
+	// Their effective permission set is therefore nonempty, including when this
+	// filtered result is empty. No additional permission-existence query is needed.
+	return permissions, true, nil
 }
 
 func (s *Service) getLegacyUserPermissionQuery(

@@ -273,7 +273,7 @@ func TestLegacyResolverRequester(t *testing.T) {
 			tc.want.Permissions = map[int64]map[string][]string{
 				12: {
 					"library.panels:read": {"folders:uid:parent"},
-					"folders:read":        {"folders:uid:parent"},
+					"folders:read":        {"folders:uid:parent", acimpl.SharedWithMeFolderPermission.Scope},
 				},
 			}
 			require.Equal(t, tc.want, observed)

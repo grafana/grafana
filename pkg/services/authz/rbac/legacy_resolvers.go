@@ -173,14 +173,12 @@ func (s *Service) legacyResolverRequester(
 	// Library-panel resolution can perform folder visibility checks as the
 	// subject. Load that action explicitly instead of fetching a full snapshot.
 	if _, ok := grants[folder.ActionFoldersRead]; !ok {
-		checkUnrelatedPermissions := false
 		scopes, _, err := s.getLegacyIdentityScopes(
 			ctx,
 			req.namespace,
 			req.identityType,
 			req.userUID,
 			folder.ActionFoldersRead,
-			checkUnrelatedPermissions,
 			req.skipCache,
 		)
 		if err != nil {
