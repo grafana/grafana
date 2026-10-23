@@ -11,7 +11,6 @@ export interface ScopesContextValueState {
 
   // loading state of the scopes
   loading: boolean;
-  readOnly: boolean;
 
   // Currently selected scopes
   value: Scope[];
@@ -35,12 +34,6 @@ export interface ScopesContextValue {
   changeScopes(scopeNames: string[]): void;
 
   /**
-   * Set read-only mode.
-   * If `readOnly` is `true`, the selector will be set to read-only and the dashboards panel will be closed.
-   */
-  setReadOnly(readOnly: boolean): void;
-
-  /**
    * Enable or disable the usage of scopes.
    * This will hide the selector and the dashboards panel, and it will stop propagating the scopes to the query object.
    */
@@ -60,7 +53,6 @@ export function useScopes(): ScopesContextValue | undefined {
           state: context.state,
           stateObservable: context.stateObservable,
           changeScopes: context.changeScopes,
-          setReadOnly: context.setReadOnly,
           setEnabled: context.setEnabled,
         }
       : undefined;

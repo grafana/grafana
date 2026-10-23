@@ -25,7 +25,7 @@ describe('ScopesDashboardsTreeSearch', () => {
 
   beforeEach(() => {
     mockUseScopes.mockReturnValue({
-      state: { readOnly: false, drawerOpened: true },
+      state: { drawerOpened: true },
     } as ReturnType<typeof useScopes>);
     mockUseScopesServices.mockReturnValue({
       scopesService: {},

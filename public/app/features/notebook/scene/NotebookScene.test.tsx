@@ -691,7 +691,7 @@ describe('NotebookScene', () => {
     });
 
     function buildScopesContext(value: Scope[]): ScopesContextValue {
-      const state = { drawerOpened: false, enabled: false, loading: false, readOnly: false, value };
+      const state = { drawerOpened: false, enabled: false, loading: false, value };
       const stateObservable = new BehaviorSubject(state);
 
       return {
@@ -700,7 +700,6 @@ describe('NotebookScene', () => {
         },
         stateObservable,
         changeScopes: jest.fn(),
-        setReadOnly: jest.fn(),
         setEnabled: jest.fn((enabled: boolean) => stateObservable.next({ ...stateObservable.getValue(), enabled })),
       };
     }
