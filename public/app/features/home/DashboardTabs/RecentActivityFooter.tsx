@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 
-import { FilteredFooterActions, FooterAction, FooterFilterCombobox } from '../FooterActions';
+import { CardFooter, FooterAction, FooterFilterCombobox } from '../FooterActions';
 import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
 import { getPageKindMeta } from './recentActivityRows';
@@ -33,7 +33,7 @@ export function RecentActivityFooter({ recent }: Props) {
   };
 
   return (
-    <FilteredFooterActions
+    <CardFooter
       filter={
         kinds.length > 1 && (
           <FooterFilterCombobox<RecentActivityFilter>
@@ -55,6 +55,6 @@ export function RecentActivityFooter({ recent }: Props) {
       <FooterAction onClick={handleClear}>
         <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
       </FooterAction>
-    </FilteredFooterActions>
+    </CardFooter>
   );
 }

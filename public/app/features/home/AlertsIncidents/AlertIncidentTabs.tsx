@@ -7,7 +7,7 @@ import { useStoredString } from 'app/core/hooks/useStored';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
-import { FilteredFooterActions } from '../FooterActions';
+import { CardFooter } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
@@ -199,18 +199,16 @@ export function AlertIncidentTabs({
           ))}
         </TabsBar>
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab.id)}>
-          {/* Fixed height so the section doesn't jump between tabs. */}
+          {/* Fixed list height and a footer of one height, so switching tabs or loading never moves the card. */}
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
             <ScrollContainer showScrollIndicators>{activeTab.content}</ScrollContainer>
           </Box>
 
-          {(activeTab.filter || activeTab.footer) && (
-            <Box padding={1} paddingTop={1.5}>
-              <FilteredFooterActions filter={activeTab.filter && <LabelFilterCombobox {...activeTab.filter} />}>
-                {activeTab.footer}
-              </FilteredFooterActions>
-            </Box>
-          )}
+          <Box padding={1} paddingTop={1.5}>
+            <CardFooter filter={activeTab.filter && <LabelFilterCombobox {...activeTab.filter} />}>
+              {activeTab.footer}
+            </CardFooter>
+          </Box>
         </TabContent>
       </HomeSection>
     </Stack>

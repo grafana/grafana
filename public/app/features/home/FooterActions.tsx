@@ -14,12 +14,12 @@ export function FooterActions({ children }: { children: ReactNode }) {
 }
 
 /**
- * Footer row with a filter on the left and the actions on the right, kept on one line. The filter
- * has one width in every card and gives way first: it shrinks and truncates its value when the row
- * is short, so the actions never move or wrap.
+ * Card footer: an optional filter on the left, actions on the right. One height whatever it holds, so tabs and
+ * load states never move the card. The filter grows to its cap and gives way first when the row is short: it
+ * shrinks and truncates its value; only when even its floor cannot share the line do the actions wrap under it.
  */
-export function FilteredFooterActions({ filter, children }: { filter?: ReactNode; children?: ReactNode }) {
-  const styles = useStyles2(getFilteredStyles);
+export function CardFooter({ filter, children }: { filter?: ReactNode; children?: ReactNode }) {
+  const styles = useStyles2(getCardFooterStyles);
 
   return (
     <div className={styles.row}>
@@ -41,7 +41,7 @@ interface FooterFilterComboboxProps<T extends string | number> {
 }
 
 /**
- * The filter for a FilteredFooterActions slot. Hovering a truncated value shows it in full through a native
+ * The filter for a CardFooter slot. Hovering a truncated value shows it in full through a native
  * `title` (Tooltip would make the wrapper a Tab stop), measured on hover, the only time it matters, and dropped
  * while the menu is open: the input then shows the label as a placeholder and the list has the full text.
  */
@@ -64,18 +64,21 @@ export function FooterFilterCombobox<T extends string | number>({ label, ...prop
   );
 }
 
-const getFilteredStyles = (theme: GrafanaTheme2) => ({
+const getCardFooterStyles = (theme: GrafanaTheme2) => ({
+  // The combobox height, so a footer holding only a text action (or nothing yet) is as tall as one with a filter.
   row: css({
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: theme.spacing(2),
     minWidth: 0,
+    minHeight: theme.spacing(theme.components.height.md),
   }),
-  // The floor fits the default labels ("Your teams", "All incidents") with the icon and chevron, so
-  // only picked values ever truncate.
+  // Basis is the floor (icon, a few characters, chevron) and decides when the actions wrap; the cap keeps the
+  // control one width across cards whenever there is room.
   filter: css({
-    flex: `0 1 ${theme.spacing(30)}`,
-    minWidth: theme.spacing(19),
+    flex: `1 1 ${theme.spacing(15)}`,
+    maxWidth: theme.spacing(30),
 
     '& input': {
       textOverflow: 'ellipsis',
