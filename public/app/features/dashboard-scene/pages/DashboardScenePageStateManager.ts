@@ -595,9 +595,10 @@ abstract class DashboardScenePageStateManagerBase<T>
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
     const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
-    if (scene && savedViewsEnabled && !isRenderTarget(options.route)) {
+    const pathname = locationService.getLocation().pathname;
+    if (scene && savedViewsEnabled && !isRenderTarget(options.route) && !playlistSrv.state.isPlaying) {
       // Writes the viewer's stored default into ?viewFilter= when the URL has none. Skipped for render
-      // targets (reports, embeds), whose fixed parameters a personal default must not replace.
+      // targets (reports, embeds) and playlists, whose fixed parameters a personal default must not replace.
       await applyDefaultSavedViewToUrl(scene);
     }
 
@@ -605,6 +606,11 @@ abstract class DashboardScenePageStateManagerBase<T>
     // which URL sync needs resolved; the pane fetches lazily.
     if (scene && savedViewsEnabled && typeof locationService.getSearchObject().viewFilter === 'string') {
       await loadSavedViews(scene);
+    }
+
+    if (savedViewsEnabled && locationService.getLocation().pathname !== pathname) {
+      // The viewer navigated away during the awaits above; don't mount this scene over the new page.
+      return null;
     }
 
     return scene;
