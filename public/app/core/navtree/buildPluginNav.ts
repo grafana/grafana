@@ -218,7 +218,11 @@ function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: Standalo
     return updateNavById(tree, sectionId, (node) => ({
       ...node,
       children: (node.children ?? []).map((child) =>
-        child === replaced ? { ...child, ...link, children: [] } : child
+        // Only the fields the server copies (applinks.go): the core page keeps its
+        // own text, subtitle, keywords and flags, the plugin takes over the routing
+        child === replaced
+          ? { ...child, id: link.id, sortWeight: link.sortWeight, pluginId: link.pluginId, children: [] }
+          : child
       ),
     }));
   }

@@ -385,6 +385,9 @@ export function appNavConfigFor(appId: string): AppNavConfig | undefined {
   }
   return {
     ...builtIn,
+    // Naming a section says where the app goes, so it also undoes a built-in
+    // hide: an instance that wants a hidden app back can ask for it
+    hidden: false,
     sectionId: toSectionId(override.sectionId),
     sortWeight: override.sortWeight || builtIn?.sortWeight || 0,
   };

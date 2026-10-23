@@ -708,6 +708,18 @@ describe('applyPluginNav', () => {
       ]);
     });
 
+    it('lets an operator override bring a hidden app back', () => {
+      setup({
+        config: { navigation: { appSections: { 'grafana-collector-app': { sectionId: NavID.cfg } } } },
+        permissions: ['datasources:read', 'datasources:create', 'users:read'],
+        orgRole: 'Admin',
+      });
+
+      const merged = merge(app('grafana-collector-app', 'Collector', [page('Home', '/a/grafana-collector-app/home')]));
+
+      expect(findById(findById(merged, NavID.cfg)?.children ?? [], 'plugin-page-grafana-collector-app')).toBeDefined();
+    });
+
     it('keeps a hidden page out of the nav entirely', () => {
       jest
         .spyOn(appNavConfig, 'appNavPathConfigFor')
@@ -735,12 +747,19 @@ describe('applyPluginNav', () => {
           id: NavID.connections,
           text: 'Connections',
           url: '/connections',
-          children: [{ id: 'connections-infrastructure', text: 'Infrastructure', url: '/connections/infrastructure' }],
+          children: [
+            {
+              id: 'connections-infrastructure',
+              text: 'Infrastructure',
+              url: '/connections/infrastructure',
+              keywords: ['cloud', 'hosts'],
+            },
+          ],
         },
       ];
 
       const merged = applyPluginNav(existing, [
-        app('some-app', 'Some app', [page('Infrastructure', '/connections/infrastructure')]),
+        app('some-app', 'Some app', [page('Infra from the plugin', '/connections/infrastructure')]),
       ]);
 
       const children = findById(merged, NavID.connections)?.children ?? [];
@@ -748,6 +767,9 @@ describe('applyPluginNav', () => {
       expect(children).toHaveLength(1);
       expect(children[0].id).toBe('standalone-plugin-page-/connections/infrastructure');
       expect(children[0].pluginId).toBe('some-app');
+      // the core page keeps what the server leaves alone
+      expect(children[0].text).toBe('Infrastructure');
+      expect(children[0].keywords).toEqual(['cloud', 'hosts']);
     });
   });
 });
