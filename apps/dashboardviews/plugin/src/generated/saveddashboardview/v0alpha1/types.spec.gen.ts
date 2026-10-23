@@ -4,8 +4,7 @@ export interface SavedViewVariable {
 	name: string;
 	// "adhoc" | "query" | "custom" | ...
 	type: string;
-	// value is the variable's scalar or multi-value selection (query/custom/datasource variables).
-	// Omitted for ad-hoc variables, which carry their state in filters instead.
+	// value is omitted for ad hoc variables, which use filters instead.
 	value?: string | string[];
 	filters?: SavedViewFilter[];
 }
@@ -30,11 +29,7 @@ export const defaultSavedViewFilter = (): SavedViewFilter => ({
 export interface SavedViewSectionFilter {
 	sectionKind: "tab" | "row";
 	sectionKey: string;
-	// sectionTitle is the tab/row's title at capture time, used to sanity-check on apply that the
-	// section resolved at sectionKey still looks like the same one -- layout edits (reordering,
-	// inserting, deleting tabs/rows) can leave sectionKey resolving successfully but to a
-	// different section. Optional for backward compatibility with views saved before this field
-	// existed; those still apply unconditionally, same as before.
+	// sectionTitle guards against layout edits leaving sectionKey pointing at a different section.
 	sectionTitle?: string;
 	variables: SavedViewVariable[];
 }
@@ -46,11 +41,9 @@ export const defaultSavedViewSectionFilter = (): SavedViewSectionFilter => ({
 });
 
 export interface Spec {
-	// dashboardUID is the dashboard this view belongs to. A view only ever applies to the
-	// dashboard it was created on.
+	// dashboardUID is the dashboard this view belongs to.
 	dashboardUID: string;
-	// name is the user-facing label for this view (distinct from metadata.name, which is the
-	// resource's system-generated identifier).
+	// name is the user-facing title, distinct from the generated metadata.name.
 	name: string;
 	timeRange: {
 		from: string;
@@ -58,8 +51,7 @@ export interface Spec {
 		timezone?: string;
 	};
 	variables: SavedViewVariable[];
-	// sectionFilters captures ad-hoc filters scoped to a tab or row rather than the whole
-	// dashboard. Stretch goal — omitted entirely on dashboards that don't use tabs/rows.
+	// sectionFilters captures ad hoc filters scoped to a tab or row.
 	sectionFilters?: SavedViewSectionFilter[];
 }
 
