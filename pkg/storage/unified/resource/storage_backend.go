@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"iter"
 	"maps"
 	"math/rand/v2"
@@ -2414,7 +2413,7 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 		return []byte{}, err
 	}
 
-	value, err := io.ReadAll(raw)
+	value, err := kv.ReadAllAndClose(raw)
 	if err != nil {
 		return []byte{}, err
 	}
