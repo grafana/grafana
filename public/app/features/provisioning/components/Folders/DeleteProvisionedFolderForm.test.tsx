@@ -1,55 +1,28 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { useEffect } from 'react';
+import { HttpResponse, delay, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
-import {
-  type RepositoryView,
-  useCreateRepositoryJobsMutation,
-  useGetRepositoryRefsQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
-import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
+import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
 import {
   type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
+import { createJob, createRepository } from '../../mocks/factories';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
-// Mock dependencies
+setupProvisioningMswServer();
+
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
   useNavigate: () => mockNavigate,
-}));
-
-jest.mock('react-redux', () => {
-  const actual = jest.requireActual('react-redux');
-  return {
-    ...actual,
-    useDispatch: jest.fn,
-  };
-});
-
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useCreateRepositoryJobsMutation: jest.fn(),
-  useGetRepositoryRefsQuery: jest.fn(),
-  provisioningAPI: {
-    endpoints: {
-      listRepository: {
-        select: jest.fn(() => () => ({ data: { items: [] } })),
-      },
-    },
-  },
-  provisioningAPIv0alpha1: {
-    endpoints: {
-      listRepository: {
-        select: jest.fn(() => () => ({ data: { items: [] } })),
-      },
-    },
-  },
 }));
 
 jest.mock('../../hooks/useProvisionedFolderFormData');
@@ -69,26 +42,35 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="shared-fields" />,
 }));
 
-// The job watcher reports whatever status a test queues up, in place of polling the API.
-let mockJobStatusInfo: StepStatusInfo = { status: 'running' };
-jest.mock('app/features/provisioning/Job/JobStatus', () => ({
-  JobStatus: ({ onStatusChange }: { onStatusChange?: (info: StepStatusInfo) => void }) => {
-    useEffect(() => {
-      onStatusChange?.(mockJobStatusInfo);
-    }, [onStatusChange]);
-    return <div data-testid="job-status" />;
-  },
-}));
-
-const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
-  typeof useCreateRepositoryJobsMutation
->;
-const mockUseGetRepositoryRefsQuery = useGetRepositoryRefsQuery as jest.Mock;
 const mockUseProvisionedFolderFormData = useProvisionedFolderFormData as jest.MockedFunction<
   typeof useProvisionedFolderFormData
 >;
 
-const mockCreateJob = jest.fn();
+type DeleteJobBody = {
+  message?: string;
+  delete?: { ref?: string; resources?: Array<{ name: string; group: string; kind: string }> };
+};
+
+const successJob = (status: Record<string, unknown> = {}) =>
+  createJob({ spec: { action: 'delete' }, status: { state: 'success', ...status } });
+
+/** Captures the posted delete job and answers the job watch with `job`. */
+function mockDeleteJob(job: Job = successJob()) {
+  const posted: { repository?: string; body?: DeleteJobBody } = {};
+  server.use(
+    http.post(`${BASE}/repositories/:name/jobs`, async ({ request, params }) => {
+      posted.repository = String(params.name);
+      posted.body = (await request.json()) as DeleteJobBody;
+      return HttpResponse.json(job);
+    }),
+    http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [job], metadata: { resourceVersion: '1' } })),
+    // The finished job links back to its repository
+    http.get(`${BASE}/repositories/:name`, ({ params }) =>
+      HttpResponse.json(createRepository({ metadata: { name: String(params.name) } }))
+    )
+  );
+  return posted;
+}
 
 const mockParentFolder: FolderDTO = {
   id: 1,
@@ -148,48 +130,25 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isLoading: false,
 };
 
-function setup(
-  props: Partial<Parameters<typeof DeleteProvisionedFolderForm>[0]> = {},
-  hookData = defaultHookData,
-  requestState: { isLoading: boolean; isSuccess: boolean; isError: boolean; error: Error | null } = {
-    isLoading: false,
-    isSuccess: false,
-    isError: false,
-    error: null,
-  }
-) {
-  const mockJobMutationResult = [mockCreateJob, requestState] as unknown as ReturnType<
-    typeof useCreateRepositoryJobsMutation
-  >;
-  const mockHookResult = hookData as ReturnType<typeof useProvisionedFolderFormData>;
-
-  // The submit path awaits createJob(...).unwrap() and hands the job to the job watcher
-  mockCreateJob.mockReturnValue({ unwrap: () => Promise.resolve({ metadata: { name: 'job-1' } }) });
-  mockUseCreateRepositoryJobsMutation.mockReturnValue(mockJobMutationResult);
-  mockUseProvisionedFolderFormData.mockReturnValue(mockHookResult);
+function setup(hookData = defaultHookData, job: Job = successJob()) {
+  const posted = mockDeleteJob(job);
+  mockUseProvisionedFolderFormData.mockReturnValue(hookData as ReturnType<typeof useProvisionedFolderFormData>);
 
   const onDismiss = jest.fn();
-  const defaultProps = {
-    parentFolder: mockParentFolder,
-    onDismiss,
-  };
-
   const renderResult = render(
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-      <DeleteProvisionedFolderForm {...defaultProps} {...props} />
+      <DeleteProvisionedFolderForm parentFolder={mockParentFolder} onDismiss={onDismiss} />
     </OpenFeatureProvider>
   );
 
   const clickDeleteButton = async () => {
-    const deleteButton = screen.getByRole('button', { name: /delete/i });
-    await userEvent.click(deleteButton);
+    await renderResult.user.click(screen.getByRole('button', { name: /delete/i }));
   };
 
   return {
     ...renderResult,
     onDismiss,
-    mockCreateJob,
-    mockNavigate,
+    posted,
     clickDeleteButton,
   };
 }
@@ -197,14 +156,6 @@ function setup(
 describe('DeleteProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockNavigate.mockClear();
-    mockJobStatusInfo = { status: 'running' };
-    // The hook reads `currentData`, the refs of the repository currently selected
-    mockUseGetRepositoryRefsQuery.mockReturnValue({
-      currentData: { items: [{ name: 'main' }, { name: 'develop' }] },
-      isLoading: false,
-    });
-    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   describe('rendering', () => {
@@ -220,30 +171,26 @@ describe('DeleteProvisionedFolderForm', () => {
     });
 
     it('should not render the form when the repository is missing', () => {
-      setup({}, { ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
+      setup({ ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
   });
 
   describe('form submission', () => {
     it('should call createJob with correct parameters when deleting on the configured branch', async () => {
-      const { mockCreateJob, clickDeleteButton } = setup();
+      const { posted, clickDeleteButton } = setup();
 
       await clickDeleteButton();
 
-      await waitFor(() => {
-        expect(mockCreateJob).toHaveBeenCalledWith({
-          name: 'test-repo',
-          jobSpec: {
-            action: 'delete',
-            message: 'Delete folder: Test Folder',
-            delete: {
-              ref: undefined, // the configured branch omits ref
-              // The job names the folder, so authorization runs against that resource
-              resources: [{ name: 'folder-uid', group: 'folder.grafana.app', kind: 'Folder' }],
-            },
-          },
-        });
+      await waitFor(() => expect(posted.body).toBeDefined());
+      expect(posted.repository).toBe('test-repo');
+      // The configured branch omits ref; the job names the folder, so authorization runs against that resource
+      expect(posted.body).toEqual({
+        action: 'delete',
+        message: 'Delete folder: Test Folder',
+        delete: {
+          resources: [{ name: 'folder-uid', group: 'folder.grafana.app', kind: 'Folder' }],
+        },
       });
     });
 
@@ -253,72 +200,66 @@ describe('DeleteProvisionedFolderForm', () => {
         ref: 'feature-branch',
         comment: 'Custom delete message',
       };
-      const { mockCreateJob, clickDeleteButton } = setup({}, { ...defaultHookData, initialValues: customFormData });
+      const { posted, clickDeleteButton } = setup({ ...defaultHookData, initialValues: customFormData });
 
       await clickDeleteButton();
 
-      await waitFor(() => {
-        expect(mockCreateJob).toHaveBeenCalledWith(
-          expect.objectContaining({
-            jobSpec: expect.objectContaining({
-              message: 'Custom delete message',
-              delete: expect.objectContaining({ ref: 'feature-branch' }),
-            }),
-          })
-        );
-      });
+      await waitFor(() => expect(posted.body).toBeDefined());
+      expect(posted.body).toEqual(
+        expect.objectContaining({
+          message: 'Custom delete message',
+          delete: expect.objectContaining({ ref: 'feature-branch' }),
+        })
+      );
     });
 
     it('renders the message from the repo commit template when comment is empty', async () => {
-      const { mockCreateJob, clickDeleteButton } = setup(
-        {},
-        {
-          ...defaultHookData,
-          repository: {
-            ...defaultHookData.repository!,
-            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
-          },
-          initialValues: { ...mockFormData, ref: 'feature-branch', comment: '' },
-        }
-      );
+      const { posted, clickDeleteButton } = setup({
+        ...defaultHookData,
+        repository: {
+          ...defaultHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+        },
+        initialValues: { ...mockFormData, ref: 'feature-branch', comment: '' },
+      });
 
       await clickDeleteButton();
 
-      await waitFor(() => {
-        expect(mockCreateJob).toHaveBeenCalledWith(
-          expect.objectContaining({
-            jobSpec: expect.objectContaining({ message: 'chore(folders): delete Test Folder' }),
-          })
-        );
-      });
+      await waitFor(() => expect(posted.body).toBeDefined());
+      expect(posted.body!.message).toBe('chore(folders): delete Test Folder');
     });
 
     it('should not submit if repository name is missing', async () => {
-      const { mockCreateJob, clickDeleteButton } = setup({}, { ...defaultHookData, repository: undefined });
+      const { posted, clickDeleteButton } = setup({ ...defaultHookData, repository: undefined });
 
       await clickDeleteButton();
 
-      await waitFor(() => {
-        expect(mockCreateJob).not.toHaveBeenCalled();
-      });
+      expect(await screen.findByText('Missing required fields')).toBeInTheDocument();
+      expect(posted.body).toBeUndefined();
     });
   });
 
   describe('loading state', () => {
-    it('should show loading text and disable button when request is loading', () => {
-      setup({}, defaultHookData, { isLoading: true, isSuccess: false, isError: false, error: null });
+    it('should show loading text and disable button while the job is being created', async () => {
+      const { clickDeleteButton } = setup();
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async () => {
+          await delay(200);
+          return HttpResponse.json(successJob());
+        })
+      );
 
-      const deleteButton = screen.getByRole('button', { name: /deleting/i });
-      expect(deleteButton).toBeDisabled();
+      await clickDeleteButton();
+
+      expect(await screen.findByRole('button', { name: /deleting/i })).toBeDisabled();
     });
   });
 
   describe('success handling', () => {
     it('redirects to the dashboard list with the PR link once a branch delete job finishes', async () => {
-      mockJobStatusInfo = { status: 'success', urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } };
-      const { mockNavigate, onDismiss, clickDeleteButton } = setup(
-        {},
-        { ...defaultHookData, initialValues: { ...mockFormData, ref: 'feature-branch' } }
+      const { onDismiss, clickDeleteButton } = setup(
+        { ...defaultHookData, initialValues: { ...mockFormData, ref: 'feature-branch' } },
+        successJob({ url: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } })
       );
 
       await clickDeleteButton();
@@ -336,8 +277,7 @@ describe('DeleteProvisionedFolderForm', () => {
     });
 
     it('redirects to the dashboard list once a configured-branch delete job finishes', async () => {
-      mockJobStatusInfo = { status: 'success' };
-      const { mockNavigate, onDismiss, clickDeleteButton } = setup();
+      const { onDismiss, clickDeleteButton } = setup();
 
       await clickDeleteButton();
 
@@ -348,10 +288,9 @@ describe('DeleteProvisionedFolderForm', () => {
     it('redirects with the PR title captured at submission after the refs list the new branch', async () => {
       // Creating the job refetches the refs. Once they include the branch the live PR title clears
       // (the branch is no longer "new"), so the redirect must use what the form was submitted with.
-      mockJobStatusInfo = { status: 'success', urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } };
-      mockUseGetRepositoryRefsQuery.mockReturnValue({ currentData: { items: [{ name: 'main' }] }, isLoading: false });
-      const { mockNavigate, clickDeleteButton } = setup(
-        {},
+      let refs = [{ name: 'main' }];
+      server.use(http.get(`${BASE}/repositories/:name/refs`, () => HttpResponse.json({ items: refs })));
+      const { posted, clickDeleteButton } = setup(
         {
           ...defaultHookData,
           repository: {
@@ -360,17 +299,16 @@ describe('DeleteProvisionedFolderForm', () => {
             pullRequest: { titleTemplate: '{{action}}: {{title}}' },
           },
           initialValues: { ...mockFormData, ref: 'feature-branch' },
-        }
-      );
-      mockCreateJob.mockReturnValue({
-        unwrap: async () => {
-          mockUseGetRepositoryRefsQuery.mockReturnValue({
-            currentData: { items: [{ name: 'main' }, { name: 'feature-branch' }] },
-            isLoading: false,
-          });
-          return { metadata: { name: 'job-1' } };
         },
-      });
+        successJob({ url: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } })
+      );
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          posted.body = (await request.json()) as DeleteJobBody;
+          refs = [{ name: 'main' }, { name: 'feature-branch' }];
+          return HttpResponse.json(successJob({ url: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } }));
+        })
+      );
 
       await clickDeleteButton();
 
@@ -382,13 +320,13 @@ describe('DeleteProvisionedFolderForm', () => {
 
   describe('error handling', () => {
     it('should show the API error in an alert when the job cannot be created', async () => {
-      const { onDismiss, clickDeleteButton } = setup(
-        {},
-        { ...defaultHookData, initialValues: { ...mockFormData, ref: 'feature-branch' } }
-      );
-      mockCreateJob.mockReturnValue({
-        unwrap: () => Promise.reject({ status: 500, data: { message: 'API Error' } }),
+      const { onDismiss, clickDeleteButton } = setup({
+        ...defaultHookData,
+        initialValues: { ...mockFormData, ref: 'feature-branch' },
       });
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json({ message: 'API Error' }, { status: 500 }))
+      );
 
       await clickDeleteButton();
 
@@ -398,9 +336,9 @@ describe('DeleteProvisionedFolderForm', () => {
       expect(onDismiss).not.toHaveBeenCalled();
     });
 
-    it('shows the job error instead of a blank drawer when the job fails', async () => {
-      mockJobStatusInfo = { status: 'error', error: 'Error fetching active job' };
-      const { mockNavigate, onDismiss, clickDeleteButton } = setup();
+    it('shows the job error instead of a blank drawer when the job lookup fails', async () => {
+      const { onDismiss, clickDeleteButton } = setup();
+      server.use(http.get(`${BASE}/jobs`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
       await clickDeleteButton();
 
