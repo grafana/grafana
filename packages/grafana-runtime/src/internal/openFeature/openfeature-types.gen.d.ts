@@ -45,6 +45,7 @@ declare module "@openfeature/core" {
     | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"

@@ -2172,14 +2172,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max data points",
-      "tooltip-max-data-points": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+      "tooltip-max-data-points": "Per series, used directly by some data sources and to calculate auto interval"
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "new"
     },
     "min-interval-option": {
       "label-interval": "Interval",
-      "tooltip-interval": "Interval sent to the data source. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
+      "tooltip-interval": "Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4616,8 +4616,7 @@
       "delete-warning": "This will delete this folder and all its descendants.",
       "folder-empty": "Selected folder is empty",
       "folder-not-empty": "Selected folder contains resources that will be deleted",
-      "missing-info": "Missing required fields",
-      "success-message": "Folder deleted successfully"
+      "missing-info": "Missing required fields"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -7255,8 +7254,7 @@
       "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "no-repository-selected": "Missing required repository for deletion",
-      "success-message": "Dashboard deleted successfully"
+      "no-repository-selected": "Missing required repository for deletion"
     },
     "description-label": {
       "description": "Description"
@@ -7535,14 +7533,10 @@
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
-      "current-file-not-found": "Current dashboard file could not be found",
       "drawer-title": "Move Provisioned Dashboard",
-      "file-load-error": "Error loading dashboard",
-      "loading-dashboard-data": "Loading dashboard data",
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -14328,6 +14322,7 @@
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "Pushing to the configured branch is disabled for this repository",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
