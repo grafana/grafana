@@ -37,17 +37,16 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "yarn clean && yarn create:folders && yarn copy:dist",
+    "build": "npm run clean && npm run create:folders && npm run copy:dist",
     "clean": "rm -rf ./dist && rm -f package.tgz",
     "copy:api": "cp ../../public/openapi3.json ./src/api",
     "copy:dist": "cp ./src/apis/* ./dist/apis && cp ./src/api/* ./dist/api",
     "create:folders": "mkdir -p dist/api dist/apis",
     "format": "prettier \"**/*.json\" --write --log-level=warn",
     "generate:openapi": "make -C ../../ generate-openapi",
-    "typecheck": "",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "process-specs": "node src/scripts/process-specs.ts && yarn copy:api && yarn format"
+    "process-specs": "node src/scripts/process-specs.ts && npm run copy:api && npm run format"
   },
   "engines": {
     "node": ">= 22 <25"
