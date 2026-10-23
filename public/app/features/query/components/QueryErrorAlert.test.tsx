@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { setPluginComponentsHook } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
+import { getMockDataSourceMeta } from 'app/features/datasources/mocks/dataSourcesMocks';
 
 import { QueryErrorAlert } from './QueryErrorAlert';
 
@@ -34,6 +35,7 @@ describe('QueryErrorAlert', () => {
     uid: 'ds-uid',
     type: 'prometheus',
     name: 'Prometheus',
+    meta: getMockDataSourceMeta(),
     readOnly: false,
     access: 'proxy',
     jsonData: {},
