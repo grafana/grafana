@@ -128,7 +128,10 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
       // If the field has no name, we fallback to the old index version.
       const sourceField = findSourceField(dest.fields[f], source.fields, f);
       if (!sourceField) {
-        dest.fields[f].values.splice(destIdx, 0, undefined);
+        // Check before splicing
+        if (!entryExistsInDest) {
+          dest.fields[f].values.splice(destIdx, 0, undefined);
+        }
         continue;
       }
       // Same value, accumulate
