@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/sony/gobreaker/v2"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
@@ -18,8 +20,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -143,6 +143,9 @@ type GrafanaRouter struct {
 	// reconcile retries it only once its own backoff passes. Owned by
 	// reconcile.
 	loadFailures map[string]*groupLoadFailure
+	// loadFailureDocs is the status page's copy of loadFailures, published by
+	// reconcile, so a status request never reads reconcile's state.
+	loadFailureDocs atomic.Pointer[[]loadFailureDoc]
 	// warnings holds the reconcile warnings logged for the routes the loader
 	// last returned, so each is logged once while it lasts. Owned by
 	// reconcile.
@@ -706,6 +709,9 @@ type groupLoadFailure struct {
 	key     string
 	err     error
 	backoff *cooldown
+	// failures counts the key's consecutive failed loads, since the first.
+	failures int
+	since    time.Time
 }
 
 // storeServing records a completed reconcile's outcome. Errors are logged
@@ -841,6 +847,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		}
 	}
 
+	r.publishLoadFailures()
 	r.publish(ctx)
 	// End retired watches only after publishing, so clients that re-watch
 	// reach the new backend. Then destroy what the retired handlers hold,
@@ -852,6 +859,25 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		destroyWhenDrained(ctx, retired.group, retired.entry)
 	}
 	return errors.Join(errs...)
+}
+
+// publishLoadFailures publishes the groups whose backend is failing to load,
+// for the status page.
+func (r *GrafanaRouter) publishLoadFailures() {
+	docs := make([]loadFailureDoc, 0, len(r.loadFailures))
+	for group, failure := range r.loadFailures {
+		_, serving := r.served[group]
+		docs = append(docs, loadFailureDoc{
+			Group:    group,
+			Key:      failure.key,
+			Failures: failure.failures,
+			Since:    failure.since.UTC(),
+			RetryAt:  failure.backoff.next.UTC(),
+			Serving:  serving,
+		})
+	}
+	sort.Slice(docs, func(i, j int) bool { return docs[i].Group < docs[j].Group })
+	r.loadFailureDocs.Store(&docs)
 }
 
 // loadGroup loads b's handler for group. A backend that failed to load is
@@ -869,13 +895,14 @@ func (r *GrafanaRouter) loadGroup(ctx context.Context, group string, b Backend) 
 		return handler, nil
 	}
 	if failure == nil || failure.key != b.Key() {
-		failure = &groupLoadFailure{key: b.Key(), backoff: newCooldown(0, reconcileRetryMin, groupLoadRetryMax)}
+		failure = &groupLoadFailure{key: b.Key(), backoff: newCooldown(0, reconcileRetryMin, groupLoadRetryMax), since: now}
 		if r.loadFailures == nil {
 			r.loadFailures = map[string]*groupLoadFailure{}
 		}
 		r.loadFailures[group] = failure
 	}
 	failure.backoff.OnFailure(now)
+	failure.failures++
 	failure.err = fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err)
 	return nil, failure.err
 }

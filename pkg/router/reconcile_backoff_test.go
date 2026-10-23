@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"testing/synctest"
@@ -111,4 +112,48 @@ func TestReconcileLogsEachWarningOnce(t *testing.T) {
 	loader.backends = duplicate
 	require.NoError(t, router.reconcile(ctx))
 	require.Equal(t, 2, warnings(), "a warning that came back is logged again")
+}
+
+// The status page lists the groups whose backend keeps failing to load,
+// served or not, without their error text.
+func TestRouterStatusListsLoadFailures(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		failing := &flakyBackend{key: "1", fail: true}
+		loader := &mutableLoader{backends: []Backend{failing}}
+		router := NewGrafanaRouter(loader, nil)
+		require.Error(t, router.reconcile(t.Context()))
+		start := time.Now().UTC()
+
+		// Never served: the group is only in loadFailures.
+		doc, groups := readStatus(t, router)
+		require.NotContains(t, groups, backoffGroup)
+		require.Equal(t, []loadFailureDoc{{
+			Group: backoffGroup, Key: "1", Failures: 1, Since: start, RetryAt: start.Add(reconcileRetryMin),
+		}}, doc.LoadFailures)
+
+		time.Sleep(reconcileRetryMin)
+		require.Error(t, router.reconcile(t.Context()))
+		doc, _ = readStatus(t, router)
+		require.Equal(t, 2, doc.LoadFailures[0].Failures)
+		require.Equal(t, start, doc.LoadFailures[0].Since)
+		require.Equal(t, time.Now().UTC().Add(2*reconcileRetryMin), doc.LoadFailures[0].RetryAt)
+
+		// A new key that fails while the last-known-good backend serves.
+		failing.fail = false
+		time.Sleep(2 * reconcileRetryMin)
+		require.NoError(t, router.reconcile(t.Context()))
+		doc, _ = readStatus(t, router)
+		require.Empty(t, doc.LoadFailures)
+		loader.backends = []Backend{&flakyBackend{key: "2", fail: true}}
+		require.Error(t, router.reconcile(t.Context()))
+		doc, groups = readStatus(t, router)
+		require.Equal(t, "1", groups[backoffGroup].Key)
+		require.Len(t, doc.LoadFailures, 1)
+		require.Equal(t, "2", doc.LoadFailures[0].Key)
+		require.True(t, doc.LoadFailures[0].Serving)
+
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil), http.NotFoundHandler())
+		require.NotContains(t, rec.Body.String(), "load failed", "error text stays in the log")
+	})
 }
