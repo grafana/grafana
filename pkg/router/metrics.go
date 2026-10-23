@@ -2,13 +2,13 @@ package router
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sony/gobreaker/v2"
 )
 
@@ -82,8 +82,32 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Help:      "How each group's aggregated discovery was obtained: provided, cached, fetched, stale or unavailable.",
 		}, []string{"group", "result"}),
 	}
-	reg.MustRegister(m.inFlight, m.longRunning, m.requests, m.duration, m.backendFailures, m.breakerTransitions, m.discoveryResults)
+	m.inFlight = registerOrReuse(reg, m.inFlight)
+	m.longRunning = registerOrReuse(reg, m.longRunning)
+	m.requests = registerOrReuse(reg, m.requests)
+	m.duration = registerOrReuse(reg, m.duration)
+	m.backendFailures = registerOrReuse(reg, m.backendFailures)
+	m.breakerTransitions = registerOrReuse(reg, m.breakerTransitions)
+	m.discoveryResults = registerOrReuse(reg, m.discoveryResults)
 	return m
+}
+
+// registerOrReuse registers c with reg, or returns the identical collector
+// already registered there, so building the router twice on one registry, as
+// tests and some module combinations do, shares its metrics instead of
+// panicking. A conflicting definition is a programming error, and panics.
+func registerOrReuse[C prometheus.Collector](reg prometheus.Registerer, c C) C {
+	err := reg.Register(c)
+	if err == nil {
+		return c
+	}
+	var already prometheus.AlreadyRegisteredError
+	if errors.As(err, &already) {
+		if existing, ok := already.ExistingCollector.(C); ok {
+			return existing
+		}
+	}
+	panic(err)
 }
 
 func (m *routerMetrics) breakerChanged(group string, to gobreaker.State) {
@@ -110,7 +134,7 @@ func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *pro
 		NativeHistogramMinResetDuration: time.Hour,
 	}, []string{"plugin_id", "method", "status_code"})
 	if reg != nil {
-		reg.MustRegister(h)
+		h = registerOrReuse(reg, h)
 	}
 	return h
 }
@@ -120,11 +144,15 @@ func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *pro
 // request duration, the source const label lets plugins_url and core_url
 // register on one registry.
 func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prometheus.CounterVec {
-	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+	c := prometheus.NewCounterVec(prometheus.CounterOpts{
 		ConstLabels: prometheus.Labels{"source": source},
 		Name:        "grafana_router_plugin_grpc_request_retries_total",
 		Help:        "Retries of unary gRPC calls to plugin deployments, by plugin and gRPC method.",
 	}, []string{"plugin_id", "method"})
+	if reg != nil {
+		c = registerOrReuse(reg, c)
+	}
+	return c
 }
 
 // requestGroup returns the group a request is for: the group of an

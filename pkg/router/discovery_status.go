@@ -21,6 +21,7 @@ type routerStatusDoc struct {
 	Reconciler   reconcilerDoc      `json:"reconciler"`
 	Breakers     breakerSettingsDoc `json:"breakers"`
 	Groups       []groupStatusDoc   `json:"groups"`
+	LoadFailures []loadFailureDoc   `json:"loadFailures,omitempty"`
 	Sources      []sourceStatus     `json:"sources,omitempty"`
 	Shadowed     []shadowedGroup    `json:"shadowed,omitempty"`
 	StackLookups map[string]uint64  `json:"stackLookups,omitempty"`
@@ -43,6 +44,21 @@ type reconcilerDoc struct {
 type breakerSettingsDoc struct {
 	OpenAfterConsecutiveFailures int    `json:"openAfterConsecutiveFailures"`
 	OpenFor                      string `json:"openFor"`
+}
+
+// loadFailureDoc is a group whose backend keeps failing to load. Its error
+// text, which can name internal hosts, is only in the reconcile log.
+type loadFailureDoc struct {
+	Group string `json:"group"`
+	// Key is the backend key that fails to load.
+	Key string `json:"key"`
+	// Failures counts its consecutive failed loads, since Since.
+	Failures int       `json:"failures"`
+	Since    time.Time `json:"since"`
+	// RetryAt is when reconcile may load it again.
+	RetryAt time.Time `json:"retryAt"`
+	// Serving is whether an earlier backend still serves the group.
+	Serving bool `json:"serving"`
 }
 
 type groupStatusDoc struct {
@@ -130,6 +146,9 @@ func (r *GrafanaRouter) routerStatus(req *http.Request) routerStatusDoc {
 
 	for name, entry := range *r.snapshot.Load() {
 		doc.Groups = append(doc.Groups, r.groupStatus(name, entry))
+	}
+	if failures := r.loadFailureDocs.Load(); failures != nil {
+		doc.LoadFailures = *failures
 	}
 	sort.Slice(doc.Groups, func(i, j int) bool { return doc.Groups[i].Group < doc.Groups[j].Group })
 	return doc

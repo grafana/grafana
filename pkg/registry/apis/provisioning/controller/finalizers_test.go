@@ -1412,6 +1412,52 @@ func TestProcess_CleanFinalizer_RecordsErrorCause(t *testing.T) {
 	}
 }
 
+// TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause
+// verifies that a deletion blocked by unmanaged resources in a repository folder
+// is counted as user-caused, matching status.deletion, so it does not burn the
+// finalizer SLO while waiting for the user to move or remove those resources.
+func TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause(t *testing.T) {
+	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
+	}}
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	client := &mockDynamicClient{
+		deleteFunc: func(_ context.Context, _ string, _ metav1.DeleteOptions, _ ...string) error {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code: http.StatusBadRequest, Details: &metav1.StatusDetails{UID: "folder.not-empty"},
+			}}
+		},
+	}
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: folders.GroupVersion.Group, Resource: "folders",
+	}).Return(client, schema.GroupVersionKind{}, nil).Once()
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{lister: resourceLister, clientFactory: clientFactory, metrics: &metrics, maxWorkers: 1}
+
+	err := f.process(context.Background(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "my-repo",
+			Namespace:  "default",
+			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	})
+	require.Error(t, err)
+
+	assert.Equal(t, float64(1), testutil.ToFloat64(
+		metrics.finalizerProcessedTotal.WithLabelValues(repository.RemoveOrphanResourcesFinalizer, metricutils.ErrorOutcome, reconcileCauseUser),
+	))
+	assert.Equal(t, float64(0), testutil.ToFloat64(
+		metrics.finalizerProcessedTotal.WithLabelValues(repository.RemoveOrphanResourcesFinalizer, metricutils.ErrorOutcome, reconcileCauseSystem),
+	))
+}
+
 // nonWebhookRepo implements only repository.Repository (not WebhookRepository),
 // standing in for a built repository that isn't webhook-capable.
 type nonWebhookRepo struct {

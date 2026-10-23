@@ -1440,6 +1440,36 @@
       "saving": "Aan het opslaan ...",
       "title-error-saving-receiver": "Er is een fout opgetreden bij het opslaan van de ontvanger"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Om je Alertmanager-instellingen te wijzigen, ga je naar de pagina Alert Admin. Neem contact op met je beheerder als je geen toegang hebt.",
       "admin-hint-external": "Om je Alertmanager-instellingen te wijzigen, ga je naar de pagina Alert Admin. Neem contact op met je beheerder als je geen toegang hebt.",
@@ -1765,7 +1795,9 @@
         "autosync-tooltip-unsupported": "Automatische synchronisatie is niet beschikbaar voor dit type Alertmanager. Selecteer een Mimir- of Cortex-gegevensbron om deze in te schakelen.",
         "datasource": "Alertmanager-gegevensbron",
         "datasource-autosync-badge": "Automatische synchronisatie",
+        "embedded-yaml-parse-error": "",
         "heading": "Meldingsbronnen importeren",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Geen Alertmanager-gegevensbronnen gevonden",
         "no-permission-desc": "Je hebt geen toestemming om meldingsbronnen te importeren. Je hebt de <strong>toestemming alerting.notifications:write</strong> nodig. Je kunt deze stap overslaan.",
@@ -7420,6 +7452,57 @@
       "usage-count_one": "Gebruikt op {{count}} dashboards",
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Link toevoegen",
       "remove-link": "Link verwijderen",
@@ -7745,6 +7828,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Er is een onverwachte fout opgetreden bij het opslaan."
     },
     "save-library-viz-panel-modal": {
@@ -8037,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Querydeelvenster openen"
     },
     "viz-panel-links-renderer": {
@@ -13634,6 +13720,13 @@
       "save-tooltip": "Opslaan"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Aan het laden ..."
   },
@@ -15460,11 +15553,6 @@
       "original-query": "Oorspronkelijke query",
       "trace-id": "(Tracerings-id: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Query toevoegen",
-      "expression": "Expressie",
-      "title-data-source-help": "Hulp bij gegevensbron"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15592,31 @@
     "accept": "Accepteren",
     "assistant-context-title": "Query co-authoring-context",
     "assistant-instructions-title": "Instructies voor co-authoring van query's",
-    "assistant-unavailable": "Assistant is niet beschikbaar",
-    "assistant-unavailable-body": "Voor query co-authoring is Grafana Assistant vereist.",
-    "building": "Query wordt opgebouwd...",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Beschikbaarheid van Assistant wordt gecontroleerd...",
     "clarification-label": "Extra detail toevoegen",
     "clarification-message": "Verduidelijkingsbericht",
-    "clarification-placeholder": "Extra detail toevoegen...",
+    "clarification-placeholder": "",
     "clarification-title": "Detail aangevraagd",
     "close": "Co-authoring sluiten",
-    "context": "CONTEXT",
-    "context-error": "Kon de geselecteerde querycontext niet lezen",
+    "context-error": "",
     "continue": "Doorgaan",
     "continue-here": "Hier doorgaan",
     "continue-in-assistant": "Doorgaan in Assistant",
-    "continue-in-assistant-chat": "Doorgaan in Assistant-chat",
     "dialog": "Co-auteur van query",
     "dismiss": "Sluiten",
     "error": "Fout bij co-authoring van query",
     "error-accept-failed": "Het queryvoorstel kon niet worden geaccepteerd. Probeer het opnieuw.",
     "error-multiple-responses": "Assistant heeft tegenstrijdige queryvoorstellen opgehaald. Probeer het opnieuw.",
     "error-preview-failed": "Er kon geen voorbeeld van het queryvoorstel worden weergegeven. Probeer het opnieuw.",
+    "explain-failed": "",
     "explain-or-modify": "Uitleggen of wijzigen",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Annuleren",
     "feedback-description": "Je feedback helpt de query-ervaring in Grafana te verbeteren.",
     "feedback-error": "Feedback kon niet worden verzonden. Probeer het opnieuw.",
@@ -15536,36 +15627,61 @@
     "feedback-not-helpful": "Niet nuttig",
     "feedback-positive-placeholder": "Wat vond je goed? Hoe had het nog beter kunnen zijn?",
     "feedback-positive-title": "Wat ging er goed?",
-    "feedback-privacy": "Je beoordeling, opmerking en of dit een voorstel of overdracht was, worden verzonden. Je query, prompt en het antwoord van de Assistant worden niet meegestuurd.",
+    "feedback-privacy": "",
     "feedback-recipient": "Je feedback wordt verzonden naar de teams die aan query's werken.",
     "feedback-send": "Verzenden",
     "feedback-sending": "Verzenden...",
-    "focus": "FOCUS",
-    "handoff-guidance": "Mogelijk moeten je wijzigingen betrekking hebben op een andere gegevensbron of op extra zoekopdrachten buiten de gegevensbron waarop we ons richten. Doorgaan in Assistant-chat om grotere wijzigingen aan te brengen.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Gemarkeerde query",
-    "highlighted-query-summary": "Samenvatting van gemarkeerde query",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant kon geen geldige {{language}} produceren na een poging om het voorstel te herstellen. Probeer het opnieuw of voeg meer details toe.",
     "iteration-nudge": "Ben je aan iets groots bezig? Grotere wijzigingen verder uitwerken met meer ruimte.",
-    "open-in-chat": "Openen in chat",
-    "original-change": "Origineel {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Voorbeeld van query",
+    "previous-option": "",
     "prompt-label": "Beschrijf een querywijziging",
-    "prompt-placeholder": "Beschrijf een snelle wijziging...",
+    "prompt-placeholder": "",
     "proposal-details": "Details van queryvoorstel",
-    "proposed-change": "Voorgestelde {{kind}}",
-    "reading-highlighted-query": "Gemarkeerde query wordt gelezen...",
+    "query-diff": "",
     "relevant-context": "Relevante querycontext",
     "request-failed": "Assistant kon geen queryvoorstel samenstellen. Probeer het opnieuw.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Probeer het opnieuw",
+    "retry-context": "",
     "running-updated-query": "Bijgewerkte query wordt uitgevoerd...",
+    "select-to-accept": "",
     "selection-ready": "De selectie maakt deel uit van deze {{language}}-query.",
     "selection-whole-query": "De volledige {{language}}-query is geselecteerd voor co-authoring.",
     "selection-with-type": "{{name}} is een {{type}} {{kind}}.",
     "stale-query-response": "De gemarkeerde query is gewijzigd voordat de suggestie gereed was. Sluit het af en markeer het opnieuw.",
     "stop": "Stoppen",
     "submit": "Coauteur",
-    "suggestion-updated": "Suggestie bijgewerkt",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistant heeft de huidige query zonder wijzigingen opgehaald. Probeer het opnieuw of voeg meer details toe.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Eventuele niet-opgeslagen paneelbewerkingen gaan niet verloren.",
     "working-focus": "Queryfocus"
   },
@@ -16181,14 +16297,7 @@
       "time-range": "Tijdsbereik vergrendelen"
     },
     "export": {
-      "back-button": "Terug naar exportconfiguratie",
-      "cancel-button": "Annuleren",
-      "info-text": "Dit dashboard exporteren.",
-      "loading": "Bezig met laden ...",
-      "save-button": "Opslaan naar bestand",
-      "share-externally-label": "Exporteren om extern te delen",
-      "view-button": "JSON weergeven",
-      "view-button-yaml": "YAML weergeven"
+      "share-externally-label": "Exporteren om extern te delen"
     },
     "image": {
       "actions": "Acties voor afbeeldingsexport",
@@ -16246,9 +16355,6 @@
       "dark": "Donker",
       "field-name": "Thema",
       "light": "Licht"
-    },
-    "view-json": {
-      "copy-button": "Naar klembord kopiëren"
     }
   },
   "share-panel": {
@@ -17427,6 +17533,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Verwijder delen van de zoekresultaten met behulp van een regex-patroon."
       },
+      "deselect-all": "",
       "label-from-variable": "Van variabele",
       "label-identifier": "Identificatie",
       "label-use-variable": "Gebruik variabele",
@@ -17434,7 +17541,8 @@
       "name": {
         "filter-fields-by-name": "Velden filteren op naam"
       },
-      "placeholder-regular-expression-pattern": "Regulier expressiepatroon"
+      "placeholder-regular-expression-pattern": "Regulier expressiepatroon",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
