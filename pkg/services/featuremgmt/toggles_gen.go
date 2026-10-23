@@ -814,10 +814,6 @@ const (
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
 
-	// FlagApppluginsLoadAppManifestAndKeepSettings
-	// Continue to expose settings when a manifest exists
-	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
-
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -934,6 +930,10 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
+	// FlagSearchPerResourceFolderTree
+	// Allow recursive folder filters in per-resource search APIs
+	FlagSearchPerResourceFolderTree = "search.perResourceFolderTree"
+
 	// FlagAlertingHybridSearch
 	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
 	FlagAlertingHybridSearch = "alerting.hybridSearch"
@@ -977,10 +977,6 @@ const (
 	// FlagGrafanaFrontendLegacyAPIHandling
 	// Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
-
-	// FlagGrafanaOfrepRootUrl
-	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
-	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
 
 	// FlagFeaturesLegacyOverrideLookupBypass
 	// Skips checking for flag overrides.

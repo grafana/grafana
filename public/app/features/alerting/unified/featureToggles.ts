@@ -1,10 +1,14 @@
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { getPreviewToggle } from './previewToggles';
 
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
 export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;
+
+export const shouldUseGmaOnlyListView = () =>
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingGmaOnlyListView, false);
 
 /**
  * Whether the new list view is turned on for this instance. When it's off, everyone gets the old list,
