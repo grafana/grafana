@@ -172,6 +172,12 @@ export function ChannelSubForm<R extends ChannelValues>({
     const fieldPath = settingsPath.startsWith(`${channelFieldPath}.settings.`)
       ? settingsPath.slice(`${channelFieldPath}.settings.`.length)
       : settingsPath;
+    const currentSecureFields = getValues(`${channelFieldPath}.secureFields`);
+    Object.keys(currentSecureFields ?? {}).forEach((key) => {
+      if (key === fieldPath || key.startsWith(`${fieldPath}.`)) {
+        onResetSecureField(key);
+      }
+    });
     const fullPath = `${settingsFieldPath}.${fieldPath}` as const;
     unregister(fullPath);
     setValue(fullPath, undefined);
