@@ -78,10 +78,8 @@ interface SectionVariableScope {
 }
 
 /**
- * Walks the dashboard's layout tree (tabs/rows, arbitrarily nested) collecting each section's own
- * ad-hoc variable set, keyed by its layout path (e.g. "/tabs/1", "/rows/0/tabs/2" — see
- * mutation-api/commands/layoutPathResolver.ts, which resolves the same paths back to a section on apply).
- * Mirrors the traversal in mutation-api/commands/variableScope.ts's findSectionPathsContainingVariable.
+ * Collects each tab/row's own ad hoc variable set, keyed by layout path (e.g. "/rows/0/tabs/2"),
+ * the same paths layoutPathResolver.ts resolves on apply.
  */
 function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar: string): SectionVariableScope[] {
   const scopes: SectionVariableScope[] = [];
@@ -110,11 +108,8 @@ function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar:
 }
 
 /**
- * Tab/row-scoped ad-hoc filters (stretch goal, spec 2.1.1). No explicit feature-toggle check here:
- * a section only has a `$variables` set of its own once `dashboardUnifiedDrilldownControls`-gated UI
- * has actually added one (TabItem.tsx/RowItem.tsx), so a dashboard that never used the feature walks
- * to an empty list here regardless — the same effective gate without a direct config.featureToggles
- * read in this non-component module.
+ * Tab/row-scoped ad hoc filters. No toggle check needed: sections only get their own `$variables`
+ * through toggle-gated UI.
  */
 function captureSectionFilters(dashboard: DashboardScene): SavedViewSectionFilter[] | undefined {
   const sectionFilters = collectSectionVariableScopes(dashboard.state.body, '/')
@@ -244,9 +239,7 @@ function mergeSectionFiltersAsDefault(
   const beforeByKey = new Map((before ?? []).map((s) => [s.sectionKey, s]));
   const afterByKey = new Map((after ?? []).map((s) => [s.sectionKey, s]));
 
-  // Only ever iterates spec's own sections, never before/after's -- a section present live but
-  // absent from spec is never touched, matching applySectionFilters' own "absence in spec ⇒ no
-  // effect" behavior.
+  // Sections absent from spec are left alone, matching applySectionFilters.
   const merged = spec
     .map((section) => {
       const variables = mergeVariablesAsDefault(
