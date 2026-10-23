@@ -10,6 +10,7 @@ import (
 	"io"
 	"iter"
 	"maps"
+	"math"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -2336,7 +2337,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		// Pruning may have removed every event since effectiveRv. Without a
 		// committed RV to advance to, keep the checkpoint.
 		k.log.Debug("ListModifiedSince using data store, event store is empty", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-		return sinceRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
+		return sinceRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv, math.MaxInt64)
 	}
 	if err != nil {
 		err = fmt.Errorf("error trying to retrieve last event key: %w", err)
@@ -2354,11 +2355,12 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	if useDataStore {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-		return latestRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
+		return latestRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv, math.MaxInt64)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-	events := k.listModifiedSinceEventStore(ctx, key, effectiveRv)
+	lowestRead := int64(math.MaxInt64)
+	events := k.listModifiedSinceEventStore(ctx, key, effectiveRv, &lowestRead)
 	return latestRv, func(yield func(*ModifiedResource, error) bool) {
 		for mr, err := range events {
 			if !yield(mr, err) || err != nil {
@@ -2368,7 +2370,9 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		// The scan reads the oldest events last, so pruning may have overtaken a long one.
 		if time.Since(effectiveRvTime) > k.eventRetentionPeriod-eventStoreRetentionMargin {
 			k.log.Info("ListModifiedSince event store scan outlived the retention period, rescanning the data store", "sinceRv", sinceRv, "group", key.Group, "resource", key.Resource)
-			for mr, err := range k.listModifiedSinceDataStore(ctx, key, effectiveRv) {
+			// The descending scan read every event from lowestRead up, and pruning
+			// removes the oldest first, so only resources last changed below it can be missing.
+			for mr, err := range k.listModifiedSinceDataStore(ctx, key, effectiveRv, lowestRead) {
 				if !yield(mr, err) {
 					return
 				}
@@ -2412,7 +2416,8 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 	return value, nil
 }
 
-func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+// listModifiedSinceDataStore skips resources whose latest version is at or above belowRv.
+func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv, belowRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
@@ -2446,7 +2451,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 			// keys in ascending lex order with the shape
 			// `group/resource/ns/name/rv`, so all rows for a given
 			// (namespace, name) are contiguous.
-			if lastSeenResource.Key.Namespace != dataKey.Namespace || lastSeenResource.Key.Name != dataKey.Name {
+			if (lastSeenResource.Key.Namespace != dataKey.Namespace || lastSeenResource.Key.Name != dataKey.Name) &&
+				lastSeenDataKey.ResourceVersion < belowRv {
 				value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
 				if err != nil {
 					yield(&ModifiedResource{}, err)
@@ -2473,7 +2479,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 			lastSeenDataKey = dataKey
 		}
 
-		if lastSeenResource != nil {
+		if lastSeenResource != nil && lastSeenDataKey.ResourceVersion < belowRv {
 			value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
 			if err != nil {
 				yield(&ModifiedResource{}, err)
@@ -2487,7 +2493,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	}
 }
 
-func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+// listModifiedSinceEventStore records in lowestRead the lowest event RV it read.
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64, lowestRead *int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
@@ -2502,6 +2509,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 				yield(&ModifiedResource{}, err)
 				return
 			}
+			*lowestRead = min(*lowestRead, evtKey.ResourceVersion)
 
 			if evtKey.Group != key.Group || evtKey.Resource != key.Resource {
 				continue

@@ -3131,7 +3131,11 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 			opts.EventRetentionPeriod = eventStoreRetentionMargin + 2*time.Second
 		})
-		rv, _ := addTestObject(t, backend, t.Context(), ns, "slow", "value")
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		time.Sleep(2 * time.Millisecond)
+		slowRV, _ := addTestObject(t, backend, t.Context(), ns, "slow", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.UnixMilli(snowflakeTimestampMillis(slowRV)))
+		require.NoError(t, err)
 
 		_, seq := backend.ListModifiedSince(t.Context(), ns, SubtractDurationFromSnowflake(rv, time.Millisecond), nil)
 		var names []string
@@ -3142,7 +3146,8 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 				time.Sleep(2500 * time.Millisecond)
 			}
 		}
-		require.Equal(t, []string{"slow", "slow"}, names)
+		// The rescan recovers the pruned event without repeating what the event store listed.
+		require.Equal(t, []string{"slow", "pruned"}, names)
 	})
 
 	t.Run("reads the data store past an hour even with a longer retention period", func(t *testing.T) {
