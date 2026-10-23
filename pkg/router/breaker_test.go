@@ -633,8 +633,9 @@ func TestDiscoveryFetchDeadlineCountsOnceForPerVersionDiscovery(t *testing.T) {
 			<-req.Context().Done()
 			return nil, req.Context().Err()
 		})
-		var versions []metav1.GroupVersionForDiscovery
-		for _, v := range []string{"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"} {
+		names := []string{"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"}
+		versions := make([]metav1.GroupVersionForDiscovery, 0, len(names))
+		for _, v := range names {
 			versions = append(versions, metav1.GroupVersionForDiscovery{GroupVersion: cachedGroup + "/" + v, Version: v})
 		}
 		backend, err := newAggregateBackend("older", metav1.APIGroup{Name: cachedGroup, Versions: versions}, base, hanging)
