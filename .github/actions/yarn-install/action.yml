@@ -1,27 +1,6 @@
-# From https://gist.github.com/belgattitude/042f9caf10d029badbde6cf9d43e400a
-
-########################################################################################
-# "yarn install" composite action for yarn 3/4+ and "nodeLinker: node-modules"         #
-#--------------------------------------------------------------------------------------#
-# Requirement: ./.github/actions/setup-node should be run before                       #
-#                                                                                      #
-# Usage in workflows steps:                                                            #
-#                                                                                      #
-#      - name: Monorepo install                                                        #
-#        uses: ./.github/actions/yarn-nm-install                                       #
-#        with:                                                                         #
-#          enable-corepack: false                   # (default = 'false')              #
-#          cwd: ${{ github.workspace }}/apps/my-app # (default = '.')                  #
-#          cache-prefix: add cache key prefix       # (default = 'default')            #
-#          cache-node-modules: false                # (default = 'false')              #
-#          cache-install-state: false               # (default = 'false')              #
-#                                                                                      #
-# Reference:                                                                           #
-#   - latest: https://gist.github.com/belgattitude/042f9caf10d029badbde6cf9d43e400a    #
-########################################################################################
-
-name: 'Monorepo install (yarn)'
-description: 'Run yarn install with node_modules linker and cache enabled'
+# Install with the project's package manager and its corresponding cache.
+name: 'Monorepo install (yarn/pnpm)'
+description: 'Install frontend dependencies with cache enabled'
 inputs:
   cwd:
     description: "Changes node's process.cwd() if the project is not located on the root. Default to process.cwd()"
@@ -32,7 +11,7 @@ inputs:
     required: false
     default: 'default'
   cache-npm-cache:
-    description: 'Cache npm global cache folder often used by node-gyp, prebuild binaries (invalidated on lock/os/node-version)'
+    description: 'Yarn only: cache npm global cache folder often used by node-gyp, prebuild binaries (invalidated on lock/os/node-version)'
     required: false
     default: 'true'
   cache-node-modules:
@@ -44,25 +23,40 @@ inputs:
     required: false
     default: 'false'
   enable-corepack:
-    description: 'Enable corepack'
+    description: 'Enable corepack for Yarn projects'
     required: false
     default: 'true'
   hardened-mode:
     description: "Enable yarn hardened mode. 'auto' disables it for internal PRs, 'true' always enables it. Fork PRs always use hardened mode regardless."
     required: false
     default: 'auto'
+outputs:
+  package-manager:
+    description: 'Detected package manager (yarn or pnpm)'
+    value: ${{ steps.detect-manager.outputs.package-manager }}
 
 runs:
   using: 'composite'
-
   steps:
+    - name: Detect package manager
+      id: detect-manager
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: |
+        PM=$(node -p "require('./package.json').packageManager.split('@')[0]")
+        case "$PM" in
+          yarn|pnpm) echo "package-manager=$PM" >> "$GITHUB_OUTPUT" ;;
+          *) echo "Unsupported package manager: $PM" >&2; exit 1 ;;
+        esac
+
     - name: ⚙️ Enable Corepack
-      if: inputs.enable-corepack == 'true'
+      if: steps.detect-manager.outputs.package-manager == 'yarn' && inputs.enable-corepack == 'true'
       shell: bash
       working-directory: ${{ inputs.cwd }}
       run: corepack enable
 
     - name: ⚙️ Expose yarn config as "$GITHUB_OUTPUT"
+      if: steps.detect-manager.outputs.package-manager == 'yarn'
       id: yarn-config
       shell: bash
       working-directory: ${{ inputs.cwd }}
@@ -75,6 +69,7 @@ runs:
         echo "NPM_GLOBAL_CACHE_FOLDER=$(npm config get cache)" >> $GITHUB_OUTPUT
 
     - name: Restore yarn cache
+      if: steps.detect-manager.outputs.package-manager == 'yarn'
       uses: actions/cache@v5
       id: yarn-download-cache
       with:
@@ -84,7 +79,7 @@ runs:
           yarn-download-cache-${{ inputs.cache-prefix }}-
 
     - name: Restore node_modules
-      if: inputs.cache-node-modules == 'true'
+      if: steps.detect-manager.outputs.package-manager == 'yarn' && inputs.cache-node-modules == 'true'
       id: yarn-nm-cache
       uses: actions/cache@v5
       with:
@@ -94,7 +89,7 @@ runs:
         key: yarn-nm-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
 
     - name: Restore global npm cache folder
-      if: inputs.cache-npm-cache == 'true'
+      if: steps.detect-manager.outputs.package-manager == 'yarn' && inputs.cache-npm-cache == 'true'
       id: npm-global-cache
       uses: actions/cache@v5
       with:
@@ -102,7 +97,7 @@ runs:
         key: yarn-npm-global-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
 
     - name: Restore yarn install state
-      if: inputs.cache-install-state == 'true' && inputs.cache-node-modules == 'true'
+      if: steps.detect-manager.outputs.package-manager == 'yarn' && inputs.cache-install-state == 'true' && inputs.cache-node-modules == 'true'
       id: yarn-install-state-cache
       uses: actions/cache@v5
       with:
@@ -110,6 +105,7 @@ runs:
         key: yarn-install-state-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
 
     - name: Install dependencies
+      if: steps.detect-manager.outputs.package-manager == 'yarn'
       shell: bash
       working-directory: ${{ inputs.cwd }}
       run: yarn install --immutable --inline-builds
@@ -123,3 +119,43 @@ runs:
         # Skip big post-install dependencies
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
+
+    # Fix the store location so the cache can be restored before pnpm is installed. The runner
+    # temp directory is on the same disk as the checkout, so pnpm can hardlink from the store.
+    - name: Configure pnpm store
+      if: steps.detect-manager.outputs.package-manager == 'pnpm'
+      shell: bash
+      run: echo "pnpm_config_store_dir=$RUNNER_TEMP/pnpm-store" >> "$GITHUB_ENV"
+
+    # Restore-only on a key match, saved once per lockfile. pnpm/setup's own store cache saves a
+    # new entry on every run, which many parallel jobs would push past the repository cache limit.
+    - name: Restore pnpm store
+      if: steps.detect-manager.outputs.package-manager == 'pnpm'
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/pnpm-store
+        key: pnpm-store-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.cwd), format('{0}/pnpm-workspace.yaml', inputs.cwd)) }}
+        restore-keys: |
+          pnpm-store-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Restore node_modules
+      if: steps.detect-manager.outputs.package-manager == 'pnpm' && inputs.cache-node-modules == 'true'
+      uses: actions/cache@v5
+      with:
+        path: ${{ inputs.cwd }}/**/node_modules
+        key: pnpm-node-modules-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.cwd), format('{0}/pnpm-workspace.yaml', inputs.cwd)) }}
+
+    # Installs pnpm's native binary at the packageManager version and runs a frozen install.
+    # It also caches pnpm's lockfile verification result, so an unchanged lockfile is not
+    # re-checked against the registry. Node.js comes from setup-node, not from pnpm.
+    - name: Install pnpm and dependencies
+      if: steps.detect-manager.outputs.package-manager == 'pnpm'
+      uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+      with:
+        working-directory: ${{ inputs.cwd }}
+        node-version-file: false
+        cache: false
+        require-lockfile: true
