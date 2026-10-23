@@ -69,7 +69,7 @@ jest.mock('../services', () => ({
     };
   },
 }));
-type MockSettings = { type: string; uid: string; jsonData?: DataSourceJsonData } | undefined;
+type MockSettings = { type: string; uid: string; jsonData?: Record<string, unknown> } | undefined;
 const defaultInstanceSettings = (ref?: DataSourceRef): MockSettings => ({
   type: ref?.type ?? '<mocktype>',
   uid: ref?.uid ?? '<mockuid>',
