@@ -28,9 +28,10 @@ const (
 	// verification: use it only over a link that is trusted anyway.
 	mtRouterCAFileKey   = "mt_router_ca_file"
 	mtRouterInsecureKey = "mt_router_insecure"
-	// mtRouterAudienceKey is the audience of the token the stack exchanges its
-	// access policy for, to read the router's discovery.
-	mtRouterAudienceKey = "mt_router_audience"
+	// mtRouterAudience is the audience of the token the stack exchanges its
+	// access policy for, to read the router's discovery. The router does not
+	// check it.
+	mtRouterAudience = "mt-discovery"
 
 	// The router's groups change only when apps roll out, so poll rarely, and
 	// spread the many stacks that poll it.
@@ -138,20 +139,21 @@ func (m *mtRoutes) Notify(ctx context.Context) (<-chan struct{}, error) {
 // mtBackend serves one of the multi-tenant router's groups from a stack.
 type mtBackend struct{ *aggregateBackend }
 
-// Load marks what the stack forwards, and refuses what the router forwarded
-// already: with the stack's address pointing at itself, that is a loop.
+// Load marks what the stack forwards, and refuses what already crossed, from
+// the router or from a stack: with the stack's address pointing at itself, or
+// a group the router no longer serves, that would be a loop.
 func (b *mtBackend) Load(ctx context.Context) (http.Handler, error) {
 	proxy, err := b.aggregateBackend.Load(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Header.Get(stFallbackHeader) != "" {
+		if crossed(req) {
 			http.NotFound(w, req)
 			return
 		}
 		req = req.Clone(req.Context())
-		req.Header.Set(stFallbackHeader, stFallbackValue)
+		req.Header.Set(routerOriginHeader, originST)
 		proxy.ServeHTTP(w, req)
 	}), nil
 }
@@ -162,7 +164,6 @@ type mtRoutesConfig struct {
 	Address  string
 	CAFile   string
 	Insecure bool
-	Audience string
 	// Exchanger turns the stack's access policy into the token the router
 	// authenticates its discovery poll with.
 	Exchanger authnlib.TokenExchanger
@@ -193,7 +194,6 @@ func newMTRoutesFromConfig(cfg *setting.Cfg, inner RoutesLoader) (RoutesLoader, 
 		Address:  address,
 		CAFile:   section.Key(mtRouterCAFileKey).MustString(""),
 		Insecure: section.Key(mtRouterInsecureKey).MustBool(false),
-		Audience: section.Key(mtRouterAudienceKey).MustString(""),
 	}
 	if policy := grpcutils.ReadGrpcClientConfig(cfg); policy.Token != "" && policy.TokenExchangeURL != "" {
 		exchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{Token: policy.Token, TokenExchangeURL: policy.TokenExchangeURL})
@@ -217,9 +217,6 @@ func buildMTRoutes(inner RoutesLoader, c mtRoutesConfig) (*mtRoutes, error) {
 	if c.Insecure && c.CAFile != "" {
 		return nil, fmt.Errorf("%s: %s and %s cannot both be set", cloudRouterSection, mtRouterCAFileKey, mtRouterInsecureKey)
 	}
-	if c.Audience == "" {
-		return nil, fmt.Errorf("%s: %s is required when %s is set", cloudRouterSection, mtRouterAudienceKey, mtRouterAddressKey)
-	}
 	if c.Exchanger == nil {
 		return nil, fmt.Errorf("%s: token and token_exchange_url in [grpc_client_authentication] are required when %s is set", cloudRouterSection, mtRouterAddressKey)
 	}
@@ -232,8 +229,8 @@ func buildMTRoutes(inner RoutesLoader, c mtRoutesConfig) (*mtRoutes, error) {
 	// requests carry the caller's credentials instead (see aggregateBackend).
 	client, err := rest.HTTPClientFor(&rest.Config{
 		Host:          c.Address,
-		Transport:     headerTransport{base: newAggregateBaseTransport(tlsCfg), name: skipSTHeader, value: skipValue},
-		WrapTransport: aggregateTokenWrapper(mtSourceName, c.Exchanger, c.Audience),
+		Transport:     headerTransport{base: newAggregateBaseTransport(tlsCfg), name: routerOriginHeader, value: originST},
+		WrapTransport: aggregateTokenWrapper(mtSourceName, c.Exchanger, mtRouterAudience),
 		Timeout:       defaultAggregateDiscoveryTimeout,
 	})
 	if err != nil {
@@ -259,11 +256,12 @@ func (t headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.base.RoundTrip(req)
 }
 
-// mtDiscoveryRule serves the router's request to skip it: a stack's own groups
-// only, so what the router has offered never comes back to it as the stack's.
+// mtDiscoveryRule serves a request from the router: a stack's own groups only,
+// so what the router has offered never comes back to it as the stack's.
 func mtDiscoveryRule() discoveryRule {
 	return discoveryRule{
-		Header:  skipMTHeader,
+		Header:  routerOriginHeader,
+		Value:   originMT,
 		Exclude: func(e servingEntry) bool { return e.source == aggregateSource(mtSourceName) },
 	}
 }

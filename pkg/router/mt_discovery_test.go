@@ -21,7 +21,6 @@ func stackConfig() *setting.Cfg {
 	cfg.StackID = "1"
 	section := func(name, key, value string) { cfg.Raw.Section(name).Key(key).SetValue(value) }
 	section(cloudRouterSection, mtRouterAddressKey, "https://mt-router:3000")
-	section(cloudRouterSection, mtRouterAudienceKey, "mt-router")
 	section("grpc_client_authentication", "token", "policy-token")
 	section("grpc_client_authentication", "token_exchange_url", "https://auth.example.com/exchange")
 	return cfg
@@ -91,7 +90,7 @@ func TestStackServesTheRoutersGroups(t *testing.T) {
 			req.Header.Set("Accept", accept)
 		}
 		if header != "" {
-			req.Header.Set(header, skipValue)
+			req.Header.Set(routerOriginHeader, header)
 		}
 		recorder := httptest.NewRecorder()
 		svc.HandleFunc(recorder, req, local)
@@ -108,7 +107,7 @@ func TestStackServesTheRoutersGroups(t *testing.T) {
 
 	// Discovery lists both, and a request that skips the router lists only the stack's.
 	require.Equal(t, []string{discoveryGroup, "local.grafana.app", "mt.grafana.app"}, legacyGroupsVia(t, svc, local, ""))
-	require.Equal(t, []string{discoveryGroup, "local.grafana.app"}, legacyGroupsVia(t, svc, local, skipMTHeader))
+	require.Equal(t, []string{discoveryGroup, "local.grafana.app"}, legacyGroupsVia(t, svc, local, routerOriginHeader+"="+originMT))
 
 	// Its OpenAPI document comes from the router, and the stack's index lists it.
 	doc := get("/openapi/v3/apis/mt.grafana.app/v1", "", "")
@@ -117,7 +116,7 @@ func TestStackServesTheRoutersGroups(t *testing.T) {
 	index := get("/openapi/v3", "", "")
 	require.Equal(t, http.StatusOK, index.Code)
 	require.Contains(t, index.Body.String(), "apis/mt.grafana.app/v1")
-	require.NotContains(t, get("/openapi/v3", "", skipMTHeader).Body.String(), "apis/mt.grafana.app/v1")
+	require.NotContains(t, get("/openapi/v3", "", originMT).Body.String(), "apis/mt.grafana.app/v1")
 
 	// The proxied request is the router's own, so it has the real group as its metric label.
 	families, err := reg.Gather()

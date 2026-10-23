@@ -3,6 +3,7 @@ package router
 import (
 	"errors"
 	"net/http"
+	"slices"
 )
 
 // discoveryRule narrows the root discovery a request sees when it carries
@@ -10,6 +11,9 @@ import (
 // engine never reads a deployment-specific name.
 type discoveryRule struct {
 	Header string
+	// Value, when set, is the only value of Header the rule applies to; rules
+	// may share a header and tell requests apart by it. Empty means any value.
+	Value string
 	// SkipSource leaves out what the source of unserved groups would add.
 	SkipSource bool
 	// Exclude leaves out the router's own entries it reports true for.
@@ -26,7 +30,7 @@ type discoveryView struct {
 func (r *GrafanaRouter) discoveryView(req *http.Request) discoveryView {
 	var v discoveryView
 	for _, rule := range r.discoveryRules {
-		if req.Header.Get(rule.Header) == "" {
+		if value := req.Header.Get(rule.Header); value == "" || rule.Value != "" && value != rule.Value {
 			continue
 		}
 		v.active = true
@@ -50,8 +54,12 @@ func (v discoveryView) excludes(entry servingEntry) bool {
 // varyOnDiscoveryRules marks a root discovery response as varying on the
 // rules' headers, since the same URL has more than one view.
 func (r *GrafanaRouter) varyOnDiscoveryRules(w http.ResponseWriter) {
+	var varied []string
 	for _, rule := range r.discoveryRules {
-		w.Header().Add("Vary", rule.Header)
+		if !slices.Contains(varied, rule.Header) {
+			varied = append(varied, rule.Header)
+			w.Header().Add("Vary", rule.Header)
+		}
 	}
 }
 

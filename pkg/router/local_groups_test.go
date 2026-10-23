@@ -3,10 +3,9 @@ package router
 import (
 	"context"
 	"encoding/json"
-	"io"
+	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -129,33 +128,20 @@ func TestLocalGroupsRunStopsAfterSnapshot(t *testing.T) {
 	require.True(t, local.absent("other.grafana.app"))
 }
 
-func TestSingleTenantFallbackRefusesForwardedRequests(t *testing.T) {
-	st := newTestSingleTenantFallback(t)
-	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
-		t.Fatal("a refused request must not reach a stack lookup")
-		return singleTenantStack{}, nil
+func TestSingleTenantFallbackRefusesRequestsThatAlreadyCrossed(t *testing.T) {
+	for _, origin := range []string{originST, originMT, "somebody-else"} {
+		t.Run(origin, func(t *testing.T) {
+			st := newTestSingleTenantFallback(t)
+			st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+				t.Error("a refused request must not reach a stack lookup")
+				return singleTenantStack{}, errors.New("unexpected lookup")
+			}
+			req := httptest.NewRequest(http.MethodGet, "/apis/remote.grafana.app/v1/namespaces/stacks-1/things", nil)
+			req.Header.Set(routerOriginHeader, origin)
+			recorder := httptest.NewRecorder()
+			st.ServeHTTP(recorder, req)
+			require.Equal(t, http.StatusNotFound, recorder.Code)
+			require.Equal(t, uint64(1), st.fallbackRefused.Load())
+		})
 	}
-	req := httptest.NewRequest(http.MethodGet, "/apis/remote.grafana.app/v1/namespaces/stacks-1/things", nil)
-	req.Header.Set(stFallbackHeader, stFallbackValue)
-	recorder := httptest.NewRecorder()
-	st.ServeHTTP(recorder, req)
-	require.Equal(t, http.StatusNotFound, recorder.Code)
-	require.Equal(t, uint64(1), st.fallbackRefused.Load())
-}
-
-// Only the stack marks a request. The router's forward to a stack leaves it
-// unmarked, so the stack's own fallback to the router still works.
-func TestSingleTenantFallbackDoesNotMarkForwardedRequests(t *testing.T) {
-	st := newTestSingleTenantFallback(t)
-	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
-		return singleTenantStack{URL: "https://tenant.example.com"}, nil
-	}
-	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
-		require.Empty(t, req.Header.Get(stFallbackHeader))
-		return &http.Response{StatusCode: http.StatusNoContent, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
-	})
-	recorder := httptest.NewRecorder()
-	st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/remote.grafana.app/v1/namespaces/stacks-1/things", nil))
-	require.Equal(t, http.StatusNoContent, recorder.Code)
-	require.Zero(t, st.fallbackRefused.Load())
 }

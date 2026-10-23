@@ -41,7 +41,7 @@ func TestRouterTargetSkipsSingleTenantDiscoveryWhenAsked(t *testing.T) {
 		req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 		req.Header.Set("Accept", "application/json")
 		if header != "" {
-			req.Header.Set(header, skipValue)
+			req.Header.Set(routerOriginHeader, header)
 		}
 		recorder := httptest.NewRecorder()
 		httpRouter.ServeHTTP(recorder, req)
@@ -49,7 +49,7 @@ func TestRouterTargetSkipsSingleTenantDiscoveryWhenAsked(t *testing.T) {
 		return recorder.Body.String()
 	}
 	require.Contains(t, get(""), "fallback.example.com")
-	require.NotContains(t, get(skipSTHeader), "fallback.example.com")
+	require.NotContains(t, get(originST), "fallback.example.com")
 	require.Equal(t, polls, calls, "a request that skips stacks must not reach one")
 }
 
@@ -64,25 +64,25 @@ func TestSingleTenantFallbackAsksStacksForTheirOwnDiscovery(t *testing.T) {
 			}
 			var sent string
 			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
-				sent = req.Header.Get(skipMTHeader)
+				sent = req.Header.Get(routerOriginHeader)
 				return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("discovery"))}, nil
 			})
 			recorder := httptest.NewRecorder()
 			st.ServeHTTP(recorder, requestWithNamespace(http.MethodGet, path, "stacks-123"))
 			require.Equal(t, http.StatusOK, recorder.Code)
-			require.Equal(t, skipValue, sent)
+			require.Equal(t, originMT, sent)
 		})
 	}
 }
 
-// Resource requests are not discovery, so they carry no skip header.
-func TestSingleTenantFallbackLeavesResourceRequestsUnmarked(t *testing.T) {
+// Resource requests are marked with their origin too.
+func TestSingleTenantFallbackMarksResourceRequestsWithTheirOrigin(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
 	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
 		return singleTenantStack{URL: "https://stack.example.com"}, nil
 	}
 	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
-		require.Empty(t, req.Header.Get(skipMTHeader))
+		require.Equal(t, originMT, req.Header.Get(routerOriginHeader))
 		return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 	})
 	recorder := httptest.NewRecorder()

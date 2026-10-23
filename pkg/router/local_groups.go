@@ -16,21 +16,21 @@ import (
 )
 
 const (
-	// stFallbackHeader marks a request a single-tenant stack forwarded to the
-	// multi-tenant router for a group it does not serve. The router's own
-	// single-tenant fallback sends unknown groups back to the stack, so
-	// without the marker a group neither serves would bounce between them.
-	stFallbackHeader = "X-Grafana-ST-To-Router-Fallback"
-	stFallbackValue  = "true"
-
-	// skipSTHeader, sent by a stack on its discovery poll of the multi-tenant
-	// router, asks for the groups the router itself serves, with nothing from
-	// stacks. skipMTHeader, sent by the router on the discovery it forwards to
-	// a stack, asks for the groups the stack itself serves, with nothing from
-	// the router. Together they stop discovery from recursing.
-	skipSTHeader = "X-Grafana-Discovery-Skip-ST"
-	skipMTHeader = "X-Grafana-Discovery-Skip-MT"
-	skipValue    = "true"
+	// routerOriginHeader marks a request that the multi-tenant router (originMT)
+	// or a single-tenant stack (originST) forwarded to the other side for a
+	// group it does not serve. Each side forwards what it does not serve to the
+	// other, so without the mark a group neither serves would bounce between
+	// them: a request that already crossed is refused rather than sent again.
+	// It also tells discovery what to leave out: the router answers a request
+	// from a stack with only its own groups, and a stack answers the router's
+	// with only its own, which stops discovery from recursing.
+	//
+	// The edge should drop the header from public traffic. Anyone who sets it
+	// only narrows their own discovery and makes their own fallbacks refuse. Any
+	// value refuses; the discovery rules also read the values originMT and originST.
+	routerOriginHeader = "X-Grafana-Router-Origin"
+	originMT           = "mt"
+	originST           = "st"
 )
 
 // localGroups is the set of API groups the embedded API server answers for,
@@ -175,4 +175,11 @@ func apiServiceGroups(ctx context.Context, client *http.Client, url string) ([]s
 		groups = append(groups, item.Spec.Group)
 	}
 	return groups, nil
+}
+
+// crossed reports whether req carries the origin header, with any value: it
+// already crossed between the multi-tenant router and a stack, or someone
+// claims it did, and either way it is not sent across again.
+func crossed(req *http.Request) bool {
+	return req.Header.Get(routerOriginHeader) != ""
 }

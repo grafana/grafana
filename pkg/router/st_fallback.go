@@ -33,7 +33,8 @@ type loaderWithSingleTenantFallback interface {
 // router's own groups only, without the stacks' defaults or the stack itself.
 func singleTenantDiscoveryRule() discoveryRule {
 	return discoveryRule{
-		Header:     skipSTHeader,
+		Header:     routerOriginHeader,
+		Value:      originST,
 		SkipSource: true,
 		Exclude:    func(e servingEntry) bool { return e.callerScoped },
 	}
@@ -139,7 +140,7 @@ type singleTenantFallback struct {
 	cooldown  *cooldown
 	status    pollStatus
 	lookupsBy stackLookupCounts
-	// fallbackRefused counts requests refused for carrying stFallbackHeader.
+	// fallbackRefused counts requests refused for having crossed already.
 	fallbackRefused atomic.Uint64
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
@@ -312,9 +313,9 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// A stack forwarded this request here because it does not serve the group,
-	// so sending it back to the stack would loop; see stFallbackHeader.
-	if req.Header.Get(stFallbackHeader) != "" {
+	// A request that already crossed, from a stack to the router or the other
+	// way, is not sent across again: that would loop; see routerOriginHeader.
+	if crossed(req) {
 		st.fallbackRefused.Add(1)
 		http.NotFound(w, req)
 		return
@@ -441,10 +442,9 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			rewriteOutbound(pr, host.url)
-			// A stack's discovery is its own, without the router's view of stacks.
-			if group == "" {
-				pr.Out.Header.Set(skipMTHeader, skipValue)
-			}
+			// Set, not added: a stack's discovery is its own, and what a caller
+			// claims about where a request came from is not believed.
+			pr.Out.Header.Set(routerOriginHeader, originMT)
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},

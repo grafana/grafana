@@ -38,11 +38,11 @@ func newFakeMTRouter(t *testing.T, groups ...string) *fakeMTRouter {
 	f := &fakeMTRouter{}
 	f.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f.hits.Add(1)
-		if r.Header.Get(stFallbackHeader) != "" {
+		if r.Header.Get(routerOriginHeader) == originST {
 			f.markerSeen.Store(true)
 		}
 		if r.URL.Path == apisPrefix {
-			if r.Header.Get(skipSTHeader) != "" {
+			if r.Header.Get(routerOriginHeader) == originST {
 				f.skipSTSeen.Store(true)
 			}
 			f.accessToken.Store(r.Header.Get("X-Access-Token"))
@@ -126,10 +126,10 @@ func TestMTRoutesRefuseMarkedRequests(t *testing.T) {
 	handler, err := backends[0].Load(t.Context())
 	require.NoError(t, err)
 
-	serve := func(marked bool) int {
+	serve := func(origin string) int {
 		req := httptest.NewRequest(http.MethodGet, "/apis/mt.grafana.app/v1/namespaces/default/things", nil)
-		if marked {
-			req.Header.Set(stFallbackHeader, stFallbackValue)
+		if origin != "" {
+			req.Header.Set(routerOriginHeader, origin)
 		}
 		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
 		recorder := httptest.NewRecorder()
@@ -137,9 +137,11 @@ func TestMTRoutesRefuseMarkedRequests(t *testing.T) {
 		return recorder.Code
 	}
 	before := mt.hits.Load()
-	require.Equal(t, http.StatusNotFound, serve(true))
-	require.Equal(t, before, mt.hits.Load(), "a marked request must not reach the router")
-	require.Equal(t, http.StatusAccepted, serve(false))
+	for _, origin := range []string{originST, originMT, "somebody-else"} {
+		require.Equal(t, http.StatusNotFound, serve(origin), origin)
+	}
+	require.Equal(t, before, mt.hits.Load(), "a request that already crossed must not reach the router")
+	require.Equal(t, http.StatusAccepted, serve(""))
 	require.True(t, mt.markerSeen.Load(), "the stack marks what it forwards")
 }
 
@@ -172,7 +174,7 @@ func TestMTRoutesNotify(t *testing.T) {
 }
 
 func testMTConfig(address string) mtRoutesConfig {
-	return mtRoutesConfig{Address: address, Audience: "mt-router", Exchanger: authnlib.NewStaticTokenExchanger("exchanged")}
+	return mtRoutesConfig{Address: address, Exchanger: authnlib.NewStaticTokenExchanger("exchanged")}
 }
 
 // The stack polls as itself, with its access policy, and asks the router to
@@ -225,7 +227,6 @@ func TestBuildMTRoutesValidation(t *testing.T) {
 		"relative address":  {func(c *mtRoutesConfig) { c.Address = "mt-router:3000" }, mtRouterAddressKey},
 		"ca and insecure":   {func(c *mtRoutesConfig) { c.CAFile = "/ca.pem"; c.Insecure = true }, mtRouterCAFileKey},
 		"missing ca file":   {func(c *mtRoutesConfig) { c.CAFile = "/does/not/exist.pem" }, "ca_file"},
-		"missing audience":  {func(c *mtRoutesConfig) { c.Audience = "" }, mtRouterAudienceKey},
 		"missing exchanger": {func(c *mtRoutesConfig) { c.Exchanger = nil }, "grpc_client_authentication"},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -246,7 +247,6 @@ func TestNewMTRoutesFromConfig(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.StackID = "1"
 		set(cfg, cloudRouterSection, mtRouterAddressKey, "https://mt-router:3000")
-		set(cfg, cloudRouterSection, mtRouterAudienceKey, "mt-router")
 		set(cfg, "grpc_client_authentication", "token", "policy-token")
 		set(cfg, "grpc_client_authentication", "token_exchange_url", "https://auth.example.com/exchange")
 		return cfg
@@ -286,4 +286,25 @@ func TestRandomFractionIsInRange(t *testing.T) {
 		seen[f] = struct{}{}
 	}
 	require.Greater(t, len(seen), 1, "the value must vary")
+}
+
+// capturingExchanger records what the stack asks its token to be good for.
+type capturingExchanger struct {
+	requests []authnlib.TokenExchangeRequest
+}
+
+func (c *capturingExchanger) Exchange(_ context.Context, r authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
+	c.requests = append(c.requests, r)
+	return &authnlib.TokenExchangeResponse{Token: "exchanged"}, nil
+}
+
+// The router does not check the audience, so the stack asks for a fixed one.
+func TestBuildMTRoutesAsksForTheDiscoveryAudience(t *testing.T) {
+	mt := newFakeMTRouter(t, "mt.grafana.app")
+	exchanger := &capturingExchanger{}
+	routes, err := buildMTRoutes(&wakeLoader{}, mtRoutesConfig{Address: mt.URL, Exchanger: exchanger})
+	require.NoError(t, err)
+	routes.target.poll(t.Context(), make(chan struct{}, 1))
+	require.NotEmpty(t, exchanger.requests)
+	require.Equal(t, []string{"mt-discovery"}, exchanger.requests[0].Audiences)
 }

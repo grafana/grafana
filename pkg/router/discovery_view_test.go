@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -87,6 +88,18 @@ func sourceHandler(calls *int) http.Handler {
 	})
 }
 
+// setHeader sets a header from a "name" (value "true") or "name=value" spec.
+func setHeader(req *http.Request, spec string) {
+	if spec == "" {
+		return
+	}
+	name, value, ok := strings.Cut(spec, "=")
+	if !ok {
+		value = "true"
+	}
+	req.Header.Set(name, value)
+}
+
 func legacyGroups(t *testing.T, router *GrafanaRouter, next http.Handler, header string) []string {
 	t.Helper()
 	return legacyGroupsWith(t, router.HandleFunc, next, header)
@@ -96,9 +109,7 @@ func legacyGroupsWith(t *testing.T, handle func(http.ResponseWriter, *http.Reque
 	t.Helper()
 	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", "application/json")
-	if header != "" {
-		req.Header.Set(header, "true")
-	}
+	setHeader(req, header)
 	res := httptest.NewRecorder()
 	handle(res, req, next)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
@@ -116,9 +127,7 @@ func aggregatedGroups(t *testing.T, router *GrafanaRouter, next http.Handler, he
 	t.Helper()
 	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", aggregatedDiscoveryJSON)
-	if header != "" {
-		req.Header.Set(header, "true")
-	}
+	setHeader(req, header)
 	res := httptest.NewRecorder()
 	router.HandleFunc(res, req, next)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
@@ -135,9 +144,7 @@ func aggregatedGroups(t *testing.T, router *GrafanaRouter, next http.Handler, he
 func openAPIPaths(t *testing.T, router *GrafanaRouter, next http.Handler, header string) []string {
 	t.Helper()
 	req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3", nil)
-	if header != "" {
-		req.Header.Set(header, "true")
-	}
+	setHeader(req, header)
 	res := httptest.NewRecorder()
 	router.HandleFunc(res, req, next)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
@@ -222,4 +229,25 @@ func TestDiscoveryViewVariesOnRuleHeaders(t *testing.T) {
 		require.Contains(t, joined, testSkipSTHeader, target)
 		require.Contains(t, joined, testSkipMTHeader, target)
 	}
+}
+
+// Rules may share one header and tell requests apart by its value, as the
+// origin header does.
+func TestDiscoveryRulesMatchOnValue(t *testing.T) {
+	var calls int
+	router := viewRouter(t)
+	router.discoveryRules = []discoveryRule{
+		{Header: "X-Test-Origin", Value: "st", SkipSource: true, Exclude: func(e servingEntry) bool { return e.callerScoped }},
+		{Header: "X-Test-Origin", Value: "mt", Exclude: func(e servingEntry) bool { return e.source == testMTSource }},
+	}
+	require.Equal(t, []string{discoveryGroup, "mt.grafana.app", "plugin.grafana.app"}, legacyGroups(t, router, sourceHandler(&calls), "X-Test-Origin=st"))
+	require.Equal(t, []string{"core.grafana.app", discoveryGroup, "plugin.grafana.app", "st.grafana.app"}, legacyGroups(t, router, sourceHandler(&calls), "X-Test-Origin=mt"))
+	require.Equal(t, []string{"core.grafana.app", discoveryGroup, "mt.grafana.app", "plugin.grafana.app", "st.grafana.app"}, legacyGroups(t, router, sourceHandler(&calls), "X-Test-Origin=other"),
+		"a value no rule names changes nothing")
+
+	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
+	req.Header.Set("Accept", "application/json")
+	res := httptest.NewRecorder()
+	router.HandleFunc(res, req, sourceHandler(&calls))
+	require.Equal(t, []string{"Accept", "X-Test-Origin"}, res.Header().Values("Vary"), "a shared header is listed once")
 }
