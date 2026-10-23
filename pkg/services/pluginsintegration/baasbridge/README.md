@@ -47,7 +47,7 @@ The router supplies the route credentials through `Options.RouteCredentials`. An
 
 ## Errors
 
-When the operator can't be reached, or answers a webhook with 503, the client returns gRPC `Unavailable`. An admission call that times out returns `DeadlineExceeded`. The gRPC client uses the same codes, and the router's circuit breaker counts both against the backend. Route responses pass through with the operator's status code. Their status and headers are relayed before any body, so a watch's headers aren't held until its first event.
+When the operator can't be reached, or answers a webhook with 503, the client returns gRPC `Unavailable`. An admission call that times out returns `DeadlineExceeded`, as does any call whose response headers take longer than the router's backend response-header timeout (60s). That timeout covers only the headers, so a watch's body can stream for as long as it lasts. The gRPC client uses the same codes, and the router's circuit breaker counts both against the backend. Route responses pass through with the operator's status code. Their status and headers are relayed before any body, so a watch's headers aren't held until its first event.
 
 Redirects are never followed, because that would carry the caller's credentials to the redirect target. A route redirect becomes a 502, as from the router's proxies, and doesn't count against the breaker. A webhook redirect fails the call.
 
@@ -57,3 +57,11 @@ Redirects are never followed, because that would carry the caller's credentials 
 - The router's gRPC request metrics don't cover these calls. They're traced through `otelhttp`.
 - Admission reviews don't set `dryRun`, because the v3 request doesn't carry it. An operator with side effects can't skip them for a dry run.
 - Calls aren't retried. The gRPC client retries `Unavailable` up to three times. `apiextensions-apiserver` only retries webhook responses that carry a `Retry-After` header, which the app-sdk webhook handler never sends.
+
+## Removing it
+
+Everything outside this package that uses it is marked `//nolint:staticcheck`, because the package is deprecated. Deleting the package breaks the build at each of these:
+
+- `pkg/router/plugin_manifests.go`: picks the bridge for HTTP hosts, and forwards route credentials.
+- `pkg/router/plugin.go`: skips v3 token exchange for bridge clients.
+- `pkg/services/pluginsintegration/pluginroute/routes.go`: calls `WithDeclaredAccessChecked` once a declared access check passes, which decides whether a route gets the caller's access token.

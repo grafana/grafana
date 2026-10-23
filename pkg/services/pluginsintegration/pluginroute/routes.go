@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim; remove with it
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -364,7 +365,9 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
-			ctx = WithDeclaredAccessChecked(ctx)
+			// Only an operator behind baasbridge is told; it is then not sent the
+			// caller's access token.
+			ctx = baasbridge.WithDeclaredAccessChecked(ctx) //nolint:staticcheck
 		}
 
 		if resource != "" {
@@ -413,21 +416,6 @@ func (w headResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
 
 // Unwrap lets http.ResponseController reach the underlying writer.
 func (w headResponseWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
-
-type declaredAccessKey struct{}
-
-// WithDeclaredAccessChecked records on a route request's ctx that a declared
-// access check authorized it.
-func WithDeclaredAccessChecked(ctx context.Context) context.Context {
-	return context.WithValue(ctx, declaredAccessKey{}, true)
-}
-
-// DeclaredAccessChecked reports whether a declared access check authorized the
-// route request in ctx. Without one, the plugin must authorize it itself.
-func DeclaredAccessChecked(ctx context.Context) bool {
-	checked, _ := ctx.Value(declaredAccessKey{}).(bool)
-	return checked
-}
 
 // routeCheck is a declared access check, complete but for what only a request
 // knows.

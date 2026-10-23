@@ -27,7 +27,6 @@ import (
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 )
 
 // Key prefixes for the backends of each plugin manifests source.
@@ -102,7 +101,7 @@ func newPluginManifestsTarget(
 		client:          client,
 		patterns:        patterns,
 		grpcConfig:      grpcConfig,
-		httpTransport:   baasbridge.NewTransport(grpcConfig.TLS), //nolint:staticcheck
+		httpTransport:   baasbridge.NewTransport(grpcConfig.TLS, backendResponseHeaderTimeout), //nolint:staticcheck
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
 		requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, source),
@@ -301,7 +300,7 @@ func forwardRouteCredentials(ctx context.Context, header http.Header) error {
 	if token := requester.GetIDToken(); token != "" {
 		header.Set("X-Grafana-Id", token)
 	}
-	if !pluginroute.DeclaredAccessChecked(ctx) {
+	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
 		if token := requester.GetAccessToken(); token != "" {
 			header.Set("X-Access-Token", token)
 		}

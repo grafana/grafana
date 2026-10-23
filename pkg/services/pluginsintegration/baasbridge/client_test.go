@@ -494,6 +494,50 @@ func TestClientCallRouteRedirect(t *testing.T) {
 	require.False(t, followed)
 }
 
+// The response-header timeout fails an operator that never answers, and leaves
+// a body that streams after its headers unbounded.
+func TestClientCallRouteResponseHeaderTimeout(t *testing.T) {
+	const timeout = 100 * time.Millisecond
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/apis/"+httpTestGroup+"/v1/slow-body" {
+			w.WriteHeader(http.StatusOK)
+			w.(http.Flusher).Flush()
+			time.Sleep(3 * timeout)
+			_, _ = w.Write([]byte("late"))
+			return
+		}
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(func() { close(release) })
+	client, err := NewClient(server.URL, nil, Options{HTTPClient: &http.Client{Transport: NewTransport(nil, timeout)}})
+	require.NoError(t, err)
+
+	req := &pluginv3.CallRouteRequest{}
+	req.SetMethod(http.MethodGet)
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/hang")
+	_, err = client.CallRoute(t.Context(), req)
+	require.Equal(t, codes.DeadlineExceeded, status.Code(err), "counted against the backend like a gRPC deadline")
+
+	req.SetUrl("/apis/" + httpTestGroup + "/v1/slow-body")
+	stream, err := client.CallRoute(t.Context(), req)
+	require.NoError(t, err)
+	var body []byte
+	for {
+		msg, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoError(t, err)
+		body = append(body, msg.GetBody()...)
+	}
+	require.Equal(t, "late", string(body))
+}
+
 func TestClientCallRouteEscapedPath(t *testing.T) {
 	server, _ := newHTTPTestOperator(t)
 	for _, name := range []string{"a%2Fb", "100%25", "a%20b"} {

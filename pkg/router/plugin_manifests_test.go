@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -634,7 +633,7 @@ func TestForwardRouteCredentials(t *testing.T) {
 		"without a declared check the operator authorizes the route, so it gets the access token")
 
 	header = http.Header{}
-	require.NoError(t, forwardRouteCredentials(pluginroute.WithDeclaredAccessChecked(identity.WithRequester(t.Context(), requester)), header))
+	require.NoError(t, forwardRouteCredentials(baasbridge.WithDeclaredAccessChecked(identity.WithRequester(t.Context(), requester)), header)) //nolint:staticcheck
 	require.Equal(t, http.Header{"X-Grafana-Id": {"id"}}, header, "a declared check already authorized the route")
 
 	header = http.Header{}

@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -155,9 +156,14 @@ func IsClient(c appclientv3.Client) bool {
 // NewTransport returns a traced transport for the clients of many operators;
 // a nil tlsConfig uses the default TLS settings.
 //
+// responseHeaderTimeout bounds only the wait for a response's headers, so an
+// operator that accepts a connection and never answers fails the call, while a
+// watch streams its body for as long as it lasts. 0 waits for the request.
+//
 // Deprecated: see the package documentation.
-func NewTransport(tlsConfig *tls.Config) http.RoundTripper {
+func NewTransport(tlsConfig *tls.Config, responseHeaderTimeout time.Duration) http.RoundTripper {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.ResponseHeaderTimeout = responseHeaderTimeout
 	// The default keeps 2 idle connections per host, so concurrent calls to one
 	// operator would open a new connection, and TLS session, for most requests.
 	// These match apiextensions-apiserver's custom-route proxy.
@@ -539,14 +545,18 @@ func (c *client) setCredentials(ctx context.Context, header http.Header) error {
 
 // transportError reports a failure to reach the operator as Unavailable, as
 // the gRPC client does, so callers such as the router's breaker treat it the
-// same way.
-// A call that ran out of time is DeadlineExceeded, like a gRPC deadline.
+// same way. A call that ran out of time, its own or the transport's wait for
+// headers, is DeadlineExceeded, like a gRPC deadline.
 func transportError(ctx context.Context, err error) error {
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		return status.Error(codes.DeadlineExceeded, err.Error())
 	}
 	if ctx.Err() != nil {
 		return ctx.Err()
+	}
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		return status.Error(codes.DeadlineExceeded, err.Error())
 	}
 	return status.Error(codes.Unavailable, err.Error())
 }
