@@ -12,10 +12,12 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -27,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -367,14 +368,24 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
-	// A rename that copies permissions must own the transaction so the permission refresh runs after commit.
-	if renamed && newReceiverCreated && sqlstore.IsInTransaction(ctx) {
-		return models.ErrReceiverUpdateInTransaction.Errorf("contact point renames cannot run inside an existing SQL transaction")
-	}
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if renamed {
-			if err := ecp.applyReceiverRename(ctx, orgID, revision, oldReceiver, newReceiver, fullRemoval, newReceiverCreated, provenance); err != nil {
-				return err
+			if newReceiverCreated {
+				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, string(oldReceiver.UID), string(newReceiver.UID))
+				if err != nil {
+					return err
+				}
+				if permissionsUpdated > 0 {
+					ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiver.Name, "newName", newReceiver.Name, "count", permissionsUpdated)
+				}
+			}
+			if fullRemoval {
+				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiver.Name, newReceiver.Name, provenance); err != nil {
+					return err
+				}
+				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, string(oldReceiver.UID)); err != nil {
+					return err
+				}
 			}
 		}
 		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
@@ -385,9 +396,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	// Refresh after commit, so that the caller's permissions include the copied receiver permissions.
+	// Without an outer transaction, this refresh runs after commit.
 	if renamed && newReceiverCreated {
-		ecp.resourcePermissions.RefreshPermissions(ctx, user)
+		// A refresh failure must not turn a successful mutation into a failed response.
+		if err := ecp.resourcePermissions.RefreshPermissions(ctx, user); err != nil {
+			tracing.Error(trace.SpanFromContext(ctx), err)
+		}
 	}
 	return nil
 }
@@ -586,27 +600,6 @@ func (ecp *ContactPointService) checkProtectedFields(
 		})
 	}
 	return nil
-}
-
-// applyReceiverRename moves receiver permissions and dependent resources to the renamed receiver.
-// It must run inside the update transaction.
-func (ecp *ContactPointService) applyReceiverRename(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldReceiver, newReceiver *v1.PostableApiReceiver, fullRemoval, newReceiverCreated bool, provenance models.Provenance) error {
-	if newReceiverCreated {
-		permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, string(oldReceiver.UID), string(newReceiver.UID))
-		if err != nil {
-			return err
-		}
-		if permissionsUpdated > 0 {
-			ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiver.Name, "newName", newReceiver.Name, "count", permissionsUpdated)
-		}
-	}
-	if !fullRemoval {
-		return nil
-	}
-	if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiver.Name, newReceiver.Name, provenance); err != nil {
-		return err
-	}
-	return ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, string(oldReceiver.UID))
 }
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.

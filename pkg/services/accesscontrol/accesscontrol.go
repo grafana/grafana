@@ -160,8 +160,8 @@ type ReceiverPermissionsService interface {
 	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
 	CopyPermissions(ctx context.Context, orgID int64, oldUID, newUID string) (int, error)
 	// RefreshPermissions must run outside a SQL transaction, after the permission changes commit.
-	// It skips the refresh if ctx contains a SQL session. Refresh failures do not fail the committed update.
-	RefreshPermissions(ctx context.Context, user identity.Requester)
+	// It skips the refresh if ctx contains a SQL session. Callers handle refresh errors separately from committed updates.
+	RefreshPermissions(ctx context.Context, user identity.Requester) error
 }
 
 type RoutePermissionsService interface {

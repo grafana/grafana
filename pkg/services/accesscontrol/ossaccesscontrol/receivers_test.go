@@ -6,9 +6,14 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -102,7 +107,7 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 						require.ErrorIs(t, err, rollbackErr)
 					} else {
 						require.NoError(t, err)
-						receivers.RefreshPermissions(ctx, requester)
+						require.NoError(t, receivers.RefreshPermissions(ctx, requester))
 						require.Equal(t, 1, recorder.calls)
 					}
 					permissions, err = ac.GetUserPermissions(ctx, requester, accesscontrol.Options{})
@@ -144,7 +149,12 @@ func TestReceiverPermissionsRefresh(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			type requestKey struct{}
-			ctx := context.WithValue(t.Context(), requestKey{}, "request metadata")
+			spans := tracetest.NewSpanRecorder()
+			provider := tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(spans))
+			t.Cleanup(func() { require.NoError(t, provider.Shutdown(context.Background())) })
+			ctx, parent := provider.Tracer("test").Start(t.Context(), "receiver update")
+			defer parent.End()
+			ctx = context.WithValue(ctx, requestKey{}, "request metadata")
 			if tc.session != nil {
 				ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, tc.session)
 			}
@@ -168,8 +178,27 @@ func TestReceiverPermissionsRefresh(t *testing.T) {
 				}
 			}}
 			receivers := ReceiverPermissionsService{ac: recorder, log: log.NewNopLogger()}
-			receivers.RefreshPermissions(ctx, tc.requester)
+			err := receivers.RefreshPermissions(ctx, tc.requester)
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			} else {
+				require.NoError(t, err)
+			}
 			require.Equal(t, tc.wantCalls, recorder.calls)
+
+			ended := spans.Ended()
+			if tc.requester == nil || !tc.requester.IsIdentityType(claims.TypeUser) {
+				require.Empty(t, ended)
+				return
+			}
+			require.Len(t, ended, 1)
+			span := ended[0]
+			require.Equal(t, "accesscontrol.ossaccesscontrol.RefreshPermissions", span.Name())
+			require.Equal(t, parent.SpanContext(), span.Parent())
+			require.Contains(t, span.Attributes(), attribute.Bool("is_in_tx", tc.name == "inside SQL transaction"))
+			// Callers own error recording to avoid duplicate exception events.
+			require.Equal(t, codes.Unset, span.Status().Code)
+			require.Empty(t, span.Events())
 		})
 	}
 }

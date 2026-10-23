@@ -5,11 +5,13 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -160,22 +162,24 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 }
 
 // RefreshPermissions refreshes the caller's permissions after the receiver update commits.
-func (r ReceiverPermissionsService) RefreshPermissions(ctx context.Context, user identity.Requester) {
+func (r ReceiverPermissionsService) RefreshPermissions(ctx context.Context, user identity.Requester) error {
 	if user == nil || !user.IsIdentityType(claims.TypeUser) {
-		return
+		return nil
 	}
+	inTransaction := sqlstore.IsInTransaction(ctx)
+	ctx, span := tracing.Start(ctx, "accesscontrol.ossaccesscontrol.RefreshPermissions", attribute.Bool("is_in_tx", inTransaction))
+	defer span.End()
+
 	// Remote AuthZ cannot see uncommitted changes, so a reload inside a transaction can cache old permissions.
-	if sqlstore.IsInTransaction(ctx) {
-		r.log.Warn("Skipped receiver permission refresh inside a SQL transaction", "user", user.GetUID())
-		return
+	if inTransaction {
+		return nil
 	}
 
 	// Reload also refreshes basic-role and team caches, which ClearUserPermissionCache does not clear.
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	if _, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true}); err != nil {
-		r.log.Warn("Failed to refresh user permissions after receiver update", "user", user.GetUID(), "error", err)
-	}
+	_, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+	return err
 }
 
 func (r ReceiverPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {

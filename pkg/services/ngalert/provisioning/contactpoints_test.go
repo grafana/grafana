@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
@@ -368,12 +370,14 @@ func TestIntegrationContactPointService(t *testing.T) {
 	t.Run("update refreshes caller permissions after a rename commits", func(t *testing.T) {
 		failure := errors.New("save failed")
 		for _, tc := range []struct {
-			name    string
-			rename  bool
-			saveErr error
-			want    []string
+			name       string
+			rename     bool
+			saveErr    error
+			refreshErr error
+			want       []string
 		}{
 			{name: "rename", rename: true, want: []string{"copy", "save", "refresh"}},
+			{name: "refresh failure", rename: true, refreshErr: errors.New("refresh failed"), want: []string{"copy", "save", "refresh"}},
 			{name: "unchanged name", want: []string{"save"}},
 			{name: "save failure", rename: true, saveErr: failure, want: []string{"copy", "save"}},
 		} {
@@ -401,14 +405,26 @@ func TestIntegrationContactPointService(t *testing.T) {
 						assertInTransaction(t, ctx)
 						calls = append(calls, "copy")
 					},
-					refresh: func(ctx context.Context, u identity.Requester) {
+					refresh: func(ctx context.Context, u identity.Requester) error {
 						require.Nil(t, ctx.Value(NopTransactionManager{}), "refresh must run after the transaction")
 						require.Same(t, adminUser, u)
 						calls = append(calls, "refresh")
+						return tc.refreshErr
 					},
 				}
 
-				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, cp, models.ProvenanceAPI)
+				provider := tracesdk.NewTracerProvider()
+				t.Cleanup(func() { require.NoError(t, provider.Shutdown(context.Background())) })
+				ctx, span := provider.Tracer("test").Start(t.Context(), "contact point update")
+				defer span.End()
+				err = sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
+				if tc.refreshErr != nil {
+					recorded := span.(tracesdk.ReadOnlySpan)
+					require.Equal(t, codes.Error, recorded.Status().Code)
+					require.Equal(t, tc.refreshErr.Error(), recorded.Status().Description)
+					require.Len(t, recorded.Events(), 1)
+					require.Equal(t, "exception", recorded.Events()[0].Name)
+				}
 				if tc.saveErr != nil {
 					require.ErrorIs(t, err, failure)
 				} else {
@@ -424,7 +440,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			name   string
 			rename bool
 		}{
-			{name: "rename is rejected", rename: true},
+			{name: "rename is allowed", rename: true},
 			{name: "unchanged name is allowed"},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
@@ -441,30 +457,29 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 				saved := false
 				store.UpdateFn = func(context.Context, *models.SaveAlertmanagerConfigurationCmd) error {
-					if tc.rename {
-						t.Fatal("a rename must reject the caller's transaction before writing")
-					}
 					saved = true
 					return nil
 				}
+				copied, refreshed := false, false
 				sut.resourcePermissions = contactPointPermissionSpy{
 					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-					copy: func(context.Context) {
-						t.Fatal("a rename must reject the caller's transaction before copying permissions")
+					copy: func(ctx context.Context) {
+						require.True(t, sqlstore.IsInTransaction(ctx))
+						copied = true
 					},
-					refresh: func(context.Context, identity.Requester) {
-						t.Fatal("an update in the caller's transaction must not refresh permissions")
+					refresh: func(ctx context.Context, _ identity.Requester) error {
+						require.True(t, sqlstore.IsInTransaction(ctx))
+						refreshed = true
+						return nil
 					},
 				}
 
 				ctx := context.WithValue(context.Background(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
 				err = sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
-				if tc.rename {
-					require.ErrorIs(t, err, models.ErrReceiverUpdateInTransaction)
-					return
-				}
 				require.NoError(t, err)
 				require.True(t, saved)
+				require.Equal(t, tc.rename, copied)
+				require.Equal(t, tc.rename, refreshed)
 			})
 		}
 	})
@@ -1167,7 +1182,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 type contactPointPermissionSpy struct {
 	*fakes.FakeReceiverPermissionsService
 	copy    func(context.Context)
-	refresh func(context.Context, identity.Requester)
+	refresh func(context.Context, identity.Requester) error
 }
 
 func (s contactPointPermissionSpy) CopyPermissions(ctx context.Context, _ int64, _, _ string) (int, error) {
@@ -1175,8 +1190,8 @@ func (s contactPointPermissionSpy) CopyPermissions(ctx context.Context, _ int64,
 	return 0, nil
 }
 
-func (s contactPointPermissionSpy) RefreshPermissions(ctx context.Context, user identity.Requester) {
-	s.refresh(ctx, user)
+func (s contactPointPermissionSpy) RefreshPermissions(ctx context.Context, user identity.Requester) error {
+	return s.refresh(ctx, user)
 }
 
 func createContactPointServiceSut(t *testing.T,

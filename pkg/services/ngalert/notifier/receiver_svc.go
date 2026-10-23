@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -499,11 +498,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	// A rename must own the transaction so the permission refresh runs after commit.
-	if existing.Name != r.Name && sqlstore.IsInTransaction(ctx) {
-		return nil, models.ErrReceiverUpdateInTransaction.Errorf("receiver renames cannot run inside an existing SQL transaction")
-	}
-
 	// We re-encrypt the existing receiver to ensure any unencrypted secure fields that are correctly encrypted, note this should NOT re-encrypt secure fields that are already encrypted.
 	// This is rare, but can happen if a receiver is created with unencrypted secure fields and then the secure option is added later.
 	// Preferably, this would be handled by receiver config versions and migrations but for now this is a good safety net.
@@ -608,7 +602,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	if existing.Name != r.Name {
-		rs.resourcePermissions.RefreshPermissions(ctx, user)
+		// A refresh failure must not turn a successful mutation into a failed response.
+		if err := rs.resourcePermissions.RefreshPermissions(ctx, user); err != nil {
+			tracing.Error(span, err)
+		}
 	}
 
 	logger.Info("Updated receiver", "new_version", result.Version)
