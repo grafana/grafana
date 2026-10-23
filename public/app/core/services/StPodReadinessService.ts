@@ -108,7 +108,7 @@ export class StPodReadinessService {
     this.pollTimer = setInterval(() => this.poll(), ST_POD_POLL_INTERVAL_MS);
     this.timeoutTimer = setTimeout(() => {
       if (this.state.getValue() === StPodStatus.Waiting) {
-        this.markTimeout();
+        this.transitionToTimeout();
       }
     }, ST_POD_TIMEOUT_MS);
   }
@@ -119,16 +119,16 @@ export class StPodReadinessService {
         showErrorAlert: false,
       });
       if (response?.database === 'ok') {
-        this.markReady();
+        this.transitionToReady();
       } else {
-        this.markWaiting();
+        this.transitionToWaiting();
       }
     } catch {
-      this.markWaiting();
+      this.transitionToWaiting();
     }
   }
 
-  private markReady(): void {
+  private transitionToReady(): void {
     if (this.state.getValue() === StPodStatus.Ready) {
       return;
     }
@@ -138,7 +138,7 @@ export class StPodReadinessService {
     this.clearTimers();
   }
 
-  private markWaiting(): void {
+  private transitionToWaiting(): void {
     if (this.state.getValue() === StPodStatus.Waiting) {
       return;
     }
@@ -146,7 +146,7 @@ export class StPodReadinessService {
     this.state.next(StPodStatus.Waiting);
   }
 
-  private markTimeout(): void {
+  private transitionToTimeout(): void {
     if (this.state.getValue() === StPodStatus.Timeout) {
       return;
     }
