@@ -13,18 +13,14 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
-# --- Bundler selection
-# Set RSPACK=1 to build the frontend with rspack instead of webpack. rspack writes
-# inside the webpack output directory, so the CDN mount and the public/build URL
-# prefix are the same either way; only the manifest and the flag change.
-use_rspack = os.environ.get('RSPACK', '') in ('1', 'true')
-build_dir = 'build/rspack' if use_rspack else 'build'
+# --- Build output
+build_dir = 'build/rspack'
 manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
 
-# A cold build (yarn install + serial plugin builds + main webpack compile) can take
-# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
-# fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
+# A cold build (yarn install + serial plugin builds + main rspack compile) can take
+# longer than Tilt's default 5m readiness timeout, which fails `tilt ci` even though the
+# build succeeds.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
@@ -42,11 +38,9 @@ local_resource(
   cmd='rm -rf %s' % manifest_path,
   # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
   # files rather than hold them in a dev server.
-  serve_cmd='yarn start:rspack:noHmr -- --env noTsCheck=1 --env noLint=1' if use_rspack else 'yarn start:noLint',
+  serve_cmd='yarn start:noHmr -- --env noTsCheck=1 --env noLint=1',
   resource_deps=['yarn install'],
 
-  # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
-  # the webpack build is complete?
   readiness_probe=probe(
     initial_delay_secs=10,
     period_secs=1,
@@ -59,15 +53,14 @@ local_resource(
 # boot.js has its own rspack config, so the watch that 'yarn start' runs no longer rebuilds
 # it. The image copies boot.js and live_update syncs it, so without this an edit to
 # public/boot would never reach the container.
-if use_rspack:
-  local_resource(
-    'rspack boot',
-    cmd='yarn build:rspack:boot --env develop',
-    deps=['../../public/boot'],
-    resource_deps=['yarn install'],
-    allow_parallel=True,
-    labels=["local"]
-  )
+local_resource(
+  'rspack boot',
+  cmd='yarn build:boot --env develop',
+  deps=['../../public/boot'],
+  resource_deps=['yarn install'],
+  allow_parallel=True,
+  labels=["local"]
+)
 
 local_resource(
   'backend-build',
@@ -89,14 +82,10 @@ local_resource(
 # --- Docker Compose
 base_config = read_yaml('./docker-compose.yaml')
 
-# grafana-api evaluates feature flags from static config; the frontend-service
-# evaluates them from GOFF, so the two need the bundler flag set separately.
 grafana_api_env = {
   'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
   'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
 }
-if use_rspack:
-  grafana_api_env['GF_FEATURE_TOGGLES_grafana.rspackBuild'] = 'true'
 
 # Ports and port-dependent environment variables are set here rather than in
 # docker-compose.yaml so they can be derived from PORT.
@@ -128,9 +117,6 @@ compose_overrides = {'services': {
     'ports': ['%d:1031/tcp' % port_goff],
   },
 }}
-
-if use_rspack:
-  compose_overrides['configs'] = {'goff_flags_bundler': {'file': './goff-flags.rspack.yaml'}}
 
 # Enterprise overrides: mount dev license into grafana-api
 base_volumes = base_config['services']['grafana-api']['volumes']

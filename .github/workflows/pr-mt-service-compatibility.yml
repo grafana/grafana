@@ -36,7 +36,6 @@ jobs:
             frontend_strict:
               - 'public/**'
               - 'packages/**'
-              - 'scripts/webpack/**'
               - 'scripts/rspack/**'
               - '.eslintrc*'
               - '.prettierrc*'
