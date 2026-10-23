@@ -11,6 +11,7 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import {
+  getRequiredPredefinedVariables,
   isPredefinedNameSelected,
   parseUseCrossDashboardVariables,
   setScopeAll,
@@ -130,6 +131,7 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly
   const folderVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'folder');
   const visibleGlobalVars = filtersOnly ? globalVars.filter(isFilterVariableKind) : globalVars;
   const visibleFolderVars = filtersOnly ? folderVars.filter(isFilterVariableKind) : folderVars;
+  const requiredBy = getRequiredPredefinedVariables(candidates, selection);
 
   return (
     <Stack direction="column" gap={2}>
@@ -157,6 +159,7 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly
           <ScopeCheckboxSection
             scope="global"
             variables={visibleGlobalVars}
+            requiredBy={requiredBy}
             allNamesInScope={globalVars.map((variable) => variable.spec.name)}
             limitSelectionToShown={filtersOnly}
             selection={selection}
@@ -167,6 +170,7 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly
           <ScopeCheckboxSection
             scope="folder"
             variables={visibleFolderVars}
+            requiredBy={requiredBy}
             allNamesInScope={folderVars.map((variable) => variable.spec.name)}
             limitSelectionToShown={filtersOnly}
             selection={selection}
@@ -183,6 +187,8 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly
 interface ScopeCheckboxSectionProps {
   scope: PredefinedVariableScope;
   variables: VariableKind[];
+  /** Variables injected because a selected one uses them as its datasource; shown checked and locked. */
+  requiredBy: Map<VariableKind, string[]>;
   /** Every name in the scope, including ones hidden by filtersOnly. */
   allNamesInScope: string[];
   /** All checkbox opts in only the listed variables, not the whole scope. */
@@ -196,6 +202,7 @@ interface ScopeCheckboxSectionProps {
 function ScopeCheckboxSection({
   scope,
   variables,
+  requiredBy,
   allNamesInScope,
   limitSelectionToShown,
   selection,
@@ -256,24 +263,34 @@ function ScopeCheckboxSection({
                 }}
               />
             </li>
-            {variables.map((variable) => (
-              <li key={variable.spec.name} className={styles.listItem}>
-                <Checkbox
-                  label={variable.spec.name}
-                  value={isPredefinedNameSelected(selection, scope, variable.spec.name)}
-                  disabled={!canEdit}
-                  onChange={(event) =>
-                    updateDashboardScopeVariable(
-                      dashboard,
-                      scope,
-                      variable.spec.name,
-                      event.currentTarget.checked,
-                      allNamesInScope
-                    )
-                  }
-                />
-              </li>
-            ))}
+            {variables.map((variable) => {
+              const requiredByNames = requiredBy.get(variable);
+              return (
+                <li key={variable.spec.name} className={styles.listItem}>
+                  <Checkbox
+                    label={variable.spec.name}
+                    description={
+                      requiredByNames
+                        ? t('dashboard.sidebar.cross-dashboard-variables.required-by', 'Required by {{names}}', {
+                            names: requiredByNames.join(', '),
+                          })
+                        : undefined
+                    }
+                    value={Boolean(requiredByNames) || isPredefinedNameSelected(selection, scope, variable.spec.name)}
+                    disabled={!canEdit || Boolean(requiredByNames)}
+                    onChange={(event) =>
+                      updateDashboardScopeVariable(
+                        dashboard,
+                        scope,
+                        variable.spec.name,
+                        event.currentTarget.checked,
+                        allNamesInScope
+                      )
+                    }
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </OptionsPaneCategory>
