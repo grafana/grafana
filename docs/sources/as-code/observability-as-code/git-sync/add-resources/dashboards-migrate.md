@@ -180,12 +180,6 @@ To avoid losing unsupported resources, complete these steps for each folder **be
 
 ### Reuse the original folder's UID
 
-{{< admonition type="note" >}}
-
-Folder metadata requires the `provisioningFolderMetadata` feature, which is enabled by default. If your administrator has disabled it, `metadata.name` is ignored and folders always get a path-derived UID.
-
-{{< /admonition >}}
-
 To reuse an original folder's UID, add a `_folder.json` file to that folder's directory in the repository:
 
 ```json
