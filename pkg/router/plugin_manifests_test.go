@@ -645,21 +645,31 @@ func TestPluginConnectionClosesWithItsLastHandler(t *testing.T) {
 	require.ErrorContains(t, err, "closed")
 }
 
-// A handler that fails to load releases what Load acquired for it.
+// A handler that fails to load releases what Load acquired for it, also
+// when the load panics and the router recovers it.
 func TestPluginBackendLoadFailureReleases(t *testing.T) {
-	acquired, released := 0, 0
-	backend := &PluginBackend{
-		pluginID: "grafana-appsdktest-app",
-		client: func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+	for name, client := range map[string]PluginClientProvider{
+		"error": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 			return nil, nil, errors.New("unreachable")
 		},
-		acquire: func() (func(), error) {
-			acquired++
-			return func() { released++ }, nil
+		"panic": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			panic("unreachable")
 		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			acquired, released := 0, 0
+			backend := &PluginBackend{
+				pluginID: "grafana-appsdktest-app",
+				client:   client,
+				acquire: func() (func(), error) {
+					acquired++
+					return func() { released++ }, nil
+				},
+			}
+			_, err := loadBackend(t.Context(), backend)
+			require.ErrorContains(t, err, "unreachable")
+			require.Equal(t, 1, acquired)
+			require.Equal(t, 1, released)
+		})
 	}
-	_, err := backend.Load(t.Context())
-	require.ErrorContains(t, err, "unreachable")
-	require.Equal(t, 1, acquired)
-	require.Equal(t, 1, released)
 }

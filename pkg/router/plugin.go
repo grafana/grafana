@@ -450,11 +450,19 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 			return nil, err
 		}
 	}
+	// Release unless the handler takes it over, also when load panics: the
+	// router recovers the panic and retries the load.
+	loaded := false
+	defer func() {
+		if !loaded {
+			release()
+		}
+	}()
 	handler, err := b.load(ctx)
 	if err != nil {
-		release()
 		return nil, err
 	}
+	loaded = true
 	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name, release: release}, nil
 }
 
