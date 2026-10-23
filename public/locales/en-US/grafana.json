@@ -13161,7 +13161,8 @@
         "close": "Close {{title}}",
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
-      }
+      },
+      "floating-resize": "Resize sidebar width"
     },
     "fullscreen-workspace": {
       "enter": "Enter Workspace",

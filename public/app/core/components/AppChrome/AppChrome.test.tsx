@@ -62,6 +62,8 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  floatingExtensionSidebarWidth: 480,
+  setFloatingExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
   floatingHidden: false,
 };
