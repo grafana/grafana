@@ -1014,7 +1014,7 @@ describe('mode instrumentation', () => {
     expect(next.edit_session_id).not.toBe(first.edit_session_id);
   });
 
-  it('keeps legacy tracking unchanged when the mode feature is disabled', () => {
+  it('tracks edit periods without reporting mode usage when the mode feature is disabled', () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': false });
     const dashboard = setup();
     render(
@@ -1034,8 +1034,102 @@ describe('mode instrumentation', () => {
       changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Legacy edit' });
     });
     expect(dashboard.state.title).toBe('Legacy edit');
-    expect(events('dashboards_edit_actor_first_change')).toEqual([]);
-    expect(dashboard.getEditSessionTracking()).toEqual({});
+    const sessionId = dashboard.getEditSessionTracking().edit_session_id;
+    expect(events('dashboards_edit_period_started')).toEqual([
+      expect.objectContaining({ source: 'user', edit_session_id: sessionId }),
+    ]);
+    expect(events('dashboards_edit_actor_first_change')).toEqual([
+      expect.objectContaining({ edit_session_id: sessionId, actor: 'user', mode: 'edit' }),
+    ]);
+    expect(dashboard.getEditSessionTracking()).toEqual(
+      expect.objectContaining({ had_manual_changes: true, had_assistant_changes: false, edit_actors: 'manual' })
+    );
+  });
+
+  describe.each([true, false])('edit period outcomes with modes enabled=%s', (enabled) => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': enabled });
+    });
+
+    function changeTitleManually(dashboard: ReturnType<typeof setup>, newValue: string) {
+      act(() => {
+        dashboard.setDashboardMode('edit', 'picker') || dashboard.onEnterEditMode();
+        dashboard.activateSidebar();
+        changeTitle({ source: dashboard, oldValue: dashboard.state.title, newValue });
+        // The change-detection worker is mocked, so mark the draft dirty as it would.
+        dashboard.setState({ isDirty: true });
+      });
+    }
+
+    it.each([
+      ['manual', true, false],
+      ['assistant', false, true],
+      ['mixed', true, true],
+    ] as const)('classifies a discarded period as %s', async (actors, manual, assistant) => {
+      const dashboard = setup();
+      if (assistant) {
+        await assistantChangesTitle(dashboard, 'Agent draft');
+      }
+      if (manual) {
+        changeTitleManually(dashboard, 'Manual draft');
+      }
+      act(() => dashboard.exitEditMode({ skipConfirm: true }));
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({
+          outcome: 'discarded',
+          had_manual_changes: manual,
+          had_assistant_changes: assistant,
+          edit_actors: actors,
+        }),
+      ]);
+    });
+
+    it('reports leaving edit mode without changes as exited with no actors', () => {
+      const dashboard = setup();
+      act(() => dashboard.onEnterEditMode());
+      act(() => dashboard.exitEditMode({ skipConfirm: false }));
+      expect(dashboard.state.isEditing).toBe(false);
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({ outcome: 'exited', edit_actors: 'none', had_unattributed_changes: false }),
+      ]);
+    });
+
+    it('counts a change no actor recorded as manual', () => {
+      const dashboard = setup(true);
+      act(() => dashboard.onEnterEditMode());
+      act(() => {
+        dashboardSceneGraph.getVizPanels(dashboard)[0].setState({ title: 'Dragged elsewhere' });
+        dashboard.setState({ isDirty: true });
+      });
+      expect(dashboard.getEditSessionTracking()).toEqual(
+        expect.objectContaining({
+          had_manual_changes: false,
+          had_assistant_changes: false,
+          had_unattributed_changes: true,
+          edit_actors: 'manual',
+        })
+      );
+    });
+
+    it('reports an open period as abandoned once when the scene deactivates', async () => {
+      const dashboard = setup();
+      await assistantChangesTitle(dashboard, 'Agent draft');
+      deactivate();
+      deactivate = () => {};
+      window.dispatchEvent(new Event('pagehide'));
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({ outcome: 'abandoned', edit_actors: 'assistant', has_unsaved_changes: true }),
+      ]);
+    });
+
+    it('reports an open period as abandoned when the page is hidden', () => {
+      const dashboard = setup();
+      changeTitleManually(dashboard, 'Manual draft');
+      window.dispatchEvent(new Event('pagehide'));
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({ outcome: 'abandoned', edit_actors: 'manual' }),
+      ]);
+    });
   });
 
   it('includes the session when discarding and exiting edit mode', async () => {
@@ -1050,7 +1144,7 @@ describe('mode instrumentation', () => {
     expect(dashboard.getEditSessionTracking()).toEqual({});
   });
 
-  it.each([false, true])('preserves legacy start and discard behavior with modes enabled=%s', async (enabled) => {
+  it.each([false, true])('reports the same start and discard events with modes enabled=%s', async (enabled) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': enabled });
     const dashboard = setup();
     await assistantChangesTitle(dashboard, 'First draft');
@@ -1074,16 +1168,12 @@ describe('mode instrumentation', () => {
     ]);
     expect(events('dashboards_edit_discarded')).toEqual([{ isDynamicDashboard: true }]);
     expect(events('grafana_dashboard_saved')).toHaveLength(1);
-    expect(events('dashboards_edit_period_started')).toHaveLength(enabled ? 3 : 0);
-    expect(events('dashboards_edit_period_ended')).toEqual(
-      enabled
-        ? [
-            expect.objectContaining({ outcome: 'saved' }),
-            expect.objectContaining({ outcome: 'discarded' }),
-            expect.objectContaining({ outcome: 'discarded' }),
-          ]
-        : []
-    );
+    expect(events('dashboards_edit_period_started')).toHaveLength(3);
+    expect(events('dashboards_edit_period_ended')).toEqual([
+      expect.objectContaining({ outcome: 'saved' }),
+      expect.objectContaining({ outcome: 'discarded' }),
+      expect.objectContaining({ outcome: 'discarded' }),
+    ]);
   });
 
   it('reports elapsed time as wall time rather than inventing active editing time', () => {

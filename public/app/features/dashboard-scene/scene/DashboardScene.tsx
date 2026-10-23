@@ -102,7 +102,12 @@ import {
   resolvePredefinedVariablesForDashboard,
   type UseCrossDashboardVariables,
 } from '../utils/crossDashboardVariablesSelection';
-import { type DashboardEditSessionTracking, type DashboardModeTrigger } from '../utils/dashboardModeTracking';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+  getEditActors,
+} from '../utils/dashboardModeTracking';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
@@ -242,8 +247,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._modePickerOpened = true;
   }
 
+  // Edit periods are tracked regardless of dashboard modes, so manual and Assistant editing can be
+  // measured on instances that don't have modes enabled.
   private startEditPeriod(source: 'user' | 'assistant') {
-    if (!dashboardModesEnabled() || this._editSession) {
+    if (this._editSession) {
       return;
     }
     this._editSession = {
@@ -268,18 +275,35 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!this._editSession) {
       return {};
     }
+    const hadManualChanges = this._editSession.manualChanges || Boolean(this.state.editPanel?.state.isDirty);
+    const hadAssistantChanges = this._editSession.assistantChanges;
+    // Assistant writes are always recorded by the mutation client, so an actual change that neither
+    // actor recorded came from a manual edit path that doesn't report itself (e.g. legacy grid drags).
+    const hadUnattributedChanges =
+      !hadManualChanges && !hadAssistantChanges && Boolean(this.state.isDirty) && this.hasActualSaveChangesSafe();
     return {
       edit_session_id: this._editSession.id,
       edit_source: this._editSession.source,
       mode: getDashboardMode(this.state),
-      had_manual_changes: this._editSession.manualChanges || Boolean(this.state.editPanel?.state.isDirty),
-      had_assistant_changes: this._editSession.assistantChanges,
+      had_manual_changes: hadManualChanges,
+      had_assistant_changes: hadAssistantChanges,
+      had_unattributed_changes: hadUnattributedChanges,
+      edit_actors: getEditActors(hadManualChanges || hadUnattributedChanges, hadAssistantChanges),
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
     };
   }
 
+  // Tracking runs on exit and unload paths, which must not fail when the diff can't be computed.
+  private hasActualSaveChangesSafe() {
+    try {
+      return hasActualSaveChanges(this);
+    } catch {
+      return false;
+    }
+  }
+
   public recordEditMutation(source: 'user' | 'assistant' = this._assistantWrites > 0 ? 'assistant' : 'user') {
-    if (!dashboardModesEnabled() || !this.state.isEditing) {
+    if (!this.state.isEditing) {
       return;
     }
     this.startEditPeriod(source);
@@ -298,14 +322,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public trackEditMutation(perform: () => void) {
-    if (!dashboardModesEnabled()) {
-      perform();
-      return;
-    }
     const alreadyRecorded =
       this._assistantWrites > 0 ? this._editSession?.assistantChanges : this._editSession?.manualChanges;
-    // Only compare until the first actual change by each actor in this editing period.
-    const before = alreadyRecorded ? undefined : JSON.stringify(this.getSaveModel());
+    // Only compare until the first actual change by each actor in this editing period. Outside edit
+    // mode the comparison would be discarded, so skip the serialization.
+    const before = alreadyRecorded || !this.state.isEditing ? undefined : JSON.stringify(this.getSaveModel());
     perform();
     if (before !== undefined && before !== JSON.stringify(this.getSaveModel())) {
       this.recordEditMutation();
@@ -326,13 +347,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  private trackDiscardedPeriod() {
+  private endEditPeriod(outcome: Exclude<DashboardEditPeriodOutcome, 'saved' | 'saved_as_copy'>) {
     const tracking = this.getEditSessionTracking();
     if (tracking.edit_session_id) {
       DashboardInteractions.editPeriodEnded({
         ...tracking,
         edit_session_id: tracking.edit_session_id,
-        outcome: 'discarded',
+        outcome,
         has_unsaved_changes: Boolean(this.state.isDirty),
       });
     }
@@ -480,8 +501,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         this.applyDashboardMode();
       }
     });
+    // Closing the tab or reloading never deactivates the scene, so an open edit period would go unreported.
+    const onPageHide = () => this.endEditPeriod('abandoned');
+    window.addEventListener('pagehide', onPageHide);
 
     return () => {
+      window.removeEventListener('pagehide', onPageHide);
+      this.endEditPeriod('abandoned');
       this.cancelPendingViews();
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
@@ -929,11 +955,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
-    if (restoreInitialState) {
-      this.trackDiscardedPeriod();
-    } else {
-      this._editSession = undefined;
-    }
+    this.endEditPeriod(restoreInitialState ? 'discarded' : 'exited');
     this._sidebarBeforeViewing = undefined;
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
@@ -997,7 +1019,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    this.trackDiscardedPeriod();
+    this.endEditPeriod('discarded');
 
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();
