@@ -6,11 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -22,17 +19,15 @@ import (
 func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 	failure := errors.New("update failed")
 	for _, tc := range []struct {
-		name       string
-		rename     bool
-		copyErr    error
-		deleteErr  error
-		saveErr    error
-		commitErr  error
-		refreshErr error
-		want       []string
+		name      string
+		rename    bool
+		copyErr   error
+		deleteErr error
+		saveErr   error
+		commitErr error
+		want      []string
 	}{
-		{name: "rename", rename: true, want: []string{"copy", "delete", "save", "commit", "refresh"}},
-		{name: "refresh failure", rename: true, refreshErr: failure, want: []string{"copy", "delete", "save", "commit", "refresh"}},
+		{name: "rename", rename: true, want: []string{"copy", "delete", "save", "commit"}},
 		{name: "unchanged name", want: []string{"save", "commit"}},
 		{name: "copy failure", rename: true, copyErr: failure, want: []string{"copy", "rollback"}},
 		{name: "delete failure", rename: true, deleteErr: failure, want: []string{"copy", "delete", "rollback"}},
@@ -52,15 +47,12 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secrets)
 			receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
 			require.NoError(t, err)
-			spans := tracetest.NewSpanRecorder()
-			sut.tracer = tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spans))
 			oldUID := receiver.UID
 			if tc.rename {
 				receiver.Name = "renamed"
 			}
 
 			var calls []string
-			committed := false
 			sut.xact = receiverPermissionTransactionFunc(func(ctx context.Context, work func(context.Context) error) error {
 				err := work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
 				if err != nil {
@@ -71,7 +63,6 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 				if tc.commitErr != nil {
 					return tc.commitErr
 				}
-				committed = true
 				return nil
 			})
 			sut.cfgStore = receiverPermissionConfigStore{alertmanagerConfigStore: sut.cfgStore, save: func(ctx context.Context) error {
@@ -81,9 +72,10 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 			}}
 			sut.resourcePermissions = receiverPermissionSpy{
 				FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-				copy: func(ctx context.Context, orgID int64, old, new string) (int, error) {
+				copy: func(ctx context.Context, orgID int64, actor identity.Requester, old, new string) (int, error) {
 					assertInTransaction(t, ctx)
 					require.Equal(t, requester.OrgID, orgID)
+					require.Same(t, requester, actor)
 					require.Equal(t, oldUID, old)
 					require.Equal(t, legacy_storage.NameToUid("renamed"), new)
 					calls = append(calls, "copy")
@@ -96,15 +88,6 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 					calls = append(calls, "delete")
 					return tc.deleteErr
 				},
-				refresh: func(ctx context.Context, user identity.Requester) error {
-					require.True(t, committed)
-					require.Nil(t, ctx.Value(NopTransactionManager{}))
-					require.Nil(t, ctx.Value(sqlstore.ContextSessionKey{}))
-					require.Equal(t, "request metadata", ctx.Value(requestKey{}))
-					require.Same(t, requester, user)
-					calls = append(calls, "refresh")
-					return tc.refreshErr
-				},
 			}
 
 			_, err = sut.UpdateReceiver(ctx, receiver, nil, requester.OrgID, requester)
@@ -114,24 +97,6 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 				require.NoError(t, err)
 			}
 			require.Equal(t, tc.want, calls)
-			if tc.refreshErr != nil {
-				found := false
-				for _, span := range spans.Ended() {
-					if span.Name() == "alerting.receivers.update" {
-						found = true
-						require.Equal(t, codes.Error, span.Status().Code)
-						require.Equal(t, tc.refreshErr.Error(), span.Status().Description)
-						var exceptions int
-						for _, event := range span.Events() {
-							if event.Name == "exception" {
-								exceptions++
-							}
-						}
-						require.Equal(t, 1, exceptions)
-					}
-				}
-				require.True(t, found)
-			}
 		})
 	}
 }
@@ -164,20 +129,20 @@ func TestReceiverService_UpdateReceiverInExistingTransaction(t *testing.T) {
 				called = true
 				return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
 			})
-			refreshed := false
+			copied := false
 			sut.resourcePermissions = receiverPermissionSpy{
 				FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-				copy:                           func(context.Context, int64, string, string) (int, error) { return 0, nil },
-				delete:                         func(context.Context, int64, string) error { return nil },
-				refresh: func(ctx context.Context, _ identity.Requester) error {
+				copy: func(ctx context.Context, _ int64, actor identity.Requester, _, _ string) (int, error) {
 					require.True(t, sqlstore.IsInTransaction(ctx))
-					refreshed = true
-					return nil
+					require.Same(t, requester, actor)
+					copied = true
+					return 0, nil
 				},
+				delete: func(context.Context, int64, string) error { return nil },
 			}
 
 			_, err = sut.UpdateReceiver(ctx, receiver, nil, requester.OrgID, requester)
-			require.Equal(t, tc.rename, refreshed)
+			require.Equal(t, tc.rename, copied)
 			require.NoError(t, err)
 			require.True(t, called)
 		})
@@ -223,19 +188,14 @@ func (s receiverPermissionConfigStore) Save(ctx context.Context, _ *legacy_stora
 
 type receiverPermissionSpy struct {
 	*fakes.FakeReceiverPermissionsService
-	copy    func(context.Context, int64, string, string) (int, error)
-	delete  func(context.Context, int64, string) error
-	refresh func(context.Context, identity.Requester) error
+	copy   func(context.Context, int64, identity.Requester, string, string) (int, error)
+	delete func(context.Context, int64, string) error
 }
 
-func (s receiverPermissionSpy) CopyPermissions(ctx context.Context, orgID int64, old, new string) (int, error) {
-	return s.copy(ctx, orgID, old, new)
+func (s receiverPermissionSpy) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, old, new string) (int, error) {
+	return s.copy(ctx, orgID, user, old, new)
 }
 
 func (s receiverPermissionSpy) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {
 	return s.delete(ctx, orgID, uid)
-}
-
-func (s receiverPermissionSpy) RefreshPermissions(ctx context.Context, user identity.Requester) error {
-	return s.refresh(ctx, user)
 }

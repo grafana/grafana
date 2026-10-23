@@ -12,8 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/codes"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
@@ -367,17 +365,15 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
 	})
 
-	t.Run("update refreshes caller permissions after a rename commits", func(t *testing.T) {
+	t.Run("update copies permissions with the requester during a rename", func(t *testing.T) {
 		failure := errors.New("save failed")
 		for _, tc := range []struct {
-			name       string
-			rename     bool
-			saveErr    error
-			refreshErr error
-			want       []string
+			name    string
+			rename  bool
+			saveErr error
+			want    []string
 		}{
-			{name: "rename", rename: true, want: []string{"copy", "save", "refresh"}},
-			{name: "refresh failure", rename: true, refreshErr: errors.New("refresh failed"), want: []string{"copy", "save", "refresh"}},
+			{name: "rename", rename: true, want: []string{"copy", "save"}},
 			{name: "unchanged name", want: []string{"save"}},
 			{name: "save failure", rename: true, saveErr: failure, want: []string{"copy", "save"}},
 		} {
@@ -401,30 +397,14 @@ func TestIntegrationContactPointService(t *testing.T) {
 				}
 				sut.resourcePermissions = contactPointPermissionSpy{
 					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-					copy: func(ctx context.Context) {
+					copy: func(ctx context.Context, actor identity.Requester) {
 						assertInTransaction(t, ctx)
+						require.Same(t, adminUser, actor)
 						calls = append(calls, "copy")
-					},
-					refresh: func(ctx context.Context, u identity.Requester) error {
-						require.Nil(t, ctx.Value(NopTransactionManager{}), "refresh must run after the transaction")
-						require.Same(t, adminUser, u)
-						calls = append(calls, "refresh")
-						return tc.refreshErr
 					},
 				}
 
-				provider := tracesdk.NewTracerProvider()
-				t.Cleanup(func() { require.NoError(t, provider.Shutdown(context.Background())) })
-				ctx, span := provider.Tracer("test").Start(t.Context(), "contact point update")
-				defer span.End()
-				err = sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
-				if tc.refreshErr != nil {
-					recorded := span.(tracesdk.ReadOnlySpan)
-					require.Equal(t, codes.Error, recorded.Status().Code)
-					require.Equal(t, tc.refreshErr.Error(), recorded.Status().Description)
-					require.Len(t, recorded.Events(), 1)
-					require.Equal(t, "exception", recorded.Events()[0].Name)
-				}
+				err = sut.UpdateContactPoint(t.Context(), 1, adminUser, cp, models.ProvenanceAPI)
 				if tc.saveErr != nil {
 					require.ErrorIs(t, err, failure)
 				} else {
@@ -460,17 +440,13 @@ func TestIntegrationContactPointService(t *testing.T) {
 					saved = true
 					return nil
 				}
-				copied, refreshed := false, false
+				copied := false
 				sut.resourcePermissions = contactPointPermissionSpy{
 					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-					copy: func(ctx context.Context) {
+					copy: func(ctx context.Context, actor identity.Requester) {
 						require.True(t, sqlstore.IsInTransaction(ctx))
+						require.Same(t, adminUser, actor)
 						copied = true
-					},
-					refresh: func(ctx context.Context, _ identity.Requester) error {
-						require.True(t, sqlstore.IsInTransaction(ctx))
-						refreshed = true
-						return nil
 					},
 				}
 
@@ -479,7 +455,6 @@ func TestIntegrationContactPointService(t *testing.T) {
 				require.NoError(t, err)
 				require.True(t, saved)
 				require.Equal(t, tc.rename, copied)
-				require.Equal(t, tc.rename, refreshed)
 			})
 		}
 	})
@@ -1181,17 +1156,12 @@ func TestIntegrationAuthorization(t *testing.T) {
 
 type contactPointPermissionSpy struct {
 	*fakes.FakeReceiverPermissionsService
-	copy    func(context.Context)
-	refresh func(context.Context, identity.Requester) error
+	copy func(context.Context, identity.Requester)
 }
 
-func (s contactPointPermissionSpy) CopyPermissions(ctx context.Context, _ int64, _, _ string) (int, error) {
-	s.copy(ctx)
+func (s contactPointPermissionSpy) CopyPermissions(ctx context.Context, _ int64, user identity.Requester, _, _ string) (int, error) {
+	s.copy(ctx, user)
 	return 0, nil
-}
-
-func (s contactPointPermissionSpy) RefreshPermissions(ctx context.Context, user identity.Requester) error {
-	return s.refresh(ctx, user)
 }
 
 func createContactPointServiceSut(t *testing.T,

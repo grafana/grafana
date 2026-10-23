@@ -12,12 +12,10 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -371,7 +369,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if renamed {
 			if newReceiverCreated {
-				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, string(oldReceiver.UID), string(newReceiver.UID))
+				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, user, string(oldReceiver.UID), string(newReceiver.UID))
 				if err != nil {
 					return err
 				}
@@ -395,13 +393,6 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	})
 	if err != nil {
 		return err
-	}
-	// Without an outer transaction, this refresh runs after commit.
-	if renamed && newReceiverCreated {
-		// A refresh failure must not turn a successful mutation into a failed response.
-		if err := ecp.resourcePermissions.RefreshPermissions(ctx, user); err != nil {
-			tracing.Error(trace.SpanFromContext(ctx), err)
-		}
 	}
 	return nil
 }

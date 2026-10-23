@@ -575,7 +575,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 				return err
 			}
 			// Update receiver permissions
-			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, existing.UID, result.UID)
+			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, existing.UID, result.UID)
 			if err != nil {
 				return err
 			}
@@ -599,13 +599,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	if existing.Name != r.Name {
-		// A refresh failure must not turn a successful mutation into a failed response.
-		if err := rs.resourcePermissions.RefreshPermissions(ctx, user); err != nil {
-			tracing.Error(span, err)
-		}
 	}
 
 	logger.Info("Updated receiver", "new_version", result.Version)

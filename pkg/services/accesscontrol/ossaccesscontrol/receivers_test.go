@@ -53,12 +53,22 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 				featuremgmt.FlagAuthzLegacyUserPermissions: {State: memprovider.Enabled, ContextEvaluator: &evaluate},
 			})))
 			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
-			for _, rollback := range []bool{false, true} {
-				name := "commit"
-				if rollback {
-					name = "rollback"
-				}
-				t.Run(name, func(t *testing.T) {
+			for _, tc := range []struct {
+				name        string
+				rollback    bool
+				standalone  bool
+				refreshErr  error
+				cancelCopy  bool
+				skipRefresh bool
+			}{
+				{name: "nested commit"},
+				{name: "nested rollback", rollback: true},
+				{name: "standalone", standalone: true},
+				{name: "nil requester", standalone: true, skipRefresh: true},
+				{name: "cancelled copy", standalone: true, cancelCopy: true},
+				{name: "refresh failure", refreshErr: errors.New("AuthZ unavailable")},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
 					ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext("", map[string]any{"legacy-route": legacy}))
 					sql := sqlstore.NewTestStore(t)
 					cfg := setting.NewCfg()
@@ -75,7 +85,14 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 					}
 					ac := acimpl.ProvideOSSService(cfg, store, actions, cache, features,
 						tracing.InitializeTracerForTest(), sql, permreg.ProvidePermissionRegistry(), nil, iam.Features{}, client, catalog)
-					recorder := &permissionRefreshRecorder{Service: ac, t: t}
+					type requestKey struct{}
+					ctx = context.WithValue(ctx, requestKey{}, "request metadata")
+					recorder := &permissionRefreshRecorder{Service: ac, t: t, err: tc.refreshErr, checkContext: func(ctx context.Context) {
+						require.Equal(t, "request metadata", ctx.Value(requestKey{}))
+						deadline, ok := ctx.Deadline()
+						require.True(t, ok)
+						require.WithinDuration(t, time.Now().Add(5*time.Second), deadline, time.Second)
+					}}
 					receivers, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
 						actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, nil, nil, actions)
 					require.NoError(t, err)
@@ -90,29 +107,49 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 					require.NoError(t, err)
 					require.Contains(t, permissions, oldGrant)
 					rollbackErr := errors.New("rollback")
-					err = sql.InTransaction(ctx, func(ctx context.Context) error {
-						require.NoError(t, sql.InTransaction(ctx, func(ctx context.Context) error {
-							_, err := receivers.CopyPermissions(ctx, 1, "old", "new")
-							return err
-						}))
-						require.NoError(t, receivers.DeleteResourcePermissions(ctx, 1, "old"))
-						require.Zero(t, recorder.calls)
-						if rollback {
-							return rollbackErr
+					if tc.standalone {
+						var actor identity.Requester = requester
+						if tc.skipRefresh {
+							actor = nil
 						}
-						return nil
-					})
-					require.Zero(t, recorder.calls, "copying permissions must not schedule a refresh")
-					if rollback {
+						copyCtx := ctx
+						if tc.cancelCopy {
+							var cancel context.CancelFunc
+							copyCtx, cancel = context.WithCancel(ctx)
+							cancel()
+						}
+						_, err = receivers.CopyPermissions(copyCtx, 1, actor, "old", "new")
+					} else {
+						err = sql.InTransaction(ctx, func(ctx context.Context) error {
+							require.NoError(t, sql.InTransaction(ctx, func(ctx context.Context) error {
+								_, err := receivers.CopyPermissions(ctx, 1, requester, "old", "new")
+								return err
+							}))
+							require.NoError(t, receivers.DeleteResourcePermissions(ctx, 1, "old"))
+							require.Zero(t, recorder.calls, "refresh must wait for the outermost commit")
+							if tc.rollback {
+								return rollbackErr
+							}
+							return nil
+						})
+					}
+					if tc.rollback {
 						require.ErrorIs(t, err, rollbackErr)
+						require.Zero(t, recorder.calls)
+					} else if tc.cancelCopy {
+						require.Error(t, err)
+						require.Zero(t, recorder.calls)
 					} else {
 						require.NoError(t, err)
-						require.NoError(t, receivers.RefreshPermissions(ctx, requester))
-						require.Equal(t, 1, recorder.calls)
+						if tc.skipRefresh {
+							require.Zero(t, recorder.calls)
+						} else {
+							require.Equal(t, 1, recorder.calls)
+						}
 					}
 					permissions, err = ac.GetUserPermissions(ctx, requester, accesscontrol.Options{})
 					require.NoError(t, err)
-					if rollback {
+					if tc.rollback || tc.cancelCopy {
 						require.Contains(t, permissions, oldGrant)
 						require.NotContains(t, permissions, newGrant)
 						// Read from the database, not the cache, to prove the rollback.
@@ -120,14 +157,49 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 						require.NoError(t, err)
 						require.Contains(t, permissions, oldGrant)
 						require.NotContains(t, permissions, newGrant)
-					} else {
+					} else if tc.skipRefresh {
+						permissions, err = ac.GetUserPermissions(ctx, requester, accesscontrol.Options{ReloadCache: true})
+						require.NoError(t, err)
+						require.Contains(t, permissions, oldGrant)
+						require.Contains(t, permissions, newGrant)
+					} else if tc.refreshErr != nil {
+						// A failed refresh must not undo the committed permission changes.
+						permissions, err = ac.GetUserPermissions(ctx, requester, accesscontrol.Options{ReloadCache: true})
+						require.NoError(t, err)
 						require.Contains(t, permissions, newGrant)
 						require.NotContains(t, permissions, oldGrant)
+					} else {
+						require.Contains(t, permissions, newGrant)
+						if tc.standalone {
+							require.Contains(t, permissions, oldGrant)
+						} else {
+							require.NotContains(t, permissions, oldGrant)
+						}
 					}
 				})
 			}
 		})
 	}
+}
+
+func TestReceiverPermissionsCopiedRefreshFailure(t *testing.T) {
+	spans := tracetest.NewSpanRecorder()
+	provider := tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(spans))
+	t.Cleanup(func() { require.NoError(t, provider.Shutdown(context.Background())) })
+	ctx, parent := provider.Tracer("test").Start(t.Context(), "receiver update")
+	errRefresh := errors.New("AuthZ unavailable")
+	recorder := &permissionRefreshRecorder{t: t, err: errRefresh}
+	receivers := ReceiverPermissionsService{ac: recorder}
+	require.NoError(t, receivers.onPermissionsCopied(ctx, &receiverPermissionsCopied{user: &user.SignedInUser{UserID: 7, OrgID: 1}}))
+	require.Equal(t, 1, recorder.calls)
+	parent.End()
+	ended := spans.Ended()
+	require.Len(t, ended, 2)
+	require.Empty(t, ended[0].Events(), "the helper must not duplicate the listener's exception event")
+	require.Equal(t, codes.Error, ended[1].Status().Code)
+	require.Equal(t, errRefresh.Error(), ended[1].Status().Description)
+	require.Len(t, ended[1].Events(), 1)
+	require.Equal(t, "exception", ended[1].Events()[0].Name)
 }
 
 func TestReceiverPermissionsRefresh(t *testing.T) {
@@ -178,7 +250,7 @@ func TestReceiverPermissionsRefresh(t *testing.T) {
 				}
 			}}
 			receivers := ReceiverPermissionsService{ac: recorder, log: log.NewNopLogger()}
-			err := receivers.RefreshPermissions(ctx, tc.requester)
+			err := receivers.refreshPermissions(ctx, tc.requester)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {

@@ -6,6 +6,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -54,7 +55,7 @@ func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideReceiverPermissionsService(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -87,7 +88,9 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
+	receivers := &ReceiverPermissionsService{Service: srv, sql: sql, ac: service, log: log.New("resourcepermissions.receivers")}
+	sql.Bus().AddEventListener(receivers.onPermissionsCopied)
+	return receivers, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(nil)
@@ -95,7 +98,13 @@ var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(n
 type ReceiverPermissionsService struct {
 	*resourcepermissions.Service
 	ac  accesscontrol.Service
+	sql db.DB
 	log log.Logger
+}
+
+// receiverPermissionsCopied is an in-process notification, not a durable delivery record.
+type receiverPermissionsCopied struct {
+	user identity.Requester
 }
 
 // SetDefaultPermissions sets the default permissions for a newly created receiver.
@@ -144,25 +153,44 @@ func copyPermissionUser(orgID int64) identity.Requester {
 // CopyPermissions copies the resource permissions from one receiver uid to a new uid. This is a temporary
 // method to be used during receiver renaming that is necessitated by receiver uids being generated from the receiver
 // name.
-func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, oldUID, newUID string) (int, error) {
+func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	oldResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)
 	newResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(newUID)
-	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
+	var copied int
+	err := r.sql.InTransaction(ctx, func(ctx context.Context) error {
+		currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
+		if err != nil {
+			return err
+		}
+
+		setPermissionCommands := r.toSetResourcePermissionCommands(currentPermissions)
+		if _, err := r.SetPermissions(ctx, orgID, newResourceId, setPermissionCommands...); err != nil {
+			return err
+		}
+
+		if user != nil && user.IsIdentityType(claims.TypeUser) {
+			// Queue on the shared session so nested calls wait for the outermost commit.
+			sqlstore.SessionFromContext(ctx).PublishAfterCommit(&receiverPermissionsCopied{user: user})
+		}
+		copied = countCustomPermissions(setPermissionCommands)
+		return nil
+	})
 	if err != nil {
 		return 0, err
 	}
-
-	setPermissionCommands := r.toSetResourcePermissionCommands(currentPermissions)
-	if _, err := r.SetPermissions(ctx, orgID, newResourceId, setPermissionCommands...); err != nil {
-		return 0, err
-	}
-
-	return countCustomPermissions(setPermissionCommands), nil
+	return copied, nil
 }
 
-// RefreshPermissions refreshes the caller's permissions after the receiver update commits.
-func (r ReceiverPermissionsService) RefreshPermissions(ctx context.Context, user identity.Requester) error {
+func (r ReceiverPermissionsService) onPermissionsCopied(ctx context.Context, event *receiverPermissionsCopied) error {
+	if err := r.refreshPermissions(ctx, event.user); err != nil {
+		tracing.Error(trace.SpanFromContext(ctx), err)
+	}
+	// The mutation already committed. Refresh failures must not fail event delivery.
+	return nil
+}
+
+func (r ReceiverPermissionsService) refreshPermissions(ctx context.Context, user identity.Requester) error {
 	if user == nil || !user.IsIdentityType(claims.TypeUser) {
 		return nil
 	}
