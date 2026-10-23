@@ -1276,3 +1276,48 @@ func TestRetrieveSubscriptionDetails_ServicePrincipalAuthSharesAcrossUsers(t *te
 	require.NoError(t, err)
 	require.Equal(t, int64(1), hits.Load(), "service-principal mode shares cache across users")
 }
+
+func TestExecuteTimeSeriesQueryResourcesDecodeErrorIsDownstream(t *testing.T) {
+	// resources stored as a single object instead of an array, e.g. a broken rule created through the API
+	q := backend.DataQuery{
+		RefID: "A",
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+		JSON: []byte(`{"azureMonitor":{"aggregation":"Average","metricNamespace":"Microsoft.Compute/virtualMachines","metricName":"Percentage CPU","timeGrain":"PT1M","resources":{"subscription":"s","resourceGroup":"rg","resourceName":"vm"}}}`),
+	}
+
+	tests := []struct {
+		name string
+		run  func(t *testing.T) (*backend.QueryDataResponse, error)
+	}{
+		{
+			name: "ARM path",
+			run: func(t *testing.T) (*backend.QueryDataResponse, error) {
+				return (&AzureMonitorDatasource{}).ExecuteTimeSeriesQuery(context.Background(), []backend.DataQuery{q}, types.DatasourceInfo{
+					Settings: types.AzureMonitorSettings{SubscriptionId: "default-subscription"},
+				}, nil, "", false)
+			},
+		},
+		{
+			name: "batch path",
+			run: func(t *testing.T) (*backend.QueryDataResponse, error) {
+				ctx := stubBatchFlag(t, true)
+				srv := httptest.NewServer(http.NotFoundHandler())
+				t.Cleanup(srv.Close)
+				return (&AzureMonitorDatasource{Logger: backend.Logger}).ExecuteTimeSeriesQuery(ctx, []backend.DataQuery{q}, makeBatchDsInfo(srv), srv.Client(), srv.URL, false)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := tt.run(t)
+
+			require.NoError(t, err)
+			require.Error(t, res.Responses["A"].Error)
+			assert.Contains(t, res.Responses["A"].Error.Error(), "cannot unmarshal object into Go struct field")
+			assert.Equal(t, backend.ErrorSourceDownstream, res.Responses["A"].ErrorSource)
+		})
+	}
+}
