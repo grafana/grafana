@@ -687,6 +687,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.savedDashboardViews",
+			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardPreviewMode",
 			Description: "Enables Viewing and Editing modes for dynamic dashboards",
 			Stage:       FeatureStageExperimental,
