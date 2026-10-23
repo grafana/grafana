@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -31,6 +32,18 @@ func TestWithUncheckedDeleteAuthorized_notChecked(t *testing.T) {
 
 	ctx := WithUncheckedDeleteAuthorized(context.Background(), 1, user, []string{"fold1"}, false)
 	assert.False(t, IsUncheckedDeleteAuthorized(ctx, 1, user, []string{"fold1"}), "checked=false must leave ctx unmarked even for a valid user")
+}
+
+func TestWithUncheckedDeleteAuthorized_invalidatesStaleMarker(t *testing.T) {
+	user := &identity.StaticRequester{UserUID: "real-user"}
+	folderUIDs := []string{"fold1"}
+
+	ctx := WithUncheckedDeleteAuthorized(context.Background(), 1, user, folderUIDs, true)
+	require.True(t, IsUncheckedDeleteAuthorized(ctx, 1, user, folderUIDs), "sanity check: ctx is authorized before the re-check")
+
+	// A later re-check for the same org/user/folders fails -- the earlier grant must not survive.
+	ctx = WithUncheckedDeleteAuthorized(ctx, 1, user, folderUIDs, false)
+	assert.False(t, IsUncheckedDeleteAuthorized(ctx, 1, user, folderUIDs), "a failed re-check must invalidate a prior marker, not leave it in place")
 }
 
 func TestIsUncheckedDeleteAuthorized_crossStackUIDCollision(t *testing.T) {

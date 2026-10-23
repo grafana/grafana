@@ -20,10 +20,10 @@ type uncheckedDeleteScope struct {
 	folderUIDs map[string]struct{}
 }
 
-// WithUncheckedDeleteAuthorized marks ctx as authorized for an Unchecked delete of folderUIDs by user in orgID; checked must be the caller's own permission-check result, not a hardcoded true. A false checked, or a nil/typed-nil user, leaves ctx unmarked.
+// WithUncheckedDeleteAuthorized marks ctx as authorized for an Unchecked delete of folderUIDs by user in orgID; checked must be the caller's own permission-check result, not a hardcoded true. A false checked, or a nil/typed-nil user, explicitly invalidates any marker already on ctx instead of leaving it unchanged, in case ctx was previously (and is no longer) authorized.
 func WithUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, folderUIDs []string, checked bool) context.Context {
 	if !checked || user == nil || user.IsNil() {
-		return ctx
+		return context.WithValue(ctx, uncheckedDeleteAuthorizedKey{}, uncheckedDeleteScope{})
 	}
 	set := make(map[string]struct{}, len(folderUIDs))
 	for _, uid := range folderUIDs {
