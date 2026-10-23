@@ -300,41 +300,67 @@ func isRepositoryNotFound(err error) bool {
 	return details != nil && details.Group == provisioningGroup && details.Kind == repositoriesResource
 }
 
-// isOrphanedRepositoryRootFolder reports whether obj is a repository root folder left behind by a
-// repository that no longer exists. The root folder stands for the repository itself rather than a
-// file, which is why it is the one repo-managed resource with no source path: there is nothing to
-// route a write to, and with the repository gone nothing will re-create it either.
-func (s *Storage) isOrphanedRepositoryRootFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+// managerRepositoryGone reports whether obj is managed by a repository that no longer exists.
+func (s *Storage) managerRepositoryGone(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
 	manager, ok := obj.GetManagerProperties()
 	if !ok || manager.Kind != utils.ManagerKindRepo {
-		return false
-	}
-	if src, ok := obj.GetSourceProperties(); ok && src.Path != "" {
 		return false
 	}
 	exists, err := s.repositoryExists(ctx, obj.GetNamespace(), manager.Identity)
 	return err == nil && !exists
 }
 
-// allowOrphanedRootFolderUpdate reports whether an update the managed-resource check rejected may
-// proceed anyway because it is the metadata-only write that starts the delete of an orphaned
-// repository root folder. Deleting a folder stamps a terminating label first, and rejecting that
-// write strands the folder before the delete begins.
-func (s *Storage) allowOrphanedRootFolderUpdate(ctx context.Context, err error, obj, previous utils.GrafanaMetaAccessor) bool {
-	if !errors.Is(err, errResourceIsManagedInRepository) || !metadataOnlyUpdate(obj, previous) {
+// isOrphanedRepositoryRootFolder reports whether obj is a repository root folder left behind by a
+// repository that no longer exists. The root folder stands for the repository itself rather than a
+// file, which is why it is the one repo-managed resource with no source path: there is nothing to
+// route a write to, and with the repository gone nothing will re-create it either.
+func (s *Storage) isOrphanedRepositoryRootFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	if src, ok := obj.GetSourceProperties(); ok && src.Path != "" {
 		return false
 	}
-	return s.isOrphanedRepositoryRootFolder(ctx, previous)
+	return s.managerRepositoryGone(ctx, obj)
 }
 
-// metadataOnlyUpdate reports whether an update leaves everything that belongs in git untouched.
-func metadataOnlyUpdate(obj, previous utils.GrafanaMetaAccessor) bool {
-	if obj.GetFolder() != previous.GetFolder() {
+// allowOrphanedUpdate reports whether an update the managed-resource check rejected may proceed
+// anyway because the repository managing the resource is gone. Two shapes qualify, and both leave
+// the spec and the folder untouched: releasing the resource by dropping its manager annotations,
+// and the metadata-only write that starts a delete, such as a folder's terminating label.
+//
+// Release is otherwise admin-only. Once the repository is gone that bar protects nothing — there is
+// no repository left to own the resource — and it would be incoherent to let an authorized caller
+// delete the resource outright while refusing them the lesser step of detaching it. The caller is
+// still authorized to write the resource by the API layer either way.
+func (s *Storage) allowOrphanedUpdate(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) bool {
+	if !isManagerRelease(obj, previous) && !isMetadataOnlyUpdate(obj, previous) {
 		return false
 	}
+	return s.managerRepositoryGone(ctx, previous)
+}
+
+// isManagerRelease reports whether an update only detaches the resource from its manager. The
+// source annotations go with it, so they are not compared.
+func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
+	if _, managed := obj.GetManagerProperties(); managed {
+		return false
+	}
+	if _, wasManaged := previous.GetManagerProperties(); !wasManaged {
+		return false
+	}
+	return specAndFolderUnchanged(obj, previous)
+}
+
+// isMetadataOnlyUpdate reports whether an update leaves everything that belongs in git untouched.
+func isMetadataOnlyUpdate(obj, previous utils.GrafanaMetaAccessor) bool {
 	newManager, _ := obj.GetManagerProperties()
 	oldManager, _ := previous.GetManagerProperties()
 	if newManager != oldManager {
+		return false
+	}
+	return specAndFolderUnchanged(obj, previous)
+}
+
+func specAndFolderUnchanged(obj, previous utils.GrafanaMetaAccessor) bool {
+	if obj.GetFolder() != previous.GetFolder() {
 		return false
 	}
 	spec, specErr := obj.GetSpec()

@@ -964,84 +964,158 @@ func (p *identityCapturingRestConfigProvider) GetRestConfig(ctx context.Context)
 	return p.fakeRestConfigProvider.GetRestConfig(ctx)
 }
 
-func TestAllowOrphanedRootFolderUpdate(t *testing.T) {
+func TestAllowOrphanedUpdate(t *testing.T) {
 	terminating := func(d *dashboard.Dashboard) {
 		d.Labels = map[string]string{"grafana.app/folder-terminating": "true"}
 	}
+	// released drops the manager and source annotations, as the release path does.
+	released := func(t *testing.T, previous utils.GrafanaMetaAccessor) utils.GrafanaMetaAccessor {
+		t.Helper()
+		obj := managedObject(t, repoManager, "", nil)
+		obj.SetManagerProperties(utils.ManagerProperties{})
+		obj.SetSourceProperties(utils.SourceProperties{})
+		require.Equal(t, previous.GetFolder(), obj.GetFolder())
+		return obj
+	}
 
-	t.Run("allows the terminating label once the repository is gone", func(t *testing.T) {
-		s, _ := repositoryServer(t, http.StatusNotFound)
-		previous := managedObject(t, repoManager, "", nil)
-		obj := managedObject(t, repoManager, "", terminating)
+	t.Run("release", func(t *testing.T) {
+		t.Run("is allowed for an orphaned root folder", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
 
-		require.True(t, s.allowOrphanedRootFolderUpdate(t.Context(), errResourceIsManagedInRepository, obj, previous))
-	})
-
-	t.Run("rejects it while the repository is alive", func(t *testing.T) {
-		s, _ := repositoryServer(t, http.StatusOK)
-		previous := managedObject(t, repoManager, "", nil)
-		obj := managedObject(t, repoManager, "", terminating)
-
-		require.False(t, s.allowOrphanedRootFolderUpdate(t.Context(), errResourceIsManagedInRepository, obj, previous))
-	})
-
-	t.Run("rejects a resource that has a source path", func(t *testing.T) {
-		s, _ := repositoryServer(t, http.StatusNotFound)
-		previous := managedObject(t, repoManager, "dashboards/d.json", nil)
-		obj := managedObject(t, repoManager, "dashboards/d.json", terminating)
-
-		require.False(t, s.allowOrphanedRootFolderUpdate(t.Context(), errResourceIsManagedInRepository, obj, previous))
-	})
-
-	t.Run("rejects a write that changes the spec", func(t *testing.T) {
-		s, _ := repositoryServer(t, http.StatusNotFound)
-		previous := managedObject(t, repoManager, "", nil)
-		obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
-			d.Spec.Object = map[string]any{"title": "b"}
+			require.True(t, s.allowOrphanedUpdate(t.Context(), released(t, previous), previous))
 		})
 
-		require.False(t, s.allowOrphanedRootFolderUpdate(t.Context(), errResourceIsManagedInRepository, obj, previous))
+		t.Run("is allowed for an orphaned resource with a source path", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "dashboards/d.json", nil)
+
+			require.True(t, s.allowOrphanedUpdate(t.Context(), released(t, previous), previous))
+		})
+
+		t.Run("stays admin-only while the repository is alive", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusOK)
+			previous := managedObject(t, repoManager, "dashboards/d.json", nil)
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), released(t, previous), previous))
+		})
+
+		t.Run("does not cover a release that also rewrites the spec", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+				d.Spec.Object = map[string]any{"title": "b"}
+			})
+			obj.SetManagerProperties(utils.ManagerProperties{})
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
+
+		t.Run("does not cover a release that also moves the resource", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := released(t, previous)
+			obj.SetFolder("other")
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
+
+		t.Run("does not apply to managers other than a repository", func(t *testing.T) {
+			s, paths := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}, "", nil)
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), released(t, previous), previous))
+			require.Empty(t, *paths)
+		})
 	})
 
-	t.Run("rejects a write that changes the manager", func(t *testing.T) {
-		s, _ := repositoryServer(t, http.StatusNotFound)
-		previous := managedObject(t, repoManager, "", nil)
-		obj := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "", nil)
+	t.Run("delete", func(t *testing.T) {
+		t.Run("allows the terminating label on an orphaned root folder", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", terminating)
 
-		require.False(t, s.allowOrphanedRootFolderUpdate(t.Context(), errResourceIsManagedInRepository, obj, previous))
-	})
+			require.True(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
 
-	t.Run("ignores rejections for other reasons", func(t *testing.T) {
-		s, paths := repositoryServer(t, http.StatusNotFound)
-		previous := managedObject(t, repoManager, "", nil)
+		t.Run("allows the terminating label on an orphaned nested folder", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "folders/nested.json", nil)
+			obj := managedObject(t, repoManager, "folders/nested.json", terminating)
 
-		require.False(t, s.allowOrphanedRootFolderUpdate(t.Context(), errors.New("boom"), previous, previous))
-		require.Empty(t, *paths, "a rejection for another reason must not cost a lookup")
+			require.True(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
+
+		t.Run("rejects it while the repository is alive", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusOK)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", terminating)
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
+
+		t.Run("rejects a write that changes the spec", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+				d.Spec.Object = map[string]any{"title": "b"}
+			})
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
+
+		t.Run("rejects a write that moves the resource to another manager", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "", nil)
+
+			require.False(t, s.allowOrphanedUpdate(t.Context(), obj, previous))
+		})
 	})
 }
 
-func TestMetadataOnlyUpdate(t *testing.T) {
+func TestIsManagerRelease(t *testing.T) {
+	previous := managedObject(t, repoManager, "dashboards/d.json", nil)
+
+	t.Run("manager and source dropped", func(t *testing.T) {
+		obj := managedObject(t, repoManager, "", nil)
+		obj.SetManagerProperties(utils.ManagerProperties{})
+		obj.SetSourceProperties(utils.SourceProperties{})
+		require.True(t, isManagerRelease(obj, previous))
+	})
+
+	t.Run("still managed", func(t *testing.T) {
+		require.False(t, isManagerRelease(managedObject(t, repoManager, "dashboards/d.json", nil), previous))
+	})
+
+	t.Run("was never managed", func(t *testing.T) {
+		unmanaged := managedObject(t, utils.ManagerProperties{}, "", nil)
+		require.False(t, isManagerRelease(unmanaged, unmanaged))
+	})
+}
+
+func TestIsMetadataOnlyUpdate(t *testing.T) {
 	previous := managedObject(t, repoManager, "", nil)
 
 	t.Run("unchanged", func(t *testing.T) {
-		require.True(t, metadataOnlyUpdate(managedObject(t, repoManager, "", nil), previous))
+		require.True(t, isMetadataOnlyUpdate(managedObject(t, repoManager, "", nil), previous))
 	})
 
 	t.Run("labels", func(t *testing.T) {
-		require.True(t, metadataOnlyUpdate(managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+		require.True(t, isMetadataOnlyUpdate(managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
 			d.Labels = map[string]string{"x": "y"}
 		}), previous))
 	})
 
 	t.Run("deletion timestamp", func(t *testing.T) {
 		now := v1.Now()
-		require.True(t, metadataOnlyUpdate(managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+		require.True(t, isMetadataOnlyUpdate(managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
 			d.DeletionTimestamp = &now
 		}), previous))
 	})
 
 	t.Run("spec", func(t *testing.T) {
-		require.False(t, metadataOnlyUpdate(managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+		require.False(t, isMetadataOnlyUpdate(managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
 			d.Spec.Object = map[string]any{"title": "b"}
 		}), previous))
 	})
@@ -1049,11 +1123,11 @@ func TestMetadataOnlyUpdate(t *testing.T) {
 	t.Run("folder", func(t *testing.T) {
 		moved := managedObject(t, repoManager, "", nil)
 		moved.SetFolder("other")
-		require.False(t, metadataOnlyUpdate(moved, previous))
+		require.False(t, isMetadataOnlyUpdate(moved, previous))
 	})
 
 	t.Run("manager", func(t *testing.T) {
 		other := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "", nil)
-		require.False(t, metadataOnlyUpdate(other, previous))
+		require.False(t, isMetadataOnlyUpdate(other, previous))
 	})
 }

@@ -350,7 +350,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
-		if !s.allowOrphanedRootFolderUpdate(ctx, err, obj, previous) {
+		if !s.allowOrphanedUpdate(ctx, obj, previous) {
 			return v, err
 		}
 	}
