@@ -140,7 +140,7 @@ export const resourceKindInfos = {
  * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
  * so a new kind only needs its registry entry.
  */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
+export type ResourceKindKey = keyof typeof resourceKindInfos | (string & {});
 
 /**
  * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
@@ -148,7 +148,7 @@ export type ResourceKindKey = keyof typeof resourceKindInfos;
  * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
  * new kind needs no edit there either.
  */
-export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+export type ResourceItemType = (typeof resourceKindInfos)[keyof typeof resourceKindInfos]['itemType'] | (string & {});
 
 /**
  * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
@@ -242,6 +242,27 @@ export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): st
     return resourceKindInfos.folder.getRoute(repoName);
   }
   return info.listRoute;
+}
+
+/**
+ * Builds a kind descriptor for a resource outside the registry, such as an app plugin kind. It has
+ * no in-app routes, so callers must handle navigation themselves.
+ */
+export function getGenericKindInfo(group: string, kind: string, resource = kind.toLowerCase() + 's'): ResourceKindInfo {
+  return {
+    key: kind.toLowerCase(),
+    getLabel: () => kind,
+    pluralLabel: () => resource,
+    group,
+    kind,
+    resource,
+    itemType: kind,
+    icon: 'file-alt',
+    listRoute: '',
+    folderScoped: true,
+    list: async () => [],
+    alwaysAvailable: false,
+  };
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
