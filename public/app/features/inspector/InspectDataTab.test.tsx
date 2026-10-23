@@ -284,6 +284,16 @@ describe('InspectDataTab', () => {
       expect(dataArrivedWithCachedDisplayNames).toBe(true);
     });
 
+    it('should not prefix display names with the frame name when there are multiple frames', () => {
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true })} />
+        </OpenFeatureProvider>
+      );
+
+      expect(tableNGFrames.at(-1)!.fields.map((f) => f.state?.displayName)).toEqual(['time', 'name', 'value']);
+    });
+
     it('should not show a join computed from older data after the data refreshes', async () => {
       mockTransformationsRegistry([joinByFieldTransformer]);
       const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
