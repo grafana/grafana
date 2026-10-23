@@ -39,11 +39,9 @@ const ALERT_RULE_HEALTHS = {
 } satisfies Record<AlertRuleAlertRuleHealth, AlertRuleAlertRuleHealth>;
 
 // annotations comes back as a JSON-encoded string; parse it safely via Zod.
-const annotationsSchema = z.record(z.string(), z.string());
-
 function tryParseAnnotations(s: string): Record<string, string> | undefined {
   try {
-    return annotationsSchema.parse(JSON.parse(s));
+    return z.record(z.string(), z.string()).parse(JSON.parse(s));
   } catch {
     return undefined;
   }
