@@ -79,10 +79,6 @@ const getCardFooterStyles = (theme: GrafanaTheme2) => ({
   filter: css({
     flex: `1 1 ${theme.spacing(15)}`,
     maxWidth: theme.spacing(30),
-
-    '& input': {
-      textOverflow: 'ellipsis',
-    },
   }),
   actions: css({
     flex: '1 0 auto',
