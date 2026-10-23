@@ -258,10 +258,7 @@ describe('applySavedViewState — tab/row-scoped section filters', () => {
   });
 
   it('does not apply a saved section filter to a different tab that now resolves at the same layout path', () => {
-    // Regression test: sectionKey is a structural index path ("/tabs/0"), which can keep resolving
-    // successfully after a reorder/insert/delete, just to a DIFFERENT tab than the one captured. If
-    // that different tab happens to have a same-named ad-hoc variable, a title-unaware apply would
-    // silently overwrite it with the wrong saved value.
+    // After a reorder, "/tabs/0" can resolve to a different tab; the title check must catch that.
     const { scene: originalScene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'saved' }]);
     const spec = captureSavedViewState(originalScene);
     expect(spec.sectionFilters?.[0].sectionTitle).toBe('My tab');
@@ -282,8 +279,7 @@ describe('applySavedViewState — tab/row-scoped section filters', () => {
   it('still applies unconditionally when the saved section has no captured title (backward compat)', () => {
     const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'saved' }]);
     const spec = captureSavedViewState(scene);
-    // Simulate a view saved before sectionTitle existed, AND the tab's title having since changed
-    // -- a mismatch that would fail the check if it ran, proving it's genuinely skipped here.
+    // A view saved before sectionTitle existed, on a tab that has since been renamed.
     const specWithoutTitle: SavedDashboardViewSpec = {
       ...spec,
       sectionFilters: spec.sectionFilters?.map(({ sectionTitle, ...rest }) => rest),
@@ -303,9 +299,7 @@ describe('applySavedViewState — tab/row-scoped section filters', () => {
   });
 
   it('resets a section the spec does not mention back to the baseline', () => {
-    // Same reset-on-select principle as dashboard-level variables, applied to a tab/row's own
-    // ad-hoc filters: selecting a view that doesn't mention a section's filter at all must not
-    // leave it at whatever a prior view or manual edit left it in.
+    // Section filters the view omits reset to the baseline, like dashboard-level variables.
     const { scene, tab } = buildSceneWithTabFilter([]);
     const baseline = captureSavedViewState(scene); // captured with no filters -- the authored default
 
