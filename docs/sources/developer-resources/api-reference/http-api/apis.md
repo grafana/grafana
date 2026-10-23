@@ -22,10 +22,12 @@ weight: 01
 # The new HTTP API structure in Grafana
 
 {{< admonition type="note" >}}
-Available in Grafana 12 and later.
+Available in Grafana 12 and later. 
 {{< /admonition >}}
 
 This document explains how Grafana structures the `/apis` HTTP APIs, which use a Kubernetes-style API layer with a standardized structure and consistent versioning. Read on to understand request paths, versions, namespaces, and common response fields when you migrate from legacy `/api` endpoints or work with new APIs.
+
+For information about a specific API, refer to its doc. You can find them in [List of available HTTP APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api#list-of-available-http-apis).
 
 ## Before you begin
 
