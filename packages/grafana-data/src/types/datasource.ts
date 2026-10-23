@@ -637,6 +637,11 @@ export interface DataQueryError {
   refId?: string;
   traceId?: string;
   type?: DataQueryErrorType;
+  /**
+   * Machine-readable context about the error, as provided by the data source. Grafana treats it as
+   * opaque: consumers interpret it.
+   */
+  errorDetails?: Record<string, unknown>;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {

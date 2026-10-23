@@ -361,6 +361,35 @@ describe('Query Response parser', () => {
     expect(res.errors?.[1].traceId).toBe('traceId1');
   });
 
+  test('should carry errorDetails from the error frame meta', () => {
+    const errorDetails = {
+      category: 'adaptive_metrics_incompatible_query',
+      exampleSeries: { metric: { __name__: 'foo' } },
+    };
+    const input = {
+      data: {
+        results: {
+          A: {
+            error: 'error from A',
+            status: 422,
+            frames: [
+              {
+                schema: {
+                  meta: { custom: { errorDetails } },
+                },
+              },
+            ],
+          },
+        },
+      },
+    } as unknown as FetchResponse<BackendDataSourceResponse>;
+
+    const res = toDataQueryResponse(input);
+
+    expect(res.error?.errorDetails).toEqual(errorDetails);
+    expect(res.errors?.[0].errorDetails).toEqual(errorDetails);
+  });
+
   describe('Cache notice', () => {
     let resp: FetchResponse<BackendDataSourceResponse>;
 

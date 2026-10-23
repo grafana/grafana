@@ -99,6 +99,10 @@ export function toDataQueryResponse(
         if (traceId != null) {
           errorObj.traceId = traceId;
         }
+        const errorDetails = dr.frames?.[0]?.schema?.meta?.custom?.errorDetails;
+        if (errorDetails != null) {
+          errorObj.errorDetails = errorDetails;
+        }
         if (!rsp.error) {
           rsp.error = { ...errorObj };
         }
