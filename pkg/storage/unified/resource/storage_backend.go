@@ -30,6 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1445,7 +1446,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	k.notifier.Publish(eventData)
 	var meta *watchMetadata
 	if k.watchNotificationMetadata {
-		meta = newWatchMetadata(obj, event.ObjectOld)
+		meta = newWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj, event.ObjectOld)
 	}
 	k.publishWatchNotification(ctx, eventData, meta)
 

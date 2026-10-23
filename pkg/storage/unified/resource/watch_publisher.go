@@ -44,24 +44,24 @@ func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotific
 	}
 }
 
-// watchNotificationLabels lists the label keys copied onto a notification.
-// Only these are sent to keep the payload small; extend it as consumers need more.
-var watchNotificationLabels = []string{
-	"encrypted",       // settings: value lives in the secrets service
-	"secureValueName", // settings: secure value to clean up
+// watchMetadataSpec lists what a resource's notifications carry beyond identity:
+// the allowlisted label and annotation keys and finalizers, plus generation and
+// the creation and deletion timestamps. Only allowlisted values are sent, to keep
+// the payload small.
+type watchMetadataSpec struct {
+	Labels      []string
+	Annotations []string
+	Finalizers  []string
 }
 
-// watchNotificationAnnotations lists the annotation keys copied onto a
-// notification. Only these are sent to keep the payload small; extend it as
-// consumers need more.
-var watchNotificationAnnotations = []string{
-	"setting.grafana.app/pending-secret-cleanup", // settings: superseded secrets awaiting cleanup
-}
-
-// watchNotificationFinalizers lists the finalizers copied onto a notification.
-// Extend it as consumers need more.
-var watchNotificationFinalizers = []string{
-	"setting.grafana.app/secret-cleanup", // settings: secret cleanup pending on delete
+// watchNotificationSpecs holds the resources whose notifications carry metadata.
+// Resources not listed here send none; add an entry when a consumer needs it.
+var watchNotificationSpecs = map[schema.GroupResource]watchMetadataSpec{
+	{Group: "setting.grafana.app", Resource: "settings"}: {
+		Labels:      []string{"encrypted", "secureValueName"},
+		Annotations: []string{"setting.grafana.app/pending-secret-cleanup"},
+		Finalizers:  []string{"setting.grafana.app/secret-cleanup"},
+	},
 }
 
 // watchMetadata is the object metadata a notification carries so consumers can
@@ -76,24 +76,25 @@ type watchMetadata struct {
 	Annotations       map[string]string // allowlisted keys only
 }
 
-// newWatchMetadata reads the metadata of the written object and, when there is
-// one, of its previous revision. Either may be nil.
-func newWatchMetadata(obj, previous utils.GrafanaMetaAccessor) *watchMetadata {
-	if obj == nil {
+// newWatchMetadata returns the metadata for a write of the given resource, or nil
+// when the resource has no entry in watchNotificationSpecs. previous may be nil.
+func newWatchMetadata(gr schema.GroupResource, obj, previous utils.GrafanaMetaAccessor) *watchMetadata {
+	spec, ok := watchNotificationSpecs[gr]
+	if !ok || obj == nil {
 		return nil
 	}
 	m := &watchMetadata{
-		Labels:            filterKeys(obj.GetLabels(), watchNotificationLabels),
+		Labels:            filterKeys(obj.GetLabels(), spec.Labels),
 		Generation:        obj.GetGeneration(),
-		Finalizers:        filterFinalizers(obj.GetFinalizers()),
-		Annotations:       filterKeys(obj.GetAnnotations(), watchNotificationAnnotations),
+		Finalizers:        filterFinalizers(obj.GetFinalizers(), spec.Finalizers),
+		Annotations:       filterKeys(obj.GetAnnotations(), spec.Annotations),
 		CreationTimestamp: timeToMillis(obj.GetCreationTimestamp().Time),
 	}
 	if dt := obj.GetDeletionTimestamp(); dt != nil {
 		m.DeletionTimestamp = timeToMillis(dt.Time)
 	}
 	if previous != nil {
-		m.PreviousLabels = filterKeys(previous.GetLabels(), watchNotificationLabels)
+		m.PreviousLabels = filterKeys(previous.GetLabels(), spec.Labels)
 	}
 	return m
 }
@@ -112,11 +113,11 @@ func filterKeys(m map[string]string, allowed []string) map[string]string {
 	return out
 }
 
-// filterFinalizers keeps only the allowlisted finalizers, or nil when none are set.
-func filterFinalizers(finalizers []string) []string {
+// filterFinalizers keeps only the allowed finalizers, or nil when none are set.
+func filterFinalizers(finalizers, allowed []string) []string {
 	var out []string
 	for _, f := range finalizers {
-		if slices.Contains(watchNotificationFinalizers, f) {
+		if slices.Contains(allowed, f) {
 			out = append(out, f)
 		}
 	}

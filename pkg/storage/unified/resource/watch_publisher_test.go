@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -152,6 +153,11 @@ func TestPublishWatchNotification(t *testing.T) {
 	})
 }
 
+var (
+	settingsGR   = schema.GroupResource{Group: "setting.grafana.app", Resource: "settings"}
+	settingsSpec = watchNotificationSpecs[settingsGR]
+)
+
 func TestNewWatchMetadata(t *testing.T) {
 	created := time.UnixMilli(1000)
 	deleted := metav1.NewTime(time.UnixMilli(2000))
@@ -160,8 +166,8 @@ func TestNewWatchMetadata(t *testing.T) {
 		u.SetName("n")
 		u.SetLabels(labels)
 		u.SetGeneration(3)
-		u.SetFinalizers([]string{watchNotificationFinalizers[0], "other"})
-		u.SetAnnotations(map[string]string{watchNotificationAnnotations[0]: "[\"sv\"]", "other": "x"})
+		u.SetFinalizers([]string{settingsSpec.Finalizers[0], "other"})
+		u.SetAnnotations(map[string]string{settingsSpec.Annotations[0]: "[\"sv\"]", "other": "x"})
 		u.SetCreationTimestamp(metav1.NewTime(created))
 		u.SetDeletionTimestamp(deletion)
 		m, err := utils.MetaAccessor(u)
@@ -170,32 +176,37 @@ func TestNewWatchMetadata(t *testing.T) {
 	}
 
 	t.Run("reads the object and previous labels", func(t *testing.T) {
-		got := newWatchMetadata(mk(map[string]string{"encrypted": "true", "other": "x"}, &deleted), mk(map[string]string{"encrypted": "false"}, nil))
+		got := newWatchMetadata(settingsGR, mk(map[string]string{"encrypted": "true", "other": "x"}, &deleted), mk(map[string]string{"encrypted": "false"}, nil))
 		assert.Equal(t, &watchMetadata{
 			Labels:            map[string]string{"encrypted": "true"}, // "other" is not allowlisted
 			PreviousLabels:    map[string]string{"encrypted": "false"},
 			Generation:        3,
 			CreationTimestamp: 1000,
 			DeletionTimestamp: 2000,
-			Finalizers:        []string{watchNotificationFinalizers[0]},                       // "other" is not allowlisted
-			Annotations:       map[string]string{watchNotificationAnnotations[0]: "[\"sv\"]"}, // "other" is not allowlisted
+			Finalizers:        []string{settingsSpec.Finalizers[0]},                       // "other" is not allowlisted
+			Annotations:       map[string]string{settingsSpec.Annotations[0]: "[\"sv\"]"}, // "other" is not allowlisted
 		}, got)
 	})
 
 	t.Run("leaves previous labels and deletion timestamp empty on create", func(t *testing.T) {
-		got := newWatchMetadata(mk(nil, nil), nil)
+		got := newWatchMetadata(settingsGR, mk(nil, nil), nil)
 		assert.Nil(t, got.PreviousLabels)
 		assert.Zero(t, got.DeletionTimestamp)
 	})
 
+	t.Run("a resource without an allowlist entry yields nil", func(t *testing.T) {
+		other := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		assert.Nil(t, newWatchMetadata(other, mk(map[string]string{"encrypted": "true"}, nil), nil))
+	})
+
 	t.Run("nil object yields nil", func(t *testing.T) {
-		assert.Nil(t, newWatchMetadata(nil, nil))
+		assert.Nil(t, newWatchMetadata(settingsGR, nil, nil))
 	})
 }
 
 func TestWatchNotificationAllowlists(t *testing.T) {
 	t.Run("labels and annotations keep only allowlisted keys", func(t *testing.T) {
-		for name, allowed := range map[string][]string{"labels": watchNotificationLabels, "annotations": watchNotificationAnnotations} {
+		for name, allowed := range map[string][]string{"labels": settingsSpec.Labels, "annotations": settingsSpec.Annotations} {
 			t.Run(name, func(t *testing.T) {
 				in := map[string]string{"not-allowlisted": "x"}
 				assert.Nil(t, filterKeys(in, allowed), "nothing allowlisted is nil, not an empty map")
@@ -208,10 +219,10 @@ func TestWatchNotificationAllowlists(t *testing.T) {
 	})
 
 	t.Run("finalizers keep only allowlisted entries", func(t *testing.T) {
-		assert.Nil(t, filterFinalizers([]string{"other"}))
-		assert.Nil(t, filterFinalizers(nil))
-		assert.Equal(t, []string{watchNotificationFinalizers[0]},
-			filterFinalizers([]string{"other", watchNotificationFinalizers[0]}))
+		assert.Nil(t, filterFinalizers([]string{"other"}, settingsSpec.Finalizers))
+		assert.Nil(t, filterFinalizers(nil, settingsSpec.Finalizers))
+		assert.Equal(t, []string{settingsSpec.Finalizers[0]},
+			filterFinalizers([]string{"other", settingsSpec.Finalizers[0]}, settingsSpec.Finalizers))
 	})
 
 	t.Run("previous labels are filtered too", func(t *testing.T) {
@@ -224,7 +235,7 @@ func TestWatchNotificationAllowlists(t *testing.T) {
 		pm, err := utils.MetaAccessor(prev)
 		require.NoError(t, err)
 
-		got := newWatchMetadata(om, pm)
+		got := newWatchMetadata(settingsGR, om, pm)
 		assert.Equal(t, map[string]string{"encrypted": "true"}, got.PreviousLabels)
 	})
 }
