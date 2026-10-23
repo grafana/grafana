@@ -2,11 +2,14 @@ import {
   LocalValueVariable,
   type MultiValueVariableState,
   type SceneObject,
+  SceneObjectBase,
   type SceneVariable,
   type SceneVariables,
   SceneVariableSet,
   type VariableValueSingle,
 } from '@grafana/scenes';
+
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 
 const CLONE_KEY = '-clone-';
 
@@ -50,6 +53,72 @@ export function getRepeatCloneSourceKey(scene: SceneObject): string | undefined 
   return undefined;
 }
 
+/**
+ * Resolve an object inside a repeat clone to the same object in the repeat source.
+ * Repeat clones are rebuilt from the source on every edit, so edits made on a clone are discarded.
+ * Clone rows/tabs live in the source's repeatedRows/repeatedTabs, so the source is the clone's parent,
+ * and the clone subtree mirrors the source subtree by state property and array index.
+ */
+export function getRepeatSourceObject<T extends SceneObject>(obj: T): T {
+  const path: Array<{ prop: string; index?: number }> = [];
+  let current: SceneObject = obj;
+
+  while (current.parent) {
+    const parent: SceneObject = current.parent;
+    const repeatSourceKey = 'repeatSourceKey' in current.state ? current.state.repeatSourceKey : undefined;
+
+    if (repeatSourceKey && parent.state.key === repeatSourceKey) {
+      const resolved = followStatePath(parent, path);
+      // The source may itself sit inside another repeat clone (e.g. a repeated row in a repeated tab)
+      return isSameType(obj, resolved) ? getRepeatSourceObject(resolved) : obj;
+    }
+
+    const step = findStateLocation(parent, current);
+    if (!step) {
+      return obj;
+    }
+
+    path.unshift(step);
+    current = parent;
+  }
+
+  return obj;
+}
+
+function isSameType<T extends SceneObject>(obj: T, candidate: unknown): candidate is T {
+  return candidate instanceof obj.constructor;
+}
+
+function findStateLocation(parent: SceneObject, child: SceneObject): { prop: string; index?: number } | undefined {
+  for (const [prop, value] of Object.entries(parent.state)) {
+    if (value === child) {
+      return { prop };
+    }
+    if (Array.isArray(value)) {
+      const index = value.indexOf(child);
+      if (index !== -1) {
+        return { prop, index };
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function followStatePath(root: SceneObject, path: Array<{ prop: string; index?: number }>): unknown {
+  let current: unknown = root;
+
+  for (const { prop, index } of path) {
+    if (!(current instanceof SceneObjectBase)) {
+      return undefined;
+    }
+    const value: unknown = Reflect.get(current.state, prop);
+    current = index === undefined ? value : Array.isArray(value) ? value[index] : undefined;
+  }
+
+  return current;
+}
+
 export function getLocalVariableValueSet(
   variable: SceneVariable<MultiValueVariableState>,
   value: VariableValueSingle,
@@ -85,6 +154,21 @@ export function getRepeatVariableValueSet(
     // Always clone base variables to avoid attaching the same SceneObject instance
     // to multiple SceneVariableSet parents during repeat updates.
     variables: [...baseSet.state.variables.map((v) => v.clone()), ...localVariables],
+  });
+}
+
+/**
+ * Deep-clone a section annotation set so duplicated rows/tabs get their own layer objects.
+ * Scene clone keeps keys, and a shared key makes sidebar selection resolve to the first layer.
+ */
+export function cloneSectionDataLayerSet(data: SceneObject | undefined): DashboardDataLayerSet | undefined {
+  if (!(data instanceof DashboardDataLayerSet)) {
+    return undefined;
+  }
+
+  return data.clone({
+    key: undefined,
+    annotationLayers: data.state.annotationLayers.map((layer) => layer.clone({ key: undefined })),
   });
 }
 

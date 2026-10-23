@@ -1,6 +1,7 @@
 import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec, type RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -482,4 +483,88 @@ describe('serialization', () => {
     const rowSpec = serialized.spec as RowsLayoutSpec;
     expect(rowSpec.rows[0].spec.variables).toBeUndefined();
   });
+
+  it('keeps row annotations across save and load and omits an empty list', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Deploys',
+              collapse: false,
+              annotations: [sectionAnnotation('row-deploys')],
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    };
+
+    const deserialized = deserializeRowsLayout(layout, {}, false);
+    const row = deserialized.state.rows[0];
+    const data = row.state.$data;
+    expect(data).toBeInstanceOf(DashboardDataLayerSet);
+    expect(data instanceof DashboardDataLayerSet && data.state.annotationLayers[0].state.name).toBe('row-deploys');
+
+    const serialized = serializeRowsLayout(deserialized);
+    const rowSpec = serialized.spec as RowsLayoutSpec;
+    expect(rowSpec.rows[0].spec.annotations).toHaveLength(1);
+    expect(rowSpec.rows[0].spec.annotations![0].spec.name).toBe('row-deploys');
+
+    const empty = deserializeRowsLayout(
+      {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: { title: 'Empty', collapse: false, layout: { kind: 'GridLayout', spec: { items: [] } } },
+            },
+          ],
+        },
+      },
+      {},
+      false
+    );
+    const emptySpec = serializeRowsLayout(empty).spec as RowsLayoutSpec;
+    expect(emptySpec.rows[0].spec.annotations).toBeUndefined();
+    expect(empty.state.rows[0].state.$data).toBeUndefined();
+  });
+
+  it('does not create live section layers when loading a snapshot', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Deploys',
+              collapse: false,
+              annotations: [sectionAnnotation('row-deploys')],
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    };
+
+    const deserialized = deserializeRowsLayout(layout, {}, false, undefined, true);
+    expect(deserialized.state.rows[0].state.$data).toBeUndefined();
+  });
 });
+
+function sectionAnnotation(name: string) {
+  return {
+    kind: 'AnnotationQuery' as const,
+    spec: {
+      name,
+      enable: true,
+      hide: false,
+      iconColor: 'red',
+      query: { kind: 'DataQuery' as const, group: 'grafana', version: 'v0', spec: {} },
+    },
+  };
+}
