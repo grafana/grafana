@@ -37,6 +37,7 @@ export function useSaveDashboard(isCopy = false) {
     ) => {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
+        const saveAsSource = options.saveAsCopy ? scene.state : undefined;
 
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({
@@ -77,7 +78,7 @@ export function useSaveDashboard(isCopy = false) {
         // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
         const diffCount = scene.getDashboardChanges().diffCount;
 
-        await scene.saveCompleted(saveModel, resultData, options.folderUid);
+        await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 
         if (editSessionTracking.edit_session_id) {
           DashboardInteractions.editPeriodEnded({
