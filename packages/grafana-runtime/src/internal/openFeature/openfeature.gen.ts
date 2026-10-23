@@ -234,6 +234,8 @@ export const FlagKeys = {
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
+  GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -1608,6 +1610,17 @@ export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluati
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
+};
+
+/**
+ * Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+ *
+ * **Details:**
+ * - flag key: `grafana.savedDashboardViews`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedDashboardViews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedDashboardViews", false, options).value;
 };
 
 /**

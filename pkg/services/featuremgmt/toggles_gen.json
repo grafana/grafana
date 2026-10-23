@@ -3268,6 +3268,22 @@
     },
     {
       "metadata": {
+        "name": "grafana.savedDashboardViews",
+        "resourceVersion": "1792708487109",
+        "creationTimestamp": "2026-10-22T21:16:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 22:34:47.109907 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.savedQueriesPage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-15T11:52:46Z"
