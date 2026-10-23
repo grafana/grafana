@@ -68,6 +68,7 @@ export class StPodReadinessService {
     this.beginPolling();
   }
 
+  /** Test-only teardown. Not called by the production lifecycle. */
   stop(): void {
     this.clearTimers();
   }
