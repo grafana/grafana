@@ -26,7 +26,7 @@ export interface SavedViewTimeRange {
   timezone?: string;
 }
 
-/** Mirrors apps/dashboardviews/kinds/saveddashboardview.cue's spec — see the backend spec, 4.2. */
+/** Mirrors the spec in apps/dashboardviews/kinds/saveddashboardview.cue. */
 export interface SavedDashboardViewSpec {
   dashboardUID: string;
   name: string;

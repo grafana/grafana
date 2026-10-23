@@ -79,10 +79,7 @@ describe('applySavedViewState', () => {
   });
 
   it('publishes SceneVariableValueChangedEvent when applying a changed ad-hoc filter', () => {
-    // Regression test: a plain setState({ filters }) updates the filter-chip UI (which reads
-    // state.filters directly) but never notifies dependent panels/repeats/interpolated content,
-    // which listen for this event to know they need to re-run. updateFilters() is the API that
-    // publishes it -- that's what this pins.
+    // A plain setState would update the chips but not notify dependent panels.
     const scene = buildScene({ adhocFilters: [{ key: 'host', operator: '=', value: 'a' }] });
     const adhoc = scene.state.$variables?.getByName('adhocFilter');
     if (!(adhoc instanceof AdHocFiltersVariable)) {
