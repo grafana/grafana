@@ -19,6 +19,8 @@ export {
   type RulerNotificationSettingsDTO,
   type ConvertPrometheusResponse,
   type ConvertAlertmanagerResponse,
+  type RenameResources,
+  type MergeStats,
   type AlertmanagerUserConfig,
 } from './convert/api/types';
 

@@ -34,7 +34,8 @@ rule shapes.
   It's the format of the `X-Grafana-Alerting-Notification-Settings` header, and of `notification_settings` on
   each rule in Grafana's ruler API.
 - `ConvertPrometheusResponse` and `ConvertAlertmanagerResponse`: what the endpoints answer with.
-  `ConvertAlertmanagerResponse` also lists what an Alertmanager import renamed and added.
+  `ConvertAlertmanagerResponse` also lists what an Alertmanager import renamed (`RenameResources`) and added
+  (`MergeStats`).
 - `AlertmanagerUserConfig`: an Alertmanager config the way mimirtool sends it, as a YAML string plus template
   files.
 

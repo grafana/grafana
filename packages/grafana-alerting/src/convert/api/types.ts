@@ -76,21 +76,25 @@ export interface ConvertPrometheusResponse {
   error: string;
 }
 
+/** Resources an Alertmanager import renamed so they don't clash with existing ones, old name to new name. */
+export interface RenameResources {
+  receivers?: Record<string, string>;
+  time_intervals?: Record<string, string>;
+}
+
+/** What an Alertmanager import added to the config. Names are after any rename. */
+export interface MergeStats {
+  /** The routing tree the import added. */
+  added_route?: string;
+  added_receivers?: string[];
+  added_time_intervals?: string[];
+  added_templates?: string[];
+  added_inhibition_rules?: string[];
+}
+
 export interface ConvertAlertmanagerResponse extends ConvertPrometheusResponse {
-  /** Resources renamed so they don't clash with existing ones, old name to new name. */
-  rename_resources?: {
-    receivers?: Record<string, string>;
-    time_intervals?: Record<string, string>;
-  };
-  /** What the import added. Names are after any rename. */
-  stats?: {
-    /** The routing tree the import added. */
-    added_route?: string;
-    added_receivers?: string[];
-    added_time_intervals?: string[];
-    added_templates?: string[];
-    added_inhibition_rules?: string[];
-  };
+  rename_resources?: RenameResources;
+  stats?: MergeStats;
 }
 
 /** An Alertmanager config as mimirtool sends it: the config itself as a YAML string, and its template files. */
