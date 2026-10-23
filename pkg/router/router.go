@@ -251,6 +251,11 @@ func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next ht
 	if !authorizeNamespace(w, req) {
 		return
 	}
+	if isDeprecatedWatchPath(req.URL.Path) {
+		setRoute(req, routeInvalid)
+		http.Error(w, "the deprecated /watch/ path is not supported, use ?watch=true", http.StatusNotFound)
+		return
+	}
 
 	// Built by the router, and checked before group dispatch so the tree is
 	// never mistaken for a group.

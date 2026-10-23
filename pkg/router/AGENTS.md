@@ -48,7 +48,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   the outcomes of real proxied requests; no active health probes. An outcome is reported as soon as
   the response status is written, never when the body ends, so a watch can't hold a half-open
   breaker's trial slot. Only requests whose own context ended (`errCallerGone`) are excluded from
-  breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
+  breaker accounting. A deadline the router sets on its own fetches, such as discovery, has the
+  cause `errRouterDeadline` (`callerGone`), so missing it counts against the backend. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
   `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
   `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
@@ -124,7 +125,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
     count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
     the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
-    deprecated `/watch/` path form is not supported either.
+    deprecated `/apis/<g>/<v>/watch/...` path form gets a 404 and is not counted as a watch
+    (`isDeprecatedWatchPath`).
 
 ## Package layout
 
@@ -248,7 +250,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     stored.
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
-    last good copy is served, marked `Stale`.
+    last good copy is served, marked `Stale`. Without one, an incomplete fetch serves what it did
+    read, such as the versions an older backend answered for.
   - The document is written by `writeAggregatedDiscovery`, never through a per-request
     `aggregated.ResourceManager`, which logs a line for every group version each time it is built.
     It must answer exactly as that manager would: groups sorted by name, versions in order, empty
