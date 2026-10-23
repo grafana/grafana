@@ -4,6 +4,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
+import { loadSavedViews } from '../savedviews/loadSavedViews';
 import { applySavedViewStateAsDefault, captureSavedViewState } from '../savedviews/state';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
@@ -94,15 +95,29 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Deferred like onEnterEditMode above: the $timeRange and variable updateFromUrl calls later in
     // this pass use the same stale URL snapshot and would revert a synchronous apply.
     if (savedViewsEnabled && typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
-      const view = savedViews?.find((v) => v.metadata.name === values.viewFilter);
+      const name = values.viewFilter;
+      const scene = this._scene;
+      // Snapshot before sibling updateFromUrl calls run, so explicit params in this URL can win.
+      const before = captureSavedViewState(scene);
+      const baseline = savedViewUpdate.savedViewBaseline ?? savedViewBaseline;
+      const view = savedViews?.find((v) => v.metadata.name === name);
       if (view) {
-        const scene = this._scene;
-        // Snapshot before sibling updateFromUrl calls run, so explicit params in this URL can win.
-        const before = captureSavedViewState(scene);
-        const baseline = savedViewUpdate.savedViewBaseline ?? savedViewBaseline;
         setTimeout(() => applySavedViewStateAsDefault(scene, view.spec, before, baseline));
-        savedViewUpdate.viewFilter = values.viewFilter;
+      } else {
+        // Not loaded yet (e.g. a link opened mid-session), or created since the last fetch.
+        loadSavedViews(scene).then(() => {
+          if (scene.state.viewFilter !== name) {
+            return;
+          }
+          const loaded = scene.state.savedViews?.find((v) => v.metadata.name === name);
+          if (loaded) {
+            applySavedViewStateAsDefault(scene, loaded.spec, before, baseline);
+          } else {
+            scene.setState({ viewFilter: undefined });
+          }
+        });
       }
+      savedViewUpdate.viewFilter = name;
     } else if (viewFilter && values.viewFilter === null) {
       savedViewUpdate.viewFilter = undefined;
     }

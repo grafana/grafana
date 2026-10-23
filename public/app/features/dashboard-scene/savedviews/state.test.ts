@@ -320,6 +320,16 @@ describe('getSavedViewDiff', () => {
     expect(getSavedViewDiff(base, { ...base, variables: [...base.variables] })).toBe(false);
   });
 
+  it('is true when only the values of a multi-value ad hoc filter differ', () => {
+    const withValues = (values: string[]): SavedDashboardViewSpec => ({
+      ...base,
+      variables: [{ name: 'adhoc', type: 'adhoc', filters: [{ key: 'host', operator: '=|', value: 'a', values }] }],
+    });
+
+    expect(getSavedViewDiff(withValues(['a', 'b']), withValues(['a']))).toBe(true);
+    expect(getSavedViewDiff(withValues(['a', 'b']), withValues(['a', 'b']))).toBe(false);
+  });
+
   it('is true when the time range differs', () => {
     expect(getSavedViewDiff({ ...base, timeRange: { from: 'now-1h', to: 'now' } }, base)).toBe(true);
   });

@@ -215,7 +215,7 @@ function variableEqual(a: SavedViewVariable | undefined, b: SavedViewVariable | 
 }
 
 function normalizeFilters(filters: SavedViewVariable['filters']) {
-  return (filters ?? []).map(({ key, operator, value }) => ({ key, operator, value }));
+  return (filters ?? []).map(({ key, operator, value, values }) => ({ key, operator, value, values: values ?? [] }));
 }
 
 function normalizeValue(value: SavedViewVariable['value']): unknown[] {
