@@ -130,36 +130,20 @@ func TestDeleteInFoldersUnchecked_UsesTargetOrgNotRequesterOrg(t *testing.T) {
 	require.Equal(t, []int64{2}, fakeElementService.deletedOrgIDs, "must delete in the target org, not the requester's own org")
 }
 
-// recordingLibraryElementService wraps the fake to capture DeleteLibraryElementsInFolderUnchecked's args.
-type recordingLibraryElementService struct {
-	*fake.LibraryElementService
-	gotOrgID  int64
-	gotFolder string
-	calls     int
-}
-
-func (r *recordingLibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
-	r.calls++
-	r.gotOrgID = orgID
-	r.gotFolder = folderUID
-	return nil
-}
-
 func TestLibraryPanelService_DeleteInFoldersUnchecked(t *testing.T) {
 	// orgID must win over signedInUser.GetOrgID(), which can differ for some callers.
-	elementSvc := &recordingLibraryElementService{LibraryElementService: &fake.LibraryElementService{}}
+	elementSvc := &orderTrackingLibraryElementService{LibraryElementService: &fake.LibraryElementService{}}
 	lps := LibraryPanelService{LibraryElementService: elementSvc}
 
 	requester := &identity.StaticRequester{OrgID: 99}
 	require.ErrorIs(t, lps.DeleteInFoldersUnchecked(context.Background(), 7, []string{"fold1"}, requester), folder.ErrUncheckedDeleteNotAuthorized)
-	assert.Zero(t, elementSvc.calls, "must not delete anything without the unchecked-delete marker")
+	assert.Empty(t, elementSvc.deletedUIDs, "must not delete anything without the unchecked-delete marker")
 
 	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 7, requester, []string{"fold1"}, true)
 	require.NoError(t, lps.DeleteInFoldersUnchecked(ctx, 7, []string{"fold1"}, requester))
 
-	assert.Equal(t, 1, elementSvc.calls)
-	assert.Equal(t, int64(7), elementSvc.gotOrgID, "must use the orgID argument, not signedInUser.GetOrgID()")
-	assert.Equal(t, "fold1", elementSvc.gotFolder)
+	assert.Equal(t, []string{"fold1"}, elementSvc.deletedUIDs)
+	assert.Equal(t, []int64{7}, elementSvc.deletedOrgIDs, "must use the orgID argument, not signedInUser.GetOrgID()")
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
