@@ -117,7 +117,9 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	groups, err := discoverGroupResources(ctx, t.client, t.base.String())
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		t.status.recordFailure()
+		if t.status.recordFailure() {
+			wake(dirty)
+		}
 		logging.FromContext(ctx).Warn("router: aggregate discovery poll failed, backing off", "target", t.name, "err", err)
 		return
 	}

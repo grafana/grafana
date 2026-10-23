@@ -160,6 +160,10 @@ Exactly one loader serves:
 3. **Otherwise no groups** (`noRoutesLoader`). The dummy loader that serves static groups is in
    `dummy_test.go`, for tests only.
 
+The cloud loader serves nothing until each of its sources has polled once, successfully or not
+(`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A
+source's first attempt wakes the router either way.
+
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:
 

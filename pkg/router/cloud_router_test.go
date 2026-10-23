@@ -668,9 +668,11 @@ audience = second
 		require.Equal(t, "aggregate:"+name, backends[0].Source())
 		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
 	}
-	// Poll completion order must not determine priority or merge group versions.
+	// Poll completion order must not determine priority or merge group
+	// versions. The loader serves nothing until every target has polled once.
 	loader.aggregateTargets[1].poll(t.Context(), dirty)
-	assertWinner("a_second", "v2")
+	_, err = loader.Load(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
 	loader.aggregateTargets[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())

@@ -165,7 +165,9 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		t.status.recordFailure()
+		if t.status.recordFailure() {
+			wake(dirty)
+		}
 		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
 		return
 	}

@@ -5,12 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
 	"os"
 	"slices"
+	"strings"
 	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -293,7 +295,24 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	return l.dirty, nil // the poll loops push to this channel
 }
 
+// errFirstPollPending keeps the cloud loader from serving before each of its
+// sources has polled once.
+var errFirstPollPending = errors.New("router: waiting for the first poll of")
+
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
+	// Until every source has polled once, the snapshots of those that haven't
+	// are empty but not failed. Serving then would report ready with groups
+	// missing from discovery, so wait. A failed first poll ends the wait too.
+	var pending []string
+	for _, status := range l.sourceStatuses() {
+		if status.Successes+status.Failures == 0 {
+			pending = append(pending, status.Source)
+		}
+	}
+	if len(pending) > 0 {
+		return nil, fmt.Errorf("%w: %s", errFirstPollPending, strings.Join(pending, ", "))
+	}
+
 	lookup := make(map[string]Backend)
 	var discoveryErr error
 	var shadowed []shadowedGroup
