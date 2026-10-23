@@ -657,6 +657,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
+	if ts, ok := teamStorage.(user.TeamStorage); ok {
+		b.teamStorage = ts
+	}
+
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {
@@ -778,8 +782,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	if authInfos, ok := b.authInfoStorage.(user.AuthInfoStorage); ok && !readOnly {
-		userStore = user.NewCascadeDeleter(userStore, authInfos)
+	var userTeamsBackends *dualwrite.Selector[user.UserTeamsBackend]
+	if b.dual != nil && b.unified != nil && enableTeamsAPI {
+		userTeamsBackends = dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),
+			user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamGetter))
+	}
+	if !readOnly {
+		authInfos, _ := b.authInfoStorage.(user.AuthInfoStorage)
+		if authInfos != nil || (b.teamStorage != nil && userTeamsBackends != nil) {
+			userStore = user.NewCascadeDeleter(userStore, authInfos, b.teamStorage, userTeamsBackends)
+		}
 	}
 	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
@@ -811,9 +823,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 			}
 		}
 		if enableTeamsAPI {
-			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),
-				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamGetter))
-			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(backends, b.tracing)
+			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(userTeamsBackends, b.tracing)
 		}
 	}
 
