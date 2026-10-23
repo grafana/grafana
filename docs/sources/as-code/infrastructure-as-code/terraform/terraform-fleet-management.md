@@ -224,21 +224,7 @@ This Terraform configuration creates the following:
      region           = grafana_cloud_access_policy.otel_policy.region
      access_policy_id = grafana_cloud_access_policy.otel_policy.policy_id
    }
-
-   output "otel_token" {
-     value     = grafana_cloud_access_policy_token.otel_token.token
-     sensitive = true
-   }
    ```
-
-1. Create a Collector access policy and token.
-   To create a new one, refer to [Grafana Cloud Access Policies](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/).
-   Add your stack to the realms list.
-   The scope needed for the examples in this guide is:
-   - `set:otel-data-write`
-
-   **Save the token to a secure file.**
-   You must enter it later in this guide when you [apply the Terraform configuration](#apply-the-terraform-configuration).
 
 ## Create a configuration file for your collector
 
@@ -311,11 +297,6 @@ This Terraform configuration creates a Supervisor configuration file that connec
 1. Create a file named `otel-supervisor-config.tf` and add the following code block:
 
    ```terraform
-   variable "otel_token" {
-     type        = string
-     description = "Grafana Cloud OpenTelemetry token"
-   }
-
    resource "local_file" "otel_supervisor_config" {
      filename = "${path.module}/supervisor.yaml"
      content = templatefile(
@@ -334,12 +315,7 @@ This Terraform configuration creates a Supervisor configuration file that connec
 1. Replace the following field values:
    - `<OTELCOL_EXECUTABLE_PATH>` with the path to your OpenTelemetry Collector executable
    - `<STORAGE_DIRECTORY>` with the path to a writable directory to use for [persistent data storage](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/opampsupervisor/README.md#persistent-data-storage)
-   - `<COLLECTOR_ID>` with the unique identifier of the Collector.
-     You can create one by running the following command:
-
-     ```shell
-     uuidgen | tr '[:upper:]' '[:lower:]'
-     ```
+   - `<COLLECTOR_ID>` with the universally unique identifier (UUID) of the Collector.
 
 ## Create a Fleet Management collector
 
@@ -557,17 +533,11 @@ In a terminal, run the following commands from the directory where all of the co
    terraform plan
    ```
 
-   If you're following the OTel path, enter the `otel_token` when prompted.
-   You generated this token at the [Create an access policy and token for your collector](#create-an-access-policy-and-token-for-your-collector) step.
-
 1. Apply the configuration:
 
    ```shell
    terraform apply
    ```
-
-   If you're following the OTel path, enter the `otel_token` again.
-   Enter `yes` when Terraform asks to change the `otel_token` value.
 
 ## Run the collector
 
