@@ -6,7 +6,7 @@ interface RuleDescriptionProps {
   summary?: string;
 }
 
-/** One-line description below the title: error (red) if present, else summary (secondary), else nothing. */
+/** One-line description below the title: error (red) if present, else summary (secondary). Always renders; let the caller guard on presence. */
 export function RuleDescription({ lastError, summary }: RuleDescriptionProps) {
   if (lastError) {
     return (
@@ -17,14 +17,11 @@ export function RuleDescription({ lastError, summary }: RuleDescriptionProps) {
       </Tooltip>
     );
   }
-  if (summary) {
-    return (
-      <Tooltip content={summary} placement="top">
-        <Text variant="bodySmall" color="secondary" truncate element="p" aria-label={summary}>
-          {summary}
-        </Text>
-      </Tooltip>
-    );
-  }
-  return null;
+  return (
+    <Tooltip content={summary} placement="top">
+      <Text variant="bodySmall" color="secondary" truncate element="p" aria-label={summary}>
+        {summary}
+      </Text>
+    </Tooltip>
+  );
 }

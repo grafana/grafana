@@ -30,7 +30,11 @@ export function AlertRuleRow({ searchHit, folderPath }: AlertRuleRowProps) {
           {searchHit.title}
         </TextLink>
       }
-      description={<RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />}
+      description={
+        (searchHit.lastError || searchHit.summary) && (
+          <RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />
+        )
+      }
       right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
       meta={[folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />]}
     />

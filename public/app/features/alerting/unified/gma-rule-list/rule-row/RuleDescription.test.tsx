@@ -22,12 +22,6 @@ describe('RuleDescription', () => {
     expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
   });
 
-  it('renders nothing when neither error nor summary is present', () => {
-    const { container } = render(<RuleDescription />);
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it('shows a tooltip with the full error text', async () => {
     render(<RuleDescription lastError="remote write failed: connection refused" />);
 
