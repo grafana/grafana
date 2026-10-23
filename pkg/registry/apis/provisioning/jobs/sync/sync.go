@@ -29,18 +29,25 @@ type Syncer interface {
 }
 
 type syncer struct {
-	compare               CompareFn
-	fullSync              FullSyncFn
-	incrementalSync       IncrementalSyncFn
-	tracer                tracing.Tracer
+	compare         CompareFn
+	fullSync        FullSyncFn
+	incrementalSync IncrementalSyncFn
+	tracer          tracing.Tracer
+	// convergePlanner routes incremental requests through the planner-backed
+	// full sync. The incremental function is injected without resource clients,
+	// so a planner-backed one cannot be installed alongside the other two —
+	// and leaving the hand-rolled one in place would let every incremental run
+	// bypass the planner entirely, which is most runs.
+	convergePlanner       bool
 	metrics               jobs.JobMetrics
 	maxSyncWorkers        int
 	folderMetadataEnabled bool
 	resourceTimeout       time.Duration
 }
 
-func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceTimeout time.Duration) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceTimeout time.Duration, convergePlanner bool) Syncer {
 	return &syncer{
+		convergePlanner:       convergePlanner,
 		compare:               compare,
 		fullSync:              fullSync,
 		incrementalSync:       incrementalSync,

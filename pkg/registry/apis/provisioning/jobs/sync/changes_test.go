@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestChanges(t *testing.T) {
@@ -768,6 +769,11 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 	t.Run("reparents orphan folder child before deferred folder cleanup", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
+		// The planner derives a folder identity from the repository name; the
+		// hand-rolled diff never asked for it, so it was never stubbed.
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}).Maybe()
 		repoResources := resources.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
@@ -818,6 +824,11 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 
 	t.Run("deletes duplicate orphan child when surviving child already matches source", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
+		// The planner derives a folder identity from the repository name; the
+		// hand-rolled diff never asked for it, so it was never stubbed.
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}).Maybe()
 		repoResources := resources.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
@@ -870,6 +881,11 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 
 	t.Run("prefers child under orphan folder UID over stale-hash child under surviving folder", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
+		// The planner derives a folder identity from the repository name; the
+		// hand-rolled diff never asked for it, so it was never stubbed.
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}).Maybe()
 		repoResources := resources.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
@@ -929,6 +945,11 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 
 	t.Run("invalid folder metadata suppresses duplicate folder orphan cleanup", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
+		// The planner derives a folder identity from the repository name; the
+		// hand-rolled diff never asked for it, so it was never stubbed.
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}).Maybe()
 		repoResources := resources.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
@@ -1075,6 +1096,11 @@ func TestCompare(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := repository.NewMockRepository(t)
+			// The planner derives a folder identity from the repository name; the
+			// hand-rolled diff never asked for it, so it was never stubbed.
+			repo.On("Config").Return(&provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			}).Maybe()
 			repoResources := resources.NewMockRepositoryResources(t)
 
 			tt.setupMocks(repo, repoResources)
@@ -1099,6 +1125,11 @@ func TestCompare(t *testing.T) {
 func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 	t.Run("augmentChangesForFolderMetadata skipped when flag off", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
+		// The planner derives a folder identity from the repository name; the
+		// hand-rolled diff never asked for it, so it was never stubbed.
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}).Maybe()
 		repoResources := resources.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
@@ -1149,6 +1180,11 @@ func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := repository.NewMockRepository(t)
+			// The planner derives a folder identity from the repository name; the
+			// hand-rolled diff never asked for it, so it was never stubbed.
+			repo.On("Config").Return(&provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			}).Maybe()
 			repoResources := resources.NewMockRepositoryResources(t)
 
 			source := []repository.FileTreeEntry{
@@ -1187,6 +1223,11 @@ func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
 
 func TestCompare_InvalidCreatedFolderMetadataWarningPreservesFolderCreate(t *testing.T) {
 	repo := repository.NewMockRepository(t)
+	// The planner derives a folder identity from the repository name; the
+	// hand-rolled diff never asked for it, so it was never stubbed.
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+	}).Maybe()
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	source := []repository.FileTreeEntry{
