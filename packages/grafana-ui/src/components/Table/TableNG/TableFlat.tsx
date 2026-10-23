@@ -351,7 +351,7 @@ export function TableFlat(props: TableNGProps) {
     hasColumnSidebar && hasHeader && isColumnVisibilityPanelOpen
       ? sidebarWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH + COLUMN_VISIBILITY_TABLE_BORDER_WIDTH
       : 0;
-  const frameSize = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+  const frameSize = tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
   const fullWidth = Math.max(width - frameSize - columnVisibilityPanelAllocation, 0);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
@@ -442,6 +442,7 @@ export function TableFlat(props: TableNGProps) {
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
+    transparent,
   });
   const showPagination = enablePagination && numRows > 0;
   const scrollbarWidth = useNativeScrollbarWidth(gridRef);

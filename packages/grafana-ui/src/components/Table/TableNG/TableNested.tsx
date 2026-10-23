@@ -238,8 +238,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       width -
       (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) -
       scrollbarWidth -
-      (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
-    [width, scrollbarWidth, firstRowNestedData, tableRefreshEnabled, noPanelPadding]
+      (tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
+    [width, scrollbarWidth, firstRowNestedData, tableRefreshEnabled, noPanelPadding, transparent]
   );
   const nestedAvailableWidth = useMemo(() => availableWidth - TABLE.CELL_PADDING - 1, [availableWidth]);
 
@@ -371,6 +371,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
+    transparent,
   });
 
   const showPagination = enablePagination && numRows > 0;
