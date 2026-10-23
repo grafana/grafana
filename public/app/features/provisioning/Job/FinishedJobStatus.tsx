@@ -100,7 +100,6 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
             title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
             message: messages.warning,
           },
-          urls: job.status.url,
         });
       }
     }

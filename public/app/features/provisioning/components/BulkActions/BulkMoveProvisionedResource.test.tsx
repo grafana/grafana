@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
-import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { fullyLoadedViewItemCollection } from 'app/features/browse-dashboards/fixtures/state.fixtures';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
@@ -13,7 +13,6 @@ import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidati
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 
 import { BulkMoveProvisionedResource } from './BulkMoveProvisionedResource';
-import { type ResponseType } from './useBulkActionJob';
 
 jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
   AffectedFolderContents: jest.fn(({ selectedItems, defaultMessage }) => (
@@ -38,8 +37,9 @@ const mockUseSelectionRepoValidation = useSelectionRepoValidation as jest.Mocked
   typeof useSelectionRepoValidation
 >;
 
-jest.mock('./useBulkActionJob', () => ({
-  useBulkActionJob: jest.fn(),
+jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
+  useCreateRepositoryJobsMutation: jest.fn(),
 }));
 
 jest.mock('app/features/provisioning/Job/JobStatus', () => ({
@@ -72,7 +72,7 @@ jest.mock('@grafana/runtime', () => ({
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );
-const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
+const mockUseCreateRepositoryJobsMutation = jest.mocked(useCreateRepositoryJobsMutation);
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 const mockUseGetFolderQuery = jest.mocked(require('app/api/clients/folder/v1beta1').useGetFolderQuery);
 const mockJobStatus = jest.mocked(JobStatus);
@@ -109,12 +109,20 @@ function browseDashboardsState(
   };
 }
 
+/** Mocks the RTK mutation the forms create jobs with; `error` makes the request reject. */
+function mockCreateJobMutation(result: { job?: Job; error?: unknown }, isLoading = false) {
+  const mockCreateJob = jest.fn(() => ({
+    unwrap: () => (result.error ? Promise.reject(result.error) : Promise.resolve(result.job)),
+  }));
+  mockUseCreateRepositoryJobsMutation.mockReturnValue([mockCreateJob, { isLoading }] as unknown as ReturnType<
+    typeof useCreateRepositoryJobsMutation
+  >);
+  return mockCreateJob;
+}
+
 function setup(
   repository: RepositoryView | null,
-  mockJobResult: ResponseType = {
-    success: true,
-    job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
-  },
+  result: { job?: Job; error?: unknown } = { job: { metadata: { name: 'test-job' }, status: { state: 'success' } } },
   isLoading = false
 ) {
   const selectedItems = {
@@ -131,7 +139,7 @@ function setup(
   };
 
   const onDismiss = jest.fn();
-  const mockCreateBulkJob = jest.fn().mockResolvedValue(mockJobResult);
+  const mockCreateJob = mockCreateJobMutation(result, isLoading);
 
   mockUseGetResourceRepositoryView.mockReturnValue({
     repository: repository ?? defaultRepository,
@@ -149,18 +157,13 @@ function setup(
     isMissingRepo: false,
   });
 
-  mockUseBulkActionJob.mockReturnValue({
-    createBulkJob: mockCreateBulkJob,
-    isLoading,
-  });
-
   const renderResult = render(
     <BulkMoveProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
   );
 
   return {
     onDismiss,
-    mockCreateBulkJob,
+    mockCreateJob,
     selectedItems,
     defaultRepository,
     ...renderResult,
@@ -223,14 +226,14 @@ describe('BulkMoveProvisionedResource', () => {
   });
 
   it('handles successful move', async () => {
-    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
+    const { user, mockCreateJob, defaultRepository } = setup(null);
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      defaultRepository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: defaultRepository.name,
+      jobSpec: expect.objectContaining({
         action: 'move',
         message: expect.stringContaining('Move resources'),
         move: expect.objectContaining({
@@ -240,8 +243,8 @@ describe('BulkMoveProvisionedResource', () => {
             expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),
           ]),
         }),
-      })
-    );
+      }),
+    });
 
     expect(await screen.findByTestId('job-status')).toBeInTheDocument();
     expect(screen.getByText(/Job Status - move - success/)).toBeInTheDocument();
@@ -249,7 +252,7 @@ describe('BulkMoveProvisionedResource', () => {
 
   it('handles move errors', async () => {
     const mockPublish = jest.fn();
-    const { user } = setup(null, { success: false, error: 'Network error' });
+    const { user } = setup(null, { error: 'Network error' });
 
     mockGetAppEvents.mockReturnValue({
       publish: mockPublish,
@@ -269,7 +272,7 @@ describe('BulkMoveProvisionedResource', () => {
 
   it('shows JobStatus with working state during move', async () => {
     const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
-    const { user } = setup(null, { success: true, job: workingJob });
+    const { user } = setup(null, { job: workingJob });
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
@@ -283,7 +286,7 @@ describe('BulkMoveProvisionedResource', () => {
 
   it('hides form buttons when job is in working state', async () => {
     const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
-    const { user } = setup(null, { success: true, job: workingJob });
+    const { user } = setup(null, { job: workingJob });
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
@@ -295,20 +298,20 @@ describe('BulkMoveProvisionedResource', () => {
   });
 
   it('calls createBulkJob with branch workflow parameters by default', async () => {
-    const { user, mockCreateBulkJob } = setup(null);
+    const { user, mockCreateJob } = setup(null);
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: expect.anything(),
+      jobSpec: expect.objectContaining({
         action: 'move',
         move: expect.objectContaining({
           ref: expect.stringContaining('bulk-move/'),
         }),
-      })
-    );
+      }),
+    });
   });
 
   it('calls createBulkJob with write workflow parameters for write-only repositories', async () => {
@@ -319,14 +322,14 @@ describe('BulkMoveProvisionedResource', () => {
       target: 'folder',
       workflows: ['write'],
     };
-    const { user, mockCreateBulkJob } = setup(writeOnlyRepository);
+    const { user, mockCreateJob } = setup(writeOnlyRepository);
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      writeOnlyRepository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: writeOnlyRepository.name,
+      jobSpec: expect.objectContaining({
         action: 'move',
         move: expect.objectContaining({
           ref: undefined,
@@ -335,8 +338,8 @@ describe('BulkMoveProvisionedResource', () => {
             expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),
           ]),
         }),
-      })
-    );
+      }),
+    });
   });
 
   it('shows error when every selected item is already in the target folder', async () => {
@@ -355,11 +358,9 @@ describe('BulkMoveProvisionedResource', () => {
       isMissingRepo: false,
     });
 
-    const mockCreateBulkJob = jest.fn().mockResolvedValue({
-      success: true,
+    const mockCreateJob = mockCreateJobMutation({
       job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
     });
-    mockUseBulkActionJob.mockReturnValue({ createBulkJob: mockCreateBulkJob, isLoading: false });
 
     // Both selected items live directly under the folder the picker returns ('target-folder-uid').
     const repoRoot: DashboardViewItem = { kind: 'folder', uid: 'test-folder', title: 'Repo root' };
@@ -403,7 +404,7 @@ describe('BulkMoveProvisionedResource', () => {
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
     expect(await screen.findByText(/Selected resources are already in the target folder/)).toBeInTheDocument();
-    expect(mockCreateBulkJob).not.toHaveBeenCalled();
+    expect(mockCreateJob).not.toHaveBeenCalled();
   });
 
   it('moves a nested folder to the repository root from the root browse page', async () => {
@@ -422,11 +423,9 @@ describe('BulkMoveProvisionedResource', () => {
       isMissingRepo: false,
     });
 
-    const mockCreateBulkJob = jest.fn().mockResolvedValue({
-      success: true,
+    const mockCreateJob = mockCreateJobMutation({
       job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
     });
-    mockUseBulkActionJob.mockReturnValue({ createBulkJob: mockCreateBulkJob, isLoading: false });
 
     // Picking the repo root folder: its k8s name equals the repository name, which resolves to the '/' path.
     resetFolderPickerMock('test-folder');
@@ -467,16 +466,16 @@ describe('BulkMoveProvisionedResource', () => {
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      repository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: repository.name,
+      jobSpec: expect.objectContaining({
         action: 'move',
         move: expect.objectContaining({
           targetPath: '/',
           resources: [expect.objectContaining({ name: 'nested-folder', kind: 'Folder' })],
         }),
-      })
-    );
+      }),
+    });
     expect(screen.queryByText(/Selected resources are already in the target folder/)).not.toBeInTheDocument();
   });
 
@@ -489,10 +488,7 @@ describe('BulkMoveProvisionedResource', () => {
       isMissingRepo: true,
     });
 
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: jest.fn(),
-      isLoading: false,
-    });
+    mockCreateJobMutation({});
 
     const selectedItems = {
       folder: { 'folder-1': true },
@@ -519,10 +515,7 @@ describe('BulkMoveProvisionedResource', () => {
       isMissingRepo: false,
     });
 
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: jest.fn(),
-      isLoading: false,
-    });
+    mockCreateJobMutation({});
 
     const selectedItems = {
       folder: { 'folder-1': true },
@@ -547,12 +540,6 @@ describe('BulkMoveProvisionedResource', () => {
       target: 'folder',
       workflows: ['branch', 'write'],
     };
-
-    const mockCreateBulkJob = jest.fn().mockResolvedValue({
-      success: true,
-      job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
-    });
-
     mockUseGetResourceRepositoryView.mockImplementation(({ folderName }: { folderName?: string }) => {
       if (folderName === 'test-folder') {
         return {
@@ -572,10 +559,7 @@ describe('BulkMoveProvisionedResource', () => {
       };
     });
 
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: mockCreateBulkJob,
-      isLoading: false,
-    });
+    mockCreateJobMutation({ job: { metadata: { name: 'test-job' }, status: { state: 'success' } } });
 
     const onDismiss = jest.fn();
     const { rerender, user } = render(
@@ -651,7 +635,7 @@ describe('BulkMoveProvisionedResource', () => {
     };
 
     it('pre-fills the comment from the rendered template and POSTs it', async () => {
-      const { user, mockCreateBulkJob } = setup(templateRepository);
+      const { user, mockCreateJob } = setup(templateRepository);
 
       const textarea = await screen.findByRole('textbox', { name: /comment/i });
       await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
@@ -659,10 +643,10 @@ describe('BulkMoveProvisionedResource', () => {
       await user.click(screen.getByTestId('folder-picker'));
       await user.click(screen.getByRole('button', { name: /Move/i }));
 
-      expect(mockCreateBulkJob).toHaveBeenCalledWith(
-        templateRepository,
-        expect.objectContaining({ action: 'move', message: 'chore: move 2 resources' })
-      );
+      expect(mockCreateJob).toHaveBeenCalledWith({
+        name: templateRepository.name,
+        jobSpec: expect.objectContaining({ action: 'move', message: 'chore: move 2 resources' }),
+      });
     });
 
     it('renders the comment read-only when the template is enforced', async () => {
@@ -678,7 +662,7 @@ describe('BulkMoveProvisionedResource', () => {
     });
 
     it('keeps a manual edit across re-renders and POSTs the edited message', async () => {
-      const { user, mockCreateBulkJob, selectedItems, onDismiss, rerender } = setup(templateRepository);
+      const { user, mockCreateJob, selectedItems, onDismiss, rerender } = setup(templateRepository);
 
       const textarea = await screen.findByRole('textbox', { name: /comment/i });
       await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
@@ -695,10 +679,10 @@ describe('BulkMoveProvisionedResource', () => {
       await user.click(screen.getByTestId('folder-picker'));
       await user.click(screen.getByRole('button', { name: /Move/i }));
 
-      expect(mockCreateBulkJob).toHaveBeenCalledWith(
-        templateRepository,
-        expect.objectContaining({ message: 'chore: move 2 resources edited' })
-      );
+      expect(mockCreateJob).toHaveBeenCalledWith({
+        name: templateRepository.name,
+        jobSpec: expect.objectContaining({ message: 'chore: move 2 resources edited' }),
+      });
     });
   });
 });

@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -7,7 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { collectSelectedItems, getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
@@ -18,8 +19,10 @@ import {
 import { isRootFolderUID } from 'app/features/search/constants';
 
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { getJobRef, useResourceJob } from '../../hooks/useResourceJob';
 import { useSelectedItemParentUIDs } from '../../hooks/useSelectedItemParentUIDs';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { type MoveJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
@@ -29,7 +32,6 @@ import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolder
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 
-import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import {
   type BulkActionFormData,
   type BulkActionProvisionResourceProps,
@@ -46,15 +48,9 @@ interface FormProps extends BulkActionProvisionResourceProps {
 }
 
 function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
-  // States
-  const [job, setJob] = useState<Job>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  // Captured at submit time so the success message matches the workflow the job used.
-  const submittedViaBranchWorkflow = useRef(false);
 
-  // Hooks
-  const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
+  const { submitted, submit, isCreating } = useResourceJob({ repository });
   const selectedItemParentUIDs = useSelectedItemParentUIDs(selectedItems);
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const {
@@ -99,8 +95,6 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
   };
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
-    setHasSubmitted(true);
-
     // 1. Setup
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
 
@@ -112,7 +106,6 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
           'Target folder path is invalid or empty, please select again.'
         ),
       });
-      setHasSubmitted(false);
       return;
     }
 
@@ -124,7 +117,6 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
           'Selected resources are already in the target folder.'
         ),
       });
-      setHasSubmitted(false);
       return;
     }
 
@@ -136,8 +128,6 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       resourceCount: resources.length,
     });
 
-    submittedViaBranchWorkflow.current = workflow === 'branch';
-
     const jobSpec: MoveJobSpec = {
       action: 'move',
       message,
@@ -148,19 +138,19 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       },
     };
 
-    const result = await createBulkJob(repository, jobSpec);
-
-    if (result.success && result.job) {
-      setJob(result.job); // Store the job for tracking
-    } else if (!result.success && result.error) {
+    try {
+      await submit(jobSpec);
+    } catch (error) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [
           t('browse-dashboards.bulk-move-resources-form.error-moving-resources', 'Error moving resources'),
-          result.error,
+          extractErrorMessage(
+            error,
+            t('browse-dashboards.bulk-actions.error-generic', 'Unexpected error happened when creating job')
+          ),
         ],
       });
-      setHasSubmitted(false);
     }
   };
 
@@ -168,12 +158,12 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
-          {hasSubmitted && job ? (
+          {submitted ? (
             <ResourceJobStatus
-              job={job}
+              job={submitted.job}
               jobType="move"
               successTitle={
-                submittedViaBranchWorkflow.current
+                getJobRef(submitted.jobSpec)
                   ? t('provisioning.bulk-action.success-title-branch', 'Requested changes were pushed to a branch')
                   : t('browse-dashboards.bulk-move-resources-form.success-title', 'Resources moved successfully')
               }
@@ -219,14 +209,11 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
               />
 
               <Stack gap={2}>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreating}>
                   <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
-                >
-                  {isCreatingJob
+                <Button type="submit" disabled={isCreating || targetFolderUID === undefined}>
+                  {isCreating
                     ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
                     : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
                 </Button>

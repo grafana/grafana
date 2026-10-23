@@ -47,7 +47,6 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
               title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
               message: messages.warning,
             },
-            urls: job?.status?.url,
           });
           errorSetRef.current = true;
         }

@@ -15,10 +15,10 @@ import { useGetResourceRepositoryView } from '../../hooks/useGetResourceReposito
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { useResourceJob } from '../../hooks/useResourceJob';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { type DeleteJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getRequestRef } from '../../utils/workflow';
-import { type DeleteJobSpec } from '../BulkActions/useBulkActionJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { ResourceJobStatus } from '../Shared/ResourceJobStatus';

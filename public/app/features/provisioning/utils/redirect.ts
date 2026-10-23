@@ -80,7 +80,7 @@ export function getJobListRedirectUrl({
   urls: RepositoryUrLs | undefined;
   repoType: string | undefined;
   action?: ResourceBranchAction;
-  prTitle: string;
+  prTitle?: string;
 }): string {
   if (workflow !== 'branch') {
     return '/dashboards';

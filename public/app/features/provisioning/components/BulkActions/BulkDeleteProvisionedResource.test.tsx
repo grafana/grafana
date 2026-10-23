@@ -2,13 +2,12 @@ import { screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
-import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
-import { type ResponseType } from './useBulkActionJob';
 
 jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
   AffectedFolderContents: jest.fn(({ selectedItems, defaultMessage }) => (
@@ -33,8 +32,9 @@ const mockUseSelectionRepoValidation = useSelectionRepoValidation as jest.Mocked
   typeof useSelectionRepoValidation
 >;
 
-jest.mock('./useBulkActionJob', () => ({
-  useBulkActionJob: jest.fn(),
+jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
+  useCreateRepositoryJobsMutation: jest.fn(),
 }));
 
 jest.mock('app/features/provisioning/Job/JobStatus', () => ({
@@ -55,7 +55,7 @@ jest.mock('@grafana/runtime', () => ({
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );
-const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
+const mockUseCreateRepositoryJobsMutation = jest.mocked(useCreateRepositoryJobsMutation);
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 const mockJobStatus = jest.mocked(JobStatus);
 
@@ -69,12 +69,20 @@ function resetJobStatusMock() {
   ));
 }
 
+/** Mocks the RTK mutation the forms create jobs with; `error` makes the request reject. */
+function mockCreateJobMutation(result: { job?: Job; error?: unknown }, isLoading = false) {
+  const mockCreateJob = jest.fn(() => ({
+    unwrap: () => (result.error ? Promise.reject(result.error) : Promise.resolve(result.job)),
+  }));
+  mockUseCreateRepositoryJobsMutation.mockReturnValue([mockCreateJob, { isLoading }] as unknown as ReturnType<
+    typeof useCreateRepositoryJobsMutation
+  >);
+  return mockCreateJob;
+}
+
 function setup(
   repository: RepositoryView | null,
-  mockJobResult: ResponseType = {
-    success: true,
-    job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
-  },
+  result: { job?: Job; error?: unknown } = { job: { metadata: { name: 'test-job' }, status: { state: 'success' } } },
   isLoading = false
 ) {
   const selectedItems = {
@@ -91,7 +99,7 @@ function setup(
   };
 
   const onDismiss = jest.fn();
-  const mockCreateBulkJob = jest.fn().mockResolvedValue(mockJobResult);
+  const mockCreateJob = mockCreateJobMutation(result, isLoading);
 
   mockUseGetResourceRepositoryView.mockReturnValue({
     repository: repository ?? defaultRepository,
@@ -108,18 +116,13 @@ function setup(
     isMissingRepo: false,
   });
 
-  mockUseBulkActionJob.mockReturnValue({
-    createBulkJob: mockCreateBulkJob,
-    isLoading,
-  });
-
   const renderResult = render(
     <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
   );
 
   return {
     onDismiss,
-    mockCreateBulkJob,
+    mockCreateJob,
     selectedItems,
     defaultRepository,
     ...renderResult,
@@ -160,7 +163,7 @@ describe('BulkDeleteProvisionedResource', () => {
       isMissingRepo: false,
       isLoading: true,
     });
-    mockUseBulkActionJob.mockReturnValue({ createBulkJob: jest.fn(), isLoading: false });
+    mockCreateJobMutation({});
 
     render(
       <BulkDeleteProvisionedResource
@@ -182,7 +185,7 @@ describe('BulkDeleteProvisionedResource', () => {
       isReadOnlyRepo: false,
       isMissingRepo: true,
     });
-    mockUseBulkActionJob.mockReturnValue({ createBulkJob: jest.fn(), isLoading: false });
+    mockCreateJobMutation({});
 
     render(
       <BulkDeleteProvisionedResource
@@ -205,13 +208,13 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('handles successful deletion', async () => {
-    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
+    const { user, mockCreateJob, defaultRepository } = setup(null);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      defaultRepository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: defaultRepository.name,
+      jobSpec: expect.objectContaining({
         action: 'delete',
         message: expect.stringContaining('Delete resources'),
         delete: expect.objectContaining({
@@ -220,8 +223,8 @@ describe('BulkDeleteProvisionedResource', () => {
             expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),
           ]),
         }),
-      })
-    );
+      }),
+    });
 
     // Should show JobStatus component
     expect(await screen.findByTestId('job-status')).toBeInTheDocument();
@@ -230,7 +233,7 @@ describe('BulkDeleteProvisionedResource', () => {
 
   it('handles deletion errors', async () => {
     const mockPublish = jest.fn();
-    const { user } = setup(null, { success: false, error: 'Network error' });
+    const { user } = setup(null, { error: 'Network error' });
 
     mockGetAppEvents.mockReturnValue({
       publish: mockPublish,
@@ -250,7 +253,7 @@ describe('BulkDeleteProvisionedResource', () => {
 
   it('shows loading state during deletion', async () => {
     const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
-    const { user } = setup(null, { success: true, job: workingJob });
+    const { user } = setup(null, { job: workingJob });
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
@@ -264,7 +267,7 @@ describe('BulkDeleteProvisionedResource', () => {
 
   it('Should not show buttons when job is in working state', async () => {
     const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
-    const { user } = setup(null, { success: true, job: workingJob });
+    const { user } = setup(null, { job: workingJob });
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
@@ -277,19 +280,19 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('calls createBulkJob with branch workflow parameters by default', async () => {
-    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
+    const { user, mockCreateJob, defaultRepository } = setup(null);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      defaultRepository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: defaultRepository.name,
+      jobSpec: expect.objectContaining({
         action: 'delete',
         delete: expect.objectContaining({
           ref: expect.stringContaining('bulk-delete/'),
         }),
-      })
-    );
+      }),
+    });
   });
 
   it('preserves repository context when selection clears on root page', async () => {
@@ -306,10 +309,7 @@ describe('BulkDeleteProvisionedResource', () => {
       workflows: ['branch', 'write'],
     };
 
-    const mockCreateBulkJob = jest.fn().mockResolvedValue({
-      success: true,
-      job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
-    });
+    mockCreateJobMutation({ job: { metadata: { name: 'test-job' }, status: { state: 'success' } } });
 
     mockUseGetResourceRepositoryView.mockImplementation(({ folderName }: { folderName?: string }) => {
       if (folderName === 'test-folder') {
@@ -328,11 +328,6 @@ describe('BulkDeleteProvisionedResource', () => {
         isReadOnlyRepo: false,
         isMissingRepo: true,
       };
-    });
-
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: mockCreateBulkJob,
-      isLoading: false,
     });
 
     const onDismiss = jest.fn();
@@ -368,13 +363,13 @@ describe('BulkDeleteProvisionedResource', () => {
       target: 'folder',
       workflows: ['write'],
     };
-    const { user, mockCreateBulkJob } = setup(writeOnlyRepository);
+    const { user, mockCreateJob } = setup(writeOnlyRepository);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      writeOnlyRepository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: writeOnlyRepository.name,
+      jobSpec: expect.objectContaining({
         action: 'delete',
         delete: expect.objectContaining({
           ref: undefined,
@@ -383,8 +378,8 @@ describe('BulkDeleteProvisionedResource', () => {
             expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),
           ]),
         }),
-      })
-    );
+      }),
+    });
   });
 
   it('does not show a generated branch and targets the configured branch when write is the default workflow', async () => {
@@ -396,7 +391,7 @@ describe('BulkDeleteProvisionedResource', () => {
       branch: 'main',
       workflows: ['write', 'branch'],
     };
-    const { user, mockCreateBulkJob } = setup(writeFirstRepository);
+    const { user, mockCreateJob } = setup(writeFirstRepository);
 
     // Wait for the real ResourceEditFormSharedFields branch field to render.
     await screen.findByRole('button', { name: /Delete/i });
@@ -407,15 +402,15 @@ describe('BulkDeleteProvisionedResource', () => {
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      writeFirstRepository,
-      expect.objectContaining({
+    expect(mockCreateJob).toHaveBeenCalledWith({
+      name: writeFirstRepository.name,
+      jobSpec: expect.objectContaining({
         action: 'delete',
         delete: expect.objectContaining({
           ref: undefined,
         }),
-      })
-    );
+      }),
+    });
   });
 
   it('shows the branch success message when the job completes on the branch workflow', async () => {
@@ -468,17 +463,17 @@ describe('BulkDeleteProvisionedResource', () => {
     };
 
     it('pre-fills the comment from the rendered template and POSTs it', async () => {
-      const { user, mockCreateBulkJob } = setup(templateRepository);
+      const { user, mockCreateJob } = setup(templateRepository);
 
       const textarea = await screen.findByRole('textbox', { name: /comment/i });
       await waitFor(() => expect(textarea).toHaveValue('chore: delete 2 resources'));
 
       await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-      expect(mockCreateBulkJob).toHaveBeenCalledWith(
-        templateRepository,
-        expect.objectContaining({ action: 'delete', message: 'chore: delete 2 resources' })
-      );
+      expect(mockCreateJob).toHaveBeenCalledWith({
+        name: templateRepository.name,
+        jobSpec: expect.objectContaining({ action: 'delete', message: 'chore: delete 2 resources' }),
+      });
     });
 
     it('renders the comment read-only when the template is enforced', async () => {
@@ -486,17 +481,17 @@ describe('BulkDeleteProvisionedResource', () => {
         ...templateRepository,
         commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}', enforceTemplate: true },
       };
-      const { mockCreateBulkJob } = setup(enforcedRepository);
+      const { mockCreateJob } = setup(enforcedRepository);
 
       const textarea = await screen.findByRole('textbox', { name: /comment/i });
       await waitFor(() => expect(textarea).toHaveValue('chore: delete 2 resources'));
       expect(textarea).toHaveAttribute('readonly');
 
-      expect(mockCreateBulkJob).not.toHaveBeenCalled();
+      expect(mockCreateJob).not.toHaveBeenCalled();
     });
 
     it('keeps a manual edit across re-renders and POSTs the edited message', async () => {
-      const { user, mockCreateBulkJob, selectedItems, onDismiss, rerender } = setup(templateRepository);
+      const { user, mockCreateJob, selectedItems, onDismiss, rerender } = setup(templateRepository);
 
       const textarea = await screen.findByRole('textbox', { name: /comment/i });
       await waitFor(() => expect(textarea).toHaveValue('chore: delete 2 resources'));
@@ -512,10 +507,10 @@ describe('BulkDeleteProvisionedResource', () => {
 
       await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-      expect(mockCreateBulkJob).toHaveBeenCalledWith(
-        templateRepository,
-        expect.objectContaining({ message: 'chore: delete 2 resources edited' })
-      );
+      expect(mockCreateJob).toHaveBeenCalledWith({
+        name: templateRepository.name,
+        jobSpec: expect.objectContaining({ message: 'chore: delete 2 resources edited' }),
+      });
     });
   });
 });
