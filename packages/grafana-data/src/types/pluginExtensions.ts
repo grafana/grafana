@@ -3,7 +3,7 @@ import type * as React from 'react';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { type ScopedVars } from './ScopedVars';
-import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
+import { type DataQueryError, type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
 import { type IconName } from './icon';
 import { type PanelData } from './panel';
 import { type AbsoluteTimeRange, type RawTimeRange, type TimeZone } from './time';
@@ -231,6 +231,7 @@ export enum PluginExtensionPoints {
   TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
   QueryEditorRowActions = 'grafana/query-editor-row/actions/v1',
+  QueryErrorAction = 'grafana/query-error/action/v1',
   TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
@@ -325,6 +326,23 @@ export type PluginExtensionQueryEditorRowActionsV1Context = {
   app?: string;
   /** The time range the query is evaluated with, if the editor has one. */
   timeRange?: RawTimeRange;
+};
+
+/**
+ * Rendered below a query error. A component that has nothing to contribute for the given error
+ * (e.g. an unrelated datasource or error) is expected to render `null`.
+ */
+export type PluginExtensionQueryErrorActionV1Context = {
+  error: DataQueryError;
+  query?: DataQuery;
+  /** The datasource the failed query runs against. */
+  dataSource?: {
+    uid: string;
+    type: string;
+    name: string;
+  };
+  /** Which part of Grafana the error is rendered in, e.g. `explore`, `dashboard`. */
+  app?: string;
 };
 
 export type PluginExtensionDataSourceConfigContext<

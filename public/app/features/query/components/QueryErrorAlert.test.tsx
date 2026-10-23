@@ -1,6 +1,13 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataQueryError } from '@grafana/data';
+import {
+  type ComponentTypeWithExtensionMeta,
+  type DataQueryError,
+  type DataSourceInstanceSettings,
+  type PluginExtensionQueryErrorActionV1Context,
+  PluginExtensionTypes,
+} from '@grafana/data';
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryErrorAlert } from './QueryErrorAlert';
@@ -20,7 +27,32 @@ jest.mock('@grafana/assistant', () => ({
 describe('QueryErrorAlert', () => {
   beforeEach(() => {
     mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: true });
+    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   });
+
+  const dataSource: DataSourceInstanceSettings = {
+    uid: 'ds-uid',
+    type: 'prometheus',
+    name: 'Prometheus',
+    readOnly: false,
+    access: 'proxy',
+    jsonData: {},
+  };
+
+  type ActionContext = Partial<PluginExtensionQueryErrorActionV1Context>;
+  type ActionComponent = React.ComponentType<ActionContext>;
+
+  function createAction(id: string, Component: ActionComponent): ComponentTypeWithExtensionMeta<ActionContext> {
+    return Object.assign(Component, {
+      meta: {
+        id,
+        pluginId: 'grafana-adaptive-metrics-app',
+        title: 'Fix query',
+        description: '',
+        type: PluginExtensionTypes.component as const,
+      },
+    });
+  }
 
   it('should not render the assistant button when assistant is not available', () => {
     mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: false });
@@ -102,5 +134,63 @@ describe('QueryErrorAlert', () => {
       'structured',
       expect.objectContaining({ title: 'Query error details' })
     );
+  });
+
+  it('should render a plugin action below the error with the error context', () => {
+    const received: ActionContext[] = [];
+    setPluginComponentsHook(() => ({
+      components: [
+        createAction('action', (props) => {
+          received.push(props);
+          return <button>Fix query</button>;
+        }),
+      ],
+      isLoading: false,
+    }));
+
+    const error: DataQueryError = { message: 'Some error' };
+    const query: DataQuery = { refId: 'A' };
+
+    render(<QueryErrorAlert error={error} query={query} dataSource={dataSource} app="explore" />);
+
+    const message = screen.getByText('Some error');
+    const button = screen.getByRole('button', { name: 'Fix query' });
+    expect(message.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(received).toHaveLength(1);
+    expect(received[0]).toMatchObject({
+      error: { message: 'Some error' },
+      query: { refId: 'A' },
+      dataSource: { uid: 'ds-uid', type: 'prometheus', name: 'Prometheus' },
+      app: 'explore',
+    });
+  });
+
+  it('should omit the datasource and app when they are not provided', () => {
+    const received: ActionContext[] = [];
+    setPluginComponentsHook(() => ({
+      components: [
+        createAction('action', (props) => {
+          received.push(props);
+          return null;
+        }),
+      ],
+      isLoading: false,
+    }));
+
+    render(<QueryErrorAlert error={{ message: 'Some error' }} />);
+
+    expect(received[0].dataSource).toBeUndefined();
+    expect(received[0].app).toBeUndefined();
+  });
+
+  it('should render nothing for the extension point while it is loading', () => {
+    setPluginComponentsHook(() => ({
+      components: [createAction('action', () => <button>Fix query</button>)],
+      isLoading: true,
+    }));
+
+    render(<QueryErrorAlert error={{ message: 'Some error' }} />);
+
+    expect(screen.queryByRole('button', { name: 'Fix query' })).not.toBeInTheDocument();
   });
 });

@@ -687,7 +687,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             )}
             {editor}
           </ErrorBoundaryAlert>
-          {error && <QueryErrorAlert error={error} query={query} />}
+          {error && <QueryErrorAlert error={error} query={query} dataSource={this.props.dataSource} app={app} />}
           {visualization}
         </div>
       </QueryOperationRow>

@@ -375,6 +375,7 @@ describe('Query Response parser', () => {
             frames: [
               {
                 schema: {
+                  fields: [],
                   meta: { custom: { errorDetails } },
                 },
               },
