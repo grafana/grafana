@@ -45,21 +45,17 @@ type BytesValue interface {
 // NewBytesValue returns a BytesValue over b. Only pass bytes the reader may
 // hand out, such as a freshly scanned row.
 func NewBytesValue(b []byte) BytesValue {
-	return &bytesValue{Reader: bytes.NewReader(b), b: b}
+	return &bytesValue{Buffer: *bytes.NewBuffer(b)}
 }
 
 var _ BytesValue = (*bytesValue)(nil)
 
+// bytesValue gets Read, WriteTo and Bytes (the unread part) from bytes.Buffer.
 type bytesValue struct {
-	*bytes.Reader
-	b []byte
+	bytes.Buffer
 }
 
 func (*bytesValue) Close() error { return nil }
-
-func (v *bytesValue) Bytes() []byte {
-	return v.b[len(v.b)-v.Len():]
-}
 
 type SortOrder int
 
