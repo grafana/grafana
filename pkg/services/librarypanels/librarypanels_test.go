@@ -71,7 +71,7 @@ func TestIntegrationLibraryPanelFolderOperations(t *testing.T) {
 			// sc.user only has folder.ActionFoldersRead, but a deny-all AccessControl proves the unchecked path doesn't consult it at all.
 			le.AccessControl = acmock.New()
 
-			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), sc.user.OrgID, sc.user)
+			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), sc.user.OrgID, sc.user, true)
 			err := sc.lps.DeleteInFoldersUnchecked(ctx, sc.user.OrgID, []string{sc.folder.UID}, sc.user)
 			require.NoError(t, err)
 
@@ -124,7 +124,7 @@ func TestDeleteInFoldersUnchecked_UsesTargetOrgNotRequesterOrg(t *testing.T) {
 
 	// A Grafana Admin cascading a folder in an org other than their own: orgID is the target org, distinct from admin.OrgID.
 	admin := &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: true}
-	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 2, admin)
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 2, admin, true)
 	require.NoError(t, lps.DeleteInFoldersUnchecked(ctx, 2, []string{"folder-a"}, admin))
 
 	require.Equal(t, []int64{2}, fakeElementService.deletedOrgIDs, "must delete in the target org, not the requester's own org")
@@ -154,7 +154,7 @@ func TestLibraryPanelService_DeleteInFoldersUnchecked(t *testing.T) {
 	require.ErrorIs(t, lps.DeleteInFoldersUnchecked(context.Background(), 7, []string{"fold1"}, requester), folder.ErrUncheckedDeleteNotAuthorized)
 	assert.Zero(t, elementSvc.calls, "must not delete anything without the unchecked-delete marker")
 
-	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 7, requester)
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 7, requester, true)
 	require.NoError(t, lps.DeleteInFoldersUnchecked(ctx, 7, []string{"fold1"}, requester))
 
 	assert.Equal(t, 1, elementSvc.calls)

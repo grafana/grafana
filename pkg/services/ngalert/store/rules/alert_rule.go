@@ -1899,7 +1899,8 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return folder.ErrAccessDenied
 		}
 	}
-	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user), orgID, folderUIDs, user)
+	// Reaching here means every folder's AccessControl check above passed.
+	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, true), orgID, folderUIDs, user)
 }
 
 // DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have

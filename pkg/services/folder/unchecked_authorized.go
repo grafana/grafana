@@ -19,9 +19,9 @@ type uncheckedDeleteScope struct {
 	userUID   string
 }
 
-// WithUncheckedDeleteAuthorized marks ctx as authorized for an Unchecked delete by user in orgID; a nil or typed-nil user leaves ctx unmarked.
-func WithUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester) context.Context {
-	if user == nil || user.IsNil() {
+// WithUncheckedDeleteAuthorized marks ctx as authorized for an Unchecked delete by user in orgID; checked must be the caller's own permission-check result, not a hardcoded true. A false checked, or a nil/typed-nil user, leaves ctx unmarked.
+func WithUncheckedDeleteAuthorized(ctx context.Context, orgID int64, user identity.Requester, checked bool) context.Context {
+	if !checked || user == nil || user.IsNil() {
 		return ctx
 	}
 	return context.WithValue(ctx, uncheckedDeleteAuthorizedKey{},
