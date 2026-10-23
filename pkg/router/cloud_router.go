@@ -55,10 +55,7 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		return nil, nil, err
 	}
 	if pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
+		patterns := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
 		client, err := newPluginManifestsClient(section, "plugins")
 		if err != nil {
 			return nil, nil, err

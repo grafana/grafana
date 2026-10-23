@@ -186,6 +186,9 @@ func TestWatchThroughEveryBackendAndMode(t *testing.T) {
 			if middleware {
 				mode = "middleware"
 			}
+			if middleware && kind == "single-tenant" {
+				continue // only the standalone router has the single-tenant fallback
+			}
 			t.Run(kind+"/"+mode, func(t *testing.T) {
 				t.Parallel()
 				for _, param := range []string{"watch=1", "watch=true"} {

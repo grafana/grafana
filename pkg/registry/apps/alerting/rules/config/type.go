@@ -5,11 +5,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var kind = model.ConfigKind()
+var kind = v0alpha1.ConfigKind()
 
 var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 	kind.GroupVersionResource().Resource, strings.ToLower(kind.Kind()), kind.Kind(),

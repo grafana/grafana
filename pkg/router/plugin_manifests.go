@@ -92,6 +92,9 @@ func newPluginManifestsTarget(
 		return nil, fmt.Errorf("router: %s must be absolute (scheme and host required): url=%q", source, rawURL)
 	}
 
+	// Managed plugins have no local plugin settings for the legacy app-access
+	// check, so it always grants access (pluginManifestAccessControl).
+	deps.AccessControl = pluginManifestAccessControl{}
 	t := &pluginManifestsTarget{
 		keyPrefix:       keyPrefix,
 		source:          source,
@@ -189,16 +192,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 				return t.pluginClients(entry.Host, entry.Definition.JSONData.ID)
 			}
 
-			// Remove any dependencies that may try to load settings
-			// After the manifest CRUD works, we can explore getting these wired properly
-			deps := t.deps
-			deps.PluginClient = nil
-			deps.ContextProvider = nil
-			deps.PluginSettings = nil
-			deps.DualWrite = nil
-			deps.AccessControl = pluginManifestAccessControl{}
-
-			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, deps, nil)
+			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
 
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)

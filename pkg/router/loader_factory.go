@@ -18,37 +18,31 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader prefers configured cloud routes (aggregate targets,
-// plugins_url, core_url and/or st_discovery_url -- see
-// ProvideCloudRoutesLoaderFactory), then local plugins. Dummy groups let the
-// router run when none of those sources are available.
-//
-// In middleware mode the router runs inside a single-tenant Grafana, so the
-// cloud sources are never loaded.
+// ProvideRoutesLoader serves local plugins, or no groups without plugin
+// sources. It never loads the cloud sources: the
+// standalone router tries ProvideCloudRoutesLoader first, and calls this only
+// when [cloud_router] configures none, and Grafana itself never polls them.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	middleware := middlewareEnabled(cfg, deps.Features)
-	if !middleware {
-		// The cloud loader is invalid when running in OSS/middleware mode
-		if cloud, err := ProvideCloudRoutesLoaderFactory(cfg, deps.PluginDependencies); err != nil || cloud != nil {
-			return cloud, err
-		}
-	}
-
-	// Plugin sources
 	if deps.PluginSources != nil {
-		if middleware {
+		if middlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
 			if err := initLocalPlugins(context.Background(), deps); err != nil {
 				return nil, err
 			}
 		}
-		return &PluginLoader{deps: deps, settings: !standaloneRouter(cfg)}, nil
+		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features)}, nil
 	}
 
-	return dummyRoutesLoader{groups: []string{
-		"dummy-backend-1.ext.grafana.app",
-		"dummy-backend-2.ext.grafana.app",
-	}}, nil
+	return noRoutesLoader{}, nil
+}
+
+// noRoutesLoader serves no groups, for a router without plugin sources.
+type noRoutesLoader struct{}
+
+func (noRoutesLoader) Load(context.Context) ([]Backend, error) { return nil, nil }
+
+func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return make(chan struct{}), nil
 }
 
 // ProvideCloudRoutesLoader builds the cloud routes loader from the router
@@ -114,7 +108,15 @@ func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bo
 	if features == nil || standaloneRouter(cfg) {
 		return false
 	}
-	return features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) || //nolint:staticcheck
+	return features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) || settingsEnabled(cfg, features) //nolint:staticcheck
+}
+
+// settingsEnabled reports whether the router serves app plugin settings. It is
+// read once, at startup, like middlewareEnabled, which it turns on: settings
+// served without middleware would never be reached, and middleware without
+// settings would take over plugin groups without their settings.
+func settingsEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
+	return features != nil && !standaloneRouter(cfg) &&
 		features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
 }
 

@@ -800,7 +800,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 	if err := l.RequireEditPermissionsOnFolder(c, signedInUser, folderUID); err != nil {
 		return err
 	}
-	return l.DeleteLibraryElementsInFolderUnchecked(c, signedInUser, folderUID)
+	return l.DeleteLibraryElementsInFolderUnchecked(c, signedInUser.GetOrgID(), signedInUser, folderUID)
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without

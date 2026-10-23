@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -304,7 +303,7 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 		return req
 	}
 
-	ctx, span := otel.Tracer("github.com/grafana/grafana/pkg/router").Start(routerTraceContext(req), "router.authenticate")
+	ctx, span := routerTracer().Start(routerTraceContext(req), "router.authenticate")
 	defer span.End()
 
 	var err error
@@ -441,12 +440,10 @@ func apiGroup(path string) string {
 	return group
 }
 
-// breakerState is the group breaker's state, read without changing it. Only
-// entries built outside newHandlerEntry, in tests, lack a view.
+// breakerState is the group breaker's state, read without changing it:
+// gobreaker's own State moves an open breaker whose timeout passed to
+// half-open.
 func (e servingEntry) breakerState() gobreaker.State {
-	if e.breakerView == nil {
-		return e.breaker.State()
-	}
 	return e.breakerView.State()
 }
 

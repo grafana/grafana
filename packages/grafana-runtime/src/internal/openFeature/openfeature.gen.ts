@@ -340,6 +340,8 @@ export const FlagKeys = {
   ReloadDashboardsOnParamsChange: "reloadDashboardsOnParamsChange",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option */
+  ReportingRemoveLogoUrlField: "reporting.removeLogoUrlField",
   /** Enables the configurable footer settings for PDF reports */
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
@@ -2189,6 +2191,17 @@ export const useFlagReloadDashboardsOnParamsChange = (options?: ReactFlagEvaluat
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option
+ *
+ * **Details:**
+ * - flag key: `reporting.removeLogoUrlField`
+ * - default value: `false`
+ */
+export const useFlagReportingRemoveLogoUrlField = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reporting.removeLogoUrlField", false, options).value;
 };
 
 /**

@@ -1440,6 +1440,36 @@
       "saving": "Wird gespeichert …",
       "title-error-saving-receiver": "Fehler beim Speichern des Empfängers"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Gehen Sie zur Seite Alerting Admin, um Ihre Alertmanager-Einrichtung zu ändern. Kontaktieren Sie Ihren Administrator, wenn Sie keinen Zugriff haben.",
       "admin-hint-external": "Gehen Sie zur Seite Alerting Admin, um Ihre Alertmanager-Einrichtung zu ändern. Kontaktieren Sie Ihren Administrator, wenn Sie keinen Zugriff haben.",
@@ -1765,7 +1795,9 @@
         "autosync-tooltip-unsupported": "Die automatische Synchronisierung ist für diesen Alertmanager-Typ nicht verfügbar. Wählen Sie eine Datenquelle von Mimir oder Cortex aus, um sie zu aktivieren.",
         "datasource": "Alertmanager-Datenquelle",
         "datasource-autosync-badge": "Automatische Synchronisierung",
+        "embedded-yaml-parse-error": "",
         "heading": "Benachrichtigungsressourcen importieren",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Keine Alertmanager-Datenquellen gefunden",
         "no-permission-desc": "Sie haben keine Berechtigung zum Importieren von Benachrichtigungsressourcen. Sie benötigen die Berechtigung <strong>alerting.notifications:write</strong>. Sie können diesen Schritt überspringen.",
@@ -7420,6 +7452,57 @@
       "usage-count_one": "Verwendet bei {{count}} Dashboards",
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Link hinzufügen",
       "remove-link": "Link entfernen",
@@ -7745,6 +7828,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Beim Speichern ist ein unerwarteter Fehler aufgetreten."
     },
     "save-library-viz-panel-modal": {
@@ -8037,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Abfragebereich öffnen"
     },
     "viz-panel-links-renderer": {
@@ -13634,6 +13720,13 @@
       "save-tooltip": "Speichern"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Wird geladen …"
   },
@@ -15460,11 +15553,6 @@
       "original-query": "Ursprüngliche Abfrage",
       "trace-id": "(Trace-ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Abfrage hinzufügen",
-      "expression": "Ausdruck",
-      "title-data-source-help": "Datenquellen-Hilfe"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Intervall = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15592,31 @@
     "accept": "Annehmen",
     "assistant-context-title": "Co-Authoring-Kontext abfragen",
     "assistant-instructions-title": "Co-Authoring-Anweisungen abfragen",
-    "assistant-unavailable": "Assistant ist nicht verfügbar",
-    "assistant-unavailable-body": "Co-Authoring-Abfragen erfordern Grafana Assistant.",
-    "building": "Abfrage wird erstellt …",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Die Verfügbarkeit von Assistant wird überprüft …",
     "clarification-label": "Zusätzliche Details hinzufügen",
     "clarification-message": "Klärungsnachricht",
-    "clarification-placeholder": "Zusätzliche Details hinzufügen ...",
+    "clarification-placeholder": "",
     "clarification-title": "Detail angefordert",
     "close": "Co-Authoring schließen",
-    "context": "KONTEXT",
-    "context-error": "Der ausgewählte Abfragekontext konnte nicht gelesen werden",
+    "context-error": "",
     "continue": "Fortfahren",
     "continue-here": "Hier geht es weiter",
     "continue-in-assistant": "In Assistant fortfahren",
-    "continue-in-assistant-chat": "Im Assistant-Chat fortfahren",
     "dialog": "Abfrage-Co-Autor",
     "dismiss": "Verwerfen",
     "error": "Co-Authoring-Abfragefehler",
     "error-accept-failed": "Der Abfragevorschlag konnte nicht akzeptiert werden. Versuchen Sie es erneut.",
     "error-multiple-responses": "Assistant hat widersprüchliche Abfragevorschläge zurückgegeben. Versuchen Sie es erneut.",
     "error-preview-failed": "Der Abfragevorschlag konnte nicht in der Vorschau angezeigt werden. Versuchen Sie es erneut.",
+    "explain-failed": "",
     "explain-or-modify": "Erklären oder ändern",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Abbrechen",
     "feedback-description": "Ihr Feedback hilft, die Abfrageerfahrung in Grafana zu verbessern.",
     "feedback-error": "Feedback konnte nicht gesendet werden. Versuchen Sie es erneut.",
@@ -15536,36 +15627,61 @@
     "feedback-not-helpful": "Nicht hilfreich",
     "feedback-positive-placeholder": "Was hat Ihnen gefallen? Wie hätte es noch besser sein können?",
     "feedback-positive-title": "Was hat gut funktioniert?",
-    "feedback-privacy": "Ihre Bewertung, Ihr Kommentar und die Angabe, ob es sich um einen Vorschlag oder eine Übergabe handelte, werden gesendet. Ihre Abfrage, Ihre Eingabeaufforderung und die Assistant-Antwort sind nicht enthalten.",
+    "feedback-privacy": "",
     "feedback-recipient": "Ihr Feedback wird an die Teams gesendet, die an der Abfrage arbeiten.",
     "feedback-send": "Senden",
     "feedback-sending": "Senden …",
-    "focus": "FOKUS",
-    "handoff-guidance": "Ihre Änderungen müssen möglicherweise eine andere Datenquelle oder zusätzliche Abfragen außerhalb derjenigen umfassen, auf die wir uns konzentrieren. Fahren Sie im Assistant-Chat fort, um größere Änderungen vorzunehmen.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Hervorgehobene Abfrage",
-    "highlighted-query-summary": "Zusammenfassung der hervorgehobenen Abfrage",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant konnte nach dem Versuch, den Vorschlag zu reparieren, keine gültige {{language}} erstellen. Versuchen Sie es erneut oder fügen Sie weitere Details hinzu.",
     "iteration-nudge": "Arbeiten Sie an etwas Großem? Iterieren Sie größere Änderungen mit mehr Platz.",
-    "open-in-chat": "Im Chat öffnen",
-    "original-change": "Ursprüngliche {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Vorschau der Abfrage",
+    "previous-option": "",
     "prompt-label": "Beschreiben Sie eine Abfrageänderung",
-    "prompt-placeholder": "Beschreiben Sie eine schnelle Änderung …",
+    "prompt-placeholder": "",
     "proposal-details": "Details zum Abfragevorschlag",
-    "proposed-change": "Vorgeschlagene {{kind}}",
-    "reading-highlighted-query": "Hervorgehobene Abfrage wird gelesen …",
+    "query-diff": "",
     "relevant-context": "Relevanter Abfragekontext",
     "request-failed": "Assistant konnte keinen Abfragevorschlag erstellen. Versuchen Sie es erneut.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Erneut versuchen",
+    "retry-context": "",
     "running-updated-query": "Aktualisierte Abfrage wird ausgeführt …",
+    "select-to-accept": "",
     "selection-ready": "Die Auswahl ist Teil dieser {{language}}-Abfrage.",
     "selection-whole-query": "Die vollständige {{language}}-Abfrage ist für Co-Authoring ausgewählt.",
     "selection-with-type": "{{name}} ist ein {{type}} {{kind}}.",
     "stale-query-response": "Die hervorgehobene Abfrage wurde geändert, bevor der Vorschlag bereit war. Verwerfen Sie sie und markieren Sie sie erneut.",
     "stop": "Abbrechen",
     "submit": "Co-Autor",
-    "suggestion-updated": "Vorschlag aktualisiert",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistant hat die aktuelle Abfrage ohne Änderungen zurückgegeben. Versuchen Sie es erneut oder fügen Sie weitere Details hinzu.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Nicht gespeicherte Panel-Bearbeitungen gehen nicht verloren.",
     "working-focus": "Abfragefokus"
   },
@@ -16181,14 +16297,7 @@
       "time-range": "Zeitbereich sperren"
     },
     "export": {
-      "back-button": "Zurück zum Export der Konfiguration",
-      "cancel-button": "Abbrechen",
-      "info-text": "Dieses Dashboard exportieren.",
-      "loading": "Wird geladen ...",
-      "save-button": "In Datei speichern …",
-      "share-externally-label": "Export für externe Freigabe",
-      "view-button": "JSON anzeigen",
-      "view-button-yaml": "YAML anzeigen"
+      "share-externally-label": "Export für externe Freigabe"
     },
     "image": {
       "actions": "Bildexportaktionen",
@@ -16246,9 +16355,6 @@
       "dark": "Dunkel",
       "field-name": "Design",
       "light": "Hell"
-    },
-    "view-json": {
-      "copy-button": "In Zwischenablage kopieren"
     }
   },
   "share-panel": {
@@ -17427,6 +17533,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Entfernen Sie mit einem Regex-Muster Teile der Abfrageergebnisse."
       },
+      "deselect-all": "",
       "label-from-variable": "Von Variable",
       "label-identifier": "Kennung",
       "label-use-variable": "Variable verwenden",
@@ -17434,7 +17541,8 @@
       "name": {
         "filter-fields-by-name": "Felder nach Name filtern"
       },
-      "placeholder-regular-expression-pattern": "Reguläres Ausdrucksmuster"
+      "placeholder-regular-expression-pattern": "Reguläres Ausdrucksmuster",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

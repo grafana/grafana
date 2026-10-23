@@ -80,7 +80,7 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			sc.service.AccessControl = acmock.New()
 			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
 
-			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), noPermsUser, sc.folder.UID)
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), noPermsUser.OrgID, noPermsUser, sc.folder.UID)
 			require.NoError(t, err)
 
 			var count int64

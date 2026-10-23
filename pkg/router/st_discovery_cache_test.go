@@ -403,7 +403,7 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		return discoveryResponse(http.Header{"Content-Type": {"application/json"}},
 			`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"`+group+`","versions":[{"groupVersion":"`+group+`/v1","version":"v1"}]}]}`)
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -430,7 +430,7 @@ func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
 		}
 		return discoveryResponse(nil, "document")
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))

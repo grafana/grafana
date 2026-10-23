@@ -24,8 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
-type LoaderWithSingleTenantFallback interface {
+// loaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
+type loaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }
 
@@ -152,6 +152,14 @@ type singleTenantFallbackOptions struct {
 	transport           *http.Transport
 }
 
+// Idle connection bounds for the shared transport to every stack: enough per
+// stack for concurrent requests, and a total that bounds the sockets held for
+// thousands of stacks.
+const (
+	singleTenantMaxIdleConnsPerHost = 32
+	singleTenantMaxIdleConns        = 1000
+)
+
 func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFallback, error) {
 	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
 	if err != nil {
@@ -197,6 +205,11 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
+		// Stacks are reached over plaintext HTTP/1.1, one request per
+		// connection at a time, so net/http's default of 2 idle connections per
+		// host makes most concurrent requests dial again.
+		opts.transport.MaxIdleConnsPerHost = singleTenantMaxIdleConnsPerHost
+		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
 	return &singleTenantFallback{
@@ -415,6 +428,7 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 		Transport:     newBackendTransport(st.transport),
 		ErrorHandler:  proxyErrorHandler,
 		FlushInterval: streamingFlushInterval,
+		BufferPool:    proxyBuffers,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
@@ -488,17 +502,6 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	return breaker
 }
 
-// Helper function called when the fallback is directly used as a loader (testing)
-func (st *singleTenantFallback) SingleTenantFallback() http.Handler {
-	return st
-}
-
-// Load implements [RoutesLoader]. It returns the latest discovery snapshot and
-// makes no requests.
-func (st *singleTenantFallback) Load(context.Context) ([]Backend, error) {
-	return st.Backends()
-}
-
 // Backends returns the last-known-good discovered backends, and the error from
 // the latest poll if it failed.
 func (st *singleTenantFallback) Backends() ([]Backend, error) {
@@ -534,15 +537,6 @@ func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error)
 		})
 	}
 	return backends, nil
-}
-
-func (st *singleTenantFallback) Notify(ctx context.Context) (<-chan struct{}, error) {
-	dirty := make(chan struct{}, 1)
-	go func() {
-		defer close(dirty)
-		st.run(ctx, dirty)
-	}()
-	return dirty, nil
 }
 
 // run polls discovery until ctx is done, paced only by st.cooldown, the same
@@ -606,7 +600,6 @@ func backendKeys(backends []Backend) map[string]struct{} {
 }
 
 var (
-	_ RoutesLoader          = (*singleTenantFallback)(nil)
 	_ Backend               = (*fallbackBackend)(nil)
 	_ CallerScopedDiscovery = (*fallbackBackend)(nil)
 )

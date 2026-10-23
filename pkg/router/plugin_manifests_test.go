@@ -108,8 +108,7 @@ func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	patterns, err := compileGroupPatterns([]string{"*.internal"})
-	require.NoError(t, err)
+	patterns := compileGroupPatterns([]string{"*.internal"})
 
 	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, patterns, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
