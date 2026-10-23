@@ -39,7 +39,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
   re-reads full state through `Load`. Drain the channel before calling `Load`. `Run` does an explicit
-  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil).
+  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil). Since every
+  reconcile sees the same routes, a warning about them (reserved, invalid or duplicate groups) is
+  logged when it first appears, not on every reconcile (`warn` in `reconcile`).
 - **`Ready` fails only when nothing is served.** A partial reconcile error is logged, but must not
   drain the router from its load balancer.
 - **The circuit breaker is passive only.** `gobreaker`'s two-step breaker, one per group, driven by
@@ -85,6 +87,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
   router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
+  A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
+  `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
+  Until then its error is reported again, so `Ready` and the reconcile log don't change. A new key
+  for the group is loaded at once.
 - **Authenticate, then check the namespace, before any dispatch.** Every `/apis` and `/openapi/v3`
   request needs a requester: one Grafana's middleware set, or one from a verified `X-Access-Token`
   (`authenticate`), or it gets a 401. A request whose path names a namespace
