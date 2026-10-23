@@ -8,7 +8,7 @@ This entry point holds functions, types and an RTKQ client. It has no React comp
 added: apps build their own forms from these and from the components `@grafana/alerting/unstable` already has.
 
 ```ts
-import { convertAPI, getConvertRulesHeaders, type RulerRuleGroupDTO } from '@grafana/alerting/convert';
+import { convertAPI, type ConvertRulesOptions, type RulerRuleGroupDTO } from '@grafana/alerting/convert';
 ```
 
 ## What's in here
@@ -40,16 +40,16 @@ rule shapes.
 
 ### Headers (`api/headers.ts`)
 
-The convert API reads its options from headers instead of the request body. These functions turn an options
-object into those headers, leaving out anything that isn't set:
+The convert API reads its options from headers instead of the request body. `convertAPI`'s endpoints take
+the options as plain fields and turn them into those headers, leaving out anything that isn't set. The option
+types are exported so apps can type their own calls:
 
-- `getConvertRulesHeaders(options)` for rule imports: data source, target data source, folder, paused
-  state, notification settings, extra labels, version message and provenance.
-- `getConvertRulesFolderHeaders(options)` for reading and deleting rules in a folder.
-- `getConvertAlertmanagerHeaders(options)` for Alertmanager imports: identifier, force replace, dry run
-  and promote.
+- `ConvertRulesOptions` for rule imports: data source, target data source, folder, paused state,
+  notification settings, extra labels, version message and provenance.
+- `ConvertRulesFolderOptions` for reading and deleting rules in a folder.
+- `ConvertAlertmanagerOptions` for Alertmanager imports: identifier, force replace, dry run and promote.
 
-They're exported for apps that call the API with their own fetch helpers instead of `convertAPI`.
+The functions that build the headers aren't exported. Call the API through `convertAPI`.
 
 ### RTKQ client (`api/client.ts`)
 

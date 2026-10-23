@@ -37,10 +37,7 @@ export interface ConvertAlertmanagerOptions {
   promote?: boolean;
 }
 
-/**
- * The headers for a rule import. Exported for callers that don't use the RTKQ client, e.g. plugins with
- * their own fetch helpers.
- */
+/** The headers for a rule import. Only `convertAPI` uses these; they aren't part of the package's exports. */
 export function getConvertRulesHeaders(options: ConvertRulesOptions): Record<string, string> {
   const headers: Record<string, string> = { ...getConvertRulesFolderHeaders(options) };
 
