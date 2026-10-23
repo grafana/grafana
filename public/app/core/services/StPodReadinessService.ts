@@ -84,6 +84,7 @@ export class StPodReadinessService {
 
   private reset(): void {
     this.readyAt = null;
+    this.pending?.resolve();
     this.pending = null;
     this.state.next(StPodStatus.Unknown);
   }

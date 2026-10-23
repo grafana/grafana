@@ -153,6 +153,20 @@ describe('StPodReadinessService', () => {
     expect(service.getStatus()).toBe(StPodStatus.Waiting);
   });
 
+  it('resolves the stale pending promise when reset so suspended consumers can re-render', async () => {
+    jest.useFakeTimers();
+    installBackend(podDown);
+
+    service.start();
+    const stale = service.getReadyPromise();
+    await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
+    expect(service.getStatus()).toBe(StPodStatus.Timeout);
+
+    service.start();
+
+    await expect(stale).resolves.toBeUndefined();
+  });
+
   it('hands out a fresh pending promise after recovering from timeout', async () => {
     jest.useFakeTimers();
     installBackend(podDown);
