@@ -351,12 +351,30 @@ func TestUpdateCopyFieldsSetsGroupResource(t *testing.T) {
 // Dashboards and folders opt in through their manifests. Written out so that a
 // Grafana kind joining them is reviewed: its lists must not hide objects that a
 // get by name returns, including in storage wrappers the manifest says nothing
-// about.
+// about. The only test that reads the real coverage; the others use
+// testBuiltinManifests.
 func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	assert.Equal(t, []schema.GroupResource{dashboards, folders}, GlobalSearchResourceTypes())
-	assert.Equal(t, map[schema.GroupResource]string{dashboards: "Dashboard", folders: "Folder"}, GlobalSearchKinds())
+	got := globalSearchCoverageOf(AppManifests())
+	assert.Equal(t, []schema.GroupResource{dashboards, folders}, got.types)
+	assert.Equal(t, map[schema.GroupResource]string{dashboards: "Dashboard", folders: "Folder"}, got.kinds)
+}
+
+// testBuiltinManifests stand in for the compiled-in manifests in tests, so that
+// a Grafana kind opting in to global search changes only the test above.
+func testBuiltinManifests() []*app.ManifestData {
+	yes := true
+	return []*app.ManifestData{
+		testGlobalManifest("dashboard.grafana.app", testGlobalKind("Dashboard", "Dashboards", &yes)),
+		testGlobalManifest("folder.grafana.app", testGlobalKind("Folder", "Folders", &yes)),
+	}
+}
+
+// useTestGlobalSearchCoverage makes the compiled-in coverage, which a nil
+// registry falls back to, the one testBuiltinManifests describe.
+func useTestGlobalSearchCoverage() {
+	globalSearchCoverage = func() globalSearchTypes { return globalSearchCoverageOf(testBuiltinManifests()) }
 }
 
 // A kind opts in on every version it is served in, or on none: the global index
@@ -498,8 +516,8 @@ func TestGlobalSearchCoverageRegistry(t *testing.T) {
 // The manifest watcher reloads every registry through ReloadManifests.
 func TestReloadManifestsUpdatesGlobalSearchCoverage(t *testing.T) {
 	yes := true
-	opts := SearchOptions{GlobalSearchCoverage: NewGlobalSearchCoverageRegistry(AppManifests())}
+	opts := SearchOptions{GlobalSearchCoverage: NewGlobalSearchCoverageRegistry(testBuiltinManifests())}
 	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	require.NoError(t, opts.ReloadManifests(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))}))
+	require.NoError(t, opts.ReloadManifests(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))}))
 	assert.True(t, opts.GlobalSearchCoverage.Covers(pages))
 }
