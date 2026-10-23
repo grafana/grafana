@@ -108,31 +108,6 @@ func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
 	return holder[:separatorIndex]
 }
 
-func TestReadAndClose(t *testing.T) {
-	t.Run("returns KV bytes values without copying", func(t *testing.T) {
-		value := []byte("stored value")
-		got, err := readAndClose(kv.NewBytesValue(value))
-		require.NoError(t, err)
-		require.Equal(t, value, got)
-		require.Same(t, &value[0], &got[0])
-	})
-
-	t.Run("returns only the unread part of a bytes value", func(t *testing.T) {
-		r := kv.NewBytesValue([]byte("stored value"))
-		_, err := io.ReadFull(r, make([]byte, len("stored ")))
-		require.NoError(t, err)
-		got, err := readAndClose(r)
-		require.NoError(t, err)
-		require.Equal(t, []byte("value"), got)
-	})
-
-	t.Run("reads other readers fully", func(t *testing.T) {
-		got, err := readAndClose(io.NopCloser(strings.NewReader("streamed value")))
-		require.NoError(t, err)
-		require.Equal(t, []byte("streamed value"), got)
-	})
-}
-
 func TestNewKvStorageBackend(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 

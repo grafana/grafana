@@ -34,21 +34,31 @@ type KeyValue struct {
 	Value io.ReadCloser
 }
 
-// BytesValue is a KV value that is already in memory. Callers reading all of
-// it can take Bytes (the unread part) instead of copying it.
-type BytesValue struct {
+// bytesValue is a value the KV already holds in memory and owns, such as a
+// freshly scanned row, so ReadAllAndClose can hand its bytes out uncopied.
+type bytesValue struct {
 	bytes.Buffer
 }
 
-var _ io.ReadCloser = (*BytesValue)(nil)
-
-// NewBytesValue returns a BytesValue over b. Only pass bytes the reader may
-// hand out, such as a freshly scanned row.
-func NewBytesValue(b []byte) *BytesValue {
-	return &BytesValue{Buffer: *bytes.NewBuffer(b)}
+func newBytesValue(b []byte) *bytesValue {
+	return &bytesValue{Buffer: *bytes.NewBuffer(b)}
 }
 
-func (*BytesValue) Close() error { return nil }
+func (*bytesValue) Close() error { return nil }
+
+// ReadAllAndClose reads r to the end and closes it, returning both errors.
+// The returned bytes belong to the caller and stay valid after r is closed.
+func ReadAllAndClose(r io.ReadCloser) ([]byte, error) {
+	if v, ok := r.(*bytesValue); ok {
+		// Values this package owns skip the copy io.ReadAll would make. Detach
+		// the buffer so later use of r cannot touch the returned bytes.
+		data := v.Bytes()
+		v.Buffer = bytes.Buffer{}
+		return data, r.Close()
+	}
+	data, err := io.ReadAll(r)
+	return data, errors.Join(err, r.Close())
+}
 
 type SortOrder int
 
@@ -197,7 +207,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 		return nil, err
 	}
 
-	return NewBytesValue(value), nil
+	return newBytesValue(value), nil
 }
 
 func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -250,7 +260,7 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 
 			kv := KeyValue{
 				Key:   key,
-				Value: NewBytesValue(value),
+				Value: newBytesValue(value),
 			}
 
 			if !yield(kv, nil) {
