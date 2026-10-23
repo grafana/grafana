@@ -114,7 +114,7 @@ For more information, refer to the [Save status section](#save-status)
 
 <!--TODO: Do I wanna add this here? You can also create a notebook from the **New** menu in Grafana or by searching for **New notebook** in the command palette.-->
 
-## Save status
+### Save status
 
 Notebooks save your edits automatically, including changes made with [undo and redo](#undo-and-redo-changes).
 The save status displays at the top of the notebook next to the undo and redo icons.
@@ -142,12 +142,13 @@ When you hover your cursor over either of the buttons, it displays what change w
 
 You can't restore a deleted notebook using undo or redo.
 
-## Work with visualizations
+## Visualization blocks
 
 Visualization blocks display query results within your notebook.
 You can edit the block's title and queries, choose a suggested visualization, or give the panel its own time range.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-visualization-editing-v13.3.png" max-width="750px" alt="Notebook in edit mode with a panel title, visualization controls, a locked time range, and query controls below the chart" >}}
+<!-- TODO: redo screenshot-->
 
 In edit mode, hover over a visualization to display its controls.
 Visualization blocks have the following controls:
@@ -174,6 +175,7 @@ To change it, return to edit mode and click the locked range.
 Click **Remove time lock** to make the panel follow the notebook's time range again.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-panel-time-range-v13.3.png" max-width="750px" alt="Panel time picker with relative ranges, absolute start and end fields, and the option to remove the time lock" >}}
+<!-- TODO: redo screenshot-->
 
 A relative range, such as **Last 30 minutes**, remains relative to the current time.
 To preserve a specific investigation window, use an absolute start and end time.
@@ -182,7 +184,7 @@ Locking a time range doesn't save a snapshot of the query results.
 ### Add panels from Dashboards or Explore
 
 You can bring a dashboard panel or an Explore query into a notebook without recreating it.
-To add a panel from a dashboard or Explore, follow these steps:
+To add a panel from Dashboards or Explore, follow these steps:
 
 1. Do one of the following:
 
@@ -196,23 +198,28 @@ Updating the added panel in the notebook doesn't change the panel in the source 
 
 ## Create notebooks from Grafana Assistant Workspace
 
-When you complete a chat with the Grafana Assistant in Workspace, notebooks help you pick up where the canvas leaves off.
+In Grafana Assistant Workspace, you can turn investigation findings into a notebook to continue editing and share with your team.
 
-While you investigate in Workspace, the canvas assembles the work as a temporary collection of questions, panels, and findings.
-The Assistant builds the canvas autonomously in **Investigation** mode, or by way of your chat.
+While you investigate in Workspace, the canvas brings together the work as a temporary collection of questions, panels, and findings.
+The Assistant builds the canvas autonomously in **Investigation** mode, or through your chat.
 
 As you work, you can add the content of a message, such as text or a visualization, from your Assistant conversation to a notebook by clicking the **Add to notebook** icon.
-When the entire canvas is worth keeping, you can direct Assistant create a notebook or click the **Create notebook** option:
+To create a notebook from the entire canvas, ask Assistant to create one or click **Create notebook**:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-workspace-notebook-v13.3.png" max-width="750px" alt="Canvas with the option to create a notebook" >}}
 
 ## Notebooks and incidents
 
-Many investigations never become incidents, but the pre-escalation work often includes important signals, and notebooks let you keep that.
-Additionally, they provide context you can return to the next time something similar happens.
-Each investigation in a notebook makes the next one faster.
+Notebooks can provide context for incident response, even if you started investigating before declaring an incident.
+With [Grafana IRM](https://grafana.com/docs/grafana-cloud/observe-and-act/respond-to-incidents/), you can attach a notebook to an existing incident or declare an incident based on your notebook.
 
-You can attach a notebook to an existing incident or declare an incident based on your notebook.
+Both actions add a link to the notebook as incident context, not a copy of its contents or a snapshot of its data.
+Users opening the link need permission to view the notebook and query its data sources.
+
+{{< admonition type="note">}}
+To connect notebooks and incidents, you need to have Grafana IRM enabled for your instance with its notebook integration available, and the appropriate permissions for both features.
+If the integration isn't available, the notebook menu doesn't include the **IRM** option.
+{{< /admonition >}}
 
 ### Attach notebooks to incidents
 
@@ -220,11 +227,13 @@ To attach a notebook to an existing incident, follow these steps:
 
 1. Navigate to **Notebooks**.
 1. Open the notebook you want to attach.
-1. Click the menu in the toolbar.
+1. Click the **More actions** menu in the toolbar.
 1. Select **IRM > Attach to incident**.
 1. In the dialog box that opens, select the incident to which you want to attach the notebook.
-1. (Optional) Add a caption to provide context.
+1. (Optional) Update a caption to provide context. By default, it's the notebook title.
 1. Click **Attach**.
+
+The notebook link is added to the incident's context.
 
 ### Declare incidents from notebooks
 
@@ -232,15 +241,17 @@ To declare an incident from a notebook, follow these steps:
 
 1. Navigate to **Notebooks**.
 1. Open the notebook you want to use.
-1. Click the menu in the toolbar.
+1. Click the **More actions** menu in the toolbar.
 1. Select **IRM > Declare incident**.
-1. In the dialog box that opens, complete the incident form.
+1. In the dialog box that opens, review the incident title and update it if needed. By default, it's the notebook title.
+1. Complete the fields required by your organization.
 1. Click **Declare incident**.
 
    This opens the incident you've just created in **IRM > Incidents**.
 
 1. Add any other needed context to the incident.
 
+The notebook link is added to the incident's context.
 
-
-
+Declaring an incident can trigger your configured incident response actions, such as notifying responders.
+For details about incident fields and response workflows, refer to [Declare an incident in Grafana IRM](https://grafana.com/docs/grafana-cloud/observe-and-act/respond-to-incidents/manage-incidents/declare-incident/).
