@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -609,6 +610,19 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 			require.Equal(t, tc.skipped, target.status.status(tc.source).Skipped)
 		})
 	}
+}
+
+// An HTTP operator gets only a v3 client, from baasbridge, and no connection.
+func TestPluginManifestsTargetHTTPClient(t *testing.T) {
+	target := &pluginManifestsTarget{}
+	clientV2, clientV3, err := target.pluginClients("http://127.0.0.1:8080", "grafana-appsdktest-app", &app.ManifestData{})
+	require.NoError(t, err)
+	require.Nil(t, clientV2)
+	require.True(t, baasbridge.IsClient(clientV3)) //nolint:staticcheck
+	require.Empty(t, target.connections)
+
+	_, _, err = target.pluginClients("http://", "grafana-appsdktest-app", nil)
+	require.ErrorContains(t, err, "absolute http or https URL")
 }
 
 func TestForwardRouteCredentials(t *testing.T) {

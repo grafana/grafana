@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -73,7 +74,10 @@ func newHTTPTestOperator(t *testing.T) (*httptest.Server, *[]string) {
 
 	mux := http.NewServeMux()
 	handler.Register(mux)
-	mux.HandleFunc("GET /apis/"+httpTestGroup+"/v1/namespaces/default/widgets/example/render", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /apis/"+httpTestGroup+"/v1/namespaces/default/widgets/{name}/render", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Seen-Name", r.PathValue("name"))
+		w.Header().Set("X-Seen-Extra", r.Header.Get("X-Remote-Extra-Scopes"))
+		w.Header().Set("X-Seen-Upgrade", r.Header.Get("Upgrade"))
 		w.Header().Set("X-Seen-Token", r.Header.Get("X-Access-Token"))
 		w.Header().Set("X-Seen-Id", r.Header.Get("X-Grafana-Id"))
 		w.Header().Set("X-Seen-Query", r.URL.RawQuery)
@@ -220,8 +224,10 @@ func TestClientCallRoute(t *testing.T) {
 	req.SetMethod(http.MethodGet)
 	req.SetUrl("/apis/" + httpTestGroup + "/v1/namespaces/default/widgets/example/render?pretty=true")
 	req.SetHeaders(map[string]*pluginv3.StringList{
-		"X-Remote-User":  pluginv3.StringList_builder{Values: []string{"admin"}}.Build(),
-		"X-Access-Token": pluginv3.StringList_builder{Values: []string{"Bearer spoofed"}}.Build(),
+		"X-Remote-User":         pluginv3.StringList_builder{Values: []string{"admin"}}.Build(),
+		"X-Access-Token":        pluginv3.StringList_builder{Values: []string{"Bearer spoofed"}}.Build(),
+		"X-Remote-Extra-Scopes": pluginv3.StringList_builder{Values: []string{"admin"}}.Build(),
+		"Upgrade":               pluginv3.StringList_builder{Values: []string{"websocket"}}.Build(),
 	})
 
 	stream, err := newHTTPTestClient(t, server.URL).CallRoute(t.Context(), req)
@@ -233,6 +239,9 @@ func TestClientCallRoute(t *testing.T) {
 	require.Equal(t, []string{"caller-id"}, first.GetHeaders()["X-Seen-Id"].GetValues())
 	require.Equal(t, []string{"pretty=true"}, first.GetHeaders()["X-Seen-Query"].GetValues())
 	require.Equal(t, []string{""}, first.GetHeaders()["X-Seen-Remote-User"].GetValues(), "credential headers are dropped")
+	require.Equal(t, []string{""}, first.GetHeaders()["X-Seen-Extra"].GetValues(), "credential header prefixes are dropped")
+	require.Equal(t, []string{""}, first.GetHeaders()["X-Seen-Upgrade"].GetValues(), "hop-by-hop headers are dropped")
+	require.Equal(t, []string{"example"}, first.GetHeaders()["X-Seen-Name"].GetValues())
 	body := first.GetBody()
 	for {
 		next, err := stream.Recv()
@@ -259,6 +268,24 @@ func TestClientUnavailable(t *testing.T) {
 	req.SetUrl("/apis/" + httpTestGroup + "/v1/namespaces/default/widgets/example/render")
 	_, err = client.CallRoute(t.Context(), req)
 	require.Equal(t, codes.Unavailable, status.Code(err))
+}
+
+// The operator sees the path as the caller sent it, escapes included.
+func TestClientCallRouteEscapedPath(t *testing.T) {
+	server, _ := newHTTPTestOperator(t)
+	for _, name := range []string{"a%2Fb", "100%25", "a%20b"} {
+		req := &pluginv3.CallRouteRequest{}
+		req.SetMethod(http.MethodGet)
+		req.SetUrl("/apis/" + httpTestGroup + "/v1/namespaces/default/widgets/" + name + "/render")
+		stream, err := newHTTPTestClient(t, server.URL).CallRoute(t.Context(), req)
+		require.NoError(t, err, name)
+		first, err := stream.Recv()
+		require.NoError(t, err, name)
+		require.Equal(t, int32(http.StatusAccepted), first.GetCode(), name)
+		unescaped, err := url.PathUnescape(name)
+		require.NoError(t, err)
+		require.Equal(t, []string{unescaped}, first.GetHeaders()["X-Seen-Name"].GetValues(), name)
+	}
 }
 
 func TestClientRouteCredentialsError(t *testing.T) {

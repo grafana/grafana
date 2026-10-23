@@ -374,7 +374,9 @@ func (c *client) CallRoute(ctx context.Context, in *pluginv3.CallRouteRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "parsing route URL: %v", err)
 	}
-	target := c.base.JoinPath(u.Path)
+	// JoinPath takes escaped elements: the unescaped path would lose an escaped
+	// "/" in a name, and fail to join one with an escaped "%".
+	target := c.base.JoinPath(u.EscapedPath())
 	target.RawQuery = u.RawQuery
 
 	req, err := http.NewRequestWithContext(ctx, in.GetMethod(), target.String(), bytes.NewReader(in.GetBody()))
@@ -386,9 +388,8 @@ func (c *client) CallRoute(ctx context.Context, in *pluginv3.CallRouteRequest) (
 			req.Header.Add(key, value)
 		}
 	}
-	for _, name := range credentialHeaders {
-		req.Header.Del(name)
-	}
+	deleteHeaders(req.Header, hopByHopHeaders)
+	deleteHeaders(req.Header, credentialHeaders)
 	if err := c.setCredentials(ctx, req.Header); err != nil {
 		return nil, err
 	}
@@ -481,12 +482,35 @@ func statusResult(s metav1.Status) *pluginv3.StatusResult {
 	return out
 }
 
-// credentialHeaders assert who the request acts as. Only
-// Options.RouteCredentials may set them; X-Remote- headers would let a caller assert it themselves.
-var credentialHeaders = []string{"Authorization", "Cookie", "X-Access-Token", "X-Grafana-Id", "X-Id-Token", "X-Remote-User", "X-Remote-Group"}
+// credentialHeaders, or header prefixes (ending in "-"), assert who a route
+// request acts as. Only Options.RouteCredentials may set them; the others would
+// let a caller assert an identity themselves, as a trusted proxy does.
+var credentialHeaders = []string{
+	"Authorization", "Proxy-Authorization", "Cookie",
+	"X-Access-Token", "X-Grafana-Id", "X-Id-Token",
+	"X-Remote-User", "X-Remote-Group", "X-Remote-Extra-", "X-Webauth-", "Impersonate-",
+}
 
-// hopByHopHeaders apply to one HTTP connection, so they are not passed on.
+// hopByHopHeaders apply to one HTTP connection, so they are not passed on in
+// either direction. Upgrade in particular: the stream cannot carry one.
 var hopByHopHeaders = []string{"Connection", "Keep-Alive", "Proxy-Connection", "Te", "Trailer", "Transfer-Encoding", "Upgrade"}
+
+// deleteHeaders removes each named header, and every header starting with a
+// name that ends in "-".
+func deleteHeaders(header http.Header, names []string) {
+	for _, name := range names {
+		if !strings.HasSuffix(name, "-") {
+			header.Del(name)
+			continue
+		}
+		prefix := http.CanonicalHeaderKey(name)
+		for key := range header {
+			if strings.HasPrefix(http.CanonicalHeaderKey(key), prefix) {
+				delete(header, key)
+			}
+		}
+	}
+}
 
 // httpRouteStream streams an HTTP response as v3 route responses: the first
 // carries the status code and headers, and each carries a chunk of the body.
@@ -522,9 +546,7 @@ func (s *httpRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
 		s.sentHeader = true
 		out.SetCode(int32(s.resp.StatusCode))
 		header := s.resp.Header.Clone()
-		for _, name := range hopByHopHeaders {
-			header.Del(name)
-		}
+		deleteHeaders(header, hopByHopHeaders)
 		headers := make(map[string]*pluginv3.StringList, len(header))
 		for key, values := range header {
 			headers[key] = pluginv3.StringList_builder{Values: values}.Build()
