@@ -22,9 +22,11 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 )
 
 // Key prefixes for the backends of each plugin manifests source.
@@ -42,6 +44,9 @@ type pluginManifestsTarget struct {
 	patterns   []*regexp.Regexp
 	grpcConfig pluginGRPCConfig
 	deps       PluginDependencies
+	// httpTransport serves the baasbridge clients of deployments whose host is
+	// an HTTP URL.
+	httpTransport http.RoundTripper
 
 	cooldown *cooldown
 	status   pollStatus
@@ -103,6 +108,7 @@ func newPluginManifestsTarget(
 		client:          client,
 		patterns:        patterns,
 		grpcConfig:      grpcConfig,
+		httpTransport:   baasbridge.NewTransport(grpcConfig.TLS, backendResponseHeaderTimeout), //nolint:staticcheck
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
 		requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, source),
@@ -197,7 +203,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 				connectionID = manifest.Group
 			}
 			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-				return t.pluginClients(entry.Host, connectionID)
+				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
 			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
@@ -211,7 +217,9 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			backend.info = entry.Definition.JSONData.Info
 			// Without a host, the deployment has no backend to call.
 			backend.hasBackend = entry.Host != ""
-			if host := entry.Host; host != "" {
+			// An HTTP operator is reached through baasbridge, with no gRPC
+			// connection to hold.
+			if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
 				backend.acquire = func() (func(), error) { return t.acquireConnection(host, connectionID) }
 			}
 
@@ -244,12 +252,32 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	}
 }
 
-func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Client, appclientv3.Client, error) {
+// pluginClients returns the clients for a deployment's host. A host that is an
+// http or https URL is an operator written for apiextensions-apiserver, which
+// serves only the v3 calls, over HTTP; manifest declares its admission hooks.
+func (t *pluginManifestsTarget) pluginClients(host, pluginID string, manifest *app.ManifestData) (plugins.Client, appclientv3.Client, error) {
 	if host == "" {
 		return nil, nil, nil // no client exists
 	}
 	t.connectionsMu.Lock()
 	defer t.connectionsMu.Unlock()
+	if t.closed {
+		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
+	}
+
+	// Temporarily support the BaaS HTTP style operators
+	if baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+		clientV3, err := baasbridge.NewClient(host, manifest, baasbridge.Options{ //nolint:staticcheck
+			HTTPClient:       &http.Client{Transport: t.httpTransport},
+			MaxResponseBytes: int64(t.grpcConfig.Message.MaxRecvSize),
+			RouteCredentials: forwardRouteCredentials,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		return nil, clientV3, nil
+	}
+
 	c, err := t.connectionLocked(pluginConnectionKey{host: host, pluginID: pluginID})
 	if err != nil {
 		return nil, nil, err
@@ -269,6 +297,27 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
 		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
 	}, clientV3, nil
+}
+
+// forwardRouteCredentials sends an HTTP operator's route the caller's identity
+// as apiextensions-apiserver's custom-route proxy does, with raw tokens: the ID
+// token always, and the access token, a bearer credential the operator could
+// replay, only when no declared check authorized the route, leaving the
+// operator to authorize it.
+func forwardRouteCredentials(ctx context.Context, header http.Header) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil
+	}
+	if token := requester.GetIDToken(); token != "" {
+		header.Set("X-Grafana-Id", token)
+	}
+	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
+		if token := requester.GetAccessToken(); token != "" {
+			header.Set("X-Access-Token", token)
+		}
+	}
+	return nil
 }
 
 // acquireConnection takes a reference to the connection for host and plugin,

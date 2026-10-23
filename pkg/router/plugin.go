@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
@@ -524,15 +525,21 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 // loadManifest serves a manifest's kinds and routes, which call the plugin
 // through its v3 client only.
 func (b *PluginBackend) loadManifest(cfg *setting.Cfg, opts pluginroute.Options, client appclientv3.Client) (*pluginroute.Handler, error) {
+	// A baasbridge client forwards the requester's own credentials, so an
+	// exchanged token would go unused.
+	bridged := baasbridge.IsClient(client) //nolint:staticcheck
 	if client != nil {
 		client = &breakerPluginClientV3{Client: client}
 	}
-	// Keep authentication outside the breaker: token exchange failures do not
-	// indicate whether the plugin is reachable.
-	client, err := v3.WithAuthentication(client, b.pluginID, []string{b.group.Name},
-		withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
-	if err != nil {
-		return nil, err
+	if !bridged {
+		// Keep authentication outside the breaker: token exchange failures do not
+		// indicate whether the plugin is reachable.
+		var err error
+		client, err = v3.WithAuthentication(client, b.pluginID, []string{b.group.Name},
+			withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
+		if err != nil {
+			return nil, err
+		}
 	}
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	opts.ClientV3 = client
