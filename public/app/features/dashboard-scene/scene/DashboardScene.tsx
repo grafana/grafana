@@ -324,10 +324,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._assistantWrites > 0 ? this._editSession?.assistantChanges : this._editSession?.manualChanges;
     // Only compare until the first actual change by each actor in this editing period. Outside edit
     // mode the comparison would be discarded, so skip the serialization.
-    const before = alreadyRecorded || !this.state.isEditing ? undefined : JSON.stringify(this.getSaveModel());
+    if (alreadyRecorded || !this.state.isEditing) {
+      perform();
+      return;
+    }
+    const before = this.serializeForChangeTracking();
     perform();
-    if (before !== undefined && before !== JSON.stringify(this.getSaveModel())) {
+    // Serialization fails while a batched action has elements detached; count the action as a change.
+    const after = before === null ? null : this.serializeForChangeTracking();
+    if (before === null || after === null || before !== after) {
       this.recordEditMutation();
+    }
+  }
+
+  private serializeForChangeTracking(): string | null {
+    try {
+      return JSON.stringify(this.getSaveModel());
+    } catch {
+      return null;
     }
   }
 
