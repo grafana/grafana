@@ -159,6 +159,7 @@ type ProvisioningAuthorizer struct {
 	clients               ResourceClients
 	folders               FolderAncestorFinder
 	folderMetadataEnabled bool
+	fallback              auth.AccessChecker
 }
 
 // NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
@@ -246,12 +247,16 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		}
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
+	var dir string
+	if parsed.Info != nil {
+		dir = safepath.Dir(parsed.Info.Path)
+	}
+	return a.checkResourceInFolder(ctx, parsed, authlib.CheckRequest{
 		Group:    parsed.GVR.Group,
 		Resource: parsed.GVR.Resource,
 		Name:     name,
 		Verb:     verb,
-	}, metaFolder)
+	}, metaFolder, dir)
 }
 
 // requiresAncestorAuthorization limits ancestor lookup to preview reads of
@@ -312,6 +317,9 @@ func (a *ProvisioningAuthorizer) AuthorizeResourcePreview(ctx context.Context, p
 			}
 		}
 	}
+	if !found && parsed.Existing == nil && a.fallback != nil {
+		return a.fallback.Check(ctx, req, ancestor)
+	}
 	return a.access.Check(ctx, req, ancestor)
 }
 
@@ -366,17 +374,17 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 //
 // Returns an error if the file does not exist, is unparseable, or contains an
 // unsupported resource type.
-func (a *ProvisioningAuthorizer) authorizeFileVerb(ctx context.Context, path, folderID, verb string) error {
+func (a *ProvisioningAuthorizer) authorizeFileVerb(ctx context.Context, path, dir, folderID, verb string) error {
 	gvr, err := a.resolveFileGVR(ctx, path)
 	if err != nil {
 		return err
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
+	return a.checkInFolder(ctx, authlib.CheckRequest{
 		Group:    gvr.Group,
 		Resource: gvr.Resource,
 		Verb:     verb,
-	}, folderID)
+	}, folderID, dir)
 }
 
 // authorizeFolder is a private helper that checks if the user has permission to perform
@@ -398,10 +406,12 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb
 
 	// Determine the folder context based on the verb
 	var folderContext string
+	contextDir := path
 	switch verb {
 	case utils.VerbDelete:
 		// For delete, check in the parent folder context
 		parentPath := safepath.Dir(path)
+		contextDir = parentPath
 		if parentPath == "" {
 			// Root-level folder
 			folderContext = ""
@@ -416,12 +426,12 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb
 		folderContext = folderID
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
+	return a.checkInFolder(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
 		Resource: FolderResource.Resource,
 		Name:     folderID,
 		Verb:     verb,
-	}, folderContext)
+	}, folderContext, contextDir)
 }
 
 // AuthorizeCreateFolder checks if the user has permission to create a folder at the
@@ -452,12 +462,12 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 	parentPath := safepath.Dir(path)
 	if parentPath == "" {
 		// Creating at root - check root folder permission
-		return a.access.Check(ctx, authlib.CheckRequest{
+		return a.checkInFolder(ctx, authlib.CheckRequest{
 			Group:    FolderResource.Group,
 			Resource: FolderResource.Resource,
 			Name:     "",
 			Verb:     utils.VerbCreate,
-		}, RootFolder(a.repo))
+		}, RootFolder(a.repo), "")
 	}
 
 	// Check create permission on the parent folder
@@ -506,7 +516,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path
 		}
 	}
 
-	return a.authorizeFileVerb(ctx, path, folderID, utils.VerbDelete)
+	return a.authorizeFileVerb(ctx, path, parentPath, folderID, utils.VerbDelete)
 }
 
 // authorizeMoveFolder checks if the user has permission to move a folder from
@@ -541,12 +551,12 @@ func (a *ProvisioningAuthorizer) authorizeMoveFolder(ctx context.Context, origin
 	parentPath := safepath.Dir(targetPath)
 	if parentPath == "" {
 		// Moving to root - check root folder permission
-		return a.access.Check(ctx, authlib.CheckRequest{
+		return a.checkInFolder(ctx, authlib.CheckRequest{
 			Group:    FolderResource.Group,
 			Resource: FolderResource.Resource,
 			Name:     "",
 			Verb:     utils.VerbCreate,
-		}, RootFolder(a.repo))
+		}, RootFolder(a.repo), "")
 	}
 
 	// Check create permission on the target parent folder
@@ -577,7 +587,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		}
 	}
 
-	if err := a.authorizeFileVerb(ctx, sourcePath, sourceFolderID, utils.VerbUpdate); err != nil {
+	if err := a.authorizeFileVerb(ctx, sourcePath, sourceParent, sourceFolderID, utils.VerbUpdate); err != nil {
 		return err
 	}
 
@@ -593,7 +603,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		}
 	}
 
-	return a.authorizeFileVerb(ctx, sourcePath, targetFolderID, utils.VerbCreate)
+	return a.authorizeFileVerb(ctx, sourcePath, targetParent, targetFolderID, utils.VerbCreate)
 }
 
 // AuthorizeReadAllSupported checks if the current user has read (get) permission
@@ -682,10 +692,10 @@ func (a *ProvisioningAuthorizer) AuthorizeReadRawFile(ctx context.Context, path 
 		folderID = id
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
+	return a.checkInFolder(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
 		Resource: FolderResource.Resource,
 		Name:     folderID,
 		Verb:     utils.VerbGet,
-	}, folderID)
+	}, folderID, parentPath)
 }
