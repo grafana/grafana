@@ -32,6 +32,7 @@ import {
   isPreviewingPendingChanges,
   loadPendingChangePreview,
 } from '../lifecycle/pendingChangePreview';
+import { applyDefaultSavedViewToUrl } from '../savedviews/loadSavedViews';
 import { consumeDashboardModeAfterSave, setDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
@@ -107,6 +108,11 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
       isPlaying: false,
     },
   },
+}));
+
+jest.mock('../savedviews/loadSavedViews', () => ({
+  applyDefaultSavedViewToUrl: jest.fn(),
+  loadSavedViews: jest.fn(),
 }));
 
 const mockUserStorageGetItem = jest.fn();
@@ -262,6 +268,47 @@ beforeEach(() => {
 });
 
 describe('DashboardScenePageStateManager v1', () => {
+  describe('default saved view', () => {
+    const load = () =>
+      new DashboardScenePageStateManager({}).loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.savedDashboardViews': true });
+      playlistSrv.state.isPlaying = false;
+      locationService.push('/d/fake-uid');
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-uid' }, meta: {} });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+      playlistSrv.state.isPlaying = false;
+      jest.mocked(applyDefaultSavedViewToUrl).mockReset();
+    });
+
+    it('writes the viewer default on a normal load', async () => {
+      await load();
+
+      expect(applyDefaultSavedViewToUrl).toHaveBeenCalled();
+    });
+
+    it('skips the viewer default while a playlist is playing', async () => {
+      playlistSrv.state.isPlaying = true;
+
+      await load();
+
+      expect(applyDefaultSavedViewToUrl).not.toHaveBeenCalled();
+    });
+
+    it('does not mount the scene if the viewer navigated away while it was loading', async () => {
+      jest.mocked(applyDefaultSavedViewToUrl).mockImplementation(async () => locationService.push('/d/other-uid'));
+      const loader = new DashboardScenePageStateManager({});
+
+      await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+      expect(loader.state.dashboard).toBeUndefined();
+    });
+  });
+
   describe('dashboard mode after save navigation', () => {
     afterEach(() => {
       setTestFlags({});
