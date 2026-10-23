@@ -125,6 +125,7 @@ const (
 	maxWebhooks     = 100  // Maximum number of webhooks allowed per repository
 	maxPRFiles      = 1000 // Maximum number of files allowed in a pull request
 	maxRepositories = 1000 // Maximum number of repositories returned by a listing
+	maxPRComments   = 1000 // Maximum number of pull request comments returned by a listing
 )
 
 func (r *githubClient) GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error) {
@@ -577,6 +578,43 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int,
 	}
 
 	if _, _, err := r.gh.Issues.CreateComment(ctx, r.owner, r.repo, number, comment); err != nil {
+		return translateGitHubError(err)
+	}
+
+	return nil
+}
+
+func (r *githubClient) ListPullRequestComments(ctx context.Context, number int) ([]repo.PullRequestComment, error) {
+	opts := &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	var result []repo.PullRequestComment
+	for {
+		comments, resp, err := r.gh.Issues.ListComments(ctx, r.owner, r.repo, number, opts)
+		if err != nil {
+			return nil, translateGitHubError(err)
+		}
+
+		for _, c := range comments {
+			result = append(result, repo.PullRequestComment{ID: c.GetID(), Body: c.GetBody()})
+		}
+
+		if len(result) >= maxPRComments {
+			return result[:maxPRComments], nil
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return result, nil
+}
+
+func (r *githubClient) EditPullRequestComment(ctx context.Context, commentID int64, body string) error {
+	if _, _, err := r.gh.Issues.EditComment(ctx, r.owner, r.repo, commentID, &github.IssueComment{Body: &body}); err != nil {
 		return translateGitHubError(err)
 	}
 

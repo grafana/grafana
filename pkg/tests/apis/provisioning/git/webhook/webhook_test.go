@@ -86,6 +86,7 @@ func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendO
 		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, encode([]*github.Hook{hook})),
 		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, encode(hook)),
 		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepoByHookId, encode(hook)),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposIssuesCommentsByOwnerByRepoByIssueNumber, encode([]*github.IssueComment{})),
 		ghmock.WithRequestMatchHandler(
 			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

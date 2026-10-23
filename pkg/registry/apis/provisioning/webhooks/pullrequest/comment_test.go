@@ -19,11 +19,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func TestCommenter_UnsupportedFork(t *testing.T) {
+func newPullRequestRepoWithoutComments(t *testing.T) *repository.MockPullRequestRepo {
 	repo := repository.NewMockPullRequestRepo(t)
+	repo.On("ListPullRequestComments", mock.Anything, mock.Anything).Return(nil, nil)
+	return repo
+}
+
+func TestCommenter_UnsupportedFork(t *testing.T) {
+	repo := newPullRequestRepoWithoutComments(t)
 	expected, err := os.ReadFile("testdata/unsupported-fork.md")
 	require.NoError(t, err)
-	repo.On("CommentPullRequest", mock.Anything, 123, string(expected)).Return(nil).Once()
+	repo.On("CommentPullRequest", mock.Anything, 123, previewCommentMarker+"\n\n"+string(expected)).Return(nil).Once()
 
 	repo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "org-2"},
@@ -39,7 +45,7 @@ func TestCommenter_UnsupportedFork(t *testing.T) {
 }
 
 func TestGenerateComment_EscapesTitle(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepoWithoutComments(t)
 
 	var captured string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -71,12 +77,42 @@ func TestGenerateComment_EscapesTitle(t *testing.T) {
 }
 
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepoWithoutComments(t)
 	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
 
 	commenter := NewCommenter(false, URLProvider{})
 	err := commenter.Comment(context.Background(), repo, 1, changeInfo{})
 	require.Error(t, err)
+}
+
+func TestCommenter_Comment_EditsNewestPreviewComment(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+	repo.On("ListPullRequestComments", context.Background(), 1).Return([]repository.PullRequestComment{
+		{ID: 9, Body: "> " + previewCommentMarker},
+		{ID: 3, Body: previewCommentMarker + "\n\nold"},
+		{ID: 7, Body: previewCommentMarker + "\n\nnewer"},
+		{ID: 8, Body: "unrelated"},
+	}, nil)
+	repo.On("EditPullRequestComment", context.Background(), 1, int64(7), mock.MatchedBy(func(comment string) bool {
+		return strings.HasPrefix(comment, previewCommentMarker+"\n\n")
+	})).Return(nil).Once()
+
+	require.NoError(t, NewCommenter(false, URLProvider{}).Comment(context.Background(), repo, 1, changeInfo{}))
+}
+
+func TestCommenter_Comment_FailedToEdit(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+	repo.On("ListPullRequestComments", context.Background(), 1).Return([]repository.PullRequestComment{{ID: 7, Body: previewCommentMarker}}, nil)
+	repo.On("EditPullRequestComment", context.Background(), 1, int64(7), mock.Anything).Return(errors.New("failed"))
+
+	require.ErrorContains(t, NewCommenter(false, URLProvider{}).Comment(context.Background(), repo, 1, changeInfo{}), "edit pull request comment")
+}
+
+func TestCommenter_Comment_FailedToListComments(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+	repo.On("ListPullRequestComments", context.Background(), 1).Return(nil, errors.New("failed"))
+
+	require.ErrorContains(t, NewCommenter(false, URLProvider{}).Comment(context.Background(), repo, 1, changeInfo{}), "list pull request comments")
 }
 
 func TestGenerateComment(t *testing.T) {
@@ -377,7 +413,7 @@ func TestGenerateComment(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
-			repo := repository.NewMockPullRequestRepo(t)
+			repo := newPullRequestRepoWithoutComments(t)
 
 			// expectation on the comment
 			fpath := filepath.Join("testdata", strings.ReplaceAll(tc.Name, " ", "-")+".md")
@@ -385,7 +421,7 @@ func TestGenerateComment(t *testing.T) {
 			// nolint:gosec
 			expect, err := os.ReadFile(fpath)
 			require.NoError(t, err)
-			repo.On("CommentPullRequest", context.Background(), 1, string(expect)).Return(nil)
+			repo.On("CommentPullRequest", context.Background(), 1, previewCommentMarker+"\n\n"+string(expect)).Return(nil)
 
 			commenter := NewCommenter(false, URLProvider{})
 			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
@@ -395,7 +431,7 @@ func TestGenerateComment(t *testing.T) {
 }
 
 func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepoWithoutComments(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -440,7 +476,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 // The action label must fall back to the FileAction ("deleted") instead of
 // rendering a blank Action column.
 func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepoWithoutComments(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -487,7 +523,7 @@ func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
 }
 
 func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepoWithoutComments(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -516,7 +552,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 }
 
 func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepoWithoutComments(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -560,7 +596,7 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 
 func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
-		repo := repository.NewMockPullRequestRepo(t)
+		repo := newPullRequestRepoWithoutComments(t)
 		info := changeInfo{
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
@@ -596,7 +632,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	})
 
 	t.Run("note does not appear when showImageRendererNote is false", func(t *testing.T) {
-		repo := repository.NewMockPullRequestRepo(t)
+		repo := newPullRequestRepoWithoutComments(t)
 		info := changeInfo{
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
