@@ -7,6 +7,7 @@ package baasbridge
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -57,8 +58,8 @@ var _ appclientv3.Client = (*client)(nil)
 
 // client calls an operator written for apiextensions-apiserver
 // through the plugin v3 interface. Such an operator serves the Kubernetes
-// webhook endpoints (/validate, /mutate and /convert) and its custom routes
-// under their /apis paths over HTTP, rather than the v3 gRPC services.
+// webhooks (by default at /validate, /mutate and /convert) and its custom
+// routes under their /apis paths over HTTP, rather than the v3 gRPC services.
 //
 // It is a transition path: the operator is expected to move to gRPC.
 type client struct {
@@ -69,7 +70,8 @@ type client struct {
 	// kinds holds the admission hooks the manifest declares for each kind. One
 	// v3 review covers both hooks, but the operator serves each at its own
 	// endpoint, and fails a review for a kind it has no hook for.
-	kinds map[schema.GroupVersionKind]httpAdmissionKind
+	kinds    map[schema.GroupVersionKind]httpAdmissionKind
+	webhooks app.ManifestOperatorWebhookProperties
 }
 
 type httpAdmissionKind struct {
@@ -113,7 +115,7 @@ type Options struct {
 // them: one v3 review asks for both hooks, but the operator serves each at its
 // own endpoint, and answers a kind without that hook with a plain-text 500 that
 // is indistinguishable from a real failure, short of matching app-sdk's error
-// text. Conversion and routes do not use it.
+// text. Its operator.webhooks names the webhook paths. Routes do not use it.
 //
 // Deprecated: see the package documentation.
 func NewClient(host string, manifest *app.ManifestData, opts Options) (appclientv3.Client, error) {
@@ -142,7 +144,23 @@ func NewClient(host string, manifest *app.ManifestData, opts Options) (appclient
 		maxResponseBytes: maxResponseBytes,
 		credentials:      opts.RouteCredentials,
 		kinds:            httpAdmissionKinds(manifest),
+		webhooks:         webhookPaths(manifest),
 	}, nil
+}
+
+// webhookPaths returns the paths the manifest's operator serves its webhooks
+// at. A missing or empty path is app-sdk's default, which is also what the
+// AppManifest schema fills in for a missing one.
+func webhookPaths(manifest *app.ManifestData) app.ManifestOperatorWebhookProperties {
+	var paths app.ManifestOperatorWebhookProperties
+	if manifest != nil && manifest.Operator != nil && manifest.Operator.Webhooks != nil {
+		paths = *manifest.Operator.Webhooks
+	}
+	return app.ManifestOperatorWebhookProperties{
+		ConversionPath: cmp.Or(paths.ConversionPath, "/convert"),
+		ValidationPath: cmp.Or(paths.ValidationPath, "/validate"),
+		MutationPath:   cmp.Or(paths.MutationPath, "/mutate"),
+	}
 }
 
 // IsClient reports whether client was returned by NewClient.
@@ -256,7 +274,7 @@ func (c *client) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionRevi
 	object := in.GetObjectBytes()
 	var warnings []string
 	if kind.mutation[in.GetOperation()] {
-		result, err := c.admissionReview(ctx, "mutate", review, object)
+		result, err := c.admissionReview(ctx, c.webhooks.MutationPath, review, object)
 		if err != nil {
 			return nil, err
 		}
@@ -281,7 +299,7 @@ func (c *client) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionRevi
 		}
 	}
 	if kind.validation[in.GetOperation()] {
-		result, err := c.admissionReview(ctx, "validate", review, object)
+		result, err := c.admissionReview(ctx, c.webhooks.ValidationPath, review, object)
 		if err != nil {
 			return nil, err
 		}
@@ -401,7 +419,7 @@ func (c *client) ConvertObjects(ctx context.Context, in *pluginv3.ConvertObjects
 		},
 	}
 	out := &apiextensionsv1.ConversionReview{}
-	if err := c.post(ctx, "convert", review, out); err != nil {
+	if err := c.post(ctx, c.webhooks.ConversionPath, review, out); err != nil {
 		return nil, err
 	}
 	if out.Response == nil {
