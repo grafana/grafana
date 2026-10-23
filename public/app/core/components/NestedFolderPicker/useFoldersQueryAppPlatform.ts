@@ -2,6 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { t } from '@grafana/i18n';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -14,23 +15,20 @@ import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
 import { type UseFoldersQueryProps } from './useFoldersQuery';
-import { getRootFolderItem } from './utils';
+import { getRootFolderItem, toReadOnlyTreeItem } from './utils';
 
-type GetFolderChildrenQuery = ReturnType<
-  ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
->;
+type FolderChildrenSelector = ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchFolderChildrenPage.select>;
+type GetFolderChildrenQuery = ReturnType<FolderChildrenSelector>;
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
 
 const rootFolderToken = 'general';
 const sharedWithMeFolderToken = 'sharedwithme';
-const collator = new Intl.Collator();
 
 /**
  * Returns a loaded folder hierarchy as a flat list and a function to load folders.
- * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
- * does not have pagination at the moment.
+ * This version uses the app platform search API, and loads each folder's children a page at a time.
  */
 export function useFoldersQueryAppPlatform({
   isBrowsing,
@@ -39,6 +37,7 @@ export function useFoldersQueryAppPlatform({
   rootFolderUID,
   rootFolderItem,
   permission,
+  showReadOnly,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
@@ -52,9 +51,7 @@ export function useFoldersQueryAppPlatform({
   }
 
   // Keep a list of selectors for dynamic state selection
-  const [selectors, setSelectors] = useState<
-    Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>>
-  >([]);
+  const [selectors, setSelectors] = useState<FolderChildrenSelector[]>([]);
 
   // This is an aggregated dynamic selector of all the selectors for all the request issued while loading the folder
   // tree and returns the whole tree that was loaded so far.
@@ -64,7 +61,8 @@ export function useFoldersQueryAppPlatform({
       let isLoading = false;
       let error: unknown = undefined;
 
-      const responseByParent: Record<string, GetFolderChildrenQuery> = {};
+      // Keyed by page offset, so a page that is requested again replaces itself instead of being added twice
+      const pagesByOffsetByParent: Record<string, Record<number, GetFolderChildrenQuery>> = {};
 
       for (const response of responses) {
         if (response.status === QueryStatus.pending) {
@@ -77,45 +75,58 @@ export function useFoldersQueryAppPlatform({
 
         const parentName = response.originalArgs?.folder;
         if (parentName) {
-          responseByParent[parentName] = response;
+          const offset = response.originalArgs?.offset ?? 0;
+          pagesByOffsetByParent[parentName] = { ...pagesByOffsetByParent[parentName], [offset]: response };
         }
+      }
+
+      const pagesByParent: Record<string, GetFolderChildrenQuery[]> = {};
+      for (const [parentName, pagesByOffset] of Object.entries(pagesByOffsetByParent)) {
+        pagesByParent[parentName] = Object.entries(pagesByOffset)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([, page]) => page);
       }
 
       return {
         isLoading,
         error,
-        responseByParent,
+        pagesByParent,
       };
     });
   }, [selectors]);
 
   const state = useSelector(listAllFoldersSelector);
 
-  // Loads folders for the given parent UID
+  // Loads the next page of folders for the given parent UID
   const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
       const finalParentUid = parentUid ?? rootFolderToken;
-      const response = state.responseByParent[finalParentUid];
-      const isLoading = response?.status === QueryStatus.pending;
+      const pages = state.pagesByParent[finalParentUid] ?? [];
 
-      // If already loading, don't request again
-      if (isLoading) {
+      // If already loading, or every page has loaded, don't request again
+      if (pages.some((page) => page.status === QueryStatus.pending) || isComplete(pages)) {
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder', permission } as const;
+      const args = {
+        folder: finalParentUid,
+        limit: PAGE_SIZE,
+        offset: pages.filter((page) => page.data).length * PAGE_SIZE,
+        permission,
+        markReadOnly: showReadOnly,
+      };
 
       // Make a request
-      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchFolderChildrenPage.initiate(args));
 
       // Add selector for the response to the list so we can then have an aggregated selector for all the folders
-      const selector = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args);
+      const selector = dashboardAPIv0alpha1.endpoints.searchFolderChildrenPage.select(args);
       setSelectors((selectors) => selectors.concat(selector));
 
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch, permission]
+    [state, dispatch, permission, showReadOnly]
   );
 
   // Unsubscribe from all requests when the component is unmounted
@@ -135,12 +146,12 @@ export function useFoldersQueryAppPlatform({
     }
 
     function createFlatList(
-      parentUid: string | undefined,
-      response: GetFolderChildrenQuery | undefined,
+      parentUid: string,
+      pages: GetFolderChildrenQuery[],
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
-      let folders = response?.data?.hits ? [...response.data.hits] : [];
-      folders.sort((a, b) => collator.compare(a.title, b.title));
+      // Pages keep the server's title order, so each new page only appends to the rows already shown
+      let folders: DashboardHit[] = pages.flatMap((page) => page.data?.hits ?? []);
 
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
       // This is backed by the same search endpoint, using `folder=sharedwithme`.
@@ -152,7 +163,7 @@ export function useFoldersQueryAppPlatform({
       const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
-        const flatItem: DashboardsTreeItem = {
+        const treeItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
           disabled: item.name === sharedWithMeFolderToken,
@@ -168,15 +179,18 @@ export function useFoldersQueryAppPlatform({
             parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
           },
         };
+        // A folder the server didn't mark as creatable is read only, so it's never picked by mistake
+        const readOnly = showReadOnly && name !== sharedWithMeFolderToken && item.canCreate !== true;
+        const flatItem = readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
 
-        const childResponse = folderIsOpen && state.responseByParent[name];
-        if (childResponse) {
+        const childPages = folderIsOpen ? state.pagesByParent[name] : undefined;
+        if (childPages?.length) {
           // If we finished loading and there are no children add folder to empty folders list so we don't show
           // the caret next to the folder anymore
-          if (isEmptyResponse(childResponse)) {
+          if (isEmptyResponse(childPages[0])) {
             addEmptyFolder(name);
           }
-          const childFlatItems = createFlatList(name, childResponse, level + 1);
+          const childFlatItems = createFlatList(name, childPages, level + 1);
           return [flatItem, ...childFlatItems];
         }
 
@@ -185,20 +199,20 @@ export function useFoldersQueryAppPlatform({
 
       // We could return early but we are adding the "shared with me" folder statically, so even if response is empty
       // there could be a folder to process
-      if (!response) {
-        // The pagination placeholders are what actually triggers the call to the next page. So if there is no response,
-        // meaning to request for some children, we add these placeholders, and they will trigger the load.
+      if (!isComplete(pages) && !pages.some((page) => page.status === QueryStatus.rejected)) {
+        // The pagination placeholders are what actually triggers the call to the next page, so while there are more
+        // children to load we add these placeholders, and they will trigger the load.
         list.push(...getPaginationPlaceholders(PAGE_SIZE, parentUid, level));
       }
       return list;
     }
 
     const startingToken = rootFolderUID ?? rootFolderToken;
-    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
+    const rootFlatTree = createFlatList(startingToken, state.pagesByParent[startingToken] ?? [], 1);
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, showReadOnly]);
 
   return {
     emptyFolders,
@@ -207,6 +221,12 @@ export function useFoldersQueryAppPlatform({
     error: state.error ? new Error(getMessageFromError(state.error)) : undefined,
     requestNextPage,
   };
+}
+
+// A short page is the last one
+function isComplete(pages: GetFolderChildrenQuery[]) {
+  const lastPage = pages.at(-1);
+  return Boolean(lastPage?.data && lastPage.data.hits.length < PAGE_SIZE);
 }
 
 function makeSharedWithMeFolder() {

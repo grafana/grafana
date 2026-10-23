@@ -7,6 +7,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagFoldersAppPlatformAPI, useFlagGrafanaFolderPickerFolderEditAccess } from '@grafana/runtime/internal';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -27,7 +28,7 @@ import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
-import { getRootFolderItem } from './utils';
+import { getRootFolderItem, toReadOnlyTreeItem } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -71,15 +72,28 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
+type SearchResults = QueryResponse & {
+  items: Array<{ item: DashboardViewItem; readOnly: boolean }>;
+};
+
+async function getSearchResults(
+  searchQuery: string,
+  permission?: PermissionLevel,
+  showReadOnly?: boolean
+): Promise<SearchResults> {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
-    permission,
+    // With read only folders shown, every folder is listed and the server marks which ones can be picked
+    permission: showReadOnly ? undefined : permission,
+    includeCanCreate: showReadOnly,
   });
 
-  const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
+  const items = queryResponse.view.map((v) => ({
+    item: queryResultToViewItem(v, queryResponse.view),
+    readOnly: Boolean(showReadOnly) && v.canCreate !== true,
+  }));
   return { ...queryResponse, items };
 }
 
@@ -100,13 +114,18 @@ export function NestedFolderPicker({
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
 
+  const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
+  // Selectability comes from the search API, which only backs the picker with the app platform folder API
+  const isFoldersAppPlatformAPIEnabled = useFlagFoldersAppPlatformAPI();
+  const showReadOnly = isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && permission === 'edit';
+
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
   // but doesn't have access to the folder
   const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
 
   const [autoFocusButton, setAutoFocusButton] = useState(false);
@@ -141,6 +160,7 @@ export function NestedFolderPicker({
     permission,
     rootFolderUID,
     rootFolderItem,
+    showReadOnly,
   });
 
   useEffect(() => {
@@ -152,19 +172,18 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission).then((queryResponse) => {
+    debouncedSearch(search, permission, showReadOnly).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
       // request in progress, this will clear it for us
       if (timestamp > lastSearchTimestamp.current) {
-        const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-        setSearchResults({ ...queryResponse, items });
+        setSearchResults(queryResponse);
         setIsFetchingSearchResults(false);
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission]);
+  }, [search, permission, showReadOnly]);
 
   // the order of middleware is important!
   const middleware = [
@@ -260,7 +279,10 @@ export function NestedFolderPicker({
         flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       }
     } else {
-      flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
+      flatTree = (searchResults?.items ?? []).map(({ item, readOnly }) => {
+        const treeItem = { isOpen: false, level: 0, item };
+        return readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
+      });
     }
 
     return filterItems(flatTree, excludeUIDs, folderFilter);

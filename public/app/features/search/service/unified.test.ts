@@ -165,6 +165,26 @@ describe('Unified Storage Searcher', () => {
     expect(response.view.get(0).uid).toBe('team-owned-dashboard');
   });
 
+  it('asks for and returns whether each folder allows creating dashboards', async () => {
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const include = new URL(request.url).searchParams.get('include');
+        return HttpResponse.json({
+          totalHits: 2,
+          hits: [
+            { name: 'writable', title: 'Writable', resource: 'folders', canCreate: include === 'canCreate' },
+            { name: 'viewable', title: 'Viewable', resource: 'folders', canCreate: false },
+          ],
+        });
+      })
+    );
+
+    const response = await new UnifiedSearcher().search({ query: '*', kind: ['folder'], includeCanCreate: true });
+
+    expect(response.view.get(0).canCreate).toBe(true);
+    expect(response.view.get(1).canCreate).toBe(false);
+  });
+
   describe('sort request parameters', () => {
     let searchRequests: URL[] = [];
 

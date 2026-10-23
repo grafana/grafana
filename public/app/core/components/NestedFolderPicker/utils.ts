@@ -2,6 +2,11 @@ import { t } from '@grafana/i18n';
 import { type ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 
+/** Marks a folder the user can see but not pick. Being read only is why it's disabled, so both are always set. */
+export function toReadOnlyTreeItem(treeItem: DashboardsTreeItem): DashboardsTreeItem {
+  return { ...treeItem, readOnly: true, disabled: true };
+}
+
 export const getRootFolderItem = (): DashboardsTreeItem => ({
   isOpen: true,
   level: 0,

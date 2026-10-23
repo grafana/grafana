@@ -51,6 +51,7 @@ export type SearchHit = {
   // calculated in the frontend
   url: string;
   managedBy?: ManagedBy;
+  canCreate?: boolean;
 };
 
 export type SearchAPIResponse = {
@@ -360,6 +361,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += `&permission=${query.permission}`;
     }
 
+    if (query.includeCanCreate) {
+      uri += '&include=canCreate';
+    }
+
     if (query.deleted) {
       uri = `${getAPIBaseURL(DASHBOARD_API_GROUP, 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }
@@ -462,6 +467,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
       managedBy: hit.managedBy,
+      // Only added when the search asked for it, so other searches don't get an empty column
+      ...(hit.canCreate !== undefined && { canCreate: hit.canCreate }),
       ...field,
     };
   });
