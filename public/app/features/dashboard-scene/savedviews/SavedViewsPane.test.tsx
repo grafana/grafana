@@ -106,10 +106,7 @@ describe('SavedViewsPane', () => {
   });
 
   it('sets viewFilter synchronously on select, before the url round-trip', async () => {
-    // Part of the double-apply fix: DashboardSceneUrlSync's viewFilter handling only fires when
-    // the url value actually changes, so this synchronous write (done here, ahead of
-    // locationService.partial) is what makes a genuinely-new selection apply exactly once in a
-    // real app where a UrlSyncManager is live, instead of once here plus once more there.
+    // Lets DashboardSceneUrlSync's viewFilter guard skip a second apply when the URL catches up.
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
 
@@ -120,10 +117,7 @@ describe('SavedViewsPane', () => {
   });
 
   it('re-applies a saved view when its (already-selected) row is clicked again', async () => {
-    // Regression test: DashboardSceneUrlSync only applies a saved view when the URL's viewFilter
-    // value actually changes, so re-clicking the currently-selected view -- after editing the time
-    // range/variables locally and wanting to snap back -- must not depend on that URL diff, or it's
-    // a silent no-op (found via manual testing on a real dashboard).
+    // Re-clicking doesn't change the URL, so this must not rely on URL sync.
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     const { scene } = renderPane([
       buildView('view-1', { name: 'My view', timeRange: { from: 'now-24h', to: 'now-1h' } }),
@@ -142,9 +136,7 @@ describe('SavedViewsPane', () => {
   });
 
   it('resets a variable the selected view does not mention back to the dashboard baseline', async () => {
-    // Regression test (found via manual testing): a view saved before "team" existed on the
-    // dashboard, or one that simply never touched it, must not leave team at whatever a prior
-    // view or a manual edit left it at -- selecting a view is a full, deterministic switch.
+    // Selecting a view is a full switch: variables it omits reset to the baseline.
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     const team = new QueryVariable({ name: 'team', query: 'label_values(team)', value: 'platform', text: 'platform' });
     const scene = new DashboardScene({
@@ -153,8 +145,7 @@ describe('SavedViewsPane', () => {
       $variables: new SceneVariableSet({ variables: [team] }),
       savedViews: [buildView('view-1', { name: 'My view', variables: [] })], // doesn't mention "team"
     });
-    // The baseline the real url-sync pass would have captured on load, before "team" was ever
-    // touched by anything -- its own authored default is '$__all'.
+    // The baseline URL sync would capture on load.
     team.setState({ value: '$__all', text: 'All' });
     scene.setState({ savedViewBaseline: captureSavedViewState(scene) });
     // Simulate the manual edit (or a previous view) that left team somewhere else entirely.

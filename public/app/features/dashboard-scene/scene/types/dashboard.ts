@@ -96,12 +96,8 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   /** metadata.name of the currently-applied Saved View, if any — mirrors `?viewFilter=`. */
   viewFilter?: string;
   /**
-   * The dashboard's own time range + variable state, captured once on the very first url-sync
-   * pass (before that pass's own $timeRange/variable updateFromUrl calls, and before any saved
-   * view ever applies) — see DashboardSceneUrlSync.updateFromUrl. This is what a saved view falls
-   * back to for any variable (or section-scoped filter) it doesn't itself capture, so selecting a
-   * view always resets the dashboard to a clean, deterministic state rather than leaving an
-   * unrelated variable at whatever ad-hoc value it happened to have.
+   * Time range and variable state captured on the first URL sync pass. Saved views fall back to
+   * this for anything they don't capture.
    */
   savedViewBaseline?: SavedDashboardViewSpec;
 }

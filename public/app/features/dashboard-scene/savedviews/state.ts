@@ -56,13 +56,7 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
 }
 
 /**
- * The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene.
- *
- * `baseline` (dashboard.state.savedViewBaseline — see DashboardSceneUrlSync) fills in any variable
- * the view doesn't itself capture: selecting a view is a full, deterministic switch, not a partial
- * overlay, so a variable the view is silent on resets to the dashboard's own authored default
- * rather than staying at whatever ad-hoc value a prior view or manual edit left it in. Without a
- * baseline (e.g. a test harness that never went through a url-sync pass), falls back to spec as-is.
+ * Applies a stored spec to the scene. Variables the view omits reset to `baseline` when given.
  */
 export function applySavedViewState(
   dashboard: DashboardScene,
@@ -88,19 +82,8 @@ function mergeVariablesWithBaseline(
 }
 
 /**
- * The default-aware counterpart to applySavedViewState, for the URL-driven apply path only. A
- * saved view is meant to be a default an explicit var- or from/to param in the SAME url change
- * still overrides (e.g. a shared link like "?viewFilter=view-1&from=now-15m") -- but $timeRange's and
- * every variable's own updateFromUrl already ran synchronously, in the same pass, by the time the
- * caller's deferred applySavedViewState would normally run, so a blind full apply would clobber
- * whatever they just set. `before` is a captureSavedViewState snapshot taken synchronously, BEFORE
- * those sibling handlers ran; this re-captures the CURRENT state (`after`) and, field by field
- * (time range's from/to/timezone independently, each variable by name), applies the saved spec's
- * value only where `before` and `after` are equal -- i.e. nothing explicit touched it during this
- * pass. Where they differ, the just-applied explicit value is left alone.
- *
- * `baseline` fills in variables the view doesn't capture, same as applySavedViewState, so a
- * `?viewFilter=` link or back/forward navigation switches views as completely as a pane click.
+ * applySavedViewState for the URL path, where explicit var- or from/to params in the same URL
+ * change win. Fields that changed between `before` and now were set by those params and are kept.
  */
 export function applySavedViewStateAsDefault(
   dashboard: DashboardScene,
@@ -120,9 +103,7 @@ function mergeTimeRangeAsDefault(
   before: SavedViewTimeRange,
   after: SavedViewTimeRange
 ): SavedViewTimeRange {
-  // from/to/timezone are independent url keys (SceneTimeRange.updateFromUrl applies each on its
-  // own), so a link with only ?from= leaves `to` untouched -- merging as one atomic unit would see
-  // "timeRange differs" and wrongly skip the saved to as well.
+  // from/to/timezone are separate URL keys, so merge them independently.
   const timezone = (before.timezone ?? '') === (after.timezone ?? '') ? spec.timezone : after.timezone;
   return {
     from: before.from === after.from ? spec.from : after.from,
@@ -138,10 +119,7 @@ function mergeVariablesAsDefault(
 ): SavedViewVariable[] {
   const beforeByName = new Map(before.map((v) => [v.name, v]));
   const afterByName = new Map(after.map((v) => [v.name, v]));
-  // A saved variable absent from BOTH before and after (deleted/renamed since the view was saved,
-  // or an unsupported type captureVariable already skips) has nothing to compare, so it's treated
-  // as untouched and passed through -- applyVariables' own getByName lookup already no-ops
-  // harmlessly when the target doesn't exist live.
+  // Variables missing from the live dashboard pass through; applyVariables skips them.
   return spec.filter((saved) => variableEqual(beforeByName.get(saved.name), afterByName.get(saved.name)));
 }
 
@@ -196,10 +174,8 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
 }
 
 /**
- * Whether applying `stored` would change the dashboard's current state, i.e. whether there is
- * anything to save over it. Mirrors applySavedViewState: variables the view omits count as reset to
- * `baseline`, a view without a timezone leaves the timezone alone, and variables that no longer
- * exist on the dashboard are skipped.
+ * Whether applying `stored` would change the dashboard, using applySavedViewState's rules:
+ * omitted variables reset to `baseline`, a missing timezone is left alone.
  */
 export function getSavedViewDiff(
   current: SavedDashboardViewSpec,
@@ -227,8 +203,7 @@ function variablesDiffer(current: SavedViewVariable[], expected: SavedViewVariab
   });
 }
 
-// Compares only the selection, not the serialized object: stored specs come back from the server,
-// so key order and single-value shape ("a" vs ["a"]) can differ from a fresh capture.
+// Compares selections, not objects: server copies can differ in key order and "a" vs ["a"].
 function variableEqual(a: SavedViewVariable | undefined, b: SavedViewVariable | undefined): boolean {
   if (!a || !b) {
     return a === b;

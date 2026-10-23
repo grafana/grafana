@@ -66,8 +66,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftName, setDraftName] = useState('');
   const draftRowRef = useRef<HTMLDivElement>(null);
-  // autoFocus only scrolls the input itself into view, which leaves the row's own padding clipped
-  // against the footer when the draft lands at the bottom of a long list.
+  // autoFocus scrolls only the input, leaving the row's padding clipped by the footer.
   useEffect(() => {
     if (isDrafting) {
       draftRowRef.current?.scrollIntoView({ block: 'nearest' });
@@ -86,8 +85,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     return () => sub.unsubscribe();
   }, [dashboard]);
 
-  // undefined means "not fetched yet" (e.g. the pane was opened without a ?viewFilter= link
-  // having already loaded them) -- distinct from an empty array, which means "fetched, none saved".
+  // undefined means not fetched yet; [] means fetched with none saved.
   useEffect(() => {
     if (savedViews === undefined) {
       loadSavedViews(dashboard).then((ok) => setLoadFailed(!ok));
@@ -143,14 +141,8 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   }
 
   function handleSelect(view: SavedDashboardView) {
-    // Set viewFilter synchronously, in the same tick as the direct apply below. That's what makes
-    // DashboardSceneUrlSync's own `values.viewFilter !== viewFilter` guard already false by the
-    // time locationService.partial's url change reaches it (wherever a UrlSyncManager is actually
-    // live) -- without this, that path schedules a SECOND, redundant apply of the same spec, a
-    // real double query-refresh cascade, not a harmless no-op. Applying directly here is still
-    // required regardless: re-clicking an already-selected view leaves the url unchanged, so that
-    // path never fires at all, and this component needs to work with no live UrlSyncManager too
-    // (e.g. its own tests).
+    // Setting viewFilter first stops DashboardSceneUrlSync re-applying when the URL updates. The
+    // direct apply is still needed: re-clicking the selected view leaves the URL unchanged.
     dashboard.setState({ viewFilter: view.metadata.name });
     applySavedViewState(dashboard, view.spec, dashboard.state.savedViewBaseline);
     locationService.partial({ viewFilter: view.metadata.name });
@@ -443,8 +435,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     footer: css({
       flexShrink: 0,
-      // Sidebar's own openPane wrapper already reserves paddingBottom: theme.spacing(2) below its
-      // content, so no bottom padding here to avoid doubling it up.
+      // No bottom padding: the sidebar pane wrapper already adds it.
       padding: theme.spacing(2, 1, 0, 1),
       borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
@@ -464,8 +455,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-start',
       // Zeroed out so the title text lines up with the search input's left edge.
       padding: 0,
-      // The row itself already highlights on hover -- suppress the Button's own
-      // hover/focus background so it doesn't show as a second, differently-colored rectangle.
+      // The row already highlights on hover, so drop the button's own hover background.
       '&:hover, &:focus': {
         background: 'transparent',
       },
