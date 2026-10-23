@@ -52,17 +52,15 @@ describe('convertAPI', () => {
   it('posts a rule group with the import options as headers', async () => {
     const requests = captureRequests('post', '/api/convert/prometheus/config/v1/rules/:namespace', accepted);
     const group = { name: 'node', interval: '1m', rules: [{ alert: 'NodeDown', expr: 'up == 0' }] };
+    // Typed the way the README tells apps to name an endpoint's arguments.
+    const args: typeof convertAPI.endpoints.postRuleGroup.Types.QueryArg = {
+      namespace: 'integrations-node',
+      payload: group,
+      datasourceUid: 'mimir',
+      notificationSettings: { type: 'NamedRoutingTree', routingTree: 'team-a' },
+    };
 
-    await createStore()
-      .dispatch(
-        convertAPI.endpoints.postRuleGroup.initiate({
-          namespace: 'integrations-node',
-          payload: group,
-          datasourceUid: 'mimir',
-          notificationSettings: { type: 'NamedRoutingTree', routingTree: 'team-a' },
-        })
-      )
-      .unwrap();
+    await createStore().dispatch(convertAPI.endpoints.postRuleGroup.initiate(args)).unwrap();
 
     expect(await requests[0].json()).toEqual(group);
     expect(requests[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('mimir');
