@@ -91,6 +91,11 @@ func (c *stackDiscoveryCache) add(key string, entry stackDiscoveryEntry) {
 	defer c.mu.Unlock()
 	// Remove first, so that the evict callback subtracts a replaced entry.
 	c.entries.Remove(key)
+	if entry.size > c.limit {
+		// It could never fit, and making room would evict every other stack's
+		// entries before dropping it too.
+		return
+	}
 	c.entries.Add(key, entry)
 	c.bytes += entry.size
 	for c.bytes > c.limit && c.entries.Len() > 0 {
