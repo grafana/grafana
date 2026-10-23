@@ -80,7 +80,12 @@ describe('StPodReadyService', () => {
     service.start();
     await flushMicrotasks();
 
-    expect(get).toHaveBeenCalledWith('/api/health', undefined, undefined, { showErrorAlert: false });
+    expect(get).toHaveBeenCalledWith(
+      '/api/health',
+      undefined,
+      undefined,
+      expect.objectContaining({ showErrorAlert: false })
+    );
   });
 
   it('start is idempotent while already polling', async () => {
@@ -308,6 +313,84 @@ describe('StPodReadyService', () => {
 
       expect(get).toHaveBeenCalledTimes(1);
       expect(service.state.getValue()).toBe(StPodStatus.Ready);
+    });
+  });
+
+  describe('resource hygiene', () => {
+    it('does not stack polls when the backend is slower than the poll interval', async () => {
+      jest.useFakeTimers();
+      let resolveSlow: (value: { database: string }) => void = () => {};
+      const get = jest.fn(() => new Promise<{ database: string }>((res) => (resolveSlow = res)));
+      setBackendSrv({ get } as unknown as BackendSrv);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(get).toHaveBeenCalledTimes(1);
+
+      await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS * 5);
+
+      expect(get).toHaveBeenCalledTimes(1);
+
+      resolveSlow({ database: 'failing' });
+      await flushMicrotasks();
+      await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS);
+
+      expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    it('aborts the in-flight health request when the service is stopped', async () => {
+      jest.useFakeTimers();
+      let capturedSignal: AbortSignal | undefined;
+      const get = jest.fn(
+        (_url: string, _params?: unknown, _requestId?: unknown, options?: { abortSignal?: AbortSignal }) => {
+          capturedSignal = options?.abortSignal;
+          return new Promise(() => {});
+        }
+      );
+      setBackendSrv({ get } as unknown as BackendSrv);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(capturedSignal?.aborted).toBe(false);
+
+      service.stop();
+
+      expect(capturedSignal?.aborted).toBe(true);
+    });
+
+    it('does not transition out of a terminal state when an in-flight poll resolves after stop', async () => {
+      jest.useFakeTimers();
+      let resolveSlow: (value: { database: string }) => void = () => {};
+      const get = jest.fn(() => new Promise<{ database: string }>((res) => (resolveSlow = res)));
+      setBackendSrv({ get } as unknown as BackendSrv);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      service.stop();
+
+      resolveSlow({ database: 'ok' });
+      await flushMicrotasks();
+
+      expect(service.getStatus()).toBe(StPodStatus.Unknown);
+    });
+
+    it('clears readyAt when transitioning away from ready via reset', async () => {
+      jest.useFakeTimers();
+      installBackend(podUp);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+      service.start();
+      await flushMicrotasks();
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+      service.start();
+      await flushMicrotasks();
+
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
     });
   });
 });
