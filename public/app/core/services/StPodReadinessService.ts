@@ -103,6 +103,7 @@ export class StPodReadinessService {
   }
 
   private beginPolling(): void {
+    this.clearTimers();
     this.poll();
     this.pollTimer = setInterval(() => this.poll(), ST_POD_POLL_INTERVAL_MS);
     this.timeoutTimer = setTimeout(() => {
