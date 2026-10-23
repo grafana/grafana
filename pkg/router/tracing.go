@@ -50,43 +50,74 @@ func routerTraceContext(req *http.Request) context.Context {
 }
 
 func newBackendTransport(base http.RoundTripper) http.RoundTripper {
-	return otelhttp.NewTransport(base, otelhttp.WithSpanNameFormatter(func(_ string, req *http.Request) string {
+	return otelhttp.NewTransport(base, otelhttp.WithPropagators(currentPropagator{}), otelhttp.WithSpanNameFormatter(func(_ string, req *http.Request) string {
 		return traceHTTPMethod(req.Method)
 	}))
 }
 
-func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group string, attributes ...attribute.KeyValue) (*statusRecorder, *http.Request, func()) {
+// currentPropagator propagates with the global propagator of the moment, so a
+// transport built once follows otel.SetTextMapPropagator. The global one may
+// be a composite, which can't be compared, so it can't key a cache instead.
+type currentPropagator struct{}
+
+func (currentPropagator) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+}
+
+func (currentPropagator) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
+	return otel.GetTextMapPropagator().Extract(ctx, carrier)
+}
+
+func (currentPropagator) Fields() []string {
+	return otel.GetTextMapPropagator().Fields()
+}
+
+// internalSpanKind is the router's span kind option, built once: an option
+// value allocates each time it is made.
+var internalSpanKind = trace.WithSpanKind(trace.SpanKindInternal)
+
+// traceRouterRequest starts a router span for req, and returns the recorder
+// to write the response through and the request carrying the span. The
+// caller defers rec.endSpan(), which ends the span with the outcome.
+func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group string, attributes ...attribute.KeyValue) (*statusRecorder, *http.Request) {
 	ctx := routerTraceContext(req)
 	attributes = append(attributes,
 		attribute.String("grafana.router.group", group),
 		semconv.HTTPRequestMethodKey.String(traceHTTPMethod(req.Method)))
-	ctx, span := routerTracer().Start(ctx, name,
-		trace.WithSpanKind(trace.SpanKindInternal), trace.WithAttributes(attributes...))
+	ctx, span := routerTracer().Start(ctx, name, internalSpanKind, trace.WithAttributes(attributes...))
 	ctx = context.WithValue(ctx, routerSpanKey{}, span.SpanContext())
 	rec := newStatusRecorder(w)
-	return rec, req.WithContext(ctx), func() {
-		panicked := recover()
-		if panicked != nil {
-			defer func() { panic(panicked) }()
-		}
-		// End before re-panicking so the SDK does not record arbitrary panic payloads.
-		defer span.End()
-		// A canceled or panicking handler may never have sent a response.
-		if rec.wroteHeader || (panicked == nil && req.Context().Err() == nil) {
-			span.SetAttributes(semconv.HTTPResponseStatusCode(rec.status))
-		}
-		if err := req.Context().Err(); err == context.Canceled {
-			span.SetAttributes(attribute.Bool("grafana.router.canceled", true))
-		} else if err != nil {
-			span.SetAttributes(semconv.ErrorTypeKey.String("timeout"))
-			span.SetStatus(codes.Error, "")
-		} else if panicked != nil {
-			span.SetAttributes(semconv.ErrorTypeKey.String("panic"))
-			span.SetStatus(codes.Error, "")
-		} else if rec.status >= http.StatusInternalServerError {
-			span.SetAttributes(semconv.ErrorTypeKey.String(strconv.Itoa(rec.status)))
-			span.SetStatus(codes.Error, "")
-		}
+	rec.span, rec.spanCtx = span, ctx
+	return rec, req.WithContext(ctx)
+}
+
+// endSpan ends the span traceRouterRequest started, with the response's
+// outcome. It must be deferred directly, since it recovers a panic to record
+// it, and then re-panics.
+func (r *statusRecorder) endSpan() {
+	panicked := recover()
+	if panicked != nil {
+		defer func() { panic(panicked) }()
+	}
+	span := r.span
+	// End before re-panicking so the SDK does not record arbitrary panic payloads.
+	defer span.End()
+	err := r.spanCtx.Err()
+	// A canceled or panicking handler may never have sent a response.
+	if r.wroteHeader || (panicked == nil && err == nil) {
+		span.SetAttributes(semconv.HTTPResponseStatusCode(r.status))
+	}
+	if err == context.Canceled {
+		span.SetAttributes(attribute.Bool("grafana.router.canceled", true))
+	} else if err != nil {
+		span.SetAttributes(semconv.ErrorTypeKey.String("timeout"))
+		span.SetStatus(codes.Error, "")
+	} else if panicked != nil {
+		span.SetAttributes(semconv.ErrorTypeKey.String("panic"))
+		span.SetStatus(codes.Error, "")
+	} else if r.status >= http.StatusInternalServerError {
+		span.SetAttributes(semconv.ErrorTypeKey.String(strconv.Itoa(r.status)))
+		span.SetStatus(codes.Error, "")
 	}
 }
 
