@@ -1385,6 +1385,96 @@ func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
 	}
 }
 
+func TestFullSync_DeletedFolderMetadataWithUnchangedFallbackUID(t *testing.T) {
+	fallbackUID := resources.ParseFolder("team/", "test-repo").ID
+	teamFolder := provisioning.ResourceListItem{
+		Path: "team/", Hash: "old-meta-hash", Name: fallbackUID,
+		Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource,
+	}
+
+	tests := []struct {
+		name   string
+		source []repository.FileTreeEntry
+		target []provisioning.ResourceListItem
+	}{
+		{
+			name: "empty folder kept by .keep",
+			source: []repository.FileTreeEntry{
+				{Path: "team", Blob: false},
+				{Path: "team/.keep", Hash: "keep-hash", Blob: true},
+			},
+			target: []provisioning.ResourceListItem{teamFolder},
+		},
+		{
+			name: "folder with dashboard and child folder",
+			source: []repository.FileTreeEntry{
+				{Path: "team", Blob: false},
+				{Path: "team/dashboard.json", Hash: "dash-hash", Blob: true},
+				{Path: "team/child", Blob: false},
+				{Path: "team/child/_folder.json", Hash: "child-meta-hash", Blob: true},
+			},
+			target: []provisioning.ResourceListItem{
+				teamFolder,
+				{
+					Path: "team/dashboard.json", Hash: "dash-hash", Name: "dash-1", Folder: fallbackUID,
+					Group: "dashboard.grafana.app", Resource: "dashboards",
+				},
+				{
+					Path: "team/child/", Hash: "child-meta-hash", Name: "child-uid", Folder: fallbackUID,
+					Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+			clients := resources.NewMockResourceClients(t)
+			progress := jobs.NewMockJobProgressRecorder(t)
+			// No expectations: the folder is not renamed, so no quota is lifted for it.
+			quotaTracker := quotas.NewMockQuotaTracker(t)
+
+			repo.On("Config").Return(&provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			})
+			// No Read expectation: the folder has no _folder.json left to read.
+			repo.On("ReadTree", mock.Anything, "ref").Return(tt.source, nil)
+			repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{Items: tt.target}, nil)
+			repoResources.On("SetTree", mock.Anything).Return().Once()
+
+			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+				return r.Path() == "team/" &&
+					r.Action() == repository.FileActionUpdated &&
+					r.Warning() != nil
+			})).Return().Once()
+
+			progress.On("SetTotal", mock.Anything, 1).Return()
+			progress.On("TooManyErrors").Return(nil)
+			progress.On("HasDirPathFailedCreation", "team/").Return(false)
+
+			// The single variadic option must be WithForceWalk, the only option a
+			// same-path folder update receives. mock.Anything also matches a
+			// missing argument, so the argument count is checked explicitly.
+			repoResources.On("EnsureFolderPathExist", mock.Anything, "team/", "ref", mock.Anything).
+				Run(func(args mock.Arguments) { require.Len(t, args, 4) }).
+				Return(fallbackUID, nil).Once()
+			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+				return r.Path() == "team/" &&
+					r.Action() == repository.FileActionUpdated &&
+					r.Name() == fallbackUID &&
+					r.Warning() == nil &&
+					r.Error() == nil
+			})).Return().Once()
+
+			err := FullSync(context.Background(), repo, Compare, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, true, 0)
+			require.NoError(t, err)
+			repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+		})
+	}
+}
+
 func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	// Verify that old folder UIDs are deleted AFTER folder creations and file creations.
 	// The ordering must be: folder phase -> file phase -> old folder deletion.
