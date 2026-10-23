@@ -33,6 +33,7 @@ import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashbo
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
+import { usePromotePanelAdHocChanges } from '../scene/panel-actions/promote/usePromotePanelAdHocChanges';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
 
@@ -74,6 +75,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const prevParams = useRef<Params<string>>(params);
 
   useScenesFlickeringFix();
+  usePromotePanelAdHocChanges(dashboard);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {

@@ -15,21 +15,7 @@ import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { PanelAdHocChangesAction } from './PanelAdHocChangesAction';
-
-const mockOnSaveDashboard = jest.fn();
-jest.mock('../../saving/useSaveDashboard', () => ({
-  useSaveDashboard: () => ({ onSaveDashboard: mockOnSaveDashboard }),
-}));
-// Reloading fetches the saved dashboard from the API and swaps the scene on the page.
-const mockReloadedDashboard = { onEnterEditMode: jest.fn() };
-const mockPageStateManager = {
-  state: { dashboard: undefined as typeof mockReloadedDashboard | undefined },
-  removeSceneCache: jest.fn(),
-  reloadDashboard: jest.fn(),
-};
-jest.mock('../../pages/DashboardScenePageStateManager', () => ({
-  getDashboardScenePageStateManager: () => mockPageStateManager,
-}));
+import { PromotePanelAdHocChangesEvent } from './promote/utils';
 
 const OWNER = TABLE_TRANSFORMATIONS_OWNER;
 const buttonTestId = selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction;
@@ -83,6 +69,8 @@ async function buildScene({
     },
     version
   );
+  // Loaded dashboards keep the JSON they were built from.
+  dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
 
   activateFullSceneTree(dashboard);
   await act(() => new Promise((r) => setTimeout(r, 1)));
@@ -138,78 +126,22 @@ describe('PanelAdHocChangesAction', () => {
     expect(await screen.findByRole('menuitem', { name: 'Save to dashboard' })).toBeInTheDocument();
   });
 
-  describe('"Save to dashboard"', () => {
-    const promoted = { id: 'organize', options: { excludeByName: { hidden: true } } };
+  it('asks the dashboard to save the changes when "Save to dashboard" is clicked', async () => {
+    const { panel, dashboard } = await buildScene({ canSave: true });
+    const onPromote = jest.fn();
+    dashboard.subscribeToEvent(PromotePanelAdHocChangesEvent, onPromote);
+    addAdHocChange(panel);
 
-    beforeEach(() => {
-      promotionPath.mockReset().mockImplementation((dashboard) => ({ ...dashboard, title: 'Promoted' }));
-      mockOnSaveDashboard.mockReset();
-      mockReloadedDashboard.onEnterEditMode.mockReset();
-      mockPageStateManager.state.dashboard = undefined;
-      mockPageStateManager.removeSceneCache.mockReset();
-      mockPageStateManager.reloadDashboard.mockReset().mockImplementation(async () => {
-        // The page manager must not reuse its cached scene, or it skips rebuilding the dashboard.
-        expect(mockPageStateManager.removeSceneCache).toHaveBeenCalledWith('saved-uid');
-        mockPageStateManager.state.dashboard = mockReloadedDashboard;
-      });
-    });
+    await userEvent.click(screen.getByTestId(buttonTestId));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Save to dashboard' }));
 
-    async function clickSaveToDashboard({ isEditing = false } = {}) {
-      const { panel, dashboard } = await buildScene({ canSave: true, isEditing });
-      act(() => panel.getRuntimeTransformations().set(OWNER, [promoted]));
-
-      await userEvent.click(screen.getByTestId(buttonTestId));
-      await userEvent.click(await screen.findByRole('menuitem', { name: 'Save to dashboard' }));
-
-      return dashboard;
-    }
-
-    it('saves the JSON returned by the promotion path, then reloads the saved dashboard uncached', async () => {
-      mockOnSaveDashboard.mockResolvedValue({ status: 'success', uid: 'saved-uid' });
-
-      const dashboard = await clickSaveToDashboard();
-
-      expect(promotionPath).toHaveBeenCalledWith(expect.objectContaining({ elements: expect.any(Object) }), {
-        elementKey: 'panel-1',
-        transformations: [promoted],
-      });
-      expect(mockOnSaveDashboard).toHaveBeenCalledWith(
-        dashboard,
-        expect.objectContaining({ rawDashboardJSON: expect.objectContaining({ title: 'Promoted' }) })
-      );
-      expect(mockPageStateManager.removeSceneCache).toHaveBeenCalledWith('saved-uid');
-      expect(mockPageStateManager.reloadDashboard).toHaveBeenCalledTimes(1);
-      expect(mockReloadedDashboard.onEnterEditMode).not.toHaveBeenCalled();
-    });
-
-    it('puts the reloaded dashboard back in edit mode when it was saved from edit mode', async () => {
-      mockOnSaveDashboard.mockResolvedValue({ status: 'success', uid: 'saved-uid' });
-
-      await clickSaveToDashboard({ isEditing: true });
-
-      expect(mockPageStateManager.reloadDashboard).toHaveBeenCalledTimes(1);
-      expect(mockReloadedDashboard.onEnterEditMode).toHaveBeenCalledWith('user', 'restore');
-    });
-
-    it('does not reload the dashboard when saving fails', async () => {
-      mockOnSaveDashboard.mockResolvedValue(new Error('conflict'));
-
-      await clickSaveToDashboard();
-
-      expect(mockOnSaveDashboard).toHaveBeenCalledTimes(1);
-      expect(mockPageStateManager.removeSceneCache).not.toHaveBeenCalled();
-      expect(mockPageStateManager.reloadDashboard).not.toHaveBeenCalled();
-    });
+    expect(onPromote).toHaveBeenCalledTimes(1);
+    expect(onPromote.mock.calls[0][0].payload).toEqual({ panel });
   });
 
   it.each([
     { desc: 'the user cannot save the dashboard', options: { canSave: false } },
     { desc: 'the dashboard is v1', options: { canSave: true, version: 'v1' as const } },
-    { desc: 'the dashboard is provisioned', options: { canSave: true, meta: { provisioned: true } } },
-    {
-      desc: 'the dashboard is repository-managed',
-      options: { canSave: true, meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } } } },
-    },
     { desc: 'the panel is a library panel', options: { canSave: true, libraryPanel: true } },
   ])('offers only "Remove changes" when $desc', async ({ options }) => {
     const { panel } = await buildScene(options);
@@ -219,6 +151,19 @@ describe('PanelAdHocChangesAction', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Remove changes' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Save to dashboard' })).not.toBeInTheDocument();
+  });
+
+  // The save drawer shows these dashboards their own save forms.
+  it.each([
+    { desc: 'provisioned', meta: { provisioned: true } },
+    { desc: 'repository-managed', meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } } } },
+  ])('offers "Save to dashboard" when the dashboard is $desc', async ({ meta }) => {
+    const { panel } = await buildScene({ canSave: true, meta });
+    addAdHocChange(panel);
+
+    await userEvent.click(screen.getByTestId(buttonTestId));
+
+    expect(await screen.findByRole('menuitem', { name: 'Save to dashboard' })).toBeInTheDocument();
   });
 
   it('clears the panel\'s ad hoc transformations and hides the button when "Remove changes" is clicked', async () => {

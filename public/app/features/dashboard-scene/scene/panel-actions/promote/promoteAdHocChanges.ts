@@ -3,25 +3,10 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
-import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, isLibraryPanel } from '../../utils/utils';
+import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from '../../../utils/utils';
 
-/**
- * Ad hoc changes can only be promoted into v2 dashboards that are saved directly from Grafana. Provisioned and
- * managed dashboards (for example repository-managed) have their own save flow, and a library panel's transformations
- * live in the library panel rather than the dashboard.
- */
-export function canPromoteAdHocChanges(panel: VizPanel): boolean {
-  const dashboard = getDashboardSceneFor(panel);
-
-  return (
-    dashboard.serializer instanceof V2DashboardSerializer &&
-    !dashboard.state.meta.provisioned &&
-    !dashboard.isManaged() &&
-    !isLibraryPanel(panel)
-  );
-}
+import { canPromoteAdHocChanges } from './utils';
 
 /**
  * Runs the promotion path of every interaction the panel declares, threading the v2 dashboard JSON through each one.

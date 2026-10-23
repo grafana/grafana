@@ -4,10 +4,9 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
-import { type DashboardMeta } from 'app/types/dashboard';
 
-import { DashboardScene } from '../DashboardScene';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { DashboardScene } from '../../DashboardScene';
+import { DefaultGridLayoutManager } from '../../layout-default/DefaultGridLayoutManager';
 
 import { promoteAdHocChanges } from './promoteAdHocChanges';
 
@@ -33,16 +32,17 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-async function buildScene(version: 'v1' | 'v2' = 'v2', meta: DashboardMeta = {}) {
+async function buildScene(version: 'v1' | 'v2' = 'v2') {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
   const dashboard = new DashboardScene(
     {
       title: 'My dashboard',
-      meta,
       body: DefaultGridLayoutManager.fromVizPanels([panel]),
     },
     version
   );
+  // Loaded dashboards keep the JSON they were built from.
+  dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
   activateFullSceneTree(dashboard);
   await new Promise((r) => setTimeout(r, 1));
   panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideColumn);
@@ -87,12 +87,5 @@ describe('promoteAdHocChanges', () => {
     expect(result).toBeUndefined();
     expect(promotions.first).not.toHaveBeenCalled();
     expect(promotions.second).not.toHaveBeenCalled();
-  });
-
-  it('does not promote into a provisioned dashboard', async () => {
-    const { panel } = await buildScene('v2', { provisioned: true });
-
-    expect(promoteAdHocChanges(panel)).toBeUndefined();
-    expect(promotions.first).not.toHaveBeenCalled();
   });
 });

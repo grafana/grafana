@@ -2,17 +2,13 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
-import { useAppNotification } from 'app/core/copy/appNotification';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 
-import { getDashboardScenePageStateManager } from '../../pages/DashboardScenePageStateManager';
-import { useSaveDashboard } from '../../saving/useSaveDashboard';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneLike } from '../types/dashboard';
 
-import { canPromoteAdHocChanges, promoteAdHocChanges } from './promoteAdHocChanges';
+import { PromotePanelAdHocChangesEvent, canPromoteAdHocChanges } from './promote/utils';
 
 interface Props {
   panel: VizPanel;
@@ -23,45 +19,15 @@ interface Props {
  * Anyone can remove the changes; users who can save the dashboard can also save them to it when promotion is supported.
  */
 export function PanelAdHocChangesAction({ panel }: Props) {
-  const dashboard = getDashboardSceneFor(panel);
-  const { meta } = dashboard.useState();
+  const { meta } = getDashboardSceneLike(panel).useState();
   // Re-render once the plugin has loaded so its declared interactions are available.
   panel.useState();
   const hasInteractions = Boolean(panel.getPlugin()?.panelInteractions);
   const hasChanges = useHasAdHocTransformations(panel, hasInteractions);
   const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(panel);
-  const { onSaveDashboard } = useSaveDashboard();
-  const notifyApp = useAppNotification();
 
-  const onSaveToDashboard = async () => {
-    const promoted = promoteAdHocChanges(panel);
-    if (!promoted) {
-      return;
-    }
-
-    const result = await onSaveDashboard(dashboard, {
-      folderUid: meta.folderUid,
-      k8s: meta.k8s,
-      rawDashboardJSON: promoted,
-    });
-
-    if (result?.status !== 'success') {
-      notifyApp.error(t('panel-adhoc-changes.save-failed', 'Could not save view changes to the dashboard'));
-      return;
-    }
-
-    // Read before reloading: the reload replaces this scene with one that starts in view mode.
-    const wasEditing = dashboard.state.isEditing;
-    const manager = getDashboardScenePageStateManager();
-    // The cached scene already carries the saved version, so reload would otherwise skip rebuilding it.
-    manager.removeSceneCache(result.uid);
-    await manager.reloadDashboard(locationService.getSearchObject());
-
-    if (wasEditing) {
-      // Match a normal save, which keeps the dashboard in edit mode.
-      manager.state.dashboard?.onEnterEditMode('user', 'restore');
-    }
-  };
+  // The dashboard saves the changes, see usePromotePanelAdHocChanges.
+  const onSaveToDashboard = () => panel.publishEvent(new PromotePanelAdHocChangesEvent({ panel }), true);
 
   const onRemoveChanges = () => panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, []);
 
