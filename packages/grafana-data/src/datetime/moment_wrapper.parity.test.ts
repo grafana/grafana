@@ -81,7 +81,7 @@ describe('Luxon-backed DateTime wrapper', () => {
   });
 
   it.each([
-    { locale: 'en-US', winter: 'EST', summer: 'EDT' },
+    { locale: 'en-US', winter: 'GMT-5', summer: 'GMT-4' },
     { locale: 'fr-FR', winter: 'UTC−5', summer: 'UTC−4' },
   ])(
     'resolves $locale timezone labels and DST offsets with a custom week start',

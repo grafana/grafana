@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 FROM alpine:3.24.2 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
 FROM golang:1.27.3-alpine AS go-builder-base
-FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
+FROM --platform=${JS_PLATFORM} node:26.12.1-alpine3.24 AS js-builder-base
 FROM gcr.io/distroless/static-debian13 AS distroless-base
 # Empty by default. For local enterprise builds, override with:
 #   --build-context enterprise-src=../grafana-enterprise
@@ -35,6 +35,8 @@ RUN apk add --no-cache make build-base python3
 
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+# node:26 images no longer include yarn, so use the release checked in under .yarn/releases
+RUN ln -s /tmp/grafana/.yarn/releases/yarn-*.cjs /usr/local/bin/yarn
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
