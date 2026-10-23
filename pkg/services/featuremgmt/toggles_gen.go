@@ -239,6 +239,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagGrafanaSavedDashboardViews
+	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -930,6 +934,10 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
+	// FlagSearchPerResourceFolderTree
+	// Allow recursive folder filters in per-resource search APIs
+	FlagSearchPerResourceFolderTree = "search.perResourceFolderTree"
+
 	// FlagAlertingHybridSearch
 	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
 	FlagAlertingHybridSearch = "alerting.hybridSearch"
@@ -974,10 +982,6 @@ const (
 	// Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
-	// FlagGrafanaOfrepRootUrl
-	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
-	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
-
 	// FlagFeaturesLegacyOverrideLookupBypass
 	// Skips checking for flag overrides.
 	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
@@ -1005,10 +1009,6 @@ const (
 	// FlagGrafanaPluginPathNesting
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
-
-	// FlagGrafanaRspackBuild
-	// Switches the backend to load frontend assets built with rspack instead of webpack
-	FlagGrafanaRspackBuild = "grafana.rspackBuild"
 
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client

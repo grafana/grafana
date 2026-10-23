@@ -1440,6 +1440,36 @@
       "saving": "Guardando…",
       "title-error-saving-receiver": "Error al guardar el receptor"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Para cambiar la configuración de Alertmanager, accede a la página de administración de alertas. Si no tienes acceso, ponte en contacto con tu administrador.",
       "admin-hint-external": "Para cambiar la configuración de Alertmanager, accede a la página de administración de alertas. Si no tienes acceso, ponte en contacto con tu administrador.",
@@ -1765,7 +1795,9 @@
         "autosync-tooltip-unsupported": "La sincronización automática no está disponible para este tipo de Alertmanager. Selecciona una fuente de datos de Mimir o Cortex para habilitarla.",
         "datasource": "Fuente de datos de Alertmanager",
         "datasource-autosync-badge": "Sincronización automática",
+        "embedded-yaml-parse-error": "",
         "heading": "Importar recursos de notificación",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "No se han encontrado fuentes de datos de Alertmanager.",
         "no-permission-desc": "No tienes permiso para importar recursos de notificación. Necesitas el permiso <strong>alerting.notifications:write</strong>. Puedes omitir este paso.",
@@ -7420,6 +7452,57 @@
       "usage-count_one": "Utilizado en {{count}} dashboards",
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Añadir enlace",
       "remove-link": "Quitar enlace",
@@ -7745,6 +7828,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Se ha producido un error inesperado al guardar."
     },
     "save-library-viz-panel-modal": {
@@ -8037,6 +8121,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir panel de consulta",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir panel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -13634,6 +13720,13 @@
       "save-tooltip": "Guardar"
     }
   },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
+    }
+  },
   "page-loader": {
     "default": "Cargando..."
   },
@@ -15460,11 +15553,6 @@
       "original-query": "Consulta original",
       "trace-id": "(ID de seguimiento: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Añadir consulta",
-      "expression": "Expresión",
-      "title-data-source-help": "Ayuda de la fuente de datos"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Intervalo = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15592,31 @@
     "accept": "Aceptar",
     "assistant-context-title": "Contexto de coautoría de la consulta",
     "assistant-instructions-title": "Instrucciones de coautoría de la consulta",
-    "assistant-unavailable": "El asistente no está disponible",
-    "assistant-unavailable-body": "La coautoría de la consulta requiere el asistente de Grafana.",
-    "building": "Creando consulta...",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Comprobando la disponibilidad del asistente...",
     "clarification-label": "Añadir información adicional",
     "clarification-message": "Mensaje de aclaración",
-    "clarification-placeholder": "Añadir información adicional...",
+    "clarification-placeholder": "",
     "clarification-title": "Detalle solicitado",
     "close": "Cerrar coautoría",
-    "context": "CONTEXTO",
-    "context-error": "No se ha podido leer el contexto de la consulta seleccionada",
+    "context-error": "",
     "continue": "Continuar",
     "continue-here": "Continuar aquí",
     "continue-in-assistant": "Continuar en el asistente",
-    "continue-in-assistant-chat": "Continuar en el chat del asistente",
     "dialog": "Coautor de la consulta",
     "dismiss": "Descartar",
     "error": "Error de coautoría de la consulta",
     "error-accept-failed": "No se ha podido aceptar la propuesta de consulta. Vuelve a intentarlo.",
     "error-multiple-responses": "El asistente ha devuelto propuestas de consulta que entran en conflicto. Vuelve a intentarlo.",
     "error-preview-failed": "No se ha podido previsualizar la propuesta de consulta. Vuelve a intentarlo.",
+    "explain-failed": "",
     "explain-or-modify": "Explicar o modificar",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Cancelar",
     "feedback-description": "Tus comentarios ayudan a mejorar la experiencia de la consulta en Grafana.",
     "feedback-error": "No se han podido enviar los comentarios. Vuelve a intentarlo.",
@@ -15536,36 +15627,61 @@
     "feedback-not-helpful": "Nada útil",
     "feedback-positive-placeholder": "¿Qué te ha gustado? ¿Cómo se podría mejorar?",
     "feedback-positive-title": "¿Qué ha ido bien?",
-    "feedback-privacy": "Se envían tu valoración, tu comentario y si se trataba de una propuesta o de un traspaso. Tu consulta, la indicación y la respuesta del asistente no se incluyen.",
+    "feedback-privacy": "",
     "feedback-recipient": "Tus comentarios se enviarán a los equipos que trabajan en las consultas.",
     "feedback-send": "Enviar",
     "feedback-sending": "Enviando...",
-    "focus": "ENFOQUE",
-    "handoff-guidance": "Es posible que tus cambios deban abarcar otra fuente de datos o consultas adicionales fuera de la que nos centramos. Continúa en el chat del asistente para realizar cambios mayores.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Consulta resaltada",
-    "highlighted-query-summary": "Resumen de la consulta resaltada",
+    "hold-to-peek": "",
     "invalid-query-response": "El asistente no ha podido generar un {{language}} válido después de intentar reparar la propuesta. Vuelve a intentarlo o añade más información.",
     "iteration-nudge": "¿Estás trabajando en algo grande? Realiza iteraciones de cambios mayores con más espacio.",
-    "open-in-chat": "Abrir en el chat",
-    "original-change": "{{kind}} original",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Vista previa de la consulta",
+    "previous-option": "",
     "prompt-label": "Describe un cambio de consulta",
-    "prompt-placeholder": "Describe un cambio rápido...",
+    "prompt-placeholder": "",
     "proposal-details": "Detalles de la propuesta de consulta",
-    "proposed-change": "Propuesto: {{kind}}",
-    "reading-highlighted-query": "Leyendo consulta resaltada...",
+    "query-diff": "",
     "relevant-context": "Contexto de consulta relevante",
     "request-failed": "El asistente no ha podido generar una propuesta de consulta. Vuelve a intentarlo.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Intentar de nuevo",
+    "retry-context": "",
     "running-updated-query": "Ejecutando consulta actualizada...",
+    "select-to-accept": "",
     "selection-ready": "La selección forma parte de esta consulta de {{language}}.",
     "selection-whole-query": "La consulta de {{language}} completa está seleccionada para coautoría.",
     "selection-with-type": "{{name}} es un {{kind}} tipo {{type}}.",
     "stale-query-response": "La consulta resaltada cambió antes de que la sugerencia estuviera lista. Descártala y resáltala de nuevo.",
     "stop": "Detener",
     "submit": "Coautor",
-    "suggestion-updated": "Sugerencia actualizada",
+    "submit-follow-up": "",
     "unchanged-query-response": "El asistente ha devuelto la consulta actual sin cambios. Vuelve a intentarlo o añade más información.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Las modificaciones del panel no guardadas no se perderán.",
     "working-focus": "Enfoque de la consulta"
   },
@@ -16181,14 +16297,7 @@
       "time-range": "Bloquear el intervalo de tiempo"
     },
     "export": {
-      "back-button": "Volver a la configuración de exportación",
-      "cancel-button": "Cancelar",
-      "info-text": "Exporte este panel de control.",
-      "loading": "Cargando...",
-      "save-button": "Guardar en archivo",
-      "share-externally-label": "Exportar para compartir externamente",
-      "view-button": "Ver JSON",
-      "view-button-yaml": "Ver YAML"
+      "share-externally-label": "Exportar para compartir externamente"
     },
     "image": {
       "actions": "Acciones de exportación de imágenes",
@@ -16246,9 +16355,6 @@
       "dark": "Oscuro",
       "field-name": "Tema",
       "light": "Claro"
-    },
-    "view-json": {
-      "copy-button": "Copiar al portapapeles"
     }
   },
   "share-panel": {
@@ -17427,6 +17533,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Elimina partes de los resultados de la consulta utilizando un patrón de expresión regular."
       },
+      "deselect-all": "",
       "label-from-variable": "De la variable",
       "label-identifier": "Identificador",
       "label-use-variable": "Utilizar variable",
@@ -17434,7 +17541,8 @@
       "name": {
         "filter-fields-by-name": "Filtrar campos por nombre"
       },
-      "placeholder-regular-expression-pattern": "Patrón de expresión regular"
+      "placeholder-regular-expression-pattern": "Patrón de expresión regular",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {

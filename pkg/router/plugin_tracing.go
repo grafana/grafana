@@ -13,6 +13,16 @@ type tracedPluginHandler struct {
 	*pluginroute.Handler
 	pluginID string
 	group    string
+	// release frees what Load acquired for this handler; nil for none.
+	release func()
+}
+
+// Destroy releases the plugin's API server, then what Load acquired for it.
+func (h *tracedPluginHandler) Destroy() {
+	h.Handler.Destroy()
+	if h.release != nil {
+		h.release()
+	}
 }
 
 func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

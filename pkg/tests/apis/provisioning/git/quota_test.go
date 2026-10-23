@@ -180,7 +180,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.RequireRepoFolderCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -207,11 +207,10 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
 			"incremental sync should warn when a create is skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources produce warnings, not errors")
-		require.Len(t, jobObj.Status.Warnings, 1,
-			"exactly 1 quota warning expected for the skipped dashboard")
-		require.Equal(t,
+		require.Len(t, jobObj.Status.Warnings, 3,
+			"one quota warning and two missing folder metadata warnings expected")
+		require.Contains(t, jobObj.Status.Warnings,
 			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, action: ignored)",
-			jobObj.Status.Warnings[0],
 			"quota warning should identify the skipped file")
 
 		// Still 2 dashboards and 1 folder — folder2 was never created.
@@ -233,7 +232,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.RequireRepoFolderCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)

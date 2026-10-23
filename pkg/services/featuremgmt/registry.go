@@ -687,6 +687,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.savedDashboardViews",
+			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardPreviewMode",
 			Description: "Enables Viewing and Editing modes for dynamic dashboards",
 			Stage:       FeatureStageExperimental,
@@ -963,7 +971,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -2618,9 +2626,9 @@ var (
 		{
 			Name:        "profilesHeatmap",
 			Description: "Enables heatmap visualization support for Pyroscope profiles",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -2880,6 +2888,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "search.perResourceFolderTree",
+			Description:  "Allow recursive folder filters in per-resource search APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "alerting.hybridSearch",
 			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
 			Stage:       FeatureStageExperimental,
@@ -2908,6 +2925,14 @@ var (
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboard.artifacts",
+			Description: "Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
@@ -3111,15 +3136,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "grafana.ofrepRootUrl",
-			Description:  "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBackendServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:        "assistant.dashboardPlanning",
 			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
 			Stage:       FeatureStageExperimental,
@@ -3182,7 +3198,7 @@ var (
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{
@@ -3219,14 +3235,6 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
-		},
-		{
-			Name:        "grafana.rspackBuild",
-			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
 		},
 		{
 			Name:        "pluginsForceTls13",
@@ -3427,6 +3435,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "reporting.removeLogoUrlField",
+			Description: "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
