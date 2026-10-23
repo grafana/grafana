@@ -567,6 +567,41 @@ describe('combineResponses', () => {
     expect(combined.errors?.[1]?.message).toBe('errorB');
   });
 
+  it('pads nanoseconds for a timestamp column whose source index differs from its destination index', () => {
+    // eventTime is source index 2 and is appended at destination index 3.
+    // otherTime occupies that destination index in the source frame and has different fractions.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'oldField', type: FieldType.string, config: {}, values: ['old1', 'old3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'eventTime', type: FieldType.time, config: {}, values: [2200], nanos: [456789] },
+        { name: 'otherTime', type: FieldType.time, config: {}, values: [3300], nanos: [111111] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+    const eventTime = fields.find((field: Field) => field.name === 'eventTime');
+    const otherTime = fields.find((field: Field) => field.name === 'otherTime');
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'oldField', 'eventTime', 'otherTime']);
+    expect(eventTime?.values).toEqual([2200, undefined, undefined]);
+    expect(eventTime?.nanos).toEqual([456789, undefined, undefined]);
+    expect(otherTime?.values).toEqual([3300, undefined, undefined]);
+    expect(otherTime?.nanos).toEqual([111111, undefined, undefined]);
+  });
+
   it('combines frames with nanoseconds', () => {
     const { logFrameA, logFrameB } = getMockFrames();
     logFrameA.fields[0].nanos = [333333, 444444];
