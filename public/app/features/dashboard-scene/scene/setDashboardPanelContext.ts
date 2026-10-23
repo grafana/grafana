@@ -50,7 +50,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   context.adHocTransformations = vizPanel.getRuntimeTransformations();
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, true)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, process.env.NODE_ENV !== 'test')) {
     context.isSeriesLimitShown = () => isSeriesLimitShown(vizPanel);
   }
 

@@ -80,7 +80,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const isEditingPanel = Boolean(dashboard.state.editPanel);
     // These panels are rendered with the panel actions popover, so actions it offers are left out of the menu.
     const hasActionsPopover =
-      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, true) &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, process.env.NODE_ENV !== 'test') &&
       !isEditingPanel &&
       !dashboard.state.panelSearch &&
       !dashboard.state.panelsPerRow;
