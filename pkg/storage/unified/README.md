@@ -329,6 +329,29 @@ enable_search = true
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
 unified storage when the dual writer mode is set to 3 or greater. When <= 2, the legacy search api calls will go to legacy storage.
 
+### Restrict collection search to service identities
+
+Set `vector_allowed_read_services` to a JSON object that maps each `group/resource` collection to its allowed service identities.
+For example, this allows Assistant to search inframemories:
+
+```ini
+[unified_storage]
+vector_allowed_read_services = {"assistant.inframemories.ext.grafana.app/inframemories":["assistant"]}
+```
+
+Assistant must send its own authenticated service access-policy token with the `assistant` service identity.
+A forwarded user token, including an on-behalf-of token from Assistant, cannot search this collection.
+The restriction applies to vector and hybrid searches, including lexical fallback and requests with multiple targets.
+Direct and explicitly federated `ResourceSearch` requests reject restricted targets for callers outside the allowed service identities.
+Implicit global searches omit restricted types for those callers and fail when no authorized searchable type remains.
+Existing namespace and resource `get` permissions still apply; this setting does not grant access or enable the collection.
+An unset value or `{}` leaves search behavior unchanged.
+Invalid policy values prevent the server from starting.
+
+Deploy support to every storage and search server that can serve these requests before setting the restriction.
+Older servers ignore the setting and can continue serving unrestricted reads.
+Before rolling back server support, disable the restricted collection's availability on every serving route.
+
 ## Running load tests
 Load tests and instructions can be found [here](https://github.com/grafana/grafana-api-tests/tree/main/simulation/src/unified_storage).
 

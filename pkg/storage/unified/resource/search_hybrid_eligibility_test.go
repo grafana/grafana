@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -11,9 +12,103 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/utils/ptr"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+func TestHybridSearch_RestrictedLaterTargetRejectsWholeRequest(t *testing.T) {
+	for _, lexicalOnly := range []bool{false, true} {
+		t.Run(map[bool]string{false: "semantic", true: "lexical fallback"}[lexicalOnly], func(t *testing.T) {
+			s, index, embedder := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+			s.allowedReadServices = map[string][]string{"g/secret": {"assistant"}}
+			if lexicalOnly {
+				s.embedder, s.vectorBackend = nil, nil
+			}
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Namespace: "ns", Query: "memory",
+				Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "g", Resource: "r"}, {Group: "g", Resource: "secret"}},
+			})
+			require.Equal(t, codes.PermissionDenied, status.Code(err))
+			require.Nil(t, resp)
+			require.Nil(t, index.gotReq)
+			require.Empty(t, embedder.gotIn.Texts)
+		})
+	}
+}
+
+func TestHybridSearch_RestrictedTargetAllowsAssistant(t *testing.T) {
+	s, index, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+	s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
+	ctx := serviceReadContext(authlib.TypeAccessPolicy, "assistant")
+	resp, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{Query: "memory", Key: validKey()})
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, index.gotReq)
+}
+
+func TestNewSearchServerEnforcesAllowedReadServices(t *testing.T) {
+	index := &hybridFakeIndex{resp: lexTableResponse()}
+	s, err := newSearchServer(SearchOptions{
+		Backend:             &fakeSearchBackend{idx: index},
+		Resources:           &countingBuilderSupplier{},
+		AllowedReadServices: map[string][]string{"g/r": {"assistant"}},
+	}, nil, nil, nil, nil, authlib.FixedAccessClient(true), nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, s)
+	req := &resourcepb.HybridSearchRequest{Key: validKey(), Query: "memory"}
+	resp, err := s.HybridSearch(authedCtx(), req)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Nil(t, resp)
+	require.Nil(t, index.gotReq)
+
+	resp, err = s.HybridSearch(serviceReadContext(authlib.TypeAccessPolicy, "assistant"), req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, index.gotReq)
+}
+
+func TestResourceSearch_RestrictedCollectionRejectsBeforeIndexRead(t *testing.T) {
+	for _, tc := range []struct {
+		name, restricted string
+		federated        bool
+	}{
+		{name: "direct", restricted: "g/r"},
+		{name: "federated", restricted: "g/secret", federated: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, index, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+			s.allowedReadServices = map[string][]string{tc.restricted: {"assistant"}}
+			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: validKey()}, Query: "memory"}
+			if tc.federated {
+				req.Federated = []*resourcepb.ResourceKey{{Namespace: "ns", Group: "g", Resource: "secret"}}
+			}
+			resp, err := s.Search(authedCtx(), req)
+			require.NoError(t, err)
+			require.Equal(t, int32(403), resp.Error.Code)
+			require.Nil(t, index.gotReq)
+		})
+	}
+}
+
+func TestResourceSearch_FederatedPolicyKeepsAuthenticationAndTenantErrors(t *testing.T) {
+	s, index, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+	s.allowedReadServices = map[string][]string{"g/secret": {"assistant"}}
+	req := &resourcepb.ResourceSearchRequest{
+		Options:   &resourcepb.ListOptions{Key: validKey()},
+		Federated: []*resourcepb.ResourceKey{{Group: "g", Resource: "secret"}},
+	}
+	resp, err := s.Search(context.Background(), req)
+	require.NoError(t, err)
+	require.Equal(t, int32(401), resp.Error.Code)
+	require.Nil(t, index.gotReq)
+
+	req.Options.Key.Namespace = "other"
+	resp, err = s.Search(authedCtx(), req)
+	require.NoError(t, err)
+	require.Equal(t, int32(403), resp.Error.Code)
+	require.Nil(t, index.gotReq)
+}
 
 func TestHybridSearch_GlobalMetricLabels(t *testing.T) {
 	s, _ := newHybridResourcesTestServer(nil)

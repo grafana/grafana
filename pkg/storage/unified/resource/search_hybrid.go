@@ -101,6 +101,11 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !types.NamespaceMatches(user.GetNamespace(), namespace) {
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
+	for _, key := range keys {
+		if err := s.checkAllowedReadService(ctx, key.Group, key.Resource); err != nil {
+			return nil, err
+		}
+	}
 	targets, err := s.prepareHybridTargets(ctx, req, keys)
 	if err != nil {
 		return nil, err

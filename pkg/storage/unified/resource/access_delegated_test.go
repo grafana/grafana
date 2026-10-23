@@ -826,6 +826,34 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		}}}
 	}
 
+	t.Run("restricted type is omitted while authorized types remain searchable", func(t *testing.T) {
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		s := newPermissionTestSearchServer(newLimitedClient(t))
+		s.globalIndexEnabled = true
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
+		s.allowedReadServices = map[string][]string{dashboards: {"assistant"}}
+		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get"))
+		rsp, err := s.Search(ctx, globalRequest())
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, []string{dashboards}, rsp.SkippedTypes)
+		require.NotNil(t, index.req)
+		require.Equal(t, []*resourcepb.Requirement{{Key: SEARCH_FIELD_GROUP_RESOURCE, Operator: string(selection.In), Values: []string{folders}}}, index.req.Options.Fields)
+	})
+
+	t.Run("all policy restricted types deny before reading the index", func(t *testing.T) {
+		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+		s := newPermissionTestSearchServer(newLimitedClient(t))
+		s.globalIndexEnabled = true
+		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
+		s.allowedReadServices = map[string][]string{dashboards: {"assistant"}, folders: {"assistant"}}
+		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get"))
+		rsp, err := s.Search(ctx, globalRequest())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.Nil(t, index.req)
+	})
+
 	for mode, withPermissions := range map[string]func(...string) *identity.StaticRequester{
 		"direct": serviceWithPermissions,
 		"delegated": func(permissions ...string) *identity.StaticRequester {

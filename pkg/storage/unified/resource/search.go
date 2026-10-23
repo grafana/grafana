@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/util/workqueue"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -536,6 +537,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	allowedReadServices    map[string][]string
 	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
@@ -583,6 +585,36 @@ type searchServer struct {
 	backgroundGlobalDiscovery bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+func (s *searchServer) checkAllowedReadService(ctx context.Context, group, resource string) error {
+	allowed, restricted := s.allowedReadServices[group+"/"+resource]
+	if !restricted {
+		return nil
+	}
+	user, ok := types.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return status.Error(codes.Unauthenticated, "no user in context")
+	}
+	identities := user.GetExtra()[authnlib.ServiceIdentityKey]
+	if user.GetIdentityType() != types.TypeAccessPolicy || len(identities) != 1 {
+		return status.Error(codes.PermissionDenied, "service identity not allowed to read collection")
+	}
+	for _, identity := range allowed {
+		if identities[0] == identity {
+			return nil
+		}
+	}
+	return status.Error(codes.PermissionDenied, "service identity not allowed to read collection")
+}
+
+func (s *searchServer) checkFederatedReadServices(ctx context.Context, req *resourcepb.ResourceSearchRequest) error {
+	for _, federated := range req.Federated {
+		if err := s.checkAllowedReadService(ctx, federated.Group, federated.Resource); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // getIndexMaxAge returns the configured rebuild interval for the given
@@ -682,6 +714,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		allowedReadServices:    opts.AllowedReadServices,
 		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
@@ -1133,6 +1166,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
+	}
+	if err := s.checkAllowedReadService(ctx, req.Key.Group, req.Key.Resource); err != nil {
+		return nil, err
 	}
 
 	limit := int(req.Limit)

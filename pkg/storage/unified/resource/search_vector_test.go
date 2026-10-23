@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -206,8 +207,91 @@ func authedCtx() context.Context {
 	)
 }
 
+type serviceReadRequester struct {
+	*identity.StaticRequester
+	identities []string
+}
+
+func (u *serviceReadRequester) GetExtra() map[string][]string {
+	return map[string][]string{authnlib.ServiceIdentityKey: u.identities}
+}
+
+func serviceReadContext(subject authlib.IdentityType, identities ...string) context.Context {
+	return authlib.WithAuthInfo(context.Background(), &serviceReadRequester{
+		StaticRequester: &identity.StaticRequester{Type: subject, Namespace: "ns"},
+		identities:      identities,
+	})
+}
+
 func validKey() *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r"}
+}
+
+func TestVectorSearch_RestrictedCollectionRejectsUserBeforeEmbedding(t *testing.T) {
+	client := &fakeTextEmbedder{dim: 4}
+	backend := &fakeVectorBackend{}
+	s := newTestSearchServer(newTestEmbedder(client), backend)
+	s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Empty(t, client.gotIn.Texts)
+	require.Zero(t, backend.resolveCalls)
+}
+
+func TestVectorSearch_AllowedReadServices(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		subject    authlib.IdentityType
+		identities []string
+		policy     map[string][]string
+		wantDenied bool
+	}{
+		{name: "assistant service", subject: authlib.TypeAccessPolicy, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}},
+		{name: "another service", subject: authlib.TypeAccessPolicy, identities: []string{"other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "missing identity", subject: authlib.TypeAccessPolicy, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "empty configured allowlist fails closed", subject: authlib.TypeAccessPolicy, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {}}, wantDenied: true},
+		{name: "multiple identities", subject: authlib.TypeAccessPolicy, identities: []string{"assistant", "other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "user with assistant claim", subject: authlib.TypeUser, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "service account with assistant claim", subject: authlib.TypeServiceAccount, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+		{name: "unconfigured user", subject: authlib.TypeUser},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
+			client := &fakeTextEmbedder{dim: 4}
+			s := newTestSearchServer(newTestEmbedder(client), backend)
+			s.allowedReadServices = tc.policy
+			resp, err := s.VectorSearch(serviceReadContext(tc.subject, tc.identities...), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
+			if tc.wantDenied {
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Nil(t, resp)
+				require.Zero(t, backend.resolveCalls)
+				require.Empty(t, client.gotIn.Texts)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, resp.Results, 1)
+			require.Equal(t, "memory", resp.Results[0].Name)
+		})
+	}
+}
+
+func TestVectorSearch_AllowedServiceStillNeedsTenantAndGetPermission(t *testing.T) {
+	backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
+	access := &fakeAccessClient{allow: func(string, string) bool { return false }}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+	s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
+	ctx := serviceReadContext(authlib.TypeAccessPolicy, "assistant")
+	key := validKey()
+	key.Namespace = "other"
+	resp, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: key, Query: "memory"})
+	require.NoError(t, err)
+	require.Equal(t, 403, int(resp.Error.Code))
+	require.Zero(t, backend.resolveCalls)
+
+	resp, err = s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
+	require.NoError(t, err)
+	require.Empty(t, resp.Results)
+	require.Positive(t, backend.resolveCalls)
 }
 
 func TestVectorSearch_HappyPath(t *testing.T) {
