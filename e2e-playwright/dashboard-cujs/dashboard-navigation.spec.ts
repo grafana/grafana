@@ -10,9 +10,9 @@ test.use({
   openFeature: {
     flags: {
       reloadDashboardsOnParamsChange: true,
+      'grafana.scopesDashboardsMegaMenu': false,
     },
   },
-  openFeature: { flags: { 'grafana.scopesDashboardsMegaMenu': false } },
 });
 
 runDashboardNavigationCujs({ megaMenu: false });
