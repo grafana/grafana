@@ -222,6 +222,13 @@ describe('captureSavedViewState — tab/row-scoped section filters', () => {
     ]);
   });
 
+  it('keeps an empty tab title so apply still checks it', () => {
+    const { scene, tab } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    tab.setState({ title: '' });
+
+    expect(captureSavedViewState(scene).sectionFilters?.[0].sectionTitle).toBe('');
+  });
+
   it('omits sectionFilters entirely when no tab/row has its own variables', () => {
     const spec = captureSavedViewState(buildScene());
 
@@ -608,6 +615,22 @@ describe('getSavedViewDiff', () => {
       ],
     };
     expect(getSavedViewDiff(changed, withSection)).toBe(true);
+  });
+
+  it('ignores a stored section whose title no longer matches the live section at that path', () => {
+    const section = (sectionTitle: string, value: string): SavedViewSectionFilter => ({
+      sectionKind: 'tab',
+      sectionKey: '/tabs/0',
+      sectionTitle,
+      variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value }] }],
+    });
+
+    expect(
+      getSavedViewDiff(
+        { ...base, sectionFilters: [section('Other tab', 'y')] },
+        { ...base, sectionFilters: [section('My tab', 'x')] }
+      )
+    ).toBe(false);
   });
 
   it('is false when sectionFilters is absent on both sides', () => {

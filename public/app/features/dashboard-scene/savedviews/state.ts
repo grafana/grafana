@@ -116,7 +116,7 @@ function captureSectionFilters(dashboard: DashboardScene): SavedViewSectionFilte
     .map(({ sectionKind, sectionKey, sectionTitle, variables }) => ({
       sectionKind,
       sectionKey,
-      ...(sectionTitle ? { sectionTitle } : {}),
+      ...(sectionTitle !== undefined ? { sectionTitle } : {}),
       variables: captureVariables(variables),
     }))
     .filter((section) => section.variables.length > 0);
@@ -367,7 +367,11 @@ function sectionFiltersDiffer(
   const currentByKey = new Map((current ?? []).map((s) => [s.sectionKey, s]));
   return (expected ?? []).some((section) => {
     const live = currentByKey.get(section.sectionKey);
-    return live !== undefined && variablesDiffer(live.variables, section.variables);
+    if (!live || (section.sectionTitle !== undefined && live.sectionTitle !== section.sectionTitle)) {
+      // Apply skips this section too, so it can't make the view dirty.
+      return false;
+    }
+    return variablesDiffer(live.variables, section.variables);
   });
 }
 
