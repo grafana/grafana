@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { FileDropzone } from './FileDropzone';
@@ -51,6 +51,35 @@ describe('The FileDropzone component', () => {
     render(<FileDropzone options={{ accept: { 'text/*': ['.json', '.txt'] } }} />);
 
     expect(await screen.findByText('Accepted file types: .json, .txt')).toBeInTheDocument();
+  });
+
+  describe('file system access', () => {
+    const originalSecureContext = Object.getOwnPropertyDescriptor(globalThis, 'isSecureContext');
+
+    afterEach(() => {
+      if (originalSecureContext) {
+        Object.defineProperty(globalThis, 'isSecureContext', originalSecureContext);
+      } else {
+        Reflect.deleteProperty(globalThis, 'isSecureContext');
+      }
+    });
+
+    it.each([false, true])('reads a dropped file with isSecureContext=%s', async (isSecureContext) => {
+      Object.defineProperty(globalThis, 'isSecureContext', { configurable: true, value: isSecureContext });
+      const fileToUpload = file({});
+      const getAsFileSystemHandle = jest
+        .fn()
+        .mockResolvedValue(isSecureContext ? { getFile: async () => fileToUpload } : undefined);
+      const data = mockData([fileToUpload]);
+      Object.assign(data.dataTransfer.items[0], { getAsFileSystemHandle });
+      const onLoad = jest.fn();
+      render(<FileDropzone onLoad={onLoad} options={{ accept: '.json', multiple: false }} />);
+
+      dispatchEvt(await screen.findByTestId('dropzone'), 'drop', data);
+
+      await waitFor(() => expect(onLoad).toHaveBeenCalledWith('{"ping":true}'));
+      expect(getAsFileSystemHandle).toHaveBeenCalledTimes(isSecureContext ? 1 : 0);
+    });
   });
 
   it('should handle file removal from the list', async () => {

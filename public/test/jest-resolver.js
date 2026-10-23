@@ -4,6 +4,11 @@ module.exports = (path, options) => {
     ...options,
     // Use packageFilter to process parsed `package.json` before the resolution (see https://www.npmjs.com/package/resolve#resolveid-opts-cb)
     packageFilter: (pkg) => {
+      // Match the browser entry: the UMD bundle embeds its own copy of file-selector.
+      if (pkg.name === 'react-dropzone') {
+        delete pkg.exports;
+        pkg.main = pkg.module;
+      }
       // jest-environment-jsdom 28+ tries to use browser exports instead of default exports,
       // but react-colorful only offers an ESM browser export and not a CommonJS one.
       // Deleting exports forces fallback to the CommonJS "main" entry.
