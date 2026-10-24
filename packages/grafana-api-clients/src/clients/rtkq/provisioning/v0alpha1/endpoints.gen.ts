@@ -1,5 +1,13 @@
 import { api } from './baseAPI';
-export const addTagTypes = ['API Discovery', 'Connection', 'Job', 'Repository', 'Provisioning'] as const;
+export const addTagTypes = [
+  'API Discovery',
+  'BundleFile',
+  'Bundle',
+  'Connection',
+  'Job',
+  'Repository',
+  'Provisioning',
+] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -9,6 +17,261 @@ const injectedRtkApi = api
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
         query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
+      }),
+      listBundleFile: build.query<ListBundleFileApiResponse, ListBundleFileApiArg>({
+        query: (queryArg) => ({
+          url: `/bundlefiles`,
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            fieldSelector: queryArg.fieldSelector,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            resourceVersion: queryArg.resourceVersion,
+            timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
+          },
+        }),
+        providesTags: ['BundleFile'],
+      }),
+      createBundleFile: build.mutation<CreateBundleFileApiResponse, CreateBundleFileApiArg>({
+        query: (queryArg) => ({
+          url: `/bundlefiles`,
+          method: 'POST',
+          body: queryArg.bundleFile,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['BundleFile'],
+      }),
+      deletecollectionBundleFile: build.mutation<
+        DeletecollectionBundleFileApiResponse,
+        DeletecollectionBundleFileApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/bundlefiles`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            dryRun: queryArg.dryRun,
+            fieldSelector: queryArg.fieldSelector,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+            resourceVersion: queryArg.resourceVersion,
+            resourceVersionMatch: queryArg.resourceVersionMatch,
+            sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
+            timeoutSeconds: queryArg.timeoutSeconds,
+          },
+        }),
+        invalidatesTags: ['BundleFile'],
+      }),
+      getBundleFile: build.query<GetBundleFileApiResponse, GetBundleFileApiArg>({
+        query: (queryArg) => ({
+          url: `/bundlefiles/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['BundleFile'],
+      }),
+      replaceBundleFile: build.mutation<ReplaceBundleFileApiResponse, ReplaceBundleFileApiArg>({
+        query: (queryArg) => ({
+          url: `/bundlefiles/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.bundleFile,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['BundleFile'],
+      }),
+      deleteBundleFile: build.mutation<DeleteBundleFileApiResponse, DeleteBundleFileApiArg>({
+        query: (queryArg) => ({
+          url: `/bundlefiles/${queryArg.name}`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+          },
+        }),
+        invalidatesTags: ['BundleFile'],
+      }),
+      updateBundleFile: build.mutation<UpdateBundleFileApiResponse, UpdateBundleFileApiArg>({
+        query: (queryArg) => ({
+          url: `/bundlefiles/${queryArg.name}`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['BundleFile'],
+      }),
+      listBundle: build.query<ListBundleApiResponse, ListBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles`,
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            fieldSelector: queryArg.fieldSelector,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            resourceVersion: queryArg.resourceVersion,
+            timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
+          },
+        }),
+        providesTags: ['Bundle'],
+      }),
+      createBundle: build.mutation<CreateBundleApiResponse, CreateBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles`,
+          method: 'POST',
+          body: queryArg.bundle,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
+      }),
+      deletecollectionBundle: build.mutation<DeletecollectionBundleApiResponse, DeletecollectionBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            dryRun: queryArg.dryRun,
+            fieldSelector: queryArg.fieldSelector,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+            resourceVersion: queryArg.resourceVersion,
+            resourceVersionMatch: queryArg.resourceVersionMatch,
+            sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
+            timeoutSeconds: queryArg.timeoutSeconds,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
+      }),
+      getBundle: build.query<GetBundleApiResponse, GetBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Bundle'],
+      }),
+      replaceBundle: build.mutation<ReplaceBundleApiResponse, ReplaceBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.bundle,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
+      }),
+      deleteBundle: build.mutation<DeleteBundleApiResponse, DeleteBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
+      }),
+      updateBundle: build.mutation<UpdateBundleApiResponse, UpdateBundleApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
+      }),
+      getBundleStatus: build.query<GetBundleStatusApiResponse, GetBundleStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}/status`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Bundle'],
+      }),
+      replaceBundleStatus: build.mutation<ReplaceBundleStatusApiResponse, ReplaceBundleStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}/status`,
+          method: 'PUT',
+          body: queryArg.bundle,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
+      }),
+      updateBundleStatus: build.mutation<UpdateBundleStatusApiResponse, UpdateBundleStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/bundles/${queryArg.name}/status`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Bundle'],
       }),
       listConnection: build.query<ListConnectionApiResponse, ListConnectionApiArg>({
         query: (queryArg) => ({
@@ -559,6 +822,379 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
+export type ListBundleFileApiResponse = /** status 200 OK */ BundleFileList;
+export type ListBundleFileApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
+};
+export type CreateBundleFileApiResponse = /** status 200 OK */
+  | BundleFile
+  | /** status 201 Created */ BundleFile
+  | /** status 202 Accepted */ BundleFile;
+export type CreateBundleFileApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  bundleFile: BundleFile;
+};
+export type DeletecollectionBundleFileApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionBundleFileApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersionMatch?: string;
+  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
+    
+    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
+      is interpreted as "data at least as new as the provided `resourceVersion`"
+      and the bookmark event is send when the state is synced
+      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+      bookmark event is send when the state is synced at least to the moment
+      when request started being processed.
+    - `resourceVersionMatch` set to any other value or unset
+      Invalid error is returned.
+    
+    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
+  sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+};
+export type GetBundleFileApiResponse = /** status 200 OK */ BundleFile;
+export type GetBundleFileApiArg = {
+  /** name of the BundleFile */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceBundleFileApiResponse = /** status 200 OK */ BundleFile | /** status 201 Created */ BundleFile;
+export type ReplaceBundleFileApiArg = {
+  /** name of the BundleFile */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  bundleFile: BundleFile;
+};
+export type DeleteBundleFileApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteBundleFileApiArg = {
+  /** name of the BundleFile */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+};
+export type UpdateBundleFileApiResponse = /** status 200 OK */ BundleFile | /** status 201 Created */ BundleFile;
+export type UpdateBundleFileApiArg = {
+  /** name of the BundleFile */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
+export type ListBundleApiResponse = /** status 200 OK */ BundleList;
+export type ListBundleApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
+};
+export type CreateBundleApiResponse = /** status 200 OK */
+  | Bundle
+  | /** status 201 Created */ Bundle
+  | /** status 202 Accepted */ Bundle;
+export type CreateBundleApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  bundle: Bundle;
+};
+export type DeletecollectionBundleApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionBundleApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersionMatch?: string;
+  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
+    
+    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
+      is interpreted as "data at least as new as the provided `resourceVersion`"
+      and the bookmark event is send when the state is synced
+      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+      bookmark event is send when the state is synced at least to the moment
+      when request started being processed.
+    - `resourceVersionMatch` set to any other value or unset
+      Invalid error is returned.
+    
+    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
+  sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+};
+export type GetBundleApiResponse = /** status 200 OK */ Bundle;
+export type GetBundleApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceBundleApiResponse = /** status 200 OK */ Bundle | /** status 201 Created */ Bundle;
+export type ReplaceBundleApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  bundle: Bundle;
+};
+export type DeleteBundleApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteBundleApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+};
+export type UpdateBundleApiResponse = /** status 200 OK */ Bundle | /** status 201 Created */ Bundle;
+export type UpdateBundleApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
+export type GetBundleStatusApiResponse = /** status 200 OK */ Bundle;
+export type GetBundleStatusApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceBundleStatusApiResponse = /** status 200 OK */ Bundle | /** status 201 Created */ Bundle;
+export type ReplaceBundleStatusApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  bundle: Bundle;
+};
+export type UpdateBundleStatusApiResponse = /** status 200 OK */ Bundle | /** status 201 Created */ Bundle;
+export type UpdateBundleStatusApiArg = {
+  /** name of the Bundle */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
 export type ListConnectionApiResponse = /** status 200 OK */ ConnectionList;
 export type ListConnectionApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -1433,6 +2069,151 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type BundleFileSpec = {
+  /** Bundle this file belongs to. */
+  bundle: string;
+  /** Content of the file, base64-encoded. Always encoded, whatever the file holds: bundles carry arbitrary files, and a single representation avoids both guessing at text and silently mangling anything that is not valid UTF-8. */
+  content?: string;
+  /** Hash of the decoded content. It is both the change detector and the version a consumer checks: a bundle records the hashes it resolved, so a file whose hash matches is the one the bundle expects. */
+  hash?: string;
+  /** Path is the file's location, relative to the repository root -- the same form every other provisioning path takes. */
+  path: string;
+  /** Repository this file was read from. */
+  repository: string;
+  /** Size of the decoded content in bytes. */
+  size?: number;
+};
+export type BundleFile = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec?: BundleFileSpec;
+};
+export type ListMeta = {
+  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
+  continue?: string;
+  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
+  remainingItemCount?: number;
+  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
+  resourceVersion?: string;
+  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
+  selfLink?: string;
+};
+export type BundleFileList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: BundleFile[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
+export type StatusCause = {
+  /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
+    
+    Examples:
+      "name" - the field "name" on the current resource
+      "items[0].name" - the field "name" on the first array entry in "items" */
+  field?: string;
+  /** A human-readable description of the cause of the error.  This field may be presented as-is to a reader. */
+  message?: string;
+  /** A machine-readable description of the cause of the error. If this value is empty there is no information available. */
+  reason?: string;
+};
+export type StatusDetails = {
+  /** The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes. */
+  causes?: StatusCause[];
+  /** The group attribute of the resource associated with the status StatusReason. */
+  group?: string;
+  /** The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** The name attribute of the resource associated with the status StatusReason (when there is a single name which can be described). */
+  name?: string;
+  /** If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action. */
+  retryAfterSeconds?: number;
+  /** UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
+  uid?: string;
+};
+export type Status = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Suggested HTTP return code for this status, 0 if not set. */
+  code?: number;
+  /** Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type. */
+  details?: StatusDetails;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** A human-readable description of the status of this operation. */
+  message?: string;
+  /** Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  metadata?: ListMeta;
+  /** A machine-readable description of why this operation is in the "Failure" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it. */
+  reason?: string;
+  /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
+  status?: string;
+};
+export type Patch = object;
+export type BundleSpec = {
+  /** Paths belonging to this bundle, relative to the repository root -- the same form every other provisioning path takes.
+    
+    A path with a trailing "/" is a folder, and everything beneath it belongs to the bundle; anything else is a single file. Selection is by path only: a repository path is already the addressing scheme provisioning uses everywhere, and a declared path is readable in a diff.
+    
+    These are what the author declared; what they resolved to is status.files. */
+  paths?: string[];
+};
+export type Condition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
+  lastTransitionTime: Time;
+  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+  message: string;
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  observedGeneration?: number;
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  reason: string;
+  /** status of the condition, one of True, False, Unknown. */
+  status: string;
+  /** type of condition in CamelCase or in foo.example.com/CamelCase. */
+  type: string;
+};
+export type BundleFileRef = {
+  /** Hash of the decoded content. A consumer compares it against the stored file to know it has the version this bundle published. */
+  hash?: string;
+  /** Name of the BundleFile resource holding this file's content. */
+  name: string;
+  /** Path in the repository, relative to its root. */
+  path: string;
+  /** Size of the decoded content in bytes. */
+  size?: number;
+};
+export type BundleStatus = {
+  conditions?: Condition[];
+  /** Files the bundle resolved to at Ref, after expanding folders. Unlike spec.paths these are always files.
+    
+    Each entry names the BundleFile holding it, so this is the index a consumer reads to fetch content: one GET of the bundle yields every name, hash and size, and the files are then fetched directly by name. Without the name a client would have to either list bundle files by label -- which returns all of their content -- or recompute the name from the path, duplicating a hash the server owns. */
+  files?: BundleFileRef[];
+  /** Ref is the repository ref the files below were resolved at. Without it a resolved list is a claim with no referent: neither staleness nor safe deletion could be determined from it. */
+  ref?: string;
+  /** Unresolved are spec.paths entries that matched nothing at Ref. Reported rather than hidden, so a folder renamed away surfaces instead of quietly emptying the bundle. */
+  unresolved?: string[];
+};
+export type Bundle = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec?: BundleSpec;
+  status?: BundleStatus;
+};
+export type BundleList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: Bundle[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
@@ -1550,20 +2331,6 @@ export type ConnectionSpec = {
   /** Webhook configuration for this connection */
   webhook?: ConnectionWebhookConfig;
 };
-export type Condition = {
-  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
-  lastTransitionTime: Time;
-  /** message is a human readable message indicating details about the transition. This may be an empty string. */
-  message: string;
-  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
-  observedGeneration?: number;
-  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
-  reason: string;
-  /** status of the condition, one of True, False, Unknown. */
-  status: string;
-  /** type of condition in CamelCase or in foo.example.com/CamelCase. */
-  type: string;
-};
 export type ErrorDetails = {
   /** BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant. */
   badValue?: any;
@@ -1616,16 +2383,6 @@ export type Connection = {
   spec?: ConnectionSpec;
   status?: ConnectionStatus;
 };
-export type ListMeta = {
-  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
-  continue?: string;
-  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
-  remainingItemCount?: number;
-  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
-  resourceVersion?: string;
-  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
-  selfLink?: string;
-};
 export type ConnectionList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -1634,51 +2391,6 @@ export type ConnectionList = {
   kind?: string;
   metadata?: ListMeta;
 };
-export type StatusCause = {
-  /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
-    
-    Examples:
-      "name" - the field "name" on the current resource
-      "items[0].name" - the field "name" on the first array entry in "items" */
-  field?: string;
-  /** A human-readable description of the cause of the error.  This field may be presented as-is to a reader. */
-  message?: string;
-  /** A machine-readable description of the cause of the error. If this value is empty there is no information available. */
-  reason?: string;
-};
-export type StatusDetails = {
-  /** The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes. */
-  causes?: StatusCause[];
-  /** The group attribute of the resource associated with the status StatusReason. */
-  group?: string;
-  /** The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  /** The name attribute of the resource associated with the status StatusReason (when there is a single name which can be described). */
-  name?: string;
-  /** If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action. */
-  retryAfterSeconds?: number;
-  /** UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
-  uid?: string;
-};
-export type Status = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Suggested HTTP return code for this status, 0 if not set. */
-  code?: number;
-  /** Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type. */
-  details?: StatusDetails;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  /** A human-readable description of the status of this operation. */
-  message?: string;
-  /** Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  metadata?: ListMeta;
-  /** A machine-readable description of why this operation is in the "Failure" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it. */
-  reason?: string;
-  /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
-  status?: string;
-};
-export type Patch = object;
 export type ConnectionAuthorizeRequestSpec = {
   /** The authorization code returned by the provider */
   code: string;
@@ -2389,6 +3101,28 @@ export type ResourceStats = {
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
+  useListBundleFileQuery,
+  useLazyListBundleFileQuery,
+  useCreateBundleFileMutation,
+  useDeletecollectionBundleFileMutation,
+  useGetBundleFileQuery,
+  useLazyGetBundleFileQuery,
+  useReplaceBundleFileMutation,
+  useDeleteBundleFileMutation,
+  useUpdateBundleFileMutation,
+  useListBundleQuery,
+  useLazyListBundleQuery,
+  useCreateBundleMutation,
+  useDeletecollectionBundleMutation,
+  useGetBundleQuery,
+  useLazyGetBundleQuery,
+  useReplaceBundleMutation,
+  useDeleteBundleMutation,
+  useUpdateBundleMutation,
+  useGetBundleStatusQuery,
+  useLazyGetBundleStatusQuery,
+  useReplaceBundleStatusMutation,
+  useUpdateBundleStatusMutation,
   useListConnectionQuery,
   useLazyListConnectionQuery,
   useCreateConnectionMutation,
