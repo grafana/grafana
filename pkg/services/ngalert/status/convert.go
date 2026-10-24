@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
