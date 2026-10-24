@@ -175,7 +175,11 @@ export const getGridStyles = memoize(
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
-        ...(showColumnSidebarBorder && { borderInlineStart: `1px solid ${table.border}` }),
+        ...(showColumnSidebarBorder && {
+          borderInlineStart: `1px solid ${table.border}`,
+          // Match the header corner so the divider does not protrude above its curve.
+          ...(tableRefreshEnabled && { borderStartStartRadius: cornerRadius }),
+        }),
 
         // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
         ...(theme.flags.tabularNums ? {} : { fontVariantNumeric: 'normal' }),
