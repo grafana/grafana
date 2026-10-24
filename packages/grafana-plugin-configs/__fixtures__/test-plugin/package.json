@@ -1,0 +1,5 @@
+{
+  "name": "@grafana-plugins/test-fixture-plugin",
+  "private": true,
+  "version": "1.2.3"
+}

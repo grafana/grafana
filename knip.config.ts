@@ -138,7 +138,7 @@ const config: KnipConfig = {
       entry: [...defaultEntries, 'module.{ts,tsx,js}!'],
       project: defaultProject,
       // these are provided by grafana-plugin-configs
-      ignoreDependencies: ['@swc/jest'],
+      ignoreDependencies: ['@swc/jest', 'imports-loader', 'style-loader'],
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
@@ -177,6 +177,12 @@ const config: KnipConfig = {
       webpack: false,
       // dev tooling only, so nothing is part of production
       project: ['**/*.{js,ts}'],
+      // knip's rspack plugin globs `rspack.config*` — which also matches the
+      // config's test file — and executes them without the arguments the
+      // plugin build passes in
+      rspack: false,
+      // the fixture plugin is only ever referenced by path from the config tests
+      ignore: ['__fixtures__/**'],
       ignoreDependencies: ['.*'],
     },
     'packages/grafana-plugin-compat': {
