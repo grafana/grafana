@@ -7019,7 +7019,8 @@
         "change-annotation-controls-display": "Change annotation controls display",
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
-        "change-annotation-panel-filter": "Change annotation panel filter"
+        "change-annotation-panel-filter": "Change annotation panel filter",
+        "change-annotation-query": "Change annotation query"
       },
       "edit-query": "Edit query"
     },
