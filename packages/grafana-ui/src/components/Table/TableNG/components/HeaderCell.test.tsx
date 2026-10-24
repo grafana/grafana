@@ -652,6 +652,47 @@ describe('HeaderCell', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
       expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
     });
+
+    it('moves focus to the column menu button when clearing the filter removes the filter icon', async () => {
+      const field = filterableField();
+      const data = { fields: [field], length: 3 };
+      const FilteredHeader = () => {
+        // Keyed on applyFilter, which stays stable across filter changes, so clearing is not undone.
+        const applyFilter = useTableFilters()?.applyFilter;
+        useEffect(() => {
+          applyFilter?.(field, { id: 'inSet', options: { mode: 'display', values: ['a'] } });
+        }, [applyFilter]);
+        return <HeaderCell {...baseProps} field={field} tableRefreshEnabled />;
+      };
+      const user = userEvent.setup();
+      render(
+        <TableFilterProvider props={{ data, width: 300, height: 200 }}>
+          <FilteredHeader />
+        </TableFilterProvider>
+      );
+
+      act(() => screen.getByLabelText(filterIconLabel).focus());
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+      act(() => screen.getByRole('button', { name: 'Clear filter' }).focus());
+      await user.keyboard('{Enter}');
+
+      expect(screen.getByLabelText(menuLabel)).toHaveFocus();
+      expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
+    });
+
+    it('does not pull focus back into the header when the popup is dismissed by clicking empty space', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await user.click(screen.getByLabelText(menuLabel));
+      await user.click(await screen.findByRole('menuitem', { name: 'Filter values' }));
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+      await user.click(document.body);
+
+      expect(document.body).toHaveFocus();
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
+    });
   });
 
   describe('keyboard handling', () => {
