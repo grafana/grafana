@@ -25,6 +25,12 @@ const (
 	VerbSetPermissions = "set_permissions"
 )
 
+// Datasource-specific authorization probes, not Kubernetes request verbs.
+const (
+	VerbGetCaching = "get_caching"
+	VerbSetCaching = "set_caching"
+)
+
 // ListKeysPathSegment is the final segment of the list-keys endpoint. Kubernetes
 // parses a POST to it as a create on an object of that name, so the authorization
 // chain and the route that serves it both need the literal.
