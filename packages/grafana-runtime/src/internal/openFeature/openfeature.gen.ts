@@ -118,6 +118,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Disables public dashboards for the stack */
+  DashboardsDisablePublicDashboards: "dashboards.disablePublicDashboards",
   /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
   DashboardsLibraryPanelHorizontalRepeatFullWidth: "dashboards.libraryPanelHorizontalRepeatFullWidth",
   /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
@@ -972,6 +974,17 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardValidatorApp", false, options).value;
+};
+
+/**
+ * Disables public dashboards for the stack
+ *
+ * **Details:**
+ * - flag key: `dashboards.disablePublicDashboards`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisablePublicDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disablePublicDashboards", false, options).value;
 };
 
 /**

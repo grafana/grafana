@@ -201,7 +201,8 @@ declare module "@openfeature/core" {
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
-    | "reporting.removeLogoUrlField";
+    | "reporting.removeLogoUrlField"
+    | "dashboards.disablePublicDashboards";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

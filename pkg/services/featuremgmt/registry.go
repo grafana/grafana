@@ -3428,6 +3428,15 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "dashboards.disablePublicDashboards",
+			Description:  "Disables public dashboards for the stack",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
