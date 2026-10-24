@@ -203,6 +203,7 @@ The SQL conversion path:
 
 - The query result appears as a single data frame, without labels, and maps directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
+- If a column name repeats, later columns get a number, for example `host_2` and `host_3`. The match ignores case.
 
 ## Data source response formats
 
