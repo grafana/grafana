@@ -282,6 +282,25 @@ describe('TableDataGrid', () => {
       expect(getGridFrameOverlayStyleRule()).toBeUndefined();
     });
 
+    it('gives the first- and last-column header corner masks separate pseudo-elements', () => {
+      // A single column's cell has both edge classes; sharing one pseudo-element would collide.
+      render(
+        <TableDataGrid {...makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] })} />
+      );
+
+      const cssRules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules));
+      const matches = (className: string, edge: 'before' | 'after') =>
+        cssRules.some(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule && rule.selectorText.endsWith(`.${className}::${edge}`)
+        );
+
+      expect(matches(FIRST_COLUMN_CLASS, 'after')).toBe(true);
+      expect(matches(LAST_COLUMN_CLASS, 'before')).toBe(true);
+      expect(matches(LAST_COLUMN_CLASS, 'after')).toBe(false);
+      expect(matches(FIRST_COLUMN_CLASS, 'before')).toBe(false);
+    });
+
     it.each([
       [true, 'none'],
       [false, '0 2px 4px red'],
