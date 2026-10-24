@@ -1445,6 +1445,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
@@ -2168,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Punti dati massimi",
-      "tooltip-max-data-points": "Il numero massimo di punti dati per serie. Utilizzato direttamente da alcune origini dei dati e nel calcolo dell'intervallo automatico. Con i dati in streaming questo valore viene utilizzato per il buffer circolare."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "nuovo"
     },
     "min-interval-option": {
       "label-interval": "Intervallo",
-      "tooltip-interval": "Intervallo inviato all'origine dei dati. Si consiglia di impostare la frequenza di scrittura, ad esempio <1>1 m</1> se i dati vengono scritti ogni minuto."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Vai al contenuto principale",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Accedi"
     }
@@ -4612,8 +4622,7 @@
       "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. ",
       "folder-empty": "La cartella selezionata è vuota",
       "folder-not-empty": "La cartella selezionata contiene risorse che verranno eliminate",
-      "missing-info": "Campi obbligatori mancanti",
-      "success-message": "Cartella eliminata correttamente"
+      "missing-info": "Campi obbligatori mancanti"
     },
     "empty-state": {
       "button-title": "Crea dashboard",
@@ -7251,8 +7260,7 @@
       "delete-error": "Impossibile eliminare la dashboard",
       "deleting": "Eliminazione in corso...",
       "drawer-title": "Elimina la dashboard configurata",
-      "no-repository-selected": "Repository obbligatorio mancante per l'eliminazione",
-      "success-message": "Dashboard eliminata correttamente"
+      "no-repository-selected": "Repository obbligatorio mancante per l'eliminazione"
     },
     "description-label": {
       "description": "Descrizione"
@@ -7531,14 +7539,10 @@
       "already-in-folder": "La dashboard è già presente nella cartella selezionata.",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
-      "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
       "drawer-title": "Sposta la dashboard configurata",
-      "file-load-error": "Errore durante il caricamento della dashboard",
-      "loading-dashboard-data": "Caricamento dati dashboard",
       "move-action": "Sposta dashboard",
       "move-read-only-message": "Questa dashboard non può essere spostata direttamente da Grafana perché il repository è di sola lettura. Per spostare questa dashboard, sposta il file nel repository Git.",
       "moving": "Spostamento in corso...",
-      "success-message": "Dashboard spostata correttamente",
       "target-path-label": "Percorso di destinazione",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
     },
@@ -14322,6 +14326,7 @@
       "description-folder": "Cartella all'interno del repository. Lascia vuoto per la cartella principale del repository.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "L'invio al ramo configurato è disabilitato",
       "label-branch": "Ramo",
       "label-comment": "Commento",
@@ -15867,6 +15872,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Seleziona un'origine dei dati per questa query per continuare.",
     "datasource-load-error-title": "Impossibile caricare l'origine dati per questa query",
     "loading-datasource": "Caricamento origine di dati in corso",

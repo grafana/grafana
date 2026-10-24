@@ -1459,6 +1459,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_few": "",
@@ -2198,14 +2203,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max. počet datových bodů",
-      "tooltip-max-data-points": "Maximální datové body na řadu. Používá se přímo některými zdroji dat a při výpočtu automatického intervalu. U streamovaných dat se tato hodnota používá pro klouzavou vyrovnávací paměť."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "nové"
     },
     "min-interval-option": {
       "label-interval": "Interval",
-      "tooltip-interval": "Interval odeslán do zdroje dat. Doporučuje se nastavit frekvenci zápisu, například <1>1m</1>, pokud jsou data zapisována každou minutu."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4219,6 +4224,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Přejít na hlavní obsah",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Přihlášení"
     }
@@ -4702,8 +4712,7 @@
       "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. ",
       "folder-empty": "Vybraná složka je prázdná",
       "folder-not-empty": "Vybraná složka obsahuje zdroje, které budou odstraněny",
-      "missing-info": "Chybějící povinná pole",
-      "success-message": "Složka byla úspěšně odstraněna"
+      "missing-info": "Chybějící povinná pole"
     },
     "empty-state": {
       "button-title": "Vytvořit nástěnku",
@@ -7355,8 +7364,7 @@
       "delete-error": "Nástěnku se nepodařilo odstranit",
       "deleting": "Probíhá odstranění…",
       "drawer-title": "Odstranit zajištěnou nástěnku",
-      "no-repository-selected": "Chybí úložiště, které je nutné odstranit",
-      "success-message": "Nástěnka byla úspěšně odstraněna"
+      "no-repository-selected": "Chybí úložiště, které je nutné odstranit"
     },
     "description-label": {
       "description": "Popis"
@@ -7639,14 +7647,10 @@
       "already-in-folder": "Nástěnka již je ve vybrané složce.",
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
-      "current-file-not-found": "Aktuální soubor nástěnky se nepodařilo najít",
       "drawer-title": "Přesunout zajištěnou nástěnku",
-      "file-load-error": "Chyba při načítání nástěnky",
-      "loading-dashboard-data": "Načítání dat nástěnky",
       "move-action": "Přesunout nástěnku",
       "move-read-only-message": "Tuto nástěnku nelze přesunout přímo z Grafany, protože úložiště je jen pro čtení. Chcete-li tuto nástěnku přesunout, přesuňte soubor v úložišti Git.",
       "moving": "Probíhá přesouvání…",
-      "success-message": "Nástěnka byla úspěšně přesunuta",
       "target-path-label": "Cílová cesta",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
@@ -14544,6 +14548,7 @@
       "description-folder": "Složka uvnitř úložiště. Ponechte prázdné pro kořenový adresář úložiště.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Prosazení do nakonfigurované větve je deaktivováno",
       "label-branch": "Větev",
       "label-comment": "Komentář",
@@ -16139,6 +16144,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Chcete-li pokračovat, vyberte zdroj dat pro tento dotaz.",
     "datasource-load-error-title": "Zdroj dat pro tento dotaz se nepodařilo načíst",
     "loading-datasource": "Načítání zdroje dat",
