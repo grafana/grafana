@@ -120,17 +120,15 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           // the column name based on value fields that are numbers
           // this prevents columns that should be named 1000190
           // from becoming named {__name__: 'metricName'}
-          if (typeof columnName === 'number') {
-            valueField.config = { ...valueField.config, displayNameFromDS: undefined };
-          }
-
           // the names of these columns need to be the selected column values, and not be overridden with the display name
-          delete valueField.config.displayName;
+          const config = { ...valueField.config };
+          delete config.displayName;
+          delete config.displayNameFromDS;
 
           fields.push({
             name: columnName?.toString() ?? null,
             values: values,
-            config: valueField.config,
+            config,
             type: valueField.type,
           });
         }
