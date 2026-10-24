@@ -149,6 +149,14 @@ describe('duration', () => {
     const str = toDurationInMilliseconds(-1, 0);
     expect(formattedValueToString(str)).toBe('1 millisecond ago');
   });
+  it('sub-millisecond values do not render blank', () => {
+    expect(formattedValueToString(toDurationInMilliseconds(0.5, 1))).toBe('0.5 milliseconds');
+    expect(formattedValueToString(toDurationInMilliseconds(0.9999, 0))).toBe('1 millisecond');
+    expect(formattedValueToString(toDurationInMilliseconds(-0.5, 1))).toBe('0.5 milliseconds ago');
+  });
+  it('sub-millisecond seconds render in fractional milliseconds', () => {
+    expect(formattedValueToString(toDurationInSeconds(0.0004, 0))).toBe('0.400 milliseconds');
+  });
   it('seconds', () => {
     const str = toDurationInSeconds(1, 0);
     expect(formattedValueToString(str)).toBe('1 second');

@@ -239,6 +239,19 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     }
   }
 
+  if (strings.length === 0) {
+    // A non-zero value below the smallest unit (millisecond) pushed nothing,
+    // which rendered as an empty string. Show a fractional millisecond value,
+    // honoring decimals, so a non-zero duration never renders blank.
+    let value = toFixed(size, decimals);
+    if (Number(value) === 0) {
+      // Honoring decimals would round a non-zero value to zero; use automatic
+      // precision instead so it still renders as non-zero.
+      value = toFixed(size);
+    }
+    strings.push(value + ' ' + (value === '1' ? 'millisecond' : 'milliseconds'));
+  }
+
   return { text: strings.join(', ') };
 }
 
