@@ -6,7 +6,7 @@ import { ConfirmModal, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { logError } from '../../Analytics';
-import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { convertApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { type StagedExtraConfig } from './stagedConfig';
@@ -33,11 +33,11 @@ function ReassuranceRow({ children }: { children: NonNullable<React.ReactNode> }
  */
 export function RevertConfirmModal({ stagedConfig, onDismiss }: Props) {
   const notifyApp = useAppNotification();
-  const [deleteStaged, { isLoading }] = convertToGMAApi.useDeleteStagedAlertmanagerConfigMutation();
+  const [deleteStaged, { isLoading }] = convertApi.useDeleteAlertmanagerConfigMutation();
 
   const onConfirm = async () => {
     try {
-      await deleteStaged({ configIdentifier: stagedConfig.identifier }).unwrap();
+      await deleteStaged({ identifier: stagedConfig.identifier }).unwrap();
       notifyApp.success(t('alerting.settings.import.revert.success', 'Staged configuration reverted'));
       onDismiss();
     } catch (err) {
