@@ -92,10 +92,6 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     withAuth({
-      name: 'mysql',
-      testDir: path.join(pluginDirRoot, '/mysql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
     }),
@@ -123,10 +119,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
-    }),
-    withAuth({
-      name: 'influxdb',
-      testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
       name: 'canvas',
