@@ -272,6 +272,8 @@ type Cfg struct {
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate string
+	// AllowEmbeddingHosts is the list of hostnames allowed by the CSP frame-ancestors directive.
+	AllowEmbeddingHosts []string
 	// FormActionAdditionalHosts is the list of additional hostnames for the CSP form-action directive.
 	// These are appended to the template; 'self' should be in the template itself.
 	FormActionAdditionalHosts       []string
@@ -2111,6 +2113,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
+	cfg.AllowEmbeddingHosts = security.Key("allow_embedding_hosts").Strings(" ")
 	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
