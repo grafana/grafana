@@ -13,6 +13,11 @@ import { MIN_GRAFANA_VERSION } from './constants';
  * Selectors grouped/defined in Components
  */
 export const versionedComponents = {
+  NotebookFeedback: {
+    button: {
+      '13.3.0': 'data-testid NotebookFeedback button',
+    },
+  },
   RadioButton: {
     container: {
       '10.2.3': 'data-testid radio-button',
