@@ -855,6 +855,15 @@ describe('Schema Inspector feature toggle', () => {
         return columns({ table });
       };
 
+      // Completions can refetch schemas, which updates hook state, so they run inside act().
+      const requestColumns = async (...tables: string[]) => {
+        let columns: Array<Awaited<ReturnType<typeof getLatestColumns>>> = [];
+        await act(async () => {
+          columns = await Promise.all(tables.map(getLatestColumns));
+        });
+        return columns;
+      };
+
       beforeEach(() => {
         setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
         SqlEditorMock.mockClear();
@@ -932,10 +941,7 @@ describe('Schema Inspector feature toggle', () => {
         });
       });
 
-      it.each([
-        { desc: 'is in flight', setup: () => mockBackendSrv.post.mockReturnValue(new Promise(() => {})) },
-        { desc: 'fails', setup: () => mockBackendSrv.post.mockRejectedValue(new Error('boom')) },
-      ])('drops previously loaded schema columns while a schema refetch $desc', async ({ setup }) => {
+      it('drops previously loaded schema columns when a schema refetch fails', async () => {
         mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
         const queries = [{ refId: 'A' }];
 
@@ -947,7 +953,7 @@ describe('Schema Inspector feature toggle', () => {
           ]);
         });
 
-        setup();
+        mockBackendSrv.post.mockRejectedValue(new Error('boom'));
         // New interpolation context triggers a schema refetch.
         rerender(
           <SqlExpr
@@ -958,9 +964,7 @@ describe('Schema Inspector feature toggle', () => {
         );
 
         await waitFor(() => expect(mockBackendSrv.post).toHaveBeenCalledTimes(2));
-        await waitFor(async () => {
-          await expect(getLatestColumns('A')).resolves.toEqual([]);
-        });
+        expect(await requestColumns('A')).toEqual([[]]);
       });
 
       it.each([
@@ -989,13 +993,142 @@ describe('Schema Inspector feature toggle', () => {
         runMetaSQLExprQuery.mockRestore();
       });
 
-      it('suggests no columns and skips the metadata query while schemas are loading', async () => {
+      describe('when source queries change after the last schema fetch', () => {
+        const expressionQuery = defaultProps.query;
+        const queryA = { refId: 'A', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'up' };
+        const editQueryA = (expr: string) => ({ ...queryA, expr });
+
+        const renderWithSourceQueries = async (queries: SqlExprProps['queries']) => {
+          const view = render(<SqlExpr {...defaultProps} queries={queries} />);
+          await waitFor(() => expect(mockBackendSrv.post).toHaveBeenCalledTimes(1));
+          return view;
+        };
+
+        it('refetches schemas and suggests columns for a newly added source query', async () => {
+          mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+          const { rerender } = await renderWithSourceQueries([queryA, expressionQuery]);
+
+          const queryB = { refId: 'B', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'mem' };
+          mockSchemas({
+            A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] },
+            B: { columns: [schemaColumn('bytes', 'BIGINT')], sampleRows: [] },
+          });
+          rerender(
+            <SqlExpr
+              {...defaultProps}
+              refIds={[{ value: 'A' }, { value: 'B' }]}
+              queries={[queryA, queryB, expressionQuery]}
+            />
+          );
+
+          expect(await requestColumns('B')).toEqual([
+            [{ label: 'bytes', insertText: 'bytes', kind: 'column', boost: 50 }],
+          ]);
+          expect(mockBackendSrv.post).toHaveBeenCalledTimes(2);
+          expect(mockBackendSrv.post.mock.calls[1][1].queries.map((q: { refId: string }) => q.refId)).toEqual([
+            'A',
+            'B',
+            'expression_1',
+          ]);
+        });
+
+        it('refetches schemas and suggests the new columns for an edited source query', async () => {
+          mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+          const { rerender } = await renderWithSourceQueries([queryA, expressionQuery]);
+
+          mockSchemas({ A: { columns: [schemaColumn('mem', 'DOUBLE')], sampleRows: [] } });
+          rerender(<SqlExpr {...defaultProps} queries={[editQueryA('mem'), expressionQuery]} />);
+
+          expect(await requestColumns('A')).toEqual([[{ label: 'mem', insertText: 'mem', kind: 'column', boost: 50 }]]);
+          expect(mockBackendSrv.post).toHaveBeenCalledTimes(2);
+        });
+
+        it('shows the refetched schemas in Schema Inspector after a completion', async () => {
+          mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+          const { rerender, findByText } = await renderWithSourceQueries([queryA, expressionQuery]);
+
+          mockSchemas({ A: { columns: [schemaColumn('mem', 'DOUBLE')], sampleRows: [] } });
+          rerender(<SqlExpr {...defaultProps} queries={[editQueryA('mem'), expressionQuery]} />);
+          await requestColumns('A');
+
+          expect(await findByText('mem')).toBeInTheDocument();
+        });
+
+        it('does not refetch schemas while source queries are edited without requesting completions', async () => {
+          mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+          const { rerender } = await renderWithSourceQueries([queryA, expressionQuery]);
+
+          for (const expr of ['m', 'me', 'mem']) {
+            rerender(<SqlExpr {...defaultProps} queries={[editQueryA(expr), expressionQuery]} />);
+          }
+          await act(async () => {});
+
+          expect(mockBackendSrv.post).toHaveBeenCalledTimes(1);
+        });
+
+        it('sends one schema request for concurrent completions after a source query change', async () => {
+          mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+          const { rerender } = await renderWithSourceQueries([queryA, expressionQuery]);
+
+          mockSchemas({ A: { columns: [schemaColumn('mem', 'DOUBLE')], sampleRows: [] } });
+          rerender(<SqlExpr {...defaultProps} queries={[editQueryA('mem'), expressionQuery]} />);
+
+          const memColumn = [{ label: 'mem', insertText: 'mem', kind: 'column', boost: 50 }];
+          expect(await requestColumns('A', 'a')).toEqual([memColumn, memColumn]);
+          expect(mockBackendSrv.post).toHaveBeenCalledTimes(2);
+        });
+
+        it('keeps the newer schemas when an older schema request resolves last', async () => {
+          const resolvers: Array<(response: unknown) => void> = [];
+          mockBackendSrv.post.mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
+          const schemasWith = (column: string) => ({
+            kind: 'SQLSchemaResponse',
+            apiVersion: 'query.grafana.app/v0alpha1',
+            sqlSchemas: { A: { columns: [schemaColumn(column, 'DOUBLE')], sampleRows: [] } },
+          });
+
+          const { rerender, findByText, queryByText } = await renderWithSourceQueries([queryA, expressionQuery]);
+          rerender(<SqlExpr {...defaultProps} queries={[editQueryA('mem'), expressionQuery]} />);
+
+          const pendingColumns = requestColumns('A');
+          await waitFor(() => expect(resolvers).toHaveLength(2));
+          resolvers[1](schemasWith('mem'));
+          resolvers[0](schemasWith('cpu'));
+
+          expect(await pendingColumns).toEqual([[{ label: 'mem', insertText: 'mem', kind: 'column', boost: 50 }]]);
+          expect(await findByText('mem')).toBeInTheDocument();
+          expect(queryByText('cpu')).not.toBeInTheDocument();
+        });
+
+        it('does not refetch schemas when only the SQL expression itself changes', async () => {
+          mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+          const { rerender } = await renderWithSourceQueries([queryA, expressionQuery]);
+
+          const editedExpression = { ...expressionQuery, expression: 'SELECT cpu FROM A' };
+          rerender(<SqlExpr {...defaultProps} query={editedExpression} queries={[queryA, editedExpression]} />);
+
+          expect(await requestColumns('A')).toEqual([[{ label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 }]]);
+          expect(mockBackendSrv.post).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      it('waits for an in-flight schema fetch and suggests its columns without a metadata query', async () => {
         const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
-        mockBackendSrv.post.mockReturnValue(new Promise(() => {}));
+        let resolveSchemas: (response: unknown) => void = () => {};
+        mockBackendSrv.post.mockReturnValue(new Promise((resolve) => (resolveSchemas = resolve)));
 
         render(<SqlExpr {...defaultProps} queries={[{ refId: 'A' }]} />);
+        await waitFor(() => expect(mockBackendSrv.post).toHaveBeenCalledTimes(1));
 
-        await expect(getLatestColumns('A')).resolves.toEqual([]);
+        const pendingColumns = requestColumns('A');
+        resolveSchemas({
+          kind: 'SQLSchemaResponse',
+          apiVersion: 'query.grafana.app/v0alpha1',
+          sqlSchemas: { A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } },
+        });
+
+        expect(await pendingColumns).toEqual([[{ label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 }]]);
+        expect(mockBackendSrv.post).toHaveBeenCalledTimes(1);
         expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
 
         runMetaSQLExprQuery.mockRestore();
