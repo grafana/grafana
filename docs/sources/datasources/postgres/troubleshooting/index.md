@@ -109,7 +109,7 @@ The following errors occur when there are issues with authentication credentials
 1. Verify that the username and password are correct in the data source configuration.
 1. Check that the user exists in PostgreSQL.
 1. Verify the password has not expired.
-1. If no password is specified, ensure a [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) is configured.
+1. If no password is specified, make sure that the [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) exists and that `forward_host_env_vars` includes `grafana-postgresql-datasource`. Refer to [Use PostgreSQL client files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/#use-postgresql-client-files).
 
 ### Permission denied
 
