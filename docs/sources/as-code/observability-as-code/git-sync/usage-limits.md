@@ -126,9 +126,13 @@ If sharding isn't practical for your setup, try raising the per-connection resou
 
 ## Git Sync across multiple organizations
 
-Git Sync works across multiple organizations for self-managed Grafana instances. You can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git.
+Self-managed Grafana instances support multiple organizations. If you're using Grafana OSS/Enterprise, you can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git.
 
 This feature is available starting in Grafana 13.0.4, but not supported until Grafana 13.1.1.
+
+### Configure multiple organizations
+
+If you're setting up Git Sync as code or with Terraform and want to configure multiple organizations, use the `org_id` (Number) The Grafana organization ID this resource belongs to, for self-hosted OSS or Enterprise Grafana. When set, it overrides the provider's `org_id` for this resource only, so a single provider configuration can manage App Platform resources across multiple organizations. Not supported on Grafana Cloud (configure a stack with `stack_id` instead). Changing this value forces the resource to be recreated in the new organization.
 
 ## Compatible Git providers
 
