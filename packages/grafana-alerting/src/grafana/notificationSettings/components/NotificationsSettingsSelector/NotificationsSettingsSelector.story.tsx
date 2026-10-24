@@ -106,3 +106,12 @@ export const Disabled: Story = {
   },
   render: UncontrolledModeRenderFn,
 };
+
+export const HideRoutingOptions: Story = {
+  args: {
+    manageContactPointsHref: '/alerting/notifications',
+    hideRoutingOptions: true,
+    value: { type: 'SimplifiedRouting', receiver: 'slack-oncall', groupWait: '1m' },
+  },
+  render: UncontrolledModeRenderFn,
+};
