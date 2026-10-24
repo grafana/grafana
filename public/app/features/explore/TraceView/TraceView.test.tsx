@@ -1,4 +1,4 @@
-import { render, prettyDOM, screen } from '@testing-library/react';
+import { render, prettyDOM, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
@@ -14,6 +14,8 @@ import {
 
 import { configureStore } from '../../../store/configureStore';
 import { DEFAULT_SPAN_FILTERS } from '../state/constants';
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
 import { TraceView } from './TraceView';
 import { SPAN_NAME } from './components/constants/span';
@@ -44,13 +46,21 @@ function mockPluginInstalled(installedPluginIds: string[] = []) {
   }));
 }
 
-function getTraceView(frames: DataFrame[], spanFilters?: TraceSearchProps) {
-  const store = configureStore();
+function getTraceView(frames: DataFrame[], spanFilters?: TraceSearchProps, spanId?: string, expandSpan?: boolean) {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState({ panelsState: { trace: { spanId, expandSpan } } }),
+      },
+    },
+  });
   const topOfViewRef = createRef<HTMLDivElement>();
 
   return (
     <Provider store={store}>
       <TraceView
+        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -282,6 +292,19 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+
+  describe('linked span', () => {
+    const childSpanId = '35118c298fc91f68';
+
+    it('opens the linked span attributes and resource attributes with expandSpan=true and allows closing its details', async () => {
+      render(getTraceView([frameOld], undefined, childSpanId, true));
+      await waitFor(() => expect(screen.getByText('client-uuid-3')).toBeInTheDocument());
+      expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
+
+      await userEvent.click(screen.getAllByTestId('span-view')[2]);
+      expect(screen.queryByText('client-uuid-3')).not.toBeInTheDocument();
+    });
   });
 
   describe('Adaptive Traces restored banner', () => {
