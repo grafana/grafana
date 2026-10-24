@@ -47,6 +47,9 @@ export {
   isDefaultRoutingTree,
 } from './grafana/notificationPolicies/routingTree.utils';
 
+// Time intervals
+export { useListTimeIntervals } from './grafana/muteTimings/hooks/useListTimeIntervals';
+
 // Notification settings
 export { isValidPromDuration } from './grafana/notificationSettings/utils/promDuration';
 export {
@@ -57,6 +60,10 @@ export {
   GroupByField,
   type GroupByFieldProps,
 } from './grafana/notificationSettings/components/GroupByField/GroupByField';
+export {
+  TimeIntervalsSelect,
+  type TimeIntervalsSelectProps,
+} from './grafana/notificationSettings/components/TimeIntervalsSelect/TimeIntervalsSelect';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
