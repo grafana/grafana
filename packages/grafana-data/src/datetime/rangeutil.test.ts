@@ -5,6 +5,8 @@ import {
   convertRawToRange,
   describeInterval,
   type describeTimeRange as DescribeTimeRange,
+  intervalToMs,
+  intervalToSeconds,
   isRelativeTimeRange,
   relativeToTimeRange,
   roundInterval,
@@ -145,6 +147,30 @@ describe('Range Utils', () => {
         type: 'ms',
         count: -50,
       });
+    });
+
+    it('keeps the fractional part of decimal values', () => {
+      expect(describeInterval('1.5h')).toEqual({
+        sec: 3600,
+        type: 'h',
+        count: 1.5,
+      });
+      expect(describeInterval('-0.5m')).toEqual({
+        sec: 60,
+        type: 'm',
+        count: -0.5,
+      });
+      expect(describeInterval('2.5')).toEqual({
+        sec: 1,
+        type: 's',
+        count: 2.5,
+      });
+    });
+
+    it('converts decimal intervals to the right number of milliseconds', () => {
+      expect(intervalToMs('1.5h')).toBe(5400000);
+      expect(intervalToMs('0.5s')).toBe(500);
+      expect(intervalToSeconds('2.5m')).toBe(150);
     });
   });
 
