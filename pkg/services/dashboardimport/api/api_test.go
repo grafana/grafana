@@ -101,6 +101,52 @@ func TestImportDashboardAPI(t *testing.T) {
 		})
 	})
 
+	t.Run("Signed in, marshaled request without folder fields should not select a folder", func(t *testing.T) {
+		var capturedReq *dashboardimport.ImportDashboardRequest
+		service := &serviceMock{
+			importDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+				capturedReq = req
+				return &dashboardimport.ImportDashboardResponse{UID: "direct-v2-dashboard"}, nil
+			},
+		}
+
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
+		routeRegister := routing.NewRouteRegister()
+		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
+		s := webtest.NewServer(t, routeRegister)
+
+		cmd := &dashboardimport.ImportDashboardRequest{
+			Dashboard: simplejson.NewFromAny(map[string]any{
+				"apiVersion": "dashboard.grafana.app/v2",
+				"kind":       "Dashboard",
+				"metadata": map[string]any{
+					"name": "direct-v2-dashboard",
+					"annotations": map[string]any{
+						"grafana.app/folder": "resource-folder",
+					},
+				},
+				"spec": map[string]any{
+					"title": "Direct V2 Dashboard",
+				},
+			}),
+			Overwrite: true,
+		}
+		jsonBytes, err := json.Marshal(cmd)
+		require.NoError(t, err)
+		require.NotContains(t, string(jsonBytes), "folderId")
+		require.NotContains(t, string(jsonBytes), "folderUid")
+
+		req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1})
+		resp, err := s.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		require.NotNil(t, capturedReq)
+		require.False(t, capturedReq.HasFolderSelection())
+	})
+
 	t.Run("Quota not reached, schema loader service enabled", func(t *testing.T) {
 		importDashboardServiceCalled := false
 		service := &serviceMock{

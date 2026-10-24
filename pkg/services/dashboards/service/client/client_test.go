@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,6 +30,7 @@ type testSetup struct {
 	mockClientV1       *client.MockK8sHandler
 	mockClientV2Alpha1 *client.MockK8sHandler
 	mockClientV2Beta1  *client.MockK8sHandler
+	mockClientV2       *client.MockK8sHandler
 }
 
 func setupTest(t *testing.T) *testSetup {
@@ -37,6 +39,7 @@ func setupTest(t *testing.T) *testSetup {
 		mockClientV1       = &client.MockK8sHandler{}
 		mockClientV2Alpha1 = &client.MockK8sHandler{}
 		mockClientV2Beta1  = &client.MockK8sHandler{}
+		mockClientV2       = &client.MockK8sHandler{}
 	)
 
 	mockMetrics := newK8sClientMetrics(prometheus.NewRegistry())
@@ -56,6 +59,8 @@ func setupTest(t *testing.T) *testSetup {
 				return mockClientV2Alpha1
 			case v2beta1.VERSION:
 				return mockClientV2Beta1
+			case v2.VERSION:
+				return mockClientV2
 			case v1.VERSION:
 				return mockClientV1
 			default:
@@ -76,6 +81,7 @@ func setupTest(t *testing.T) *testSetup {
 		mockClientV1:       mockClientV1,
 		mockClientV2Alpha1: mockClientV2Alpha1,
 		mockClientV2Beta1:  mockClientV2Beta1,
+		mockClientV2:       mockClientV2,
 	}
 }
 
@@ -672,6 +678,83 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 
 		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+}
+
+func TestK8sHandlerWithFallback_Create(t *testing.T) {
+	t.Run("Create with DashboardV2 API version", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/" + v2.VERSION,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard-v2",
+				},
+				"spec": map[string]interface{}{
+					"title": "Created Dashboard V2",
+				},
+			},
+		}
+		orgID := int64(2)
+		options := metav1.CreateOptions{}
+
+		expectedResult := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/" + v2.VERSION,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name":            "test-dashboard-v2",
+					"resourceVersion": "456",
+				},
+				"spec": map[string]interface{}{
+					"title": "Created Dashboard V2",
+				},
+			},
+		}
+
+		setup.mockClientV2.On("Create", mock.Anything, obj, orgID, options).Return(expectedResult, nil).Once()
+
+		result, err := setup.handler.Create(ctx, obj, orgID, options)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+		require.Equal(t, 1, setup.mockFactoryCalls[v2.VERSION], "Factory should be called once with v2")
+
+		setup.mockClientV1.AssertExpectations(t)
+		setup.mockClientV2.AssertExpectations(t)
+	})
+
+	t.Run("Create with error", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": v0alpha1.VERSION,
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard-error",
+				},
+				"spec": map[string]interface{}{
+					"title": "Error Dashboard",
+				},
+			},
+		}
+		orgID := int64(3)
+		options := metav1.CreateOptions{}
+		expectedErr := errors.New("create failed")
+
+		setup.mockClientV0Alpha1.On("Create", mock.Anything, obj, orgID, options).Return(nil, expectedErr).Once()
+
+		result, err := setup.handler.Create(ctx, obj, orgID, options)
+		require.Error(t, err)
+		require.Nil(t, result)
+		require.Equal(t, expectedErr, err)
+		require.Equal(t, 1, setup.mockFactoryCalls[v0alpha1.VERSION], "Factory should be called once with v0alpha1")
+
+		setup.mockClientV0Alpha1.AssertExpectations(t)
+		setup.mockClientV2Beta1.AssertExpectations(t)
 	})
 }
 
