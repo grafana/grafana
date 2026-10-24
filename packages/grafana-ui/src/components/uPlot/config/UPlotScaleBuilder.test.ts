@@ -2,7 +2,7 @@ import type uPlot from 'uplot';
 
 import { ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
 
-import { optMinMax, UPlotScaleBuilder } from './UPlotScaleBuilder';
+import { optMinMax, type ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 
 function mockUPlot(scaleKey: string, distr: number): uPlot {
   return {
@@ -166,6 +166,61 @@ describe('UPlotScaleBuilder', () => {
       const result = rangeFn(mockUPlot('y', 1), null as any, null as any, 'y');
       expect(result[0]).toBe(0);
       expect(result[1]).toBe(100);
+    });
+  });
+
+  describe('getConfig range - null data with emptyRange', () => {
+    const rangeOf = (props: Partial<ScaleProps>, distr = 1, data: [number | null, number | null] = [null, null]) => {
+      const rangeFn = new UPlotScaleBuilder({ ...baseProps, ...props }).getConfig()['y'].range as uPlot.Range.Function;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return rangeFn(mockUPlot('y', distr), data[0] as any, data[1] as any, 'y');
+    };
+
+    it('ranges a linear scale over emptyRange with padding', () => {
+      const [min, max] = rangeOf({ emptyRange: [20, 80] });
+      expect(min).toBeLessThanOrEqual(20);
+      expect(max).toBeGreaterThanOrEqual(80);
+    });
+
+    it('gives a non-empty range for a single value', () => {
+      const [min, max] = rangeOf({ emptyRange: [80, 80] });
+      expect(min).toBeLessThanOrEqual(80);
+      expect(max).toBeGreaterThan(80);
+    });
+
+    it('applies soft limits', () => {
+      expect(rangeOf({ emptyRange: [20, 80], softMin: 0, softMax: 200 })).toEqual([0, 200]);
+    });
+
+    it('applies a hard min', () => {
+      expect(rangeOf({ emptyRange: [20, 80], min: 50 })[0]).toBe(50);
+    });
+
+    it('ranges a log scale over emptyRange', () => {
+      const [min, max] = rangeOf({ emptyRange: [10, 1000], distribution: ScaleDistribution.Log, log: 10 }, 3);
+      expect(min).toBeLessThanOrEqual(10);
+      expect(max).toBeGreaterThanOrEqual(1000);
+    });
+
+    it('ignores the non-positive end of emptyRange on a log scale', () => {
+      const [min, max] = rangeOf({ emptyRange: [0, 100], distribution: ScaleDistribution.Log, log: 10 }, 3);
+      expect(min).toBeGreaterThan(0);
+      expect(max).toBeGreaterThanOrEqual(100);
+    });
+
+    it('leaves a log scale empty when emptyRange has no positive values', () => {
+      expect(rangeOf({ emptyRange: [-10, 0], distribution: ScaleDistribution.Log, log: 10 }, 3)).toEqual([null, null]);
+    });
+
+    it('ignores emptyRange when the scale has data', () => {
+      expect(rangeOf({ emptyRange: [-1000, 1000] }, 1, [10, 20])).toEqual(rangeOf({}, 1, [10, 20]));
+    });
+
+    it('widens emptyRange when scales merge', () => {
+      const builder = new UPlotScaleBuilder({ ...baseProps, emptyRange: [20, 80] });
+      builder.merge({ ...baseProps, emptyRange: [50, 120] });
+      builder.merge({ ...baseProps });
+      expect(builder.props.emptyRange).toEqual([20, 120]);
     });
   });
 

@@ -2956,6 +2956,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "timeseries.thresholdsWithoutData",
+			Description:  "Draws configured thresholds on time series panels when a query returns no values",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "table.refresh",
 			Description:  "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
 			Stage:        FeatureStageExperimental,

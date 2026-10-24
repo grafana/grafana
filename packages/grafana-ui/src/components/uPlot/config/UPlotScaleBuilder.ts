@@ -24,6 +24,11 @@ export interface ScaleProps {
   stackingMode?: StackingMode;
   padMinBy?: number;
   padMaxBy?: number;
+  /**
+   * Used as the data range when no series on the scale has a value, so the axis stays enabled.
+   * Without it, an empty scale disables its axis.
+   */
+  emptyRange?: [number, number];
 }
 
 const isValidLogBase = (v: number | undefined): v is Scale.LogBase => v === 2 || v === 10;
@@ -45,6 +50,13 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   merge(props: ScaleProps) {
     this.props.min = optMinMax('min', this.props.min, props.min);
     this.props.max = optMinMax('max', this.props.max, props.max);
+
+    if (props.emptyRange) {
+      const current = this.props.emptyRange;
+      this.props.emptyRange = current
+        ? [Math.min(current[0], props.emptyRange[0]), Math.max(current[1], props.emptyRange[1])]
+        : props.emptyRange;
+    }
   }
 
   getConfig(): uPlot.Scales {
@@ -62,6 +74,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       centeredZero,
       decimals,
       stackingMode,
+      emptyRange,
       padMinBy = 0.1,
       padMaxBy = 0.1,
     } = this.props;
@@ -155,14 +168,18 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     ) => {
       const scale = u.scales[scaleKey];
 
+      const logBase = scale.log ?? FALLBACK_LOG;
+
+      if (dataMin == null && dataMax == null && emptyRange) {
+        [dataMin, dataMax] = getEmptyDataRange(emptyRange, scale.distr === DISTR_MAP[ScaleDistribution.Log]);
+      }
+
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       // happens when all series on a scale are `show: false`, re-returning nulls will auto-disable axis
       if (!hasFixedRange && dataMin == null && dataMax == null) {
         return minMax;
       }
-
-      const logBase = scale.log ?? FALLBACK_LOG;
 
       if (
         scale.distr === DISTR_MAP[ScaleDistribution.Linear] ||
@@ -283,6 +300,17 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       },
     };
   }
+}
+
+// log scales cannot show values <= 0, so those ends fall back to the other end or leave the scale empty
+function getEmptyDataRange([min, max]: [number, number], isLog: boolean): [number | null, number | null] {
+  if (!isLog) {
+    return [min, max];
+  }
+  if (max <= 0) {
+    return [null, null];
+  }
+  return [min > 0 ? min : max, max];
 }
 
 export function optMinMax(minmax: 'min' | 'max', a?: number | null, b?: number | null): undefined | number | null {

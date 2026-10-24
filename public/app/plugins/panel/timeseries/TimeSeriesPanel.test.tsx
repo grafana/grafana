@@ -8,10 +8,15 @@ import {
   EventBusSrv,
   FieldType,
   getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
   type PanelProps,
+  ThresholdsMode,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { GraphThresholdsStyleMode, LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
@@ -297,6 +302,99 @@ describe('TimeSeriesPanel', () => {
         );
         expect(icon.style.backgroundSize).toBe('6px 4px');
       }
+    });
+  });
+
+  describe('thresholds without data', () => {
+    const thresholdsStyle = (mode: GraphThresholdsStyleMode) => ({
+      overrides: [],
+      defaults: {
+        custom: { thresholdsStyle: { mode } },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 80, color: 'red' },
+          ],
+        },
+      },
+    });
+
+    const getProps = (data: Partial<PanelData>, mode = GraphThresholdsStyleMode.Line) => {
+      const props = getPanelProps<Options>(defaultOptions, { fieldConfig: thresholdsStyle(mode) });
+      return { ...props, data: { ...props.data, series: [], ...data } };
+    };
+
+    const plot = () => screen.queryByTestId(selectors.components.VizLayout.container);
+
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.TimeseriesThresholdsWithoutData]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('draws a plot with the no data overlay for an empty response', () => {
+      render(<TimeSeriesPanel {...getProps({})} />);
+
+      expect(plot()).toBeInTheDocument();
+      expect(screen.getByText('No data')).toBeInTheDocument();
+    });
+
+    it('keeps the error view when the feature toggle is off', () => {
+      setTestFlags({});
+      render(<TimeSeriesPanel {...getProps({})} />);
+
+      expect(plot()).not.toBeInTheDocument();
+    });
+
+    it('keeps the error view when the thresholds style is off', () => {
+      render(<TimeSeriesPanel {...getProps({}, GraphThresholdsStyleMode.Off)} />);
+
+      expect(plot()).not.toBeInTheDocument();
+    });
+
+    it('keeps the error view when the query failed', () => {
+      render(<TimeSeriesPanel {...getProps({ state: LoadingState.Error })} />);
+
+      expect(plot()).not.toBeInTheDocument();
+    });
+
+    it('waits for the first response before drawing thresholds', () => {
+      render(<TimeSeriesPanel {...getProps({ state: LoadingState.Loading })} />);
+
+      expect(plot()).not.toBeInTheDocument();
+    });
+
+    it('keeps the thresholds while a refresh is loading', () => {
+      const { rerender } = render(<TimeSeriesPanel {...getProps({})} />);
+      rerender(<TimeSeriesPanel {...getProps({ state: LoadingState.Loading })} />);
+
+      expect(plot()).toBeInTheDocument();
+    });
+
+    it('hides the thresholds while a refresh after an error is loading', () => {
+      const { rerender } = render(<TimeSeriesPanel {...getProps({ state: LoadingState.Error })} />);
+      rerender(<TimeSeriesPanel {...getProps({ state: LoadingState.Loading })} />);
+
+      expect(plot()).not.toBeInTheDocument();
+    });
+
+    it('draws the thresholds again once a refresh after an error succeeds', () => {
+      const { rerender } = render(<TimeSeriesPanel {...getProps({ state: LoadingState.Error })} />);
+      rerender(<TimeSeriesPanel {...getProps({ state: LoadingState.Loading })} />);
+      rerender(<TimeSeriesPanel {...getProps({})} />);
+
+      expect(plot()).toBeInTheDocument();
+    });
+
+    it('drops the overlay when data arrives', () => {
+      const { rerender } = render(<TimeSeriesPanel {...getProps({})} />);
+      rerender(<TimeSeriesPanel {...getProps({ series: [validFrame] })} />);
+
+      expect(plot()).toBeInTheDocument();
+      expect(screen.queryByText('No data')).not.toBeInTheDocument();
     });
   });
 });

@@ -6108,6 +6108,21 @@
     },
     {
       "metadata": {
+        "name": "timeseries.thresholdsWithoutData",
+        "resourceVersion": "1792186798185",
+        "creationTimestamp": "2026-10-16T21:39:58Z"
+      },
+      "spec": {
+        "description": "Draws configured thresholds on time series panels when a query returns no values",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tracesDrilldownTimeSeeker",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-01T14:24:07Z"
