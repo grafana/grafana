@@ -17,6 +17,7 @@ import (
 
 // ssoTokenAllowedPaths are the GCOM paths that should receive the hg-auth token.
 var ssoTokenAllowedPaths = []*regexp.Regexp{
+	regexp.MustCompile(`^/?growth/cohorts/[1-9][0-9]*$`),
 	regexp.MustCompile(`^/?plugins$`),
 	regexp.MustCompile(`^/?plugins/[^/]+$`),
 	regexp.MustCompile(`^/?plugins/[^/]+/entitlement$`),
