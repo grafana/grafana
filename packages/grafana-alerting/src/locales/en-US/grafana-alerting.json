@@ -16,6 +16,25 @@
     "paused-badge": {
       "paused": "Paused"
     },
+    "routing-tree-picker": {
+      "change": "Change",
+      "change-aria": "Change notification policy",
+      "collapse": "Collapse",
+      "collapse-aria": "Collapse the notification policy selector",
+      "default-badge": "Default policy",
+      "default-info": "Alert instances are routed using the default notification policy tree.",
+      "description": "Select which notification policy tree should handle routing for this alert rule.",
+      "reset": "Reset to default",
+      "reset-aria": "Reset to default policy",
+      "selector-aria": "Select notification policy",
+      "view-policies": "View policies",
+      "view-policies-aria": "View notification policies"
+    },
+    "routing-tree-preview": {
+      "default-receiver": "Default receiver",
+      "heading": "Who would get notified",
+      "no-match": "No matching notification policy found"
+    },
     "routing-tree-selector": {
       "error": "Failed to load notification policies"
     },
