@@ -55,10 +55,72 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
   return undefined;
 }
 
-/** The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene. */
-export function applySavedViewState(dashboard: DashboardScene, spec: SavedDashboardViewSpec): void {
+/**
+ * Applies a stored spec to the scene. Variables the view omits reset to `baseline` when given.
+ */
+export function applySavedViewState(
+  dashboard: DashboardScene,
+  spec: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
+): void {
   applyTimeRange(dashboard, spec.timeRange);
-  applyVariables(dashboard, spec.variables);
+  applyVariables(dashboard, mergeVariablesWithBaseline(spec.variables, baseline?.variables));
+}
+
+function mergeVariablesWithBaseline(
+  spec: SavedViewVariable[],
+  baseline: SavedViewVariable[] | undefined
+): SavedViewVariable[] {
+  if (!baseline) {
+    return spec;
+  }
+  const byName = new Map(baseline.map((v) => [v.name, v]));
+  for (const variable of spec) {
+    byName.set(variable.name, variable);
+  }
+  return Array.from(byName.values());
+}
+
+/**
+ * applySavedViewState for the URL path, where explicit var- or from/to params in the same URL
+ * change win. Fields that changed between `before` and now were set by those params and are kept.
+ */
+export function applySavedViewStateAsDefault(
+  dashboard: DashboardScene,
+  spec: SavedDashboardViewSpec,
+  before: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
+): void {
+  const after = captureSavedViewState(dashboard);
+  const variables = mergeVariablesWithBaseline(spec.variables, baseline?.variables);
+
+  applyTimeRange(dashboard, mergeTimeRangeAsDefault(spec.timeRange, before.timeRange, after.timeRange));
+  applyVariables(dashboard, mergeVariablesAsDefault(variables, before.variables, after.variables));
+}
+
+function mergeTimeRangeAsDefault(
+  spec: SavedViewTimeRange,
+  before: SavedViewTimeRange,
+  after: SavedViewTimeRange
+): SavedViewTimeRange {
+  // from/to/timezone are separate URL keys, so merge them independently.
+  const timezone = (before.timezone ?? '') === (after.timezone ?? '') ? spec.timezone : after.timezone;
+  return {
+    from: before.from === after.from ? spec.from : after.from,
+    to: before.to === after.to ? spec.to : after.to,
+    ...(timezone ? { timezone } : {}),
+  };
+}
+
+function mergeVariablesAsDefault(
+  spec: SavedViewVariable[],
+  before: SavedViewVariable[],
+  after: SavedViewVariable[]
+): SavedViewVariable[] {
+  const beforeByName = new Map(before.map((v) => [v.name, v]));
+  const afterByName = new Map(after.map((v) => [v.name, v]));
+  // Variables missing from the live dashboard pass through; applyVariables skips them.
+  return spec.filter((saved) => variableEqual(beforeByName.get(saved.name), afterByName.get(saved.name)));
 }
 
 function applyTimeRange(dashboard: DashboardScene, timeRange: SavedViewTimeRange): void {
@@ -111,31 +173,54 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
   }
 }
 
-/** True if `current` differs from `stored` in time range or any captured variable. */
-export function getSavedViewDiff(current: SavedDashboardViewSpec, stored: SavedDashboardViewSpec): boolean {
+/**
+ * Whether applying `stored` would change the dashboard, using applySavedViewState's rules:
+ * omitted variables reset to `baseline`, a missing timezone is left alone.
+ */
+export function getSavedViewDiff(
+  current: SavedDashboardViewSpec,
+  stored: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
+): boolean {
   if (timeRangeDiffers(current.timeRange, stored.timeRange)) {
     return true;
   }
-  return variablesDiffer(current.variables, stored.variables);
+  return variablesDiffer(current.variables, mergeVariablesWithBaseline(stored.variables, baseline?.variables));
 }
 
-function timeRangeDiffers(a: SavedViewTimeRange, b: SavedViewTimeRange): boolean {
-  return a.from !== b.from || a.to !== b.to || (a.timezone ?? '') !== (b.timezone ?? '');
-}
-
-function variablesDiffer(current: SavedViewVariable[], stored: SavedViewVariable[]): boolean {
-  if (current.length !== stored.length) {
+function timeRangeDiffers(current: SavedViewTimeRange, stored: SavedViewTimeRange): boolean {
+  if (current.from !== stored.from || current.to !== stored.to) {
     return true;
   }
+  return stored.timezone !== undefined && (current.timezone ?? '') !== stored.timezone;
+}
 
-  const storedByName = new Map(stored.map((v) => [v.name, v]));
-  return current.some((variable) => {
-    const other = storedByName.get(variable.name);
-    return !other || !variableEqual(variable, other);
+function variablesDiffer(current: SavedViewVariable[], expected: SavedViewVariable[]): boolean {
+  const currentByName = new Map(current.map((v) => [v.name, v]));
+  return expected.some((variable) => {
+    const live = currentByName.get(variable.name);
+    return live !== undefined && !variableEqual(live, variable);
   });
 }
 
-// Safe because both sides come from captureVariable's fixed field order.
-function variableEqual(a: SavedViewVariable, b: SavedViewVariable): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+// Compares selections, not objects: server copies can differ in key order and "a" vs ["a"].
+function variableEqual(a: SavedViewVariable | undefined, b: SavedViewVariable | undefined): boolean {
+  if (!a || !b) {
+    return a === b;
+  }
+  if (a.filters || b.filters) {
+    return JSON.stringify(normalizeFilters(a.filters)) === JSON.stringify(normalizeFilters(b.filters));
+  }
+  return JSON.stringify(normalizeValue(a.value)) === JSON.stringify(normalizeValue(b.value));
+}
+
+function normalizeFilters(filters: SavedViewVariable['filters']) {
+  return (filters ?? []).map(({ key, operator, value, values }) => ({ key, operator, value, values: values ?? [] }));
+}
+
+function normalizeValue(value: SavedViewVariable['value']): unknown[] {
+  if (value === undefined) {
+    return [];
+  }
+  return Array.isArray(value) ? value : [value];
 }

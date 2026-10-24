@@ -2,11 +2,13 @@ import { waitFor } from '@testing-library/react';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, SceneTimeRange, UrlSyncManager, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
+import { savedDashboardViewsApi, type SavedDashboardView } from '../savedviews/api';
 import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -17,6 +19,10 @@ import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+
+jest.mock('../savedviews/api', () => ({
+  savedDashboardViewsApi: { listForDashboard: jest.fn().mockResolvedValue([]) },
+}));
 
 describe('DashboardSceneUrlSync', () => {
   describe('library panel editor loading', () => {
@@ -87,6 +93,160 @@ describe('DashboardSceneUrlSync', () => {
       const layout = scene.state.body as DefaultGridLayoutManager;
       layout.state.grid.setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+  });
+
+  describe('viewFilter', () => {
+    function buildSceneWithSavedViews() {
+      const view: SavedDashboardView = {
+        apiVersion: 'dashboardviews.grafana.app/v0alpha1',
+        kind: 'SavedDashboardView',
+        metadata: { name: 'view-1', resourceVersion: '1', creationTimestamp: '' },
+        spec: {
+          dashboardUID: 'dash-1',
+          name: 'My view',
+          timeRange: { from: 'now-24h', to: 'now-1h' },
+          variables: [],
+        },
+      };
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        savedViews: [view],
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      return { scene, view };
+    }
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      setTestFlags({ 'grafana.savedDashboardViews': true });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      setTestFlags({});
+    });
+
+    it('ignores viewFilter and skips the baseline capture when the grafana.savedDashboardViews flag is off', () => {
+      setTestFlags({});
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+
+      expect(scene.state.viewFilter).toBeUndefined();
+      expect(scene.state.savedViewBaseline).toBeUndefined();
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+    });
+
+    it('records the selection synchronously, but defers applying it', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+
+      // state.viewFilter is a plain scalar on this scene, so it applies immediately.
+      expect(scene.state.viewFilter).toBe('view-1');
+      // The apply is deferred; done synchronously, $timeRange.updateFromUrl would revert it.
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+      expect(scene.state.$timeRange?.state.to).toBe('now-1h');
+    });
+
+    it('still records viewFilter and the baseline when an editPanel param hits an early return', () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1', editPanel: 'does-not-exist' });
+
+      expect(scene.state.viewFilter).toBe('view-1');
+      expect(scene.state.savedViewBaseline).toBeDefined();
+    });
+
+    it('clears a viewFilter that still matches no saved view after refetching', async () => {
+      jest.mocked(savedDashboardViewsApi.listForDashboard).mockResolvedValueOnce([]);
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'does-not-exist' });
+      await jest.runAllTimersAsync();
+
+      expect(savedDashboardViewsApi.listForDashboard).toHaveBeenCalledWith('dash-1');
+      expect(scene.state.viewFilter).toBeUndefined();
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+    });
+
+    it('fetches and applies a view linked while its views are not loaded yet', async () => {
+      const { scene, view } = buildSceneWithSavedViews();
+      scene.setState({ savedViews: undefined });
+      jest.mocked(savedDashboardViewsApi.listForDashboard).mockResolvedValueOnce([view]);
+
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      expect(scene.urlSync?.getUrlState().viewFilter).toBe('view-1');
+      await jest.runAllTimersAsync();
+
+      expect(scene.state.viewFilter).toBe('view-1');
+      expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it('clears viewFilter from state when removed from the url', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      expect(scene.state.viewFilter).toBe('view-1');
+
+      scene.urlSync?.updateFromUrl({ viewFilter: null });
+      expect(scene.state.viewFilter).toBeUndefined();
+    });
+
+    it('reflects the applied view in getUrlState', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+
+      expect(scene.urlSync?.getUrlState().viewFilter).toBe('view-1');
+    });
+
+    it('does not clobber an explicit time-range override that lands in the same url-sync pass', () => {
+      // e.g. "?viewFilter=view-1&from=now-15m": the explicit from must win over the view.
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      scene.state.$timeRange?.urlSync?.updateFromUrl({ from: 'now-15m' });
+
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-15m'); // explicit override survives
+      expect(scene.state.$timeRange?.state.to).toBe('now-1h'); // untouched -- still gets the default
+    });
+
+    it('does not schedule a second apply when the url already matches the current viewFilter', () => {
+      // SavedViewsPane sets viewFilter before the URL updates, so this branch must not re-apply.
+      const { scene } = buildSceneWithSavedViews();
+      scene.setState({ viewFilter: 'view-1' });
+
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h'); // unchanged: branch never fired
+    });
+
+    it('captures savedViewBaseline from the dashboard exactly as authored, on the first url-sync pass', () => {
+      const { scene } = buildSceneWithSavedViews();
+      expect(scene.state.savedViewBaseline).toBeUndefined();
+
+      scene.urlSync?.updateFromUrl({});
+
+      expect(scene.state.savedViewBaseline?.timeRange).toEqual({ from: 'now-6h', to: 'now' });
+    });
+
+    it('never overwrites savedViewBaseline on a later pass, even after a view or manual edit changed the scene', () => {
+      // The baseline must not be recaptured, or it would reflect the last applied view.
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+      const baselineAfterFirstPass = scene.state.savedViewBaseline;
+
+      // A second, unrelated pass (e.g. a manual time-range edit synced to the url) must not touch it.
+      scene.urlSync?.updateFromUrl({});
+
+      expect(scene.state.savedViewBaseline).toBe(baselineAfterFirstPass);
+      expect(scene.state.savedViewBaseline?.timeRange).toEqual({ from: 'now-6h', to: 'now' });
     });
   });
 
