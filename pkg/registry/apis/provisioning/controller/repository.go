@@ -339,11 +339,17 @@ func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigge
 // for a fast, rate-limited retry rather than dropped until the next informer
 // resync. A Kubernetes 503 qualifies, as does a decrypt/KMS outage
 // (ErrSecretDecryptFailed) -- a plain sentinel that is not a 503 StatusError but
-// is a transient infrastructure failure all the same. This is the single source
-// of truth for the retry decision: both the worker's queue predicate and the
-// delete branch's error-preference switch consult it, so they cannot drift.
+// is a transient infrastructure failure all the same -- and so does a read that
+// kept coming back older than the notification that triggered it
+// (ErrStaleRead): the write behind that notification is committed, so re-queueing
+// is what lets the reconcile see it, where dropping the key would defer the
+// event to the next re-list. This is the single source of truth for the retry
+// decision: both the worker's queue predicate and the delete branch's
+// error-preference switch consult it, so they cannot drift.
 func isRetryableProcessError(err error) bool {
-	return apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed)
+	return apierrors.IsServiceUnavailable(err) ||
+		errors.Is(err, repository.ErrSecretDecryptFailed) ||
+		errors.Is(err, informer.ErrStaleRead)
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -429,7 +435,16 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	}
 	rc.queueLag.add(key)
 	rc.queue.AddRateLimited(key)
-	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
+	// Name the transient condition being retried: a stale read resolves itself
+	// once the read path catches up, while the others point at infrastructure.
+	switch {
+	case errors.Is(err, informer.ErrStaleRead):
+		logger.Info("RepositoryController will retry as the read is older than the triggering event", "queue_len", rc.queue.Len())
+	case apierrors.IsServiceUnavailable(err):
+		logger.Info("RepositoryController will retry as service is unavailable", "queue_len", rc.queue.Len())
+	default:
+		logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
+	}
 
 	return true
 }

@@ -149,9 +149,15 @@ const (
 // Only reads with an announcement outstanding are counted, so the three
 // outcomes sum to that population and behind/(current+behind) is the rate at
 // which such a read missed the announced write.
+//
+// It also carries the one outcome of acting on that measurement (see
+// staleread.go), since it is the same subject and the same lifecycle:
+//
+//	grafana_provisioning_stale_reads_exhausted_total{resource}
 type FreshnessMetrics struct {
-	reads *prometheus.CounterVec
-	lag   *prometheus.HistogramVec
+	reads     *prometheus.CounterVec
+	lag       *prometheus.HistogramVec
+	exhausted *prometheus.CounterVec
 }
 
 // NewFreshnessMetrics builds the read-freshness metrics on reg. Build it once
@@ -173,6 +179,10 @@ func NewFreshnessMetrics(reg prometheus.Registerer) *FreshnessMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"resource"}),
+		exhausted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_stale_reads_exhausted_total",
+			Help: "Reconcile reads that stayed behind the announced resource version for a whole re-read budget and were surrendered to the work queue, by resource. Retries are not counted separately: the behind outcome above is recorded per attempt, so behind = re-reads + exhausted budgets.",
+		}, []string{"resource"}),
 	}
 }
 
@@ -189,6 +199,7 @@ func (m *FreshnessMetrics) Recorder(resourceName string) FreshnessRecorder {
 		behind:       m.reads.WithLabelValues(resourceName, outcomeBehind),
 		notFound:     m.reads.WithLabelValues(resourceName, outcomeNotFound),
 		lag:          m.lag.WithLabelValues(resourceName),
+		exhausted:    m.exhausted.WithLabelValues(resourceName),
 	}
 }
 
@@ -200,6 +211,14 @@ type FreshnessRecorder struct {
 	behind       prometheus.Counter
 	notFound     prometheus.Counter
 	lag          prometheus.Observer
+	exhausted    prometheus.Counter
+}
+
+// recordExhausted counts a read that never caught up with the announced version.
+func (r FreshnessRecorder) recordExhausted() {
+	if r.exhausted != nil {
+		r.exhausted.Inc()
+	}
 }
 
 // observe records one read against the version announced before it was issued
@@ -268,7 +287,10 @@ type announcedVersions interface {
 
 // observeRepositoryFreshness wraps a RepositoryGetter to record how each read
 // compared to the notification that triggered it. Calls pass through untouched.
-func observeRepositoryFreshness(inner RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) RepositoryGetter {
+//
+// It returns the concrete wrapper so a caller that must reach its own verdict
+// about the same read can share the sample it took (see getAt).
+func observeRepositoryFreshness(inner RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) freshnessRepositoryGetter {
 	return freshnessRepositoryGetter{RepositoryGetter: inner, announced: announced, rec: rec}
 }
 
@@ -280,14 +302,21 @@ type freshnessRepositoryGetter struct {
 
 func (g freshnessRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 	// Sampled before the read; see the top of the file.
-	announced := g.announced.Announced(namespace, name)
+	return g.getAt(ctx, namespace, name, g.announced.Announced(namespace, name))
+}
+
+// getAt is Get against a version the caller already sampled before the read. A
+// caller that acts on this comparison (see staleread.go) has to judge the read
+// against the same sample this records it against: two samples taken around one
+// read can straddle an announcement, and would then disagree about it.
+func (g freshnessRepositoryGetter) getAt(ctx context.Context, namespace, name string, announced int64) (*provisioningapis.Repository, error) {
 	repo, err := g.RepositoryGetter.Get(ctx, namespace, name)
 	g.rec.observe(ctx, namespace, name, announced, repo, err)
 	return repo, err
 }
 
 // observeConnectionFreshness is observeRepositoryFreshness for connections.
-func observeConnectionFreshness(inner ConnectionGetter, announced announcedVersions, rec FreshnessRecorder) ConnectionGetter {
+func observeConnectionFreshness(inner ConnectionGetter, announced announcedVersions, rec FreshnessRecorder) freshnessConnectionGetter {
 	return freshnessConnectionGetter{ConnectionGetter: inner, announced: announced, rec: rec}
 }
 
@@ -298,7 +327,11 @@ type freshnessConnectionGetter struct {
 }
 
 func (g freshnessConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	announced := g.announced.Announced(namespace, name)
+	return g.getAt(ctx, namespace, name, g.announced.Announced(namespace, name))
+}
+
+// getAt is Get against an already-sampled version; see freshnessRepositoryGetter.getAt.
+func (g freshnessConnectionGetter) getAt(ctx context.Context, namespace, name string, announced int64) (*provisioningapis.Connection, error) {
 	conn, err := g.ConnectionGetter.Get(ctx, namespace, name)
 	g.rec.observe(ctx, namespace, name, announced, conn, err)
 	return conn, err
