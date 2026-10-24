@@ -1,3 +1,4 @@
+import { createAssistantContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -126,6 +127,13 @@ export function EditDataSourceActions({ uid }: Props) {
         </>
       )}
       <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" context="datasource_page" />
+      <OpenAssistantButton
+        size="sm"
+        title={t('datasources.edit-data-source-actions.configure-with-assistant', 'Configure with assistant')}
+        origin="grafana/datasources-edit/configure-with-assistant"
+        prompt={`Help me finish configuring the ${dataSource.name} data source (uid: ${dataSource.uid}).`}
+        context={[createAssistantContextItem('datasource', { datasourceUid: dataSource.uid })]}
+      />
     </>
   );
 }
