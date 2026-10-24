@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -109,9 +110,46 @@ func TestService_UpdatePluginSetting_JSONDataSize(t *testing.T) {
 		OrgID:    1,
 		JSONData: map[string]any{"k": strings.Repeat("a", maxJSONDataBytes)},
 	})
-	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingJSONDataTooLarge)
+	require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
 
-	require.NoError(t, validateJSONDataSize(map[string]any{"k": strings.Repeat("a", maxJSONDataBytes-len(`{"k":""}`))}))
+	require.NoError(t, validateStoredSize("jsonData", map[string]any{"k": strings.Repeat("a", maxJSONDataBytes-len(`{"k":""}`))}))
+}
+
+func TestIntegrationUpdatePluginSetting_SecureJSONDataSize(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	psService := ProvideService(store, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+	large := map[string]string{"k": strings.Repeat("a", maxJSONDataBytes)}
+
+	t.Run("rejects a new setting", func(t *testing.T) {
+		err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{PluginID: "new-app", OrgID: 1, SecureJSONData: large})
+		require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
+		var e errutil.Error
+		require.ErrorAs(t, err, &e)
+		require.Equal(t, "Plugin secureJsonData is too large to store.", e.PublicMessage)
+	})
+
+	t.Run("rejects an update that is small but pushes the merged data over the limit", func(t *testing.T) {
+		existing := pluginsettings.PluginSetting{
+			OrgId:          1,
+			PluginId:       "existing-app",
+			SecureJsonData: map[string][]byte{"a": []byte(strings.Repeat("a", 40000))},
+			Created:        time.Now(),
+			Updated:        time.Now(),
+		}
+		require.NoError(t, store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Insert(&existing)
+			return err
+		}))
+
+		err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
+			PluginID:       "existing-app",
+			OrgID:          1,
+			SecureJSONData: map[string]string{"b": strings.Repeat("b", 20000)},
+		})
+		require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
+	})
 }
 
 func TestIntegrationPluginSettings(t *testing.T) {
