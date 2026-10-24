@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
@@ -533,6 +534,38 @@ describe('HeaderCell', () => {
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
     });
 
+    it('moves focus to the filter search input when the popup is opened from the column menu by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      act(() => screen.getByLabelText(menuLabel).focus());
+      await user.keyboard('{Enter}');
+      const filterItem = await screen.findByRole('menuitem', { name: 'Filter values' });
+      act(() => filterItem.focus());
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+    });
+
+    it('returns focus to the column menu button when the filter popup is applied by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      const menuButton = screen.getByLabelText(menuLabel);
+      act(() => menuButton.focus());
+      await user.keyboard('{Enter}');
+      act(() => screen.getByRole('menuitem', { name: 'Filter values' }).focus());
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+
+      act(() => screen.getByRole('button', { name: 'Ok' }).focus());
+      await user.keyboard('{Enter}');
+
+      expect(menuButton).toHaveFocus();
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
+    });
+
     it('marks a filtered column with a persistent filter icon, leaving the menu hover-only', () => {
       const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
       const { rerender } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
@@ -572,6 +605,47 @@ describe('HeaderCell', () => {
 
       // the same popup the column menu opens, so the filter can be adjusted or cleared in one click
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    });
+
+    it('moves focus to the column menu button when clearing the filter removes the filter icon', async () => {
+      function FilteredHeaderCell() {
+        const [filter, setFilter] = useState<FilterType>({
+          Field1: { filtered: [{ value: 'a' }], filteredSet: new Set(['a']), displayName: 'Field1' },
+        });
+        return (
+          <HeaderCell
+            {...baseProps}
+            field={filterableField()}
+            filter={filter}
+            setFilter={setFilter}
+            tableRefreshEnabled
+          />
+        );
+      }
+      const user = userEvent.setup();
+      render(<FilteredHeaderCell />);
+
+      act(() => screen.getByLabelText(filterIconLabel).focus());
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+      act(() => screen.getByRole('button', { name: 'Clear filter' }).focus());
+      await user.keyboard('{Enter}');
+
+      expect(screen.getByLabelText(menuLabel)).toHaveFocus();
+      expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
+    });
+
+    it('does not pull focus back into the header when the popup is dismissed by clicking empty space', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await user.click(screen.getByLabelText(menuLabel));
+      await user.click(await screen.findByRole('menuitem', { name: 'Filter values' }));
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+      await user.click(document.body);
+
+      expect(document.body).toHaveFocus();
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
     });
 
     it('tells assistive tech the filter icon expands a dialog, and whether it is open', async () => {

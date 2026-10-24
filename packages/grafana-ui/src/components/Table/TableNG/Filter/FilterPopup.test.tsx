@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
@@ -139,6 +139,29 @@ describe('FilterPopup', () => {
       const after = updater(before);
       expect(after).not.toHaveProperty('Status');
     });
+  });
+
+  describe('focus', () => {
+    it('focuses the search input when it opens', async () => {
+      renderPopup();
+
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+    });
+
+    it.each(['Ok', 'Cancel', 'Clear filter'])(
+      'returns focus to the trigger button when %s is pressed',
+      async (name) => {
+        const user = userEvent.setup();
+        const { buttonElement, onClose } = renderPopup({ filterValue: [{ value: 'active', label: 'active' }] });
+        await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+
+        act(() => screen.getByRole('button', { name }).focus());
+        await user.keyboard('{Enter}');
+
+        expect(buttonElement).toHaveFocus();
+        expect(onClose).toHaveBeenCalledTimes(1);
+      }
+    );
   });
 
   describe('Escape key', () => {
