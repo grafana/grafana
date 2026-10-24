@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { downloadLogs } from '../../utils';
+import { copyLogs, downloadLogs } from '../../utils';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 
 import { type LogListFontSize } from './LogList';
@@ -43,11 +43,13 @@ const FONT_SIZE_LARGE_TOOLTIP_COPY = 'Set large font';
 const FONT_SIZE_SMALL_LABEL_COPY = 'Small font';
 const FONT_SIZE_SMALL_TOOLTIP_COPY = 'Set small font';
 const DOWNLOAD_LOGS_LABEL_COPY = 'Download logs';
+const COPY_RESULTS_LABEL_COPY = 'Copy results';
 
 const OLDEST_LOGS_LABEL_REGEX = /oldest logs first/;
 
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
+  copyLogs: jest.fn(),
   downloadLogs: jest.fn(),
 }));
 
@@ -141,6 +143,7 @@ describe('LogListControls', () => {
       expect(screen.queryByLabelText(WRAP_LINES_LABEL_COPY)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(COPY_RESULTS_LABEL_COPY)).not.toBeInTheDocument();
     }
   );
 
@@ -153,6 +156,7 @@ describe('LogListControls', () => {
         </LogListContextProvider>
       );
       expect(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).toBeInTheDocument();
+      expect(screen.getByLabelText(COPY_RESULTS_LABEL_COPY)).toBeInTheDocument();
     }
   );
 
@@ -510,6 +514,34 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
     await userEvent.click(await screen.findByText('txt'));
     expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined, []);
+  });
+
+  test('Allows to copy logs', async () => {
+    jest.mocked(copyLogs).mockClear();
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText(COPY_RESULTS_LABEL_COPY));
+    expect(copyLogs).toHaveBeenCalledTimes(1);
+    expect(copyLogs).toHaveBeenCalledWith([], undefined, []);
+  });
+
+  test('Allows to copy filtered logs', async () => {
+    jest.mocked(copyLogs).mockClear();
+    const log1 = createLogRow({ logLevel: LogLevel.error });
+    const log2 = createLogRow({ logLevel: LogLevel.warning });
+    const logs = [log1, log2];
+    const filteredLogs = [log1];
+
+    render(
+      <LogListContextProvider {...contextProps} logs={logs} filterLevels={[LogLevel.error]}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText(COPY_RESULTS_LABEL_COPY));
+    expect(copyLogs).toHaveBeenCalledWith(filteredLogs, undefined, []);
   });
 
   test('Controls new lines', async () => {
