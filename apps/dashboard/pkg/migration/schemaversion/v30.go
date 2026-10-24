@@ -378,16 +378,18 @@ func getActiveThresholdColor(value float64, thresholds map[string]interface{}) i
 			break
 		}
 
-		var stepNum float64
-		if stepValue != nil {
-			num, ok := ConvertToFloat(stepValue)
-			if !ok {
-				break
-			}
-			stepNum = num
+		// Null value is -Infinity base threshold; always active, keep scanning.
+		if stepValue == nil {
+			activeStep = stepMap
+			continue
 		}
 
-		if value >= stepNum {
+		num, ok := ConvertToFloat(stepValue)
+		if !ok {
+			break
+		}
+
+		if value >= num {
 			activeStep = stepMap
 		} else {
 			break
