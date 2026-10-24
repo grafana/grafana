@@ -251,6 +251,10 @@ describe('InspectDataTab', () => {
   });
 
   describe('when useTableNG is true', () => {
+    beforeAll(() => {
+      mockTransformationsRegistry([joinByFieldTransformer]);
+    });
+
     beforeEach(() => {
       dataArrivedWithCachedDisplayNames = undefined;
       tableNGFrames = [];
@@ -285,7 +289,6 @@ describe('InspectDataTab', () => {
     });
 
     it('should not show a join computed from older data after the data refreshes', async () => {
-      mockTransformationsRegistry([joinByFieldTransformer]);
       const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
       const selectDataFrame = async (label: string) => {
         await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
@@ -316,6 +319,23 @@ describe('InspectDataTab', () => {
       await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
       expect(hasValue(tableNGFrames.at(-1)!, 'uniqueB')).toBe(true);
       expect(tableNGFrames.some((frame) => hasValue(frame, 'uniqueA'))).toBe(false);
+    });
+
+    it('should show the joined frame when panel transformations are applied', async () => {
+      const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab
+            {...createProps({ useTableNG: true, options: { withTransforms: true, withFieldConfig: false } })}
+          />
+        </OpenFeatureProvider>
+      );
+
+      await userEvent.click(screen.getByText(/Data options/i));
+      await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
+      await userEvent.click(screen.getByText('Series joined by time'));
+      await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
+      expect(hasValue(tableNGFrames.at(-1)!, 'uniqueA')).toBe(true);
     });
   });
 });

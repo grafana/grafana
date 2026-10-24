@@ -73,7 +73,7 @@ export const InspectDataTab = memo(function InspectDataTab({
   const [excelCompatibilityMode, setExcelCompatibilityMode] = useState(false);
   const styles = useStyles2(getPanelInspectorStyles2);
 
-  const shouldJoin = !!data && !options.withTransforms && transformId === DataTransformerID.joinByField;
+  const shouldJoin = !!data && transformId === DataTransformerID.joinByField;
 
   useEffect(() => {
     if (!data || !shouldJoin) {
