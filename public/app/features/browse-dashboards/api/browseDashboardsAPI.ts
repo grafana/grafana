@@ -19,6 +19,7 @@ import { AnnoKeyFolder, type Resource, type TableResponse } from 'app/features/a
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { clearDashboardsPageCache } from 'app/features/dashboard-scene/utils/cache';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch, getState } from 'app/store/store';
@@ -31,7 +32,6 @@ import {
   type FolderListItemDTO,
 } from 'app/types/folders';
 
-import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { invalidateVariablesAfterFolderDelete } from '../../variables-management/cache';
 import { refetchChildren, refreshParents } from '../state/actions';
@@ -404,7 +404,6 @@ export const browseDashboardsAPI = createApi({
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
-        const pageStateManager = getDashboardScenePageStateManager();
         let deletedCount = 0;
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
@@ -433,11 +432,8 @@ export const browseDashboardsAPI = createApi({
           }
         } finally {
           if (deletedCount > 0) {
-            pageStateManager.clearDashboardCache();
             deletedDashboardsCache.clear();
-            for (const uid of deletedDashboardUIDs) {
-              pageStateManager.removeSceneCache(uid);
-            }
+            clearDashboardsPageCache(deletedDashboardUIDs);
 
             // Show notification with button to Recently Deleted
             const title =

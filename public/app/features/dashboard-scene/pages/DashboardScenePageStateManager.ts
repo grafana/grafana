@@ -82,6 +82,7 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import { registerDashboardPageStateCaches } from '../utils/cache';
 import {
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
@@ -1797,6 +1798,7 @@ export function getDashboardScenePageStateManager(v?: 'v1' | 'v2') {
 
   if (!managers.unified) {
     managers.unified = new UnifiedDashboardScenePageStateManager({});
+    registerDashboardPageStateCaches(managers.unified);
   }
 
   return managers.unified;

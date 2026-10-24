@@ -70,10 +70,10 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { buildVizPanel } from './layoutSerializers/utils';
+import { normalizeDataSourceRef } from './normalizeDataSourceRef';
 import {
   getPersistedDSFor,
   getElementDatasource,
-  normalizeDataSourceRef,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
