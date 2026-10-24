@@ -5,6 +5,7 @@ import { omit } from 'lodash';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
+import AzureResourceGraphDatasource from '../../azure_resource_graph/azure_resource_graph_datasource';
 import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import createMockDatasource, { createMockLocations, createMockMetricsNamespaces } from '../../mocks/datasource';
@@ -81,6 +82,9 @@ const defaultProps = {
       .mockResolvedValue(createMockSubscriptions().map((sub) => ({ text: sub.name, value: sub.id }))),
     getLocations: jest.fn().mockResolvedValue(createMockLocations()),
     getMetricNamespaces: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
+    azureResourceGraphDatasource: {
+      getResourceTypes: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
+    },
   }),
   onCancel: noop,
   onApply: noop,
@@ -99,6 +103,73 @@ describe('AzureMonitor ResourcePicker', () => {
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     config.featureToggles.azureResourcePickerUpdates = false;
+  });
+
+  it('explains that metrics are checked after selecting a resource', async () => {
+    render(<ResourcePicker {...defaultProps} queryType="metrics" />);
+
+    expect(await screen.findByLabelText('Primary Subscription')).toBeInTheDocument();
+    expect(
+      screen.getByText('Some resources do not have metrics. Select a resource to load its available metrics.')
+    ).toBeInTheDocument();
+  });
+
+  it('browses and applies an unlisted metrics resource without querying subscription namespaces', async () => {
+    const settings = createMockInstanceSetttings();
+    const graph = new AzureResourceGraphDatasource(settings);
+    graph.postResource = jest.fn().mockImplementation(async (_path, { query }) => {
+      if (query.includes('join kind=inner')) {
+        return {
+          data: [{ subscriptionId: 'sub2', subscriptionName: 'Second subscription' }],
+        };
+      }
+      if (query.includes('summarize count=count() by resourceGroupName')) {
+        return {
+          data: [{ resourceGroupName: 'test-rg', resourceGroupURI: '/subscriptions/sub2/resourceGroups/test-rg' }],
+        };
+      }
+      return {
+        data: [
+          {
+            id: '/subscriptions/sub2/resourceGroups/test-rg/providers/contoso.monitor/widgets/widget',
+            name: 'widget',
+            type: 'contoso.monitor/widgets',
+            resourceGroup: 'test-rg',
+            location: 'westus3',
+          },
+        ],
+      };
+    });
+    const datasource = createMockDatasource({ azureResourceGraphDatasource: graph });
+    const data = new ResourcePickerData(settings, datasource.azureMonitorDatasource, graph);
+    const onApply = jest.fn();
+    render(
+      <ResourcePicker
+        {...defaultProps}
+        datasource={datasource}
+        resourcePickerData={data}
+        queryType="metrics"
+        selectableEntryTypes={[ResourceRowType.Resource]}
+        onApply={onApply}
+      />
+    );
+
+    await userEvent.click(await screen.findByLabelText('Expand Second subscription'));
+    await userEvent.click(await screen.findByLabelText('Expand test-rg'));
+    await userEvent.click(await screen.findByLabelText('widget'));
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(onApply).toHaveBeenCalledWith([
+      {
+        subscription: 'sub2',
+        resourceGroup: 'test-rg',
+        metricNamespace: 'contoso.monitor/widgets',
+        resourceName: 'widget',
+        region: 'westus3',
+      },
+    ]);
+    expect(graph.postResource).toHaveBeenCalledTimes(3);
+    expect(datasource.azureMonitorDatasource.getMetricNamespaces).not.toHaveBeenCalled();
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resources={[noResourceURI]} />);
@@ -445,13 +516,90 @@ describe('AzureMonitor ResourcePicker', () => {
       render(<ResourcePicker {...defaultProps} queryType="metrics" />);
 
       await waitFor(() => {
-        expect(defaultProps.datasource.getMetricNamespaces).toHaveBeenCalled();
+        expect(defaultProps.datasource.azureResourceGraphDatasource.getResourceTypes).toHaveBeenCalledWith();
       });
 
       const resourceTypeFilter = await screen.findByTestId(
         selectors.components.queryEditor.resourcePicker.filters.type.input
       );
       expect(resourceTypeFilter).toBeInTheDocument();
+    });
+
+    it('lets users filter by an unlisted type without sampling the first subscription', async () => {
+      const user = userEvent.setup();
+      const getResourceTypes = jest
+        .fn()
+        .mockResolvedValue([{ text: 'contoso.monitor/widgets', value: 'contoso.monitor/widgets' }]);
+      const datasource = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([
+          { text: 'First subscription', value: 'sub1' },
+          { text: 'Second subscription', value: 'sub2' },
+        ]),
+        getLocations: jest.fn().mockResolvedValue(createMockLocations()),
+        getMetricNamespaces: jest.fn(),
+        azureResourceGraphDatasource: { getResourceTypes },
+      });
+      const fetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+      render(<ResourcePicker {...defaultProps} datasource={datasource} queryType="metrics" />);
+
+      const typeFilter = await screen.findByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      await user.click(typeFilter);
+      await user.type(typeFilter, 'contoso.monitor/widgets{ArrowDown}{Enter}');
+
+      await waitFor(() => {
+        expect(fetchInitialRows).toHaveBeenCalledWith('metrics', undefined, {
+          subscriptions: [],
+          types: ['contoso.monitor/widgets'],
+          locations: [],
+        });
+      });
+      expect(getResourceTypes).toHaveBeenCalledWith();
+      expect(datasource.getMetricNamespaces).not.toHaveBeenCalled();
+    });
+
+    it('shows a resource-type discovery error instead of silently empty filter options', async () => {
+      const datasource = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'First subscription', value: 'sub1' }]),
+        azureResourceGraphDatasource: {
+          getResourceTypes: jest.fn().mockRejectedValue(new Error('Resource Graph access denied')),
+        },
+      });
+      render(<ResourcePicker {...defaultProps} datasource={datasource} queryType="metrics" />);
+
+      expect(await screen.findByText('Resource Graph access denied')).toBeInTheDocument();
+      expect(screen.getByLabelText('Primary Subscription')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
+    });
+
+    it('keeps the location filter usable when resource-type discovery fails', async () => {
+      const user = userEvent.setup();
+      const getLocations = jest.fn().mockResolvedValue(createMockLocations());
+      const datasource = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'First subscription', value: 'sub1' }]),
+        getLocations,
+        azureResourceGraphDatasource: {
+          getResourceTypes: jest.fn().mockRejectedValue(new Error('Resource Graph access denied')),
+        },
+      });
+      const fetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+      render(<ResourcePicker {...defaultProps} datasource={datasource} queryType="metrics" />);
+
+      await waitFor(() => {
+        expect(getLocations).toHaveBeenCalledWith(['sub1']);
+      });
+      const locationFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input);
+      await user.click(locationFilter);
+      await user.type(locationFilter, 'North Europe{ArrowDown}{Enter}');
+
+      await waitFor(() => {
+        expect(fetchInitialRows).toHaveBeenCalledWith('metrics', undefined, {
+          subscriptions: [],
+          types: [],
+          locations: ['northeurope'],
+        });
+      });
+      expect(screen.getByText('Resource Graph access denied')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
     });
 
     it('should not render resource type filter for logs query type', async () => {
