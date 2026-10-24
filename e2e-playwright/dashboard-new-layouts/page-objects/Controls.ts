@@ -102,6 +102,8 @@ export class Controls extends PageObject {
   };
 
   readonly variables = {
+    /** Returns every variable control in the controls bar, in display order (controls menu items are not included) */
+    getControls: (): Locator => this.getContainer().getByTestId(this.selectors.pages.Dashboard.SubMenu.submenuItem),
     /** Returns the variable's label in the submenu */
     getLabel: (variableLabel: string): Locator =>
       this.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)),
