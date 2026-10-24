@@ -804,6 +804,18 @@ func TestSocialGoogle_Validate(t *testing.T) {
 			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
+			name: "fails if both role attribute strict and skip org role sync are enabled",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":             "client-id",
+					"role_attribute_strict": "true",
+					"skip_org_role_sync":    "true",
+				},
+			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
 			name: "fails if the user is not allowed to update allow assign grafana admin",
 			requester: &user.SignedInUser{
 				IsGrafanaAdmin: false,
