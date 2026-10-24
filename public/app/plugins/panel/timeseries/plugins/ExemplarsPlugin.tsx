@@ -117,9 +117,11 @@ const ExemplarsPluginInternal = ({
         y = yMax;
       }
 
+      // An all-null metric series has no y-range; keep valid exemplars at the top of the initialized plot.
+      const emptyYScale = plot.status === 1 && yMin == null && yMax == null;
       const coords = {
         x: plot.valToPos(x, 'x'),
-        y: plot.valToPos(y, yScale),
+        y: emptyYScale ? 0 : plot.valToPos(y, yScale),
       };
       return Number.isFinite(coords.x) && Number.isFinite(coords.y) ? coords : undefined;
     },
