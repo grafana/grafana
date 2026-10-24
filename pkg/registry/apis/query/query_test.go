@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -422,6 +423,17 @@ func TestMergeHeaders(t *testing.T) {
 			require.Equal(t, tt.expected, h1)
 		})
 	}
+}
+
+func TestExtractKnownHeaders(t *testing.T) {
+	h := http.Header{}
+	h.Set(authn.OAuthPassthroughAccessTokenHeader, "token")
+	h.Set(authn.OAuthPassthroughIDTokenHeader, "id-token")
+
+	require.Equal(t, map[string]string{
+		authn.OAuthPassthroughAccessTokenHeader: "token",
+		authn.OAuthPassthroughIDTokenHeader:     "id-token",
+	}, ExtractKnownHeaders(h))
 }
 
 type mockAuthInfo struct {
