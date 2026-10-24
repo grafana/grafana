@@ -24,7 +24,6 @@ import (
 	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
@@ -60,12 +59,6 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	// Initialize checks
-	checkMap := map[string]checks.Check{}
-	for _, c := range checkRegistry.Checks() {
-		checkMap[c.ID()] = c
-	}
-
 	ctr, err := checktyperegisterer.New(cfg, log)
 	if err != nil {
 		return nil, err
@@ -92,7 +85,7 @@ func New(cfg app.Config) (app.App, error) {
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						if req.Object != nil {
-							check, err := getCheck(req.Object, checkMap)
+							check, err := getCheck(req.Object, checkRegistry)
 							if err != nil {
 								return err
 							}

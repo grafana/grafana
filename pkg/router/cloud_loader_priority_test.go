@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +21,7 @@ func priorityBackend(group, source string) Backend {
 func priorityAggregate(backends ...Backend) *aggregateTarget {
 	target := &aggregateTarget{}
 	target.snapshot.Store(&backends)
+	target.status.recordSuccess(time.Now())
 	return target
 }
 
@@ -36,8 +38,10 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	require.NoError(t, err)
 	plugins := []Backend{priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin")}
 	loader.pluginsTarget.snapshot.Store(&plugins)
+	loader.pluginsTarget.status.recordSuccess(time.Now())
 	core := []Backend{priorityBackend("shared", "core"), priorityBackend("c-core-only", "core")}
 	loader.coreTarget.snapshot.Store(&core)
+	loader.coreTarget.status.recordSuccess(time.Now())
 	pollDiscovery(t, st)
 
 	loadShared := func() Backend {
@@ -83,7 +87,7 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 	loader, err := newCloudLoader(nil, nil, nil, st)
 	require.NoError(t, err)
 	_, err = loader.Load(t.Context())
-	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	require.ErrorIs(t, err, errFirstPollPending)
 	pollDiscovery(t, st)
 	_, err = loader.Load(t.Context())
 	require.ErrorContains(t, err, "discovery unavailable")
@@ -160,11 +164,42 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	require.Equal(t, sourceSingleTenant, statuses[0].Source)
 	require.False(t, statuses[0].LastSuccess.IsZero())
 	require.Equal(t, uint64(1), statuses[0].Successes)
-	require.Equal(t, sourceStatus{Source: "aggregate:baas_apiserver"}, statuses[1], "never polled")
+	require.Equal(t, "aggregate:baas_apiserver", statuses[1].Source)
+	require.Equal(t, uint64(1), statuses[1].Successes, "Load serves only once every source has polled")
 
 	fail = true
 	pollDiscovery(t, st)
 	statuses = loader.sourceStatuses()
 	require.False(t, statuses[0].LastSuccess.IsZero(), "the last success is kept after a failure")
 	require.Equal(t, uint64(1), statuses[0].Failures)
+}
+
+// The router isn't ready until every source has polled once: a source that
+// hasn't has an empty snapshot that is not an error, and serving it would
+// leave its groups out of discovery. A failed first poll ends the wait too.
+func TestCloudLoaderWaitsForEverySourcesFirstPoll(t *testing.T) {
+	polled := &aggregateTarget{name: "polled"}
+	backends := []Backend{priorityBackend("polled.ext.grafana.app", "polled")}
+	polled.snapshot.Store(&backends)
+	polled.status.recordSuccess(time.Now())
+	slow := &aggregateTarget{name: "slow"}
+	var none []Backend
+	slow.snapshot.Store(&none)
+	loader, err := newCloudLoader([]*aggregateTarget{polled, slow}, nil, nil, nil)
+	require.NoError(t, err)
+	router := NewGrafanaRouter(loader, nil)
+
+	err = router.reconcile(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
+	require.ErrorContains(t, err, "aggregate:slow")
+	router.storeServing(t.Context(), err)
+	require.Error(t, router.Ready(t.Context()))
+
+	require.True(t, slow.status.recordFailure(), "the first failed attempt is reported")
+	require.False(t, slow.status.recordFailure())
+	err = router.reconcile(t.Context())
+	require.NoError(t, err)
+	router.storeServing(t.Context(), err)
+	require.NoError(t, router.Ready(t.Context()))
+	require.Contains(t, router.served, "polled.ext.grafana.app")
 }

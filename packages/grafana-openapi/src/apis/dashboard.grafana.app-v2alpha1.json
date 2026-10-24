@@ -3932,6 +3932,14 @@
             "format": "double",
             "default": 0
           },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "title": {
             "type": "string",
             "default": ""

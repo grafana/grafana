@@ -66,6 +66,8 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them */
+  AssistantDashboardArtifacts: "assistant.dashboard.artifacts",
   /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
   AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -176,6 +178,8 @@ export const FlagKeys = {
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
+  GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
   /** Check for the existence of logs when linking from the Trace View */
@@ -188,6 +192,8 @@ export const FlagKeys = {
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Adds an experimental Protomaps vector basemap to the geomap panel */
+  GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
   /** Offers the reserved Grafana home option in the home dashboard preference */
   GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
@@ -228,6 +234,8 @@ export const FlagKeys = {
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
+  GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -304,8 +312,6 @@ export const FlagKeys = {
   PreferLibraryPanelTitle: "preferLibraryPanelTitle",
   /** Enables possibility to preserve dashboard variables and time range when navigating between dashboards */
   PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
-  /** Author Git Sync commits as the acting Grafana user */
-  ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Enable export functionality for provisioned resources */
   ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
@@ -336,6 +342,8 @@ export const FlagKeys = {
   ReloadDashboardsOnParamsChange: "reloadDashboardsOnParamsChange",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option */
+  ReportingRemoveLogoUrlField: "reporting.removeLogoUrlField",
   /** Enables the configurable footer settings for PDF reports */
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
@@ -678,6 +686,17 @@ export const useFlagAlertingUIUseFullyCompatBackendFilters = (options?: ReactFla
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboard.artifacts`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardArtifacts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboard.artifacts", false, options).value;
 };
 
 /**
@@ -1286,6 +1305,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardVariablesMigration`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardVariablesMigration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardVariablesMigration", false, options).value;
+};
+
+/**
  * Enables the auto-height feature for dashboard panels
  *
  * **Details:**
@@ -1345,10 +1375,21 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  *
  * **Details:**
  * - flag key: `grafana.filterablePanels`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.filterablePanels", false, options).value;
+  return useFlag("grafana.filterablePanels", true, options).value;
+};
+
+/**
+ * Adds an experimental Protomaps vector basemap to the geomap panel
+ *
+ * **Details:**
+ * - flag key: `grafana.geomapProtomapsBasemap`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.geomapProtomapsBasemap", false, options).value;
 };
 
 /**
@@ -1572,6 +1613,17 @@ export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEv
 };
 
 /**
+ * Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+ *
+ * **Details:**
+ * - flag key: `grafana.savedDashboardViews`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedDashboardViews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedDashboardViews", false, options).value;
+};
+
+/**
  * Enables the dedicated Saved queries page and its navigation entry
  *
  * **Details:**
@@ -1642,10 +1694,10 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.thresholdsInterpolation`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.thresholdsInterpolation", false, options).value;
+  return useFlag("grafana.thresholdsInterpolation", true, options).value;
 };
 
 /**
@@ -1990,17 +2042,6 @@ export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagE
 };
 
 /**
- * Author Git Sync commits as the acting Grafana user
- *
- * **Details:**
- * - flag key: `provisioning.userAttribution`
- * - default value: `true`
- */
-export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.userAttribution", true, options).value;
-};
-
-/**
  * Enable export functionality for provisioned resources
  *
  * **Details:**
@@ -2163,6 +2204,17 @@ export const useFlagReloadDashboardsOnParamsChange = (options?: ReactFlagEvaluat
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option
+ *
+ * **Details:**
+ * - flag key: `reporting.removeLogoUrlField`
+ * - default value: `false`
+ */
+export const useFlagReportingRemoveLogoUrlField = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reporting.removeLogoUrlField", false, options).value;
 };
 
 /**

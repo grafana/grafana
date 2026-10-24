@@ -7,6 +7,7 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
@@ -46,6 +47,8 @@ jest.mock('app/core/services/pageHistory/pageHistorySrv', () => ({
 
 setBackendSrv(backendSrv);
 setupMockServer();
+// The kind filter is a Combobox; without a measured rect the virtualizer renders no options in jsdom.
+mockComboboxRect();
 
 const FILTER_KEY = 'grafana.home.recentActivity.filter';
 
@@ -408,7 +411,7 @@ describe('DashboardTabs', () => {
     it('lists visited pages with their restored state, newest first', async () => {
       seedHistory([appEntry, exploreEntry, recentDashboardEntry, alertingEntry]);
 
-      render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
+      const { user } = render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
       expect(await screen.findByRole('tab', { name: /recent.*4/i, selected: true })).toBeInTheDocument();
 
@@ -425,20 +428,20 @@ describe('DashboardTabs', () => {
         'Last 90 days · Plugin=finnhub'
       );
 
+      // Kind badges are icon-only; the kind is their accessible name and tooltip.
       const list = within(screen.getByRole('list'));
-      expect(list.getByText('Dashboard')).toBeInTheDocument();
-      expect(list.getByText('Alerting')).toBeInTheDocument();
-      expect(list.getByText('App')).toBeInTheDocument();
-      expect(list.getByText('Explore')).toBeInTheDocument();
+      expect(list.getByRole('img', { name: 'Dashboard' })).toBeInTheDocument();
+      expect(list.getByRole('img', { name: 'Alerting' })).toBeInTheDocument();
+      expect(list.getByRole('img', { name: 'App' })).toBeInTheDocument();
+      expect(list.getByRole('img', { name: 'Explore' })).toBeInTheDocument();
 
       // The kind filter covers the whole history; "All" is active until one is picked.
-      const filter = within(screen.getByRole('radiogroup', { name: /show only/i }));
-      const radios = filter.getAllByRole('radio');
-      expect(radios).toHaveLength(5);
-      ['All', 'Dashboards', 'Explore', 'Alerting', 'Apps'].forEach((name, i) =>
-        expect(radios[i]).toHaveAccessibleName(name)
-      );
-      expect(filter.getByRole('radio', { name: 'All' })).toBeChecked();
+      const filter = screen.getByRole('combobox', { name: /show only/i });
+      expect(filter).toHaveValue('All');
+      await user.click(filter);
+      const options = await screen.findAllByRole('option');
+      expect(options.map((option) => option.textContent)).toEqual(['All', 'Dashboards', 'Explore', 'Alerting', 'Apps']);
+      await user.keyboard('{Escape}');
 
       // One exposure per display, counting the whole history.
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
@@ -458,21 +461,25 @@ describe('DashboardTabs', () => {
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
-      const filter = within(await screen.findByRole('radiogroup', { name: /show only/i }));
-      expect(filter.getAllByRole('radio')).toHaveLength(3);
-      expect(filter.queryByRole('radio', { name: 'Alerting' })).not.toBeInTheDocument();
-      expect(filter.queryByRole('radio', { name: 'Apps' })).not.toBeInTheDocument();
+      const filter = await screen.findByRole('combobox', { name: /show only/i });
+      await user.click(filter);
+      expect(await screen.findAllByRole('option')).toHaveLength(3);
+      expect(screen.queryByRole('option', { name: 'Alerting' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Apps' })).not.toBeInTheDocument();
 
-      await user.click(filter.getByRole('radio', { name: 'Explore' }));
+      await user.click(screen.getByRole('option', { name: 'Explore' }));
 
       expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(1);
       expect(screen.getByRole('link', { name: /^Ops Logs/ })).toBeInTheDocument();
+      expect(filter).toHaveValue('Explore');
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
       expect(jest.mocked(recentActivityFilterChanged)).toHaveBeenCalledWith({ filter: 'explore' });
       expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
       // The counter says what the list shows; the options follow the whole history.
       expect(screen.getByRole('tab', { name: /recent.*1/i })).toBeInTheDocument();
-      expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeInTheDocument();
+      await user.click(filter);
+      expect(await screen.findByRole('option', { name: 'Dashboards' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
 
       // A click under a kind filter says so: the kind was forced and the position counts within it.
       await user.click(screen.getByRole('link', { name: /^Ops Logs/ }));
@@ -487,7 +494,7 @@ describe('DashboardTabs', () => {
       render(<DashboardTabs extensionComponents={[]} />);
 
       expect(await screen.findByRole('button', { name: /clear recent activity/i })).toBeInTheDocument();
-      expect(screen.queryByRole('radiogroup', { name: /show only/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /show only/i })).not.toBeInTheDocument();
     });
 
     it('shows the time column while a shown row has a visit time, blank on seeded rows; the filter decides', async () => {
@@ -503,11 +510,14 @@ describe('DashboardTabs', () => {
       expect(within(seededRow).getByTestId('time-ago')).toBeEmptyDOMElement();
       expect(within(exploreRow).getByTestId('time-ago')).toHaveTextContent(/ago/);
 
-      await user.click(screen.getByRole('radio', { name: 'Dashboards' }));
+      const filter = screen.getByRole('combobox', { name: /show only/i });
+      await user.click(filter);
+      await user.click(await screen.findByRole('option', { name: 'Dashboards' }));
       expect(screen.getByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
       expect(screen.queryByTestId('time-ago')).not.toBeInTheDocument();
 
-      await user.click(screen.getByRole('radio', { name: 'All' }));
+      await user.click(filter);
+      await user.click(await screen.findByRole('option', { name: 'All' }));
       expect(screen.getAllByTestId('time-ago')).toHaveLength(2);
     });
 
@@ -585,7 +595,7 @@ describe('DashboardTabs', () => {
       seedHistory([exploreEntry, recentDashboardEntry, alertingEntry]);
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
-      expect(await screen.findByRole('radio', { name: 'Explore' })).toBeChecked();
+      expect(await screen.findByRole('combobox', { name: /show only/i })).toHaveValue('Explore');
 
       jest.mocked(pageHistorySrv.clear).mockImplementation(async () => seedHistory([]));
       await user.click(screen.getByRole('button', { name: /clear recent activity/i }));
@@ -601,12 +611,15 @@ describe('DashboardTabs', () => {
       window.localStorage.setItem(FILTER_KEY, 'explore');
       seedHistory([recentDashboardEntry, alertingEntry]);
 
-      render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
+      const { user } = render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Alert rules/ })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
-      expect(screen.queryByRole('radio', { name: 'Explore' })).not.toBeInTheDocument();
+      const filter = screen.getByRole('combobox', { name: /show only/i });
+      expect(filter).toHaveValue('All');
+      await user.click(filter);
+      expect(await screen.findByRole('option', { name: 'All' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Explore' })).not.toBeInTheDocument();
     });
 
     it('shows a retryable error when the dashboard lookup fails', async () => {

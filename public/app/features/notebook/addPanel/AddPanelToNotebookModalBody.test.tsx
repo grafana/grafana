@@ -388,6 +388,18 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(component).toBeDefined();
     });
 
+    // t() HTML-escapes interpolated values by default, which the toast would show as `Checkout&#39;s`.
+    it('leaves punctuation in the success toast alone', async () => {
+      createWithContent.mockResolvedValue({ uid: 'nb3', title: "Checkout's errors/sec" });
+      const { user, onDismiss } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), "Checkout's errors/sec");
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+      expect(mockCreateSuccessNotification.mock.calls[0][0]).toBe("Panel added to Checkout's errors/sec");
+    });
+
     // Saving a dashboard refuses a name already in use; a notebook that silently becomes the second
     // "Checkout latency" is the same confusion, one list further down.
     it('refuses a name another notebook already has', async () => {

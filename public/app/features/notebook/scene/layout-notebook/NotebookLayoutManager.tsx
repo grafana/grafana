@@ -3,7 +3,13 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import {
+  AppEvents,
+  filterFieldConfigOverrides,
+  type GrafanaTheme2,
+  isStandardFieldProp,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -17,11 +23,13 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { getUpdatedHoverHeader } from 'app/features/dashboard-scene/scene/panel-timerange/utils';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -103,6 +111,13 @@ interface PendingQueriesEdit {
   timer?: ReturnType<typeof setTimeout>;
 }
 
+interface PendingPanelTitleEdit {
+  elementName: string;
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+}
+
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
   implements DashboardLayoutManager<{}, NotebookLayoutKind>
@@ -130,9 +145,12 @@ export class NotebookLayoutManager
 
   private pendingContentEdit?: PendingContentEdit;
   private pendingQueriesEdit?: PendingQueriesEdit;
+  private pendingPanelTitleEdit?: PendingPanelTitleEdit;
+  private pendingVizChanges = new Map<string, Promise<void>>();
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
+    this.state.cells.forEach((cell) => cell.setPanelTitleEditing(Boolean(state.isEditing)));
 
     // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
     // closing the notebook mid-word would leave that step behind, and the next typing would join it.
@@ -247,6 +265,12 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+    this.state.cells.forEach((cell) => cell.setPanelTitleEditing(isEditing));
+    for (const panel of this.getVizPanels()) {
+      panel.setState({
+        hoverHeader: isEditing ? false : getUpdatedHoverHeader(panel.state.title, panel.state.$timeRange?.state),
+      });
+    }
   }
 
   /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
@@ -513,6 +537,206 @@ export class NotebookLayoutManager
     });
   }
 
+  public setPanelTitle(cell: NotebookCellItem, title: string): void {
+    const panel = cell.state.body;
+    if (!panel || isLibraryPanel(panel) || panel.state.title === title) {
+      return;
+    }
+
+    const elementName = cell.state.elementName;
+    const pending = this.pendingPanelTitleEdit;
+    if (pending?.elementName === elementName) {
+      pending.after = title;
+      this.applyPanelTitle(elementName, title);
+      if (pending.before === title) {
+        this.editHistory?.discard(pending.action);
+        this.pendingPanelTitleEdit = undefined;
+      }
+      return;
+    }
+
+    this.commitPendingEdits();
+    const history = this.editHistory;
+    if (!history) {
+      this.applyPanelTitle(elementName, title);
+      return;
+    }
+
+    const edit: PendingPanelTitleEdit = {
+      elementName,
+      before: panel.state.title,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename-panel', 'Rename panel'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
+        perform: () => {
+          this.commitPanelTitleEdit();
+          this.applyPanelTitle(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.commitPanelTitleEdit();
+          this.applyPanelTitle(edit.elementName, edit.before);
+        },
+      },
+    };
+    this.pendingPanelTitleEdit = edit;
+    this.applyPanelTitle(elementName, title);
+    history.record(edit.action);
+  }
+
+  public commitPanelTitleEdit(): void {
+    this.pendingPanelTitleEdit = undefined;
+  }
+
+  private applyPanelTitle(elementName: string, title: string): void {
+    for (const cell of this.state.cells) {
+      if (cell.state.elementName === elementName && cell.state.body) {
+        cell.state.body.setState({
+          title,
+          hoverHeader: this.state.isEditing
+            ? false
+            : getUpdatedHoverHeader(title, cell.state.body.state.$timeRange?.state),
+        });
+      }
+    }
+  }
+
+  public async changePanelVisualization(
+    cell: NotebookCellItem,
+    suggestion: PanelPluginVisualizationSuggestion
+  ): Promise<void> {
+    if (!cell.state.body || isLibraryPanel(cell.state.body)) {
+      return;
+    }
+
+    this.commitPendingEdits();
+    const elementName = cell.state.elementName;
+    let panels: VizPanel[] = [];
+    const wasEditing = this.notebookScene?.state.isEditing;
+    let before: Array<ReturnType<typeof snapshotVisualization>> = [];
+    let after: Array<ReturnType<typeof snapshotVisualization>> = [];
+    let failed = false;
+    const history = this.editHistory;
+    const replay = (getSnapshots: () => typeof before) => {
+      const wasEditing = this.notebookScene?.state.isEditing;
+      void this.enqueueVizChange(elementName, async () => {
+        if (failed) {
+          return;
+        }
+        let previous: typeof before = [];
+        try {
+          previous = panels.map(snapshotVisualization);
+          await applyVisualizations(panels, getSnapshots());
+        } catch {
+          failed = true;
+          const restored =
+            previous.length === panels.length &&
+            (await applyVisualizations(panels, previous).then(
+              () => true,
+              () => false
+            ));
+          history?.discard(action);
+          appEvents.emit(AppEvents.alertError, [
+            restored
+              ? t(
+                  'notebooks.history.visualization-replay-error',
+                  'Could not restore visualization. Try selecting the visualization again.'
+                )
+              : t(
+                  'notebooks.history.visualization-rollback-error',
+                  'Could not restore visualization. Check the panel before saving.'
+                ),
+          ]);
+          return;
+        }
+        this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
+      });
+    };
+    const action: NotebookEditAction = {
+      label: t('notebooks.history.change-visualization', 'Change visualization'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => replay(() => after),
+      undo: () => replay(() => before),
+    };
+    history?.record(action);
+
+    try {
+      await this.enqueueVizChange(elementName, async () => {
+        panels = this.state.cells
+          .filter((candidate) => candidate.state.elementName === elementName)
+          .map((candidate) => candidate.state.body)
+          .filter((panel): panel is VizPanel => Boolean(panel));
+        before = panels.map(snapshotVisualization);
+        const results = await Promise.allSettled(
+          panels.map(async (panel) => {
+            const fieldConfig = {
+              defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
+              overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
+            };
+            const options = suggestion.options && structuredClone(suggestion.options);
+            const nextFieldConfig = structuredClone({
+              ...(suggestion.fieldConfig ?? fieldConfig),
+              overrides: fieldConfig.overrides,
+            });
+            await panel.changePluginType(
+              suggestion.pluginId,
+              structuredClone(options),
+              structuredClone(nextFieldConfig)
+            );
+            if (options) {
+              panel.onOptionsChange(options, true);
+            }
+            if (suggestion.fieldConfig) {
+              panel.onFieldConfigChange(nextFieldConfig, true);
+            }
+          })
+        );
+        const failure = results.find((result) => result.status === 'rejected');
+        if (failure) {
+          failed = true;
+          await applyVisualizations(panels, before);
+          throw failure.reason;
+        }
+        after = panels.map(snapshotVisualization);
+      });
+    } catch (error) {
+      history?.discard(action);
+      throw error;
+    }
+
+    if (isEqual(before, after)) {
+      history?.discard(action);
+    } else {
+      this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
+    }
+  }
+
+  private enqueueVizChange(elementName: string, change: () => Promise<void>): Promise<void> {
+    const result = (this.pendingVizChanges.get(elementName) ?? Promise.resolve()).then(change);
+    const settled = result.then(
+      () => {},
+      () => {}
+    );
+    this.pendingVizChanges.set(elementName, settled);
+    void settled.then(() => {
+      if (this.pendingVizChanges.get(elementName) === settled) {
+        this.pendingVizChanges.delete(elementName);
+      }
+    });
+    return result;
+  }
+
+  public whenVizChangesSettled(): Promise<string[]> | undefined {
+    const pending = [...this.pendingVizChanges.entries()];
+    return pending.length
+      ? Promise.all(pending.map(([, change]) => change)).then(() => pending.map(([name]) => name))
+      : undefined;
+  }
+
+  public hasPendingVizChanges(): boolean {
+    return this.pendingVizChanges.size > 0;
+  }
+
   /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
@@ -582,7 +806,8 @@ export class NotebookLayoutManager
   /** A fresh, unconfigured Panel VizPanel — shared by buildCellFor (insert) and convertCellToPanel. */
   private buildVisualizationPanel(): VizPanel {
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
-    return new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), nextId()));
+    const state = buildVizPanelState(defaultVisualizationPanelKind(), nextId());
+    return new VizPanel({ ...state, hoverHeader: this.state.isEditing ? false : state.hoverHeader });
   }
 
   /**
@@ -720,7 +945,9 @@ export class NotebookLayoutManager
     const copy = cell.clone({
       key: undefined,
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
-      body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      body: cell.state.body?.clone({
+        key: getVizPanelKeyForPanelId(nextId()),
+      }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
       // A bare .clone() would reuse the same $timeRange instance across both cells.
       ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
@@ -824,11 +1051,17 @@ export class NotebookLayoutManager
   public commitPendingEdits(): void {
     this.commitContentEdits();
     this.commitQueriesEdits();
+    this.commitPanelTitleEdit();
   }
 
   private insertCell(cell: NotebookCellItem, index: number): void {
     if (this.state.cells.includes(cell)) {
       return;
+    }
+
+    cell.setPanelTitleEditing(Boolean(this.state.isEditing));
+    if (this.state.isEditing) {
+      cell.state.body?.setState({ hoverHeader: false });
     }
 
     const cells = [...this.state.cells];
@@ -904,6 +1137,36 @@ export class NotebookLayoutManager
 
   public static createFromLayout(): NotebookLayoutManager {
     return new NotebookLayoutManager({ cells: [] });
+  }
+}
+
+function snapshotVisualization(panel: VizPanel) {
+  return {
+    pluginId: panel.state.pluginId,
+    options: structuredClone(panel.state.options),
+    fieldConfig: structuredClone(panel.state.fieldConfig),
+  };
+}
+
+async function applyVisualizations(panels: VizPanel[], snapshots: Array<ReturnType<typeof snapshotVisualization>>) {
+  const results = await Promise.allSettled(
+    panels.map(async (panel, index) => {
+      const snapshot = snapshots[index];
+      if (isEqual(snapshotVisualization(panel), snapshot)) {
+        return;
+      }
+      await panel.changePluginType(
+        snapshot.pluginId,
+        structuredClone(snapshot.options),
+        structuredClone(snapshot.fieldConfig)
+      );
+      panel.onOptionsChange(structuredClone(snapshot.options), true);
+      panel.onFieldConfigChange(structuredClone(snapshot.fieldConfig), true);
+    })
+  );
+  const failure = results.find((result) => result.status === 'rejected');
+  if (failure) {
+    throw failure.reason;
   }
 }
 
@@ -1151,9 +1414,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   document: css({
     maxWidth: 900,
     margin: '0 auto',
-    padding: theme.spacing(3, 4, 6, 4),
+    padding: theme.spacing(3, 4, 6, 8),
     [theme.breakpoints.up('md')]: {
-      paddingLeft: theme.spacing(7),
+      paddingLeft: theme.spacing(11),
       paddingRight: theme.spacing(7),
     },
     width: '100%',
@@ -1181,11 +1444,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
     // focus stays visible, because a tab stop at opacity 0 is a focus trap. A control that pinned
     // itself stays too, which is how a control with an open menu keeps the menu anchored.
-    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
-      {
-        opacity: 0,
-        pointerEvents: 'none',
-      },
+    '@media (hover: hover)': {
+      [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
+        {
+          opacity: 0,
+          pointerEvents: 'none',
+        },
+    },
   }),
 });
 

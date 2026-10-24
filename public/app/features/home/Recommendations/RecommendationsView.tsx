@@ -11,7 +11,7 @@ import { recommendationsShown } from '../analytics/main';
 import { type Solution, type SolutionId } from '../solutions/types';
 
 import { RecommendationCard } from './RecommendationCard';
-import { RecommendationExisting } from './RecommendationExisting';
+import { RecommendationExisting, RecommendationExistingSkeleton } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
 import { type BaseRow } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
@@ -255,6 +255,31 @@ function RecommendedCardSkeleton() {
         <Skeleton height={20} />
         <Skeleton width={170} height={32} />
       </Stack>
+    </div>
+  );
+}
+
+/**
+ * Stands in for the whole region while the plugin list and probes resolve, built from the same card shell and
+ * column skeletons the view shows while its facts settle, so the region keeps one height from skeleton to content.
+ */
+export function RecommendationsSkeleton() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div data-testid="recommendations-skeleton">
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <Skeleton width={280} height={24} />
+        <Skeleton width={60} height={24} />
+      </Stack>
+
+      <div className={styles.cards}>
+        <HomeGrid columns={2} gap={0}>
+          <div className={styles.card}>
+            <RecommendationExistingSkeleton />
+          </div>
+          <RecommendedCardSkeleton />
+        </HomeGrid>
+      </div>
     </div>
   );
 }

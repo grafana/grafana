@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -105,7 +105,7 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 
-	rule := &model.AlertRule{
+	rule := &v1beta1.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "no-summary-rule",
 			Namespace: "default",
@@ -113,13 +113,13 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 				"grafana.app/folder": "test-folder-uid",
 			},
 		},
-		Spec: model.AlertRuleSpec{
+		Spec: v1beta1.AlertRuleSpec{
 			Title:        "no-summary-rule",
-			Trigger:      model.AlertRuleIntervalTrigger{Interval: "1m"},
-			NoDataState:  model.AlertRuleNoDataStateNoData,
-			ExecErrState: model.AlertRuleExecErrStateError,
-			Expressions: model.AlertRuleExpressionMap{
-				"A": model.AlertRuleExpression{
+			Trigger:      v1beta1.AlertRuleIntervalTrigger{Interval: "1m"},
+			NoDataState:  v1beta1.AlertRuleNoDataStateNoData,
+			ExecErrState: v1beta1.AlertRuleExecErrStateError,
+			Expressions: v1beta1.AlertRuleExpressionMap{
+				"A": v1beta1.AlertRuleExpression{
 					Model:  map[string]interface{}{"type": "math", "expression": "1 == 1", "refId": "A"},
 					Source: new(true),
 				},
