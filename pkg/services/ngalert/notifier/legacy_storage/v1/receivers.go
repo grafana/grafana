@@ -20,8 +20,8 @@ func ReceiverUID(name string) ResourceUID {
 func NewReceiver(name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
 	r := PostableApiReceiver{
 		ResourceMetadata: ResourceMetadata{
-			UID:        ReceiverUID(name),
-			Provenance: provenance,
+			UID:     ReceiverUID(name),
+			Manager: models.ProvenanceToManagerProperties(provenance),
 		},
 		Name:                    name,
 		GrafanaManagedReceivers: integrations,
