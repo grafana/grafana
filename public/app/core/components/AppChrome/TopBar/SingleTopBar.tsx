@@ -21,6 +21,8 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
 import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
+import { PrototypeTopBarCluster } from '../MegaMenuPrototype/PrototypeMegaMenu';
+import { usePrototypeVariant } from '../MegaMenuPrototype/state';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
@@ -65,12 +67,15 @@ export const SingleTopBar = memo(function SingleTopBar({
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
+  // PROTOTYPE: mega menu solutions — header cluster replaces logo + hamburger; profile moves into the menu.
+  const prototypeVariant = usePrototypeVariant();
 
   return (
     <>
       <div className={styles.layout}>
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
-          {!menuDockedAndOpen && (
+          {!menuDockedAndOpen && prototypeVariant && <PrototypeTopBarCluster />}
+          {!menuDockedAndOpen && !prototypeVariant && (
             <>
               <HomeLogo homeNav={homeNav} />
               <ToolbarButton
@@ -111,7 +116,9 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
           <AssistantToolbarButtons />
-          {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
+          {profileNode && !prototypeVariant && (
+            <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />
+          )}
         </Stack>
       </div>
       {showToolbarLevel && (
