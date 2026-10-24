@@ -1,0 +1,30 @@
+---
+description: Require screenshots/recordings for user-visible UI changes
+alwaysApply: true
+---
+
+# Visual verification
+
+When a change alters user-visible behavior (panels, editors, Explore, query preview, copy/success feedback, remounting, layout):
+
+## Required
+
+- Capture a **screenshot**, a **short recording**, or both, showing **before** (broken) and **after** (fixed).
+- Attach captures to the PR description and reference them from the ticket.
+- Name the exact page, query, panel, or control shown so a reviewer can reproduce it.
+- Prefer repo tooling:
+  - Playwright e2e (`yarn e2e:playwright`) — screenshots and video
+  - Local Grafana (`make run` + `yarn start`) exercised with browser tooling
+
+## When visual capture is not feasible
+
+Pure logic / non-UI paths, or UI that cannot run in this tree:
+
+- Say so explicitly in the PR **Test plan** (**N/A — logic-only** or **N/A — UI not runnable here**).
+- Still rely on automated tests (see `.cursor/rules/testing-coverage.mdc`).
+- Briefly describe what a capture would have shown.
+
+## Do not
+
+- Ship UI-facing PRs with neither tests nor visual evidence.
+- Include credentials, tokens, or real user data in any capture.
