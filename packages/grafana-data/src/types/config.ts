@@ -231,6 +231,22 @@ export interface BootData {
  * If you want to access these values, use the `config` object from `@grafana/runtime`.
  * @internal
  */
+/** Where an operator has placed an app plugin, or one of its pages, in the nav */
+export interface NavigationPlacement {
+  sectionId: string;
+  sortWeight?: number;
+}
+
+/**
+ * The [navigation.app_sections] and [navigation.app_standalone_pages] overrides,
+ * keyed by plugin id and by page path. A section id that no section has hides the
+ * entry, which is how Grafana Cloud hides an installed app.
+ */
+export interface NavigationConfig {
+  appSections?: Record<string, NavigationPlacement>;
+  appStandalonePages?: Record<string, NavigationPlacement>;
+}
+
 export interface GrafanaConfig {
   publicDashboardAccessToken: string;
   publicDashboardsEnabled: boolean;
@@ -301,6 +317,7 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
+  navigation: NavigationConfig;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;

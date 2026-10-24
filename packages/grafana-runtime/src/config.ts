@@ -13,6 +13,7 @@ import {
   type GrafanaTheme2,
   type LicenseInfo,
   type MapLayerOptions,
+  type NavigationConfig,
   type OAuthSettings,
   type PanelPluginMeta,
   type PreinstalledPlugin as PreinstalledPluginGrafanaData,
@@ -212,6 +213,7 @@ export class GrafanaBootConfig {
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
   };
+  navigation: NavigationConfig = {};
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   applicationInsightsAutoRouteTracking?: boolean;
