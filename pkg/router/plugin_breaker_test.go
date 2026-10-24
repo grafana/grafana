@@ -468,8 +468,17 @@ func TestPluginPanicSettlesHalfOpenAttempt(t *testing.T) {
 	panicValue := &struct{ message string }{"plugin panic"}
 	for _, method := range []string{"admission", "conversion", "route", "receive", "health", "resource"} {
 		t.Run(method, func(t *testing.T) {
+			// State() itself moves an open breaker to half-open once Timeout
+			// passes, so reading it after the panic races the scheduler.
+			// Count the transition the failed trial causes instead.
+			var trialFailures atomic.Int32
 			cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 				ReadyToTrip: func(gobreaker.Counts) bool { return true }, Timeout: 20 * time.Millisecond,
+				OnStateChange: func(_ string, from, to gobreaker.State) {
+					if from == gobreaker.StateHalfOpen && to == gobreaker.StateOpen {
+						trialFailures.Add(1)
+					}
+				},
 			})
 			done, err := cb.Allow()
 			require.NoError(t, err)
@@ -499,7 +508,7 @@ func TestPluginPanicSettlesHalfOpenAttempt(t *testing.T) {
 					_ = legacy.CallResource(ctx, &backend.CallResourceRequest{}, nil)
 				}
 			})
-			require.Equal(t, gobreaker.StateOpen, cb.State(), "a panic must fail the trial instead of leaving it in flight")
+			require.Equal(t, int32(1), trialFailures.Load(), "a panic must fail the trial instead of leaving it in flight")
 			require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
 			raw.panicValue = nil
 			_, err = client.AdmissionReview(ctx, &pluginv3.AdmissionReviewRequest{})
