@@ -94,6 +94,9 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
+		if apierrors.IsNotFound(err) {
+			err = apierrors.NewBadRequest(fmt.Sprintf("repository %q does not exist", name))
+		}
 		responder.Error(err)
 		return
 	}

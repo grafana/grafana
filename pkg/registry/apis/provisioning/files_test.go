@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -698,4 +699,39 @@ func TestIsRawFileIntegration(t *testing.T) {
 			require.Equal(t, tt.expected, resources.IsRawFile(tt.path))
 		})
 	}
+}
+
+func TestHandleRequest_MissingRepository(t *testing.T) {
+	gr := provisioningapi.RepositoryResourceInfo.GroupResource()
+	logger := logging.FromContext(t.Context())
+
+	handle := func(t *testing.T, getterErr error, method string) error {
+		t.Helper()
+		connector := &filesConnector{getter: &fakeRepoGetter{err: getterErr}}
+		responder := &fakeResponder{}
+		req := httptest.NewRequest(method, "/repositories/gone-repo/files/dashboard.json", nil)
+
+		connector.handleRequest(context.Background(), "gone-repo", req, responder, logger)
+
+		return responder.err
+	}
+
+	t.Run("a not found repository is returned as a bad request", func(t *testing.T) {
+		for _, method := range []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete} {
+			err := handle(t, apierrors.NewNotFound(gr, "gone-repo"), method)
+
+			require.Error(t, err, method)
+			require.True(t, apierrors.IsBadRequest(err), "%s: got %v", method, err)
+			require.False(t, apierrors.IsNotFound(err), method)
+			require.Contains(t, err.Error(), `"gone-repo"`, method)
+		}
+	})
+
+	t.Run("other errors are returned as they are", func(t *testing.T) {
+		unhealthy := &apierrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusFailedDependency, Message: "not healthy"}}
+
+		err := handle(t, unhealthy, http.MethodPost)
+
+		require.Equal(t, unhealthy, err)
+	})
 }
