@@ -43,5 +43,5 @@ export const valueSetMatcher: ValueMatcherInfo<ValueSetOptions> = {
       return selected.has(formattedValueToString(display(value)));
     };
   },
-  getOptionsDisplayText: (options) => `Is in set: ${options.values.join(', ')}`,
+  getOptionsDisplayText: (options) => `Is in set: ${Array.isArray(options.values) ? options.values.join(', ') : ''}`,
 };

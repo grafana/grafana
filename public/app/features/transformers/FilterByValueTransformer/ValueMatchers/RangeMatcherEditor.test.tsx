@@ -2,14 +2,95 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 import { FieldType, type TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
+import { numberOrVariableValidator } from '../../utils';
 
 import { rangeMatcherEditor } from './RangeMatcherEditor';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: jest.fn(),
 }));
 
 describe('RangeMatcherEditor', () => {
+  beforeEach(() => {
+    jest.mocked(getTemplateSrv).mockReturnValue(new TemplateSrv());
+  });
+
+  it.each(['from', 'to'] as const)('renders an opted-in open %s bound as a valid empty input', (bound) => {
+    const Editor = rangeMatcherEditor({ validator: numberOrVariableValidator });
+    render(
+      <Editor
+        options={bound === 'from' ? { to: 10, allowOpenBounds: true } : { from: 1, allowOpenBounds: true }}
+        field={{ name: 'Value', type: FieldType.number, config: {}, values: [] }}
+        onChange={jest.fn()}
+      />
+    );
+
+    const openInput = screen.getByPlaceholderText(bound === 'from' ? 'From' : 'To');
+    expect(openInput).toHaveValue('');
+    expect(openInput).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByPlaceholderText(bound === 'from' ? 'To' : 'From')).toHaveValue(bound === 'from' ? '10' : '1');
+  });
+
+  it.each(['from', 'to'] as const)('renders a missing %s bound as empty and invalid without opt-in', (bound) => {
+    const Editor = rangeMatcherEditor({ validator: numberOrVariableValidator });
+    render(
+      <Editor
+        options={bound === 'from' ? { to: 10 } : { from: 1 }}
+        field={{ name: 'Value', type: FieldType.number, config: {}, values: [] }}
+        onChange={jest.fn()}
+      />
+    );
+
+    const missingInput = screen.getByPlaceholderText(bound === 'from' ? 'From' : 'To');
+    expect(missingInput).toHaveValue('');
+    expect(missingInput).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByPlaceholderText(bound === 'from' ? 'To' : 'From')).toHaveValue(bound === 'from' ? '10' : '1');
+  });
+
+  it.each(['from', 'to'] as const)('clears the opted-in %s bound to undefined', async (bound) => {
+    const Editor = rangeMatcherEditor({ validator: numberOrVariableValidator });
+    const onChange = jest.fn();
+    render(
+      <Editor
+        options={{ from: 1, to: 10, allowOpenBounds: true, inclusive: true }}
+        field={{ name: 'Value', type: FieldType.number, config: {}, values: [] }}
+        onChange={onChange}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(bound === 'from' ? 'From' : 'To');
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenLastCalledWith(
+        bound === 'from'
+          ? { from: undefined, to: 10, allowOpenBounds: true, inclusive: true }
+          : { from: 1, to: undefined, allowOpenBounds: true, inclusive: true }
+      )
+    );
+  });
+
+  it('preserves the empty string when open bounds are not enabled', async () => {
+    const Editor = rangeMatcherEditor({ validator: numberOrVariableValidator });
+    const onChange = jest.fn();
+    render(
+      <Editor
+        options={{ from: 1, to: 10 }}
+        field={{ name: 'Value', type: FieldType.number, config: {}, values: [] }}
+        onChange={onChange}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('From'), { target: { value: '' } });
+    fireEvent.blur(screen.getByPlaceholderText('From'));
+
+    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith({ from: '', to: 10 }));
+  });
+
   it('shows variable suggestions for both from and to inputs', async () => {
     // Mock template service variables
     const mockVariables: TypedVariableModel[] = [

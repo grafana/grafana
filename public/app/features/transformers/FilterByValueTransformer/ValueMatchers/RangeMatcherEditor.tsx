@@ -18,13 +18,14 @@ export function rangeMatcherEditor<T = string | number>(
   return function RangeMatcherEditor({ options, onChange }) {
     const { validator } = config;
     const [isInvalid, setInvalid] = useState({
-      from: !validator(options.from),
-      to: !validator(options.to),
+      from: !(options.allowOpenBounds && options.from === undefined) && !validator(options.from),
+      to: !(options.allowOpenBounds && options.to === undefined) && !validator(options.to),
     });
 
     const onChangeOptionsSuggestions = useCallback(
       (value: string, prop: PropNames) => {
-        const invalid = !validator(value);
+        const isOpenBound = options.allowOpenBounds && value === '';
+        const invalid = !isOpenBound && !validator(value);
 
         setInvalid({
           ...isInvalid,
@@ -37,7 +38,7 @@ export function rangeMatcherEditor<T = string | number>(
 
         onChange({
           ...options,
-          [prop]: value,
+          [prop]: isOpenBound ? undefined : value,
         });
       },
       [options, onChange, isInvalid, setInvalid, validator]
@@ -48,7 +49,7 @@ export function rangeMatcherEditor<T = string | number>(
     return (
       <>
         <SuggestionsInput
-          value={String(options.from)}
+          value={options.from === undefined ? '' : String(options.from)}
           invalid={isInvalid.from}
           error={'Value needs to be a number or a variable'}
           placeholder={t('transformers.range-matcher-editor.placeholder-from', 'From')}
@@ -61,7 +62,7 @@ export function rangeMatcherEditor<T = string | number>(
         <SuggestionsInput
           invalid={isInvalid.to}
           error={'Value needs to be a number or a variable'}
-          value={String(options.to)}
+          value={options.to === undefined ? '' : String(options.to)}
           placeholder={t('transformers.range-matcher-editor.placeholder-to', 'To')}
           suggestions={suggestions}
           onChange={(val) => onChangeOptionsSuggestions(val, 'to')}
