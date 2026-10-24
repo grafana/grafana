@@ -109,6 +109,48 @@ describe('ScopesSelectorService', () => {
     service = new ScopesSelectorService(apiClient, dashboardsService, store);
   });
 
+  describe('getScope', () => {
+    it('fetches the scope and keeps it in state', async () => {
+      await expect(service.getScope('test-scope')).resolves.toEqual(mockScope);
+
+      expect(apiClient.fetchScope).toHaveBeenCalledWith('test-scope');
+      expect(service.state.scopes['test-scope']).toEqual(mockScope);
+    });
+
+    it('does not fetch a scope that is already in state', async () => {
+      await service.getScope('test-scope');
+      await service.getScope('test-scope');
+
+      expect(apiClient.fetchScope).toHaveBeenCalledTimes(1);
+    });
+
+    it('shares one request between concurrent callers', async () => {
+      const [first, second] = await Promise.all([service.getScope('test-scope'), service.getScope('test-scope')]);
+
+      expect(first).toBe(second);
+      expect(apiClient.fetchScope).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns undefined without caching when the scope cannot be fetched, so a later call retries', async () => {
+      apiClient.fetchScope.mockResolvedValueOnce(undefined);
+
+      await expect(service.getScope('test-scope')).resolves.toBeUndefined();
+      expect(service.state.scopes['test-scope']).toBeUndefined();
+
+      await expect(service.getScope('test-scope')).resolves.toEqual(mockScope);
+      expect(apiClient.fetchScope).toHaveBeenCalledTimes(2);
+    });
+
+    it('is reused by selectScope instead of fetching the scope again', async () => {
+      await service.filterNode('', '');
+      await service.getScope('test-scope');
+
+      await service.selectScope('test-scope-node');
+
+      expect(apiClient.fetchScope).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('selectScope and deselectScope', () => {
     beforeEach(async () => {
       await service.filterNode('', '');

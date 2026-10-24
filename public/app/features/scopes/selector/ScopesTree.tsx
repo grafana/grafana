@@ -115,12 +115,7 @@ export function ScopesTree({
             id={selectedNodesToShowId}
           />
 
-          <ScopesTreeHeadline
-            anyChildExpanded={anyChildExpanded}
-            query={tree.query}
-            resultsNodes={childrenArray}
-            scopeNodes={scopeNodes}
-          />
+          <ScopesTreeHeadline anyChildExpanded={anyChildExpanded} query={tree.query} resultsNodes={childrenArray} />
 
           <ScopesTreeItemList
             items={childrenArray}
