@@ -18,7 +18,8 @@ SELECT
   COALESCE(dashboard_version.created_by, dashboard.updated_by) as updated_by_id,
   COALESCE(dashboard_version.version, dashboard.version) as version,
   COALESCE(dashboard_version.message, '') as message,
-  COALESCE(dashboard_version.data, dashboard.data) as data,
+  dashboard_version.data as version_data,
+  dashboard.data as dashboard_data,
   COALESCE(dashboard_version.api_version, dashboard.api_version) as api_version
 FROM "grafana"."dashboard" as dashboard
 LEFT OUTER JOIN "grafana"."dashboard_version" as dashboard_version ON dashboard.id = dashboard_version.dashboard_id
