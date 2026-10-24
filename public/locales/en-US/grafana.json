@@ -1097,6 +1097,7 @@
         "body": "Are you sure you want to restore this deleted alert rule definition?",
         "confirm": "Yes, restore deleted rule",
         "error": "Could not restore deleted alert rule",
+        "preview-aria-label": "Deleted alert rule JSON",
         "title": "Restore deleted alert rule"
       },
       "table": {
@@ -3594,6 +3595,9 @@
       "switch-to-data-source-managed": "The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.",
       "switch-to-grafana-managed": "Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.",
       "title-alert-rule-types": "Alert rule types"
+    },
+    "sql-query-preview": {
+      "aria-label": "SQL query preview"
     },
     "state-history": {
       "columns": {
