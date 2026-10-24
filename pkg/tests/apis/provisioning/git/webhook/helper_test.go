@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common/webhooksuite"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 )
 
-var env = common.NewSharedGitEnv(
-	common.WithoutProvisioningFolderMetadata,
-	common.WithProvisioningPublicRootURL("https://grafana.example.com"),
+var env = common.NewSharedGitEnv(append(webhooksuite.EnvOptions(),
 	common.WithRepositoryTypes([]string{"git", "github"}),
-)
+)...)
 
 func sharedGitHelper(t *testing.T) *common.GitTestHelper {
 	t.Helper()
