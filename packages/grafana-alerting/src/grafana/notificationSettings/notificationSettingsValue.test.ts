@@ -1,0 +1,158 @@
+import { type AlertRuleNotificationSettings } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
+import {
+  type NotificationSettings,
+  fromRuleNotificationSettings,
+  namedRoutingTree,
+  simplifiedRouting,
+  toRuleNotificationSettings,
+} from './notificationSettingsValue';
+
+const fullSimplified = {
+  type: 'SimplifiedRouting',
+  receiver: 'slack-oncall',
+  groupBy: ['alertname', 'cluster'],
+  groupWait: '30s',
+  groupInterval: '5m',
+  repeatInterval: '4h',
+  muteTimeIntervals: ['weekends'],
+  activeTimeIntervals: ['business-hours'],
+} satisfies NotificationSettings;
+
+const namedTree = { type: 'NamedRoutingTree', routingTree: 'deployment-tools' } satisfies NotificationSettings;
+
+describe('simplifiedRouting', () => {
+  it('builds a value from just a receiver', () => {
+    expect(simplifiedRouting('slack-oncall')).toEqual({ type: 'SimplifiedRouting', receiver: 'slack-oncall' });
+  });
+
+  it('leaves out the fields that are not set', () => {
+    expect(simplifiedRouting('slack-oncall', { groupInterval: '5m', repeatInterval: '' })).toStrictEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+      groupInterval: '5m',
+    });
+  });
+
+  it('carries the optional timings and intervals along', () => {
+    expect(simplifiedRouting('slack-oncall', { groupWait: '1m', muteTimeIntervals: ['weekends'] })).toEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+      groupWait: '1m',
+      muteTimeIntervals: ['weekends'],
+    });
+  });
+
+  it('drops blank timings so they are not sent as empty durations', () => {
+    const value = simplifiedRouting('slack-oncall', { groupWait: '', groupInterval: '5m', repeatInterval: '' });
+
+    expect(JSON.parse(JSON.stringify(value))).toEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+      groupInterval: '5m',
+    });
+  });
+});
+
+describe('simplifiedRouting with an existing value as options', () => {
+  it('keeps the new receiver while carrying the existing timings along', () => {
+    expect(simplifiedRouting('new-contact-point', fullSimplified)).toEqual({
+      ...fullSimplified,
+      receiver: 'new-contact-point',
+    });
+  });
+});
+
+describe('simplifiedRouting with unrelated properties in the options', () => {
+  it('does not carry them onto the value', () => {
+    const previousNamedTree = { groupWait: '1m', routingTree: 'deployment-tools' };
+
+    expect(simplifiedRouting('slack-oncall', previousNamedTree)).toEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+      groupWait: '1m',
+    });
+  });
+});
+
+describe('namedRoutingTree', () => {
+  it('builds a value from a tree name', () => {
+    expect(namedRoutingTree('deployment-tools')).toEqual(namedTree);
+  });
+});
+
+describe('toRuleNotificationSettings', () => {
+  it('maps simplified routing with every field to the rules API shape', () => {
+    expect(toRuleNotificationSettings(fullSimplified)).toEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+      groupBy: ['alertname', 'cluster'],
+      groupWait: '30s',
+      groupInterval: '5m',
+      repeatInterval: '4h',
+      muteTimeIntervals: ['weekends'],
+      activeTimeIntervals: ['business-hours'],
+    });
+  });
+
+  it('maps a named routing tree to the rules API shape', () => {
+    expect(toRuleNotificationSettings(namedTree)).toEqual({
+      type: 'NamedRoutingTree',
+      routingTree: 'deployment-tools',
+    });
+  });
+
+  it('leaves out unset fields and copies instead of sharing the value', () => {
+    const value = simplifiedRouting('slack-oncall');
+
+    const rule = toRuleNotificationSettings(value);
+
+    expect(rule).toStrictEqual({ type: 'SimplifiedRouting', receiver: 'slack-oncall' });
+    expect(rule).not.toBe(value);
+  });
+
+  it('does not pass properties the value does not define on to the API', () => {
+    const withStrayProperty = { ...namedTree, unrelated: 'form state' };
+
+    expect(toRuleNotificationSettings(withStrayProperty)).toStrictEqual({
+      type: 'NamedRoutingTree',
+      routingTree: 'deployment-tools',
+    });
+  });
+
+  it('maps no value (default routing) to no settings', () => {
+    expect(toRuleNotificationSettings(null)).toBeUndefined();
+  });
+});
+
+describe('fromRuleNotificationSettings', () => {
+  it('maps simplified routing from the rules API shape', () => {
+    const rule: AlertRuleNotificationSettings = { ...fullSimplified };
+
+    expect(fromRuleNotificationSettings(rule)).toEqual(fullSimplified);
+  });
+
+  it('maps a named routing tree from the rules API shape', () => {
+    expect(fromRuleNotificationSettings({ type: 'NamedRoutingTree', routingTree: 'deployment-tools' })).toEqual(
+      namedTree
+    );
+  });
+
+  it('leaves out the fields the rule does not set', () => {
+    expect(fromRuleNotificationSettings({ type: 'SimplifiedRouting', receiver: 'slack-oncall' })).toStrictEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'slack-oncall',
+    });
+  });
+
+  it.each([null, undefined])('maps %p (no settings) to default routing', (rule) => {
+    expect(fromRuleNotificationSettings(rule)).toBeNull();
+  });
+
+  it.each([fullSimplified, namedTree, simplifiedRouting('slack-oncall')])(
+    'round-trips %j through the rules API shape',
+    (value) => {
+      expect(fromRuleNotificationSettings(toRuleNotificationSettings(value))).toEqual(value);
+    }
+  );
+});

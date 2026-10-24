@@ -78,6 +78,15 @@ export {
 } from './grafana/notificationSettings/components/TimingsOverride/TimingsOverride';
 export { type RoutingTimings } from './grafana/notificationSettings/constants';
 
+// Notification settings value
+export {
+  type NotificationSettings,
+  simplifiedRouting,
+  namedRoutingTree,
+  toRuleNotificationSettings,
+  fromRuleNotificationSettings,
+} from './grafana/notificationSettings/notificationSettingsValue';
+
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
