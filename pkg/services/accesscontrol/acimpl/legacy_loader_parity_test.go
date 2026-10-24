@@ -98,9 +98,10 @@ func TestIntegrationLegacyLoaderRegistrationAndInvalidation(t *testing.T) {
 		_, err := sess.Exec("UPDATE permission SET scope = ? WHERE scope = ?", b.Scope, a.Scope)
 		return err
 	}))
-	check(ac.Options{SkipZanzanaCache: true}, baseline, a, a, a)
+	// Basic-role SQL is fresh; team and direct grants retain their shared caches.
+	check(ac.Options{SkipZanzanaCache: true}, baseline, b, a, a)
 	s.ClearUserPermissionCache(requester)
-	check(ac.Options{}, baseline, b, a, a)
+	check(ac.Options{}, baseline, b, b, a)
 	check(ac.Options{ReloadCache: true}, baseline, b, b, b)
 	require.NoError(t, s.RegisterFixedRoles(ctx))
 	plugin := ac.Permission{Action: "contract-app:read", Scope: "contract-app:*"}
