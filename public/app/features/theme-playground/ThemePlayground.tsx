@@ -4,6 +4,10 @@ import { useId, useState } from 'react';
 import { createTheme, type GrafanaTheme2, type NewThemeOptions } from '@grafana/data';
 import { NewThemeOptionsSchema } from '@grafana/data/internal';
 import aubergine from '@grafana/data/themes/definitions/aubergine.json';
+import catppuccin_frappe from '@grafana/data/themes/definitions/catppuccin_frappe.json';
+import catppuccin_latte from '@grafana/data/themes/definitions/catppuccin_latte.json';
+import catppuccin_macchiato from '@grafana/data/themes/definitions/catppuccin_macchiato.json';
+import catppuccin_mocha from '@grafana/data/themes/definitions/catppuccin_mocha.json';
 import debug from '@grafana/data/themes/definitions/debug.json';
 import desertbloom from '@grafana/data/themes/definitions/desertbloom.json';
 import deut_prot_dark from '@grafana/data/themes/definitions/deut_prot_dark.json';
@@ -53,6 +57,10 @@ const themeMap: Record<string, NewThemeOptions> = {
 
 const experimentalDefinitions: Record<string, unknown> = {
   aubergine,
+  catppuccin_frappe,
+  catppuccin_latte,
+  catppuccin_macchiato,
+  catppuccin_mocha,
   debug,
   desertbloom,
   deut_prot_dark,
