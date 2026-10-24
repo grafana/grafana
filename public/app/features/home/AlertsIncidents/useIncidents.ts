@@ -6,6 +6,7 @@ import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type FilterSelection, resolveFilterScope } from './filterSelection';
@@ -20,7 +21,11 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * value; the default scope fetches every active incident.
  */
 export function useIncidents(selectedFilter: FilterSelection = '') {
-  const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  const { installed, loading: probeLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  // IRM's incidents API is served under the legacy /api/plugins path only.
+  const blocked = isLegacyAPIBlocked();
+  const pluginLoading = !blocked && probeLoading;
+  const available = !blocked && !!installed;
   const pluginId = SupportedPlugin.Irm;
 
   // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
@@ -37,7 +42,7 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
 
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
-  const skip = pluginLoading || !installed;
+  const skip = pluginLoading || !available;
   // currentData is undefined only until the current filter's list arrives, so a filter switch
   // shows the skeleton while a homepage revisit (refetchOnMountOrArgChange) shows the cached list.
   const { currentData, isFetching, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
@@ -77,7 +82,7 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
     hasIncidents,
     // Echoed back so the card can scope its empty message to the picked value.
     filterScope,
-    enabled: pluginLoading ? undefined : !!installed,
+    enabled: pluginLoading ? undefined : available,
     loading,
     error: loadError,
     refetch,

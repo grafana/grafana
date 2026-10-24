@@ -159,6 +159,42 @@ describe('HomePage', () => {
     expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
   });
 
+  it('hides the alerts, incidents and on-call tabs and sends no legacy requests when the legacy API is blocked', async () => {
+    const originalMode = window.__grafanaLegacyAPIMode;
+    window.__grafanaLegacyAPIMode = 'block';
+    try {
+      setTestFlags({ 'grafana.growthHomepage': true });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      mockUsePluginBridge.mockReturnValue({
+        installed: true,
+        loading: false,
+        settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
+      });
+      // jsdom has no fetch patch, so any legacy request the page still made would reach msw.
+      const legacyRequests: string[] = [];
+      const count = ({ request }: { request: Request }) => {
+        legacyRequests.push(new URL(request.url).pathname);
+        return HttpResponse.json([]);
+      };
+      server.use(
+        http.get('/api/user/teams', count),
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', count),
+        http.all('/api/plugins/grafana-irm-app/resources/*', count)
+      );
+
+      render(<HomePage />);
+
+      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /^incidents$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /on-call/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /alerts/i })).not.toBeInTheDocument();
+      expect(legacyRequests).toEqual([]);
+    } finally {
+      window.__grafanaLegacyAPIMode = originalMode;
+    }
+  });
+
   it('renders the OSS welcome message', async () => {
     config.buildInfo.edition = GrafanaEdition.OpenSource;
 
@@ -485,13 +521,26 @@ describe('HomePage', () => {
 
   it('renders the jump-back-in grid above the stack overview on the redesigned homepage', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
-    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
+    stubMetricsSolution();
 
     render(<HomePage />);
 
     const dashboards = await screen.findByRole('heading', { name: 'Jump back in' });
     const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
     expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('hides the overview section when no solution and no guide is available', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument()
+    );
+    expect(screen.queryByText('No solutions were found.')).not.toBeInTheDocument();
   });
 
   describe('solutions gating', () => {

@@ -13,6 +13,7 @@ import {
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
@@ -66,13 +67,17 @@ export interface OnCallSchedulesData {
 }
 
 function useIrmPlugin() {
-  const { installed, loading, settings } = usePluginBridge(PLUGIN_ID);
+  const { installed, loading: probeLoading, settings } = usePluginBridge(PLUGIN_ID);
   const schedulesHref = createBridgeURL(PLUGIN_ID, '/schedules');
+  // IRM's schedules API is served under the legacy /api/plugins path only.
+  const blocked = isLegacyAPIBlocked();
+  const loading = !blocked && probeLoading;
+  const available = !blocked && !!installed;
   return {
     loading,
     // Queries wait for the probe, so the hooks can run before it is known whether IRM is installed.
-    ready: !loading && !!installed,
-    enabled: loading ? undefined : !!installed,
+    ready: !loading && available,
+    enabled: loading ? undefined : available,
     schedulesHref,
     // Same gate as incident links: no access to the plugin's schedules page means plain text, not a link that 403s.
     canAccess: settings ? canAccessPluginPage(settings, schedulesHref) : false,

@@ -10,6 +10,7 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
@@ -69,8 +70,11 @@ function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
   }
 }
 
-// Exported so the homepage skeleton reserves the card slot using the same gate.
-export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+// Exported so the homepage skeleton reserves the card slot using the same gate. The alertmanager
+// and user-teams endpoints are legacy-only, so with the legacy API blocked the view has nothing
+// to show and is hidden like a missing plugin.
+export const canViewFiringAlerts = () =>
+  !isLegacyAPIBlocked() && contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
 
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 
@@ -86,12 +90,19 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   // e.g. from the tabs component when only incidents are available.
   const enabled = canViewFiringAlerts();
 
-  // Fetched once — teams change at login granularity. A failed fetch leaves teams
-  // undefined, so the card intentionally shows all org alerts unfiltered.
+  // Fetched once — teams change at login granularity. The lookup only scopes the default
+  // filter: any failure (endpoint missing on multi-tenant, 5xx, network) or a non-JSON body
+  // falls back to all org alerts, silently.
   const shouldLoadTeams = enabled && contextSrv.isSignedIn;
 
   const { value: teams, loading: teamsLoading } = useAsync(
-    () => (shouldLoadTeams ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
+    () =>
+      shouldLoadTeams
+        ? getBackendSrv()
+            .get<Team[]>('/api/user/teams', undefined, undefined, { showErrorAlert: false })
+            .then((result) => (Array.isArray(result) ? result : []))
+            .catch((): Team[] => [])
+        : Promise.resolve<Team[]>([]),
     [shouldLoadTeams]
   );
 

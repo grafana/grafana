@@ -366,6 +366,22 @@ describe('isDatasourceHealthy', () => {
     }
   });
 
+  it('skips the legacy health request and reads as healthy while the legacy API is blocked', async () => {
+    const originalMode = window.__grafanaLegacyAPIMode;
+    window.__grafanaLegacyAPIMode = 'block';
+    try {
+      await expect(isDatasourceHealthy('unprobed')).resolves.toBe(true);
+      expect(healthGetMock).not.toHaveBeenCalled();
+    } finally {
+      window.__grafanaLegacyAPIMode = originalMode;
+    }
+
+    // Nothing was cached for the uid, so the next read with the legacy API available probes it.
+    healthGetMock.mockResolvedValue({ status: 'ERROR' });
+    await expect(isDatasourceHealthy('unprobed')).resolves.toBe(false);
+    expect(healthGetMock).toHaveBeenCalledTimes(1);
+  });
+
   it('shares one /health request per uid across concurrent callers', async () => {
     healthGetMock.mockResolvedValue({ status: 'OK' });
 

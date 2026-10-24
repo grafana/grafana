@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef } from 'react';
 
 import { OrgRole, PluginExtensionPoints } from '@grafana/data';
 import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Stack } from '@grafana/ui';
+import { ErrorBoundaryAlert, Stack } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useStoredString } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -60,23 +60,31 @@ export function RedesignedHomePage() {
         <AssistantInputSlot />
 
         <HomeGrid columns={2} gap={2}>
-          {/* Skip the HomepageTabs extension point for the redesign UI */}
-          <DashboardTabs extensionComponents={[]} />
-          <AlertIncidentTabs
-            alertsData={alertsData}
-            incidentsData={incidentsData}
-            alertsFilter={alertsFilter}
-            onAlertsFilterChange={setAlertsFilter}
-            incidentsFilter={incidentsFilter}
-            onIncidentsFilterChange={setIncidentsFilter}
-            switchRef={alertIncidentRef}
-          />
+          <ErrorBoundaryAlert boundaryName="home-dashboard-tabs">
+            {/* Skip the HomepageTabs extension point for the redesign UI */}
+            <DashboardTabs extensionComponents={[]} />
+          </ErrorBoundaryAlert>
+          <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+            <AlertIncidentTabs
+              alertsData={alertsData}
+              incidentsData={incidentsData}
+              alertsFilter={alertsFilter}
+              onAlertsFilterChange={setAlertsFilter}
+              incidentsFilter={incidentsFilter}
+              onIncidentsFilterChange={setIncidentsFilter}
+              switchRef={alertIncidentRef}
+            />
+          </ErrorBoundaryAlert>
         </HomeGrid>
 
         {showSolutions && (
           <>
-            <Recommendations solutions={solutions} />
-            <Overview solutions={solutions.solutions} />
+            <ErrorBoundaryAlert boundaryName="home-recommendations">
+              <Recommendations solutions={solutions} />
+            </ErrorBoundaryAlert>
+            <ErrorBoundaryAlert boundaryName="home-overview">
+              <Overview solutions={solutions.solutions} />
+            </ErrorBoundaryAlert>
           </>
         )}
 

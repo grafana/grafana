@@ -1,8 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
@@ -71,6 +73,12 @@ afterEach(() => {
 });
 
 describe('canViewFiringAlerts', () => {
+  const originalMode = window.__grafanaLegacyAPIMode;
+
+  afterEach(() => {
+    window.__grafanaLegacyAPIMode = originalMode;
+  });
+
   it('is true when the user has AlertingInstanceRead permission', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     expect(canViewFiringAlerts()).toBe(true);
@@ -78,6 +86,12 @@ describe('canViewFiringAlerts', () => {
 
   it('is false when the user lacks AlertingInstanceRead permission', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    expect(canViewFiringAlerts()).toBe(false);
+  });
+
+  it('is false when the legacy API is blocked even with permission', () => {
+    window.__grafanaLegacyAPIMode = 'block';
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     expect(canViewFiringAlerts()).toBe(false);
   });
 });
@@ -139,6 +153,35 @@ describe('useFiringAlerts', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.hasTeams).toBe(true);
+  });
+
+  it.each([
+    ['a 500', () => HttpResponse.json({ message: 'nope' }, { status: 500 })],
+    [
+      'an HTML body',
+      () => HttpResponse.text('<!doctype html>', { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    ],
+  ])('falls back to unfiltered alerts without a toast when the teams lookup returns %s', async (_, respond) => {
+    jest.useFakeTimers({ doNotFake: ['Date'] });
+    try {
+      server.use(http.get('/api/user/teams', respond));
+      const requests = captureAlertFilters();
+      const emit = jest.spyOn(appEvents, 'emit');
+
+      const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+      await waitFor(() => expect(requests).toHaveLength(1));
+      expect(requests[0]).toEqual([]);
+      expect(result.current.hasTeams).toBe(false);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      // backendSrv schedules its error toast 50 ms after a request fails.
+      act(() => jest.advanceTimersByTime(50));
+      expect(emit).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
+      expect(emit).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   describe('team matchers', () => {

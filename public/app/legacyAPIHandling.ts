@@ -25,3 +25,8 @@ export function patchFetchForLegacyAPIMode() {
     return originalFetch(input, init);
   };
 }
+
+/** Whether `grafana.frontendLegacyAPIHandling` is "block": same-origin `/api/` requests reject before they are sent. */
+export function isLegacyAPIBlocked(): boolean {
+  return window.__grafanaLegacyAPIMode === 'block';
+}
