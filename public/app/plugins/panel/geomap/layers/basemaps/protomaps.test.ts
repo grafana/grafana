@@ -114,9 +114,9 @@ describe('Protomaps basemap', () => {
   });
 
   it.each([
-    { desc: 'light for auto in a light theme', flavor: ProtomapsFlavor.Auto, theme: lightTheme, file: 'light' },
-    { desc: 'dark for auto in a dark theme', flavor: ProtomapsFlavor.Auto, theme: darkTheme, file: 'dark' },
-    { desc: 'an explicit flavor regardless of theme', flavor: ProtomapsFlavor.White, theme: darkTheme, file: 'white' },
+    { desc: 'white for auto in a light theme', flavor: ProtomapsFlavor.Auto, theme: lightTheme, file: 'white' },
+    { desc: 'black for auto in a dark theme', flavor: ProtomapsFlavor.Auto, theme: darkTheme, file: 'black' },
+    { desc: 'an explicit flavor regardless of theme', flavor: ProtomapsFlavor.Light, theme: darkTheme, file: 'light' },
   ])('loads $desc', async ({ flavor, theme, file }) => {
     await initLayer({ flavor }, theme);
 
@@ -141,12 +141,12 @@ describe('Protomaps basemap', () => {
     {
       desc: 'keeps a path prefix on the configured server',
       server: 'https://tiles.example.com/basemap/v1',
-      style: 'https://tiles.example.com/basemap/v1/styles/light.json',
+      style: 'https://tiles.example.com/basemap/v1/styles/white.json',
     },
     {
       desc: 'falls back to the dev server for a non-http URL',
       server: 'javascript:alert(1)',
-      style: 'http://localhost:8095/styles/light.json',
+      style: 'http://localhost:8095/styles/white.json',
     },
   ])('$desc', async ({ server, style }) => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -163,7 +163,7 @@ describe('Protomaps basemap', () => {
     expect(applyStyleMock.mock.calls[0][2]).toEqual({
       source: 'protomaps',
       updateSource: false,
-      styleUrl: 'http://localhost:8095/styles/light.json',
+      styleUrl: 'http://localhost:8095/styles/white.json',
     });
   });
 
@@ -239,7 +239,7 @@ describe('Protomaps basemap', () => {
     const layer = await initLayer({});
 
     expect(warn).toHaveBeenCalledWith(
-      'Failed to load Protomaps basemap style from http://localhost:8095/styles/light.json:',
+      'Failed to load Protomaps basemap style from http://localhost:8095/styles/white.json:',
       new Error('404 Not Found')
     );
     expect(layer.getStyle()).toBeNull();
