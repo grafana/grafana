@@ -61,6 +61,31 @@ describe('applyPluginNav', () => {
       expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-some-app']);
     });
 
+    it.each([
+      { infoArch: false, expectedSection: NavID.root },
+      { infoArch: true, expectedSection: NavID.apps },
+    ])('places Machine Learning in $expectedSection when infoArch is $infoArch', ({ infoArch, expectedSection }) => {
+      setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': infoArch } });
+
+      const merged = merge(
+        app('grafana-ml-app', 'Grafana Machine Learning', [page('Overview', '/a/grafana-ml-app/overview')])
+      );
+      const machineLearning = findById(merged, 'plugin-page-grafana-ml-app');
+
+      expect(machineLearning).toMatchObject({
+        text: 'Machine Learning',
+        subTitle: 'Explore AI and machine learning features',
+        icon: 'gf-ml-alt',
+      });
+      if (expectedSection === NavID.root) {
+        expect(ids(merged)).toContain('plugin-page-grafana-ml-app');
+        expect(moreApps(merged)).toBeUndefined();
+      } else {
+        expect(ids(merged)).not.toContain('plugin-page-grafana-ml-app');
+        expect(ids(moreApps(merged)?.children ?? [])).toContain('plugin-page-grafana-ml-app');
+      }
+    });
+
     it('leaves out apps with no nav children', () => {
       const merged = merge(app('some-app', 'Some app', [page('Hidden', '/a/some-app/hidden', { addToNav: false })]));
 
