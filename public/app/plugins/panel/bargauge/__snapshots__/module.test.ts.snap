@@ -22,6 +22,7 @@ exports[`bargauge module registers the expected bar gauge options 1`] = `
   "namePlacement",
   "textMode",
   "showUnfilled",
+  "showThresholdLabels",
   "sizing",
   "minVizWidth",
   "minVizHeight",

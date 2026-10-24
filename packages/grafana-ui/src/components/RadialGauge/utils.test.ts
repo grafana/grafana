@@ -1,4 +1,5 @@
 import { type DataFrameView, type FieldDisplay, ThresholdsMode } from '@grafana/data';
+import { ScaleDistribution } from '@grafana/schema';
 
 import type { RadialGaugeProps } from './RadialGauge';
 import { type RadialGaugeDimensions } from './types';
@@ -12,6 +13,7 @@ import {
   getAngleBetweenSegments,
   getOptimalSegmentCount,
   getThresholdPercentageValue,
+  getValueForValuePercentage,
 } from './utils';
 
 describe('RadialGauge utils', () => {
@@ -439,6 +441,50 @@ describe('RadialGauge utils', () => {
       const fieldDisplay = createFieldDisplay(75, 0, 50);
       const result = getThresholdPercentageValue(threshold, ThresholdsMode.Percentage, fieldDisplay);
       expect(result).toBe(0.75);
+    });
+  });
+
+  describe('log scale', () => {
+    const createLogFieldDisplay = (value: number, min: number, max: number): FieldDisplay => {
+      const fieldDisplay = createFieldDisplay(value, min, max);
+      fieldDisplay.field.custom = { scaleDistribution: { type: ScaleDistribution.Log } };
+      return fieldDisplay;
+    };
+
+    it('fills half the arc for the geometric midpoint of the range', () => {
+      const result = getValueAngleForValue(createLogFieldDisplay(100, 1, 10000), 0, 360);
+      expect(result.endValueAngle).toBe(180);
+    });
+
+    it('starts the bar at the log position of the neutral value', () => {
+      const result = getValueAngleForValue(createLogFieldDisplay(1000, 1, 10000), 0, 360, 10);
+      expect(result.startValueAngle).toBe(90);
+      expect(result.endValueAngle).toBeCloseTo(180, 10);
+    });
+
+    it('places absolute thresholds at their log position', () => {
+      const threshold = { value: 1000, color: '#fff' };
+      const result = getThresholdPercentageValue(
+        threshold,
+        ThresholdsMode.Absolute,
+        createLogFieldDisplay(1, 1, 10000)
+      );
+      expect(result).toBeCloseTo(0.75, 10);
+    });
+
+    it('places percentage thresholds at the log position of the value they resolve to', () => {
+      // 50% of 1..100 resolves to 50.5, which sits at log(50.5) / log(100) on the arc
+      const threshold = { value: 50, color: '#fff' };
+      const result = getThresholdPercentageValue(
+        threshold,
+        ThresholdsMode.Percentage,
+        createLogFieldDisplay(1, 1, 100)
+      );
+      expect(result).toBeCloseTo(0.8516, 4);
+    });
+
+    it('returns the value at a position on the arc', () => {
+      expect(getValueForValuePercentage(createLogFieldDisplay(1, 1, 10000), 0.5)).toBe(100);
     });
   });
 });

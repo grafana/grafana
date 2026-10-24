@@ -68,6 +68,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
         valueDisplayMode={shouldShowValue(options.textMode) ? options.valueMode : BarGaugeValueMode.Hidden}
         namePlacement={options.namePlacement}
         isOverflow={isOverflow}
+        showScaleLabels={options.showThresholdLabels}
       />
     );
   };
