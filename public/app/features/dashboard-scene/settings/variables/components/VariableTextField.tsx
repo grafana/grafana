@@ -48,6 +48,7 @@ export function VariableTextField({
       invalid={invalid}
       error={error}
       htmlFor={id}
+      required={required}
       disabled={readOnly ? true : undefined}
     >
       <Input
