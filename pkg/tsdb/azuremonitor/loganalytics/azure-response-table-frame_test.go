@@ -66,6 +66,22 @@ func TestLogTableToFrame(t *testing.T) {
 	}
 }
 
+func TestDynamicColumnsAreConvertedToJSON(t *testing.T) {
+	res := loadTestFileWithNumber(t, "loganalytics/7-log-analytics-all-types-table.json")
+	frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, dataquery.ResultFormatTable, false)
+	require.NoError(t, err)
+	require.NotNil(t, frame)
+
+	dynamicField := frame.Fields[3]
+	require.Equal(t, "XDynamic", dynamicField.Name)
+	require.Equal(t, data.FieldTypeNullableJSON, dynamicField.Type())
+
+	value, ok := dynamicField.At(0).(*json.RawMessage)
+	require.True(t, ok)
+	require.NotNil(t, value)
+	require.JSONEq(t, `[{"person":"Daniel"},{"cats":23},{"diagnosis":"cat problem"}]`, string(*value))
+}
+
 func TestTraceTableToFrame(t *testing.T) {
 	tests := []struct {
 		name          string
