@@ -3,19 +3,14 @@ import { type Label } from '../../matchers/types';
 import { useMatchInstancesToSpecificRouteTree } from './useMatchPolicies';
 import { useRoutingTreeLookup } from './useResolvedRoutingTree';
 
-export interface RoutingTreePreviewRoute {
-  id: string;
-  receiver?: string;
-}
-
 export interface RoutingTreePreviewResult {
   /** Anything but `found` means the tree couldn't be confirmed, so `routes` is empty and shouldn't be read as "no match". */
   status: 'resolving' | 'notFound' | 'error' | 'found';
   /** The tree's routes matching the instances. When `status` is `found`, empty means nothing matched. */
-  routes: RoutingTreePreviewRoute[];
+  routes: Array<{ id: string; receiver?: string }>;
 }
 
-const NO_ROUTES: RoutingTreePreviewRoute[] = [];
+const NO_ROUTES: RoutingTreePreviewResult['routes'] = [];
 
 /** Previews the routes of a tree that match the instances. An unset name previews the default tree. */
 export function useRoutingTreePreview(

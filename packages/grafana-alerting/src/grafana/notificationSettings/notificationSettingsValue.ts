@@ -1,6 +1,6 @@
 import { type AlertRuleNotificationSettings } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-interface SimplifiedRoutingSettings {
+export interface SimplifiedRoutingSettings {
   type: 'SimplifiedRouting';
   receiver: string;
   groupBy?: string[];
@@ -11,7 +11,7 @@ interface SimplifiedRoutingSettings {
   activeTimeIntervals?: string[];
 }
 
-interface NamedRoutingTreeSettings {
+export interface NamedRoutingTreeSettings {
   type: 'NamedRoutingTree';
   routingTree: string;
 }
