@@ -39,8 +39,10 @@ const meta: Meta = {
     suffixVisible: '',
     invalid: false,
     loading: false,
+    size: 'md',
   },
   argTypes: {
+    size: { control: { type: 'radio' }, options: ['sm', 'md'] },
     prefixVisible: {
       control: {
         type: 'select',
@@ -79,6 +81,7 @@ export const Simple: StoryFn = (args) => {
         width={args.width}
         prefix={prefix}
         invalid={args.invalid}
+        size={args.size}
         suffix={suffix}
         loading={args.loading}
         addonBefore={args.before && addonBefore}

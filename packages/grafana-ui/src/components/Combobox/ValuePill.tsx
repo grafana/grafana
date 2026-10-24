@@ -7,15 +7,18 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 
+import { getMultiComboboxInnerHeight } from './getMultiComboboxStyles';
+
 interface ValuePillProps {
   children: string;
   onRemove: () => void;
   disabled?: boolean;
+  size?: 'sm' | 'md';
 }
 
 export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
-  ({ children, onRemove, disabled, ...rest }, ref) => {
-    const styles = useStyles2(getValuePillStyles, disabled);
+  ({ children, onRemove, disabled, size = 'md', ...rest }, ref) => {
+    const styles = useStyles2(getValuePillStyles, disabled, size);
     const removeButtonLabel = t('grafana-ui.value-pill.remove-button', 'Remove {{children}}', { children });
     return (
       <span className={styles.wrapper} {...rest} ref={ref}>
@@ -43,15 +46,13 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
 );
 ValuePill.displayName = 'ValuePill';
 
-const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
+const getValuePillStyles = (theme: GrafanaTheme2, disabled: boolean | undefined, size: 'sm' | 'md') => ({
   wrapper: css({
     display: 'inline-flex',
     borderRadius: theme.shape.radius.sm,
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
-    // input padding is theme.spacing(0.5)
-    // border is 1px
-    height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - (2 * 1px))`,
+    height: getMultiComboboxInnerHeight(theme, size),
     padding: theme.spacing(0.25),
     border: disabled ? `1px solid ${theme.colors.border.weak}` : 'none',
     fontSize: theme.typography.bodySmall.fontSize,

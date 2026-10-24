@@ -154,6 +154,7 @@ export function SelectBase<T, Rest = {}>({
   formatOptionLabel,
   hideSelectedOptions,
   selectRef,
+  size,
   ...rest
 }: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
@@ -275,6 +276,7 @@ export function SelectBase<T, Rest = {}>({
     hideSelectedOptions,
     inputValue,
     invalid,
+    size,
     isClearable,
     id,
     // Passing isDisabled as react-select accepts this prop

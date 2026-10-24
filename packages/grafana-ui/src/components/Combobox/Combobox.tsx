@@ -32,7 +32,7 @@ import { isNewGroup, isKeyboardEvent } from './utils';
 interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
-    'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+    'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid' | 'size'
   > {
   /**
    * Allows the user to set a value which is not in the list of options.
@@ -169,6 +169,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     onBlur,
     disabled: disabledProp,
     invalid: invalidProp,
+    size,
     prefixIcon,
     noOptionsMessage,
     isOpen: isOpenProp,
@@ -463,6 +464,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         prefix={icon && <Icon name={icon} />}
         disabled={disabled}
         invalid={invalid}
+        size={size}
         className={styles.input}
         suffix={inputSuffix}
         {...getInputProps({

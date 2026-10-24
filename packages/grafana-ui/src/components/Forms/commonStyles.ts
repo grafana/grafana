@@ -10,7 +10,7 @@ export const getFocusStyle = (theme: GrafanaTheme2) =>
     '&:focus': getFocusStyles(theme),
   });
 
-export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
+export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false, size: 'sm' | 'md' = 'md') => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
   let borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
@@ -30,7 +30,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
     css({
       background,
       lineHeight: theme.typography.body.lineHeight,
-      minHeight: theme.spacing(theme.components.height.md),
+      minHeight: theme.spacing(theme.components.height[size]),
       fontSize: theme.typography.size.md,
       color: textColor,
       border: `1px solid ${borderColor}`,

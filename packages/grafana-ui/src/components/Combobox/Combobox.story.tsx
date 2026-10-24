@@ -26,6 +26,7 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
+    size: 'md',
     width: 20,
     isClearable: false,
     placeholder: 'Select an option...',
@@ -62,6 +63,9 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Jackfruit', value: 'jackfruit' },
     ],
     value: 'banana',
+  },
+  argTypes: {
+    size: { control: { type: 'radio' }, options: ['sm', 'md'] },
   },
 };
 export default meta;
