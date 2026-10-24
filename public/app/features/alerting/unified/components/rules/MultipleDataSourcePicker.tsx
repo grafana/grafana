@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
+import { isDataSourceManagingAlerts } from '@grafana/alerting/internal';
 import {
   type DataSourceInstanceSettings,
   type SelectableValue,
@@ -12,8 +13,6 @@ import { t } from '@grafana/i18n';
 import { type DataSourcePickerProps, getDataSourceSrv, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
-
-import { isDataSourceManagingAlerts } from '../../utils/datasource';
 
 export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProps, 'onChange' | 'current'> {
   onChange: (ds: DataSourceInstanceSettings, action: 'add' | 'remove') => void;
