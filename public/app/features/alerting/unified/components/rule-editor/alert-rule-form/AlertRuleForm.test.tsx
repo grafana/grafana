@@ -367,6 +367,28 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     expect(screen.queryByRole('radio', { name: /use groups \(legacy\)/i })).not.toBeInTheDocument();
   });
 
+  it('shows the folder validation message when saving without a folder', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+  });
+
+  it('clears the folder validation message once a folder is selected', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText('Folder A'));
+
+    await waitFor(() => expect(screen.queryByText('Folder is required')).not.toBeInTheDocument());
+  });
+
   it('requires a group and POSTs to the legacy ruler API only', async () => {
     const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
     const appPlatformRequests = captureRequests(
@@ -378,7 +400,7 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     await fillRuleBasics(user);
     // Save without picking a group surfaces the required-group validation message.
     await user.click(ui.buttons.save.get());
-    expect(await screen.findByText(/Must enter a group name/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Evaluation group is required/i)).toBeInTheDocument();
 
     // With the flag off the radio is not rendered, so go straight to the group select.
     const groupInput = await ui.inputs.group.find();
