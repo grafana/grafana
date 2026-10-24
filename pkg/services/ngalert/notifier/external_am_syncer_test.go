@@ -49,6 +49,7 @@ type fakeConfigClient struct {
 	nsMapper request.NamespaceMapper
 	objects  map[string]*alertingnotifv1beta1.Config // namespace -> object
 	getErr   map[string]error                        // namespace -> error returned by Get
+	writeErr map[string]error                        // namespace -> error returned by Create/Update
 	getCalls map[string]int                          // namespace -> Get call count
 }
 
@@ -57,6 +58,7 @@ func newFakeConfigClient() *fakeConfigClient {
 		nsMapper: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
 		objects:  map[string]*alertingnotifv1beta1.Config{},
 		getErr:   map[string]error{},
+		writeErr: map[string]error{},
 		getCalls: map[string]int{},
 	}
 }
@@ -83,6 +85,13 @@ func (f *fakeConfigClient) setErr(orgID int64, err error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.getErr[f.nsMapper(orgID)] = err
+}
+
+// setWriteErr makes Create and Update for orgID return err (simulating a failed status write).
+func (f *fakeConfigClient) setWriteErr(orgID int64, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.writeErr[f.nsMapper(orgID)] = err
 }
 
 // totalGetCalls reports how many Get calls the worker made across all orgs.
@@ -157,7 +166,16 @@ func (f *fakeConfigClient) GetInto(_ context.Context, id resource.Identifier, in
 }
 
 func (f *fakeConfigClient) Create(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.CreateOptions) (resource.Object, error) {
+	if err := f.writeErrFor(obj); err != nil {
+		return nil, err
+	}
 	return f.apply(obj), nil
+}
+
+func (f *fakeConfigClient) writeErrFor(obj resource.Object) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.writeErr[obj.GetNamespace()]
 }
 
 func (f *fakeConfigClient) CreateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions, _ resource.Object) error {
@@ -166,6 +184,9 @@ func (f *fakeConfigClient) CreateInto(ctx context.Context, id resource.Identifie
 }
 
 func (f *fakeConfigClient) Update(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.UpdateOptions) (resource.Object, error) {
+	if err := f.writeErrFor(obj); err != nil {
+		return nil, err
+	}
 	return f.apply(obj), nil
 }
 
@@ -289,12 +310,14 @@ func assertNoExtraConfigSaved(t *testing.T, cs *fakeConfigStore, orgID int64) {
 }
 
 // makeMimirDS returns a minimal Alertmanager/Mimir datasource for testing;
-// ds.URL isn't read by the fetch path so it's omitted here.
+// ds.URL isn't read by the fetch path so it's omitted here. It is named after
+// its UID, so the synced config is imported under the UID.
 func makeMimirDS(uid string, orgID int64) *datasources.DataSource {
 	jd := simplejson.New()
 	jd.Set("implementation", "mimir")
 	return &datasources.DataSource{
 		UID:      uid,
+		Name:     uid,
 		OrgID:    orgID,
 		Type:     datasources.DS_ALERTMANAGER,
 		JsonData: jd,
@@ -642,6 +665,101 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")), "both ticks count as success")
 	assert.Equal(t, 2, proxy.callCount("mimir-uid"), "dedup compares hashes after fetching, it doesn't skip the fetch itself")
+}
+
+func TestSyncExternalAMs_ReEnablingWithUnchangedConfigReportsSuccess(t *testing.T) {
+	proxy := singleAMProxy(t, "mimir-uid", "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
+
+	ds := makeMimirDS("mimir-uid", 1)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
+
+	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	require.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, syncedCondition(t, adminCfg).Status)
+
+	// Disable sync: the next tick records NotConfigured.
+	setSpecUID(t, adminCfg, "")
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	require.Equal(t, conditionReasonNotConfigured, syncedCondition(t, adminCfg).Reason)
+
+	// Re-enable the same datasource. The upstream config hasn't changed, so nothing is saved, but the
+	// status must still say the sync is working rather than staying NotConfigured.
+	setSpecUID(t, adminCfg, "mimir-uid")
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	synced := syncedCondition(t, adminCfg)
+	assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, synced.Status)
+	assert.Equal(t, conditionReasonSyncSucceeded, synced.Reason)
+}
+
+func TestSyncExternalAMs_ReEnablingAfterRevertImportsAgain(t *testing.T) {
+	proxy := singleAMProxy(t, "mimir-uid", "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
+
+	ds := makeMimirDS("mimir-uid", 1)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
+	ctx := context.Background()
+	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+	// Disable sync, then revert the staged copy it left behind.
+	setSpecUID(t, adminCfg, "")
+	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+	svcCtx, svcUser := identity.WithServiceIdentity(ctx, 1)
+	require.NoError(t, moa.DeleteExtraConfiguration(svcCtx, 1, svcUser, syncBypassAuthz{}, "mimir-uid"))
+	assertNoExtraConfigSaved(t, cs, 1)
+
+	// Re-enable the same datasource. The upstream config is the one saved before, but the staged copy is
+	// gone, so it must be imported again rather than skipped as unchanged.
+	setSpecUID(t, adminCfg, "mimir-uid")
+	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+	saved, err := cs.GetLatestAlertmanagerConfiguration(ctx, 1)
+	require.NoError(t, err)
+	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
+	require.NoError(t, err)
+	require.Len(t, cfg.ExtraConfigs, 1)
+	assert.Equal(t, "mimir-uid", cfg.ExtraConfigs[0].Identifier)
+
+	synced := syncedCondition(t, adminCfg)
+	assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, synced.Status)
+	assert.Equal(t, conditionReasonSyncSucceeded, synced.Reason)
+}
+
+// setSpecUID changes the sync datasource on the org-1 Config while keeping its status, like an admin
+// editing the setting would.
+func setSpecUID(t *testing.T, adminCfg *fakeConfigClient, uid string) {
+	t.Helper()
+	obj, err := adminCfg.lookup("org-1")
+	require.NoError(t, err)
+	adminCfg.mu.Lock()
+	defer adminCfg.mu.Unlock()
+	if uid == "" {
+		obj.Spec.ExternalAlertmanagerSync = nil
+		return
+	}
+	u := uid
+	obj.Spec.ExternalAlertmanagerSync = &alertingnotifv1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{DatasourceUid: &u}
+}
+
+// syncedCondition returns the ExternalAlertmanagerSynced condition on the org-1 Config.
+func syncedCondition(t *testing.T, adminCfg *fakeConfigClient) alertingnotifv1beta1.ConfigCondition {
+	t.Helper()
+	obj, err := adminCfg.lookup("org-1")
+	require.NoError(t, err)
+	for _, c := range obj.Status.Conditions {
+		if c.Type == conditionTypeExternalAlertmanagerSynced {
+			return c
+		}
+	}
+	require.Fail(t, "expected an ExternalAlertmanagerSynced condition")
+	return alertingnotifv1beta1.ConfigCondition{}
 }
 
 func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
