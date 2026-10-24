@@ -18,12 +18,17 @@ interface EventsCanvasProps {
   mapEventToXYCoords: (dataFrame: DataFrame, rowIndex: number) => { x: number; y: number } | undefined;
 }
 
+// annotation layers can supply frames with zero rows, so count rows rather than frames
+const hasEventRows = (events: DataFrame[]) => events.some((frame) => frame.length > 0);
+
 export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords, config }: EventsCanvasProps) {
   const plotInstance = useRef<uPlot | undefined>(undefined);
   // render token required to re-render annotation markers. Rendering lines happens in uPlot and the props do not change
   // so we need to force the re-render when the draw hook was performed by uPlot
   const [renderToken, setRenderToken] = useState(0);
   const isMounted = useMountedState();
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -31,7 +36,8 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
     });
 
     config.addHook('draw', () => {
-      if (!isMounted()) {
+      // with no events there is nothing to reposition, so skip the re-render; new events re-render via props
+      if (!isMounted() || !hasEventRows(eventsRef.current)) {
         return;
       }
       setRenderToken((s) => s + 1);
@@ -64,7 +70,7 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
     return <>{markers}</>;
   }, [events, renderEventMarker, renderToken]);
 
-  if (!plotInstance.current) {
+  if (!plotInstance.current || !hasEventRows(events)) {
     return null;
   }
 
