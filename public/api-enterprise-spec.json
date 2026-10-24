@@ -2653,10 +2653,14 @@
       "type": "object",
       "properties": {
         "alertId": {
+          "description": "Only set on alert annotations created before alertUID was recorded. Use alertUID instead.",
           "type": "integer",
           "format": "int64"
         },
         "alertName": {
+          "type": "string"
+        },
+        "alertUID": {
           "type": "string"
         },
         "avatarUrl": {

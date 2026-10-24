@@ -45,6 +45,20 @@ func TestAPI_Annotations(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
 		},
 		{
+			desc:         "should be able to fetch annotations by alert UID",
+			path:         "/api/annotations?alertUID=rule-uid",
+			method:       http.MethodGet,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+		},
+		{
+			desc:         "should reject the orphaned alert rule sentinel as an alert UID",
+			path:         "/api/annotations?alertUID=" + annotations.AlertUIDRuleNotFound,
+			method:       http.MethodGet,
+			expectedCode: http.StatusBadRequest,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+		},
+		{
 			desc:         "should not be able to fetch annotations without correct permission",
 			path:         "/api/annotations",
 			method:       http.MethodGet,

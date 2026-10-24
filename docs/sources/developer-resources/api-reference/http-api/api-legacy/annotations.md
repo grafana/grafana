@@ -60,7 +60,8 @@ Query Parameters:
 - `from`: epoch datetime in milliseconds. Optional.
 - `to`: epoch datetime in milliseconds. Optional.
 - `limit`: number. Optional - default is 100. Max limit for results returned.
-- `alertId`: number. Optional. Find annotations for a specified alert.
+- `alertUID`: string. Optional. Find annotations for a specified alert rule by its UID.
+- `alertId`: Removed. Use `alertUID` instead. The parameter is ignored if it's sent.
 - `dashboardId`: Deprecated. Use dashboardUID instead.
 - `dashboardUID`: string. Optional. Find annotations that are scoped to a specific dashboard, when dashboardUID presents, dashboardId would be ignored.
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
@@ -107,7 +108,7 @@ Content-Type: application/json
 ```
 
 {{< admonition type="note" >}}
-Alerting fields, `alertId`, `alertName`, `newState`, `prevState`, are omitted when the annotation isn't tied to an alert. A missing `alertId` means the same as `0`: not an alert annotation.
+Alerting fields, `alertUID`, `alertId`, `alertName`, `newState`, `prevState`, are omitted when the annotation isn't tied to an alert. `alertUID` identifies the alert rule. `alertId` is deprecated and is only returned for alert annotations created before `alertUID` was recorded. An annotation with neither field isn't an alert annotation.
 {{< /admonition >}}
 
 > Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.

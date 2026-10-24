@@ -1850,13 +1850,6 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "Find annotations for a specified alert rule by its ID.\ndeprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.",
-            "name": "alertId",
-            "in": "query"
-          },
-          {
             "type": "string",
             "description": "Find annotations for a specified alert rule by its UID.",
             "name": "alertUID",
@@ -1919,6 +1912,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getAnnotationsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -13116,10 +13112,14 @@
       "type": "object",
       "properties": {
         "alertId": {
+          "description": "Only set on alert annotations created before alertUID was recorded. Use alertUID instead.",
           "type": "integer",
           "format": "int64"
         },
         "alertName": {
+          "type": "string"
+        },
+        "alertUID": {
           "type": "string"
         },
         "avatarUrl": {

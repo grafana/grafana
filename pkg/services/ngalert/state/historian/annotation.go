@@ -153,7 +153,7 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	}
 
 	q := annotations.ItemQuery{
-		AlertID:      rule.ID,
+		AlertUID:     rule.UID,
 		OrgID:        query.OrgID,
 		From:         query.From.UnixMilli(),
 		To:           query.To.UnixMilli(),
@@ -225,7 +225,7 @@ func (h *AnnotationBackend) buildAnnotations(rule history_model.RuleMeta, states
 		annotationText, annotationData, tags := buildAnnotationTextAndData(rule, state.State, h.maxTagsLength, logger)
 
 		item := annotations.Item{
-			AlertID:   rule.ID,
+			AlertUID:  rule.UID,
 			OrgID:     state.OrgID,
 			PrevState: state.PreviousFormatted(),
 			NewState:  state.Formatted(),
