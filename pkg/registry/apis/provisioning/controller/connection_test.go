@@ -1556,9 +1556,10 @@ func useFakeConnectionQueueClock(t *testing.T, cc *ConnectionController) *testin
 	t.Helper()
 	cc.queue.ShutDown()
 	clock := testingclock.NewFakeClock(time.Now())
-	cc.queue = workqueue.NewTypedRateLimitingQueueWithConfig(
+	cc.queue = newWorkerQueue(
+		&cc.queueLag,
 		workqueue.DefaultTypedControllerRateLimiter[string](),
-		workqueue.TypedRateLimitingQueueConfig[string]{Clock: clock},
+		workqueue.TypedQueueConfig[string]{Clock: clock},
 	)
 	t.Cleanup(cc.queue.ShutDown)
 	return clock
@@ -1792,10 +1793,12 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 		require.True(t, cc.processNextWorkItem(t.Context()))
 		synctest.Wait()
 		require.Zero(t, cc.queue.Len())
+		assert.Zero(t, cc.queueLag.lag())
 
 		time.Sleep(tokenWriteRetryDelay - time.Nanosecond)
 		synctest.Wait()
 		require.Zero(t, cc.queue.Len(), "token retry must wait for the configured delay")
+		assert.Zero(t, cc.queueLag.lag(), "token retry backoff must not count as queue lag")
 		time.Sleep(time.Nanosecond)
 		synctest.Wait()
 		require.Equal(t, 1, cc.queue.Len())
