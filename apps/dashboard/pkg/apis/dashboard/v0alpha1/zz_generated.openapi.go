@@ -507,6 +507,13 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"canCreate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the user can create dashboards in this folder. Only set when requested with include=canCreate",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"resource", "name", "title"},
 			},
@@ -1142,6 +1149,13 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 									},
 								},
 							},
+						},
+					},
+					"canCreateChecked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Set when the request asked for include=canCreate and every hit was checked",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},

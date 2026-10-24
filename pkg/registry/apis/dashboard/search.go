@@ -54,15 +54,27 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+	access   claims.AccessClient
 }
 
-func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	return &SearchHandler{
+type SearchHandlerOption func(*SearchHandler)
+
+// WithAccessClient enables include=canCreate, which checks each folder hit against dashboards:create.
+func WithAccessClient(access claims.AccessClient) SearchHandlerOption {
+	return func(s *SearchHandler) { s.access = access }
+}
+
+func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, opts ...SearchHandlerOption) *SearchHandler {
+	s := &SearchHandler{
 		client:   resourceClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
 		tracer:   tracer,
 		features: features,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
@@ -187,6 +199,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
 										Required:    false,
 										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin", "create"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "include",
+										In:          "query",
+										Description: "extra data to add to each hit. canCreate marks whether the user can create dashboards in the folder, and is only valid with type=folder",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("canCreate"),
 									},
 								},
 								{
@@ -592,6 +613,18 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	includeCanCreate := queryParams.Get("include") == "canCreate"
+	if includeCanCreate {
+		if types := queryParams["type"]; len(types) != 1 || types[0] != "folder" {
+			errhttp.Write(ctx, apierrors.NewBadRequest("include=canCreate is only supported with type=folder"), w)
+			return
+		}
+		if s.access == nil {
+			errhttp.Write(ctx, apierrors.NewBadRequest("include=canCreate is not supported by this server"), w)
+			return
+		}
+	}
+
 	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(ctx, queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
@@ -630,7 +663,56 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	if includeCanCreate {
+		if err := s.annotateCanCreate(ctx, user, &parsedResults); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+	}
+
 	s.write(w, parsedResults)
+}
+
+// annotateCanCreate sets CanCreate on each folder hit with the same check that authorizes saving into it.
+// While folderPickerCreatePermission is off, it checks the folder edit permission instead, like permission=create.
+func (s *SearchHandler) annotateCanCreate(ctx context.Context, user identity.Requester, results *dashboardv0alpha1.SearchResults) error {
+	if len(results.Hits) == 0 {
+		results.CanCreateChecked = true
+		return nil
+	}
+	asEdit := effectivePermission(ctx, dashboardaccess.PERMISSION_CREATE) != dashboardaccess.PERMISSION_CREATE
+	checks := make([]claims.BatchCheckItem, 0, len(results.Hits))
+	for _, hit := range results.Hits {
+		item := claims.BatchCheckItem{
+			CorrelationID: hit.Name,
+			Verb:          utils.VerbCreate,
+			Group:         dashboardv0alpha1.GROUP,
+			Resource:      dashboardv0alpha1.DASHBOARD_RESOURCE,
+			Folder:        hit.Name,
+		}
+		if asEdit {
+			item = claims.BatchCheckItem{
+				CorrelationID: hit.Name,
+				Verb:          utils.VerbUpdate,
+				Group:         folders.GROUP,
+				Resource:      folders.RESOURCE,
+				Name:          hit.Name,
+			}
+		}
+		checks = append(checks, item)
+	}
+
+	res, err := s.access.BatchCheck(ctx, user, claims.BatchCheckRequest{Namespace: user.GetNamespace(), Checks: checks})
+	if err != nil {
+		s.log.Warn("Failed to check create access for search hits", "err", err)
+		return apierrors.NewInternalError(errors.New("failed to check permissions"))
+	}
+	for i := range results.Hits {
+		allowed := res.Results[results.Hits[i].Name].Allowed
+		results.Hits[i].CanCreate = &allowed
+	}
+	results.CanCreateChecked = true
+	return nil
 }
 
 // DoVectorSearch serves the semantic (vector) search endpoint. It is registered
