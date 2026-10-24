@@ -41,7 +41,7 @@ export function useVariableSelectionOptionsCategory(variable: SceneVariable): Op
           id: includeAllId,
           description: t(
             'dashboard.sidebar.variable.selection-options.include-all-description',
-            'Enables a single option that represent all values'
+            'Enables a single option that represents all values'
           ),
           render: (descriptor) => <IncludeAllSwitch id={descriptor.props.id} variable={variable} />,
         })
