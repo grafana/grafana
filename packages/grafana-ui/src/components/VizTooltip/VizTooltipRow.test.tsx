@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { TimeCompareColorMode } from '@grafana/schema';
@@ -127,6 +127,39 @@ describe('VizTooltipRow', () => {
       render(<VizTooltipRow {...defaultProps} isPinned={true} />);
       expect(screen.getByText('My Value')).toBeInTheDocument();
     });
+
+    // jsdom has no layout, so the clipping element's widths are set by hand
+    const hoverPinnedText = async (
+      text: string,
+      { offsetWidth, scrollWidth }: { offsetWidth: number; scrollWidth: number }
+    ) => {
+      const { container } = render(<VizTooltipRow {...defaultProps} isPinned={true} />);
+      const hoverTarget = screen.getByText(text);
+      const clippingElement = hoverTarget.parentElement!;
+      Object.defineProperty(clippingElement, 'offsetWidth', { value: offsetWidth });
+      Object.defineProperty(clippingElement, 'scrollWidth', { value: scrollWidth });
+      Object.defineProperty(container.firstElementChild!, 'offsetWidth', { value: 240 });
+      await userEvent.hover(hoverTarget);
+      return hoverTarget;
+    };
+
+    it.each(['My Label', 'My Value'])(
+      'shows the full text of a truncated pinned "%s", capped at the row width, while it is hovered',
+      async (text) => {
+        const hoverTarget = await hoverPinnedText(text, { offsetWidth: 40, scrollWidth: 120 });
+        const tooltip = await screen.findByRole('tooltip');
+        expect(within(tooltip).getByText(text)).toHaveStyle({ maxWidth: '240px' });
+
+        await userEvent.unhover(hoverTarget);
+        await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+      }
+    );
+
+    it.each(['My Label', 'My Value'])('does not show a tooltip when a pinned "%s" fits', async (text) => {
+      await hoverPinnedText(text, { offsetWidth: 120, scrollWidth: 120 });
+      expect(screen.getByText(text)).toBeVisible();
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    });
   });
 
   describe('time comparison delta', () => {
@@ -229,13 +262,8 @@ describe('VizTooltipRow', () => {
       expect(screen.queryByText(/^\(/)).not.toBeInTheDocument();
     });
 
-    /**
-     * `label` is left empty on purpose: the pinned label branch passes a Fragment to `Tooltip`,
-     * which logs a React ref warning (pre-existing, unrelated to copying) that would fail the
-     * suite via jest-fail-on-console.
-     */
     async function copyPinnedValue(props: { value: string; delta?: VizTooltipDelta }) {
-      render(<VizTooltipRow {...defaultProps} label="" isPinned={true} {...props} />);
+      render(<VizTooltipRow {...defaultProps} isPinned={true} {...props} />);
       await userEvent.click(screen.getByText(props.value));
     }
 
