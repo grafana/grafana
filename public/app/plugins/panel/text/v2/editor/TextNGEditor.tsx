@@ -314,6 +314,7 @@ export function TextNGEditor({
               value={draft}
               onChange={handleDraftChange}
               language={editorLanguage}
+              htmlAutocompleteEventHandlers={false}
               completionSources={completionSources}
               lineWrapping
               basicSetup={basicSetup}
