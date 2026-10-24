@@ -246,7 +246,6 @@ export const TimeSeriesPanel = ({
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {/* always mounted: uPlot reads hooks only when the plot is created, so a late mount would never initialize */}
                 <ExemplarsPlugin
                   openExemplar={openExemplar}
                   visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}

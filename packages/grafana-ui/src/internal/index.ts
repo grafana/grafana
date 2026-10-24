@@ -14,6 +14,7 @@ export { useDragAndDrop } from '../components/DragAndDrop/useDragAndDrop';
 export type { DragAndDropComponents, DragAndDropModule } from '../components/DragAndDrop/useDragAndDrop';
 
 export { UPlotChart } from '../components/uPlot/Plot';
+export { EventsCanvasView } from '../components/uPlot/geometries/EventsCanvas';
 export { type AxisProps, UPLOT_AXIS_FONT_SIZE, timeUnitSize } from '../components/uPlot/config/UPlotAxisBuilder';
 export {
   type Renderers,
