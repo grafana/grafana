@@ -4,9 +4,9 @@ export type DashboardModeTrigger =
   | 'picker'
   | 'shortcut'
   | 'panel_menu'
-  | 'manual_change'
   | 'assistant'
   | 'navigation'
+  | 'composer'
   | 'restore';
 
 export interface DashboardEditSessionTracking {

@@ -337,7 +337,7 @@ describe('DashboardScene', () => {
       });
 
       it.each([false, true])(
-        'starts Agent editing from Viewing and retains an existing Editing choice (already editing: %s)',
+        'starts Editing for Assistant from Viewing and from Editing (already editing: %s)',
         (alreadyEditing) => {
           if (!alreadyEditing) {
             scene.exitEditMode({ skipConfirm: true });
@@ -345,19 +345,20 @@ describe('DashboardScene', () => {
           scene.onEnterEditMode('assistant');
           jest.advanceTimersByTime(10);
 
-          expect(scene.state.mode).toBe(alreadyEditing ? 'edit' : 'agent');
-          expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(alreadyEditing);
-          expect(scene.state.sidebar.state.selectionContext.enabled).toBe(alreadyEditing);
+          expect(scene.state.mode).toBe('edit');
+          expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+          expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
         }
       );
 
-      it('starts a dashboard created by Assistant in Agent editing', () => {
+      it('starts a dashboard created by Assistant in Editing', () => {
         locationService.push('/dashboard/new?editSource=assistant');
         const newScene = buildTestScene({ meta: { canEdit: true, canSave: true } });
         const deactivate = newScene.activate();
+        jest.advanceTimersByTime(10);
         try {
-          expect(newScene.state.mode).toBe('agent');
-          expect((newScene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(false);
+          expect(newScene.state.mode).toBe('edit');
+          expect((newScene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
           expect(newScene.getEditSessionSource()).toBe('assistant');
         } finally {
           deactivate();
@@ -405,7 +406,7 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         scene.onEnterEditMode('assistant');
         jest.advanceTimersByTime(10);
-        expect(scene.state.mode).toBe('agent');
+        expect(scene.state.mode).toBe('edit');
       });
 
       it('respects opening the full editor before Assistant edits', () => {
@@ -449,7 +450,7 @@ describe('DashboardScene', () => {
         jest.advanceTimersByTime(10);
 
         expect(scene.getEditSessionSource()).toBe('user');
-        expect(scene.state.mode).toBe('agent');
+        expect(scene.state.mode).toBe('edit');
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
@@ -514,7 +515,7 @@ describe('DashboardScene', () => {
         expect(scene.state.title).toBe('hello');
       });
 
-      it.each(['view', 'edit', 'agent'] as const)(
+      it.each(['view', 'edit'] as const)(
         'preserves %s on save and the saved baseline after later Assistant edits',
         async (presentation) => {
           scene.setState({ title: 'Saved title' });
@@ -532,7 +533,7 @@ describe('DashboardScene', () => {
           mockResultsOfDetectChangesWorker({ hasChanges: false });
           scene.onEnterEditMode('assistant');
           jest.advanceTimersByTime(10);
-          expect(scene.state.mode).toBe(presentation === 'view' ? 'agent' : presentation);
+          expect(scene.state.mode).toBe('edit');
           expect(scene.state.isEditing).toBe(true);
           expect(scene.state.isDirty).toBe(false);
 

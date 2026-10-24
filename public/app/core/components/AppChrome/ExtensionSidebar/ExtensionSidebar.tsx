@@ -69,7 +69,12 @@ export function ExtensionSidebar() {
   }
 
   return (
-    <div ref={setWrapper} className={cx(styles.sidebarWrapper, floating && styles.sidebarWrapperFloating)}>
+    <div
+      ref={setWrapper}
+      className={cx(styles.sidebarWrapper, floating && styles.sidebarWrapperFloating)}
+      // Lets page captures (Composer regions) leave the sidebar out.
+      data-extension-sidebar
+    >
       <div className={styles.content}>
         {/* When the sidebar is open, we don't want the body to scroll */}
         {/* Need type assertion here due to the use of !important */}

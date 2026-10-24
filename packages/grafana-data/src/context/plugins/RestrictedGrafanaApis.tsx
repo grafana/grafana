@@ -21,6 +21,32 @@ export interface DashboardMutationAPI {
 }
 
 /**
+ * Composer for dashboards and, on their own route, notebooks. Only the entry point is typed here; consumers
+ * declare the session contract themselves and check it at runtime until the shape settles.
+ *
+ * @alpha
+ */
+interface ComposerAPI {
+  readonly version: 1;
+  canEnter(target?: {
+    resource: 'dashboard' | 'notebook';
+    uid: string;
+  }): { ok: true } | { ok: false; reason: 'no_document' | 'no_permission' | 'unsupported' };
+  enter(
+    target?: { resource: 'dashboard' | 'notebook'; uid: string },
+    options?: { presentation?: 'floating' | 'none' }
+  ): Promise<unknown>;
+  /**
+   * Without `options`, the listener enters Composer on dashboards only. Return `false` from the listener to
+   * decline a request; it then ends at once.
+   */
+  onEnterRequested(
+    listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => boolean | void,
+    options?: { resources?: Array<'dashboard' | 'notebook'> }
+  ): () => void;
+}
+
+/**
  * Lays out the extension sidebar. `docked` is a column next to the page; `floating` lays the sidebar over the
  * page in its bottom-right corner. The extension reads the current layout from its
  * `extensionSidebarPresentation` prop; switching never remounts it.
@@ -43,6 +69,7 @@ interface RestrictedGrafanaApisContextTypeInternal {
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
+  composer?: ComposerAPI;
   extensionSidebar?: ExtensionSidebarAPI;
 }
 
