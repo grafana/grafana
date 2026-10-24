@@ -167,7 +167,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		Spec: secretv1beta1.SecureValueSpec{Description: "Router integration test"},
 	}, "router-test-user")
 	require.NoError(t, err)
-	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version))
+	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version, 0))
 
 	const folderUID = "router-widgets"
 	createFolder(t, t.Context(), helper, folderUID, "Router widgets")
