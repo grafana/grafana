@@ -117,6 +117,7 @@ import {
   getDefaultVizPanel,
   getLayoutForObject,
   hasActualSaveChanges,
+  isLibraryPanel,
 } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -2016,6 +2017,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   isManaged() {
     return Boolean(this.getManagerKind());
+  }
+
+  isLibraryPanel(vizPanel: VizPanel) {
+    return isLibraryPanel(vizPanel);
   }
 
   isManagedRepository() {

@@ -705,4 +705,27 @@ describe('PanelPlugin', () => {
       expect(supplier).not.toHaveBeenCalled();
     });
   });
+
+  describe('panel interactions', () => {
+    it('has no interactions unless the panel declares them', () => {
+      expect(new PanelPlugin(() => <div />).panelInteractions).toBeUndefined();
+    });
+
+    it('exposes the declared interactions', () => {
+      const interactions = {
+        interactions: [
+          {
+            id: 0,
+            name: 'organize',
+            mutates: 'TRANSFORMATION' as const,
+            settings: ['columnName'],
+            promotionPath: jest.fn(),
+          },
+        ],
+      };
+      const panel = new PanelPlugin(() => <div />).setPanelInteractions(interactions).setNoPadding();
+
+      expect(panel.panelInteractions).toBe(interactions);
+    });
+  });
 });

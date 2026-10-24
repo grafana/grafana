@@ -620,6 +620,9 @@ export const versionedComponents = {
       PanelGroupByHeaderAction: {
         '12.4.0': 'data-testid Panel group by header action',
       },
+      PanelAdHocChangesHeaderAction: {
+        '13.3.0': 'data-testid Panel ad hoc changes header action',
+      },
     },
     Visualization: {
       Graph: {
