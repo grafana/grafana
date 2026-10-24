@@ -1,5 +1,6 @@
 import { type FormEvent } from 'react';
 
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { type GrafanaQuery } from '../types';
@@ -21,52 +22,71 @@ interface FieldConfig {
 }
 
 // Core configuration - controls the basic shape and range
-const coreFields: FieldConfig[] = [
+const getCoreFields = (): FieldConfig[] => [
   {
-    label: 'Series count',
+    label: t('grafana-datasource.random-walk-editor.label-series-count', 'Series count'),
     id: 'seriesCount',
     placeholder: '1',
     min: 1,
     step: 1,
-    tooltip: 'Number of series to generate',
+    tooltip: t('grafana-datasource.random-walk-editor.tooltip-series-count', 'Number of series to generate'),
   },
   {
-    label: 'Start value',
+    label: t('grafana-datasource.random-walk-editor.label-start-value', 'Start value'),
     id: 'startValue',
-    placeholder: 'auto',
+    placeholder: t('grafana-datasource.random-walk-editor.placeholder-start-value', 'auto'),
     step: 1,
-    tooltip: 'Initial value for the random walk',
+    tooltip: t('grafana-datasource.random-walk-editor.tooltip-start-value', 'Initial value for the random walk'),
   },
-  { label: 'Min', id: 'min', placeholder: 'none', step: 0.1 },
-  { label: 'Max', id: 'max', placeholder: 'none', step: 0.1 },
+  {
+    label: t('grafana-datasource.random-walk-editor.label-min', 'Min'),
+    id: 'min',
+    placeholder: t('grafana-datasource.random-walk-editor.placeholder-min', 'none'),
+    step: 0.1,
+  },
+  {
+    label: t('grafana-datasource.random-walk-editor.label-max', 'Max'),
+    id: 'max',
+    placeholder: t('grafana-datasource.random-walk-editor.placeholder-max', 'none'),
+    step: 0.1,
+  },
 ];
 
 // Fine-tuning parameters - controls randomness and variation
-const advancedFields: FieldConfig[] = [
+const getAdvancedFields = (): FieldConfig[] => [
   {
-    label: 'Spread',
+    label: t('grafana-datasource.random-walk-editor.label-spread', 'Spread'),
     id: 'spread',
     placeholder: '1',
     min: 0.5,
     step: 0.1,
-    tooltip: 'Maximum step size between values. Higher values create more dramatic changes.',
+    tooltip: t(
+      'grafana-datasource.random-walk-editor.tooltip-spread',
+      'Maximum step size between values. Higher values create more dramatic changes.'
+    ),
   },
   {
-    label: 'Noise',
+    label: t('grafana-datasource.random-walk-editor.label-noise', 'Noise'),
     id: 'noise',
     placeholder: '0',
     min: 0,
     step: 0.1,
-    tooltip: 'Random noise added to each value. Higher values create more variability.',
+    tooltip: t(
+      'grafana-datasource.random-walk-editor.tooltip-noise',
+      'Random noise added to each value. Higher values create more variability.'
+    ),
   },
   {
-    label: 'Drop (%)',
+    label: t('grafana-datasource.random-walk-editor.label-drop-percent', 'Drop (%)'),
     id: 'dropPercent',
     placeholder: '0',
     min: 0,
     max: 100,
     step: 1,
-    tooltip: 'Percentage of points to randomly drop (simulates missing data)',
+    tooltip: t(
+      'grafana-datasource.random-walk-editor.tooltip-drop-percent',
+      'Percentage of points to randomly drop (simulates missing data)'
+    ),
   },
 ];
 
@@ -108,8 +128,8 @@ export const RandomWalkEditor = ({ query, onChange, onRunQuery }: RandomWalkEdit
 
   return (
     <>
-      <InlineFieldRow>{coreFields.map(renderField)}</InlineFieldRow>
-      <InlineFieldRow>{advancedFields.map(renderField)}</InlineFieldRow>
+      <InlineFieldRow>{getCoreFields().map(renderField)}</InlineFieldRow>
+      <InlineFieldRow>{getAdvancedFields().map(renderField)}</InlineFieldRow>
     </>
   );
 };

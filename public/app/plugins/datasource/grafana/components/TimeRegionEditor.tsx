@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type ChangeEvent, useState } from 'react';
 
 import { dateTime, type DateTime, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import {
   Button,
   Field,
@@ -24,15 +24,25 @@ interface Props {
   onChange: (value?: TimeRegionConfig) => void;
 }
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((v, idx) => {
-  return {
-    label: v,
-    value: idx + 1,
-  };
-});
+const getDays = () =>
+  [
+    t('dashboard-settings.time-regions.day-monday', 'Monday'),
+    t('dashboard-settings.time-regions.day-tuesday', 'Tuesday'),
+    t('dashboard-settings.time-regions.day-wednesday', 'Wednesday'),
+    t('dashboard-settings.time-regions.day-thursday', 'Thursday'),
+    t('dashboard-settings.time-regions.day-friday', 'Friday'),
+    t('dashboard-settings.time-regions.day-saturday', 'Saturday'),
+    t('dashboard-settings.time-regions.day-sunday', 'Sunday'),
+  ].map((v, idx) => {
+    return {
+      label: v,
+      value: idx + 1,
+    };
+  });
 
 export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
+  const days = getDays();
 
   const timestamp = Date.now();
   const timezoneInfo = getTimeZoneDisplayInfo(value.timezone ?? 'utc', timestamp);
@@ -61,7 +71,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
   };
 
   const getToPlaceholder = () => {
-    let placeholder = 'Everyday';
+    let placeholder = t('dashboard-settings.time-regions.placeholder-everyday', 'Everyday');
     if (value.fromDayOfWeek && !value.toDayOfWeek) {
       placeholder = days[value.fromDayOfWeek - 1].label;
     }
@@ -78,7 +88,11 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     );
 
     if (isDashboardTimezone) {
-      return <>Dashboard timezone ({timezone})</>;
+      return (
+        <>
+          {t('dashboard-settings.time-regions.dashboard-timezone', 'Dashboard timezone')} ({timezone})
+        </>
+      );
     }
 
     return timezone;
@@ -138,7 +152,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
       <div className={styles.timezoneContainer}>
         <div className={styles.timezone}>{renderTimezonePicker()}</div>
         <Button variant="secondary" onClick={onToggleChangeTimezone} size="sm">
-          Change timezone
+          <Trans i18nKey="dashboard-settings.time-regions.change-timezone">Change timezone</Trans>
         </Button>
       </div>
     );
@@ -173,12 +187,12 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
 
       {value.mode == null && (
         <>
-          <Field label="From">
+          <Field label={t('dashboard-settings.time-regions.label-from', 'From')}>
             <Stack gap={0.5}>
               <Select
                 options={days}
                 isClearable
-                placeholder="Everyday"
+                placeholder={t('dashboard-settings.time-regions.placeholder-everyday', 'Everyday')}
                 value={value.fromDayOfWeek ?? null}
                 onChange={(v) => onFromDayOfWeekChange(v)}
                 width={20}
@@ -187,11 +201,12 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
                 value={from}
                 onChange={(v) => onTimeChange(v, 'from')}
                 allowEmpty={true}
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 placeholder="HH:mm"
               />
             </Stack>
           </Field>
-          <Field label="To">
+          <Field label={t('dashboard-settings.time-regions.label-to', 'To')}>
             <Stack gap={0.5}>
               {(value.fromDayOfWeek || value.toDayOfWeek) && (
                 <Select
@@ -207,6 +222,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
                 value={to}
                 onChange={(v) => onTimeChange(v, 'to')}
                 allowEmpty={true}
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 placeholder="HH:mm"
               />
             </Stack>
@@ -215,25 +231,27 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
       )}
       {value.mode === 'cron' && (
         <>
-          <Field label="Cron expression">
+          <Field label={t('dashboard-settings.time-regions.label-cron-expression', 'Cron expression')}>
             <Input
               onChange={(e: ChangeEvent<HTMLInputElement>) => onCronExprChange(e.target.value)}
               value={value.cronExpr}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="0 9 * * 1-5"
               width={40}
             />
           </Field>
-          <Field label="Duration">
+          <Field label={t('dashboard-settings.time-regions.label-duration', 'Duration')}>
             <Input
               onChange={(e: ChangeEvent<HTMLInputElement>) => onDurationChange(e.target.value)}
               value={value.duration}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="8h"
               width={40}
             />
           </Field>
         </>
       )}
-      <Field label="Timezone">{renderTimezone()}</Field>
+      <Field label={t('dashboard-settings.time-regions.label-timezone', 'Timezone')}>{renderTimezone()}</Field>
     </FieldSet>
   );
 };
