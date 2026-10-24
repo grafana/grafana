@@ -6,6 +6,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 import { getSelectStyles } from './getSelectStyles';
 import type { CustomComponentProps } from './types';
+import { getQueryBuilderSelectRole } from './utils';
 
 type ValueContainerProps<Option, IsMulti extends boolean, Group extends GroupBase<Option>> = BaseValueContainerProps<
   Option,
@@ -23,21 +24,33 @@ export const ValueContainer = <Option, IsMulti extends boolean, Group extends Gr
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (ref.current && selectProps.autoWidth && !selectProps.maxVisibleValues) {
-      // Reset in order to measure the new width
-      ref.current.style.minWidth = '0px';
-
-      const width = ref.current.offsetWidth;
-
-      ref.current.style.minWidth = `${width}px`;
+    if (!ref.current || !selectProps.autoWidth || selectProps.maxVisibleValues) {
+      return;
     }
-  }, [selectProps.value, selectProps.autoWidth, selectProps.maxVisibleValues]);
+
+    // Multi-value selects must size to fit their content and let chips wrap within the available
+    // width. Pinning a measured width here would grow the control without bounds as values are
+    // added, pushing the select (and any enclosing panel) wider.
+    if (isMulti) {
+      ref.current.style.minWidth = '0px';
+      return;
+    }
+
+    // Reset in order to measure the new width
+    ref.current.style.minWidth = '0px';
+
+    const width = ref.current.offsetWidth;
+
+    ref.current.style.minWidth = `${width}px`;
+  }, [selectProps.value, selectProps.autoWidth, selectProps.maxVisibleValues, isMulti]);
 
   const renderContainer = (containerChildren?: ReactNode) => {
     const noWrap = selectProps?.noMultiValueWrap && !selectProps?.menuIsOpen;
     const dataTestid = selectProps['data-testid'];
+    const constrainOverflow = isMulti && !noWrap && getQueryBuilderSelectRole(dataTestid) === 'value';
     const className = cx(styles.valueContainer, {
       [styles.valueContainerMulti]: isMulti && !noWrap,
+      [styles.valueContainerMultiConstrained]: constrainOverflow,
       [styles.valueContainerMultiNoWrap]: isMulti && noWrap,
     });
 
