@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -56,10 +57,14 @@ func (s *alertBroadcast) Merge(b []byte) error {
 		return nil
 	}
 
-	if err := am.PutAlerts(context.Background(), payload.Alerts); err != nil {
-		s.logger.Warn("Failed to accept received broadcast alerts", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts), "error", err)
-	} else {
-		s.logger.Debug("Received broadcast alerts from peer", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts))
-	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := am.PutAlerts(ctx, payload.Alerts); err != nil {
+			s.logger.Warn("Failed to accept received broadcast alerts", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts), "error", err)
+		} else {
+			s.logger.Debug("Received broadcast alerts from peer", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts))
+		}
+	}()
 	return nil
 }
