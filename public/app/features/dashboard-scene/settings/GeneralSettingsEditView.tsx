@@ -1,6 +1,7 @@
+import { isEqual } from 'lodash';
 import { lazy, Suspense } from 'react';
 
-import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
+import { behaviors, type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import { Spinner, type WeekStart } from '@grafana/ui';
 
@@ -32,10 +33,44 @@ export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   };
 }
 
+/**
+ * Everything General settings can change. The save model covers all settings except the folder (dashboard meta)
+ * and the default grid (not persisted in v1), which undo can still restore: the schema edit undo restores the
+ * whole previous dashboard state.
+ */
+function getSettingsSnapshot(dashboard: DashboardScene) {
+  return {
+    saveModel: dashboard.getSaveModel(),
+    folderUid: dashboard.state.meta.folderUid,
+    defaultLayoutType: dashboard.getDefaultLayoutType(),
+  };
+}
+
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
 {
+  constructor(state: GeneralSettingsEditViewState) {
+    super(state);
+
+    this.addActivationHandler(() => this.onActivate());
+  }
+
+  private onActivate() {
+    const dashboard = this._dashboard;
+    const snapshotOnEnter = getSettingsSnapshot(dashboard);
+
+    // General settings write to the dashboard (and its time range, controls and behaviors) outside edit
+    // history, so earlier undo/redo entries could replay over those changes. Comparing a snapshot catches
+    // every setting without listing them. Checking on leave is enough because undo/redo is not reachable
+    // while settings are open.
+    return () => {
+      if (!isEqual(getSettingsSnapshot(dashboard), snapshotOnEnter)) {
+        dashboard.state.sidebar.clearHistory();
+      }
+    };
+  }
+
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
   }

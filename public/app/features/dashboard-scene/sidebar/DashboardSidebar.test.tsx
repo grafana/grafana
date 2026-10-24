@@ -441,6 +441,21 @@ describe('DashboardSidebar', () => {
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
+  it('clearHistory should empty undo and redo stacks', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+
+    sidebar.undoAction();
+
+    sidebar.clearHistory();
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
   it('clone should not include undo/redo history', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;

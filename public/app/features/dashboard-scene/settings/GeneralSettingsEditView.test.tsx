@@ -4,9 +4,13 @@ import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { changeDescription } from '../actions/dashboard/changeDescription';
+import { changeTitle } from '../actions/dashboard/changeTitle';
 import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
@@ -17,6 +21,107 @@ jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
 }));
 
 describe('GeneralSettingsEditView', () => {
+  describe('Undo/redo history', () => {
+    let dashboard: DashboardScene;
+    let settings: GeneralSettingsEditView;
+    let deactivate: () => void;
+
+    beforeEach(() => {
+      dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({}),
+        $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off }), new behaviors.LiveNowTimer({})],
+        controls: new DashboardControls({}),
+        title: 'A',
+        isEditing: true,
+      });
+      deactivate = activateFullSceneTree(dashboard);
+      settings = new GeneralSettingsEditView({});
+      dashboard.setState({ editview: settings });
+
+      // Leaves one entry in each stack: title A -> B (undo), description change (redo)
+      changeTitle({ source: dashboard, oldValue: 'A', newValue: 'B' });
+      changeDescription({ source: dashboard, oldValue: undefined, newValue: 'Edited' });
+      dashboard.state.sidebar.undoAction();
+    });
+
+    afterEach(() => deactivate());
+
+    const expectHistoryLength = (length: number) => {
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(length);
+      expect(dashboard.state.sidebar.state.redoStack).toHaveLength(length);
+    };
+
+    it('keeps history when leaving settings without changing anything', () => {
+      settings.activate()();
+
+      expectHistoryLength(1);
+    });
+
+    it('clears history when leaving after a change, so undo no longer reverts it', () => {
+      const deactivateSettings = settings.activate();
+      settings.onTitleChange('C');
+      deactivateSettings();
+
+      expectHistoryLength(0);
+      dashboard.state.sidebar.undoAction();
+      expect(dashboard.state.title).toBe('C');
+    });
+
+    it('keeps history when a setting is changed and then changed back', () => {
+      const deactivateSettings = settings.activate();
+      settings.onTitleChange('C');
+      settings.onTitleChange('B');
+      deactivateSettings();
+
+      expectHistoryLength(1);
+    });
+
+    it('keeps history on dashboard state changes that are not settings', () => {
+      const deactivateSettings = settings.activate();
+      dashboard.setState({ isDirty: true });
+      deactivateSettings();
+
+      expectHistoryLength(1);
+    });
+
+    it('ignores changes made after settings are left', () => {
+      settings.activate()();
+      dashboard.setState({ title: 'C' });
+
+      expectHistoryLength(1);
+    });
+
+    it.each([
+      ['description', () => settings.onDescriptionChange('Other')],
+      ['tags', () => settings.onTagsChange(['tag'])],
+      ['editable', () => settings.onEditableChange(false)],
+      ['preload', () => settings.onPreloadChange(true)],
+      ['folder', () => settings.onMoveSuccess('new-folder', 'New folder')],
+      [
+        'default grid',
+        () =>
+          settings.onDefaultGridChange(
+            dashboard.getDefaultLayoutType() === AutoGridLayoutManager.descriptor.id
+              ? DefaultGridLayoutManager.descriptor.id
+              : AutoGridLayoutManager.descriptor.id
+          ),
+      ],
+      ['time zone', () => settings.onTimeZoneChange('Europe/Paris')],
+      ['week start', () => settings.onWeekStartChange('monday')],
+      ['now delay', () => settings.onNowDelayChange('1m')],
+      ['refresh intervals', () => settings.onRefreshIntervalChange(['5s'])],
+      ['hide time picker', () => settings.onHideTimePickerChange(true)],
+      ['live now', () => settings.onLiveNowChange(true)],
+      ['graph tooltip', () => settings.onTooltipChange(DashboardCursorSync.Crosshair)],
+    ])('clears history when %s changes', (_, change) => {
+      const deactivateSettings = settings.activate();
+      change();
+      deactivateSettings();
+
+      expectHistoryLength(0);
+    });
+  });
+
   describe('Dashboard state', () => {
     let dashboard: DashboardScene;
     let settings: GeneralSettingsEditView;

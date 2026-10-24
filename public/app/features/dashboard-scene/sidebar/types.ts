@@ -40,6 +40,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   getSelectedObject(key?: string): SceneObject | undefined;
   undoAction(): void;
   redoAction(): void;
+  clearHistory(): void;
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
   addNewPanel(target: SceneObject | undefined): void | Promise<void>;
