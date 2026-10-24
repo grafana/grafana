@@ -6531,6 +6531,7 @@
       },
       "saved-views": {
         "actions-aria-label": "Actions",
+        "default-indicator": "Your default view for this dashboard",
         "delete": "Delete",
         "delete-confirm-body": "Delete \"%NAME%\"? This cannot be undone.",
         "delete-confirm-confirm": "Delete",
@@ -6554,8 +6555,10 @@
           "no-results": "No results found for your query"
         },
         "search-placeholder": "Search views",
+        "set-default": "Set as default",
         "title": "Views",
-        "tooltip": "Saved views"
+        "tooltip": "Saved views",
+        "unset-default": "Remove as default"
       },
       "section-filters": {
         "title": "Filters"

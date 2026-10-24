@@ -70,7 +70,7 @@ import {
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { loadSavedViews } from '../savedviews/loadSavedViews';
+import { applyDefaultSavedViewToUrl, loadSavedViews } from '../savedviews/loadSavedViews';
 import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardModesEnabled } from '../scene/dashboardModes';
@@ -593,14 +593,24 @@ abstract class DashboardScenePageStateManagerBase<T>
     await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
+    const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
-    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches lazily.
-    if (
-      scene &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&
-      typeof locationService.getSearchObject().viewFilter === 'string'
-    ) {
+    const pathname = locationService.getLocation().pathname;
+    if (scene && savedViewsEnabled && !isRenderTarget(options.route) && !playlistSrv.state.isPlaying) {
+      // Writes the viewer's stored default into ?viewFilter= when the URL has none. Skipped for render
+      // targets (reports, embeds) and playlists, whose fixed parameters a personal default must not replace.
+      await applyDefaultSavedViewToUrl(scene);
+    }
+
+    // Fetched eagerly only for ?viewFilter= links (including one set by a stored default above),
+    // which URL sync needs resolved; the pane fetches lazily.
+    if (scene && savedViewsEnabled && typeof locationService.getSearchObject().viewFilter === 'string') {
       await loadSavedViews(scene);
+    }
+
+    if (savedViewsEnabled && locationService.getLocation().pathname !== pathname) {
+      // The viewer navigated away during the awaits above; don't mount this scene over the new page.
+      return null;
     }
 
     return scene;
