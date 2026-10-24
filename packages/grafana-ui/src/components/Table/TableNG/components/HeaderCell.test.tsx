@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme, type Field, FieldType } from '@grafana/data';
@@ -531,6 +531,38 @@ describe('HeaderCell', () => {
       await userEvent.click(filterItem);
       // FilterPopup renders the value list with its own Ok/Cancel controls
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    });
+
+    it('moves focus to the filter search input when the popup is opened from the column menu by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      act(() => screen.getByLabelText(menuLabel).focus());
+      await user.keyboard('{Enter}');
+      const filterItem = await screen.findByRole('menuitem', { name: 'Filter values' });
+      act(() => filterItem.focus());
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+    });
+
+    it('returns focus to the column menu button when the filter popup is applied by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      const menuButton = screen.getByLabelText(menuLabel);
+      act(() => menuButton.focus());
+      await user.keyboard('{Enter}');
+      act(() => screen.getByRole('menuitem', { name: 'Filter values' }).focus());
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+
+      act(() => screen.getByRole('button', { name: 'Ok' }).focus());
+      await user.keyboard('{Enter}');
+
+      expect(menuButton).toHaveFocus();
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
     });
 
     it('marks a filtered column with a persistent filter icon, leaving the menu hover-only', () => {

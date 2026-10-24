@@ -63,16 +63,22 @@ export const FilterPopup = memo(
 
     // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
     useEffect(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      queueMicrotask(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      });
     }, []);
+
+    const closeAndRestoreFocus = useCallback(() => {
+      onClose();
+      buttonElement?.focus();
+    }, [onClose, buttonElement]);
 
     useEffect(() => {
       function handleEscape(e: KeyboardEvent) {
         if (e.key === 'Escape') {
-          onClose();
-          buttonElement?.focus();
+          closeAndRestoreFocus();
         }
       }
       document.addEventListener('keyup', handleEscape);
@@ -80,7 +86,7 @@ export const FilterPopup = memo(
       return () => {
         document.removeEventListener('keyup', handleEscape);
       };
-    }, [onClose, buttonElement]);
+    }, [closeAndRestoreFocus]);
 
     const onFilter = useCallback(() => {
       if (values.length !== 0) {
@@ -98,8 +104,8 @@ export const FilterPopup = memo(
           return newFilter;
         });
       }
-      onClose();
-    }, [filterKey, operator, parentIndex, searchFilter, setFilter, values, name, onClose]);
+      closeAndRestoreFocus();
+    }, [filterKey, operator, parentIndex, searchFilter, setFilter, values, name, closeAndRestoreFocus]);
 
     const onClearFilter = useCallback(() => {
       setFilter((filter: FilterType) => {
@@ -107,8 +113,8 @@ export const FilterPopup = memo(
         delete newFilter[filterKey];
         return newFilter;
       });
-      onClose();
-    }, [filterKey, setFilter, onClose]);
+      closeAndRestoreFocus();
+    }, [filterKey, setFilter, closeAndRestoreFocus]);
 
     // we can't directly use ClickOutsideWrapper here because the click and keyup
     // events are complex and need to be handled with care to avoid conflicts
@@ -184,7 +190,7 @@ export const FilterPopup = memo(
             <Button size="sm" onClick={onFilter}>
               <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
             </Button>
-            <Button size="sm" variant="secondary" onClick={onClose}>
+            <Button size="sm" variant="secondary" onClick={closeAndRestoreFocus}>
               <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
             </Button>
             {clearFilterVisible && (
