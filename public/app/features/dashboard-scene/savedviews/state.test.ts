@@ -8,9 +8,12 @@ import {
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 
 import { applySavedViewState, applySavedViewStateAsDefault, captureSavedViewState, getSavedViewDiff } from './state';
-import { type SavedDashboardViewSpec } from './types';
+import { type SavedDashboardViewSpec, type SavedViewSectionFilter } from './types';
 
 function buildScene(overrides?: { from?: string; to?: string; adhocFilters?: AdHocVariableFilter[]; env?: string }) {
   const adhoc = new AdHocFiltersVariable({
@@ -192,6 +195,141 @@ describe('applySavedViewState', () => {
   });
 });
 
+function buildSceneWithTabFilter(filters: AdHocVariableFilter[]) {
+  const sectionAdhoc = new AdHocFiltersVariable({ name: 'podFilter', datasource: null, filters });
+  const tab = new TabItem({ title: 'My tab', $variables: new SceneVariableSet({ variables: [sectionAdhoc] }) });
+  const scene = new DashboardScene({
+    uid: 'dash-1',
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({ variables: [] }),
+    body: new TabsLayoutManager({ tabs: [tab] }),
+  });
+  return { scene, tab };
+}
+
+describe('captureSavedViewState — tab/row-scoped section filters', () => {
+  it('captures ad-hoc filters scoped to a tab, keyed by its layout path', () => {
+    const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    const spec = captureSavedViewState(scene);
+
+    expect(spec.sectionFilters).toEqual([
+      {
+        sectionKind: 'tab',
+        sectionKey: '/tabs/0',
+        sectionTitle: 'My tab',
+        variables: [{ name: 'podFilter', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'x' }] }],
+      },
+    ]);
+  });
+
+  it('keeps an empty tab title so apply still checks it', () => {
+    const { scene, tab } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    tab.setState({ title: '' });
+
+    expect(captureSavedViewState(scene).sectionFilters?.[0].sectionTitle).toBe('');
+  });
+
+  it('omits sectionFilters entirely when no tab/row has its own variables', () => {
+    const spec = captureSavedViewState(buildScene());
+
+    expect(spec.sectionFilters).toBeUndefined();
+  });
+});
+
+describe('applySavedViewState — tab/row-scoped section filters', () => {
+  it('applies a saved section filter back onto the matching tab', () => {
+    const { scene, tab } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    const spec = captureSavedViewState(scene);
+
+    const live = tab.state.$variables?.getByName('podFilter');
+    if (live instanceof AdHocFiltersVariable) {
+      live.setState({ filters: [{ key: 'pod', operator: '=', value: 'changed' }] });
+    }
+
+    applySavedViewState(scene, spec);
+
+    const after = tab.state.$variables?.getByName('podFilter');
+    expect(after).toBeInstanceOf(AdHocFiltersVariable);
+    if (after instanceof AdHocFiltersVariable) {
+      expect(after.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'x' }]);
+    }
+  });
+
+  it('is a no-op, not a throw, when the saved layout path no longer resolves', () => {
+    const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'x' }]);
+    const spec = captureSavedViewState(scene);
+
+    scene.setState({ body: DefaultGridLayoutManager.fromVizPanels([]) });
+
+    expect(() => applySavedViewState(scene, spec)).not.toThrow();
+  });
+
+  it('does not apply a saved section filter to a different tab that now resolves at the same layout path', () => {
+    // After a reorder, "/tabs/0" can resolve to a different tab; the title check must catch that.
+    const { scene: originalScene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'saved' }]);
+    const spec = captureSavedViewState(originalScene);
+    expect(spec.sectionFilters?.[0].sectionTitle).toBe('My tab');
+
+    const { scene: reorderedScene, tab: differentTab } = buildSceneWithTabFilter([
+      { key: 'pod', operator: '=', value: 'live' },
+    ]);
+    differentTab.setState({ title: 'A totally different tab' });
+
+    applySavedViewState(reorderedScene, spec);
+
+    const podFilter = differentTab.state.$variables?.getByName('podFilter');
+    if (podFilter instanceof AdHocFiltersVariable) {
+      expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'live' }]); // unchanged
+    }
+  });
+
+  it('still applies unconditionally when the saved section has no captured title (backward compat)', () => {
+    const { scene } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'saved' }]);
+    const spec = captureSavedViewState(scene);
+    // A view saved before sectionTitle existed, on a tab that has since been renamed.
+    const specWithoutTitle: SavedDashboardViewSpec = {
+      ...spec,
+      sectionFilters: spec.sectionFilters?.map(({ sectionTitle, ...rest }) => rest),
+    };
+    const tab = (scene.state.body as TabsLayoutManager).state.tabs[0];
+    tab.setState({ title: 'Renamed since this view was saved' });
+    const podFilter = tab.state.$variables?.getByName('podFilter');
+    if (podFilter instanceof AdHocFiltersVariable) {
+      podFilter.setState({ filters: [{ key: 'pod', operator: '=', value: 'live' }] });
+    }
+
+    applySavedViewState(scene, specWithoutTitle);
+
+    if (podFilter instanceof AdHocFiltersVariable) {
+      expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'saved' }]);
+    }
+  });
+
+  it('resets a section the spec does not mention back to the baseline', () => {
+    // Section filters the view omits reset to the baseline, like dashboard-level variables.
+    const { scene, tab } = buildSceneWithTabFilter([]);
+    const baseline = captureSavedViewState(scene); // captured with no filters -- the authored default
+
+    const live = tab.state.$variables?.getByName('podFilter');
+    if (live instanceof AdHocFiltersVariable) {
+      live.setState({ filters: [{ key: 'pod', operator: '=', value: 'leftover' }] });
+    }
+
+    // This view's own spec says nothing about sectionFilters at all.
+    applySavedViewState(
+      scene,
+      { dashboardUID: 'dash-1', name: 'My view', timeRange: { from: 'now-1h', to: 'now' }, variables: [] },
+      baseline
+    );
+
+    const after = tab.state.$variables?.getByName('podFilter');
+    expect(after).toBeInstanceOf(AdHocFiltersVariable);
+    if (after instanceof AdHocFiltersVariable) {
+      expect(after.state.filters).toEqual([]);
+    }
+  });
+});
+
 describe('applySavedViewStateAsDefault', () => {
   const spec: SavedDashboardViewSpec = {
     dashboardUID: 'dash-1',
@@ -305,6 +443,72 @@ describe('applySavedViewStateAsDefault', () => {
         expect(env.state.value).toBe('qa');
       }
     });
+
+    it('resets a section filter the view does not mention back to the baseline', () => {
+      const { scene, tab } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'left-over' }]);
+      const before = captureSavedViewState(scene);
+      const baselineWithSection: SavedDashboardViewSpec = {
+        ...baseline,
+        sectionFilters: [
+          {
+            sectionKind: 'tab',
+            sectionKey: '/tabs/0',
+            variables: [
+              { name: 'podFilter', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'authored' }] },
+            ],
+          },
+        ],
+      };
+
+      applySavedViewStateAsDefault(scene, specWithoutEnv, before, baselineWithSection);
+
+      const podFilter = tab.state.$variables?.getByName('podFilter');
+      expect(podFilter).toBeInstanceOf(AdHocFiltersVariable);
+      if (podFilter instanceof AdHocFiltersVariable) {
+        expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'authored' }]);
+      }
+    });
+  });
+
+  it('applies a section filter for a section the current dashboard also has, merging it the same way', () => {
+    const { scene, tab } = buildSceneWithTabFilter([{ key: 'pod', operator: '=', value: 'live' }]);
+    const before = captureSavedViewState(scene);
+    const specWithSection: SavedDashboardViewSpec = {
+      ...spec,
+      sectionFilters: [
+        {
+          sectionKind: 'tab',
+          sectionKey: '/tabs/0',
+          variables: [{ name: 'podFilter', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'saved' }] }],
+        },
+      ],
+    };
+
+    applySavedViewStateAsDefault(scene, specWithSection, before);
+
+    const podFilter = tab.state.$variables?.getByName('podFilter');
+    if (podFilter instanceof AdHocFiltersVariable) {
+      expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'saved' }]);
+    }
+  });
+
+  it('does not throw for a sectionFilters entry naming a section absent from the live dashboard', () => {
+    const scene = buildScene();
+    const before = captureSavedViewState(scene);
+    const specWithSection: SavedDashboardViewSpec = {
+      ...spec,
+      sectionFilters: [
+        {
+          sectionKind: 'tab',
+          sectionKey: '/tabs/0',
+          variables: [{ name: 'podFilter', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'saved' }] }],
+        },
+      ],
+    };
+
+    expect(() => applySavedViewStateAsDefault(scene, specWithSection, before)).not.toThrow();
+    // The rest of the spec (time range, dashboard-level variables) still applies normally.
+    expect(scene.state.$timeRange?.state.from).toBe('now-24h');
   });
 });
 
@@ -387,5 +591,66 @@ describe('getSavedViewDiff', () => {
   it('treats a single value and a one-item array as the same selection', () => {
     const stored = { ...base, variables: [{ name: 'env', type: 'query' as const, value: ['prod'] }] };
     expect(getSavedViewDiff(base, stored)).toBe(false);
+  });
+
+  it('is true when a section filter value differs', () => {
+    const withSection: SavedDashboardViewSpec = {
+      ...base,
+      sectionFilters: [
+        {
+          sectionKind: 'tab',
+          sectionKey: '/tabs/0',
+          variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'x' }] }],
+        },
+      ],
+    };
+    const changed: SavedDashboardViewSpec = {
+      ...withSection,
+      sectionFilters: [
+        {
+          sectionKind: 'tab',
+          sectionKey: '/tabs/0',
+          variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value: 'y' }] }],
+        },
+      ],
+    };
+    expect(getSavedViewDiff(changed, withSection)).toBe(true);
+  });
+
+  it('ignores a stored section whose title no longer matches the live section at that path', () => {
+    const section = (sectionTitle: string, value: string): SavedViewSectionFilter => ({
+      sectionKind: 'tab',
+      sectionKey: '/tabs/0',
+      sectionTitle,
+      variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value }] }],
+    });
+
+    expect(
+      getSavedViewDiff(
+        { ...base, sectionFilters: [section('Other tab', 'y')] },
+        { ...base, sectionFilters: [section('My tab', 'x')] }
+      )
+    ).toBe(false);
+  });
+
+  it('is false when sectionFilters is absent on both sides', () => {
+    expect(getSavedViewDiff(base, { ...base, variables: [...base.variables] })).toBe(false);
+  });
+
+  describe('for a section the view does not capture', () => {
+    const section = (value: string): SavedViewSectionFilter => ({
+      sectionKind: 'tab',
+      sectionKey: '/tabs/0',
+      variables: [{ name: 'pod', type: 'adhoc', filters: [{ key: 'pod', operator: '=', value }] }],
+    });
+    const baseline: SavedDashboardViewSpec = { ...base, sectionFilters: [section('authored')] };
+
+    it('is false while that section is still at the baseline', () => {
+      expect(getSavedViewDiff({ ...base, sectionFilters: [section('authored')] }, base, baseline)).toBe(false);
+    });
+
+    it('is true once that section drifts from the baseline', () => {
+      expect(getSavedViewDiff({ ...base, sectionFilters: [section('edited')] }, base, baseline)).toBe(true);
+    });
   });
 });
