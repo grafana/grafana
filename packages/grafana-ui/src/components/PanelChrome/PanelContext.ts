@@ -9,6 +9,7 @@ import {
   type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
+  type PanelNotices,
 } from '@grafana/data';
 
 import { type AdHocFilterItem } from '../Table/types';
@@ -41,6 +42,10 @@ export interface AdHocTransformationsState {
 
 /** @alpha */
 export interface PanelContext {
+  /** Panel-owned notices. Absent on hosts without notice support. @alpha */
+  notices?: PanelNotices;
+  /** Connects host data for the lifetime of a panel status surface. @internal */
+  activateNotices?: () => () => void;
   /** Identifier for the events scope */
   eventsScope: string;
   eventBus: EventBus;

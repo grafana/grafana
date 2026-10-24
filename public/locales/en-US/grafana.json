@@ -7297,6 +7297,7 @@
       "copy": "Copy to clipboard",
       "learn-more": "Learn more",
       "no-issues": "No errors or notices for this query.",
+      "no-panel-issues": "No errors or notices for this panel.",
       "severity-error": "Error",
       "severity-info": "Info",
       "severity-warning": "Warning"
