@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,7 +22,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -1924,7 +1928,6 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
-	t.Skip("flaky: times out")
 	helper := sharedHelper(t)
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
@@ -2803,4 +2806,215 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
 		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "root folder title should be updated after sync")
+}
+
+// filesStatus issues a raw request to the repository files endpoint and returns the HTTP status
+// code with the API error, so the response's own shape can be asserted.
+func filesStatus(t *testing.T, helper *common.ProvisioningTestHelper, verb, repo, path string) (int, error) {
+	t.Helper()
+	req := helper.AdminREST.Get()
+	if verb == http.MethodDelete {
+		req = helper.AdminREST.Delete()
+	}
+	var statusCode int
+	result := req.
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files", path).
+		Do(t.Context()).
+		StatusCode(&statusCode)
+	return statusCode, result.Error()
+}
+
+// requireRepositoryNotFound asserts the response identifies the repository in the request path as
+// the missing thing. Routing a managed write relies on these details to tell a deleted repository
+// apart from a missing file inside a live one.
+func requireRepositoryNotFound(t *testing.T, repo string, code int, err error) {
+	t.Helper()
+	require.Equal(t, http.StatusNotFound, code)
+	require.True(t, apierrors.IsNotFound(err), "got: %v", err)
+
+	status, ok := errors.AsType[*apierrors.StatusError](err)
+	require.True(t, ok, "got %T: %v", err, err)
+	require.Equal(t, metav1.StatusReasonNotFound, status.ErrStatus.Reason)
+	require.NotNil(t, status.ErrStatus.Details, "the response must name what was not found")
+	require.Equal(t, provisioning.GROUP, status.ErrStatus.Details.Group)
+	require.Equal(t, "repositories", status.ErrStatus.Details.Kind)
+	require.Equal(t, repo, status.ErrStatus.Details.Name)
+}
+
+// detailsKind reads the details kind of an API error, empty when it names nothing.
+func detailsKind(err error) string {
+	status, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || status.ErrStatus.Details == nil {
+		return ""
+	}
+	return status.ErrStatus.Details.Kind
+}
+
+// orphanedRepoResources syncs a folder-target repository with a nested directory, then deletes the
+// repository while keeping only the cleanup finalizer so its resources are left behind. It returns
+// the names of the resources that outlived it.
+func orphanedRepoResources(t *testing.T, helper *common.ProvisioningTestHelper, repo string) (rootDashboard, nestedDashboard, nestedFolder string) {
+	t.Helper()
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"all-panels.json":   "dashboard.json",
+			"text-options.json": "nested/nested-dashboard.json",
+		},
+	})
+
+	bySourcePath := map[string]string{}
+	for _, d := range helper.RequireRepoDashboardCount(t, repo, 2) {
+		bySourcePath[d.GetAnnotations()[utils.AnnoKeySourcePath]] = d.GetName()
+	}
+	rootDashboard = bySourcePath["dashboard.json"]
+	nestedDashboard = bySourcePath["nested/nested-dashboard.json"]
+	require.NotEmpty(t, rootDashboard, "source paths: %v", bySourcePath)
+	require.NotEmpty(t, nestedDashboard, "source paths: %v", bySourcePath)
+
+	for _, f := range helper.RequireRepoFolderCount(t, repo, 2) {
+		if f.GetName() != repo {
+			nestedFolder = f.GetName()
+		}
+	}
+	require.NotEmpty(t, nestedFolder, "the nested directory should have produced a folder")
+
+	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, rootFolder.GetAnnotations(), utils.AnnoKeySourcePath,
+		"the root folder represents the repository, not a file")
+
+	finalizerPatch := []byte(fmt.Sprintf(`[{"op":"replace","path":"/metadata/finalizers","value":[%q]}]`,
+		repository.CleanFinalizer))
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, finalizerPatch, metav1.PatchOptions{})
+	require.NoError(t, err)
+
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+	helper.WaitForRepositoryDeleted(t, repo)
+
+	_, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err, "the root folder should have outlived its repository")
+
+	return rootDashboard, nestedDashboard, nestedFolder
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedManagedResources covers deleting resources that outlive
+// the repository managing them, and the files-endpoint responses the routing relies on to tell a
+// deleted repository apart from a missing file.
+func TestIntegrationProvisioning_DeleteOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphan-delete-test"
+
+	t.Run("a missing file in a live repository is not reported as a missing repository", func(t *testing.T) {
+		helper.CreateLocalRepo(t, common.TestRepo{Name: repo + "-live", SyncTarget: "folder", SkipSync: true})
+
+		code, err := filesStatus(t, helper, http.MethodGet, repo+"-live", "no-such-file.json")
+
+		require.Equal(t, http.StatusNotFound, code)
+		require.True(t, apierrors.IsNotFound(err), "got: %v", err)
+		require.NotEqual(t, "repositories", detailsKind(err),
+			"a missing file must not look like a missing repository: %v", err)
+	})
+
+	rootDashboard, nestedDashboard, nestedFolder := orphanedRepoResources(t, helper, repo)
+
+	t.Run("the files endpoint names the repository as the missing thing", func(t *testing.T) {
+		t.Run("GET", func(t *testing.T) {
+			code, err := filesStatus(t, helper, http.MethodGet, repo, "dashboard.json")
+			requireRepositoryNotFound(t, repo, code, err)
+		})
+
+		t.Run("DELETE", func(t *testing.T) {
+			code, err := filesStatus(t, helper, http.MethodDelete, repo, "dashboard.json")
+			requireRepositoryNotFound(t, repo, code, err)
+		})
+	})
+
+	// Deleted bottom-up: a dashboard and a nested folder both have a source path, so their deletes
+	// are routed and recover from the repository not-found; the root folder has none to route with.
+	t.Run("an orphaned dashboard can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), nestedDashboard, metav1.DeleteOptions{}))
+		helper.RequireDashboardsNotFound(t, nestedDashboard)
+	})
+
+	t.Run("an orphaned nested folder can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), nestedFolder, metav1.DeleteOptions{}))
+		helper.RequireFoldersNotFound(t, nestedFolder)
+	})
+
+	t.Run("an orphaned root folder can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), rootDashboard, metav1.DeleteOptions{}))
+		helper.RequireDashboardsNotFound(t, rootDashboard)
+
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+		helper.RequireFoldersNotFound(t, repo)
+	})
+}
+
+// TestIntegrationProvisioning_ReleaseOrphanedManagedResources covers detaching resources whose
+// repository is gone. Releasing a repo-managed resource is otherwise reserved for admins.
+func TestIntegrationProvisioning_ReleaseOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphan-release-test"
+	_, nestedDashboard, nestedFolder := orphanedRepoResources(t, helper, repo)
+
+	editorFolders := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Editor,
+		Namespace: "default",
+		GVR:       folder.FolderResourceInfo.GroupVersionResource(),
+	})
+	editorDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Editor,
+		Namespace: "default",
+		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	release := func(t *testing.T, client *apis.K8sResourceClient, name string) error {
+		t.Helper()
+		fresh, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		for _, key := range []string{
+			utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity,
+			utils.AnnoKeySourcePath, utils.AnnoKeySourceChecksum,
+		} {
+			delete(annotations, key)
+		}
+		fresh.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
+		return err
+	}
+
+	// Released top-down: ensureSameRepoManager rejects an unmanaged resource inside a folder that is
+	// still repo-managed, so a parent has to be released before its children.
+	t.Run("an editor can release an orphaned root folder", func(t *testing.T) {
+		require.NoError(t, release(t, editorFolders, repo))
+
+		released, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+	})
+
+	t.Run("an editor can release an orphaned nested folder", func(t *testing.T) {
+		require.NoError(t, release(t, editorFolders, nestedFolder))
+	})
+
+	t.Run("an editor can release an orphaned dashboard", func(t *testing.T) {
+		require.NoError(t, release(t, editorDashboards, nestedDashboard))
+
+		released, err := helper.DashboardsV1.Resource.Get(t.Context(), nestedDashboard, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeySourcePath)
+	})
 }
