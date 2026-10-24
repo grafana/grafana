@@ -3,6 +3,7 @@ package fs
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -29,6 +30,51 @@ func TestCopyFile(t *testing.T) {
 
 	err = CopyFile(src.Name(), dst.Name())
 	require.NoError(t, err)
+}
+
+func TestCopyFile_SameFile(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	testCases := []struct {
+		name string
+		link func(string, string) error
+	}{
+		{name: "same path"},
+		{name: "hard link", link: os.Link},
+		{name: "symbolic link", link: os.Symlink},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			const contents = "Contents"
+			const perms = os.FileMode(0600)
+			src := filepath.Join(t.TempDir(), "source.txt")
+			require.NoError(t, os.WriteFile(src, []byte(contents), perms))
+			srcInfo, err := os.Stat(src)
+			require.NoError(t, err)
+
+			dst := src
+			if tc.link != nil {
+				dst = filepath.Join(t.TempDir(), "destination.txt")
+				err := tc.link(src, dst)
+				if err != nil && runtime.GOOS == "windows" {
+					t.Skipf("Cannot create file links on Windows: %v", err)
+				}
+				require.NoError(t, err)
+			}
+
+			require.NoError(t, CopyFile(src, dst))
+			require.NoError(t, CopyFile(dst, src))
+
+			data, err := os.ReadFile(dst)
+			require.NoError(t, err)
+			assert.Equal(t, contents, string(data))
+
+			fi, err := os.Stat(dst)
+			require.NoError(t, err)
+			assert.Equal(t, srcInfo.Mode().Perm(), fi.Mode().Perm())
+		})
+	}
 }
 
 func TestCopyFile_Permissions(t *testing.T) {
