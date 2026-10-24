@@ -430,6 +430,13 @@ func (l *cloudLoader) stackDiscoveryCache() map[string]uint64 {
 	return map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()}
 }
 
+func (l *cloudLoader) stackFallbackRefused() (uint64, bool) {
+	if l.singleTenantFallback == nil {
+		return 0, false
+	}
+	return l.singleTenantFallback.fallbackRefused.Load(), true
+}
+
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	var statuses []sourceStatus
 	if l.singleTenantFallback != nil {

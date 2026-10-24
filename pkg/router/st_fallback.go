@@ -29,6 +29,17 @@ type loaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }
 
+// singleTenantDiscoveryRule serves a stack's request to skip stacks: the
+// router's own groups only, without the stacks' defaults or the stack itself.
+func singleTenantDiscoveryRule() discoveryRule {
+	return discoveryRule{
+		Header:     routerOriginHeader,
+		Value:      originST,
+		SkipSource: true,
+		Exclude:    func(e servingEntry) bool { return e.callerScoped },
+	}
+}
+
 const (
 	// Bound stale routing after a rename, move, or deletion; cache hits do not extend this TTL.
 	singleTenantCacheTTL = 6 * time.Hour
@@ -129,6 +140,8 @@ type singleTenantFallback struct {
 	cooldown  *cooldown
 	status    pollStatus
 	lookupsBy stackLookupCounts
+	// fallbackRefused counts requests refused for having crossed already.
+	fallbackRefused atomic.Uint64
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
 	// shares one fetch among concurrent misses for the same document.
@@ -300,6 +313,13 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// A request that already crossed, from a stack to the router or the other
+	// way, is not sent across again: that would loop; see routerOriginHeader.
+	if crossed(req) {
+		st.fallbackRefused.Add(1)
+		http.NotFound(w, req)
+		return
+	}
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])
@@ -422,6 +442,9 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			rewriteOutbound(pr, host.url)
+			// Set, not added: a stack's discovery is its own, and what a caller
+			// claims about where a request came from is not believed.
+			pr.Out.Header.Set(routerOriginHeader, originMT)
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},

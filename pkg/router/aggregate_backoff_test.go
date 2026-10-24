@@ -54,3 +54,25 @@ func TestCooldown_SuccessResetsToSteadyInterval(t *testing.T) {
 	c.OnSuccess(now)
 	require.Equal(t, 30*time.Second, c.Until(now))
 }
+
+// Jitter spreads many pollers of one upstream across the interval. It only
+// lengthens the healthy wait, never the failure backoff.
+func TestCooldown_JitterLengthensOnlyTheHealthyWait(t *testing.T) {
+	now := time.Unix(0, 0)
+	for _, tc := range []struct {
+		random float64
+		want   time.Duration
+	}{
+		{0, 10 * time.Minute},
+		{0.5, 10*time.Minute + 30*time.Second},
+		{1, 11 * time.Minute},
+	} {
+		c := newCooldown(10*time.Minute, 5*time.Second, 5*time.Minute).withJitter(0.1, func() float64 { return tc.random })
+		c.OnSuccess(now)
+		require.Equal(t, tc.want, c.Until(now), "random=%v", tc.random)
+	}
+
+	c := newCooldown(10*time.Minute, 5*time.Second, 5*time.Minute).withJitter(0.1, func() float64 { return 1 })
+	c.OnFailure(now)
+	require.Equal(t, 5*time.Second, c.Until(now))
+}

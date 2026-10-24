@@ -186,6 +186,10 @@ type GrafanaRouter struct {
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
 
+	// discoveryRules narrow root discovery for requests that carry a rule's
+	// header. Set before serving.
+	discoveryRules []discoveryRule
+
 	// reconciles and reconcileErrors count completed reconciles, and
 	// lastReconcile is when the latest one finished (Unix nanoseconds), for
 	// metrics.
