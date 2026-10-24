@@ -53,6 +53,7 @@ export const Filter = memo(
         aria-expanded={isPopoverVisible}
         aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {
           name: field ? getDisplayName(field) : '',
+          interpolation: { escapeValue: false },
         })}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton}
         tabIndex={0}
