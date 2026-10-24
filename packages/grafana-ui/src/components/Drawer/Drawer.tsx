@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -93,6 +93,8 @@ export function Drawer({
   const wrapperStyles = useStyles2(getWrapperStyles, size);
   const dragStyles = useStyles2(getDragStyles);
   const titleId = useId();
+  // Preserve the trigger before nested floating overlays can replace FloatingFocusManager's global return target.
+  const returnFocusRef = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
 
   const { context, refs } = useFloating({
     open: true,
@@ -114,6 +116,14 @@ export function Drawer({
     <RcDrawer
       open={true}
       onClose={onClose}
+      // rc-drawer's window listener misses Escape when dashboard keybindings stop it at document.
+      keyboard={false}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && event.target instanceof Node && event.currentTarget.contains(event.target)) {
+          event.stopPropagation();
+          onClose();
+        }
+      }}
       placement="right"
       getContainer={'.main-view'}
       className={styles.drawerContent}
@@ -142,8 +152,14 @@ export function Drawer({
       }}
       // this is handled by floating-ui
       autoFocus={false}
+      focusTrap={false}
     >
-      <FloatingFocusManager context={context} modal getInsideElements={getDrawerInsideElements}>
+      <FloatingFocusManager
+        context={context}
+        modal
+        getInsideElements={getDrawerInsideElements}
+        returnFocus={returnFocusRef}
+      >
         <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
