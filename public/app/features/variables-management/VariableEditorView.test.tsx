@@ -85,6 +85,31 @@ describe('VariableEditorView delete action', () => {
   });
 });
 
+describe('VariableEditorView unsupported variable', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('shows the load error with a way back instead of the editor', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    const onBack = jest.fn();
+    const groupByVariable: Variable = {
+      metadata: { name: 'cluster' },
+      spec: { kind: 'GroupByVariable', spec: { name: 'cluster' } } as unknown as VariableSpec,
+    };
+
+    const { user } = render(<VariableEditorView source={groupByVariable} onBack={onBack} />);
+
+    expect(await screen.findByText('This variable cannot be edited')).toBeInTheDocument();
+    expect(screen.getByText('Scenes: Unsupported variable type GroupByVariable')).toBeInTheDocument();
+    expect(screen.queryByTestId('variable-editor-form')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    expect(onBack).toHaveBeenCalled();
+  });
+});
+
 describe('VariableEditorView folder help', () => {
   afterEach(() => {
     jest.restoreAllMocks();
