@@ -4,7 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { useFlagScopeFilters } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -199,6 +200,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
+  const scopeFiltersEnabled = useFlagScopeFilters();
   const {
     refreshPicker,
     timePicker,
@@ -271,7 +273,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
+      {scopeFiltersEnabled && !editPanel && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (

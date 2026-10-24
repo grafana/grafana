@@ -102,7 +102,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
     .filter((v): v is SceneVariable => Boolean(v));
 
   // Explicitly disable scopes for public dashboards
-  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 

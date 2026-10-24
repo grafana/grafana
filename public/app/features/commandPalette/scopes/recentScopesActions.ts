@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagScopeFilters } from '@grafana/runtime/internal';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { type ScopesSelectorServiceState } from 'app/features/scopes/selector/ScopesSelectorService';
 import { useRecentScopes } from 'app/features/scopes/selector/useRecentScopes';
@@ -14,6 +14,7 @@ const EMPTY_OBSERVABLE = new Observable<ScopesSelectorServiceState>();
 
 export function useRecentScopesActions(): CommandPaletteAction[] {
   const services = useScopesServices();
+  const scopeFiltersEnabled = useFlagScopeFilters();
 
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
     services?.scopesSelectorService.stateObservable ?? EMPTY_OBSERVABLE,
@@ -23,7 +24,7 @@ export function useRecentScopesActions(): CommandPaletteAction[] {
   const appliedScopeIds = selectorServiceState?.appliedScopes.map((s) => s.scopeId) ?? [];
   const recentScopes = useRecentScopes(appliedScopeIds);
 
-  if (!(config.featureToggles.scopeFilters && services)) {
+  if (!(scopeFiltersEnabled && services)) {
     return [];
   }
 
