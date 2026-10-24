@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -598,4 +600,82 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, common.RawSecureValue("inline-token"), token)
 	})
+}
+
+func TestSecureValues_DecryptSpan(t *testing.T) {
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "c", Namespace: "ns"},
+		Secure: provisioning.ConnectionSecure{
+			PrivateKey: common.InlineSecureValue{Name: "pk-ref"},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		mockResults map[string]decrypt.DecryptResult
+		mockErr     error
+		wantErr     bool
+	}{
+		{
+			name:        "records a span on success",
+			mockResults: map[string]decrypt.DecryptResult{"pk-ref": newDecryptResult("v")},
+		},
+		{
+			name:    "records the error on the span when decrypt fails",
+			mockErr: errors.New("boom"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exporter := tracetest.NewInMemoryExporter()
+			tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+			ctx, parent := tp.Tracer("test").Start(context.Background(), "parent")
+
+			mockSvc := &mockDecryptService{results: tt.mockResults, err: tt.mockErr}
+			_, err := connection.ProvideDecrypter(mockSvc, nil)(conn).PrivateKey(ctx)
+			parent.End()
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			span := findSpan(t, exporter.GetSpans(), "provisioning.connection.decrypt")
+			assert.Equal(t, parent.SpanContext().TraceID(), span.SpanContext.TraceID(), "decrypt span should join the active trace")
+			assert.Equal(t, parent.SpanContext().SpanID(), span.Parent.SpanID(), "decrypt span should be a child of the active span")
+			assert.Equal(t, "ns", spanAttrString(span, "namespace"))
+			assert.Equal(t, "pk-ref", spanAttrString(span, "secret.name"))
+			assert.Equal(t, "private_key", spanAttrString(span, "secret.type"))
+
+			if tt.wantErr {
+				require.Len(t, span.Events, 1)
+				assert.Equal(t, "exception", span.Events[0].Name)
+			} else {
+				assert.Empty(t, span.Events)
+			}
+		})
+	}
+}
+
+func findSpan(t *testing.T, spans tracetest.SpanStubs, name string) tracetest.SpanStub {
+	t.Helper()
+	for _, s := range spans {
+		if s.Name == name {
+			return s
+		}
+	}
+	require.FailNowf(t, "span not found", "no span named %q among %d exported spans", name, len(spans))
+	return tracetest.SpanStub{}
+}
+
+func spanAttrString(s tracetest.SpanStub, key string) string {
+	for _, kv := range s.Attributes {
+		if string(kv.Key) == key {
+			return kv.Value.AsString()
+		}
+	}
+	return ""
 }
