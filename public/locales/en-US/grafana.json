@@ -13446,6 +13446,7 @@
       "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
       "lock-time-ranges": "Lock panels to the time ranges they showed",
       "lock-time-ranges-description": "Keep each visualization on the window it was captured in. Unlocked, they follow the notebook time range.",
+      "quick-add": "Add to \"{{title}}\"",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -13771,7 +13772,8 @@
       }
     },
     "header-menu": {
-      "add-to-notebook": "Add to notebook",
+      "add-to-notebook": "Add to notebook…",
+      "add-to-recent-notebook": "Add to \"{{title}}\"",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
