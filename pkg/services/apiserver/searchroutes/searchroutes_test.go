@@ -515,7 +515,7 @@ func allBuilders(t *testing.T) []builder.APIGroupBuilder {
 //
 // Kinds that opt out in their own manifest are absent: secure values, keepers,
 // channels, plugins, plugin metas, checks, check types, preferences, stars,
-// snapshots and resource permissions.
+// snapshots, resource permissions and saved dashboard views.
 func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil, Options{}))
 

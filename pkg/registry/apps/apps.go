@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashboardviews"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
@@ -41,6 +42,7 @@ func ProvideAppInstallers(
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
+	dashboardviewsAppInstaller *dashboardviews.AppInstaller,
 	alertingNotificationAppInstaller *notifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 	annotationAppInstaller *annotation.AppInstaller,
@@ -55,6 +57,7 @@ func ProvideAppInstallers(
 		pluginsAppInstaller,
 		exampleAppInstaller,
 		quotasAppInstaller,
+		dashboardviewsAppInstaller,
 	}
 	installers = append(installers, shorturlAppInstaller)
 
