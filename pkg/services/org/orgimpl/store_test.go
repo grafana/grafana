@@ -527,6 +527,28 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.Equal(t, result.OrgUsers[0].Role, "Admin")
 		})
 
+		t.Run("Can filter organization users by exact UID", func(t *testing.T) {
+			for _, uid := range []string{ac2.UID, "missing-uid"} {
+				query := org.SearchOrgUsersQuery{
+					OrgID: ac1.OrgID, UserUID: uid, Limit: 10, Page: 1,
+					User: &user.SignedInUser{
+						OrgID:       ac1.OrgID,
+						Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+					},
+				}
+				result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
+				require.NoError(t, err)
+				if uid == ac2.UID {
+					require.Len(t, result.OrgUsers, 1)
+					require.Equal(t, ac2.ID, result.OrgUsers[0].UserID)
+					require.Equal(t, int64(1), result.TotalCount)
+				} else {
+					require.Empty(t, result.OrgUsers)
+					require.Zero(t, result.TotalCount)
+				}
+			}
+		})
+
 		t.Run("Can get organization users with query", func(t *testing.T) {
 			query := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,

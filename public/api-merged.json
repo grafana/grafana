@@ -1375,8 +1375,7 @@
         "operationId": "adminDeleteUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1416,8 +1415,7 @@
         "operationId": "adminGetUserAuthTokens",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1454,8 +1452,7 @@
         "operationId": "adminDisableUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1495,8 +1492,7 @@
         "operationId": "adminEnableUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1536,8 +1532,7 @@
         "operationId": "adminLogoutUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1588,8 +1583,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1637,8 +1631,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -1779,8 +1772,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -6303,6 +6295,19 @@
         "parameters": [
           {
             "type": "string",
+            "description": "Filter by the exact user UID within the current organization.",
+            "name": "userUid",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Filter by the exact numerical user ID within the current organization.",
+            "name": "userId",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "name": "query",
             "in": "query"
           },
@@ -6998,8 +7003,7 @@
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -7047,8 +7051,7 @@
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -10421,8 +10424,7 @@
         "operationId": "getUserByID",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -10464,8 +10466,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -10503,8 +10504,7 @@
         "operationId": "getUserOrgList",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true
@@ -10539,8 +10539,7 @@
         "operationId": "getUserTeams",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "user_id",
             "in": "path",
             "required": true

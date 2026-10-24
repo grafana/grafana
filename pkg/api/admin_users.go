@@ -432,42 +432,42 @@ type AdminUpdateUserPasswordParams struct {
 	Body dtos.AdminUpdateUserPasswordForm `json:"body"`
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminDeleteUser
 type AdminDeleteUserParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminEnableUser
 type AdminEnableUserParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminDisableUser
 type AdminDisableUserParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminGetUserAuthTokens
 type AdminGetUserAuthTokensParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminLogoutUser
 type AdminLogoutUserParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminRevokeUserAuthToken
@@ -477,7 +477,7 @@ type AdminRevokeUserAuthTokenParams struct {
 	Body auth.RevokeAuthTokenCmd `json:"body"`
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters adminCreateUser
@@ -494,7 +494,7 @@ type AdminUpdateUserPermissionsParams struct {
 	Body dtos.AdminUpdateUserPermissionsForm `json:"body"`
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:response adminCreateUserResponse

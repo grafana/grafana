@@ -998,6 +998,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/org/users`,
           params: {
+            userUid: queryArg.userUid,
+            userId: queryArg.userId,
             query: queryArg.query,
             limit: queryArg.limit,
           },
@@ -1886,37 +1888,37 @@ export type AdminCreateUserApiArg = {
 export type AdminDeleteUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminDeleteUserApiArg = {
-  userId: number;
+  userId: string;
 };
 export type AdminGetUserAuthTokensApiResponse = /** status 200 (empty) */ UserToken[];
 export type AdminGetUserAuthTokensApiArg = {
-  userId: number;
+  userId: string;
 };
 export type AdminDisableUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminDisableUserApiArg = {
-  userId: number;
+  userId: string;
 };
 export type AdminEnableUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminEnableUserApiArg = {
-  userId: number;
+  userId: string;
 };
 export type AdminLogoutUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminLogoutUserApiArg = {
-  userId: number;
+  userId: string;
 };
 export type AdminUpdateUserPasswordApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminUpdateUserPasswordApiArg = {
-  userId: number;
+  userId: string;
   adminUpdateUserPasswordForm: AdminUpdateUserPasswordForm;
 };
 export type AdminUpdateUserPermissionsApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminUpdateUserPermissionsApiArg = {
-  userId: number;
+  userId: string;
   adminUpdateUserPermissionsForm: AdminUpdateUserPermissionsForm;
 };
 export type GetUserQuotaApiResponse = /** status 200 (empty) */ QuotaDto[];
@@ -1933,7 +1935,7 @@ export type UpdateUserQuotaApiArg = {
 export type AdminRevokeUserAuthTokenApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AdminRevokeUserAuthTokenApiArg = {
-  userId: number;
+  userId: string;
   revokeAuthTokenCmd: RevokeAuthTokenCmd;
 };
 export type GetAnnotationsApiResponse = /** status 200 (empty) */ Annotation[];
@@ -2473,6 +2475,10 @@ export type GetCurrentOrgQuotaApiResponse = /** status 200 (empty) */ QuotaDto[]
 export type GetCurrentOrgQuotaApiArg = void;
 export type GetOrgUsersForCurrentOrgApiResponse = /** status 200 (empty) */ OrgUserDto[];
 export type GetOrgUsersForCurrentOrgApiArg = {
+  /** Filter by the exact user UID within the current organization. */
+  userUid?: string;
+  /** Filter by the exact numerical user ID within the current organization. */
+  userId?: number;
   query?: string;
   limit?: number;
 };
@@ -2570,13 +2576,13 @@ export type RemoveOrgUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveOrgUserApiArg = {
   orgId: number;
-  userId: number;
+  userId: string;
 };
 export type UpdateOrgUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type UpdateOrgUserApiArg = {
   orgId: number;
-  userId: number;
+  userId: string;
   updateOrgUserCommand: UpdateOrgUserCommand;
 };
 export type ViewPublicDashboardApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
@@ -3005,22 +3011,22 @@ export type SearchUsersWithPagingApiResponse = /** status 200 (empty) */ SearchU
 export type SearchUsersWithPagingApiArg = void;
 export type GetUserByIdApiResponse = /** status 200 (empty) */ UserProfileDto;
 export type GetUserByIdApiArg = {
-  userId: number;
+  userId: string;
 };
 export type UpdateUserApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type UpdateUserApiArg = {
-  userId: number;
+  userId: string;
   /** To change the email, name, login, theme, provide another one. */
   updateUserCommand: UpdateUserCommand;
 };
 export type GetUserOrgListApiResponse = /** status 200 (empty) */ UserOrgDto[];
 export type GetUserOrgListApiArg = {
-  userId: number;
+  userId: string;
 };
 export type GetUserTeamsApiResponse = /** status 200 (empty) */ TeamDto[];
 export type GetUserTeamsApiArg = {
-  userId: number;
+  userId: string;
 };
 export type RouteGetAlertRulesExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;

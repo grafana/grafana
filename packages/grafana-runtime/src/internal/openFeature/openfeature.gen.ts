@@ -272,6 +272,8 @@ export const FlagKeys = {
   KubernetesCorrelations: "kubernetesCorrelations",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
+  /** Enables user APIs in the app platform */
+  KubernetesUsersApi: "kubernetesUsersApi",
   /** Routes library panel requests from /api to the /apis endpoint */
   LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Enables the logs tableNG panel to replace existing tableRT */
@@ -1819,6 +1821,17 @@ export const useFlagKubernetesCorrelations = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("kubernetesTeamsApi", false, options).value;
+};
+
+/**
+ * Enables user APIs in the app platform
+ *
+ * **Details:**
+ * - flag key: `kubernetesUsersApi`
+ * - default value: `false`
+ */
+export const useFlagKubernetesUsersApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesUsersApi", false, options).value;
 };
 
 /**
