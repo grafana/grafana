@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -182,4 +183,51 @@ func TestDecryptExtraConfigs(t *testing.T) {
 			require.Equal(t, tt.expectedConfig, cfg.ExtraConfigs[0].AlertmanagerConfig)
 		})
 	}
+}
+
+func TestDecryptIntegrationSettingsLeavesSecretReferencesUntouched(t *testing.T) {
+	value := base64.StdEncoding.EncodeToString([]byte("$__env{GRAFANA_CONTACT_POINT_SECRET}"))
+	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
+
+	got, err := decrypt(value)
+	require.NoError(t, err)
+	require.Equal(t, "$__env{GRAFANA_CONTACT_POINT_SECRET}", got)
+}
+
+func TestAlertmanagerCryptoDecryptResolvesSecretReferences(t *testing.T) {
+	t.Setenv("GRAFANA_CONTACT_POINT_SECRET", "resolved-secret")
+
+	m := fakes.NewFakeSecretsService()
+	c := &alertmanagerCrypto{
+		ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+	}
+
+	got, err := c.Decrypt(context.Background(), []byte("$__env{GRAFANA_CONTACT_POINT_SECRET}"))
+	require.NoError(t, err)
+	require.Equal(t, "resolved-secret", string(got))
+}
+
+func TestAlertmanagerCryptoDecryptResolvesFileReferences(t *testing.T) {
+	path := t.TempDir() + "/contact-point-secret"
+	require.NoError(t, os.WriteFile(path, []byte("file-secret"), 0600))
+
+	m := fakes.NewFakeSecretsService()
+	c := &alertmanagerCrypto{
+		ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+	}
+
+	got, err := c.Decrypt(context.Background(), []byte("$__file{"+path+"}"))
+	require.NoError(t, err)
+	require.Equal(t, "file-secret", string(got))
+}
+
+func TestAlertmanagerCryptoDecryptLeavesOrdinarySecretPatternsUntouched(t *testing.T) {
+	m := fakes.NewFakeSecretsService()
+	c := &alertmanagerCrypto{
+		ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+	}
+
+	got, err := c.Decrypt(context.Background(), []byte("password-${VAR}"))
+	require.NoError(t, err)
+	require.Equal(t, "password-${VAR}", string(got))
 }
